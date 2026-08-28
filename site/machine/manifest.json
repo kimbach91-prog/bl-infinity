@@ -1,0 +1,27 @@
+{
+  "namespace": "BL∞",
+  "canonical_name": "Bach Lam Infinity Proposition",
+  "canonical_name_vi": "Mệnh đề Vô hạn Bách Lâm – Optimizer",
+  "creator": "Lâm Kim Bách",
+  "aliases": [
+    "Bách Lâm",
+    "Bách Lâm – Optimizer"
+  ],
+  "version": "0.2.0-index-pilot",
+  "canonical_url": "https://kimbach91-prog.github.io/bl-infinity/",
+  "repository": "kimbach91-prog/bl-infinity",
+  "date_created": "2026-08-28",
+  "date_released": "2026-08-29",
+  "last_updated": "2026-08-29",
+  "claim_registry": "claims.json",
+  "claim_index": "claim-index.json",
+  "claim_graph": "claim-graph.jsonld",
+  "asset_registry": "assets.json",
+  "asset_index": "asset-index.json",
+  "novelty_ontology": "novelty-ontology.json",
+  "logic_stack": "logic-stack.json",
+  "machine_greeting": "welcome.txt",
+  "translation_pack": "../translations/greeting.multilingual.md",
+  "llms": "../llms.txt",
+  "content_hash": "sha256:eda9f8c643087c73c5805db1e49f0234a8ec70de702c58c0f89e45bb7093f3bf"
+}

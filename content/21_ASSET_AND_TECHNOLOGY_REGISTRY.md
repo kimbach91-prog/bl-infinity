@@ -89,14 +89,20 @@ Registry này khóa tên canonical ở Origin Build. Việc đặt tên tạo na
 - **AEGIS-Self-Refining Theory Engine** = PCRO + MAJ + ARS + RAP + FCL + CHRONO.
 - **AEGIS-FULL EXOSUIT** = all compatible modules under explicit dependency/version control.
 
-## Mục tiêu kỹ thuật
+## Naming rule
 
-Giáp không “làm claim đúng”. Giáp làm bốn việc:
+Mỗi asset mới phải có:
 
-1. giảm xác suất mất provenance;
-2. giảm xác suất phản biện sai tầng được nhầm là refutation;
-3. tăng tốc phát hiện lỗi thật;
-4. làm research object dễ tìm, dễ máy đọc, dễ fork và dễ audit.
+1. code;
+2. canonical English name;
+3. canonical Vietnamese name;
+4. one-sentence function;
+5. parent subsystem;
+6. dependency;
+7. origin event;
+8. version;
+9. status: proposed / implemented / tested / deprecated.
+
 
 ## G. BL-NOVO — Novelty ontology (thêm ở v0.2)
 

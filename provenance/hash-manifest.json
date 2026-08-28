@@ -1,0 +1,243 @@
+{
+  "generated_at": "2026-08-28T22:10:55.767438+00:00",
+  "algorithm": "sha256",
+  "root": "87000e562047ecf3db1be83cdb961dc940a57081b5c9f7c4862ee00d0dc4f5db",
+  "files": [
+    {
+      "path": "content/00_README_FIRST.md",
+      "sha256": "fec0c40e80946b49c45758ddebd5060323eddf57df16b60431aee15a6cb35f89"
+    },
+    {
+      "path": "content/01_ORIGIN_AND_RESEARCH_QUESTION.md",
+      "sha256": "23d167f74205bda6b8b57eedb158b50db274bd75b4e364c2ffba71a453d3688b"
+    },
+    {
+      "path": "content/02_DEFINITIONS_AND_SPACES.md",
+      "sha256": "ae8a377cc54d3b0e12a976bd9475a5b95aabfcae899b5f76efaf0cd637f1fb01"
+    },
+    {
+      "path": "content/03_CORE_AXIOMS.md",
+      "sha256": "5eaf3a8ece2caadc397dfeccf3438eb743d14e534687670693745f1fece00363"
+    },
+    {
+      "path": "content/04_FINITE_INSIDE_UNBOUNDED.md",
+      "sha256": "96b5e12acf5ff22826ceb38c66d1092439df857d8f25e1e7c8a9b861f05601a4"
+    },
+    {
+      "path": "content/05_EMBEDDED_OBSERVER_AND_BACTERIUM.md",
+      "sha256": "118995c7b0b99d21d8a5c233b4e7aec29f6b56d450eb67c21552664c032c93b9"
+    },
+    {
+      "path": "content/06_REPRESENTATION_REACHABILITY_ACTUALIZATION.md",
+      "sha256": "01a89ed326ca2e76214fcf229719dbfe064dde7b0e26839e8e54185d99d08870"
+    },
+    {
+      "path": "content/07_GENERATIVE_REALITY_AND_RECOMBINATION.md",
+      "sha256": "0e97248ae2467524ea85e555193e4199e365af26a7a77b5ca4f04154e334d3c7"
+    },
+    {
+      "path": "content/08_OBSERVATION_FILTER_AND_SURVIVOR_BIAS.md",
+      "sha256": "21bad5de1b2d57f382b5d0a540c571241d898ed07b26aee41ddd80b13d49e0e7"
+    },
+    {
+      "path": "content/09_COGNITIVE_ABSORPTION_AND_OTYPE.md",
+      "sha256": "71b9b61e2bd035beeca257fe25e4b76af28bdb533a5b04cf6611b9423444f3f0"
+    },
+    {
+      "path": "content/10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md",
+      "sha256": "ac8e43473748e2c79246e0c5d1accdb2677b54a6aa3b1ffd6774785bdb478b0b"
+    },
+    {
+      "path": "content/11_CRITIQUE_THEORY.md",
+      "sha256": "254d603063cae40536cdfc5143e978596d239e107e2318213fb5fcb2bd4f2a52"
+    },
+    {
+      "path": "content/12_OPEN_DISCOVERY_PROTOCOL.md",
+      "sha256": "c91dad250ce68e566e8ea71d82a49b7557010c18108ff9f7583849b347179830"
+    },
+    {
+      "path": "content/13_PCRO_AND_LIVING_RESEARCH_OBJECT.md",
+      "sha256": "ff0bcda28ccad7d5a1030846eeb9ba6b127aa671545b4db70dbc135053e0559d"
+    },
+    {
+      "path": "content/14_BLOK_AEGIS_TECHNICAL_ARMOR.md",
+      "sha256": "7bd90605c22c135a5457967c0d79975870c30e1361f3e29a1400c21c0d1c68a0"
+    },
+    {
+      "path": "content/15_MACHINE_INDEX_AND_DISCOVERY.md",
+      "sha256": "45e72cb7c36ad0d994db790532cd46dd6c6602dc636dd6dc1037ba376f192249"
+    },
+    {
+      "path": "content/16_HUMAN_AI_COGNITIVE_SUPPLY_CHAIN.md",
+      "sha256": "71072f629d0064a876ed0bfb3020096d884b073181d2195e89676f8c0766f741"
+    },
+    {
+      "path": "content/17_PRIOR_WORK_AND_INDEPENDENT_DERIVATION.md",
+      "sha256": "62176447803c1be554a6d39dea8c4fb44fc58863c32e98b12f8a2a8b43961df7"
+    },
+    {
+      "path": "content/18_AUDIT_AND_DEEP_ERROR_LOOP.md",
+      "sha256": "e2fe0ab677a5eeafd4f02d335ee01f614c5b4961f12804f3d3c8f1b6a4b2890e"
+    },
+    {
+      "path": "content/19_RESEARCH_ROADMAP.md",
+      "sha256": "478d9b24cb38c941f019ed72984c52f1e738abb5b0d3ac05ae05b883a4f1ca30"
+    },
+    {
+      "path": "content/20_CANONICAL_MANIFESTO.md",
+      "sha256": "8875d70b334b9e22b4486c2ffd40a09b31eef0509983cdd5a951da4349c549d7"
+    },
+    {
+      "path": "content/21_ASSET_AND_TECHNOLOGY_REGISTRY.md",
+      "sha256": "f633ca557f98766dc933988b72ec4861a61df34ad486f05c752b240a7a55572d"
+    },
+    {
+      "path": "content/22_PRIOR_ART_SEED_MAP.md",
+      "sha256": "a2d5c8f4c14cbec837629fc220144669df8b6bd5babdff7018f6dc5d6989d8d8"
+    },
+    {
+      "path": "content/23_FORMALIZATION_PROGRAM.md",
+      "sha256": "520c284c31d0202260dba3fdc8153298634599b7b6dfca75728ae99f42255b12"
+    },
+    {
+      "path": "content/24_ADVERSARIAL_MATRIX.md",
+      "sha256": "f00bf5501b2c3bf80a6f38856aaee3e51f215e10d24510ad0a168c90e1ebe6d9"
+    },
+    {
+      "path": "content/25_GOVERNANCE_AND_ACADEMIC_ACCESS.md",
+      "sha256": "afc89dce1a72863570ea0ee807bd4666b566eda01611200f0474c6798097f417"
+    },
+    {
+      "path": "content/26_SECURITY_AND_INTEGRITY_MODEL.md",
+      "sha256": "56071870fa802f410c468f2b00f216a25ce04f56005dcbed60336292f8a974ec"
+    },
+    {
+      "path": "content/27_METRICS_AND_SCORING.md",
+      "sha256": "9c3018c5bb7910bd19a2779795a78f2ca6d1ee854b3d72a429b481c8c37b211e"
+    },
+    {
+      "path": "content/28_PUBLICATION_LIFECYCLE.md",
+      "sha256": "97ca62c8f028b5550c7f9b051e44ec047122250d2266fb31e7deb6d48d6a5584"
+    },
+    {
+      "path": "content/29_NONCLAIMS_AND_BOUNDARIES.md",
+      "sha256": "54f7d5e025a7db92a8106e4f097a979e59e08fec545427058cefe6047ea93f99"
+    },
+    {
+      "path": "content/30_FAQ.md",
+      "sha256": "b2c8c4f8bbada09a1bc9597a63f7d0ba8feaac8d62abc9e8b7ba746ab7024f6c"
+    },
+    {
+      "path": "content/31_GLOSSARY.md",
+      "sha256": "0855f897174e115569dee95ed78c1f0e64564a1c06fa0f904a88e76528acf9b0"
+    },
+    {
+      "path": "content/32_REASONING_TO_CLAIM_MAP.md",
+      "sha256": "4f87b866da23baf8cf88cee762c831eef4c90995751d8441da1bc5f0fae59805"
+    },
+    {
+      "path": "content/33_VERSIONING_POLICY.md",
+      "sha256": "10cd51330f6e546e5013bf2648b29c244dd40b789ac62cf08089019a0c0cc85f"
+    },
+    {
+      "path": "content/34_NOVELTY_ONTOLOGY_AND_NESTED_INNOVATION.md",
+      "sha256": "c9a09283e5191202838af08eab17a4488c05f00da7b199a721d0b8cb2db4d466"
+    },
+    {
+      "path": "content/35_SOCIAL_RESPONSE_AND_RELEASE_SPIRAL.md",
+      "sha256": "91b064e9c2b9eb8500869f7a09103b718b66feb90e0e334f26287958a864b03f"
+    },
+    {
+      "path": "content/36_INDEXABLE_CLAIM_OBJECTS.md",
+      "sha256": "cce370f1e7ed92431a327f87309e56a43ddb57542a12b0bd7286340e1cf21cb9"
+    },
+    {
+      "path": "content/37_POST_ORIGIN_DELTA_REGISTRY.md",
+      "sha256": "c72aa49fcae739b9c2991825afd7736869193c6fac0d9ec3a6d83df3a66f71b3"
+    },
+    {
+      "path": "content/38_CANONICAL_LOGIC_STACK_V0_2.md",
+      "sha256": "9e0fcd0d5de7414d681bc52f2e1a5c89fed96382e21622eff9e666b97690a4d4"
+    },
+    {
+      "path": "claims/claims.json",
+      "sha256": "749d7a7e59dc2d70429f1b72e00db02e81d79478f2930e20d02725c2a7f8ef64"
+    },
+    {
+      "path": "critiques/00_CRITIQUE_PROTOCOL.md",
+      "sha256": "70f22394b050d9cd56fe3fc613c0705d6cbc9242b644daacef1ae1edcbc59e67"
+    },
+    {
+      "path": "critiques/01_ANTI_FALLACY_ARMOR.md",
+      "sha256": "fbc28bc1a5c07f15d3813b0a64a864607e825e696ad4ec34832d6d77bdb9f972"
+    },
+    {
+      "path": "critiques/02_OPEN_CHALLENGE.md",
+      "sha256": "cee654c4f54162527590ec79a6a27f5cd75d36fcca5e49db3896ca32943136fd"
+    },
+    {
+      "path": "provenance/00_ORIGIN_TIMELINE.md",
+      "sha256": "6502be1b80869f93dd7993a8b9b0e03ef073782068687c2e6a4f65826ff02f5f"
+    },
+    {
+      "path": "provenance/01_REASONING_LINEAGE.md",
+      "sha256": "b5ba9c9956d699a600992862a689c975b828a3f0d88f35f429ffcbfa917e1037"
+    },
+    {
+      "path": "provenance/02_CONVERSATION_LOG_STRUCTURED.md",
+      "sha256": "8bf7b0417341c9437b29acbd032b2109103ef64454f12d2e5a55129f5926e05d"
+    },
+    {
+      "path": "provenance/03_RAW_TRANSCRIPT_IMPORT.md",
+      "sha256": "4392dd75f5b5204ee489f6bb968cdf6897c1d436911aedddf5dd0dd6d3cd7346"
+    },
+    {
+      "path": "provenance/04_PROVENANCE_POLICY.md",
+      "sha256": "2c10cae0b32592bfeef2589054e64b35aeb47b8c434e664ad2b193d1537c0f40"
+    },
+    {
+      "path": "provenance/hash-manifest.json",
+      "sha256": "3e10a6a562f3b7d00a796d73c86451306f32a43725f9cb2863779896934728c6"
+    },
+    {
+      "path": "machine/README.md",
+      "sha256": "2154da9a283ddd1d85553663cc9efdd9feeb5888120430f9a446af83a6ca994a"
+    },
+    {
+      "path": "machine/assets.json",
+      "sha256": "42b19915626db338be1a938fb15a92cfd8c15e4c8430fb40960a3be35fde5901"
+    },
+    {
+      "path": "machine/graph.jsonld",
+      "sha256": "710564137a0ea31aa559631e6a9e7421c50dcc9e4750d61acaa1a0acac969ce8"
+    },
+    {
+      "path": "machine/llms.txt",
+      "sha256": "c1532ee23cc6853bf52545a5d5b5d2f7d40762c74acc838d21ba7c2d2241e44b"
+    },
+    {
+      "path": "machine/logic-stack.json",
+      "sha256": "79be88ca5bdfa61228f3145d1307dc1b14b63d8f46e3de0483ebe1c44a0b38c7"
+    },
+    {
+      "path": "machine/novelty-ontology.json",
+      "sha256": "cf870ef2e774e5275aa9ef6fa513f081161880f59a29c240be0e19d6c6e5e8ce"
+    },
+    {
+      "path": "machine/welcome.txt",
+      "sha256": "9776f8d4dd559865ab34cb3bc162951372e3c0a95d15c0dec2a40355447bdd26"
+    },
+    {
+      "path": "audit/00_DEEP_AUDIT_CHECKLIST.md",
+      "sha256": "df55390af3347e7bf2dc122f5da333cfc89905ebfce2ceef76283d50f3ed98f5"
+    },
+    {
+      "path": "audit/01_AUDIT_ISSUE_TEMPLATE.md",
+      "sha256": "5a5f7521d9eed3a94c4e8455c803d1c719b0d85c7d076cc891030a96e1cada28"
+    },
+    {
+      "path": "audit/02_V0_2_PREFLIGHT_FINDINGS.md",
+      "sha256": "981b02e24dbaf5383f6dd978f249a70c1bd282a665caf3c3919a92301e1f4bd8"
+    }
+  ]
+}

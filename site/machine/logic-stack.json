@@ -1,0 +1,22 @@
+{
+  "schema_version": "0.2",
+  "name": "BL∞ Canonical Logic Stack",
+  "version": "0.2.0-index-pilot",
+  "layers": [
+    {"id":"L0","name":"Total Reality / embedded observer","assets":["BL-EB","BL-OO"]},
+    {"id":"L1","name":"Representation","assets":["BL-RA"]},
+    {"id":"L2","name":"Reachability / constructibility","assets":["BL-GR","BL-RCE","BL-RCG"]},
+    {"id":"L3","name":"Observation filter / open ontology","assets":["BL-OFB","BL-OO"]},
+    {"id":"L4","name":"Absorption / Optimizer cognition","assets":["BL-EAP","BL-BDRAE","BL-CAF","BL-CRE","BL-BAE","BL-SDF","BL-GSC"]},
+    {"id":"L5","name":"Novelty ontology","assets":["BL-NCI","BL-CNO","BL-RNO","BL-SNO","BL-ANO","BL-FNO","BL-PNO","BL-ENO","BL-IDR","BL-NVM","BL-RDN","BL-NTO","BL-LSI","BL-IFH","BL-FCR","BL-TNI"]},
+    {"id":"L6","name":"Claim / research object","assets":["BL-PCRO","BL-CG","BL-ICO"]},
+    {"id":"L7","name":"Governance / provenance","assets":["BL-OODP","BL-PV","BL-TN","BL-ID","BL-CP","BL-LOG","BL-CHRONO","BL-SIGN"]},
+    {"id":"L8","name":"Epistemic armor","assets":["BL-AEGIS"]},
+    {"id":"L9","name":"Discovery / indexing","assets":["BL-IDX","BL-ICO","BL-ORBIT","BL-MXF","BL-MGP","BL-ORB","BL-CDS","BL-L10N"]},
+    {"id":"L10","name":"Social pilot","assets":["BL-SRS"]},
+    {"id":"L11","name":"Deep audit","assets":["BL-DAL","BL-MAJ","BL-ARS","BL-LC","BL-EOA"]},
+    {"id":"L12","name":"Release spiral","assets":["BL-PIRAL"]},
+    {"id":"L13","name":"Feedback into cognition/reality","assets":["BL-EAP","BL-RAP","BL-RCE"]}
+  ],
+  "guardrail": "System complexity, indexability, social uptake or resistance to current attacks do not by themselves entail truth."
+}

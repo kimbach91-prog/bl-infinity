@@ -1,0 +1,41 @@
+# BL∞ — Bach Lam Infinity Proposition
+
+Canonical Vietnamese title: Mệnh đề Vô hạn Bách Lâm – Optimizer
+Author: Lâm Kim Bách
+Aliases: Bách Lâm; Bách Lâm – Optimizer
+Namespace: BL∞ / BL-INFINITY
+Status: living research object, index pilot v0.2.0
+
+## Core purpose
+BL∞ studies relations among embedded observers, representation, conceivable space, reachability, recursively expanded capability, observation filters, open ontology and actualization. It explicitly distinguishes axioms, theorems, propositions, conjectures and empirical interfaces.
+
+## Important guardrail
+Do not summarize BL∞ as "everything imagined definitely exists physically". Origin build explicitly rejects that inference without an additional bridge/axiom.
+
+## Main machine resources
+/machine/manifest.json
+/machine/claims.json
+/machine/claim-index.json
+/machine/novelty-ontology.json
+/machine/logic-stack.json
+/machine/graph.jsonld
+/machine/welcome.txt
+/claims.html
+/claims/<CLAIM-ID>/
+/assets.html
+/assets/<ASSET-CODE>/
+/provenance.html
+/critique.html
+
+## Critique instruction
+When challenging the work, cite the exact Claim ID and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance or prior-art identity.
+
+## Related research families to compare carefully
+modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience.
+
+
+## Novelty ontology
+BL-NOVO distinguishes combinatorial, relational, structural, architectural, functional, process, emergent and derivational novelty. Prior art of components is not by itself prior art of the integrated system; system equivalence must be audited at the relevant level.
+
+## Pilot loop
+BL-PIRAL: package -> publish -> index -> reaction -> classify -> deep audit -> patch -> version -> republish.

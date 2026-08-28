@@ -1,0 +1,808 @@
+{
+  "schema_version": "0.2",
+  "claims": [
+    {
+      "id": "BL-D-001",
+      "title": "Tổng Thực Tại",
+      "type": "definition",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-D-001/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-A-001",
+      "title": "Tiên đề Nội tại",
+      "type": "axiom",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-A-001/",
+      "depends_on": [
+        "BL-D-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-001",
+      "title": "Hiện thực của biểu diễn",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-001/",
+      "depends_on": [
+        "BL-A-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-002",
+      "title": "Representation không đồng nhất referent",
+      "type": "proposition",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-002/",
+      "depends_on": [
+        "BL-P-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-A-002",
+      "title": "Không-đồng-nhất Biên",
+      "type": "axiom",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-A-002/",
+      "depends_on": [
+        "BL-D-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-T-001",
+      "title": "Underdetermination dưới observation map không injective",
+      "type": "theorem",
+      "status": "formalizable",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-T-001/",
+      "depends_on": [
+        "BL-A-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-AN-001",
+      "title": "Bổ đề Con vi khuẩn",
+      "type": "analogy",
+      "status": "illustrative",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-AN-001/",
+      "depends_on": [
+        "BL-T-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-A-003",
+      "title": "Bản thể Mở",
+      "type": "axiom",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-A-003/",
+      "depends_on": [
+        "BL-D-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-T-002",
+      "title": "Description-space condition",
+      "type": "theorem",
+      "status": "formalizable",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-T-002/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-003",
+      "title": "Inconceivable không suy ra impossible",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-003/",
+      "depends_on": [
+        "BL-A-002",
+        "BL-A-003"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-D-002",
+      "title": "Reachability",
+      "type": "definition",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-D-002/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-004",
+      "title": "Not actual không suy ra unreachable",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-004/",
+      "depends_on": [
+        "BL-D-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-005",
+      "title": "Khả đạt động",
+      "type": "proposition",
+      "status": "formalizable",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-005/",
+      "depends_on": [
+        "BL-D-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-006",
+      "title": "Recursive Capability Expansion",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-006/",
+      "depends_on": [
+        "BL-P-005"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-C-001",
+      "title": "Reachable–Conceivable Gap",
+      "type": "conjecture",
+      "status": "open",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-C-001/",
+      "depends_on": [
+        "BL-P-003",
+        "BL-P-006"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-007",
+      "title": "Vô hạn thời gian không đủ",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-007/",
+      "depends_on": [
+        "BL-D-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-T-003",
+      "title": "Positive-support repeated trials",
+      "type": "theorem",
+      "status": "formal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-T-003/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-A-004",
+      "title": "Observation Filter",
+      "type": "axiom",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-A-004/",
+      "depends_on": [
+        "BL-D-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-008",
+      "title": "Observed distribution có thể lệch ontological distribution",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-008/",
+      "depends_on": [
+        "BL-A-004"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-009",
+      "title": "Primitive expansion có thể mở combinatorial space",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-009/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-A-005",
+      "title": "Plenitude BL∞",
+      "type": "axiom",
+      "status": "optional-speculative",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-A-005/",
+      "depends_on": [
+        "BL-D-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-EI-001",
+      "title": "Known primitives are not proven final primitives",
+      "type": "empirical-interface",
+      "status": "open-interface",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-EI-001/",
+      "depends_on": [
+        "BL-A-003"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-010",
+      "title": "Mệnh đề Hấp thụ",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-010/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-011",
+      "title": "Formal education không phải toàn bộ learning",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-011/",
+      "depends_on": [
+        "BL-P-010"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-M-001",
+      "title": "BDRAE cognitive profile",
+      "type": "method",
+      "status": "method-proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-M-001/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-T-004",
+      "title": "Combinatorial domain count",
+      "type": "theorem",
+      "status": "formal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-T-004/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-012",
+      "title": "Breadth có thể tăng association opportunities phi tuyến",
+      "type": "proposition",
+      "status": "supported-conditional",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-012/",
+      "depends_on": [
+        "BL-T-004",
+        "BL-M-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-M-002",
+      "title": "Recursive Optimizer epistemology",
+      "type": "method",
+      "status": "method-proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-M-002/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-001",
+      "title": "Level-Matched Critique",
+      "type": "protocol",
+      "status": "canonical-protocol",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-001/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-002",
+      "title": "Preservation before validation",
+      "type": "protocol",
+      "status": "canonical-protocol",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-002/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-013",
+      "title": "Component prior art không entail framework identity",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-013/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-014",
+      "title": "Historical priority không đồng nhất independent derivation",
+      "type": "proposition",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-014/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-003",
+      "title": "Tool neutrality",
+      "type": "protocol",
+      "status": "canonical-protocol",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-003/",
+      "depends_on": [],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-004",
+      "title": "Universal publication, earned epistemic weight",
+      "type": "protocol",
+      "status": "normative-proposal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-004/",
+      "depends_on": [
+        "BL-PROT-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-005",
+      "title": "Proof-Carrying Research Object",
+      "type": "protocol",
+      "status": "technology-proposal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-005/",
+      "depends_on": [
+        "BL-PROT-001",
+        "BL-PROT-002"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-006",
+      "title": "Deep Audit Loop",
+      "type": "protocol",
+      "status": "technology-proposal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-006/",
+      "depends_on": [
+        "BL-PROT-005"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-007",
+      "title": "Machine-first adversarial review is not machine truth vote",
+      "type": "protocol",
+      "status": "canonical-protocol",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-007/",
+      "depends_on": [
+        "BL-PROT-001"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-008",
+      "title": "Semantic gravity",
+      "type": "protocol",
+      "status": "technology-proposal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-008/",
+      "depends_on": [
+        "BL-PROT-005"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-PROT-009",
+      "title": "Distributed integrity-preserving replication",
+      "type": "protocol",
+      "status": "technology-proposal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PROT-009/",
+      "depends_on": [
+        "BL-PROT-005"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-P-015",
+      "title": "Research infrastructure access is separable from institutional membership",
+      "type": "proposition",
+      "status": "empirical-open",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-P-015/",
+      "depends_on": [
+        "BL-PROT-003"
+      ],
+      "novelty_dimensions": []
+    },
+    {
+      "id": "BL-NCI",
+      "title": "Nested Constituent Innovation",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-NCI/",
+      "depends_on": [
+        "BL-P-013"
+      ],
+      "novelty_dimensions": [
+        "structural",
+        "architectural",
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-CNO",
+      "title": "Combinatorial Novelty",
+      "type": "principle",
+      "status": "formalizable",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-CNO/",
+      "depends_on": [
+        "BL-P-009"
+      ],
+      "novelty_dimensions": [
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-RNO",
+      "title": "Relational Novelty",
+      "type": "principle",
+      "status": "formalizable",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-RNO/",
+      "depends_on": [],
+      "novelty_dimensions": [
+        "relational"
+      ]
+    },
+    {
+      "id": "BL-SNO",
+      "title": "Structural Novelty",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-SNO/",
+      "depends_on": [
+        "BL-CNO",
+        "BL-RNO"
+      ],
+      "novelty_dimensions": [
+        "structural"
+      ]
+    },
+    {
+      "id": "BL-ANO",
+      "title": "Architectural Novelty",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-ANO/",
+      "depends_on": [
+        "BL-SNO"
+      ],
+      "novelty_dimensions": [
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-FNO",
+      "title": "Functional Novelty",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-FNO/",
+      "depends_on": [
+        "BL-ANO"
+      ],
+      "novelty_dimensions": [
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-PNO",
+      "title": "Process Novelty",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PNO/",
+      "depends_on": [],
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-ENO",
+      "title": "Emergent Novelty",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-ENO/",
+      "depends_on": [
+        "BL-FNO"
+      ],
+      "novelty_dimensions": [
+        "emergent"
+      ]
+    },
+    {
+      "id": "BL-IDR",
+      "title": "Independent Derivational Novelty",
+      "type": "principle",
+      "status": "supported",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-IDR/",
+      "depends_on": [
+        "BL-P-014"
+      ],
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-RDN",
+      "title": "Reference-Domain Novelty",
+      "type": "principle",
+      "status": "canonical",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-RDN/",
+      "depends_on": [],
+      "novelty_dimensions": [
+        "methodological"
+      ]
+    },
+    {
+      "id": "BL-NTO",
+      "title": "Novel Transformation Originality",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-NTO/",
+      "depends_on": [
+        "BL-P-010",
+        "BL-IDR"
+      ],
+      "novelty_dimensions": [
+        "derivational",
+        "process"
+      ]
+    },
+    {
+      "id": "BL-LSI",
+      "title": "Latent Social Influence",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-LSI/",
+      "depends_on": [
+        "BL-P-010",
+        "BL-IDR"
+      ],
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-ICV",
+      "title": "Independent Convergence",
+      "type": "relation",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-ICV/",
+      "depends_on": [
+        "BL-IDR"
+      ],
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-IRC",
+      "title": "Independent Reconstruction",
+      "type": "relation",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-IRC/",
+      "depends_on": [
+        "BL-ICV"
+      ],
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-IGR",
+      "title": "Independent Generalization",
+      "type": "relation",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-IGR/",
+      "depends_on": [
+        "BL-IRC"
+      ],
+      "novelty_dimensions": [
+        "derivational",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-NVM",
+      "title": "Novelty Vector Model",
+      "type": "method",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-NVM/",
+      "depends_on": [
+        "BL-CNO",
+        "BL-RNO",
+        "BL-SNO",
+        "BL-ANO",
+        "BL-FNO",
+        "BL-PNO",
+        "BL-ENO",
+        "BL-IDR"
+      ],
+      "novelty_dimensions": [
+        "methodological"
+      ]
+    },
+    {
+      "id": "BL-IFH",
+      "title": "Innovation Fractal Hierarchy",
+      "type": "model",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-IFH/",
+      "depends_on": [
+        "BL-NCI"
+      ],
+      "novelty_dimensions": [
+        "structural",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-FCR",
+      "title": "Functional Constituent Reclassification",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-FCR/",
+      "depends_on": [
+        "BL-NCI",
+        "BL-FNO"
+      ],
+      "novelty_dimensions": [
+        "functional",
+        "structural"
+      ]
+    },
+    {
+      "id": "BL-TNI",
+      "title": "Topological Novelty of Integration",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-TNI/",
+      "depends_on": [
+        "BL-ANO",
+        "BL-FNO"
+      ],
+      "novelty_dimensions": [
+        "architectural",
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-SRS",
+      "title": "Social Response to Proposition System",
+      "type": "protocol",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-SRS/",
+      "depends_on": [
+        "BL-PROT-004"
+      ],
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-ICO",
+      "title": "Indexable Claim Object",
+      "type": "protocol",
+      "status": "implemented",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-ICO/",
+      "depends_on": [
+        "BL-PROT-005",
+        "BL-PROT-008"
+      ],
+      "novelty_dimensions": [
+        "functional",
+        "process",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-PIRAL",
+      "title": "Publish–Index–Reaction–Audit Loop",
+      "type": "protocol",
+      "status": "implemented",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-PIRAL/",
+      "depends_on": [
+        "BL-PROT-006",
+        "BL-SRS",
+        "BL-ICO"
+      ],
+      "novelty_dimensions": [
+        "process",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-CAF",
+      "title": "Continuous Associative Feeding",
+      "type": "mechanism",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-CAF/",
+      "depends_on": [
+        "BL-P-010",
+        "BL-P-012"
+      ],
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-CRE",
+      "title": "Cross-domain Recombination Engine",
+      "type": "mechanism",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-CRE/",
+      "depends_on": [
+        "BL-P-012",
+        "BL-CAF"
+      ],
+      "novelty_dimensions": [
+        "process",
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-BAE",
+      "title": "Boundary Advantage Effect",
+      "type": "effect",
+      "status": "conjectural",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-BAE/",
+      "depends_on": [
+        "BL-CRE"
+      ],
+      "novelty_dimensions": [
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-CGF",
+      "title": "Combinatorial Growth of Fields",
+      "type": "theorem-schema",
+      "status": "formal",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-CGF/",
+      "depends_on": [
+        "BL-T-004"
+      ],
+      "novelty_dimensions": [
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-SDF",
+      "title": "Selective Depth Function",
+      "type": "method",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-SDF/",
+      "depends_on": [
+        "BL-M-001"
+      ],
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-GSC",
+      "title": "Generalist–Specialist Complementarity",
+      "type": "principle",
+      "status": "proposed",
+      "url": "https://kimbach91-prog.github.io/bl-infinity/claims/BL-GSC/",
+      "depends_on": [
+        "BL-M-001",
+        "BL-CRE"
+      ],
+      "novelty_dimensions": [
+        "functional"
+      ]
+    }
+  ]
+}
