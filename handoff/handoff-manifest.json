@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "package": "BL∞ semantic handoff",
+  "date": "2026-08-29",
+  "repository": "kimbach91-prog/bl-infinity",
+  "public_url": "https://kimbach91-prog.github.io/bl-infinity/",
+  "theory_version": "0.2.0-index-pilot",
+  "snapshot_parent_commit": "dbe1bce81d3db7534f6a7d03f9c6734c2b15750c",
+  "package_is_canonical_theory": false,
+  "diagnosis": "Source content is substantially richer than the current public renderer; semantic precedence, ID migration, rich claim derivation, math rendering and critique-resolution status must be fixed before v0.3.",
+  "priority_sources": [
+    "content/38_CANONICAL_LOGIC_STACK_V0_2.md",
+    "content/34_NOVELTY_ONTOLOGY_AND_NESTED_INNOVATION.md",
+    "content/29_NONCLAIMS_AND_BOUNDARIES.md",
+    "content/23_FORMALIZATION_PROGRAM.md",
+    "content/20_CANONICAL_MANIFESTO.md",
+    "content/37_POST_ORIGIN_DELTA_REGISTRY.md",
+    "claims/claims.json",
+    "machine/logic-stack.json",
+    "provenance/02_CONVERSATION_LOG_STRUCTURED.md"
+  ],
+  "critical_findings": [
+    {
+      "id": "CRITICAL-01",
+      "issue": "Axiom numbering/identity mismatch between content/03 and claims/claims.json",
+      "required_action": "Create canonical ID migration/alias ledger before v0.3"
+    },
+    {
+      "id": "CRITICAL-02",
+      "issue": "Legacy Semantic Gravity naming remains in claim/history surfaces although BL-ORBIT is canonical successor",
+      "required_action": "Mark legacy alias and synchronize machine/public layers"
+    },
+    {
+      "id": "CRITICAL-03",
+      "issue": "theory.html flattens all content markdown into one semantic level",
+      "required_action": "Replace flat render with status-aware information architecture"
+    },
+    {
+      "id": "HIGH-04",
+      "issue": "Claim pages are addressable but do not contain derivation/proof context",
+      "required_action": "Implement rich claim object schema"
+    },
+    {
+      "id": "HIGH-05",
+      "issue": "No guaranteed LaTeX math rendering in current static template",
+      "required_action": "Add MathJax/KaTeX and build tests"
+    },
+    {
+      "id": "HIGH-07",
+      "issue": "Adversarial matrix lacks per-attack resolution state on public surface",
+      "required_action": "Create critique resolution ledger"
+    },
+    {
+      "id": "HIGH-08",
+      "issue": "Conversation provenance is compressed reconstruction, not raw full reasoning transcript",
+      "required_action": "Recover reasoning delta chain where source context is available; never fabricate raw transcript"
+    }
+  ],
+  "canonical_guardrails": [
+    "representation_exists_does_not_imply_referent_actual",
+    "inconceivable_does_not_imply_impossible",
+    "conceivable_does_not_imply_reachable_or_actual",
+    "not_actual_does_not_imply_unreachable",
+    "infinite_time_alone_does_not_imply_all_states",
+    "open_ontology_does_not_license_arbitrary_facts",
+    "prior_art_component_does_not_automatically_entail_prior_art_system",
+    "prior_system_equivalence_can_defeat_system_novelty",
+    "independent_derivation_is_distinct_from_historical_priority",
+    "system_complexity_does_not_imply_truth",
+    "indexing_or_ai_consensus_does_not_imply_validation"
+  ],
+  "next_release_target": "v0.3 semantic rebuild",
+  "do_not_bump_version_until": [
+    "canonical ID reconciliation complete",
+    "legacy/superseded migration complete",
+    "rich claim schema implemented",
+    "math rendering verified",
+    "critique resolution mapping implemented",
+    "human and machine layers synchronized",
+    "semantic audit passes"
+  ]
+}
