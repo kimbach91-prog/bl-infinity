@@ -38,10 +38,25 @@ jobs:
           p = Path('bl.config.yml')
           s = p.read_text(encoding='utf-8')
           s = re.sub(r'(?m)^  enabled:\s*false\s*$', '  enabled: true', s)
-          s = re.sub(r'(?m)^  repo_id:\s*.*$', f'  repo_id: {repo_id}', s)
-          s = re.sub(r'(?m)^  category_id:\s*.*$', f'  category_id: {category_id}', s)
+          s = re.sub(r'(?m)^  repo_id:\s*.*$', f'  repo_id: "{repo_id}"', s)
+          s = re.sub(r'(?m)^  category_id:\s*.*$', f'  category_id: "{category_id}"', s)
           p.write_text(s, encoding='utf-8')
           PY
+
+      - name: Verify giscus app access
+        shell: bash
+        run: |
+          set -euo pipefail
+          url='https://giscus.app/api/discussions/categories?repo=kimbach91-prog%2Fbl-infinity'
+          code=$(curl -sS -o /tmp/giscus.json -w '%{http_code}' "$url")
+          echo "GISCUS_HTTP_STATUS=$code"
+          cat /tmp/giscus.json
+          echo
+          if [ "$code" = "200" ]; then
+            echo "GISCUS_APP_ACCESS=OK"
+          else
+            echo "GISCUS_APP_ACCESS=NOT_READY"
+          fi
 
       - name: Commit giscus configuration
         shell: bash
