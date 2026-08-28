@@ -10,6 +10,7 @@ This repository is intentionally structured as a living, signed, adversarial, ma
 
 Nếu muốn đường ngắn nhất, đọc `INSTALL_3_STEPS.md` hoặc chạy `python scripts/prepare_release.py --github YOUR_GITHUB_USERNAME --repo bl-infinity --zip`.
 
+
 1. Read `content/00_README_FIRST.md`.
 2. Edit `bl.config.yml`.
 3. Push the entire repository to GitHub.

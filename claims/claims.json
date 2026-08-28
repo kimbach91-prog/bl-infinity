@@ -1,0 +1,889 @@
+{
+  "schema_version": "0.2",
+  "project": "BLâˆ",
+  "claims": [
+    {
+      "id": "BL-D-001",
+      "type": "definition",
+      "title": "Tá»•ng Thá»±c Táº¡i",
+      "statement": "Î© kÃ½ hiá»‡u miá»n bao gá»“m má»i thá»© cÃ³ tÆ° cÃ¡ch tá»“n táº¡i trong ontology Ä‘ang xÃ©t; Ä‘á»‹nh nghÄ©a nÃ y khÃ´ng Ä‘á»“ng nháº¥t Î© vá»›i vÅ© trá»¥ quan sÃ¡t Ä‘Æ°á»£c.",
+      "status": "canonical",
+      "scope": "ontology",
+      "falsifier": "KhÃ´ng pháº£i claim thá»±c nghiá»‡m; cÃ³ thá»ƒ bá»‹ pháº£n biá»‡n náº¿u Ä‘á»‹nh nghÄ©a táº¡o contradiction hoáº·c vÃ´ dá»¥ng vá» phÃ¢n biá»‡t.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-A-001",
+      "type": "axiom",
+      "title": "TiÃªn Ä‘á» Ná»™i táº¡i",
+      "statement": "Náº¿u A lÃ  má»™t chá»§ thá»ƒ thá»±c sá»± trong Î© thÃ¬ má»i tráº¡ng thÃ¡i thá»±c sá»± cá»§a A thuá»™c Î©.",
+      "status": "canonical",
+      "scope": "ontology",
+      "falsifier": "BÃ¡c báº±ng cÃ¡ch chá»‰ ra Ä‘á»‹nh nghÄ©a Î©/A khÃ´ng cho inclusion nÃ y høn­ØÈ8n¨[ÈØ]YÛÜH\œ›Ü‹ˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLH‚ˆBˆKˆÂˆšYˆ“TLH‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ’xnáÛˆ8nìXÈønéØHšxnàİHxná[ˆ‹ˆœİ][Y[ˆ“¸n¯İHH8nìXÈønìHÚ[š™\™\Ù[][Ûˆˆ0ëønìHÚxnáÛˆÚ[š°è¸n¨[™È0èZHX[™Èˆ0èxnæ]ønìHÚxnáÛˆønéØH3ªKˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆœ™\™\Ù[][Ûˆ‹ˆ™˜[ÚYšY\ˆˆÛİ[\›[Ù[›Û™È1$pìÈH°èønìHÚxnáÛˆÙ[™\˜]WĞJŠH8näÛˆ8n¨ZHš1¬™ÈˆÚ0í™ÈğìÈ¸n©]ønìÈ¸n¨[™È0èZH8nìXÈ°èÈ›Û™È3ªKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“PKLH‚ˆBˆKˆÂˆšYˆ“TLˆ‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ”™\™\Ù[][ÛˆÚ0í™È1$xnäÛ™Èš8n©]™Y™\™[‹ˆœİ][Y[ˆ”ønìH8näÛˆ8n¨ZHønéØH™\™\Ù[][Ûˆ¸nàHÚ0í™È8nìHİ^H˜H™Y™\™[1$q¬8nèØÈXİX[^™H1$xnæXÈ8n«\ˆ‹ˆœİ]\Èˆ˜Ø[›ÛšXØ[‹ˆœØÛÜHˆœÙ[X[XÜËÛÛÛÙŞH‹ˆ™˜[ÚYšY\ˆˆ“xnæ]ÙÚXËÜÙ[X[XÜÈ8nèÜ8náÈ›Û™È1$pìÈxnãZH™\™\Ù[][Ûˆ8n©]xn¯İH[Z[XİX[™Y™\™[°è0îH8nèÜxnãZHÛİ[\™^[\H0í™È1¬8nç[™Ëˆ‹ˆ™\[™×ÛÛˆˆÂˆ“TLH‚ˆBˆKˆÂˆšYˆ“PKLˆ‹ˆ\Hˆ˜^[ÛH‹ˆ]Hˆ’Ú0í™Ëq$xnäÛ™Ë[š8n©]špê›ˆ‹ˆœİ][Y[ˆ’Ú0í™Èxn­ØÈ1$xnâÛššpê›ˆš8n«[ˆ8nêXÈønéØH[X™YYØœÙ\™\ˆ¸n¬[™Èšpê›ˆ8nå[™È8nìXÈ8n¨ZH¸n¯İHÚ1¬HğìÈ›ÛÙˆÛÜİ\™KÙ^]\İ]™[™\ÜËˆ‹ˆœİ]\Èˆ˜Ø[›ÛšXØ[‹ˆœØÛÜHˆ™\\İ[[ÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÚ8nâH˜Hxnæ]›ÛÙˆ8nå[™È]pè]¸n¬[™ÈxnãZH[X™YYØœÙ\™\ˆ1$xnéÈ1$Zxnà]HÚxnáÛˆpíˆğìÈ^]\İ]™HXØÙ\ÜÈ8næÚH3ªKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLH‚ˆBˆKˆÂˆšYˆ“ULH‹ˆ\Hˆ[Ü™[H‹ˆ]Hˆ•[™\™]\›Z[˜][Ûˆ1¬8næÚHØœÙ\˜][ÛˆX\Ú0í™È[š™Xİ]™H‹ˆœİ][Y[ˆ“¸n¯İH8näÛˆ8n¨ZHLx¢hLˆš1¬™È×ĞJLJOS×ĞJLŠK8nëÈxnáİH×ĞH1$q¨[ˆxn©ÛˆÚ0í™È1$xnéÈ0èXÈ1$xnâÛš^Hš8n©]ÛØ˜[[Ù[ÚxnëØHLH°èL‹ˆ‹ˆœİ]\Èˆ™›Ü›X[^˜X›H‹ˆœØÛÜHˆ›[Ù[[ÜKÙ\\İ[[ÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÚ8nâH˜H8nåÚHÙÚXÈ›Û™È[\XØ][Ûˆøn­ØÈ1$xnâÛš™Ú1*XHØœÙ\˜][ÛˆX\Ú0í™È0îH8nèÜˆ‹ˆ™\[™×ÛÛˆˆÂˆ“PKLˆ‚ˆBˆKˆÂˆšYˆ“PS‹LH‹ˆ\Hˆ˜[˜[ÙŞH‹ˆ]Hˆ¸nåH1$xnàHÛÛˆšHÚxnª[ˆ‹ˆœİ][Y[ˆ•šHÚxnª[ˆğìÈ8nàÈğìÈpí0ëšønéXÈ¸næHønìXÈÚ0ë[š0èXÈpè¸nªÛˆÚ0í™È0è›ˆšxnáİ1$q¬8nèØÈğè‹\xnæ]°èxnæ][¸n¬[K]›Û™ËZ8náË[8næÛˆ¸n¯İHØœÙ\˜][ÛˆønéØH°ìÈÚxnä[™Èš]Kˆ‹ˆœİ]\Èˆš[\İ˜]]™H‹ˆœØÛÜHˆ˜[˜[ÙŞH‹ˆ™˜[ÚYšY\ˆˆ’Ú0í™È8n¨ÚH[Ü™[H¸n«]0ïNÈÜš]\]YH8nèÜ8náÈ¸n¯İH[˜[ÙŞH¸nâÈ0î[™È±¬8nèİ]pèH[™\™]\›Z[˜][Ûˆpè°ìÈZ[š8nãXKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“ULH‚ˆBˆKˆÂˆšYˆ“PKLÈ‹ˆ\Hˆ˜^[ÛH‹ˆ]Hˆ¸n¨Ûˆ8nàÈxnçÈ‹ˆœİ][Y[ˆ”š[Z]]™KØØ]YÛÜHxnáÛˆšxn¯İÚ0í™È1$q¬8nèØÈxn­ØÈ1$xnâÛš0èš[Z]]™KØØ]YÛÜHİxnäZHğî[™ÈønéØH3ªHÚHÚ1¬HğìÈÛÜİ\™H›ÛÙ‹ˆ‹ˆœİ]\Èˆ˜Ø[›ÛšXØ[‹ˆœØÛÜHˆ›Y]ÙÛÙŞKÛÛÛÙŞH‹ˆ™˜[ÚYšY\ˆˆ±$1¬H›ÛÙˆÛÜİ\™H1$xnéÈxn¨[šÚÈÛXZ[ˆ1$X[™È°ìÚH8næÚKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLH‚ˆBˆKˆÂˆšYˆ“ULˆ‹ˆ\Hˆ[Ü™[H‹ˆ]Hˆ‘\ØÜš\[Û‹\ÜXÙHÛÛ™][Ûˆ‹ˆœİ][Y[ˆ“¸n¯İH\ØÜš\[ÛˆÜXÙHønéØHYÙ[0èÛİ[X›H°èİ]HÜXÙHØ[™Y]HğìÈØ\™[˜[]H8næÛˆ1¨[ˆÛİ[X›H0ëÚ0í™È8nàÈğìÈ[š\]YHš[š]H\ØÜš\[ÛˆÚÈ8nêÛ™Èİ]H¸n¬[™È\ØÜš\[ÛˆŞ\İ[H1$pìËˆ‹ˆœİ]\Èˆ™›Ü›X[^˜X›H‹ˆœØÛÜHˆœÙ][ÜH‹ˆ™˜[ÚYšY\ˆˆ°èXÈ\Üİ[\[ÛœÈØ\™[˜[]Høn­ØÈX\[™ÎÈ[Ü™[H1$Zxnà]HÚxnáÛˆÚ0í™ÈÛZ[HØ\™[˜[]H8n«]ønéØH3ªKˆ‹ˆ™\[™×ÛÛˆˆ×BˆKˆÂˆšYˆ“TLÈ‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ’[˜ÛÛ˜ÙZ]˜X›HÚ0í™Èİ^H˜H[\ÜÜÚX›H‹ˆœİ][Y[ˆ•šxnáØÈHÚ0í™È8nàÈ0ëš[™ÈÚ0í™È8nìHİ^H˜H¸n©]Ú8n¨È›Û™È3ªKˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆ›[Ù[\\İ[[ÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÚ8nê[™ÈZ[šÛÛ˜ÙZ]˜Xš[]HønéØHH0èÛÛ\]HXÚ\Ú[Ûˆ›ØÙY\™HÚÈÜÜÚXš[]WóªKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“PKLˆ‹ˆ“PKLÈ‚ˆBˆKˆÂˆšYˆ“QLˆ‹ˆ\Hˆ™Yš[š][Ûˆ‹ˆ]Hˆ”™XXÚXš[]H‹ˆœİ][Y[ˆš™XXÚX›H8nêÈ1¬8næÚH™\\Ú\™HH¸n¯İH8näÛˆ8n¨ZHš[š]KØ[İÙY˜[œÙ›Ü›X][Ûˆ]8nêÈ8næÚHønëH8né[™ÈÜ\˜][ÛœÈxnæXÈH[È[Ù[1$pèÈÚ8nã[‹ˆ‹ˆœİ]\Èˆ˜Ø[›ÛšXØ[‹ˆœØÛÜHˆ™[˜[ZXÜËØÛÛ›Û‹ˆ™˜[ÚYšY\ˆˆ‘Yš[š][ÛˆÜš]\]YH¸n¯İHÚ0í™È1$xnéÈÚÈÛXZ[ˆønéH8nàÎÈğìÈ8nàÈxnçÈ¸næ[™È[\Ü˜[Ú[™š[š]K\]˜\šX[Ëˆ‹ˆ™\[™×ÛÛˆˆ×BˆKˆÂˆšYˆ“TL‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ“›İXİX[Ú0í™Èİ^H˜H[œ™XXÚX›H‹ˆœİ][Y[ˆ“xnæ]\™Ù]Ú1¬HXİX[8n¨ZH¸nªÛˆğìÈ8nàÈ™XXÚX›H8nêÈ¸n¨[™È0èZHxnáÛˆ8n¨ZHøn­ØÈ™XXÚX›HØ]HxnçÈ¸næ[™ÈØ\Xš[]Kˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆœ™XXÚXš[]H‹ˆ™˜[ÚYšY\ˆˆÛZ[H^\İ[X[ÙÙ[™\˜[\İ[˜İ[ÛÈ°èXÈ¸n¯İHXİX[°è™XXÚX›H¸nâÈ1$xnâÛš™Ú1*XH1$xnäÛ™Èš8n©]›Û™ÈÛXZ[ˆønéH8nàËˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLˆ‚ˆBˆKˆÂˆšYˆ“TLH‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ’Ú8n¨È1$xn¨]1$xnæ[™È‹ˆœİ][Y[ˆ’ÚH™\\Ú\™HH^H1$xnåZK™XXÚX›HÙ]ønéØHYÙ[ğìÈ8nàÈ^H1$xnåZNÈ¸n¯İHØ\Xš[]HñjH1$q¬8nèØÈ¸n¨ÛÈğèˆ°è0ê›HÜ\˜][ÛˆxnæÚH0ë™XXÚX›HÙ]Ú0í™ÈÚxn¨ÛH[È[˜Û\Ú[Ûˆ›Û™È[Ù[1$pìËˆ‹ˆœİ]\Èˆ™›Ü›X[^˜X›H‹ˆœØÛÜHˆ˜ÛÛ›ÛİXÚ›ÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÛİ[\™^[\HšH8n¨[H\Üİ[\[ÛœÈ¸n¨ÛÈğèˆ™\\Ú\™Høn­ØÈÚ8nê[™ÈZ[šY][ÛˆÚ0í™ÈxnçËÙÚxnëÈ™XXÚXš[]H[È[Ù[ˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLˆ‚ˆBˆKˆÂˆšYˆ“TLˆ‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ”™Xİ\œÚ]™HØ\Xš[]H^[œÚ[Ûˆ‹ˆœİ][Y[ˆ•ÛÛğìÈ8nàÈÚpîœÚ8n¯È8n¨[ÈÛÛxn¯Ü[Ë8n¨[ÈÚxnåÚHL8¡¤•Lx¡¤‹‹‹ˆ°èxnçÈ¸næ[™ÈY™™Xİ]™H™XXÚX›HÜXÙH]XHšxnà]H±¬8næØËˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆXÚ›ÛÙŞKØÛÙÛš][Ûˆ‹ˆ™˜[ÚYšY\ˆˆ°èXÈ[š]™\œØ[^™Y™\œÚ[Ûˆ¸n¬[™ÈÛİ[\™^[\NÈÜšYÚ[ˆÛZ[HÚ8nâH°ìÚHğìÈ8nàËÚ0í™È°ìÚHpíˆ8n¨ŞH˜Kˆ‹ˆ™\[™×ÛÛˆˆÂˆ“TLH‚ˆBˆKˆÂˆšYˆ“PËLH‹ˆ\Hˆ˜ÛÛš™Xİ\™H‹ˆ]Hˆ”™XXÚX›x $ĞÛÛ˜ÙZ]˜X›HØ\‹ˆœİ][Y[ˆğìÈ8nàÈ8näÛˆ8n¨ZH¸n¨[™È0èZHxnæXÈ™XXÚX›HÜXÙHønéØH™X[]Hš1¬™È¸n¬[H™ÛğèHİ\œ™[ÛÛ˜ÙZ]˜X›HÜXÙHønéØHxnæ]ØœÙ\™\ˆ8nëİH8n¨[‹ˆ‹ˆœİ]\Èˆ›Ü[ˆ‹ˆœØÛÜHˆ˜ÛÙÛš][Û‹ÛÛÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÚ8nê[™ÈZ[š×ĞH˜[È8néÈğèˆ—óªHÚÈ8næÛÜØœÙ\™\‹Ü™X[]H1$pí™È0ê]ˆ‹ˆ™\[™×ÛÛˆˆÂˆ“TLÈ‹ˆ“TLˆ‚ˆBˆKˆÂˆšYˆ“TLÈ‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ•°í8n¨[ˆ8nç[™ÈÚ0í™È1$xnéÈ‹ˆœİ][Y[ˆ’[™š[š]H[YH8nìH0è›ˆÚ0í™È[Z[xnãZH\™Ù]xn©]xnáÛˆ¸n¯İH\™Ù]Ú0í™ÈXØÙ\ÜÚX›Høn­ØÈ[˜[ZXÜÈÚ0í™ÈÚÈ0ê\ˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆœ›Ø˜Xš[]KÙ[˜[ZXÜÈ‹ˆ™˜[ÚYšY\ˆˆÚ8nê[™ÈZ[š[Ü™[H8nå[™È]xn¨][™š[š]U[Yx¡¤[İ]\ÈpèÚ0í™Èøn©ÛˆXØÙ\ÜÚXš[]KÙ[˜[ZXÜÈ\Üİ[\[ÛœËˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLˆ‚ˆBˆKˆÂˆšYˆ“ULÈ‹ˆ\Hˆ[Ü™[H‹ˆ]Hˆ”ÜÚ]]™K\İ\Ü™\X]YšX[È‹ˆœİ][Y[ˆ•›Û™Èpí›š[™\[™[™\X]YšX[È¸næÚHÚŒønäH1$xnâÛš0èXÈİXxn©]Ú8nëXH8nêÛ™Èøn­ÜØ]HˆšX[È0è
+K\Ú
+_›ˆ°èxn¯Ûˆ¸nàHÚH³"¸¡¤¸¢'‹ˆ‹ˆœİ]\Èˆ™›Ü›X[‹ˆœØÛÜHˆœ›Ø˜Xš[]H‹ˆ™˜[ÚYšY\ˆˆ”ØZHğè[ˆ8nãXÈøn­ØÈ\Üİ[\[ÛœÈÚ0í™È8nãØNÈÚ0í™È1$q¬8nèØÈ0î[™È™ÛğèH\Üİ[\[ÛœËˆ‹ˆ™\[™×ÛÛˆˆ×BˆKˆÂˆšYˆ“PKL‹ˆ\Hˆ˜^[ÛH‹ˆ]Hˆ“ØœÙ\˜][Ûˆš[\ˆ‹ˆœİ][Y[ˆ‘8nëÈxnáİHØœÙ\™\ˆ¸n«[ˆ0èİ]]ønéØHØ]\Ø[ØXØÙ\ÜËÙ]Xİ[Û‹ØÛÙÛš][Ûˆš[\œÈÚ0î¨Ú0í™È1$q¬8nèØÈxn­ØÈ1$xnâÛš0èØ[\HY[]HønéØH3ªKˆ‹ˆœİ]\Èˆ˜Ø[›ÛšXØ[‹ˆœØÛÜHˆ™\\İ[[ÛÙŞKÛYX\İ\™[Y[‹ˆ™˜[ÚYšY\ˆˆÚ8nê[™ÈZ[šš[\ˆÚZ[ˆ0èY[]KÙ^]\İ]™H›Û™ÈÛXZ[ˆønéH8nàËˆ‹ˆ™\[™×ÛÛˆˆÂˆ“QLH‚ˆBˆKˆÂˆšYˆ“TL‹ˆ\Hˆœ›ÜÜÚ][Ûˆ‹ˆ]Hˆ“ØœÙ\™Y\İšX][ÛˆğìÈ8nàÈ8náØÚÛÛÙÚXØ[\İšX][Ûˆ‹ˆœİ][Y[ˆ“¸n¯İHØœÙ\˜][Ûˆš[\œÈÚ0í™ÈY[]H°èğìÈÙ[Xİ[ÛˆY™™XİË\İšX][Ûˆ8nëÈxnáİH]X[ˆğè]ğìÈ8nàÈÚ0èXÈ\İšX][ÛˆønéØHÛXZ[ˆ™İxnäÛ‹ˆ‹ˆœİ]\Èˆœİ\ÜY‹ˆœØÛÜHˆœØ[\[™ËÙ\\İ[[ÛÙŞH‹ˆ™˜[ÚYšY\ˆˆÛİ[\›[Ù[›Û™È1$pìÈš[\œÈ›ÛšY[]Hš1¬™ÈÚ0í™È8nàÈ8n¨[ÈšX\Èøn­ØÈÚ8nê[™ÈZ[š[š]™\œØ[\]Z]˜[[˜ÙKˆ‹ˆ™\[™×ÛÛˆˆÂˆ“PKL‚ˆBˆKˆÂˆšYˆ“QKLH‹ˆ\Hˆ™[\\šXØ[Z[\™˜XÙH‹ˆ]Hˆ”İXš[]KÑ]XİXš[]Hİ\š]›ÜœÚ\\İ\Ú\È‹ˆœİ][Y[ˆ‘Úpè][šÚÜÂ°ä˜Ú8n©]xnáÛn¨ZXÛÛ\Û™[ğìğìÛxn­İ°í™Ù™]°èØœÙ\˜][ÛœÙ]8nå[°îš]pê››pê›™ÚX[0è8n©Û8näÚ[X[˜X°íÛÙŞ^0ê[ÙÛXZ[‹ˆ‹ˆœİ]\Èˆš\İ\Ú\È‹ˆœØÛÜHˆœ\ÚXÜËÛYX\İ\™[Y[‹ˆ™˜[ÚYšY\ˆˆ‘[\\šXØ[ÛXZ[‹X›İ[™\İÈÚ0ènê[™ÈZ[šÙ[Xİ[ÛˆxnáİH¸nå^khÃ´ngfÃ /khongrelevant; khÃ´ngdunglunanwxatunhiÄ‘á»ƒuvatthemn",
+      "depends_on": [
+        "BL-P-008"
+      ]
+    },
+    {
+      "id": "BL-P-009",
+      "type": "proposition",
+      "title": "Endogenous Imagination",
+      "statement": "Náº¿u imagining thá»±c sá»± xay ra trong embedded agent, táº¥t cáº£ physical/cognitive states cá»§a qtÃ¡ trÃ¬nh Ä‘á»u thá»™c Î©",
+      "status": "supported",
+      "scope": "cognition/ontology",
+      "falsifier": "CountermodeltrongÃ³agenttá»“ntáº¡ivaimaginingkhÃ´ngcÃ³báº¥tká»³statethuXg·§ntrongÎ©",
+      "depends_on": [
+        "BL-P-001"
+      ]
+    },
+    {
+      "id": "BL-C-002",
+      "type": "conjecture",
+      "title": "Plenitude Conjecture",
+      "statement": "Má»i formally/admissibly description cÃ³ thá»ƒ Ä‘Æ°á»£c realize ngoÃ i vi háº¡n bá»Ÿi má»™t region/structure cá»§a Î©.",
+      "status": "open",
+      "scope": "metaphysics",
+      "falsifier": "Countermodel trong lgichop mÃ  vi phÃ¨o pien báº£ndÃ´ xÃ©t.",
+      "depends_on": [
+        "BL-P-003"
+      ]
+    },
+    {
+      "id": "BL-P-010",
+      "type": "proposition",
+      "title": "Environmental Absorption",
+      "statement": "Embedded agent co the absorb compressed regularities of environment via repeated exposure without formal theory learning.",
+      "status": "supported",
+      "scope": "cognition/learning",
+      "falsifier": "Domain/empirical counterevidence showing repeated exposure cannot produce any usable compression in class claimed.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-AN-002",
+      "type": "analogy",
+      "title": "Dog Absorption Lemma",
+      "statement": "A domesticated dog can learn social/emotional/routine regularities without possessing human formal concepts.",
+      "status": "illustrative",
+      "scope": "analogy",
+      "falsifier": "The analogy fails if used to claim identical human concepts rather than absorbed regularities.",
+      "depends_on": [
+        "BL-P-010"
+      ]
+    },
+    {
+      "id": "BL-M-001",
+      "type": "model",
+      "title": "BRAEM Cognitive Profile",
+      "statement": "Cognitive profile can be represented by Breadth, Selective Depth, Recombination, Association, Execution and Metacognition.",
+      "status": "proposed",
+      "scope": "cognitive typology",
+      "falsifier": "Not a validated psychometric construct; falsify/rival via empirical model comparison.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-T-004",
+      "type": "theorem",
+      "title": "Combinatorial pair/triple count",
+      "statement": "With n distinct domains, single pairs C(n,2), triples C(n,3) and nonempty subsets 2^n-1 under standard combinatorics.",
+      "status": "formal",
+      "scope": "combinatorics",
+      "falsifier": "Mathematical error or counting assumptions violated.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-P-011",
+      "type": "proposition",
+      "title": "Combinatorial Cognitive Opportunity",
+      "statement": "If a person has access to n domains, the space of possible cross-domain combinations can grow combinatorially, although most combinations may be useless.",
+      "status": "supported",
+      "scope": "cognition/innovation",
+      "falsifier": "A model showing cognitive recombination cannot exploit added domains or combinatorial model isirrelevant.",
+      "depends_on": [
+        "BL-T-004"
+      ]
+    },
+    {
+      "id": "BL-P-012",
+      "type": "proposition",
+      "title": "Generate-Filter-Execute Innovation",
+      "statement": "Innovation quality requires not just many associations but generation plus selection and execution under an objective.",
+      "status": "proposed",
+      "scope": "innovation/action",
+      "falsifier": "Empirical/model evidence showing generation alone predicts utility better than generate-filter-execute model.",
+      "depends_on": [
+        "BL-P-011"
+      ]
+    },
+    {
+      "id": "BL-M-002",
+      "type": "method",
+      "title": "Level-Matched Critique",
+      "statement": "A critique must target truth-relevant structure of the claim it proposes to defeat; length/complexity need not match.",
+      "status": "canonical",
+      "scope": "critique methodology",
+      "falsifier": "Case where non-truth-relevant attack refutes claim.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-003",
+      "type": "method",
+      "title": "Componentâ€“Framework Distinction",
+      "statement": "Overlap at component level does not by itself establish identity of full frameworks.",
+      "status": "canonical",
+      "scope": "prior art/model comparison",
+      "falsifier": "Provide precise iso-structural mapping at the full claim/relation level.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-004",
+      "type": "method",
+      "title": "Independent Discovery Separation",
+      "statement": "Truth, HISTORICAL PRIORITY, INDEPENDENT DERIVATION, framework originality and utility are distinct variables.",
+      "status": "canonical",
+      "scope": "provenance/novelty",
+      "falsifier": "Show a logical identity that requires collapsing these variables in all cases.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-005",
+      "type": "method",
+      "title": "Preservation-Before-Validation",
+      "statement": "Preserving an uncertain hypothesis is not equivalent to accepting it as true.",
+      "status": "canonical",
+      "scope": "scientific infrastructure",
+      "falsifier": "Demonstrate the protocol marks preserved claims as validated truths.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-006",
+      "type": "method",
+      "title": "Tool-Neutrality",
+      "statement": "The use of AI, code, calculators or teams neither validates nor refutes a claim; checkability determines the epistemic role.",
+      "status": "canonical",
+      "scope": "methodology",
+      "falsifier": "Counterexample where mere tool use is a truth-maker/invalidator independent of output.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-007",
+      "type": "method",
+      "title": "Cognitive Provenance",
+      "statement": "Origin claims should preserve contemporaneous traces, versions, tool roles and evidence classes; autobiographical testimony is labeled separately.",
+      "status": "canonical",
+      "scope": "provenance",
+      "falsifier": "Provenance mechanism cannot distinguish retrospective testimony from contemporaneous evidence.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-M-008",
+      "type": "method",
+      "title": "Critique Quality",
+      "statement": "Critique should be rated by relevance, specificity, evidence/formal strength, checkability and reproducibility not by status.",
+      "status": "proposed",
+      "scope": "critique methodology",
+      "falsifier": "Empirical or formal analysis showing score fails to correlate with useful error detection.",
+      "depends_on": [
+        "BL-M-002"
+      ]
+    },
+    {
+      "id": "BL-M-009",
+      "type": "method",
+      "title": "Claim-Critique Graph",
+      "statement": "Claims and critiques are nodes with dependency/attack/response relations to enable targeted inspection.",
+      "status": "proposed",
+      "scope": "argument engineering",
+      "falsifier": "Graph representation cannot represent material critique relations or produces uncontrollable ambiguity.",
+      "depends_on": [
+        "BL-M-002"
+      ]
+    },
+    {
+      "id": "BL-M-010",
+      "type": "method",
+      "title": "Critique taxonomy",
+      "statement": "Critiques are classified by attack type: definition, inference, counterexample, countermodel, empirical contradiction, hidden assumption, scope, reproducibility, prior art and formal inconsistency.",
+      "status": "proposed",
+      "scope": "critique methodology",
+      "falsifier": "The taxonomy misses material attack types or classification causes erroneous rejection.",
+      "depends_on": [
+        "BL-M-008"
+      ]
+    },
+    {
+      "id": "BL-PROT-001",
+      "type": "protocol",
+      "title": "Proof-Carrying Research Object",
+      "statement": "A research object carries claims, premises, derivations, evidence, provenance, critiques, history and signatures or hashes.",
+      "status": "proposed",
+      "scope": "research packaging",
+      "falsifier": "Specification fails to preserve/link a required component or is in-xreconstructable.",
+      "depends_on": [
+        "BL-M-007",
+        "BL-M-009"
+      ]
+    },
+    {
+      "id": "BL-PROT-002",
+      "type": "protocol",
+      "title": "Recursive Adversarial Publishing",
+      "statement": "Publishing is a versioned process of object â†’ attack â†’ revision â†’ index â†’ new attack, not a single static PDF.",
+      "status": "proposed",
+      "scope": "publishing protocol",
+      "falsifier": "The process becomes self-sealing or revisions cannot retain lineage.",
+      "depends_on": [
+        "BL-PROT-001"
+      ]
+    },
+    {
+      "id": "BL-PROT-003",
+      "type": "protocol",
+      "title": "Machine Adversarial Jury",
+      "statement": "Multiple heterogeneous AI roles generate attacks and steelman reconstructions; agreement count is not a truth criterion.",
+      "status": "proposed",
+      "scope": "AI evaluation",
+      "falsifier": "Independent adversarial evaluation shows the protocol systematically increases confidence in false claims.",
+      "depends_on": [
+        "BL-M-008"
+      ]
+    },
+    {
+      "id": "BL-PROT-004",
+      "type": "protocol",
+      "title": "Adversarial Robustness Score",
+      "statement": "Robustness is represented as a multidimensional audit state (LE,ES,CM,RR,RR,"PR",SD) rather than a vote count.",
+      "status": "proposed",
+      "scope": "audit metrics",
+      "falsifier": "Validation shows the metric has No incremental utility or creates systematic false sense of certainty.",
+      "depends_on": [
+        "BL-PROT-003"
+      ]
+    },
+    {
+      "id": "BL-PROT-005",
+      "type": "protocol",
+      "title": "Open Research Beacon",
+      "statement": "Research object is exposed through crawlable HTML, standard metadata, stable IDs and feeds without cloaking or unauthorized access.",
+      "status": "implemented",
+      "scope": "discovery infrastructure",
+      "falsifier": "Inspection shows site requires hidden/spam mechanisms or is not crawlable.",
+      "depends_on": [
+        "BL-PROT-001"
+      ]
+    },
+    {
+      "id": "BL-PROT-006",
+      "type": "protocol",
+      "title": "Signed Discovery Manifest",
+      "statement": "Versioned research objects can be hashed and signed so provenance can be verified independently of current host.",
+      "status": "proposed",
+      "scope": "integrity/provenance",
+      "falsifier": "Signature/hash protocol does not actually bind content, identity and version.",
+      "depends_on": [
+        "BL-M-007"
+      ]
+    },
+    {
+      "id": "BL-PROT-007",
+      "type": "protocol",
+      "title": "Signed Research Relay",
+      "statement": "Forks, mirrors, translations and derivatives can preserve canonical origin and version lineage.",
+      "status": "proposed",
+      "scope": "distributed integrity",
+      "falsifier": "Protocol cannot distinguish forged origin or loses lineage under normal fork/translate operations.",
+      "depends_on": [
+        "BL-PROT-006"
+      ]
+    },
+    {
+      "id": "BL-PROT-008",
+      "type": "protocol",
+      "title": "Machine Exchange Formats",
+      "statement": "Canonical claims are projected into HTML, Markdown, JSON, JSON-LD, NDJSON, RDF, RSS, BibTeX etc. without changing claim identity.",
+      "status": "proposed",
+      "scope": "interoperability",
+      "falsifier": "Projections cannot be resolved back to canonical claim id or semantics drift unmanaged.",
+      "depends_on": [
+        "BL-PROT-005"
+      ]
+    },
+    {
+      "id": "BL-PROT-009",
+      "type": "protocol",
+      "title": "Continuous Discovery Signaling",
+      "statement": "New versions and resolved critiques are discoverable via sitemap, feeds, relation edges and public release metadata.",
+      "status": "proposed",
+      "scope": "discovery distribution",
+      "falsifier": "Public system fails to expose new versions or creates non-canonical duplicates.",
+      "depends_on": [
+        "BL-PROT-005",
+        "BL-PROT-008"
+      ]
+    },
+    {
+      "id": "BL-PROT-010",
+      "type": "protocol",
+      "title": "One-Click Research Infrastructure",
+      "statement": "A template repository can generate a crawlable site, machine files, claim graph, citation metadata and deployment from a configuration file.",
+      "status": "implemented",
+      "scope": "publishing infrastructure",
+      "falsifier": "Fresh clone/configuration cannot reproduce described outputs.",
+      "depends_on": [
+        "BL-PROT-008"
+      ]
+    },
+    {
+      "id": "BL-SAFE-001",
+      "type": "safety-principle",
+      "title": "No backdoor / no cloaking",
+      "statement": "Discovery must use public, authorized protocols; no unauthorized access, self-propagating worms, hidden payloads or cloaking.",
+      "status": "canonical",
+      "scope": "security/distribution",
+      "falsifier": "Implementation requires unauthorized mechanisms to function.",
+      "depends_on": [
+        "BL-PROT-005"
+      ]
+    },
+    {
+      "id": "BL-SAFE-002",
+      "type": "safety-principle",
+      "title": "Static-site reduces it does not eliminate attack surface",
+      "statement": "Static architecture reduces server-side attack surface but does not protect domain, account, supply chain or social-engineering compromise.",
+      "status": "canonical",
+      "scope": "security",
+      "falsifier": "Threat model shows these attacks are impossible in the specified deployment.",
+      "depends_on": []
+    },
+    {
+      "id": "BL-P-013",
+      "type": "meta-proposition",
+      "title": "Global openness â™  local immunity",
+      "statement": "Maintaining open ontology does not prevent a local claim from being falsified under its declared conditions.",
+      "status": "canonical",
+      "scope": "methodology",
+      "falsifier": "Find a local claim that cannot be falsified because of global openness rule.",
+      "depends_on": [
+        "BL-M-002"
+      ]
+    },
+    {
+      "id": "BL-P-014",
+      "type": "meta-proposition",
+      "title": "Prior art component does not entail framework nonnovelty",
+      "statement": "An earlier component description is not by default proof that a later framework is identical/nonnovel.",
+      "status": "canonical",
+      "scope": "prior art",
+      "falsifier": "Provide isomorphic mapping of full structure or show novelty claim explicitly requires primitive novelty.",
+      "depends_on": [
+        "BL-M-003"
+      ]
+    },
+    {
+      "id": "BL-P-015",
+      "type": "meta-proposition",
+      "title": "Scholarly weight is not credential identity",
+      "statement": "Credentials can be prior evidence of training but do not determine the truth value of a claim.",
+      "status": "canonical",
+      "scope": "social epistemology",
+      "falsifier": "Show credential identity is a truth-maker independent of evidence/inference.",
+      "depends_on": [
+        "BL-M-006"
+      ]
+    },
+    {
+      "id": "BL-P-016",
+      "type": "meta-proposition",
+      "title": "Universal Printis Right, Not Universal Authority",
+      "statement": "Any person may publish a claim, but epistemic weight is earned by evidence, logic, reproducibility and adversarial survival.",
+      "status": "canonical",
+      "scope": "open scholarship",
+      "falsifier": "Protocol assigns equal epistemic weight irrespective of support.",
+      "depends_on": [
+        "BL-M-008"
+      ]
+    },
+    {
+      "id": "BL-SET-001",
+      "type": "system-proposition",
+      "title": "Modular configuration space",
+      "statement": "The proposed 32-module AEGIS set has 2^32-1 nonempty selection subsets before considering order, parameters and dependency constraints.",
+      "status": "formal-design",
+      "scope": "system architecture",
+      "falsifier": "Math error in subset count or module count differs from registry.",
+      "depends_on": [
+        "BL-T-004"
+      ]
+    },
+    {
+      "id": "BL-DEL-001",
+      "type": "deployment-proposition",
+      "title": "Static research web stack",
+      "statement": "A Static GitHub Pages site plus Discussions/giscus can publish, receive comments and notify the author without a custom backend.",
+      "status": "implemented",
+      "scope": "deployment",
+      "falsifier": "A clean deployment cannot produce the stated flow with current Game.",
+      "depends_on": [
+        "BL-PROT-010"
+      ]
+    },
+    {
+      "id": "BL-NCI",
+      "type": "principle",
+      "title": "Nested Constituent Innovation",
+      "statement": "A redefined, recombined or role-transformed constituent can be an innovation at component level and a member of a higher-level innovation simultaneously.",
+      "status": "proposed",
+      "scope": "innovation ontology",
+      "falsifier": "Show role change without novel structure/function is sufficient for arnitrary novelty or causes trivial relabeling.",
+      "depends_on": [
+        "BL-P-014"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "structural",
+        "functional",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-CNO",
+      "type": "principle",
+      "title": "Combinatorial Novelty",
+      "statement": "Components may all be in K_t while f(c1,...,cn)is not in K_t; component nonnovelty does not entail system nonnovelty.",
+      "status": "proposed",
+      "scope": "innovation combinatorics",
+      "falsifier": "Provide proof that for all admissible f, components in K_t imply f(components) in K_t or show reference domain has already contains the exact combination.",
+      "depends_on": [
+        "BL-T-004"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-RNO",
+      "type": "principle",
+      "title": "Relational Novelty",
+      "statement": "Nodes/components may be known while a relation edge or relational pattern is new in the reference domain.",
+      "status": "proposed",
+      "scope": "innovation graphs",
+      "falsifier": "Show relational new edges have no identity/explanatory value or find prior exact relation.",
+      "depends_on": [],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "relational"
+      ]
+    },
+    {
+      "id": "BL-SNO",
+      "type": "principle",
+      "title": "Structural Novelty",
+      "statement": "An object can be structurally new when its components are not, if its organization/incidence structure is not in the reference knowledge state.",
+      "status": "proposed",
+      "scope": "innovation ontology",
+      "falsifier": "Find structural isomorphism with prior object under declared equivalence criterion.",
+      "depends_on": [
+        "BL-CNO",
+        "BL-RNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "structural"
+      ]
+    },
+    {
+      "id": "BL-ANO",
+      "type": "principle",
+      "title": "Architectural Novelty",
+      "statement": "A system can be architecturally new if its module set overlaps known prior art but its topology, dependencies or feedback architecture do not.",
+      "status": "proposed",
+      "scope": "system architecture",
+      "falsifier": "Provide an earlier functionally/structurally equivalent topology under a declared equivalence criterion.",
+      "depends_on": [
+        "BL-SNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-FNO",
+      "type": "principle",
+      "title": "Functional Novelty",
+      "statement": "Given a declared system boundary and functional-equivalence criterion, a composite can have functional novelty if it performs a function not realized by the prior components in that boundary.",
+      "status": "proposed",
+      "scope": "emergence/systems",
+      "falsifier": "Declare boundary) and FunctionalEquivalence; find prior system or
+ map showing the function is already realized under the same criterion.",
+      "depends_on": [
+        "BL-SNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-PNO",
+      "type": "principle",
+      "title": "Process Novelty",
+      "statement": "A transformation process can be novel in a reference domain even when similar outputs exist, if the procedure/feedback/control architecture is new.",
+      "status": "proposed",
+      "scope": "process novelty",
+      "falsifier": "Show process is functionally equivalent to prior process or that process-level novelty is not useful.",
+      "depends_on": [],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-ENO",
+      "type": "principle",
+      "title": "Emergent Novelty",
+      "statement": "A system has emergent novelty when a state/property at the system level is not attributable to any component considered in isolation under the declared model.",
+      "status": "proposed",
+      "scope": "emergence/systems",
+      "falsifier": "Provide reduction/mapping to component properties under the same model or show system boundary is arbitrary.",
+      "depends_on": [
+        "BL-FNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "emergent"
+      ]
+    },
+    {
+      "id": "BL-IDR",
+      "type": "principle",
+      "title": "Independent Derivational Novelty",
+      "statement": "Two derivation paths can produce similar outputs without one being a copy of the other if derirational provenance is independent.",
+      "status": "proposed",
+      "scope": "independent discovery",
+      "falsifier": "Provenance demonstrates dependency/copying or definition of independence is incoherent.",
+      "depends_on": [
+        "BL-M-004",
+        "BL-M-007"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-RDN",
+      "type": "principle",
+      "title": "Reference-Domain Novelty",
+      "statement": "Novelty is always relative to a declared reference domain/time/knowledge state; new-to-author, new-to-field and new-to-humanity are distinct claims.",
+      "status": "proposed",
+      "scope": "novelty metadata",
+      "falsifier": "Find a meaningful novelty judgment that requires no reference domain.",
+      "depends_on": [
+        "BL-M-004"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "metadata"
+      ]
+    },
+    {
+      "id": "BL-NTO",
+      "type": "principle",
+      "title": "Novel Transformation Originality",
+      "statement": "Originality does not require creation ex nihilo; a novel transformation of absorbed information can constitute original contribution.",
+      "status": "proposed",
+      "scope": "originality theory",
+      "falsifier": "Define originality so that it necessarily requires ex nihilo creation or show transformation has no novelty.",
+      "depends_on": [
+        "BL-P-010"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "derivational",
+        "process"
+      ]
+    },
+    {
+      "id": "BL-ICV",
+      "type": "relation",
+      "title": "Independent Convergence",
+      "statement": "Two provenance-independent paths converge on similar or overlapping claims.",
+      "status": "proposed",
+      "scope": "discovery relation",
+      "falsifier": "Provenance shows dependence or output overlap is not real.",
+      "depends_on": [
+        "BL-IDR"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-IRC",
+      "type": "relation",
+      "title": "Independent Reconstruction",
+      "statement": "A later agent may reconstruct a prior-existing structure without the prior formal structure serving as direct input.",
+      "status": "proposed",
+      "scope": "discovery relation",
+      "falsifier": "Provenance shows the prior structure served as direct or mediated input evit.",
+      "depends_on": [
+        "BL-ICV"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "derivational"
+      ]
+    },
+    {
+      "id": "BL-IGR",
+      "type": "relation",
+      "title": "Independent Generalization",
+      "statement": "A derivation path can independently converge on a partial result and then produce a strictly broader formulation.",
+      "status": "proposed",
+      "scope": "provenance relation",
+      "falsifier": "Show the claimed extension is not strictly broader or derivation is not independent.",
+      "depends_on": [
+        "BL-IRC"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "derivational",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-NVM",
+      "type": "method",
+      "title": "Novelty Vector Model",
+      "statement": "Novelty is audited as a vector of primitive, relational, structural, architectural, functional, process, emergent and derivational dimensions rather than a binary new/not-new judgment.",
+      "status": "proposed",
+      "scope": "innovation audit",
+      "falsifier": "Show dimensions are redundant/nondistinct or an alternative model has greater explanatory utility; not a validated measurement scale.",
+      "depends_on": [
+        "BL-CNO",
+        "BL-RNO",
+        "BL-SNO",
+        "BL-ANO",
+        "BL-FNO",
+        "BL-PNO",
+        "BL-ENO",
+        "BL-IDR"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "methodological"
+      ]
+    },
+    {
+      "id": "BL-IFH",
+      "type": "model",
+      "title": "Innovation Fractal Hierarchy",
+      "statement": "Innovation can be modeled as a hierarchy of primitive â†’ mechanism â†’ module â†’ subsystem â†’ architecture â†’ metasystem, where an object can be a whole at one level and a constituent at a higher level.",
+      "status": "proposed",
+      "scope": "innovation architecture",
+      "falsifier": "Find a domain where the hierarchy is not explanatory or levels are undefinable.",
+      "depends_on": [
+        "BL-NCI"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "structural",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-FCR",
+      "type": "principle",
+      "title": "Functional Constituent Reclassification",
+      "statement": "A old component with a new role in a new system can be reclassified as a new functional object câ€²=(c,Role_new) without claiming ownership of the primitive c.",
+      "status": "proposed",
+      "scope": "system ontology",
+      "falsifier": "Show the new role is not functionally/identity-distinct or the reclassification is a category error.",
+      "depends_on": [
+        "BL-NCI",
+        "BL-FNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "functional",
+        "structural"
+      ]
+    },
+    {
+      "id": "BL-TNI",
+      "type": "principle",
+      "title": "Topological Novelty of Integration",
+      "statement": "If integration topology creates new feedback loops/capabilities, the integration itself is a candidate invention even if the module set overlaps prior art.",
+      "status": "proposed",
+      "scope": "system architecture",
+      "falsifier": "Find a prior system with functionally and topologically equivalent architecture, or show topology difference adds no meaningful function.",
+      "depends_on": [
+        "BL-ANO",
+        "BL-FNO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "architectural",
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-SRS",
+      "type": "protocol",
+      "title": "Social Response to Proposition System",
+      "statement": "Social reactions to a proposition are measured by attention, understanding, objection quality, independent restatement and derivative ideas, rather than equating popularity with truth.",
+      "status": "proposed",
+      "scope": "social epistemology/experiment",
+      "falsifier": "Metric is not reliable/valid or cannot distinguish epistemically different reactions; popularity still does not become a truth criterion.",
+      "depends_on": [
+        "BL-PROT-004"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-ICO",
+      "type": "protocol",
+      "title": "Indexable Claim Object",
+      "statement": "Each claim has a stable ID, a canonical URL, metadata, dependencies, an attack surface, a machine representation, a sitemap entry and a discussion surface.",
+      "status": "implemented",
+      "scope": "publishing/indexing",
+      "falsifier": "Build fails to create a separate URL/metadata or the object is not addressable; the implementation can be audited directly.",
+      "depends_on": [
+        "BL-PROT-005",
+        "BL-PROT-008"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "functional",
+        "process",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-PIRAL",
+      "type": "protocol",
+      "title": "Publishâ€“Indexâ€“Reactionâ€“Audit Loop",
+      "statement": "After packaging, the research object goes through publish â†’ index â†’ reaction â†’ classify â†’ deep audit â†’ patch â†’ version â†’ republish, with the ability to downgrade, correct or retire claims.",
+      "status": "implemented",
+      "scope": "research process",
+      "falsifier": "The loop becomes self-sealing or does not allow claims downgrade/correction/retirement; the implementation does not preserve findings/version lineage.",
+      "depends_on": [
+        "BL-PROT-006",
+        "BL-SRS",
+        "BL-ICO"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process",
+        "architectural"
+      ]
+    },
+    {
+      "id": "BL-CAF",
+      "type": "mechanism",
+      "title": "Continuous Associative Feeding",
+      "statement": "Continuous knowledge intake does not only add nodes but can create new candidate relations with the existing internal corpus.",
+      "status": "proposed",
+      "scope": "cognition",
+      "falsifier": "An empirical model does not show association opportunities increasing as hypothesized; the canonical claim only says it can.",
+      "depends_on": [
+        "BL-P-010",
+        "BL-P-012"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-CRE",
+      "type": "mechanism",
+      "title": "Cross-domain Recombination Engine",
+      "statement": "A mechanism generates candidate mechanisms by recombining primitives/relations from multiple domains and then filtering by utility/coherence.",
+      "status": "proposed",
+      "scope": "cognition/innovation",
+      "falsifier": "It is not distinguishable from random association or does not produce more utility than baseline in testing.",
+      "depends_on": [
+        "BL-P-012",
+        "BL-CAF"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process",
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-BAE",
+      "type": "effect",
+      "title": "Boundary Advantage Effect",
+      "statement": "An integrator may have an advantage in discovering cross-domain edges at field boundaries, while specialists retain an advantage in depth within a cluster.",
+      "status": "conjectural",
+      "scope": "cognition/science of science",
+      "falsifier": "Empirical evidence refutes the boundary advantage for the specified population/task domain; it is not a universal superiority claim.",
+      "depends_on": [
+        "BL-CRE"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "functional"
+      ]
+    },
+    {
+      "id": "BL-CGF",
+      "type": "theorem-schema",
+      "title": "Combinatorial Growth of Fields",
+      "statement": "With n domains, the number of pairs is C(n,2), triples C(n,3), and nonempty subsets are 2^n-1; breadth causes candidate combination space to grow combinatorially before filtering.",
+      "status": "formal",
+      "scope": "combinatorics/cognition",
+      "falsifier": "The formula is incorrect or the mapping from field to candidate subset is not appropriate; the mathematical theorem does not by itself prove innovation quality.",
+      "depends_on": [
+        "BL-T-004"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "combinatorial"
+      ]
+    },
+    {
+      "id": "BL-SDF",
+      "type": "method",
+      "title": "Selective Depth Function",
+      "statement": "An integrator does not need uniform depth; depth can be allocated to high-leverage nodes according to objectives.",
+      "status": "proposed",
+      "scope": "learning/optimization",
+      "falsifier": "Empirical or domain evidence shows selective-depth policy performs worse than an alternative on the specified objective.",
+      "depends_on": [
+        "BL-M-001"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "process"
+      ]
+    },
+    {
+      "id": "BL-GSC",
+      "type": "principle",
+      "title": "Generalistâ€“Specialist Complementarity",
+      "statement": "Specialist depth and integrator connectivity can be complementary capabilities rather than a single hierarchy.",
+      "status": "proposed",
+      "scope": "team cognition",
+      "falsifier": "There are tasks or populations where the interaction is not complementary or one role dominates the declared objective.",
+      "depends_on": [
+        "BL-M-001",
+        "BL-CRE"
+      ],
+      "origin_phase": "post-origin-v0.2",
+      "novelty_dimensions": [
+        "functional"
+      ]
+    }
+  ]
+}
