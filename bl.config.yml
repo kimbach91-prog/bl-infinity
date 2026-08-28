@@ -46,7 +46,7 @@ seo:
 comments:
   enabled: true
   repo: kimbach91-prog/bl-infinity
-  repo_id: R_kgDOUHWEZQ
+  repo_id: "R_kgDOUHWEZQ"
   category: Page Comments
-  category_id: DIC_kwDOUHWEZc4DEaRD
+  category_id: "DIC_kwDOUHWEZc4DEaRD"
   mapping: pathname
