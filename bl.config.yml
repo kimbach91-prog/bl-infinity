@@ -44,9 +44,9 @@ seo:
   - social response to proposition
   - Publish Index Reaction Audit Loop
 comments:
-  enabled: false
+  enabled: true
   repo: kimbach91-prog/bl-infinity
-  repo_id: REPLACE_AFTER_GISCUS_SETUP
+  repo_id: R_kgDOUHWEZQ
   category: Page Comments
-  category_id: REPLACE_AFTER_GISCUS_SETUP
+  category_id: DIC_kwDOUHWEZc4DEaRD
   mapping: pathname
