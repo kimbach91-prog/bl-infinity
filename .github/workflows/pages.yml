@@ -29,6 +29,8 @@ jobs:
         run: pip install -r requirements.txt
       - name: Validate epistemic object
         run: python scripts/audit.py --strict
+      - name: Enforce BL-CPR disclosure boundary
+        run: python scripts/disclosure_audit.py --strict
       - name: Build static site
         run: python scripts/build.py
       - name: Setup Pages
@@ -47,3 +49,4 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+

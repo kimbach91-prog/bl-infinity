@@ -62,6 +62,18 @@ Người dùng tối ưu ARS/score thay vì truth.
 
 **Defense:** vector metrics, periodic calibration, no single prestige score, raw critique history always visible.
 
+## T11 — Runtime exfiltration
+
+Public repo vô tình chứa prompt vận hành hoàn chỉnh, routing weights, private diagnostics, credential, corpus riêng, raw private conversation hoặc exploit chưa vá.
+
+**Defense:** BL-CPR classification trước commit; `.gitignore` cho private paths; `scripts/disclosure_audit.py` chặn secret/key material và forbidden paths; review riêng cho mọi thay đổi `machine/`, `scripts/`, `provenance/`; không dùng “minh bạch” để biện minh cho việc xuất dữ liệu riêng.
+
+## T12 — Secrecy as epistemic escape
+
+Ngược lại, nhãn “runtime riêng” bị dùng để giấu tiền đề, bằng chứng bất lợi, điều kiện bác bỏ hoặc thay đổi claim.
+
+**Defense:** mọi yếu tố quyết định truth-status của claim công khai vẫn phải public; phần giữ riêng chỉ được bảo vệ lợi thế thực thi, quyền riêng tư hoặc an toàn, không được tạo miễn nhiễm phản biện.
+
 ## Integrity principle
 
 \[
@@ -74,3 +86,11 @@ Availability\neq Integrity\neq Authenticity\neq Truth
 - logic/evidence mới xử truth.
 
 Không được nhập bốn lớp thành một.
+
+BL-CPR bổ sung thêm phân biệt:
+
+\[
+PublicVerifiability\neq FullRuntimeDisclosure
+\]
+
+Public verifiability không cho phép lấy “minh bạch” làm lý do công khai runtime riêng; protected runtime cũng không cho phép lấy “bí mật” làm lý do né truth-condition của claim.

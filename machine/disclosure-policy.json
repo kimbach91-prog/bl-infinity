@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "policy_id": "BL-CPR",
+  "version": "1.0",
+  "status": "adopted",
+  "effective_date": "2026-08-29",
+  "decision": "open_constitution_protected_runtime",
+  "public_required": [
+    "canonical_identity",
+    "claim_truth_conditions",
+    "claim_dependencies",
+    "evidence_and_adverse_evidence",
+    "provenance_class",
+    "limitations_and_nonclaims",
+    "critique_and_resolution_history",
+    "public_reference_schema_and_tests"
+  ],
+  "controlled_or_protected": [
+    "production_prompts",
+    "private_routing_weights",
+    "private_diagnostics",
+    "private_corpus",
+    "unpublished_raw_conversations",
+    "operator_only_playbooks",
+    "commercial_execution_details_not_affecting_truth_status"
+  ],
+  "forbidden_in_public_release": [
+    ".env",
+    "private-runtime",
+    "private_runtime",
+    "runtime-private",
+    "runtime_private",
+    "private-diagnostics",
+    "private_diagnostics",
+    "raw-private",
+    "raw_private",
+    "secrets",
+    "credentials",
+    "operator-only"
+  ],
+  "forbidden_secret_material": [
+    "private_key",
+    "github_token",
+    "openai_api_key",
+    "aws_access_key"
+  ],
+  "anti_secrecy_escape": "If a protected object is necessary to verify a public claim, narrow, downgrade or withhold that claim.",
+  "lineage": {
+    "origin_of_problem": "Bách Lâm",
+    "formalization": "AI",
+    "provenance": ["LKB_DIRECT", "NEW_FORMALIZATION"],
+    "seal": "ADN BÁCH LÂM ∞"
+  }
+}
+

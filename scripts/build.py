@@ -156,7 +156,7 @@ manifest={
   'canonical_url':CFG['project']['canonical_url'],'repository':CFG['project']['repository'],'date_created':CFG['project'].get('date_created',CFG['project']['date']),'date_released':CFG['project']['date'],'last_updated':CFG['project'].get('last_updated',CFG['project']['date']),
   'claim_registry':'claims.json','claim_index':'claim-index.json','claim_graph':'claim-graph.jsonld',
   'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json',
-  'machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
+  'disclosure_policy':'disclosure-policy.json','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
 }
 allbytes=b''
 for p in sorted((ROOT/'content').glob('*.md'))+sorted((ROOT/'claims').glob('*.json'))+sorted((ROOT/'machine').glob('*.json')):
@@ -169,6 +169,7 @@ manifest['content_hash']='sha256:'+hashlib.sha256(allbytes).hexdigest()
 (SITE/'machine/asset-index.json').write_text(json.dumps({'schema_version':'0.2','assets':asset_index},ensure_ascii=False,indent=2),encoding='utf-8')
 shutil.copy(ROOT/'machine/novelty-ontology.json',SITE/'machine/novelty-ontology.json')
 shutil.copy(ROOT/'machine/logic-stack.json',SITE/'machine/logic-stack.json')
+shutil.copy(ROOT/'machine/disclosure-policy.json',SITE/'machine/disclosure-policy.json')
 shutil.copy(ROOT/'machine/welcome.txt',SITE/'machine/welcome.txt')
 (SITE/'translations').mkdir(parents=True,exist_ok=True)
 shutil.copy(ROOT/'translations/greeting.multilingual.md',SITE/'translations/greeting.multilingual.md')
