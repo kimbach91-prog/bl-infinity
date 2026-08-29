@@ -48,8 +48,18 @@ for path in files:
         errors.append(f"forbidden public path: {rel}")
     if rel.name.lower().startswith(".env") and rel.name != ".env.example":
         errors.append(f"environment file in public release: {rel}")
-    if rel.suffix.lower() in {".pem", ".p12", ".pfx", ".keystore"}:
+    if rel.suffix.lower() in {".key", ".pem", ".p12", ".pfx", ".keystore"}:
         errors.append(f"key/certificate material in public release: {rel}")
+
+
+build_path = ROOT / "scripts/build.py"
+if not build_path.exists():
+    errors.append("missing site build script: scripts/build.py")
+else:
+    build_source = build_path.read_text(encoding="utf-8")
+    for marker in ["'disclosure_policy':'disclosure-policy.json'", "machine/disclosure-policy.json"]:
+        if marker not in build_source:
+            errors.append(f"site build does not publish BL-CPR marker: {marker}")
 
 secret_patterns = {
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----"),
