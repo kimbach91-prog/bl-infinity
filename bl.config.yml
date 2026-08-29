@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.2.0-index-pilot
+  version: 0.2.1-disclosure-boundary
   date: '2026-08-29'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
@@ -43,6 +43,8 @@ seo:
   - indexable claim object
   - social response to proposition
   - Publish Index Reaction Audit Loop
+  - progressive disclosure
+  - protected runtime
 comments:
   enabled: true
   repo: kimbach91-prog/bl-infinity
@@ -50,3 +52,4 @@ comments:
   category: Page Comments
   category_id: "DIC_kwDOUHWEZc4DEaRD"
   mapping: pathname
+
