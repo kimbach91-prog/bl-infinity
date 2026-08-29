@@ -12,10 +12,10 @@ args = parser.parse_args()
 
 errors = []
 notes = []
-required = [ROOT / "DISCLOSURE_POLICY.md", ROOT / "machine/disclosure-policy.json"]
+required = [ROOT / "DISCLOSURE_POLICY.md", ROOT / "machine/disclosure-policy.json", ROOT / "BL-ADN.md"]
 for path in required:
     if not path.exists():
-        errors.append(f"missing required BL-CPR file: {path.relative_to(ROOT)}")
+        errors.append(f"missing required public protocol file: {path.relative_to(ROOT)}")
 
 try:
     policy = json.loads((ROOT / "machine/disclosure-policy.json").read_text(encoding="utf-8"))
@@ -28,6 +28,15 @@ for field in ["policy_id", "version", "status", "decision", "public_required", "
         errors.append(f"disclosure policy missing field: {field}")
 if policy.get("policy_id") != "BL-CPR":
     errors.append("unexpected disclosure policy id")
+
+try:
+    bl_adn = (ROOT / "BL-ADN.md").read_text(encoding="utf-8")
+except Exception as exc:
+    bl_adn = ""
+    errors.append(f"invalid BL-ADN source: {exc}")
+for marker in ["# XXV. CỔNG CÔNG KHAI BL-CPR", 'version: "0.2.0"']:
+    if marker not in bl_adn:
+        errors.append(f"BL-ADN source missing marker: {marker}")
 
 def tracked_files():
     try:
@@ -57,7 +66,7 @@ if not build_path.exists():
     errors.append("missing site build script: scripts/build.py")
 else:
     build_source = build_path.read_text(encoding="utf-8")
-    for marker in ["'disclosure_policy':'disclosure-policy.json'", "machine/disclosure-policy.json"]:
+    for marker in ["'disclosure_policy':'disclosure-policy.json'", "machine/disclosure-policy.json", "bl-adn.html", "bl-adn.md"]:
         if marker not in build_source:
             errors.append(f"site build does not publish BL-CPR marker: {marker}")
 
