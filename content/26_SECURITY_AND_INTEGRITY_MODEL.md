@@ -1,24 +1,74 @@
+{
+  "policy": "BL-CPR",
+  "policy_version": "1.0",
+  "errors": [],
+  "notes": [
+    "checked 12 tracked/public files"
+  ]
+}
 # 26 — Threat model và integrity model
 
 Static web làm attack surface nhỏ, không bằng zero.
 
-## T1–T4 — Hạ tầng và chuỗi cung ứng
+## Threat T1 — Account takeover
 
-- **Account/domain takeover:** dùng MFA, signed tags, immutable hashes, registrar security và mirror.
-- **Supply-chain compromise:** pin action, tối thiểu dependency, reproducible build, đối chiếu source/output hash.
-- **Malicious pull request:** branch protection, review, CI, không cấp secret cho untrusted PR.
+Kẻ tấn công chiếm GitHub/account và sửa repository.
 
-## T5–T8 — Provenance và diễn giải
+**Defense:** MFA/passkeys, signed commits/tags, immutable release hashes, external mirrors.
 
-- **Provenance forgery:** signed manifests, timestamped releases, DOI/archive, hash-linked source.
-- **Signature key compromise:** rotation, revocation record, offline signing cho major release.
-- **Semantic poisoning:** canonical entity/domain, distinctive Claim IDs, public mirrors.
-- **AI hallucinated summary:** machine guardrail, FAQ, reconstruction test, non-claim boundary.
+## T2 — Domain takeover
 
-## T9–T10 — Governance
+DNS/domain bị chiếm khiến canonical URL phục vụ nội dung giả.
 
-- **Critique flooding:** template, labels/status, duplicate detection, community triage; không censor phản biện có nội dung.
-- **Metric gaming:** vector metrics, calibration định kỳ, không dùng một prestige score, giữ raw critique history.
+**Defense:** registrar security, DNSSEC khi thích hợp, public key fingerprint được mirror, multiple archival records.
+
+## T3 — Supply-chain compromise
+
+GitHub Action/dependency độc hại sửa build output.
+
+**Defense:** pin action major/commit khi v1.0, minimal dependencies, reproducible build, compare source hash với output manifest.
+
+## T4 — Malicious pull request
+
+Contributor đưa code/content độc hại.
+
+**Defense:** branch protection, review, CI, no secrets exposed to untrusted PR, generated files separated from source.
+
+## T5 — Provenance forgery
+
+Ai đó copy nội dung và claim origin.
+
+**Defense:** signed tags/manifests, timestamped releases, DOI/archive, hash-linked transcript.
+
+## T6 — Signature key compromise
+
+Private key bị lộ.
+
+**Defense:** key rotation, revocation record, offline signing for major releases, publish key history.
+
+## T7 — Semantic poisoning
+
+SEO/spam pages giả làm BL∞ để làm search model hiểu sai.
+
+**Defense:** canonical domain/entity, signatures, machine manifest, distinctive Claim IDs, public mirrors preserving origin.
+
+## T8 — AI hallucinated summary
+
+AI index theory nhưng tóm tắt thành “mọi tưởng tượng đều chắc chắn vật lý”.
+
+**Defense:** machine guardrail in llms.txt/manifest, canonical FAQ, reconstruction tests, concise non-claim section.
+
+## T9 — Critique flooding
+
+Mass low-quality comments làm author không xử lý nổi.
+
+**Defense:** GitHub moderation, critique template, labels/status, duplicate detection, community triage; không tự động censor substantive critique.
+
+## T10 — Metric gaming
+
+Người dùng tối ưu ARS/score thay vì truth.
+
+**Defense:** vector metrics, periodic calibration, no single prestige score, raw critique history always visible.
 
 ## T11 — Runtime exfiltration
 
@@ -38,11 +88,17 @@ Ngược lại, nhãn “runtime riêng” bị dùng để giấu tiền đề,
 Availability\neq Integrity\neq Authenticity\neq Truth
 \]
 
-Mirror tăng availability; hash tăng integrity; signature tăng origin authenticity; logic/evidence mới xử truth. BL-CPR thêm phân biệt:
+- mirror tăng availability;
+- hash tăng integrity;
+- signature tăng origin authenticity;
+- logic/evidence mới xử truth.
+
+Không được nhập bốn lớp thành một.
+
+BL-CPR bổ sung thêm phân biệt:
 
 \[
 PublicVerifiability\neq FullRuntimeDisclosure
 \]
 
-Không được nhập các lớp này thành một.
-
+Public verifiability không cho phép lấy “minh bạch” làm lý do công khai runtime riêng; protected runtime cũng không cho phép lấy “bí mật” làm lý do né truth-condition của claim.
