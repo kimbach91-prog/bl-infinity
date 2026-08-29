@@ -35,6 +35,8 @@ jobs:
         run: python scripts/disclosure_audit.py --strict
       - name: Build static site
         run: python scripts/build.py
+      - name: Publish BL-REV machine contract
+        run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
       - name: Setup Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
