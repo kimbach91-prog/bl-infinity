@@ -11,9 +11,9 @@
 
 BL-WDRC biến dòng tri thức mới thành một chu kỳ có thể truy nguyên:
 
-[
-Trace ightarrow Candidate ightarrow Comparison ightarrow Distillation ightarrow Adversarial Audit ightarrow Canonical Delta ightarrow Release
-]
+```text
+Trace -> Candidate -> Comparison -> Distillation -> Adversarial Audit -> Canonical Delta -> Release
+```
 
 Đây không phải cơ chế “đăng thêm nội dung mỗi tuần”. Mục tiêu là làm BL∞ chính xác hơn, ít trùng hơn, ít tự mâu thuẫn hơn và có khả năng dựng ngược cao hơn. Một tuần không có thay đổi đủ chuẩn phải kết thúc bằng **NO_CANONICAL_DELTA**, không bằng một commit tạo nhiễu.
 
@@ -56,15 +56,12 @@ Provenance hợp lệ gồm: `DIRECT_SELF_STATEMENT`, `SOURCE_DERIVED`, `CONVERS
 
 ## 5. Pipeline bắt buộc
 
-[
-egin{aligned}
-&INGEST ightarrow NORMALIZE_NAMES ightarrow ENTITY_RESOLVE \
-&ightarrow CLASSIFY_RELATION ightarrow LABEL_PROVENANCE ightarrow SCORE \
-&ightarrow DEDUPLICATE ightarrow VERSION_RESOLVE ightarrow LINK_GRAPH \
-&ightarrow DETECT_CONFLICTS ightarrow SYNTHESIZE_WITHOUT_ERASING_SOURCE \
-&ightarrow ADVERSARIAL_TEST ightarrow RELEASE_DECISION
-end{aligned}
-]
+```text
+INGEST -> NORMALIZE_NAMES -> ENTITY_RESOLVE -> CLASSIFY_RELATION
+-> LABEL_PROVENANCE -> SCORE -> DEDUPLICATE -> VERSION_RESOLVE
+-> LINK_GRAPH -> DETECT_CONFLICTS -> SYNTHESIZE_WITHOUT_ERASING_SOURCE
+-> ADVERSARIAL_TEST -> RELEASE_DECISION
+```
 
 Một candidate không được đi tắt từ ingest sang publication.
 
@@ -72,9 +69,9 @@ Một candidate không được đi tắt từ ingest sang publication.
 
 Tên được sinh theo trục:
 
-[
-Reality ightarrow Object ightarrow Class ightarrow Essence ightarrow Scope ightarrow Function ightarrow Name
-]
+```text
+Reality -> Object -> Class -> Essence -> Scope -> Function -> Name
+```
 
 Quy tắc:
 
@@ -118,9 +115,9 @@ Mỗi quyết định phải ghi: chức năng, overlap, evidence of utility, co
 
 Mỗi thay đổi canonical phải có bảng:
 
-[
-Object ightarrow Old Formulation ightarrow Objection ightarrow Correction ightarrow Evidence ightarrow Status ightarrow Downstream Impact
-]
+```text
+Object -> Old Formulation -> Objection -> Correction -> Evidence -> Status -> Downstream Impact
+```
 
 BL-REV/BL-AEGIS phải tìm tối thiểu: counterexample, false equivalence, scope creep, identity collision, human–machine drift, hidden assumption, proof-status inflation, self-sealing và disclosure failure.
 
