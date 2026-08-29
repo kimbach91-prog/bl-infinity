@@ -1,11 +1,3 @@
-{
-  "policy": "BL-CPR",
-  "policy_version": "1.0",
-  "errors": [],
-  "notes": [
-    "checked 12 tracked/public files"
-  ]
-}
 # 26 — Threat model và integrity model
 
 Static web làm attack surface nhỏ, không bằng zero.
