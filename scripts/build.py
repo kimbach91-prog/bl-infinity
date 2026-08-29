@@ -22,7 +22,7 @@ PAGE='''<!doctype html><html lang="{{ lang }}"><head>
 <link rel="alternate" type="application/rss+xml" title="BL∞ updates" href="{{ base }}feed.xml">
 <script type="application/ld+json">{{ jsonld }}</script></head>
 <body><header class="top"><a href="{{ base }}index.html" class="brand">BL∞</a><span>Bách Lâm – Optimizer</span>
-<nav><a href="{{ base }}theory.html">Học thuyết</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
+<nav><a href="{{ base }}theory.html">Học thuyết</a><a href="{{ base }}bl-adn.html">BL-ADN</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
 <main><article>{{ body }}</article>{{ comments }}</main>
 <footer><p>BL∞ · {{ version }} · canonical research object. <a href="{{ base }}machine/manifest.json">Machine manifest</a></p></footer>
 <script src="{{ base }}assets/js/site.js"></script></body></html>'''
@@ -93,6 +93,9 @@ content=sorted((ROOT/'content').glob('*.md'))
 intro=md((ROOT/'content/00_README_FIRST.md').read_text(encoding='utf-8'))
 write_page('index.html',CFG['seo']['title'],intro)
 write_page('theory.html','BL∞ — Học thuyết canonical',render_docs([p for p in content if p.name!='00_README_FIRST.md']))
+bl_adn_source=(ROOT/'BL-ADN.md').read_text(encoding='utf-8')
+write_page('bl-adn.html','BL-ADN — Giao thức Phả hệ Tri thức',md(bl_adn_source),desc='Giao thức Đóng dấu ADN Bách Lâm ∞ và Nối tiếp Phả hệ Tri thức, phiên bản 0.2.0.')
+shutil.copy(ROOT/'BL-ADN.md',SITE/'bl-adn.md')
 
 # Claim index + one canonical page per claim (BL-ICO implementation)
 claim_by={c['id']:c for c in CLAIMS['claims']}
@@ -156,10 +159,10 @@ manifest={
   'canonical_url':CFG['project']['canonical_url'],'repository':CFG['project']['repository'],'date_created':CFG['project'].get('date_created',CFG['project']['date']),'date_released':CFG['project']['date'],'last_updated':CFG['project'].get('last_updated',CFG['project']['date']),
   'claim_registry':'claims.json','claim_index':'claim-index.json','claim_graph':'claim-graph.jsonld',
   'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json',
-  'disclosure_policy':'disclosure-policy.json','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
+  'disclosure_policy':'disclosure-policy.json','bl_adn_protocol':'../bl-adn.html','bl_adn_source':'../bl-adn.md','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
 }
 allbytes=b''
-for p in sorted((ROOT/'content').glob('*.md'))+sorted((ROOT/'claims').glob('*.json'))+sorted((ROOT/'machine').glob('*.json')):
+for p in [ROOT/'BL-ADN.md']+sorted((ROOT/'content').glob('*.md'))+sorted((ROOT/'claims').glob('*.json'))+sorted((ROOT/'machine').glob('*.json')):
     allbytes += p.read_bytes()
 manifest['content_hash']='sha256:'+hashlib.sha256(allbytes).hexdigest()
 (SITE/'machine/manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -185,7 +188,7 @@ graph=(ROOT/'machine/graph.jsonld').read_text(encoding='utf-8').replace('https:/
 (SITE/'machine/graph.jsonld').write_text(graph,encoding='utf-8')
 
 # sitemap: human pages + individual claim/asset objects + machine files
-urls=['','theory.html','claims.html','assets.html','provenance.html','critique.html','machine.html']
+urls=['','theory.html','bl-adn.html','bl-adn.md','claims.html','assets.html','provenance.html','critique.html','machine.html']
 urls += [f'claims/{c["id"]}/' for c in CLAIMS['claims']]
 urls += [f'assets/{slug_code(a["code"])}/' for a in ASSETS['assets']]
 # Machine resources are discoverable from HTML/llms.txt but are not submitted as primary search landing pages.
