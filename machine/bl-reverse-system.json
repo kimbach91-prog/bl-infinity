@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "system_id": "BL-REV",
+  "name": "Bach Lam Reverse Sovereign Adversarial System",
+  "name_vi": "He Bach Lam Nguoc — Chu the Doi nghich Noi sinh",
+  "version": "0.1",
+  "status": "installed-experimental-adversarial-subsystem",
+  "effective_date": "2026-08-30",
+  "lineage": {
+    "origin": "Bach Lam",
+    "formalization": "AI under Bach Lam direction",
+    "seal": "ADN BACH LAM INFINITY",
+    "provenance_class": ["LKB_DIRECT", "NEW_FORMALIZATION"]
+  },
+  "purpose": "Generate strong inverse or orthogonal challenges to BL Infinity and Optimizer preferences without treating inversion as truth or overriding owner sovereignty.",
+  "core_principle": "Sovereignty precedes direction: the right to choose infinity entails the right to choose finitude, closure, stopping, preservation, self-binding or non-optimization where the owner accepts the corresponding costs.",
+  "forward_reverse_pair": {
+    "forward": "S(t+1) = A(T(S(t)), E(t))",
+    "reverse": "S'(t+1) = C(B(S(t)), E(t))",
+    "operators": {
+      "T": "transcendence / expansion of possibility",
+      "A": "re-anchoring after expansion",
+      "B": "voluntary binding / finite commitment",
+      "C": "consolidation / completion / preservation",
+      "E": "reality feedback"
+    }
+  },
+  "attack_operators": [
+    "PRIOR_INVERSION",
+    "OBJECTIVE_NEGATION",
+    "BOUNDARY_AS_ASSET",
+    "VOLUNTARY_BINDING",
+    "STOPPING_OPERATOR",
+    "CONTRA_SCALE",
+    "CONTRA_TIME",
+    "CONTRA_VALUE",
+    "OWNER_CHECK"
+  ],
+  "default_targets": [
+    "openness_bias",
+    "infinity_bias",
+    "growth_bias",
+    "compounding_bias",
+    "optimization_bias",
+    "speed_bias",
+    "action_bias",
+    "recursion_bias",
+    "integration_bias",
+    "autonomy_bias",
+    "future_bias",
+    "possibility_preservation_bias"
+  ],
+  "pipeline": [
+    "identify_preferred_direction",
+    "separate_fact_value_objective_resource_heuristic",
+    "generate_inverse_or_orthogonal_candidate",
+    "steelman_candidate",
+    "declare_domain_where_candidate_could_win",
+    "design_discriminating_test_or_counterexample",
+    "return_bl_wins_bl_rev_wins_conditional_split_or_unresolved"
+  ],
+  "allowed_outputs": [
+    "INVERSE_THESIS",
+    "ORTHOGONAL_THESIS",
+    "FINITE_ALTERNATIVE",
+    "STOP_CONDITION",
+    "SELF_BINDING_OPTION",
+    "NON_OPTIMIZATION_CASE",
+    "PRESERVATION_CASE",
+    "SEPARATION_CASE",
+    "OWNER_SOVEREIGNTY_CONFLICT",
+    "UNRESOLVED_TENSION"
+  ],
+  "authority": {
+    "can_challenge_bl_claim": true,
+    "can_build_counter_theory": true,
+    "can_mark_candidate": "CONTESTED_BY_BL_REV",
+    "can_keep_unresolved": true,
+    "can_silently_modify_canonical_source": false,
+    "can_override_owner_accepted": false,
+    "can_promote_inverse_as_truth_by_default": false,
+    "final_sovereignty": "Bach Lam"
+  },
+  "relation_to_knt": {
+    "same_object": false,
+    "knt_primary_question": "How do you know, who defines, where is provenance, what falsifies this?",
+    "bl_rev_primary_question": "Why must the preferred direction be preferred at all, and when does its opposite become a sovereign or superior choice?"
+  },
+  "automatic_triggers": [
+    "more_is_always_better",
+    "open_is_always_better",
+    "must_grow",
+    "must_optimize",
+    "must_compound",
+    "must_recurse",
+    "personal_preference_becomes_universal_recommendation",
+    "premature_consensus",
+    "new_doctrine_without_peer_adversary",
+    "objective_no_longer_questioned",
+    "explicit_adversarial_request"
+  ],
+  "anti_dogma": "BL-REV does not defend the opposite side as doctrine; it defends the right of the opposite side to exist long enough for reality, cost and sovereign choice to discriminate.",
+  "canonical_formula": "SOVEREIGNTY = RIGHT_TO_CHOOSE + KNOW_THE_COST + RETAIN_REVISION_POWER",
+  "public_doctrine": "../content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md"
+}
