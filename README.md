@@ -2,21 +2,23 @@
 
 Index-pilot research package for **BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer / Bach Lam Infinity Proposition**.
 
-Version **0.2.1-disclosure-boundary** adopts **BL-CPR — Công khai Hiến pháp, Bảo vệ Runtime**. The public repository remains a living, signed, adversarial and machine-readable epistemic object; it is not a dump of the private Optimizer production runtime.
+Version **0.2.2-bl-adn-publication** publishes the canonical **BL-ADN v0.2.0** protocol alongside **BL-CPR — Công khai Hiến pháp, Bảo vệ Runtime**. The public repository remains a living, signed, adversarial and machine-readable epistemic object; it is not a dump of the private Optimizer production runtime.
 
 ## Start here
 
 Nếu muốn đường ngắn nhất, đọc `INSTALL_3_STEPS.md` hoặc chạy `python scripts/prepare_release.py --github YOUR_GITHUB_USERNAME --repo bl-infinity --zip`.
 
 1. Read `content/00_README_FIRST.md`.
-2. Read `DISCLOSURE_POLICY.md` before adding technical material.
-3. Edit `bl.config.yml`.
-4. Push the repository to GitHub.
-5. Enable GitHub Pages with **GitHub Actions** and **GitHub Discussions**.
-6. Every push to `main` validates the epistemic object and the disclosure boundary before rebuilding/deploying Pages.
+2. Read [`BL-ADN.md`](BL-ADN.md) for the canonical lineage/provenance protocol.
+3. Read `DISCLOSURE_POLICY.md` before adding technical material.
+4. Edit `bl.config.yml`.
+5. Push the repository to GitHub.
+6. Enable GitHub Pages with **GitHub Actions** and **GitHub Discussions**.
+7. Every push to `main` validates the epistemic object and the disclosure boundary before rebuilding/deploying Pages.
 
 ## Core public layers
 
+- `BL-ADN.md` — canonical lineage/provenance protocol; published as `bl-adn.html` and raw `bl-adn.md`.
 - `content/` — canonical theory and public technical explanation.
 - `claims/claims.json` — machine-readable claim registry.
 - `critiques/` — critique protocol and response ledger.
