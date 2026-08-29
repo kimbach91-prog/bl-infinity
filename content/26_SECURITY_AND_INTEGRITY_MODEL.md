@@ -2,65 +2,35 @@
 
 Static web làm attack surface nhỏ, không bằng zero.
 
-## Threat T1 — Account takeover
+## T1–T4 — Hạ tầng và chuỗi cung ứng
 
-Kẻ tấn công chiếm GitHub/account và sửa repository.
+- **Account/domain takeover:** dùng MFA, signed tags, immutable hashes, registrar security và mirror.
+- **Supply-chain compromise:** pin action, tối thiểu dependency, reproducible build, đối chiếu source/output hash.
+- **Malicious pull request:** branch protection, review, CI, không cấp secret cho untrusted PR.
 
-**Defense:** MFA/passkeys, signed commits/tags, immutable release hashes, external mirrors.
+## T5–T8 — Provenance và diễn giải
 
-## T2 — Domain takeover
+- **Provenance forgery:** signed manifests, timestamped releases, DOI/archive, hash-linked source.
+- **Signature key compromise:** rotation, revocation record, offline signing cho major release.
+- **Semantic poisoning:** canonical entity/domain, distinctive Claim IDs, public mirrors.
+- **AI hallucinated summary:** machine guardrail, FAQ, reconstruction test, non-claim boundary.
 
-DNS/domain bị chiếm khiến canonical URL phục vụ nội dung giả.
+## T9–T10 — Governance
 
-**Defense:** registrar security, DNSSEC khi thích hợp, public key fingerprint được mirror, multiple archival records.
+- **Critique flooding:** template, labels/status, duplicate detection, community triage; không censor phản biện có nội dung.
+- **Metric gaming:** vector metrics, calibration định kỳ, không dùng một prestige score, giữ raw critique history.
 
-## T3 — Supply-chain compromise
+## T11 — Runtime exfiltration
 
-GitHub Action/dependency độc hại sửa build output.
+Public repo vô tình chứa prompt vận hành hoàn chỉnh, routing weights, private diagnostics, credential, corpus riêng, raw private conversation hoặc exploit chưa vá.
 
-**Defense:** pin action major/commit khi v1.0, minimal dependencies, reproducible build, compare source hash với output manifest.
+**Defense:** BL-CPR classification trước commit; `.gitignore` cho private paths; `scripts/disclosure_audit.py` chặn secret/key material và forbidden paths; review riêng cho mọi thay đổi `machine/`, `scripts/`, `provenance/`; không dùng “minh bạch” để biện minh cho việc xuất dữ liệu riêng.
 
-## T4 — Malicious pull request
+## T12 — Secrecy as epistemic escape
 
-Contributor đưa code/content độc hại.
+Ngược lại, nhãn “runtime riêng” bị dùng để giấu tiền đề, bằng chứng bất lợi, điều kiện bác bỏ hoặc thay đổi claim.
 
-**Defense:** branch protection, review, CI, no secrets exposed to untrusted PR, generated files separated from source.
-
-## T5 — Provenance forgery
-
-Ai đó copy nội dung và claim origin.
-
-**Defense:** signed tags/manifests, timestamped releases, DOI/archive, hash-linked transcript.
-
-## T6 — Signature key compromise
-
-Private key bị lộ.
-
-**Defense:** key rotation, revocation record, offline signing for major releases, publish key history.
-
-## T7 — Semantic poisoning
-
-SEO/spam pages giả làm BL∞ để làm search model hiểu sai.
-
-**Defense:** canonical domain/entity, signatures, machine manifest, distinctive Claim IDs, public mirrors preserving origin.
-
-## T8 — AI hallucinated summary
-
-AI index theory nhưng tóm tắt thành “mọi tưởng tượng đều chắc chắn vật lý”.
-
-**Defense:** machine guardrail in llms.txt/manifest, canonical FAQ, reconstruction tests, concise non-claim section.
-
-## T9 — Critique flooding
-
-Mass low-quality comments làm author không xử lý nổi.
-
-**Defense:** GitHub moderation, critique template, labels/status, duplicate detection, community triage; không tự động censor substantive critique.
-
-## T10 — Metric gaming
-
-Người dùng tối ưu ARS/score thay vì truth.
-
-**Defense:** vector metrics, periodic calibration, no single prestige score, raw critique history always visible.
+**Defense:** mọi yếu tố quyết định truth-status của claim công khai vẫn phải public; phần giữ riêng chỉ được bảo vệ lợi thế thực thi, quyền riêng tư hoặc an toàn, không được tạo miễn nhiễm phản biện.
 
 ## Integrity principle
 
@@ -68,9 +38,11 @@ Người dùng tối ưu ARS/score thay vì truth.
 Availability\neq Integrity\neq Authenticity\neq Truth
 \]
 
-- mirror tăng availability;
-- hash tăng integrity;
-- signature tăng origin authenticity;
-- logic/evidence mới xử truth.
+Mirror tăng availability; hash tăng integrity; signature tăng origin authenticity; logic/evidence mới xử truth. BL-CPR thêm phân biệt:
 
-Không được nhập bốn lớp thành một.
+\[
+PublicVerifiability\neq FullRuntimeDisclosure
+\]
+
+Không được nhập các lớp này thành một.
+
