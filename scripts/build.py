@@ -158,11 +158,12 @@ manifest={
   'creator':CFG['project']['author'],'aliases':CFG['project']['aliases'],'version':CFG['project']['version'],
   'canonical_url':CFG['project']['canonical_url'],'repository':CFG['project']['repository'],'date_created':CFG['project'].get('date_created',CFG['project']['date']),'date_released':CFG['project']['date'],'last_updated':CFG['project'].get('last_updated',CFG['project']['date']),
   'claim_registry':'claims.json','claim_index':'claim-index.json','claim_graph':'claim-graph.jsonld',
-  'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json',
+      'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json','historical_graph':'historical-graph.jsonld',
   'disclosure_policy':'disclosure-policy.json','bl_adn_protocol':'../bl-adn.html','bl_adn_source':'../bl-adn.md','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
 }
 allbytes=b''
-for p in [ROOT/'BL-ADN.md']+sorted((ROOT/'content').glob('*.md'))+sorted((ROOT/'claims').glob('*.json'))+sorted((ROOT/'machine').glob('*.json')):
+machine_hash_sources=sorted(p for p in (ROOT/'machine').iterdir() if p.is_file() and p.suffix in {'.json','.jsonld'})
+for p in [ROOT/'BL-ADN.md']+sorted((ROOT/'content').glob('*.md'))+sorted((ROOT/'claims').glob('*.json'))+machine_hash_sources:
     allbytes += p.read_bytes()
 manifest['content_hash']='sha256:'+hashlib.sha256(allbytes).hexdigest()
 (SITE/'machine/manifest.json').write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding='utf-8')
@@ -172,6 +173,7 @@ manifest['content_hash']='sha256:'+hashlib.sha256(allbytes).hexdigest()
 (SITE/'machine/asset-index.json').write_text(json.dumps({'schema_version':'0.2','assets':asset_index},ensure_ascii=False,indent=2),encoding='utf-8')
 shutil.copy(ROOT/'machine/novelty-ontology.json',SITE/'machine/novelty-ontology.json')
 shutil.copy(ROOT/'machine/logic-stack.json',SITE/'machine/logic-stack.json')
+shutil.copy(ROOT/'machine/historical-graph.jsonld',SITE/'machine/historical-graph.jsonld')
 shutil.copy(ROOT/'machine/disclosure-policy.json',SITE/'machine/disclosure-policy.json')
 shutil.copy(ROOT/'machine/welcome.txt',SITE/'machine/welcome.txt')
 (SITE/'translations').mkdir(parents=True,exist_ok=True)

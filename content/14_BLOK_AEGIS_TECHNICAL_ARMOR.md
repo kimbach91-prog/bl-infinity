@@ -2,6 +2,12 @@
 
 BLOK là hạ tầng tri thức mở. BL-AEGIS là kiến trúc module bao quanh research object.
 
+## Ranh giới lịch sử
+
+Chương này mô tả chức năng và cấu hình hiện tại, không phải thứ tự sinh thành. Theo current-view đã được Lâm Kim Bách hiệu chỉnh, **hạt nhân nền tảng BLOK có trước chuỗi Optimizer/“Bản chất”**. Việc BLOK được đặt tên, mở rộng và tích hợp vào BL∞ trong Origin Build 2026-08-28 là một mốc formalization/public packaging, không được đánh tráo thành ngày BLOK bắt đầu tồn tại.
+
+BL∞, Optimizer, BLOK và BL-AEGIS giữ identity riêng trong BL-lineage. Quan hệ lịch sử `PRECEDES` không tự biến thành `PARENT_OF`, `DEPENDS_ON`, `IS_PART_OF` hoặc bằng chứng novelty.
+
 ## 32 module lõi
 
 1. BL-ASSET — registry tài sản/mệnh đề.

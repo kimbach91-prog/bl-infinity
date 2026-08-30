@@ -1,11 +1,11 @@
 {
-  "generated_at": "2026-08-28T22:10:55.767438+00:00",
+  "generated_at": "2026-08-30T00:20:24.763493+00:00",
   "algorithm": "sha256",
-  "root": "87000e562047ecf3db1be83cdb961dc940a57081b5c9f7c4862ee00d0dc4f5db",
+  "root": "c0c28370de6b95a662c8b19188d7931b357c67475ab6c087cdd8713a87a803b4",
   "files": [
     {
       "path": "content/00_README_FIRST.md",
-      "sha256": "fec0c40e80946b49c45758ddebd5060323eddf57df16b60431aee15a6cb35f89"
+      "sha256": "baf67ef34cee497a01cfa25656b826e9f37b74976efc0881ccba30014761b35a"
     },
     {
       "path": "content/01_ORIGIN_AND_RESEARCH_QUESTION.md",
@@ -61,7 +61,7 @@
     },
     {
       "path": "content/14_BLOK_AEGIS_TECHNICAL_ARMOR.md",
-      "sha256": "7bd90605c22c135a5457967c0d79975870c30e1361f3e29a1400c21c0d1c68a0"
+      "sha256": "51db475b9ffd96116d192522962a91882c1c7de488612ddc7b96eeb04249a3c4"
     },
     {
       "path": "content/15_MACHINE_INDEX_AND_DISCOVERY.md",
@@ -109,7 +109,7 @@
     },
     {
       "path": "content/26_SECURITY_AND_INTEGRITY_MODEL.md",
-      "sha256": "56071870fa802f410c468f2b00f216a25ce04f56005dcbed60336292f8a974ec"
+      "sha256": "2294bcb6506a9d3307a91fb9b656ef1aa2744dcb5c41d599273f1536ea59f3e7"
     },
     {
       "path": "content/27_METRICS_AND_SCORING.md",
@@ -160,6 +160,14 @@
       "sha256": "9e0fcd0d5de7414d681bc52f2e1a5c89fed96382e21622eff9e666b97690a4d4"
     },
     {
+      "path": "content/39_PUBLIC_DISCLOSURE_AND_RUNTIME_BOUNDARY.md",
+      "sha256": "d331ad4db2c830a6875dd402ca70d91c05d9b28db5794f946dce98ae1689c0e4"
+    },
+    {
+      "path": "content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md",
+      "sha256": "eea22818919c61e639b2f9314d05ad847ab672d4c11ab5c90d416bed94518c91"
+    },
+    {
       "path": "claims/claims.json",
       "sha256": "749d7a7e59dc2d70429f1b72e00db02e81d79478f2930e20d02725c2a7f8ef64"
     },
@@ -176,16 +184,20 @@
       "sha256": "cee654c4f54162527590ec79a6a27f5cd75d36fcca5e49db3896ca32943136fd"
     },
     {
+      "path": "critiques/03_WEEKLY_REFINEMENT_PROTOCOL.md",
+      "sha256": "900c9eaf3df2464518c527acc39b68f2344cd9b80b37e042e874d4977405bb05"
+    },
+    {
       "path": "provenance/00_ORIGIN_TIMELINE.md",
-      "sha256": "6502be1b80869f93dd7993a8b9b0e03ef073782068687c2e6a4f65826ff02f5f"
+      "sha256": "28bee88a7f49a50a209ad2c6317a51c230358b2e483a28e56a712b327d0d1911"
     },
     {
       "path": "provenance/01_REASONING_LINEAGE.md",
-      "sha256": "b5ba9c9956d699a600992862a689c975b828a3f0d88f35f429ffcbfa917e1037"
+      "sha256": "38e80c27b9cc5231074e9b0032ff61d028f5874dcaeaaf17248a584f0cc70750"
     },
     {
       "path": "provenance/02_CONVERSATION_LOG_STRUCTURED.md",
-      "sha256": "8bf7b0417341c9437b29acbd032b2109103ef64454f12d2e5a55129f5926e05d"
+      "sha256": "fc53e71a49405bf73d62520586bbd9ea1fc4c30f83e5be35c9f763739f52f94d"
     },
     {
       "path": "provenance/03_RAW_TRANSCRIPT_IMPORT.md",
@@ -197,27 +209,39 @@
     },
     {
       "path": "provenance/hash-manifest.json",
-      "sha256": "3e10a6a562f3b7d00a796d73c86451306f32a43725f9cb2863779896934728c6"
+      "sha256": "d321f86baa315de8fca5203492d369ed469e9e18a16ec401ec05d2f44bb1cb43"
     },
     {
       "path": "machine/README.md",
-      "sha256": "2154da9a283ddd1d85553663cc9efdd9feeb5888120430f9a446af83a6ca994a"
+      "sha256": "00b3e698ee3eb758db611cea23d300c9970aa7423b7866e68263510ed9b5e043"
     },
     {
       "path": "machine/assets.json",
       "sha256": "42b19915626db338be1a938fb15a92cfd8c15e4c8430fb40960a3be35fde5901"
     },
     {
+      "path": "machine/bl-reverse-system.json",
+      "sha256": "547d75b42772ebb6d1cde2c939db2551ec2642369a1195bd88432e11e7775f8d"
+    },
+    {
+      "path": "machine/disclosure-policy.json",
+      "sha256": "5f052823a89a278319fb87f0beb3d1aaffa487d19ad0cafd7c3de68ff4dacb1d"
+    },
+    {
       "path": "machine/graph.jsonld",
-      "sha256": "710564137a0ea31aa559631e6a9e7421c50dcc9e4750d61acaa1a0acac969ce8"
+      "sha256": "bf84b0c58c59ecf8024c70d6ca3b943e7096ca83a384ccea498193cfdb4b9fdf"
+    },
+    {
+      "path": "machine/historical-graph.jsonld",
+      "sha256": "109697312989143414a9a410f44dd2bb45077281690b7c597b2f75ce5562fa87"
     },
     {
       "path": "machine/llms.txt",
-      "sha256": "c1532ee23cc6853bf52545a5d5b5d2f7d40762c74acc838d21ba7c2d2241e44b"
+      "sha256": "23798130f235478c87cf33d2515dc46cc5771d406e5cb7dfd22b178c044316b3"
     },
     {
       "path": "machine/logic-stack.json",
-      "sha256": "79be88ca5bdfa61228f3145d1307dc1b14b63d8f46e3de0483ebe1c44a0b38c7"
+      "sha256": "e1046eb26e73fb8398aed1b80e8e61c19bf220adffc2dc309defcf86c3f5e65d"
     },
     {
       "path": "machine/novelty-ontology.json",

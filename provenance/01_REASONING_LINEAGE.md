@@ -1,4 +1,11 @@
-# Reasoning Lineage — từ “code” tới BL∞ và BLOK
+# Reasoning Lineage — BL∞ Origin Build (logical derivation, not full history)
+
+> **Graph role:** `LOGICAL_GRAPH_VIEW`  
+> **Historical authority:** `provenance/00_ORIGIN_TIMELINE.md` and `machine/historical-graph.jsonld`
+
+This file preserves the reasoning order of the 2026-08-28 BL∞ origin-build dialogue. It must not be read as a claim that BLOK was born after BL∞. The corrected historical view records that the **BLOK foundational nucleus precedes the Optimizer/“Bản chất” chain**, while exact absolute dates remain unresolved.
+
+The sequence below answers “which reasoning move supports which later formalization?”, not “which BL-lineage object existed first?”. Logical derivation, implementation dependency and historical chronology are separate graphs.
 
 ## Lineage L1 — Code nghĩa rộng
 
@@ -91,6 +98,8 @@ To reduce both false acceptance and false rejection, discovery is represented as
 ## Lineage L12 — Technical embodiment
 
 The meta-theory is not left as prose. It becomes a technical stack: Git, signed provenance, static pages, Discussions, giscus, machine manifests, JSON-LD, indexing, RSS, crawler-accessible greetings and recursive audit.
+
+This is the technical embodiment of BL∞ in this dialogue. It reuses/formalizes BLOK functions; it is not the birth event of the earlier BLOK foundational nucleus.
 
 ## Lineage L13 — AEGIS
 

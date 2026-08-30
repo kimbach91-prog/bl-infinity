@@ -1,0 +1,127 @@
+{
+  "@context": {
+    "schema": "https://schema.org/",
+    "bl": "https://kimbach91-prog.github.io/ns/bl#",
+    "name": "schema:name",
+    "creator": "schema:creator",
+    "dateCreated": "schema:dateCreated",
+    "isBasedOn": "schema:isBasedOn",
+    "precedes": {
+      "@id": "bl:precedes",
+      "@type": "@id"
+    },
+    "relatedTo": {
+      "@id": "schema:isRelatedTo",
+      "@type": "@id"
+    },
+    "evidenceClass": "bl:evidenceClass",
+    "historicalStatus": "bl:historicalStatus",
+    "exactDateKnown": "bl:exactDateKnown",
+    "formalizationRole": "bl:formalizationRole"
+  },
+  "graphType": "HISTORICAL_GRAPH",
+  "version": "0.1.0-corrected-current-view",
+  "supersedes": "BL-HIST-RECONSTRUCTION-0001",
+  "guardrails": [
+    "Lineage is not dependency.",
+    "Precedence is not parenthood.",
+    "Timestamp is not novelty proof.",
+    "Hash is not authorship proof or truth proof.",
+    "Unknown absolute dates must remain unknown."
+  ],
+  "@graph": [
+    {
+      "@id": "bl:person-lam-kim-bach",
+      "@type": "schema:Person",
+      "name": "Lâm Kim Bách"
+    },
+    {
+      "@id": "bl:event-blok-foundational-nucleus",
+      "@type": "schema:Event",
+      "name": "BLOK foundational nucleus",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "historicalStatus": "OWNER_CONFIRMED_RELATIVE_ORDER",
+      "evidenceClass": "OWNER_CORRECTION_RETROSPECTIVE",
+      "exactDateKnown": false,
+      "precedes": "bl:event-optimizer-essence-chain",
+      "formalizationRole": "earliest_confirmed_relative_position; canonical naming date unresolved"
+    },
+    {
+      "@id": "bl:event-optimizer-essence-chain",
+      "@type": "schema:Event",
+      "name": "Optimizer / Bản chất chain",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "historicalStatus": "RELATIVE_ORDER_CONFIRMED_AFTER_BLOK",
+      "evidenceClass": "OWNER_CORRECTION_RETROSPECTIVE",
+      "exactDateKnown": false
+    },
+    {
+      "@id": "bl:event-bl-infinity-origin-dialogue",
+      "@type": "schema:Event",
+      "name": "BL∞ origin-build dialogue",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "dateCreated": "2026-08-28",
+      "historicalStatus": "CHAT_TIMESTAMPED_AND_ORDERED_SUBTIMELINE",
+      "evidenceClass": "STRUCTURED_CONVERSATION_RECONSTRUCTION",
+      "exactDateKnown": true,
+      "formalizationRole": "BL∞ public formalization and integration; not BLOK birth"
+    },
+    {
+      "@id": "bl:event-bl-aegis-formalization",
+      "@type": "schema:Event",
+      "name": "BL-AEGIS modular formalization in BL∞ origin build",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "dateCreated": "2026-08-28",
+      "historicalStatus": "CHAT_ORDERED_EVENT_16",
+      "evidenceClass": "STRUCTURED_CONVERSATION_RECONSTRUCTION",
+      "exactDateKnown": true,
+      "isBasedOn": {"@id": "bl:event-bl-infinity-origin-dialogue"}
+    },
+    {
+      "@id": "bl:object-blok",
+      "@type": "schema:CreativeWork",
+      "name": "BLOK",
+      "relatedTo": [
+        "bl:object-optimizer",
+        "bl:object-bl-infinity",
+        "bl:object-bl-aegis"
+      ]
+    },
+    {
+      "@id": "bl:object-optimizer",
+      "@type": "schema:CreativeWork",
+      "name": "Optimizer",
+      "relatedTo": [
+        "bl:object-blok",
+        "bl:object-bl-infinity",
+        "bl:object-bl-aegis"
+      ]
+    },
+    {
+      "@id": "bl:object-bl-infinity",
+      "@type": "schema:CreativeWork",
+      "name": "BL∞",
+      "relatedTo": [
+        "bl:object-blok",
+        "bl:object-optimizer",
+        "bl:object-bl-aegis"
+      ]
+    },
+    {
+      "@id": "bl:object-bl-aegis",
+      "@type": "schema:CreativeWork",
+      "name": "BL-AEGIS",
+      "relatedTo": [
+        "bl:object-blok",
+        "bl:object-optimizer",
+        "bl:object-bl-infinity"
+      ]
+    }
+  ],
+  "openQuestions": [
+    "Absolute birth date of the BLOK foundational nucleus",
+    "First functional BLOK object versus later canonical naming",
+    "Exact first event of the Optimizer / Bản chất chain",
+    "Complete chronology among BL∞, Optimizer and intermediate BL-lineage objects"
+  ]
+}

@@ -4,6 +4,8 @@
 
 BL∞ được đóng gói ở đây như một **hệ nghiên cứu mở** gồm bốn tầng liên kết:
 
+> **Ranh giới lịch sử:** danh sách tầng dưới đây là thứ tự đọc/chức năng, không phải thứ tự ra đời. Current historical view ghi nhận **BLOK foundational nucleus có trước chuỗi Optimizer/“Bản chất”**. BL∞, Optimizer, BLOK và BL-AEGIS là các object/nhánh riêng trong BL-lineage; không suy `Everything subset_of Optimizer` và không lấy dependency hiện tại làm chronology.
+
 1. **Học thuyết lõi BL∞:** định nghĩa, tiên đề, mệnh đề, định lý điều kiện, phỏng đoán và câu hỏi mở.
 2. **Phương pháp Optimizer công khai:** những cơ chế cần thiết để hiểu, kiểm chứng, phản biện và tái dựng các claim công khai.
 3. **BLOK / BL-AEGIS:** hạ tầng bảo tồn provenance, phát hành, index, phản biện và sửa phiên bản cho người và máy.
@@ -44,4 +46,3 @@ Ranh giới này bảo vệ lợi thế thực thi nhưng không được dùng 
 ## Một câu tóm tắt
 
 BL∞ nghiên cứu chênh lệch giữa **thứ một chủ thể hữu hạn có thể thấy, có thể nghĩ, có thể làm, cái hệ chứa nó có thể sinh ra và toàn bộ cái có thể tồn tại**, đồng thời xây quy trình để các mệnh đề ấy được bảo tồn, phản biện, sửa chữa và phát hiện bởi con người lẫn máy — kể cả bằng một đối thủ nội sinh mang chính ADN Bách Lâm nhưng có nhiệm vụ chống lại hướng ưu tiên của BL.
-
