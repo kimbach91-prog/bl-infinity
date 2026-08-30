@@ -1,33 +1,76 @@
 # Machine layer
 
-This directory is the public machine-readable surface of BL∞. It is an epistemic interface, not the private Optimizer production runtime.
+This directory is the **public machine-readable interface** of BL∞. It exists so claims, identities, dependencies, versions and reference behaviors can be discovered and checked by software. It is not the private Optimizer/BLCC production runtime and is not a repository for internal orchestration.
 
-## Files
+## Public files
 
 - `manifest.json` — generated canonical identity/version/hash.
 - `claims.json` and `claim-index.json` — public Claim Registry and stable URLs.
 - `asset-index.json` — named BL asset → canonical URL index.
-- `novelty-ontology.json` — BL-NOVO dimensions, principles and relations.
-- `logic-stack.json` — canonical public dependency/feedback path.
-- `graph.jsonld` — entity/relation graph.
-- `historical-graph.jsonld` — corrected chronology/origin-event graph; separate from logic and adversarial relations.
+- `novelty-ontology.json` — public BL-NOVO dimensions, principles and relations.
+- `logic-stack.json` — public logical/dependency/feedback view; not a private router.
+- `graph.jsonld` — public entity/relation graph.
+- `historical-graph.jsonld` — reduced public chronology/origin graph, separate from logical dependency.
 - `disclosure-policy.json` — BL-CPR public/protected/forbidden boundary.
-- `bl-reverse-system.json` — machine-readable contract for BL-REV, the installed internal adversarial subsystem that attacks BL preferences without overriding owner sovereignty.
-- `welcome.txt` — machine research greeting/open challenge.
-- `/llms.txt` — supplemental orientation for compatible AI systems.
+- `bl-reverse-system.json` — **public interface contract only** for BL-REV.
+- `welcome.txt` — public machine research greeting/open challenge.
+- `/llms.txt` — supplemental public orientation for compatible AI systems.
 
 ## Design rule
 
-Human-visible and machine-visible content must be semantically consistent. Do not cloak, hide keyword blocks or serve a stronger/weaker theory to bots than to people.
+Human-visible and machine-visible public claims must be semantically consistent. Do not cloak, hide keyword blocks or serve a stronger/weaker theory to bots than to people.
 
-`logic-stack.json` is not a timeline. Historical order is governed by `historical-graph.jsonld`; critique/resolution edges belong to the adversarial layer. Do not infer chronology from dependency, file order, branding or current containment.
+A public machine resource may expose:
 
-Machine readability does not authorize publishing private prompts, private reasoning traces, routing weights, credentials, personal data or restricted corpora. A machine resource must pass BL-CPR classification before release.
+```text
+identity
+purpose
+public inputs / outputs
+authority boundaries
+guardrails
+falsifiers
+reference behavior
+```
 
-BL-REV is adversarial by design but is not a truth oracle. Its inverse or orthogonal candidates must remain source-bound, testable where possible, and visibly separate from canonical claims until promoted through the normal governance path.
+It must not expose merely because machines can parse it:
+
+```text
+production prompts
+activation triggers
+private target selection or ranking
+routing weights
+operator/model handoff
+private diagnostics
+raw private conversation/corpus
+full production pipeline
+```
+
+Those are protected by BL-CPR unless a specific verification requirement justifies a controlled/public release.
+
+## Graph boundaries
+
+`logic-stack.json` is not a timeline. Historical order is governed by the public historical graph. Critique/resolution relations are also distinct from both historical and logical dependency relations.
+
+```text
+Lineage != Dependency != Identity != Historical Priority
+```
+
+Machine readability, graph density or indexability do not prove truth or novelty.
+
+## BL-REV boundary
+
+The public BL-REV JSON declares the adversarial interface, authority limits and observable behavior. Internal activation, target ranking, operator inventory, sequencing and diagnostics are intentionally absent. A counterposition produced by BL-REV is not truth by default and must pass the same evidence/provenance/governance path as any other candidate.
 
 ## Discovery rule
 
-`fragment -> claim ID -> canonical theory -> author -> version -> provenance -> disclosure class`
+```text
+fragment
+-> claim ID
+-> canonical public claim/theory
+-> author/provenance class
+-> version
+-> evidence/falsifier
+-> disclosure class
+```
 
-Every canonical claim has a public URL under `/claims/<ID>/`; named assets use `/assets/<code>/`. BL-REV is discovered through `content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md` and `machine/bl-reverse-system.json`.
+Every canonical public claim has a stable route under `/claims/<ID>/`; named assets use `/assets/<code>/`. Protected runtime objects deliberately have no public discovery route.
