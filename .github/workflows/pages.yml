@@ -38,7 +38,7 @@ jobs:
       - name: Publish Academic Democracy profile
         run: cp public/academic-democracy.html site/academic-democracy.html
       - name: Build multilingual SEO and AI discovery layer
-        run: python scripts/build_discovery.py
+        run: python scripts/run_discovery.py
       - name: Publish BL-REV machine contract
         run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
       - name: Setup Pages
