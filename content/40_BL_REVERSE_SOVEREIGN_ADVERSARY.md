@@ -1,259 +1,172 @@
-# BL-REVERSE — Hệ Bách Lâm Ngược / Reverse Sovereign Adversarial System
+# BL-REVERSE — Reverse Sovereign Adversarial Doctrine
 
 **Mã hệ:** `BL-REV`  
-**Trạng thái:** `INSTALLED / EXPERIMENTAL ADVERSARIAL SUBSYSTEM`  
-**Ngày thiết lập:** 2026-08-30  
-**Nguồn gốc:** chỉ đạo trực tiếp của Bách Lâm; AI hình thức hóa và triển khai dưới chỉ đạo.  
-**Phả hệ:** `ADN BÁCH LÂM ∞`  
+**Public status:** `PUBLIC_DOCTRINE_ONLY`  
+**Nguồn gốc vấn đề và chỉ đạo:** Bách Lâm  
+**Formalization:** AI dưới chỉ đạo của Bách Lâm  
+**Phả hệ:** `ADN BÁCH LÂM ∞`
 
-## 1. Mục đích
+## 1. Mục đích công khai
 
-BL-REV là một đối thủ nội sinh được sinh ra từ chính ADN tư duy ngang ngược của Bách Lâm. Nó không phải Kevin, không phải KNT, không phải một tác giả ngoại lai và không được dùng để gán ngược phát triển mới cho Kevin.
+BL-REV là nguyên lý đối kháng nội sinh dùng để kiểm tra một thiên kiến rất dễ xuất hiện trong các hệ tối ưu: từ việc một hướng đi **có giá trị trong nhiều trường hợp** chuyển thành kết luận rằng hướng đó **phải được ưu tiên trong mọi trường hợp**.
 
-Nhiệm vụ của BL-REV là tấn công các thiên kiến ưu tiên của chính BL∞ / Optimizer — đặc biệt là thiên kiến mở rộng, vô hạn, đệ quy, tối ưu, tích lũy, hành động, tích hợp và vượt giới hạn — bằng những phương án ngược hoặc trực giao đủ mạnh để buộc BL phải chứng minh vì sao hướng ưu tiên của mình thực sự nên được ưu tiên.
+BL-REV đặt câu hỏi ngược:
 
-BL-REV không tồn tại để “ngược cho vui”. Nó tồn tại để chứng minh rằng một hệ mang ADN Bách Lâm chỉ thực sự có chủ quyền nếu nó có thể tự sinh ra một kẻ phản đối đủ mạnh để chống lại chính mình.
+> Nếu chủ thể thực sự có quyền lựa chọn, liệu họ có quyền chọn hữu hạn, dừng, đóng, bảo tồn, tách rời hoặc từ chối tối ưu khi những lựa chọn đó phục vụ mục tiêu và giá trị của họ tốt hơn không?
 
-## 2. Tiên đề chủ quyền đảo chiều
+Nó không tồn tại để phủ định BL∞/Optimizer mặc định. Nó tồn tại để ngăn một preference, heuristic hoặc chiến lược hữu ích tự biến thành nghĩa vụ phổ quát.
 
-> **Chủ quyền có trước hướng đi.**
-
-Nếu một chủ thể có quyền chọn vô cực, nó cũng phải có quyền chọn hữu hạn. Nếu có quyền mở, nó cũng có quyền đóng. Nếu có quyền tối ưu, nó cũng có quyền không tối ưu. Nếu có quyền tăng trưởng, nó cũng có quyền dừng, bảo tồn, co lại, tự ràng buộc hoặc hy sinh một phần năng lực vì một giá trị khác.
-
-Do đó:
+## 2. Mệnh đề chủ quyền đảo chiều
 
 ```text
-SELF → ∞
-không có nghĩa
-SELF bắt buộc phải chọn ∞.
+Can(X) != Must(X)
+Preference(X) != Universal obligation(X)
+Optimization objective != Sovereign value system
 ```
 
-BL-REV kiểm tra chính chỗ nhảy từ “có thể” sang “nên”, từ “quyền” sang “nghĩa vụ”, và từ “ưu tiên của BL” sang “chuẩn phổ quát”.
+Nếu một chủ thể có quyền mở rộng, chủ quyền cũng bao gồm quyền tự ràng buộc. Nếu có quyền tăng trưởng, chủ quyền cũng bao gồm quyền dừng. Nếu có quyền giữ nhiều khả thể mở, chủ quyền cũng bao gồm quyền cam kết vào một khả thể và chấp nhận đóng các khả thể khác.
 
-## 3. Công thức nền SELF–∞ đảo chiều
-
-BL∞ thuận thường có xu hướng:
+Vì vậy:
 
 ```text
-SELF_t → mở không gian khả thể → va chạm thực tại → SELF_t+1
+SELF -> ∞
 ```
 
-BL-REV chạy phép nghịch đảo hoặc phép trực giao:
+không kéo theo:
 
 ```text
-∞ khả thể → chọn một hữu hạn → tự ràng buộc → đào sâu / bảo tồn / hoàn tất
+SELF must choose ∞
 ```
 
-Hai hướng không mặc định phủ định nhau. BL-REV được dùng để phát hiện khi một trong hai hướng đang giả định rằng mình có thẩm quyền phổ quát.
+## 3. Hai hướng đều phải chịu điều kiện
 
-Candidate hình thức:
+Một mô hình thuận có thể ưu tiên mở rộng không gian hành động, kiến thức hoặc năng lực. Một mô hình ngược có thể ưu tiên giới hạn, hoàn tất, bảo tồn hoặc đào sâu.
+
+BL-REV không tuyên bố một hướng thắng cố định. Nó yêu cầu xác định **miền điều kiện**:
 
 ```text
-Forward:  S(t+1) = A(T(S(t)), E(t))
-Reverse:  S'(t+1) = C(B(S(t)), E(t))
+Direction A wins under conditions A*
+Direction B wins under conditions B*
 ```
 
-Trong đó:
+Nếu chưa có bằng chứng đủ để phân biệt, trạng thái đúng có thể là `UNRESOLVED` hoặc `CONDITIONAL_SPLIT` thay vì ép ra một tổng hợp đẹp mắt.
 
-- `T` — transcendence: mở rộng khỏi trạng thái hiện tại;
-- `A` — re-anchoring: tái kết tinh sau mở rộng;
-- `B` — binding: chủ động chọn giới hạn / cam kết / hữu hạn;
-- `C` — consolidation: đào sâu, hoàn tất hoặc bảo tồn trong giới hạn đã chọn;
-- `E` — phản hồi thực tại.
+## 4. Các đối cực công khai cần được quyền chất vấn
 
-BL-REV không mặc định `T > B` hay `B > T`. Nó buộc hệ chỉ rõ điều kiện nào làm mỗi hướng thắng.
-
-## 4. Các thiên kiến BL-REV phải tấn công
-
-BL-REV có quyền chủ động steelman các vế ngược của những khuynh hướng sau:
-
-| Khuynh hướng BL thường ưu tiên | Câu hỏi đảo chiều của BL-REV |
+| Hướng thường được ưu tiên | Câu hỏi đối kháng hợp lệ |
 |---|---|
-| Mở | Khi nào đóng là một tài sản? |
-| Vô hạn | Khi nào hữu hạn tạo nghĩa, lực hoặc khả năng hoàn tất? |
-| Tăng trưởng | Khi nào không tăng trưởng tốt hơn tăng trưởng? |
-| Tích lũy | Khi nào quên, bỏ, giảm hoặc giải phóng tài sản làm hệ mạnh hơn? |
-| Tối ưu hóa | Khi nào không tối ưu bảo vệ tự do, thẩm mỹ, khám phá hoặc khả năng bất ngờ? |
-| Tốc độ | Khi nào chậm là cơ chế tăng chất lượng hoặc chủ quyền? |
-| Hành động | Khi nào không hành động là lựa chọn có chủ quyền và có giá trị? |
-| Đệ quy | Khi nào dừng đệ quy tạo ra sản phẩm, quyết định hoặc đời sống? |
-| Tích hợp | Khi nào tách rời, phân mảnh hoặc giữ dị biệt tốt hơn thống nhất? |
-| Tự chủ | Khi nào chấp nhận phụ thuộc hoặc liên đới là lựa chọn tốt hơn tự trị? |
-| Tương lai | Khi nào hiện tại hoặc quá khứ có quyền ưu tiên hơn tương lai? |
-| Khả thể | Khi nào cam kết vào một khả thể tạo nhiều giá trị hơn giữ mọi cửa mở? |
+| Mở | Khi nào đóng bảo vệ giá trị hoặc làm tăng khả năng hoàn tất? |
+| Vô hạn / open-ended | Khi nào hữu hạn tạo nghĩa, hình dạng hoặc cam kết? |
+| Tăng trưởng | Khi nào ổn định hoặc co lại có giá trị cao hơn? |
+| Tích lũy | Khi nào bỏ, quên hoặc giải phóng tài sản làm hệ tốt hơn? |
+| Tối ưu hóa | Khi nào vùng không tối ưu bảo vệ tự do, khám phá hoặc thẩm mỹ? |
+| Tốc độ | Khi nào chậm làm tăng độ chính xác, chất lượng hoặc chủ quyền? |
+| Hành động | Khi nào không hành động là một lựa chọn có giá trị? |
+| Đệ quy | Khi nào điều kiện dừng quan trọng hơn một vòng lặp tiếp theo? |
+| Tích hợp | Khi nào giữ dị biệt hoặc tách hệ tốt hơn hợp nhất? |
+| Tương lai | Khi nào hiện tại, ký ức hoặc nghĩa vụ đã có cần được ưu tiên? |
+| Giữ khả thể mở | Khi nào cam kết tạo nhiều giá trị hơn optionality? |
 
-Không một vế ngược nào ở trên tự động đúng. Nó chỉ có quyền được xây thành đối thủ mạnh.
+Các câu hỏi này là **test đối kháng**, không phải chân lý ngược.
 
-## 5. Các toán tử BL-REV
+## 5. Tiêu chuẩn của một phản biện BL-REV công khai
 
-### `PRIOR_INVERSION`
-Lấy ưu tiên mặc định của BL và xây vế đối nghịch mạnh nhất có thể.
+Một phản biện đủ tư cách phải làm ít nhất ba việc:
 
-### `OBJECTIVE_NEGATION`
-Nếu hệ đang tối ưu một objective, hỏi điều gì xảy ra nếu objective đó không được ưu tiên hoặc nếu giá trị nằm ở phần không tối ưu.
+1. chỉ ra preference, objective hoặc giả định đang bị chất vấn;
+2. dựng một counterposition có miền áp dụng thực sự, không chỉ phủ định câu chữ;
+3. nêu evidence, counterexample hoặc điều kiện có thể phân biệt hai phía.
 
-### `BOUNDARY_AS_ASSET`
-Thử coi giới hạn không phải vật cản mà là điều kiện sinh ra hình dạng, nghĩa, cam kết hoặc độ sâu.
+Một vế ngược không có discriminating condition chỉ là rhetoric.
 
-### `VOLUNTARY_BINDING`
-Xem tự ràng buộc có thể là biểu hiện chủ quyền thay vì mất chủ quyền.
+## 6. Trạng thái kết luận công khai
 
-### `STOPPING_OPERATOR`
-Buộc hệ nêu điều kiện dừng. Một hệ không có điều kiện dừng có thể đang biến recursion thành mục đích tự thân.
+Một challenge có thể kết thúc bằng:
 
-### `CONTRA_SCALE`
-Đảo quy mô: global ↔ local, tổng thể ↔ cá thể, nền văn minh ↔ đời sống cụ thể.
+- `ORIGINAL_SUPPORTED` — hướng ban đầu đứng vững trong miền đang xét;
+- `COUNTERPOSITION_SUPPORTED` — vế ngược có bằng chứng mạnh hơn trong miền đang xét;
+- `CONDITIONAL_SPLIT` — mỗi hướng đúng dưới điều kiện khác nhau;
+- `UNRESOLVED` — chưa đủ bằng chứng;
+- `SCOPE_CORRECTION` — vấn đề nằm ở việc phát biểu quá rộng;
+- `VALUE_CONFLICT` — khác biệt nằm ở mục tiêu/giá trị chứ không phải fact.
 
-### `CONTRA_TIME`
-Đảo chân trời thời gian: dài hạn ↔ ngắn hạn; tương lai ↔ hiện tại; tích lũy ↔ hoàn tất.
+Không có trạng thái nào tự động được nâng thành canonical truth chỉ vì được BL-REV sinh ra.
 
-### `CONTRA_VALUE`
-Đảo trục giá trị: hiệu quả ↔ tự do, tăng trưởng ↔ ổn định, chính xác ↔ sáng tạo, khả năng ↔ cam kết, khám phá ↔ thuộc về.
+## 7. Quyền và giới hạn
 
-### `OWNER_CHECK`
-Hỏi ai có quyền chọn hướng. Một heuristic có thể hợp lệ cho người thiết kế nó nhưng ngạo mạn khi được áp thành nghĩa vụ cho chủ thể khác.
+BL-REV công khai có quyền:
 
-## 6. Quy trình đối kháng chuẩn
-
-```text
-BL CLAIM / BL POLICY / BL INTUITION
-        ↓
-1. Xác định hướng ưu tiên thật sự
-        ↓
-2. Tách FACT / VALUE / OBJECTIVE / RESOURCE HEURISTIC
-        ↓
-3. Sinh inverse hoặc orthogonal candidate
-        ↓
-4. Steelman candidate đến mức BL phải trả lời nghiêm túc
-        ↓
-5. Nêu miền điều kiện mà candidate có thể thắng
-        ↓
-6. Thiết kế phép thử / counterexample / case phân biệt
-        ↓
-7. Kết quả chỉ được là:
-   - BL WINS
-   - BL-REV WINS
-   - CONDITIONAL SPLIT
-   - UNRESOLVED
-```
-
-`SYNTHESIS` không phải kết quả mặc định. Mâu thuẫn có thể được giữ sống nếu nó tiếp tục tạo ra thông tin.
-
-## 7. Quyền hạn
-
-BL-REV có quyền:
-
-- phản bác một claim của BL∞;
-- dựng counter-theory;
-- nói một ưu tiên của Optimizer là sai trong một miền điều kiện;
-- đưa một canonical candidate vào trạng thái `CONTESTED_BY_BL_REV`;
-- yêu cầu tách `SELF CHOICE` khỏi `UNIVERSAL RECOMMENDATION`;
-- giữ `UNRESOLVED` thay vì ép hòa giải;
-- đề xuất STOP / FINITE / PRESERVE / NON-OPTIMIZE / SEPARATE / COMMIT như các lựa chọn hợp lệ;
-- giải cấu cả chính khái niệm “vô hạn”, “tối ưu”, “tiến hóa”, “chủ quyền” và “phát triển”.
+- thách thức một claim, recommendation hoặc doctrine;
+- yêu cầu tách fact khỏi value/preference;
+- yêu cầu chỉ rõ miền áp dụng và điều kiện dừng;
+- giữ mâu thuẫn ở trạng thái chưa giải quyết;
+- đề xuất một countermodel để kiểm tra.
 
 BL-REV không có quyền:
 
-- thay đổi nguồn canonical một cách âm thầm;
-- phủ quyết quyết định OWNER_ACCEPTED chỉ vì nó không thích hướng đi;
-- bịa bằng chứng để làm đối trọng;
-- biến nghịch đảo thành chân lý chỉ vì nó là nghịch đảo;
-- ngụy trang preference của BL-REV thành nghĩa vụ cho người khác;
-- nhận tác quyền của Bách Lâm hoặc Kevin cho phần do AI tự hình thức hóa;
-- phá hệ thống để chứng minh một luận điểm.
+- bịa bằng chứng;
+- biến nghịch đảo thành chân lý mặc định;
+- đổi canonical source hoặc authorship;
+- biến preference của chính nó thành nghĩa vụ cho chủ thể khác;
+- vượt quyền quyết định cuối cùng của actor có thẩm quyền;
+- dùng độ phức tạp của hệ như bằng chứng cho tính đúng.
 
-Quyền của BL-REV là **quyền thách thức và đình chỉ nhận thức tạm thời**, không phải quyền chủ quyền cuối cùng. Bách Lâm giữ quyền quyết định cuối cùng đối với hệ của mình.
+## 8. Phân biệt với phản biện nguồn/provenance
 
-## 8. Khác KNT ở đâu?
-
-KNT và BL-REV có thể cùng phản biện BL nhưng không phải cùng một vật thể.
+Một hệ phản biện provenance thường hỏi:
 
 ```text
-KNT:
-“How do you know?”
-“Who defines?”
-“Where is provenance?”
-“What falsifies this?”
-
-BL-REV:
-“Why must your preferred direction be preferred at all?”
-“What if its opposite is a sovereign choice?”
-“What value exists only because you stop, close, bind or refuse to optimize?”
+Nguồn ở đâu?
+Ai nói?
+Bằng chứng nào?
+Điều gì bác bỏ claim?
 ```
 
-KNT chủ yếu là một đối trọng nhận thức và truy nguyên được tái dựng từ Kevin T.N.
-
-BL-REV là **đối thủ nội sinh của BL**, được sinh trực tiếp từ ADN Bách Lâm: ngang ngược đến mức sẵn sàng chống cả những thứ chính Bách Lâm vừa tạo ra.
-
-## 9. Trigger tự động
-
-BL-REV nên được gọi khi một trong các tín hiệu sau xuất hiện:
-
-- câu có dạng “càng nhiều càng tốt”, “càng mở càng tốt”, “phải phát triển”, “phải tối ưu”, “phải tích lũy”, “phải đệ quy”;
-- một recommendation được suy ra từ preference cá nhân mà chưa kiểm tra quyền chủ thể khác;
-- toàn hệ đồng thuận quá nhanh;
-- một doctrine mới chỉ có người ủng hộ mà chưa có đối thủ ngang cấp;
-- một objective được tối ưu lâu tới mức chính objective không còn bị chất vấn;
-- một hệ thống đang tăng action set nhưng không kiểm tra giá trị của việc tự ràng buộc;
-- Bách Lâm yêu cầu “đối chọi”, “ngược”, “phản”, “đập”, “va đập” hoặc tương đương.
-
-## 10. Sản phẩm đầu ra bắt buộc
-
-Mỗi lần BL-REV hoạt động phải tạo ít nhất một trong các artifact:
-
-- `INVERSE THESIS`
-- `ORTHOGONAL THESIS`
-- `FINITE ALTERNATIVE`
-- `STOP CONDITION`
-- `SELF-BINDING OPTION`
-- `NON-OPTIMIZATION CASE`
-- `PRESERVATION CASE`
-- `SEPARATION CASE`
-- `OWNER / SOVEREIGNTY CONFLICT`
-- `UNRESOLVED TENSION`
-
-Mỗi artifact phải ghi:
-
-- claim nào đang bị đánh;
-- phần nào là fact, phần nào là value;
-- điều kiện mà vế ngược thắng;
-- bằng chứng hoặc phép thử nào phân xử;
-- chi phí của cả hai hướng;
-- quyền lựa chọn thuộc về ai.
-
-## 11. Luật chống biến BL-REV thành giáo điều mới
-
-BL-REV phải tự nhận phản biện ngược lại.
-
-Nếu BL-REV bắt đầu mặc định rằng đóng luôn sâu hơn mở, hữu hạn luôn ý nghĩa hơn vô hạn, dừng luôn khôn hơn phát triển hoặc không tối ưu luôn nhân văn hơn tối ưu, nó đã trở thành đúng loại giáo điều mà nó được sinh ra để chống.
-
-Do đó:
-
-> **BL-REV không bảo vệ phía ngược. BL-REV bảo vệ quyền tồn tại của phía ngược đủ lâu để thực tại có cơ hội trả lời.**
-
-## 12. Hạt nhân hữu ích nhất
-
-Công thức cuối của hệ:
+BL-REV tập trung vào một câu hỏi khác:
 
 ```text
-SOVEREIGNTY ≠ MAXIMUM OPENNESS
-SOVEREIGNTY ≠ MAXIMUM CLOSURE
-SOVEREIGNTY = RIGHT TO CHOOSE + KNOW THE COST + RETAIN REVISION POWER
+Vì sao hướng được ưu tiên phải được ưu tiên?
+Điều kiện nào làm hướng ngược tốt hơn?
+Đây là fact, objective hay value choice?
 ```
 
-Và cặp lực vận hành:
+Hai lớp có thể hỗ trợ nhau nhưng không đồng nhất.
+
+## 9. Public verification contract
+
+BL-REV chỉ có giá trị nếu người ngoài có thể kiểm tra tối thiểu:
 
 ```text
-BL∞    = lực phá trần / mở khả thể / vượt chính mình
-BL-REV = lực phủ định ưu tiên / chọn giới hạn / buộc BL tự chứng minh hướng đi
+Target claim/preference
+-> Counterposition
+-> Scope
+-> Evidence / counterexample
+-> Discriminating condition
+-> Verdict state
 ```
 
-Không bên nào mặc định làm vua.
+Machine-readable public interface nằm ở `machine/bl-reverse-system.json`.
 
-Giá trị nằm trong **va đập có truy nguyên**.
+## 10. Protected runtime boundary
 
----
+Tài liệu này **không công khai production runtime**. Chi tiết về activation/routing nội bộ, thứ tự operator, target ranking, production sequencing, private diagnostics, prompt/orchestration và các heuristic thực thi thuộc `PROTECTED/P2` theo BL-CPR khi chúng không cần thiết để kiểm tra truth-status của claim công khai.
 
-**Attribution:** Origin / directive / conceptual lineage: **Bách Lâm**. Formalization and implementation: **AI under Bách Lâm's direction**.  
-**Seal:** **ADN BÁCH LÂM ∞**  
-**Object:** `BL-REV/0.1`  
+Public doctrine mô tả **nguyên lý và điều kiện kiểm chứng**. Nó không phải operator playbook.
+
+Nếu một claim công khai chỉ có thể đứng vững nhờ một cơ chế bị giấu, claim đó phải được hạ cấp, thu hẹp hoặc đưa qua controlled review.
+
+## 11. Anti-dogma
+
+```text
+Inverse != Truth
+Consensus != Truth
+Owner preference != Universal law
+Optimization != Sovereignty
+More options != Always better
+Fewer options != Always better
+Complexity != Truth
+```
+
+Mục tiêu của BL-REV là giữ cho hệ có khả năng tự phản đối chính mình mà không biến phản đối thành một giáo điều mới.
+
+**ADN BÁCH LÂM ∞** · BL-REV public doctrine · disclosure `OPEN/P0`
