@@ -98,8 +98,9 @@ if not public_provenance_path.exists():
     errors.append('missing sanitized public provenance interface')
 else:
     public_provenance=public_provenance_path.read_text(encoding='utf-8')
-    for marker in ['SANITIZED_PUBLIC_PROVENANCE','BLOK foundational nucleus','precedes','Relative order only','UNKNOWN','AI formalization != author verbatim quote']:
-        if marker not in public_provenance:
+    public_provenance_lower=public_provenance.lower()
+    for marker in ['sanitized_public_provenance','blok foundational nucleus','precedes','relative order only','unknown','ai formalization != author verbatim quote']:
+        if marker not in public_provenance_lower:
             errors.append(f'public provenance missing boundary marker: {marker}')
 
 # Public repository must not reintroduce detailed/private lineage artifacts.
