@@ -1,10 +1,23 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "policy_id": "BL-CPR",
-  "version": "1.1",
+  "version": "1.2",
   "status": "adopted",
-  "effective_date": "2026-08-30",
+  "effective_date": "2026-08-31",
   "decision": "open_verifiable_knowledge_protected_runtime",
+  "repository_boundary": {
+    "public_repository_is_exposure_boundary": true,
+    "absence_from_navigation_or_sitemap_is_not_privacy": true,
+    "protected_material_must_live_outside_public_repository": true,
+    "allowed_repository_disclosure_classes": [
+      "OPEN/P0",
+      "CONTROLLED/P1"
+    ],
+    "forbidden_repository_disclosure_classes": [
+      "PROTECTED/P2",
+      "FORBIDDEN/P3"
+    ]
+  },
   "public_required": [
     "canonical_identity",
     "claim_truth_conditions",
@@ -82,6 +95,42 @@
       "routing_weights"
     ]
   },
+  "artifact_classes": {
+    "OPEN/P0": [
+      "canonical_manifest",
+      "claim_index",
+      "asset_index",
+      "disclosure_policy",
+      "canonical_public_claim_pages"
+    ],
+    "CONTROLLED/P1": [
+      "public_claim_registry_without_private_reasoning",
+      "novelty_ontology_projection",
+      "conceptual_logic_projection",
+      "entity_relation_projection",
+      "historical_provenance_projection",
+      "public_adversarial_interface_contract",
+      "discovery_orientation_material"
+    ],
+    "PROTECTED/P2": [
+      "asset_level_runtime_composition",
+      "private_router",
+      "activation_logic",
+      "target_ranking",
+      "operator_sequence",
+      "private_diagnostics",
+      "private_model_or_operator_handoffs",
+      "private_provenance_payloads"
+    ],
+    "FORBIDDEN/P3": [
+      "credentials",
+      "tokens",
+      "private_signing_keys",
+      "unlawfully_exposed_personal_data",
+      "equivalent_sensitive_secret_material"
+    ]
+  },
+  "projection_rule": "When a public claim needs machine verification, publish the smallest sufficient projection. Do not publish a richer internal object merely because it already exists in machine-readable form.",
   "history_response": {
     "preserve_private_archive": true,
     "remove_active_public_copy": true,
@@ -93,7 +142,10 @@
   "lineage": {
     "origin_of_problem": "Bách Lâm",
     "formalization": "AI",
-    "provenance": ["LKB_DIRECT", "NEW_FORMALIZATION"],
+    "provenance": [
+      "LKB_DIRECT",
+      "NEW_FORMALIZATION"
+    ],
     "seal": "ADN BÁCH LÂM ∞"
   }
 }
