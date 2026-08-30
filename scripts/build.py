@@ -78,8 +78,29 @@ def render_docs(paths):
       chunks.append(f'<section data-source="{html.escape(path.name)}">{md(txt)}</section>')
     return '\n'.join(chunks)
 
+def require_public_files(paths):
+    for path in paths:
+        if not path.exists():
+            raise FileNotFoundError(f'Public allowlist file missing: {path.relative_to(ROOT)}')
+    return paths
+
 def claim_url(cid): return CFG['project']['canonical_url'].rstrip('/')+f'/claims/{quote(cid,safe="-._")}/'
 def asset_url(code): return CFG['project']['canonical_url'].rstrip('/')+f'/assets/{slug_code(code)}/'
+
+# BL-CPR fail-closed public allowlists. Directory presence alone never grants publication.
+PUBLIC_PROVENANCE_FILES=require_public_files([
+    ROOT/'provenance/00_PUBLIC_PROVENANCE.md',
+    ROOT/'provenance/04_PROVENANCE_POLICY.md',
+])
+PUBLIC_CRITIQUE_FILES=require_public_files([
+    ROOT/'critiques/00_CRITIQUE_PROTOCOL.md',
+    ROOT/'critiques/01_ANTI_FALLACY_ARMOR.md',
+    ROOT/'critiques/02_OPEN_CHALLENGE.md',
+    ROOT/'critiques/03_WEEKLY_REFINEMENT_PROTOCOL.md',
+    ROOT/'audit/00_DEEP_AUDIT_CHECKLIST.md',
+    ROOT/'audit/01_AUDIT_ISSUE_TEMPLATE.md',
+    ROOT/'audit/02_V0_2_PREFLIGHT_FINDINGS.md',
+])
 
 # Clean generated site to prevent stale pages.
 if SITE.exists(): shutil.rmtree(SITE)
@@ -148,8 +169,8 @@ for a in ASSETS['assets']:
 arows.append('</div>')
 write_page('assets.html','BL∞ — Asset & Technology Registry','\n'.join(arows))
 
-write_page('provenance.html','BL∞ — Provenance',render_docs(sorted((ROOT/'provenance').glob('*.md'))))
-write_page('critique.html','BL∞ — Giao thức phản biện',render_docs(sorted((ROOT/'critiques').glob('*.md'))+sorted((ROOT/'audit').glob('*.md'))))
+write_page('provenance.html','BL∞ — Provenance',render_docs(PUBLIC_PROVENANCE_FILES))
+write_page('critique.html','BL∞ — Giao thức phản biện',render_docs(PUBLIC_CRITIQUE_FILES))
 write_page('machine.html','BL∞ — Machine Layer',md((ROOT/'machine/README.md').read_text(encoding='utf-8')))
 
 # Machine layer
@@ -158,7 +179,7 @@ manifest={
   'creator':CFG['project']['author'],'aliases':CFG['project']['aliases'],'version':CFG['project']['version'],
   'canonical_url':CFG['project']['canonical_url'],'repository':CFG['project']['repository'],'date_created':CFG['project'].get('date_created',CFG['project']['date']),'date_released':CFG['project']['date'],'last_updated':CFG['project'].get('last_updated',CFG['project']['date']),
   'claim_registry':'claims.json','claim_index':'claim-index.json','claim_graph':'claim-graph.jsonld',
-      'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json','historical_graph':'historical-graph.jsonld',
+  'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json','historical_graph':'historical-graph.jsonld',
   'disclosure_policy':'disclosure-policy.json','bl_adn_protocol':'../bl-adn.html','bl_adn_source':'../bl-adn.md','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
 }
 allbytes=b''
