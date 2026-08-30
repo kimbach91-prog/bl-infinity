@@ -14,6 +14,12 @@ try: data=json.loads((ROOT/'claims/claims.json').read_text(encoding='utf-8'))
 except Exception as e: errors.append(f'claims json: {e}'); data={'claims':[]}
 try: assets=json.loads((ROOT/'machine/assets.json').read_text(encoding='utf-8'))
 except Exception as e: errors.append(f'assets json: {e}'); assets={'assets':[]}
+try: historical=json.loads((ROOT/'machine/historical-graph.jsonld').read_text(encoding='utf-8'))
+except Exception as e: errors.append(f'historical graph: {e}'); historical={}
+try: logic_stack=json.loads((ROOT/'machine/logic-stack.json').read_text(encoding='utf-8'))
+except Exception as e: errors.append(f'logic stack: {e}'); logic_stack={}
+try: entity_graph=json.loads((ROOT/'machine/graph.jsonld').read_text(encoding='utf-8'))
+except Exception as e: errors.append(f'entity graph: {e}'); entity_graph={}
 
 ids=set(); allowed={'axiom','definition','theorem','proposition','conjecture','method','protocol','empirical-interface','analogy','principle','relation','model','mechanism','effect','theorem-schema'}
 claims=data.get('claims',[])
@@ -72,6 +78,28 @@ def adfs(n):
     astack.pop(); acolor[n]=BLACK
 for n in list(ag):
     if acolor[n]==WHITE: adfs(n)
+
+# Historical truth boundary: chronology is separate from logic/dependency.
+if historical.get('graphType') != 'HISTORICAL_GRAPH':
+    errors.append('historical graph missing graphType=HISTORICAL_GRAPH')
+h_nodes={n.get('@id'):n for n in historical.get('@graph',[]) if isinstance(n,dict)}
+blok_event=h_nodes.get('bl:event-blok-foundational-nucleus',{})
+if blok_event.get('precedes') != 'bl:event-optimizer-essence-chain':
+    errors.append('historical graph must preserve owner-confirmed BLOK -> PRECEDES -> Optimizer/Essence edge')
+if blok_event.get('exactDateKnown') is not False:
+    errors.append('BLOK foundational nucleus absolute date must remain unresolved')
+if logic_stack.get('graph_type') != 'LOGICAL_GRAPH_VIEW' or logic_stack.get('not_chronology') is not True:
+    errors.append('logic stack must declare that it is not chronology')
+if logic_stack.get('historical_graph') != 'historical-graph.jsonld':
+    errors.append('logic stack missing historical graph pointer')
+timeline=(ROOT/'provenance/00_ORIGIN_TIMELINE.md').read_text(encoding='utf-8')
+for marker in ['BL-HIST-CURRENT-0002','BLOK_FOUNDATIONAL_NUCLEUS -> PRECEDES -> OPTIMIZER_ESSENCE_CHAIN','SUPERSEDES BL-HIST-RECONSTRUCTION-0001']:
+    if marker not in timeline: errors.append(f'historical timeline missing correction marker: {marker}')
+e_nodes={n.get('@id'):n for n in entity_graph.get('@graph',[]) if isinstance(n,dict)}
+for required_entity in ['bl:blok','bl:optimizer','bl:bl-infinity','bl:bl-aegis']:
+    if required_entity not in e_nodes: errors.append(f'entity graph missing independent BL-lineage object {required_entity}')
+if e_nodes.get('bl:bl-aegis',{}).get('isPartOf') == {'@id':'bl:bl-infinity'}:
+    errors.append('entity graph must not collapse BL-AEGIS into BL-infinity via historical overreach')
 
 # Canonical content guardrails against self-sealing/priority overclaim.
 joined='\n'.join(p.read_text(encoding='utf-8') for p in (ROOT/'content').glob('*.md'))

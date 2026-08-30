@@ -2,6 +2,8 @@
 
 This file is a **structured reconstruction** of the live reasoning conversation, preserving sequence, conceptual transitions and selected verbatim phrases. It is not represented as a byte-for-byte export of the ChatGPT UI.
 
+**Scope correction:** turn-group order is conversation order for the 2026-08-28 BL∞ origin build, not the complete historical order of the BL lineage. In the corrected current view, the BLOK foundational nucleus predates the Optimizer/“Bản chất” chain. A mechanism appearing late in this conversation may be a reuse, public formalization or integration of an earlier object rather than its historical birth.
+
 ## Turn Group A — AI, code and representation
 
 **Author:** argues that shallow AI use stops at chat while deeper use includes skilling, coding, thought programming and neuron construction.

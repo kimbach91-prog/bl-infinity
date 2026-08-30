@@ -2,6 +2,9 @@
   "schema_version": "0.2",
   "name": "BL∞ Canonical Logic Stack",
   "version": "0.2.0-index-pilot",
+  "graph_type": "LOGICAL_GRAPH_VIEW",
+  "not_chronology": true,
+  "historical_graph": "historical-graph.jsonld",
   "layers": [
     {"id":"L0","name":"Total Reality / embedded observer","assets":["BL-EB","BL-OO"]},
     {"id":"L1","name":"Representation","assets":["BL-RA"]},
@@ -18,5 +21,5 @@
     {"id":"L12","name":"Release spiral","assets":["BL-PIRAL"]},
     {"id":"L13","name":"Feedback into cognition/reality","assets":["BL-EAP","BL-RAP","BL-RCE"]}
   ],
-  "guardrail": "System complexity, indexability, social uptake or resistance to current attacks do not by themselves entail truth."
+  "guardrail": "Layer order is logical/operational, not historical chronology. System complexity, indexability, social uptake or resistance to current attacks do not by themselves entail truth."
 }
