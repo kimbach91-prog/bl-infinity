@@ -3,6 +3,9 @@ __pycache__/
 .DS_Store
 build-report.json
 
+# Generated public site is materialized in CI, not committed as source.
+site/
+
 # BL-CPR — protected runtime boundary. These paths never belong in the public repo.
 .env
 .env.*
