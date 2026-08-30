@@ -92,9 +92,25 @@ if logic_stack.get('graph_type') != 'LOGICAL_GRAPH_VIEW' or logic_stack.get('not
     errors.append('logic stack must declare that it is not chronology')
 if logic_stack.get('historical_graph') != 'historical-graph.jsonld':
     errors.append('logic stack missing historical graph pointer')
-timeline=(ROOT/'provenance/00_ORIGIN_TIMELINE.md').read_text(encoding='utf-8')
-for marker in ['BL-HIST-CURRENT-0002','BLOK_FOUNDATIONAL_NUCLEUS -> PRECEDES -> OPTIMIZER_ESSENCE_CHAIN','SUPERSEDES BL-HIST-RECONSTRUCTION-0001']:
-    if marker not in timeline: errors.append(f'historical timeline missing correction marker: {marker}')
+
+public_provenance_path=ROOT/'provenance/00_PUBLIC_PROVENANCE.md'
+if not public_provenance_path.exists():
+    errors.append('missing sanitized public provenance interface')
+else:
+    public_provenance=public_provenance_path.read_text(encoding='utf-8')
+    for marker in ['SANITIZED_PUBLIC_PROVENANCE','BLOK foundational nucleus','precedes','Relative order only','UNKNOWN','AI formalization != author verbatim quote']:
+        if marker not in public_provenance:
+            errors.append(f'public provenance missing boundary marker: {marker}')
+
+# Public repository must not reintroduce detailed/private lineage artifacts.
+for forbidden in [
+    ROOT/'handoff',
+    ROOT/'provenance/raw',
+    ROOT/'provenance/private',
+]:
+    if forbidden.exists():
+        errors.append(f'protected provenance/runtime path exists in public tree: {forbidden.relative_to(ROOT)}')
+
 e_nodes={n.get('@id'):n for n in entity_graph.get('@graph',[]) if isinstance(n,dict)}
 for required_entity in ['bl:blok','bl:optimizer','bl:bl-infinity','bl:bl-aegis']:
     if required_entity not in e_nodes: errors.append(f'entity graph missing independent BL-lineage object {required_entity}')
@@ -122,11 +138,6 @@ if placeholder:
     msg='deployment placeholders remain: '+', '.join(placeholder)
     if args.release: errors.append(msg)
     else: warnings.append(msg)
-
-# Raw transcript boundary: reconstructed provenance must not masquerade as exact export.
-raw=ROOT/'provenance/03_RAW_TRANSCRIPT_IMPORT.md'
-if raw.exists() and 'import' in raw.read_text(encoding='utf-8').lower():
-    warnings.append('exact raw transcript has not yet been imported/hashed; current provenance is structured reconstruction + selected excerpts')
 
 result={'errors':errors,'warnings':sorted(set(warnings)),'notes':notes,'claims':len(ids),'assets':len(aset),'version':cfg.get('project',{}).get('version')}
 print(json.dumps(result,ensure_ascii=False,indent=2))
