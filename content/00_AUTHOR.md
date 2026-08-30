@@ -6,6 +6,7 @@ BL∞ phát triển từ hướng khảo sát giới hạn của quan sát, khô
 
 **Mạng xã hội & hồ sơ công khai:**
 
+- Facebook: [Lâm Kim Bách](https://m.facebook.com/lam.kimbach/)
 - GitHub: [@kimbach91-prog](https://github.com/kimbach91-prog)
 - Mã nguồn & hồ sơ công khai BL∞: [kimbach91-prog/bl-infinity](https://github.com/kimbach91-prog/bl-infinity)
 
