@@ -5,7 +5,6 @@
     "name": "schema:name",
     "creator": "schema:creator",
     "dateCreated": "schema:dateCreated",
-    "isBasedOn": "schema:isBasedOn",
     "precedes": {
       "@id": "bl:precedes",
       "@type": "@id"
@@ -14,20 +13,20 @@
       "@id": "schema:isRelatedTo",
       "@type": "@id"
     },
-    "evidenceClass": "bl:evidenceClass",
     "historicalStatus": "bl:historicalStatus",
     "exactDateKnown": "bl:exactDateKnown",
-    "formalizationRole": "bl:formalizationRole"
+    "disclosureClass": "bl:disclosureClass"
   },
-  "graphType": "HISTORICAL_GRAPH",
-  "version": "0.1.0-corrected-current-view",
-  "supersedes": "BL-HIST-RECONSTRUCTION-0001",
+  "graphType": "HISTORICAL_GRAPH_PUBLIC_PROJECTION",
+  "version": "0.2-public-projection",
+  "disclosureClass": "CONTROLLED/P1",
+  "projectionScope": "Minimum public chronology sufficient for identity, relative-order and release provenance. Raw conversations, detailed reconstruction evidence and private provenance payloads are withheld.",
   "guardrails": [
     "Lineage is not dependency.",
     "Precedence is not parenthood.",
     "Timestamp is not novelty proof.",
     "Hash is not authorship proof or truth proof.",
-    "Unknown absolute dates must remain unknown."
+    "Unknown absolute dates remain unknown."
   ],
   "@graph": [
     {
@@ -40,88 +39,66 @@
       "@type": "schema:Event",
       "name": "BLOK foundational nucleus",
       "creator": {"@id": "bl:person-lam-kim-bach"},
-      "historicalStatus": "OWNER_CONFIRMED_RELATIVE_ORDER",
-      "evidenceClass": "OWNER_CORRECTION_RETROSPECTIVE",
+      "historicalStatus": "RELATIVE_ORDER_PUBLICLY_ASSERTED",
       "exactDateKnown": false,
-      "precedes": "bl:event-optimizer-essence-chain",
-      "formalizationRole": "earliest_confirmed_relative_position; canonical naming date unresolved"
+      "precedes": "bl:event-optimizer-essence-chain"
     },
     {
       "@id": "bl:event-optimizer-essence-chain",
       "@type": "schema:Event",
       "name": "Optimizer / Bản chất chain",
       "creator": {"@id": "bl:person-lam-kim-bach"},
-      "historicalStatus": "RELATIVE_ORDER_CONFIRMED_AFTER_BLOK",
-      "evidenceClass": "OWNER_CORRECTION_RETROSPECTIVE",
+      "historicalStatus": "RELATIVE_ORDER_PUBLICLY_ASSERTED_AFTER_BLOK",
       "exactDateKnown": false
     },
     {
-      "@id": "bl:event-bl-infinity-origin-dialogue",
+      "@id": "bl:event-bl-infinity-public-formalization",
       "@type": "schema:Event",
-      "name": "BL∞ origin-build dialogue",
+      "name": "BL∞ public formalization",
       "creator": {"@id": "bl:person-lam-kim-bach"},
       "dateCreated": "2026-08-28",
-      "historicalStatus": "CHAT_TIMESTAMPED_AND_ORDERED_SUBTIMELINE",
-      "evidenceClass": "STRUCTURED_CONVERSATION_RECONSTRUCTION",
-      "exactDateKnown": true,
-      "formalizationRole": "BL∞ public formalization and integration; not BLOK birth"
+      "historicalStatus": "PUBLIC_RELEASE_PROVENANCE",
+      "exactDateKnown": true
     },
     {
-      "@id": "bl:event-bl-aegis-formalization",
+      "@id": "bl:event-bl-aegis-public-formalization",
       "@type": "schema:Event",
-      "name": "BL-AEGIS modular formalization in BL∞ origin build",
+      "name": "BL-AEGIS public modular formalization",
       "creator": {"@id": "bl:person-lam-kim-bach"},
       "dateCreated": "2026-08-28",
-      "historicalStatus": "CHAT_ORDERED_EVENT_16",
-      "evidenceClass": "STRUCTURED_CONVERSATION_RECONSTRUCTION",
-      "exactDateKnown": true,
-      "isBasedOn": {"@id": "bl:event-bl-infinity-origin-dialogue"}
+      "historicalStatus": "PUBLIC_RELEASE_PROVENANCE",
+      "exactDateKnown": true
     },
     {
       "@id": "bl:object-blok",
       "@type": "schema:CreativeWork",
       "name": "BLOK",
-      "relatedTo": [
-        "bl:object-optimizer",
-        "bl:object-bl-infinity",
-        "bl:object-bl-aegis"
-      ]
+      "relatedTo": ["bl:object-optimizer", "bl:object-bl-infinity", "bl:object-bl-aegis"]
     },
     {
       "@id": "bl:object-optimizer",
       "@type": "schema:CreativeWork",
       "name": "Optimizer",
-      "relatedTo": [
-        "bl:object-blok",
-        "bl:object-bl-infinity",
-        "bl:object-bl-aegis"
-      ]
+      "relatedTo": ["bl:object-blok", "bl:object-bl-infinity", "bl:object-bl-aegis"]
     },
     {
       "@id": "bl:object-bl-infinity",
       "@type": "schema:CreativeWork",
       "name": "BL∞",
-      "relatedTo": [
-        "bl:object-blok",
-        "bl:object-optimizer",
-        "bl:object-bl-aegis"
-      ]
+      "relatedTo": ["bl:object-blok", "bl:object-optimizer", "bl:object-bl-aegis"]
     },
     {
       "@id": "bl:object-bl-aegis",
       "@type": "schema:CreativeWork",
       "name": "BL-AEGIS",
-      "relatedTo": [
-        "bl:object-blok",
-        "bl:object-optimizer",
-        "bl:object-bl-infinity"
-      ]
+      "relatedTo": ["bl:object-blok", "bl:object-optimizer", "bl:object-bl-infinity"]
     }
   ],
-  "openQuestions": [
-    "Absolute birth date of the BLOK foundational nucleus",
-    "First functional BLOK object versus later canonical naming",
-    "Exact first event of the Optimizer / Bản chất chain",
-    "Complete chronology among BL∞, Optimizer and intermediate BL-lineage objects"
+  "withheld": [
+    "raw_conversation",
+    "detailed_reconstruction_evidence",
+    "private_provenance_payload",
+    "operator_or_model_handoff",
+    "private_reasoning_trace"
   ]
 }
