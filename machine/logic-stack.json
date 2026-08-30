@@ -1,27 +1,55 @@
 {
-  "schema_version": "0.2",
-  "name": "BL∞ Canonical Logic Stack",
-  "version": "0.2.0-index-pilot",
+  "schema_version": "0.3",
+  "name": "BL∞ Canonical Logic Stack — Public Projection",
+  "version": "0.3-public-projection",
   "graph_type": "LOGICAL_GRAPH_VIEW",
   "interface_scope": "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY",
+  "disclosure_class": "CONTROLLED/P1",
   "not_chronology": true,
   "not_runtime_router": true,
   "historical_graph": "historical-graph.jsonld",
-  "layers": [
-    {"id":"L0","name":"Total Reality / embedded observer","assets":["BL-EB","BL-OO"]},
-    {"id":"L1","name":"Representation","assets":["BL-RA"]},
-    {"id":"L2","name":"Reachability / constructibility","assets":["BL-GR","BL-RCE","BL-RCG"]},
-    {"id":"L3","name":"Observation filter / open ontology","assets":["BL-OFB","BL-OO"]},
-    {"id":"L4","name":"Absorption / Optimizer cognition","assets":["BL-EAP","BL-BDRAE","BL-CAF","BL-CRE","BL-BAE","BL-SDF","BL-GSC"]},
-    {"id":"L5","name":"Novelty ontology","assets":["BL-NCI","BL-CNO","BL-RNO","BL-SNO","BL-ANO","BL-FNO","BL-PNO","BL-ENO","BL-IDR","BL-NVM","BL-RDN","BL-NTO","BL-LSI","BL-IFH","BL-FCR","BL-TNI"]},
-    {"id":"L6","name":"Claim / research object","assets":["BL-PCRO","BL-CG","BL-ICO"]},
-    {"id":"L7","name":"Governance / provenance","assets":["BL-OODP","BL-PV","BL-TN","BL-ID","BL-CP","BL-LOG","BL-CHRONO","BL-SIGN"]},
-    {"id":"L8","name":"Epistemic armor","assets":["BL-AEGIS"]},
-    {"id":"L9","name":"Discovery / indexing","assets":["BL-IDX","BL-ICO","BL-ORBIT","BL-MXF","BL-MGP","BL-ORB","BL-CDS","BL-L10N"]},
-    {"id":"L10","name":"Social pilot","assets":["BL-SRS"]},
-    {"id":"L11","name":"Deep audit","assets":["BL-DAL","BL-MAJ","BL-ARS","BL-LC","BL-EOA"]},
-    {"id":"L12","name":"Release spiral","assets":["BL-PIRAL"]},
-    {"id":"L13","name":"Feedback into cognition/reality","assets":["BL-EAP","BL-RAP","BL-RCE"]}
+  "projection": [
+    {
+      "id": "P0",
+      "name": "Reality / embedded observer",
+      "description": "Public conceptual starting point: observers are embedded in a reality larger than any single representation."
+    },
+    {
+      "id": "P1",
+      "name": "Representation / reachability",
+      "description": "Public distinction between what can be represented, what can be reached or constructed, and what is actually realized."
+    },
+    {
+      "id": "P2",
+      "name": "Claim / evidence",
+      "description": "Public claims are separated from assumptions and must expose scope, status, dependencies and falsifiers."
+    },
+    {
+      "id": "P3",
+      "name": "Provenance / governance",
+      "description": "Public objects preserve authorship/provenance class, versioning, change history and authority boundaries."
+    },
+    {
+      "id": "P4",
+      "name": "Critique / audit",
+      "description": "Public critique and adversarial checking feed revision without granting criticism automatic truth status."
+    },
+    {
+      "id": "P5",
+      "name": "Publication / feedback",
+      "description": "Verified public objects can be indexed, challenged, revised and republished as living research objects."
+    }
   ],
-  "guardrail": "This is a public conceptual/dependency map, not a production router, activation graph, operator sequence or private runtime. Layer order is not historical chronology. System complexity, indexability, social uptake or resistance to current attacks do not by themselves entail truth."
+  "withheld_from_public_projection": [
+    "asset_level_runtime_composition",
+    "production_router",
+    "activation_triggers",
+    "operator_sequence",
+    "routing_weights",
+    "target_ranking",
+    "private_diagnostics",
+    "production_pipeline",
+    "private_model_or_operator_handoffs"
+  ],
+  "guardrail": "This artifact is a deliberately reduced public conceptual projection. It is not the production architecture, runtime router, activation graph, operator sequence, implementation inventory or private decision pipeline. Layer order is not historical chronology."
 }
