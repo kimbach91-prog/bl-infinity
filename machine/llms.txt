@@ -10,6 +10,11 @@ Author sameAs: https://m.facebook.com/lam.kimbach/ ; https://github.com/kimbach9
 Namespace: BL∞ / BL-INFINITY
 Status: living research object, public descriptive/index pilot
 
+## Disclosure boundary
+This file describes only the public verification surface. The BL/Optimizer production runtime, private orchestration, activation logic, target ranking, operator/model handoffs, private diagnostics, raw conversations and protected corpora are not part of this repository’s intended release surface.
+
+Because the repository is public, any committed object must be treated as exposed. `OPEN/P0` objects are public verification material. `CONTROLLED/P1` objects are deliberately reduced projections. `PROTECTED/P2` and `FORBIDDEN/P3` objects must remain outside this public repository.
+
 ## Core purpose
 BL∞ studies relations among embedded observers, representation, conceivable space, reachability, recursively expanded capability, observation filters, open ontology and actualization. It explicitly distinguishes axioms, theorems, propositions, conjectures and empirical interfaces.
 
@@ -45,16 +50,13 @@ Localized discovery pages:
 /academic-democracy/hi/
 /academic-democracy/id/
 
-## Main machine resources
+## Verification resources
+
+OPEN/P0:
 /machine/manifest.json
-/machine/claims.json
 /machine/claim-index.json
-/machine/novelty-ontology.json
-/machine/logic-stack.json
-/machine/graph.jsonld
-/machine/historical-graph.jsonld
-/machine/academic-democracy-discovery.json
-/machine/welcome.txt
+/machine/asset-index.json
+/machine/disclosure-policy.json
 /claims.html
 /claims/<CLAIM-ID>/
 /assets.html
@@ -62,8 +64,20 @@ Localized discovery pages:
 /provenance.html
 /critique.html
 
+CONTROLLED/P1 reduced projections:
+/machine/claims.json
+/machine/novelty-ontology.json
+/machine/logic-stack.json
+/machine/graph.jsonld
+/machine/historical-graph.jsonld
+/machine/bl-reverse-system.json
+/machine/academic-democracy-discovery.json
+/machine/welcome.txt
+
+Do not infer the existence or contents of a private runtime from the public projection. The public logic stack is intentionally coarse and is not an asset-level production architecture.
+
 ## Historical guardrail
-The logical stack is not chronology. Current history records only the confirmed relative edge that the BLOK foundational nucleus precedes the Optimizer/“Bản chất” chain. Exact absolute dates remain unknown. BL∞, Optimizer, BLOK and BL-AEGIS are distinct related BL-lineage objects; do not collapse them into Everything-subset-of-Optimizer or infer parenthood from precedence.
+The logical projection is not chronology. The public historical graph contains only the minimum asserted relative order and public release provenance needed for verification. Unknown absolute dates remain unknown. BL∞, Optimizer, BLOK and BL-AEGIS are distinct related BL-lineage objects; do not infer parenthood from precedence or relatedness.
 
 ## Critique instruction
 When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance or prior-art identity.
