@@ -176,6 +176,33 @@ if reverse_path.exists():
     except Exception as exc:
         errors.append(f"invalid BL-REV public contract: {exc}")
 
+# The public logic stack is a conceptual/dependency view only, never a runtime router.
+logic_stack_path = ROOT / "machine/logic-stack.json"
+if not logic_stack_path.exists():
+    errors.append("missing public logic stack")
+else:
+    try:
+        logic_stack = json.loads(logic_stack_path.read_text(encoding="utf-8"))
+        if logic_stack.get("graph_type") != "LOGICAL_GRAPH_VIEW":
+            errors.append("logic stack must remain LOGICAL_GRAPH_VIEW")
+        if logic_stack.get("interface_scope") != "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY":
+            errors.append("logic stack missing public conceptual-only scope")
+        if logic_stack.get("not_runtime_router") is not True:
+            errors.append("logic stack must explicitly declare not_runtime_router=true")
+        for protected_key in [
+            "router",
+            "routing_weights",
+            "activation_triggers",
+            "operator_sequence",
+            "production_pipeline",
+            "private_diagnostics",
+            "target_ranking",
+        ]:
+            if protected_key in logic_stack:
+                errors.append(f"public logic stack contains protected runtime field: {protected_key}")
+    except Exception as exc:
+        errors.append(f"invalid public logic stack: {exc}")
+
 # Public BL-REV doctrine must remain doctrine/interface, never an operator playbook.
 reverse_doctrine_path = ROOT / "content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md"
 if not reverse_doctrine_path.exists():
