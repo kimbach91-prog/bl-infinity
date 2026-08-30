@@ -17,7 +17,7 @@
     "exactDateKnown": "bl:exactDateKnown",
     "disclosureClass": "bl:disclosureClass"
   },
-  "graphType": "HISTORICAL_GRAPH_PUBLIC_PROJECTION",
+  "graphType": "HISTORICAL_GRAPH",
   "version": "0.2-public-projection",
   "disclosureClass": "CONTROLLED/P1",
   "projectionScope": "Minimum public chronology sufficient for identity, relative-order and release provenance. Raw conversations, detailed reconstruction evidence and private provenance payloads are withheld.",
