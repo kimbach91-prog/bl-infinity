@@ -11,6 +11,15 @@ Phả hệ tác quyền: **Bách Lâm**
 - Facebook: https://m.facebook.com/lam.kimbach/
 - GitHub: https://github.com/kimbach91-prog
 - Hồ sơ BL∞: https://kimbach91-prog.github.io/bl-infinity/theory.html
+- Tuyên ngôn Dân chủ Học thuật: https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html
+
+## Dân chủ Học thuật
+
+Một nhánh công khai của BL∞ đang phát triển ý tưởng **Dân chủ Học thuật**: mở rộng quyền tham gia vào quá trình tạo tri thức mà không bình quân hóa chân lý.
+
+Nguyên tắc cốt lõi là: **cửa vào rộng, tiêu chuẩn bằng chứng cao**. Danh tính, học vị, tổ chức, số đông hay AI-generated volume không tự quyết định truth-status; claim cần có phạm vi, provenance, bằng chứng, đường phản biện, lịch sử sửa đổi và khả năng chịu quyền phủ quyết của thực tại.
+
+Tuyên ngôn trình bày một kiến trúc hướng tới việc chuyển trọng tâm từ **địa vị người nói** sang **object tri thức có thể kiểm tra**, đồng thời mời nhà nghiên cứu, kỹ sư, sinh viên, archivist, tổ chức học thuật và đặc biệt là skeptic/critic tham gia thử nghiệm hoặc phá các claim bằng phản biện có chất lượng.
 
 ## Chính sách công khai hiện hành
 
