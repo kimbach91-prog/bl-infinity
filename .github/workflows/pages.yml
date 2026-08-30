@@ -1,4 +1,4 @@
-# GitHub Pages deployment for the materialized BL∞ source.
+# GitHub Pages deployment for the materialized BL∞ public source.
 name: Validate, build and deploy BL∞
 
 on:
@@ -31,7 +31,7 @@ jobs:
         run: pip install -r requirements.txt
       - name: Validate epistemic object
         run: python scripts/audit.py --strict
-      - name: Enforce BL-CPR disclosure boundary
+      - name: Enforce BL-CPR source boundary
         run: python scripts/disclosure_audit.py --strict
       - name: Build static site
         run: python scripts/build.py
@@ -39,8 +39,10 @@ jobs:
         run: cp public/academic-democracy.html site/academic-democracy.html
       - name: Build multilingual SEO and AI discovery layer
         run: python scripts/run_discovery.py
-      - name: Publish BL-REV machine contract
+      - name: Publish BL-REV public interface contract
         run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
+      - name: Re-audit materialized public tree
+        run: python scripts/disclosure_audit.py --strict
       - name: Setup Pages
         if: github.event_name != 'pull_request'
         uses: actions/configure-pages@v5
