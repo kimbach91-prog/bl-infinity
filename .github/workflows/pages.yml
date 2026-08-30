@@ -1,0 +1,95 @@
+# GitHub Pages deployment for the materialized BL∞ public source.
+name: Validate, build and deploy BL∞
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Validate epistemic object
+        run: python scripts/audit.py --strict
+      - name: Enforce BL-CPR source boundary
+        run: python scripts/disclosure_audit.py --strict
+      - name: Build static site
+        run: python scripts/build.py
+      - name: Publish Academic Democracy profile
+        run: cp public/academic-democracy.html site/academic-democracy.html
+      - name: Build multilingual SEO and AI discovery layer
+        run: python scripts/run_discovery.py
+      - name: Publish BL-REV public interface contract
+        run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
+      - name: Re-audit materialized public tree
+        run: python scripts/disclosure_audit.py --strict
+      - name: Setup Pages
+        if: github.event_name != 'pull_request'
+        uses: actions/configure-pages@v5
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: "site"
+  deploy:
+    if: github.event_name != 'pull_request'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Notify IndexNow of canonical discovery URLs
+        shell: bash
+        run: |
+          curl --fail-with-body --retry 2 -X POST 'https://api.indexnow.org/IndexNow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data-binary @- <<'JSON'
+          {
+            "host": "kimbach91-prog.github.io",
+            "key": "7d4a9f38b25c4e7aa6d0c913b8e42f61",
+            "keyLocation": "https://kimbach91-prog.github.io/bl-infinity/7d4a9f38b25c4e7aa6d0c913b8e42f61.txt",
+            "urlList": [
+              "https://kimbach91-prog.github.io/bl-infinity/",
+              "https://kimbach91-prog.github.io/bl-infinity/theory.html",
+              "https://kimbach91-prog.github.io/bl-infinity/author.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/en/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/es/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/fr/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/de/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/pt/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/zh/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ja/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ko/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ru/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ar/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/hi/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/id/"
+            ]
+          }
+          JSON

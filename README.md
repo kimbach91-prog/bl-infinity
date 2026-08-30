@@ -1,38 +1,34 @@
-# BL∞ / BLOK / BL-AEGIS
+# BL∞ — Hồ sơ mô tả công khai
 
-Index-pilot research package for **BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer / Bach Lam Infinity Proposition**.
+**BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer / Bach Lam Infinity Proposition** là một hệ nghiên cứu do **Lâm Kim Bách (Bách Lâm)** khởi phát, tập trung vào giới hạn của quan sát, không gian khả năng, tính khả đạt, bản thể mở, cơ chế phát kiến, provenance và phản biện đệ quy.
 
-Version **0.2.0-index-pilot** adds BL-NOVO (novelty ontology), BL-SRS, BL-PIRAL and BL-ICO so every claim can have its own canonical/indexable URL.
+## Tác giả
 
-This repository is intentionally structured as a living, signed, adversarial, machine-readable epistemic object rather than a single paper.
+**Lâm Kim Bách**  
+Phả hệ tác quyền: **Bách Lâm**  
+Định danh hệ/phương pháp: **Optimizer**
 
-## Start here
+- Facebook: https://m.facebook.com/lam.kimbach/
+- GitHub: https://github.com/kimbach91-prog
+- Hồ sơ BL∞: https://kimbach91-prog.github.io/bl-infinity/theory.html
+- Tuyên ngôn Dân chủ Học thuật: https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html
 
-Nếu muốn đường ngắn nhất, đọc `INSTALL_3_STEPS.md` hoặc chạy `python scripts/prepare_release.py --github YOUR_GITHUB_USERNAME --repo bl-infinity --zip`.
+## Dân chủ Học thuật
 
-1. Read `content/00_README_FIRST.md`.
-2. Edit `bl.config.yml`.
-3. Push the entire repository to GitHub.
-4. Enable GitHub Pages with **GitHub Actions**.
-5. Enable **GitHub Discussions**.
-6. Optional: install/configure giscus and fill the IDs in `bl.config.yml`.
-7. Every push to `main` runs validation, rebuilds the static site, and deploys it.
+Một nhánh công khai của BL∞ đang phát triển ý tưởng **Dân chủ Học thuật**: mở rộng quyền tham gia vào quá trình tạo tri thức mà không bình quân hóa chân lý.
 
-## Core layers
+Nguyên tắc cốt lõi là: **cửa vào rộng, tiêu chuẩn bằng chứng cao**. Danh tính, học vị, tổ chức, số đông hay AI-generated volume không tự quyết định truth-status; claim cần có phạm vi, provenance, bằng chứng, đường phản biện, lịch sử sửa đổi và khả năng chịu quyền phủ quyết của thực tại.
 
-- `content/` — canonical theory and technical explanation.
-- `claims/claims.json` — machine-readable claim registry.
-- `critiques/` — critique protocol and response ledger.
-- `provenance/` — reasoning lineage, timestamps, origin log, chat-import instructions.
-- `machine/` — AI/search/citation manifests, novelty ontology and claim graph.
-- generated `site/claims/<ID>/` — one canonical page per claim for indexing/audit.
-- generated `site/assets/<CODE>/` — one canonical page per named technology/principle.
-- `audit/` — adversarial audit protocol.
-- `scripts/` — build and validation tools.
-- `site/` — generated static site; do not hand-edit generated pages.
+Tuyên ngôn trình bày một kiến trúc hướng tới việc chuyển trọng tâm từ **địa vị người nói** sang **object tri thức có thể kiểm tra**, đồng thời mời nhà nghiên cứu, kỹ sư, sinh viên, archivist, tổ chức học thuật và đặc biệt là skeptic/critic tham gia thử nghiệm hoặc phá các claim bằng phản biện có chất lượng.
 
-## Epistemic rule
+## Chính sách công khai hiện hành
 
-**Global ontological openness is not local logical immunity.**
+Bề mặt công khai của BL∞ chỉ nhằm cung cấp **hồ sơ mô tả**, nhận diện học thuyết, tác giả, provenance và những kết luận/tài liệu được lựa chọn để công bố.
 
-Every claim must remain attackable at the level that determines its truth-status.
+**Mã nguồn triển khai, runtime, cấu hình vận hành, tài nguyên nội bộ và các lớp kỹ thuật không thuộc phạm vi công khai.** Việc một thành phần từng xuất hiện trong lịch sử phát triển không mặc nhiên biến thành cam kết công khai lâu dài.
+
+Mục tiêu của hồ sơ công khai là để bên ngoài có thể nhận diện BL∞, biết tác giả, hiểu hướng nghiên cứu và tìm đúng điểm tham chiếu mà không đồng nghĩa với quyền truy cập vào toàn bộ hệ thống triển khai.
+
+---
+
+**ADN BÁCH LÂM ∞** · origin: Bách Lâm · formalization support: AI

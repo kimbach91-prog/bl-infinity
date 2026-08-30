@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "policy_id": "BL-CPR",
+  "version": "1.1",
+  "status": "adopted",
+  "effective_date": "2026-08-30",
+  "decision": "open_verifiable_knowledge_protected_runtime",
+  "public_required": [
+    "canonical_identity",
+    "claim_truth_conditions",
+    "claim_dependencies",
+    "evidence_and_adverse_evidence",
+    "provenance_class",
+    "sanitized_public_provenance",
+    "limitations_and_nonclaims",
+    "critique_and_resolution_history",
+    "public_reference_schema_and_tests"
+  ],
+  "controlled_or_protected": [
+    "production_prompts",
+    "boot_prompts",
+    "model_or_operator_handoffs",
+    "private_routing_weights",
+    "private_activation_triggers",
+    "private_diagnostics",
+    "full_internal_adversarial_operator_lists",
+    "private_refinement_orchestration",
+    "private_corpus",
+    "raw_or_detailed_private_conversations",
+    "detailed_generative_reasoning_trace_not_required_for_claim_verification",
+    "operator_only_playbooks",
+    "commercial_execution_details_not_affecting_truth_status"
+  ],
+  "forbidden_path_prefixes": [
+    "handoff/",
+    "private-runtime/",
+    "private_runtime/",
+    "runtime-private/",
+    "runtime_private/",
+    "runtime/",
+    "private-diagnostics/",
+    "private_diagnostics/",
+    "raw-private/",
+    "raw_private/",
+    "secrets/",
+    "credentials/",
+    "operator-only/",
+    "operator-handoff/",
+    "provenance/raw/",
+    "provenance/private/"
+  ],
+  "forbidden_filename_tokens": [
+    "NEXT_MODEL_PROMPT",
+    "BOOT_PROMPT",
+    "RUNTIME_CORE",
+    "OPERATOR_PLAYBOOK",
+    "RAW_TRANSCRIPT",
+    "CONVERSATION_LOG"
+  ],
+  "forbidden_secret_material": [
+    "private_key",
+    "github_token",
+    "openai_api_key",
+    "aws_access_key"
+  ],
+  "public_machine_contract": {
+    "allowed": [
+      "identity",
+      "purpose",
+      "public_inputs_outputs",
+      "authority_boundaries",
+      "guardrails",
+      "falsifiers",
+      "reference_behavior"
+    ],
+    "protected": [
+      "production_pipeline",
+      "activation_triggers",
+      "internal_target_ranking",
+      "full_operator_inventory",
+      "private_diagnostics",
+      "routing_weights"
+    ]
+  },
+  "history_response": {
+    "preserve_private_archive": true,
+    "remove_active_public_copy": true,
+    "rewrite_public_refs_from_clean_anchor_when_feasible": true,
+    "regenerate_public_artifacts": true,
+    "provider_cache_purge_may_be_required_for_byte_level_erasure": true
+  },
+  "anti_secrecy_escape": "If a protected object is necessary to verify a public claim, narrow, downgrade, withhold or controlled-review that claim.",
+  "lineage": {
+    "origin_of_problem": "Bách Lâm",
+    "formalization": "AI",
+    "provenance": ["LKB_DIRECT", "NEW_FORMALIZATION"],
+    "seal": "ADN BÁCH LÂM ∞"
+  }
+}
