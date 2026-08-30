@@ -35,6 +35,8 @@ jobs:
         run: python scripts/disclosure_audit.py --strict
       - name: Build static site
         run: python scripts/build.py
+      - name: Publish Academic Democracy profile
+        run: cp public/academic-democracy.html site/academic-democracy.html
       - name: Publish BL-REV machine contract
         run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
       - name: Setup Pages
