@@ -17,6 +17,18 @@ Mục tiêu không phải biến một mệnh đề thành thứ “không đư�
 
 > **Nguyên tắc đối kháng nội sinh:** Sovereignty precedes direction — nếu BL có quyền chọn vô cực thì cũng phải chịu được một BL nội sinh đủ mạnh để hỏi vì sao hữu hạn, dừng, tự ràng buộc hoặc không tối ưu không thể là lựa chọn tốt hơn trong một miền điều kiện khác.
 
+## Dân chủ Học thuật — lời mời mở rộng cuộc chơi tri thức
+
+BL∞ đang thử nghiệm một nguyên tắc rộng hơn chính học thuyết của mình: **quyền bước vào quá trình tạo tri thức nên mở rộng, nhưng tiêu chuẩn sống sót của claim không được hạ xuống**.
+
+Dân chủ Học thuật ở đây không có nghĩa “mọi ý kiến đều ngang nhau”. Nó tách rõ **bình đẳng quyền vào cửa** với **bất bình đẳng trọng lượng bằng chứng**: bất kỳ ai cũng có thể đưa claim, counterexample, dữ liệu hoặc critique vào hệ nếu chấp nhận provenance, khả kiểm và quyền phủ quyết của thực tại; nhưng danh tiếng, số đông hay AI-generated volume không thay thế được evidence.
+
+Tuyên ngôn riêng trình bày sâu hơn cuộc chuyển dịch từ **địa vị người nói → object tri thức có thể kiểm tra**, từ **publication tĩnh → vòng Publish–Index–React–Audit–Revise**, cùng kiến trúc claim ID, provenance graph, versioning, public critique, machine-readable discovery và **Public Verification + Protected Runtime**.
+
+**Đọc:** [Dân chủ Học thuật — Tuyên ngôn và lời mời đồng minh](academic-democracy.html)
+
+Đặc biệt, lời mời không chỉ dành cho người đồng ý. **Skeptic, critic và người có khả năng phá claim bằng phản ví dụ tốt là những đồng minh quan trọng nhất của một hệ muốn tự sửa.**
+
 ## Ranh giới công khai BL-CPR
 
 BL∞ công khai hiến pháp tri thức, claim, bằng chứng, provenance, giới hạn, test và reference implementation cần cho kiểm chứng. Runtime Optimizer sản xuất — gồm prompt vận hành hoàn chỉnh, routing/weighting riêng, private diagnostics, private corpus, credential, raw private conversation và exploit chưa vá — không thuộc public research object.
@@ -26,6 +38,7 @@ Ranh giới này bảo vệ lợi thế thực thi nhưng không được dùng 
 ## Cách đọc
 
 - Hiểu ý tưởng: đọc `01` → `06`.
+- Đọc tuyên ngôn Dân chủ Học thuật: mở `academic-democracy.html`.
 - Audit học thuật: đọc `07` → `13`, sau đó mở `claims/claims.json`.
 - Hiểu đối thủ nội sinh của BL: đọc `40_BL_REVERSE_SOVEREIGN_ADVERSARY.md` và `machine/bl-reverse-system.json`.
 - Hiểu quá trình hình thành: đọc `provenance/`.
