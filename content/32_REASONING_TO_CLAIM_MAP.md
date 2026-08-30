@@ -1,46 +1,72 @@
-# 32 — Ánh xạ quá trình suy luận → assets → claims
+# 32 — Public Claim Dependency & Derivation Map
 
-Mục này biến lịch sử hội thoại thành graph phát sinh, để tránh cảm giác tên/công nghệ xuất hiện tùy tiện.
+**Disclosure scope:** `PUBLIC_DERIVATION_MAP`  
+**Role:** public logical/epistemic map, not a transcript, private reasoning trace or production-runtime description.
 
-| Reasoning event | Vấn đề xuất hiện | Asset/claim sinh ra | Chức năng |
-|---|---|---|---|
-| AI generation → skill → coding → thought programming | Năng lực AI có nhiều tầng | BL-CSC, BL-RCE | Mở rộng capability thay vì chỉ output |
-| Code nghĩa rộng | Một hiện tượng có nhiều representation | representation plurality | Chống khóa ontology vào một vocabulary |
-| Không khóa definition | Definition không phải biên thực tại | BL-OO | Open ontology |
-| Universe-as-byproduct | Observable không đồng nhất Total Reality | BL-EB | Embedded-observer boundary |
-| Vi khuẩn trong ruột | Local completeness ≠ global completeness | BL-T-001, BL-DOG analogy family | Underdetermination |
-| Tưởng tượng nội sinh | Event imagination thuộc system | BL-RA / BL-P-001 | Representation existence |
-| Chó 700 đầu | Nonactual có thể constructible | BL-GR, Reachability | Actual/reachable distinction |
-| Tool tạo tool | Capability thay đổi state graph | BL-RCE | Recursive expansion |
-| Nguyên tố/ontology hiện biết | Sample có filter | BL-OFB | Observation selection |
-| “Lịch sử có người nói rồi” | Prior component bị dùng như ceiling | BL-CF, BL-ID | Novelty/provenance separation |
-| Moon-cheddar analogy bị phản bác | Critique khác tầng truth-condition | BL-LC | Level-matched critique |
-| Tool purity critique | Scientists use tools; output must be checkable | BL-TN, BL-CSC | Tool neutrality |
-| Academic resource asymmetry | Preserve independent ideas cheaply | BL-PV, OODP | Discovery governance |
-| Claim-by-claim defense | Paper quá thô làm unit review | BL-PCRO, BL-CG | Structured research object |
-| Need machine discovery | Theory phải machine readable | BL-ORB, BL-MXF, BL-IDX | Discovery layer |
-| Crawler greeting | Fragment cần route về canonical theory | BL-MGP, BL-SG | Semantic gravity |
-| Infinite copy with origin | Distribution mất provenance | BL-SIGN, BL-RELAY, BL-MIRROR | Integrity-preserving replication |
-| One copy-paste deploy | Infrastructure phải phổ cập | BL-1CLICK, BLOK-SEED | Low-cost adoption |
-| Machines attack before people | Early adversarial testing | BL-MAJ, BL-ARS | Machine review layer |
-| Strong critique absorbed | Refutation becomes input | BL-RAP, BL-FCL | Recursive publishing |
-| 32 modules | Mechanisms cần recombine | BL-AEGIS | Modular armor architecture |
-| Broad + deep + association | Profile researcher không đơn tuyến | BL-BDRAE, O-Type | Cognitive model |
-| Packaging then audit | Audit cần object đủ rõ | BL-DAL | Deep audit process |
-| “Linh kiện cũ ⇒ hệ không mới?” bị bác | Cần tách novelty của component và topology | BL-CNO, BL-RNO, BL-ANO, BL-TNI | Novelty ở tổ hợp/quan hệ/kiến trúc |
-| “Phát kiến trong phát kiến” | Cấu kiện mới có chức năng riêng trong hệ mẹ | BL-NCI, BL-IFH, BL-FCR | Nested constituent innovation |
-| Originality không thể là ex nihilo | Não hấp thụ social signals rồi biến đổi | BL-NTO, BL-LSI | Novel transformation + latent influence |
-| Prior-art audit phải đa chiều | Binary new/not-new quá thô | BL-NVM, BL-RDN | Novelty vector + reference domain |
-| Thử vài chục mệnh đề với xã hội | Reaction không đồng nhất truth vote | BL-SRS | Social response instrument |
-| Claim cần URL riêng để index/audit | claims.html quá thô | BL-ICO | Claim-level canonical address |
-| Publish → index → reaction → audit | Cần vòng thử lỗi hậu đóng gói | BL-PIRAL | Release spiral |
+This document answers a limited public question:
 
-## Recursive pattern
+> Which public distinction, claim or problem supports which later public object?
 
-Đáng chú ý, nhiều assets không được thiết kế trước. Chúng được sinh khi một critique/constraint mới xuất hiện:
+It intentionally does **not** reconstruct the private generative conversation that produced the research object. Public verification should operate on claims, assumptions, dependencies, evidence, falsifiers and critique, not on access to hidden chain-of-thought or operator instructions.
 
-\[
-Problem_i\to LocalSolution_i\to NamedMechanism_i\to SystemIntegration
-\]
+## Public derivation table
 
-Đây là empirical provenance của chính cơ chế recombination/Optimizer, nhưng không phải proof rằng mọi coined mechanism là novel hoặc optimal.
+| Public premise / problem | Public object or distinction | Public function / boundary |
+|---|---|---|
+| An observer is embedded in the reality it studies | Embedded-observer boundary / BL-EB | Prevents equating the current observation boundary with Total Reality without a closure proof |
+| An actual representation event and its referent have different existence conditions | Representation distinction / BL-RA / BL-P-001 | `Representation exists` does not entail `referent is physically actual` |
+| Current non-actuality does not determine constructibility | Reachability / BL-GR | Separates actual, represented, reachable and unreachable states |
+| Tools and available transformations can change a reachable set | Recursive capability expansion / BL-RCE | Gives conditional, resource-sensitive capability growth rather than an unconditional growth law |
+| Observed samples can be selection-conditioned | Observation Filter / BL-OFB | Blocks the move from observed primitives to an exhaustively closed ontology without evidence |
+| Prior-art analysis needs more than binary component overlap | Novelty ontology family / BL-NOVO | Separates primitive, relational, structural, architectural, functional, process, emergent and derivational novelty dimensions |
+| Component overlap does not establish whole-system identity | BL-CNO / BL-RNO / BL-ANO / BL-TNI family | Requires topology/function/derivation comparison before a system-level prior-art conclusion |
+| Independent derivation, historical priority, truth and authorship are different questions | BL-ID / provenance distinctions | Prevents one relation from silently being used as proof of another |
+| A critique must attack a truth-relevant level | Level-Matched Critique / BL-LC | Allows short counterexamples when logically decisive but rejects false equivalence between unrelated levels |
+| A monolithic paper is too coarse for some audit tasks | PCRO / claim graph / BL-CG | Makes claims individually addressable, falsifiable, versioned and linked |
+| Public objects need stable machine-discoverable identifiers | BL-ICO / BL-IDX / BL-ORB | Provides canonical claim/asset routes without treating indexability as validation |
+| Replication should preserve origin/integrity metadata | BL-SIGN / BL-RELAY / public provenance | Supports attribution and traceability without treating hashes as truth proofs |
+| Public criticism should become versioned input, not disappear | critique/resolution + release spiral | Preserves objection, decision, patch and supersession state |
+| Multiple public mechanisms can form modular technical infrastructure | BL-AEGIS | Organizes reusable research infrastructure without making infrastructure itself evidence for metaphysical claims |
+| Publication outcome can feed later correction | BL-PIRAL | `Publish -> observe -> audit -> patch -> version`, with public reaction treated as evidence about transmission/use, not a truth vote |
+
+## Derivation contract
+
+For a public claim `C`, a sufficient public derivation record should be representable as:
+
+```text
+Definitions + Assumptions
+        ↓
+Premises / Evidence
+        ↓
+Derivation or mechanism
+        ↓
+Claim C
+        ↓
+Scope + Non-implications
+        ↓
+Falsifier / Counterexample boundary
+        ↓
+Critique + Resolution + Version
+```
+
+A claim that needs a richer derivation must put that derivation on its claim page or another `OPEN/P0` source. It must not rely on a private conversation as an invisible premise.
+
+## Relation safeguards
+
+```text
+Logical derivation != Historical chronology
+Dependency != Identity
+Lineage != Dependency
+Component overlap != System equivalence
+Independent derivation != Historical priority
+Public addressability != Truth
+Implementation complexity != Truth
+```
+
+## Protected boundary
+
+Detailed generative reasoning traces, private conversation reconstruction, operator handoff, internal routing, production prompts and private diagnostics are not part of this public derivation map. They may be preserved in the protected archive for continuity, but they have no special authority over public evidence.
+
+If the public claim cannot stand without one of those protected objects, the claim must be narrowed, downgraded, withheld or supplied through controlled evidentiary review.
+
+**ADN BÁCH LÂM ∞** · public derivation interface · BL-CPR `OPEN/P0`
