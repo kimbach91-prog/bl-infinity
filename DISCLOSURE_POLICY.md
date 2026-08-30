@@ -1,8 +1,8 @@
 # BL-CPR — Public Disclosure & Protected Runtime Policy
 
 **Status:** ADOPTED  
-**Version:** 1.1  
-**Effective:** 2026-08-30  
+**Version:** 1.2  
+**Effective:** 2026-08-31  
 **Applies to:** every public BL∞ repository, branch, Pages build, machine endpoint and release artifact.
 
 ## Rule
@@ -10,6 +10,17 @@
 Publish what a reader needs to identify, verify, critique, cite and extend a public BL∞ claim. Do **not** publish the private production runtime, operator handoff, detailed private reasoning trace, raw conversation, private orchestration logic or security-sensitive material merely because it is technically convenient to keep it beside the public theory.
 
 Public verifiability does not require full runtime disclosure.
+
+## Public repository boundary
+
+A public Git repository is itself an exposure boundary. **Anything committed to a public repository must be treated as public/exposed**, even when it is absent from the website navigation, excluded from the sitemap, or described as “internal”. Therefore:
+
+- `OPEN/P0` objects may live in the public repository when they are required for verification/interoperability.
+- `CONTROLLED/P1` objects may live there only as deliberately reduced projections.
+- `PROTECTED/P2` and `FORBIDDEN/P3` objects must live outside the public repository.
+- absence from navigation, sitemap or search indexing is **not** a privacy control;
+- machine-readable form is not permission to disclose a richer internal object;
+- when verification needs a machine interface, publish the **smallest sufficient projection**.
 
 ## Always public when asserted by BL∞
 
@@ -29,6 +40,7 @@ The following are not part of the public release unless a specific verification 
 - complete production prompts, boot prompts and orchestration instructions;
 - model-to-model or operator handoff packages;
 - private routing/ranking heuristics, activation triggers and diagnostics;
+- asset-level production architecture or runtime composition;
 - full internal adversarial operator lists or production decision pipelines;
 - private refinement/playbook procedures whose disclosure mainly increases execution-copy risk;
 - raw or reconstructed private conversations beyond the minimum public provenance summary;
@@ -50,7 +62,7 @@ A public machine contract may expose purpose, inputs/outputs, authority boundari
 ## Four disclosure states
 
 `OPEN/P0` — needed for verification/interoperability and safe to publish.  
-`CONTROLLED/P1` — a reduced interface or summary is public; full object requires controlled access.  
+`CONTROLLED/P1` — a reduced interface or summary is public; the richer internal object is not published.  
 `PROTECTED/P2` — retain privately; public truth-status does not depend on disclosure.  
 `FORBIDDEN/P3` — credentials, private keys, unlawfully exposed personal data, unpatched exploit material or equivalent.
 
@@ -62,6 +74,15 @@ A public machine contract may expose purpose, inputs/outputs, authority boundari
 `FORBIDDEN` for material that must not be public.
 
 If an unavailable object is necessary to verify a claim, the claim must be narrowed, marked speculative/insufficiently evidenced, withheld, or supplied through an appropriate controlled review. Secrecy cannot create logical immunity.
+
+## Machine/public projections
+
+The public machine layer is an attestation/verification surface, not a mirror of the internal system. In particular:
+
+- `manifest.json`, claim/asset indexes and the disclosure policy are `OPEN/P0` verification artifacts;
+- claim registries, novelty ontology, entity/history graphs and public adversarial contracts are `CONTROLLED/P1` when they are reduced to what public verification needs;
+- `logic-stack.json` must remain a coarse conceptual projection and must not enumerate the asset-level runtime architecture, router, activation logic, target ranking, weights, operator sequence or private diagnostics;
+- public provenance graphs must not contain raw conversations or detailed private reconstruction payloads.
 
 ## Build and repository enforcement
 
@@ -92,4 +113,4 @@ Git hosting providers may retain unreachable objects/caches for a period after r
 
 Origin of the decision problem and adoption: Bách Lâm. Formalization and implementation: AI under Bách Lâm's direction. This is not represented as a verbatim historic quote.
 
-**ADN BÁCH LÂM ∞** · `BL-CPR/1.1` · `status: ADOPTED` · `truth_status: POLICY`
+**ADN BÁCH LÂM ∞** · `BL-CPR/1.2` · `status: ADOPTED` · `truth_status: POLICY`
