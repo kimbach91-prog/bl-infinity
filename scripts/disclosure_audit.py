@@ -163,7 +163,7 @@ else:
             errors.append("site build still auto-publishes directory contents instead of an allowlist")
             break
 
-# Public BL-REV is an interface contract, not the production adversarial runtime.
+# Public BL-REV machine file is an interface contract, not the production adversarial runtime.
 reverse_path = ROOT / "machine/bl-reverse-system.json"
 if reverse_path.exists():
     try:
@@ -176,10 +176,46 @@ if reverse_path.exists():
     except Exception as exc:
         errors.append(f"invalid BL-REV public contract: {exc}")
 
-# Public derivation and refinement docs must explicitly declare reduced scope.
+# Public BL-REV doctrine must remain doctrine/interface, never an operator playbook.
+reverse_doctrine_path = ROOT / "content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md"
+if not reverse_doctrine_path.exists():
+    errors.append("missing public BL-REV doctrine")
+else:
+    reverse_doctrine = reverse_doctrine_path.read_text(encoding="utf-8")
+    reverse_doctrine_lower = reverse_doctrine.lower()
+    for marker in ["public_doctrine_only", "public verification contract", "protected runtime boundary"]:
+        if marker not in reverse_doctrine_lower:
+            errors.append(f"BL-REV public doctrine missing disclosure marker: {marker}")
+    forbidden_doctrine_runtime = [
+        "## 5. các toán tử bl-rev",
+        "## 6. quy trình đối kháng chuẩn",
+        "## 9. trigger tự động",
+        "## 10. sản phẩm đầu ra bắt buộc",
+        "`prior_inversion`",
+        "`objective_negation`",
+        "`boundary_as_asset`",
+        "`voluntary_binding`",
+        "`stopping_operator`",
+        "automatic_triggers",
+        "attack_operators",
+        "production sequencing",
+        "target ranking",
+    ]
+    # The last two concepts are allowed only inside the explicit protected-boundary paragraph.
+    boundary_index = reverse_doctrine_lower.find("## 10. protected runtime boundary")
+    for marker in forbidden_doctrine_runtime:
+        found_at = reverse_doctrine_lower.find(marker)
+        if found_at == -1:
+            continue
+        if marker in {"production sequencing", "target ranking"} and boundary_index != -1 and found_at > boundary_index:
+            continue
+        errors.append(f"BL-REV public doctrine exposes protected runtime semantic: {marker}")
+
+# Public derivation/refinement/doctrine docs must explicitly declare reduced scope.
 marker_files = {
     ROOT / "content/32_REASONING_TO_CLAIM_MAP.md": "PUBLIC_DERIVATION_MAP",
     ROOT / "critiques/03_WEEKLY_REFINEMENT_PROTOCOL.md": "PUBLIC_INTERFACE_ONLY",
+    ROOT / "content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md": "PUBLIC_DOCTRINE_ONLY",
 }
 for path, marker in marker_files.items():
     if not path.exists():
