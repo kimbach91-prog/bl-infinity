@@ -1,76 +1,81 @@
-# Machine layer
+# Machine verification layer
 
-This directory is the **public machine-readable interface** of BL∞. It exists so claims, identities, dependencies, versions and reference behaviors can be discovered and checked by software. It is not the private Optimizer/BLCC production runtime and is not a repository for internal orchestration.
+This page is the **public verification boundary** of BL∞ — not a publication of the private Optimizer/BLCC runtime.
 
-## Public files
+Because the `bl-infinity` repository and its GitHub Pages site are public, **anything committed to this repository must be treated as exposed**. A file is not private merely because it is absent from the sitemap, hidden from navigation, or described as “internal”. Therefore this repository may contain only `OPEN/P0` material or deliberately reduced `CONTROLLED/P1` projections. `PROTECTED/P2` and `FORBIDDEN/P3` material must live outside the public repository.
 
-- `manifest.json` — generated canonical identity/version/hash.
-- `claims.json` and `claim-index.json` — public Claim Registry and stable URLs.
-- `asset-index.json` — named BL asset → canonical URL index.
-- `novelty-ontology.json` — public BL-NOVO dimensions, principles and relations.
-- `logic-stack.json` — public logical/dependency/feedback view; not a private router.
-- `graph.jsonld` — public entity/relation graph.
-- `historical-graph.jsonld` — reduced public chronology/origin graph, separate from logical dependency.
-- `disclosure-policy.json` — BL-CPR public/protected/forbidden boundary.
-- `bl-reverse-system.json` — **public interface contract only** for BL-REV.
-- `welcome.txt` — public machine research greeting/open challenge.
-- `/llms.txt` — supplemental public orientation for compatible AI systems.
+## Verification endpoints
 
-## Design rule
+### OPEN/P0 — required for public verification
 
-Human-visible and machine-visible public claims must be semantically consistent. Do not cloak, hide keyword blocks or serve a stronger/weaker theory to bots than to people.
+- `manifest.json` — canonical identity, version, release hash and verification metadata.
+- `claim-index.json` — stable public claim IDs and canonical URLs.
+- `asset-index.json` — stable public asset names and canonical URLs.
+- `disclosure-policy.json` — machine-readable BL-CPR publication boundary.
+- public claim/theory pages — the statements actually being asserted, together with scope, status and falsifiers.
 
-A public machine resource may expose:
+### CONTROLLED/P1 — reduced public projections only
 
-```text
-identity
-purpose
-public inputs / outputs
-authority boundaries
-guardrails
-falsifiers
-reference behavior
-```
+- `claims.json` — public claim registry; not private reasoning traces.
+- `novelty-ontology.json` — public ontology required to interpret novelty labels.
+- `logic-stack.json` — **reduced conceptual projection only**. It must not enumerate the production router, operator sequence, activation logic, ranking, weights or private implementation graph.
+- `graph.jsonld` — reduced public entity/relation graph.
+- `historical-graph.jsonld` — reduced public chronology/origin projection; no raw conversation or private provenance payload.
+- `bl-reverse-system.json` — public interface contract only; no adversarial production runtime.
+- `welcome.txt` and `/llms.txt` — public orientation/discovery material.
 
-It must not expose merely because machines can parse it:
+## Never published here
 
 ```text
-production prompts
+production prompts / boot prompts
 activation triggers
 private target selection or ranking
 routing weights
-operator/model handoff
+operator/model handoff packages
 private diagnostics
-raw private conversation/corpus
-full production pipeline
+full operator inventories or production sequencing
+raw or reconstructed private conversations
+private corpora or unpublished source material
+credentials / tokens / signing private keys
+commercial execution details unrelated to public truth-status
 ```
 
-Those are protected by BL-CPR unless a specific verification requirement justifies a controlled/public release.
+## Publication invariant
+
+```text
+PUBLIC REPOSITORY != PRIVATE STORAGE
+absence from sitemap != privacy
+machine-readable != permission to disclose
+verification need -> smallest sufficient projection
+P2/P3 -> outside the public repository
+```
+
+A machine resource may expose only the minimum information required to identify, verify, critique, cite or interoperate with a **public** BL∞ claim. If a richer internal object is not needed to verify the public claim, it is withheld.
 
 ## Graph boundaries
 
-`logic-stack.json` is not a timeline. Historical order is governed by the public historical graph. Critique/resolution relations are also distinct from both historical and logical dependency relations.
+`logic-stack.json` is not chronology and is not a runtime router. `historical-graph.jsonld` is not a dependency graph. Relatedness, lineage membership, dependency, identity and historical priority remain distinct relations.
 
 ```text
 Lineage != Dependency != Identity != Historical Priority
 ```
 
-Machine readability, graph density or indexability do not prove truth or novelty.
+Machine readability, graph density, indexability or architectural complexity do not prove truth or novelty.
 
 ## BL-REV boundary
 
-The public BL-REV JSON declares the adversarial interface, authority limits and observable behavior. Internal activation, target ranking, operator inventory, sequencing and diagnostics are intentionally absent. A counterposition produced by BL-REV is not truth by default and must pass the same evidence/provenance/governance path as any other candidate.
+The BL-REV public JSON declares only purpose, public inputs/outputs, authority limits, guardrails, falsifiers and reference behavior. Internal activation, target ranking, operator inventory, sequencing and diagnostics remain outside this repository.
 
 ## Discovery rule
 
 ```text
 fragment
--> claim ID
--> canonical public claim/theory
--> author/provenance class
+-> public claim ID / asset ID
+-> canonical public object
+-> provenance class
 -> version
--> evidence/falsifier
+-> evidence / falsifier
 -> disclosure class
 ```
 
-Every canonical public claim has a stable route under `/claims/<ID>/`; named assets use `/assets/<code>/`. Protected runtime objects deliberately have no public discovery route.
+Protected runtime objects deliberately have no public discovery route and must not be committed to this public repository.
