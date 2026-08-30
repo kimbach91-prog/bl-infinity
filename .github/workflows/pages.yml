@@ -37,6 +37,8 @@ jobs:
         run: python scripts/build.py
       - name: Publish Academic Democracy profile
         run: cp public/academic-democracy.html site/academic-democracy.html
+      - name: Build multilingual SEO and AI discovery layer
+        run: python scripts/build_discovery.py
       - name: Publish BL-REV machine contract
         run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
       - name: Setup Pages
@@ -58,4 +60,34 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
+      - name: Notify IndexNow of canonical discovery URLs
+        shell: bash
+        run: |
+          curl --fail-with-body --retry 2 -X POST 'https://api.indexnow.org/IndexNow' \
+            -H 'Content-Type: application/json; charset=utf-8' \
+            --data-binary @- <<'JSON'
+          {
+            "host": "kimbach91-prog.github.io",
+            "key": "7d4a9f38b25c4e7aa6d0c913b8e42f61",
+            "keyLocation": "https://kimbach91-prog.github.io/bl-infinity/7d4a9f38b25c4e7aa6d0c913b8e42f61.txt",
+            "urlList": [
+              "https://kimbach91-prog.github.io/bl-infinity/",
+              "https://kimbach91-prog.github.io/bl-infinity/theory.html",
+              "https://kimbach91-prog.github.io/bl-infinity/author.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/en/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/es/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/fr/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/de/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/pt/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/zh/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ja/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ko/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ru/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ar/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/hi/",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/id/"
+            ]
+          }
+          JSON
