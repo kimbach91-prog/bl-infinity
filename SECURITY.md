@@ -8,6 +8,36 @@ This policy covers the public repository, GitHub Actions build/deploy path, GitH
 
 The private production runtime is outside this repository. Do not send credentials, private keys, raw private conversations, private corpora, exploit payloads or protected runtime material through public issues or pull requests.
 
+## Core public-write invariant
+
+A write to this public repository is itself an exposure event. CI that runs after a push cannot make already-pushed bytes secret again.
+
+Therefore every public Git mutation is governed by **BL-GWG — Bach Lam Git Write Guard**:
+
+```text
+candidate change
+-> authority/intent check
+-> disclosure class
+-> data minimization
+-> secret/privacy scan
+-> provenance/IP boundary review
+-> active-content/supply-chain check
+-> semantic/integrity diff
+-> release-separation check
+-> write only if all required gates pass
+-> post-write fail-closed audit
+```
+
+Default decision:
+
+```text
+DENY_UNTIL_ALL_GATES_PASS
+```
+
+Only `OPEN/P0` and `CONTROLLED/P1` material may enter the public repository. `PROTECTED/P2` and `FORBIDDEN/P3` remain outside it. An owner command may authorize a public mutation, but it does not override secret, credential, unlawful-data, or P3 rejection gates.
+
+**Platform limitation:** hard server-side blocking of a direct push requires a GitHub ruleset or branch protection. Repository code and CI are not misrepresented as pre-receive enforcement.
+
 ## Reporting a vulnerability
 
 For a security-sensitive report, use GitHub's private security-advisory / private vulnerability-reporting path for this repository when available. Do not open a public issue containing secrets, personal data, unpatched exploit details or a path to protected runtime material.
@@ -15,6 +45,24 @@ For a security-sensitive report, use GitHub's private security-advisory / privat
 For non-sensitive hardening suggestions, a normal issue or pull request is appropriate.
 
 ## Security architecture
+
+### L-1 — Pre-write public exposure gate
+
+BL-GWG applies before every intended public Git mutation at the process/governance layer and is rechecked by CI after mutation.
+
+Required controls:
+
+- explicit intent/authority for the public mutation;
+- P0/P1 classification before write;
+- fail-closed handling for unknown classification;
+- smallest sufficient public projection;
+- secret, credential and privacy scanning;
+- protected-runtime exclusion;
+- provenance and authorship preservation;
+- patent/trade-secret disclosure-risk review when material;
+- semantic diff and no silent security-boundary downgrade;
+- separation of Git write from Pages publication;
+- post-write BL-CPR/security/system audits.
 
 ### L0 — Account and authority
 
@@ -64,6 +112,8 @@ Pages include a restrictive Content Security Policy delivered through `<meta htt
 
 Build output includes content hashes, versioned claim IDs, translation source/target hashes and machine-readable status. Hashes establish byte/integrity relationships; they do not prove theory truth.
 
+Public mutation may not silently rewrite authorship, origin, lineage, causal history or security classification.
+
 ### L7 — Recovery and incident response
 
 If protected data is exposed:
@@ -79,7 +129,9 @@ If protected data is exposed:
 
 ### L8 — Maintenance and evolution
 
-Security and disclosure checks run on every pull request and on the scheduled weekly maintenance cycle. Dependabot checks package and Action updates. The threat model should be reviewed monthly or after a material architecture, hosting, dependency, identity or publication-boundary change.
+Security, Git-write and disclosure checks run on every pull request/push and on the scheduled maintenance cycle. Dependabot checks package and Action updates. The threat model should be reviewed after a material architecture, hosting, dependency, identity or publication-boundary change.
+
+Automated events may audit, but public Pages publication remains manual-only under the current owner publication freeze.
 
 A failing audit blocks release. Repeated false positives should be calibrated by changing the check, not by silently disabling the layer.
 
@@ -91,4 +143,4 @@ The English edition is a derivative representation. Translation state, coverage,
 
 BL∞ does not claim perfect security, zero vulnerabilities, permanent confidentiality after public exposure, or that cryptographic integrity establishes scientific truth.
 
-The correct model is continuous reduction of attack surface, bounded exposure, rapid detection, reversible release where possible, causal recovery and repeated hardening.
+The correct model is continuous reduction of attack surface, bounded exposure, pre-write minimization, rapid detection, reversible release where possible, causal recovery and repeated hardening.
