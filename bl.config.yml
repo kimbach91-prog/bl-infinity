@@ -1,0 +1,62 @@
+project:
+  namespace: BL∞
+  ascii_namespace: BL-INFINITY
+  canonical_name_vi: Mệnh đề Vô hạn Bách Lâm – Optimizer
+  canonical_name_en: Bach Lam Infinity Proposition
+  umbrella: BLOK — Bach Lam Open Knowledge Infrastructure
+  armor: BL-AEGIS — Bach Lam Augmented Epistemic Guardian for Independent Scholarship
+  author: Lâm Kim Bách
+  aliases:
+  - Bách Lâm
+  - Bách Lâm – Optimizer
+  version: 0.3.1-navigation-i18n-author
+  date: '2026-08-31'
+  canonical_url: https://kimbach91-prog.github.io/bl-infinity/
+  repository: kimbach91-prog/bl-infinity
+  language: vi
+  languages:
+  - vi
+  - en
+  language_roles:
+    vi: FULL_CANONICAL_PUBLIC_READING_SOURCE
+    en: CORE_RESEARCH_EDITION
+  license_content: CC BY 4.0
+  license_code: MIT
+  last_updated: '2026-08-31'
+  date_created: '2026-08-28'
+seo:
+  title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
+  description: BL∞ là hệ nghiên cứu mở về chủ thể nội tại, không gian khả năng, khả
+    đạt, bản thể mở, tính mới tổ hợp, provenance, phản biện đệ quy và hạ tầng phát
+    kiến có thể index ở cấp mệnh đề.
+  keywords:
+  - BL∞
+  - BL Infinity
+  - Bach Lam Infinity Proposition
+  - Mệnh đề Vô hạn Bách Lâm
+  - Bách Lâm Optimizer
+  - open ontology
+  - embedded observer
+  - generative reachability
+  - recursive critique
+  - proof-carrying research object
+  - open discovery protocol
+  - combinatorial novelty
+  - architectural novelty
+  - nested constituent innovation
+  - novelty vector model
+  - independent derivation
+  - indexable claim object
+  - social response to proposition
+  - Publish Index Reaction Audit Loop
+  - progressive disclosure
+  - protected runtime
+  - bilingual research object
+  - translation provenance
+comments:
+  enabled: true
+  repo: kimbach91-prog/bl-infinity
+  repo_id: "R_kgDOUHWEZQ"
+  category: Page Comments
+  category_id: "DIC_kwDOUHWEZc4DEaRD"
+  mapping: pathname

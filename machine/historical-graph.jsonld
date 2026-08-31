@@ -1,0 +1,104 @@
+{
+  "@context": {
+    "schema": "https://schema.org/",
+    "bl": "https://kimbach91-prog.github.io/ns/bl#",
+    "name": "schema:name",
+    "creator": "schema:creator",
+    "dateCreated": "schema:dateCreated",
+    "precedes": {
+      "@id": "bl:precedes",
+      "@type": "@id"
+    },
+    "relatedTo": {
+      "@id": "schema:isRelatedTo",
+      "@type": "@id"
+    },
+    "historicalStatus": "bl:historicalStatus",
+    "exactDateKnown": "bl:exactDateKnown",
+    "disclosureClass": "bl:disclosureClass"
+  },
+  "graphType": "HISTORICAL_GRAPH",
+  "version": "0.2-public-projection",
+  "disclosureClass": "CONTROLLED/P1",
+  "projectionScope": "Minimum public chronology sufficient for identity, relative-order and release provenance. Raw conversations, detailed reconstruction evidence and private provenance payloads are withheld.",
+  "guardrails": [
+    "Lineage is not dependency.",
+    "Precedence is not parenthood.",
+    "Timestamp is not novelty proof.",
+    "Hash is not authorship proof or truth proof.",
+    "Unknown absolute dates remain unknown."
+  ],
+  "@graph": [
+    {
+      "@id": "bl:person-lam-kim-bach",
+      "@type": "schema:Person",
+      "name": "Lâm Kim Bách"
+    },
+    {
+      "@id": "bl:event-blok-foundational-nucleus",
+      "@type": "schema:Event",
+      "name": "BLOK foundational nucleus",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "historicalStatus": "RELATIVE_ORDER_PUBLICLY_ASSERTED",
+      "exactDateKnown": false,
+      "precedes": "bl:event-optimizer-essence-chain"
+    },
+    {
+      "@id": "bl:event-optimizer-essence-chain",
+      "@type": "schema:Event",
+      "name": "Optimizer / Bản chất chain",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "historicalStatus": "RELATIVE_ORDER_PUBLICLY_ASSERTED_AFTER_BLOK",
+      "exactDateKnown": false
+    },
+    {
+      "@id": "bl:event-bl-infinity-public-formalization",
+      "@type": "schema:Event",
+      "name": "BL∞ public formalization",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "dateCreated": "2026-08-28",
+      "historicalStatus": "PUBLIC_RELEASE_PROVENANCE",
+      "exactDateKnown": true
+    },
+    {
+      "@id": "bl:event-bl-aegis-public-formalization",
+      "@type": "schema:Event",
+      "name": "BL-AEGIS public modular formalization",
+      "creator": {"@id": "bl:person-lam-kim-bach"},
+      "dateCreated": "2026-08-28",
+      "historicalStatus": "PUBLIC_RELEASE_PROVENANCE",
+      "exactDateKnown": true
+    },
+    {
+      "@id": "bl:object-blok",
+      "@type": "schema:CreativeWork",
+      "name": "BLOK",
+      "relatedTo": ["bl:object-optimizer", "bl:object-bl-infinity", "bl:object-bl-aegis"]
+    },
+    {
+      "@id": "bl:object-optimizer",
+      "@type": "schema:CreativeWork",
+      "name": "Optimizer",
+      "relatedTo": ["bl:object-blok", "bl:object-bl-infinity", "bl:object-bl-aegis"]
+    },
+    {
+      "@id": "bl:object-bl-infinity",
+      "@type": "schema:CreativeWork",
+      "name": "BL∞",
+      "relatedTo": ["bl:object-blok", "bl:object-optimizer", "bl:object-bl-aegis"]
+    },
+    {
+      "@id": "bl:object-bl-aegis",
+      "@type": "schema:CreativeWork",
+      "name": "BL-AEGIS",
+      "relatedTo": ["bl:object-blok", "bl:object-optimizer", "bl:object-bl-infinity"]
+    }
+  ],
+  "withheld": [
+    "raw_conversation",
+    "detailed_reconstruction_evidence",
+    "private_provenance_payload",
+    "operator_or_model_handoff",
+    "private_reasoning_trace"
+  ]
+}

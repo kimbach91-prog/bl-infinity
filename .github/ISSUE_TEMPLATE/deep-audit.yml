@@ -1,0 +1,47 @@
+name: Deep Audit Finding
+description: Báo lỗi logic, toán học, bằng chứng, provenance hoặc prior-art mapping.
+title: "[AUDIT] "
+labels: ["deep-audit"]
+body:
+  - type: input
+    id: target
+    attributes:
+      label: Claim ID / target
+      placeholder: BL-P-001
+    validations:
+      required: true
+  - type: dropdown
+    id: layer
+    attributes:
+      label: Audit layer
+      options:
+        - Semantic
+        - Logic
+        - Mathematics
+        - Physics / empirical
+        - Prior art
+        - AI / source
+        - Provenance
+        - Governance
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding
+      description: Chỉ rõ premise/inference/evidence bị đánh.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Counterexample / evidence / derivation
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options: [Critical, Major, Moderate, Minor]
+  - type: textarea
+    id: patch
+    attributes:
+      label: Recommended patch

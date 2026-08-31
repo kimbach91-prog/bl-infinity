@@ -1,0 +1,50 @@
+{
+  "schema_version": "2.0",
+  "policy": "TRANSLATION_IS_DERIVATIVE_REPRESENTATION_NOT_INDEPENDENT_THEORY_VERSION",
+  "source_language": "vi",
+  "languages": {
+    "vi": {
+      "role": "FULL_CANONICAL_PUBLIC_READING_SOURCE",
+      "entry": "theory.html"
+    },
+    "en": {
+      "role": "CORE_RESEARCH_EDITION",
+      "entry": "en/theory.html",
+      "coverage": "CORE_ONLY_NOT_LINE_BY_LINE_FULL_CORPUS",
+      "source_files": [
+        "content/00_README_FIRST.md",
+        "content/20_CANONICAL_MANIFESTO.md",
+        "content/26_SECURITY_AND_INTEGRITY_MODEL.md"
+      ],
+      "translation_files": [
+        "translations/en/README.md",
+        "translations/en/THEORY_CORE.md"
+      ],
+      "formalizer": "AI under owner direction",
+      "review_status": "OWNER_DIRECTED_AI_TRANSLATION_CURRENT_VIEW",
+      "quotation_rule": "For exact wording, priority, provenance or scope disputes, consult the Vietnamese source until the corresponding English passage is explicitly reviewed.",
+      "known_gap": "The English theory page is a core research edition and does not yet reproduce every Vietnamese section line by line."
+    }
+  },
+  "discovery_editions": {
+    "object_id": "BL-ACADEMIC-DEMOCRACY-DISCOVERY-SUMMARY-v1",
+    "canonical_full_source": "academic-democracy.html",
+    "scope_relation": "DERIVATIVE_LOCALIZED_SUMMARY_NOT_SCOPE_EQUIVALENT_TO_FULL_MANIFESTO",
+    "generator": "scripts/build_discovery.py",
+    "policy": "DISCOVERY_DRAFTS_MUST_NOT_BE_PRESENTED_AS_FULL_THEORY_TRANSLATIONS",
+    "languages": {
+      "en": {"hreflang": "en", "name": "English", "route": "academic-democracy/en/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Summary only; not the complete Vietnamese manifesto."},
+      "es": {"hreflang": "es", "name": "Español", "route": "academic-democracy/es/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "fr": {"hreflang": "fr", "name": "Français", "route": "academic-democracy/fr/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "de": {"hreflang": "de", "name": "Deutsch", "route": "academic-democracy/de/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "pt": {"hreflang": "pt", "name": "Português", "route": "academic-democracy/pt/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; regional variant not yet selected."},
+      "zh-Hans": {"hreflang": "zh-Hans", "name": "简体中文", "route": "academic-democracy/zh/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "ja": {"hreflang": "ja", "name": "日本語", "route": "academic-democracy/ja/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "ko": {"hreflang": "ko", "name": "한국어", "route": "academic-democracy/ko/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "ru": {"hreflang": "ru", "name": "Русский", "route": "academic-democracy/ru/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "ar": {"hreflang": "ar", "name": "العربية", "route": "academic-democracy/ar/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; full RTL editorial review is pending."},
+      "hi": {"hreflang": "hi", "name": "हिन्दी", "route": "academic-democracy/hi/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."},
+      "id": {"hreflang": "id", "name": "Bahasa Indonesia", "route": "academic-democracy/id/", "coverage": "LOCALIZED_DISCOVERY_SUMMARY", "translator_class": "AI_ASSISTED", "review_status": "AI_DRAFT_UNREVIEWED", "known_gap": "Localized title, lead and theses; supporting interface and explanation remain partly English."}
+    }
+  }
+}
