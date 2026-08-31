@@ -1,1 +1,0 @@
-Dedicated issue title: `[DEUS] Console — Owner Command Thread` (to be created in repository Issues).
