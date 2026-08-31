@@ -1,1 +1,0 @@
-GitHub Issues is the intended human-facing control surface for v0. The workflow listens for owner-authored `/deus` commands on issues beginning with `[DEUS]`.
