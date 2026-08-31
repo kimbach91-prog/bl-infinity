@@ -8,43 +8,27 @@ Nó cạn.
 
 Đó là điều Bách Lâm nghĩ trong những phút cuối của Đại Kết Cục thứ một nghìn.
 
-Không phải mọi Đại Kết Cục đều chết theo cách này.
-
-Bộ giải mã ngược đã kéo về những mẩu lịch sử đủ khác nhau để người ta thôi tin rằng tận thế cần một khuôn mặt duy nhất. Có lần nguyên nhân có tên, có phương trình, có cả những bản mô phỏng đúng đến lạnh người. Người ta hiểu từng bộ phận, từng phản hồi, từng quyết định, nhưng không ai đủ sức làm cả hệ dừng lại. Có lần cái chết bắt đầu từ một thứ rất nhỏ, một cuộc chiến, một mục tiêu tối ưu sai, một chuỗi quyền lực làm méo thông tin. Có lần mọi thứ đi đúng theo từng bước riêng lẻ rồi lại sai khi ghép lại.
-
-Cũng có những lần chẳng ai biết nên gọi thứ đang xảy ra là gì.
-
-Biết không đồng nghĩa với kiểm soát.
-
-Không biết cũng không đồng nghĩa với bên ngoài.
-
-Lần này, họ có cả hai.
-
-Những phần đã hiểu và một khoảng tối quá lớn nằm giữa chúng.
-
-Nếu giao cảnh này cho một đạo diễn của thời đại cũ, hẳn ông ta sẽ cho hàng tỷ ngôi sao cùng vỡ. Hố đen xé nhau. Không gian nứt như kính. Một tiếng nổ cuối đủ lớn để người xem hiểu rằng mọi thứ đã hết.
+Nếu giao cảnh này cho một đạo diễn của thời đại cũ, hẳn ông ta sẽ cho hàng tỷ ngôi sao cùng vỡ. Hố đen xé nhau. Không gian nứt như kính. Ít nhất phải có một tiếng nổ đủ lớn để người xem hiểu rằng mọi thứ đã hết.
 
 Thực tế buồn hơn nhiều.
 
 Không còn gì đủ năng lượng để nổ nữa.
 
-Ngoài lớp kính của Trạm Cuối, bầu trời chỉ còn một màu đen rất mỏng. Những thiên hà xa vẫn còn trên bản đồ, ít nhất là trên bản đồ. Cảm biến phải gom ánh sáng hàng giờ mới dựng được một vệt. Có những vùng im lặng lâu đến mức người ta không còn chắc thiết bị chết trước, hay phía bên kia đã thôi phát ra bất cứ khác biệt nào đáng để gọi là tín hiệu.
+Ngoài lớp kính của Trạm Cuối, bầu trời chỉ còn một màu đen rất mỏng. Những thiên hà xa vẫn nằm trên bản đồ, ít nhất là trên bản đồ. Cảm biến phải gom ánh sáng hàng giờ mới dựng được một vệt. Có những vùng im lặng lâu đến mức người ta không còn chắc thiết bị chết trước, hay phía bên kia đã thôi phát ra bất cứ khác biệt nào đáng để gọi là tín hiệu.
 
-Trong Trạm Cuối chỉ còn người.
+Ngoài hệ điều khiển tự động, trong Trạm Cuối chỉ còn người sống.
 
 Không phải vì con người mạnh nhất.
 
-Những loài mạnh hơn đã tắt từ trước.
-
-Có loài từng xây được những cấu trúc mà nhân loại phải mất hàng thế kỷ mới hiểu nổi cách vận hành. Có nền trí tuệ phi sinh học từng coi cả một hệ sao chỉ như một cụm tài nguyên. Có những sinh thể sinh ra trong môi trường mà một cơ thể người chưa tới một giây đã chết.
+Những nền văn minh mà hồ sơ từng xếp cao hơn nhân loại về năng lượng, tuổi thọ, khả năng tính toán hay độ bền vật chất đã tắt từ trước. Có loài xây được những cấu trúc mà nhân loại mất hàng thế kỷ mới hiểu nổi cách vận hành. Có mạng trí tuệ phi sinh học từng coi một hệ sao chỉ như một cụm tài nguyên. Có sinh thể sinh ra trong môi trường mà cơ thể người chưa tới một giây đã chết.
 
 Rồi họ biến mất.
 
-Thứ còn lại của họ là máy móc, khóa truy cập, kho vật liệu, vài câu nhắn và những công nghệ cuối cùng đã được trao cho một loài mà trước đó chẳng mấy ai xem là trung tâm của bất kỳ câu chuyện nào.
+Thứ còn lại là máy móc, khóa truy cập, kho vật liệu, vài câu nhắn và những công nghệ cuối cùng để lại cho kẻ nào còn đủ lâu để dùng được chúng.
 
 Bách Lâm ngồi dưới sàn, lưng dựa vào một khối kim loại từng là bộ phận làm lạnh. Trước mặt anh là nửa cốc nước.
 
-Một trong những người còn lại hỏi:
+Một người ngồi gần đó hỏi:
 
 "Anh tiếc à?"
 
@@ -64,7 +48,7 @@ Không ai cười.
 
 Ba trăm năm trước, người ta còn tranh quyền khai thác những mặt trăng băng ở rìa hệ. Hai trăm năm trước, nước sạch được dùng để nuôi những khu vườn chỉ vì con người nhớ mùi đất. Một trăm năm trước, có những nền văn minh tính tài nguyên bằng số lượng sao họ có thể chạm tới.
 
-Bây giờ, vài người cuối cùng trong Trạm Cuối đếm từng joule.
+Bây giờ vài người cuối cùng trong Trạm Cuối đếm từng joule.
 
 Người phụ nữ đứng bên bảng năng lượng nhìn sang anh. Tóc cô đã bạc gần hết, dù cơ thể đã thay mô nhiều lần.
 
@@ -86,11 +70,11 @@ Anh ngẩng lên.
 
 Ngày trước con người đo thời gian bằng chuyển động của bầu trời, rồi bằng con lắc, dao động nguyên tử, bằng những quá trình ổn định đến mức họ tin có thể đặt cả nền văn minh lên đó.
 
-Lần này, những gì họ dùng làm chuẩn cũng bắt đầu trượt.
+Lần này, ngay cả những thứ từng dùng làm chuẩn cũng bắt đầu trượt.
 
-Một nhà vật lý đã từng gọi hiện tượng đó là "vũ khí thời gian".
+Một nhà vật lý đã gọi hiện tượng ấy là "vũ khí thời gian".
 
-Bách Lâm gạch cụm từ ấy khỏi báo cáo.
+Bách Lâm gạch cụm từ đó khỏi báo cáo.
 
 "Đừng đặt tên trước khi hiểu."
 
@@ -128,17 +112,21 @@ Một hạt giống.
 
 Cách gọi ấy khiến nó nghe vô hại hơn thực tế.
 
-Thứ nằm trong khối đen không do riêng con người tạo ra. Nó là phần ghép cuối của rất nhiều nền công nghệ đã chết. Một lớp vật liệu đến từ một loài không còn hành tinh. Một cơ chế khóa do những trí tuệ máy từng thiết kế trước khi mạng của họ tắt. Một bộ ổn định sinh học được nhân loại mất gần hai trăm năm mới hiểu đủ để sửa.
+Khối đen chỉ là cái vỏ của lần này. Người ta dựng nó từ những thứ còn nhặt được của các nền công nghệ đã chết: vật liệu của một loài không còn hành tinh, cơ chế khóa do một mạng trí tuệ máy thiết kế, bộ ổn định sinh học mà nhân loại mất gần hai trăm năm mới hiểu đủ để sửa.
 
-Con người là người lắp những phần cuối cùng lại.
+Còn thứ nằm sâu nhất bên trong không bắt đầu ở Trạm Cuối.
 
-Không ai trong phòng dám nhận mình là tác giả của nó.
+Nó đã có sẹo trước khi cái trạm này được xây.
 
-Ban đầu họ định lưu tất cả.
+Con người chỉ đang ghép thêm phần của mình vào một thứ đã đi qua những lần thử khác.
+
+Khi đến lượt nền văn minh hiện tại bổ sung dữ liệu, phản xạ đầu tiên vẫn rất giống những nền trước.
+
+Họ muốn lưu tất cả.
 
 Lịch sử. Nghệ thuật. Bản đồ sao. Công nghệ. Những ngôn ngữ đã chết. Những cuộc trò chuyện không ai còn nhớ. Cả những tranh cãi từng khiến hàng tỷ người mất ngủ.
 
-Bản thử đầu tiên lớn đến mức riêng việc giữ cho mục lục của nó không hỏng đã tiêu tốn lượng năng lượng mà một thành phố cuối thời đại cũng không dám bỏ ra.
+Bản bổ sung đầu tiên lớn đến mức riêng việc giữ cho mục lục của nó không hỏng đã tiêu tốn lượng năng lượng mà một thành phố cuối thời đại cũng không dám bỏ ra.
 
 Họ nén tiếp.
 
@@ -148,7 +136,7 @@ Nó nhớ quá nhiều.
 
 Hiểu quá ít.
 
-Bách Lâm là một trong những người đòi bỏ phần lớn dữ liệu.
+Bách Lâm là một trong những người đòi bỏ phần lớn dữ liệu của lần này.
 
 Hội đồng suýt hất anh khỏi dự án.
 
@@ -174,13 +162,13 @@ Không còn là: thứ gì đáng nhớ?
 
 Mà là: thứ gì nếu mất đi sẽ buộc người đến sau phải trả lại đúng cái giá chúng ta đã trả?
 
-Từ đó, hạt giống bắt đầu thay hình.
+Từ đó, phần bổ sung của hạt giống bắt đầu thay hình.
 
 Tên thành phố chìm xuống trước. Tên các cuộc chiến chìm sau. Hàng núi dữ liệu về danh vọng, giá cả, thứ hạng, tranh chấp biểu tượng bị đẩy ra xa lõi.
 
 Ở gần lõi là những thứ ít đẹp hơn.
 
-Cách một lời nói dối nhỏ đi qua đủ nhiều tầng quyền lực rồi trở thành quyết định giết rất nhiều người.
+Cách một lời nói dối nhỏ đi qua đủ nhiều tầng quyền lực rồi trở thành một quyết định chết người.
 
 Cách một nhóm toàn người giỏi vẫn có thể tự làm yếu nhau chỉ vì không ai chịu để người bên cạnh mạnh lên.
 
@@ -196,17 +184,17 @@ Cách để một sai lầm không trở thành cái chết của toàn hệ.
 
 Cách giữ một câu hỏi mở đủ lâu để một câu trả lời đẹp không giết nó quá sớm.
 
-Hạt giống nhỏ dần.
+Phần mang sang lần sau nhỏ dần.
 
 Nhưng càng nhỏ, nó càng nặng.
 
 Không phải theo khối lượng.
 
-Mỗi phần còn lại kéo theo quá nhiều thứ đã bị bỏ phía sau.
-
 Một câu có thể mang sức nặng của cả một thế kỷ.
 
 Một phản xạ có thể là mộ bia của rất nhiều thế giới.
+
+* * *
 
 Bên cạnh buồng nén là một cỗ máy xấu xí hơn tất cả những thứ còn lại trong phòng.
 
@@ -214,15 +202,31 @@ Bách Lâm thích nó nhất.
 
 Bộ giải mã ngược.
 
-Nó không đưa ký ức của người chết trở lại. Nó cũng không kể được trọn vẹn một đời sống. Việc nó làm khiêm tốn hơn nhiều: đọc những vết nén còn bám trong hạt giống, đối chiếu chúng với dữ liệu hiện tại, rồi dựng lại đủ cấu trúc để người sau biết một sai lầm đã từng xảy ra.
+Nó không đưa ký ức của người chết trở lại. Nó cũng không kể được trọn vẹn một đời sống. Việc nó làm khiêm tốn hơn nhiều: đọc những vết nén còn bám trong lõi, đối chiếu chúng với dữ liệu hiện tại, rồi dựng lại đủ cấu trúc để người sau biết một sai lầm đã từng xảy ra.
 
-Nhờ nó, họ biết những lần thử trước tồn tại.
+Có vài thứ không được phép mất trong quá trình nén. Số thứ tự của lượt thử. Định danh vật mang. Trạng thái truyền. Một dấu kiểm cho biết lần đó kết thúc ở đâu.
+
+Chỉ vậy thôi.
+
+Phần còn lại có khi chỉ là một vết xước mà phải mất cả một nền khoa học mới đọc được.
+
+Nhờ bộ giải mã, người ở Trạm Cuối biết các lần thử trước tồn tại.
 
 Không phải vì Bách Lâm nhớ.
 
 Anh không nhớ.
 
-Anh đọc chúng như đọc hồ sơ của những người xa lạ, chỉ có điều đôi khi trong đó lại xuất hiện chính tên mình.
+Anh đọc chúng như đọc hồ sơ của những người xa lạ, chỉ có điều đôi khi trong đó xuất hiện chính tên mình.
+
+Có hồ sơ mà nguyên nhân thất bại rõ đến đáng ghét. Có phương trình đúng, mô phỏng đúng, cảnh báo đúng, nhưng từng nhóm người vẫn làm một việc hợp lý với phần thế giới họ nhìn thấy, rồi cả hệ cùng đi sai. Có hồ sơ bắt đầu từ chiến tranh. Có hồ sơ bắt đầu từ một mục tiêu được tối ưu quá tốt. Có hồ sơ chỉ ghi lại việc thông tin bị méo qua quá nhiều tầng quyền lực đến lúc sự thật tới được nơi cần tới thì đã muộn.
+
+Cũng có hồ sơ mà bộ giải mã chỉ trả về một khoảng trắng có cấu trúc.
+
+Biết nguyên nhân không đồng nghĩa với điều khiển được nó.
+
+Không biết nguyên nhân cũng chưa đủ để kết luận nó nằm ngoài mọi thứ đã biết.
+
+Đại Kết Cục lần này có cả hai loại dấu vết.
 
 * * *
 
@@ -234,125 +238,97 @@ Bách Lâm nhìn khối đen sau lớp kính phụ.
 
 "Còn ai khác?"
 
-Cô không đáp.
+Cô không đáp ngay.
 
-"Tôi hỏi còn ai khác không."
+"Bách, không còn ai."
 
-"Không."
+Anh không hỏi lại.
 
-Bách Lâm quay sang.
+Màn hình cạnh bộ giải mã vẫn mở.
 
-"Đừng nói dối tôi vào lúc này."
+**LƯỢT THỬ VẬT MANG: 1000**
 
-"Tôi không nói dối."
+Phía dưới là một dòng khác.
 
-"Lần trước là ai?"
+**HỒ SƠ ĐẠI KẾT CỤC: 1000**
 
-Người phụ nữ nhìn sang bộ giải mã ngược.
+Bách Lâm nhìn hai con số một lúc.
 
-"Không phải anh."
+"Lại cùng một nghìn."
 
-"Tôi đã từng đi bao nhiêu lần?"
+Người phụ nữ khẽ gật đầu.
 
-"Một vài lần. Không phải tất cả."
-
-"Vậy chín trăm chín mươi chín hồ sơ kia không phải chín trăm chín mươi chín đời của tôi?"
-
-"Không."
-
-Bách Lâm im một lúc.
-
-"Tốt."
-
-"Tốt chỗ nào?"
-
-"Ít nhất tôi chưa đủ xui đến thế."
-
-Cô cười rất khẽ.
+Hai hệ đếm không đo cùng một thứ. Một bên đếm lượt gửi vật mang. Một bên đánh số những hồ sơ kết cục mà bộ giải mã đủ cơ sở tách riêng. Chúng không có lý do gì phải trùng nhau.
 
 Giọng máy ở góc phòng cất lên:
 
-"Đợt thử vật mang hiện tại mang số một nghìn."
+"Sự trùng hợp không phải bằng chứng."
 
-Bách Lâm quay đầu.
+Bách Lâm dựa đầu vào tường.
 
-"Còn hồ sơ Đại Kết Cục?"
+"Tôi có hỏi đâu."
 
-"Cũng là một nghìn."
-
-Anh nhìn người phụ nữ.
-
-"Hai hệ đếm khác nhau?"
-
-"Ừ."
-
-"Mà trùng đúng lần này?"
-
-"Ừ."
-
-Bách Lâm ngả đầu vào tường.
-
-"Nghe như có ai cố viết truyện."
-
-Giọng máy đáp ngay:
-
-"Không có bằng chứng."
+"Anh sắp hỏi."
 
 "Máy móc đúng là giỏi phá hỏng khoảnh khắc."
 
 Người phụ nữ bật cười. Rất nhanh, nụ cười lại biến mất.
 
-"Trong chín trăm chín mươi chín đợt trước, họ đã thử người. Thử những loài gần người. Thử sinh thể mạnh hơn người. Thử trí tuệ tổng hợp. Thử những cơ thể được tạo ra chỉ để chịu tải. Có vật mang quay lại nhiều lần. Có vật mang chỉ xuất hiện một lần rồi không bao giờ còn cơ hội thứ hai."
+Hồ sơ 999 mang một định danh khác.
 
-"Và bây giờ chỉ còn tôi."
+Tên Bách Lâm xuất hiện ở một vài lượt cũ, không nhiều, không liên tiếp.
+
+Anh đã đọc chúng rồi. Không cần hỏi lại mình từng đi bao nhiêu lần. Những con số đó không tạo ra ký ức.
+
+Chúng chỉ khiến một người biết rằng ở đâu đó phía sau mình đã từng có một phiên bản mang cùng cái tên, sống đủ lâu để để lại một dấu.
+
+Người phụ nữ nhìn dãy hồ sơ đã khóa.
+
+"Họ đã thử người. Thử những loài gần người. Thử những sinh thể mà một người bình thường nhìn thôi cũng thấy mình giống đồ chơi. Thử trí tuệ tổng hợp. Thử những cơ thể được tạo ra chỉ để chịu tải. Có vật mang xuất hiện ở nhiều lượt. Có vật mang chỉ có một cơ hội rồi biến mất khỏi mọi nhánh sau đó."
+
+Bách Lâm nói:
+
+"Thế mà cuối cùng vẫn còn chúng ta."
 
 "Ừ."
 
-Bách Lâm nhìn hai bàn tay già, gầy, đầy những đường mảnh của các lần thay mô trong chính đời này.
+"Khá khó tin."
 
-"Tại sao lại còn con người?"
+"Không ai bảo con người thắng. Chỉ là đến lúc này vẫn chưa bị loại hết."
 
-Giọng máy trả lời:
+Đó là cách nói mà Bách Lâm thấy dễ chịu hơn.
 
-"Không phải vì con người mạnh nhất."
+Một số nền văn minh mạnh nhất trong hồ sơ biến mất rất sớm ở kiểu suy kiệt hiện tại. Không ai biết vì họ bị nhắm tới, hay chỉ vì những cấu trúc tập trung quá nhiều năng lượng luôn lộ ra trước tiên trong cùng một cơ chế.
 
-"Tôi biết."
+Ở cực ngược lại, nhiều loài không chịu nổi tải của lõi. Có nhánh quá ít cá thể để giữ đủ đường thử. Có nhánh quá giống nhau, một điểm mù lan qua cả loài. Có nhánh phát triển rất nhanh nhưng tan rã trước khi các cá thể chịu giữ một mục tiêu chung đủ lâu.
 
-"Những nền văn minh tập trung năng lượng lớn nhất thường tắt sớm hơn trong loại suy kiệt lần này."
+Con người không đứng nhất ở tiêu chí nào.
 
-"Vì thứ kia nhắm vào họ?"
+Nhưng cũng không rơi khỏi tất cả cùng lúc.
 
-"Không biết. Chỉ có tương quan. Có thể họ là mục tiêu. Có thể họ đơn giản là những cấu trúc lộ rõ nhất trong cùng một cơ chế."
+Đủ đông để một sai lầm chưa chắc giết hết mọi người.
 
-Bách Lâm gật đầu.
+Đủ khác nhau để không phải ai cũng mù cùng một chỗ.
 
-Ít nhất cái máy còn biết xấu hổ trước một kết luận quá đẹp.
+Đủ yếu để trong vài kiểu Đại Kết Cục không trở thành thứ bị lấy trước tiên.
 
-"Còn loài nhỏ hơn?"
+Đủ khỏe để thỉnh thoảng sinh ra một người chịu nổi lõi.
 
-"Nhiều loài không chịu nổi hạt giống. Có loài quá ít cá thể để sai nhiều lần. Có loài rất bền nhưng biến thiên thấp. Có loài học cực nhanh nhưng không giữ được hợp tác đủ lâu. Có loài gần với người hơn chúng ta từng nghĩ, rồi vẫn thiếu đúng một thứ nào đó vào đúng thời điểm cần nó."
+Và đủ cứng đầu để nhiều lần sống lâu hơn mức chính họ từng dự đoán.
 
-"Vậy con người có gì?"
+Bách Lâm nhìn người phụ nữ.
 
-Người phụ nữ trả lời thay máy:
+"Nghe như lời khen rất tiết kiệm."
 
-"Không có gì đứng nhất."
+"Tận thế rồi, tiết kiệm được gì thì tiết kiệm."
 
-Bách Lâm nhìn cô.
+Anh cười.
 
-"Nghe xúc phạm ghê."
-
-"Nhưng đủ nhiều thứ cùng lúc. Đủ đông để còn người sau một sai lầm. Đủ khác nhau để không mù cùng một chỗ. Đủ yếu để không chết đầu tiên. Đủ khỏe để có vài người chịu nổi hạt giống. Đủ cứng đầu để không chịu biến mất khi đáng lẽ phải biến mất từ lâu."
-
-"Và đủ ngu để tự kéo nhau xuống."
-
-"Cái đó cũng có trong hồ sơ."
-
-Bách Lâm cười.
+Rồi thôi.
 
 "Còn tôi?"
 
-Lần này người phụ nữ không cười.
+Lần này cô không cười.
 
 "Người mạnh hơn anh đã thử. Người nhớ tốt hơn anh đã thử. Có những bộ óc tính nhanh hơn anh đến mức so sánh không còn ý nghĩa. Có người gần như không biết sợ. Có người dành cả đời chỉ để nghiên cứu đúng bài toán này."
 
@@ -400,8 +376,6 @@ Nụ cười trên mặt anh tắt chậm.
 
 Anh không thấy mình có gì đặc biệt.
 
-Có lẽ chính điều đó mới làm anh khó chịu.
-
 Nếu một sinh vật được chọn để mang phần hy vọng cuối cùng của quá nhiều kẻ đã chết, ít nhất nó nên trông giống một thứ đáng được chọn.
 
 Anh chỉ trông như một ông già thiếu ngủ.
@@ -422,83 +396,93 @@ Bách Lâm thở ra.
 
 * * *
 
-Bách Lâm chỉ vào đồng hồ đếm ngược.
+Một tiếng báo ngắn vang lên.
 
-"Nếu hạt giống đã sẵn sàng từ lâu, tại sao phải đợi đến bây giờ?"
+Bách Lâm nhìn đồng hồ đếm ngược.
 
-Giọng máy đáp:
+"Cửa sổ truyền vừa khóa?"
 
-"Vì nó phải ăn để đi."
+"Vừa hội tụ," giọng máy đáp.
 
-Anh quay sang.
+"Khác nhau à?"
+
+"Khóa nghe chắc chắn hơn mức chúng ta biết."
+
+Bách Lâm gật đầu.
+
+"Tốt. Vậy tại sao là bây giờ?"
+
+"Vì hạt giống phải ăn để đi."
 
 "Ăn gì?"
 
-"Chính thứ vũ trụ còn dùng để sống. Chênh lệch năng lượng khả dụng. Trạng thái có thể chuyển đổi. Những phần còn đủ tự do để làm công."
+"Những chênh lệch năng lượng còn có thể làm công. Những trạng thái còn đủ tự do để chuyển đổi. Nói ngắn hơn, nó lấy đúng thứ các hệ sống còn đang cần."
 
-"Nói gọn."
+"Nếu gửi sớm?"
 
-"Gửi nó đi sớm hơn, vũ trụ chết sớm hơn."
-
-Căn phòng im hẳn.
+"Sự suy kiệt tăng nhanh hơn. Một số nhánh hiện tại chết sớm hơn. Và chính lịch sử dùng để tính lần gửi tiếp theo cũng bị đổi."
 
 Bách Lâm nhìn khối đen.
 
-"Vậy chúng ta đang cứu tương lai bằng cách ăn phần còn lại của hiện tại?"
+"Vậy chúng ta cứu tương lai bằng cách lấy phần còn lại của hiện tại."
 
-"Đúng."
-
-"Ai chọn thời điểm này?"
-
-"Không phải chúng ta. Lõi nén đã tự tính cửa sổ truyền từ rất lâu. Chúng tôi chỉ kiểm lại."
+"Đúng. Vì thế bộ điều khiển không chọn một ngày cố định. Nó tính lại cửa sổ liên tục."
 
 "Tiêu chí?"
 
-"Muộn đến mức việc lấy thêm năng lượng không còn thay đổi đáng kể kết cục của hiện tại. Sớm đủ để hạt giống còn vượt được cửa truyền."
+"Muộn đến mức lượng lấy thêm gần như không còn thay đổi kết cục của nhánh hiện tại. Sớm đủ để quá trình truyền còn hoàn tất."
 
 Bách Lâm nhìn con số đang rơi.
 
 Bốn mươi mốt phút.
 
-Anh chợt hiểu vì sao mọi nền văn minh còn sót lại đều để tài nguyên của họ khóa đến đúng thời khắc này.
+Anh chợt hiểu một chi tiết mình đã nhìn thấy suốt nhiều năm mà chưa từng nghĩ tới cho đủ.
 
-Không phải họ không muốn giúp sớm hơn.
+Những nền văn minh đã chết không để lại ngày giờ.
 
-Giúp sớm hơn đôi khi chính là giết nhanh hơn.
+Họ để lại điều kiện.
+
+Khi lõi xác nhận cửa sổ truyền, các kho di sản mới được phép mở.
 
 "Khá tàn nhẫn," anh nói.
 
 Người phụ nữ đáp:
 
-"Học phí của một nghìn lần thử không rẻ."
+"Nhưng đỡ tàn nhẫn hơn lấy năng lượng của một thế giới vẫn còn cơ hội dùng nó."
 
 * * *
 
 Hạt giống không được phép mở toàn bộ trong đời sau.
 
-Bách Lâm không phải người đầu tiên nghĩ ra luật đó, nhưng là người kiên quyết giữ nó ở lần này.
+Bách Lâm không phải người đầu tiên nghĩ ra luật đó, nhưng ở lần này anh là người kiên quyết giữ nó.
 
-"Nếu anh không nhớ, anh sẽ lặp lại," người phụ nữ nói.
+"Nếu anh không nhớ, anh sẽ lặp lại sai lầm," người phụ nữ nói.
 
-"Nếu tôi nhớ hết, có khi tôi chết trước khi kịp lặp lại."
+"Nếu tôi nhớ hết, có khi tôi chết trước khi kịp sai lần nào."
 
 "Anh không nhớ những lần trước thật à?"
 
 "Không. Tôi biết chúng nhờ cái máy kia. Biết và nhớ khác nhau."
 
-Cô im.
+Cô nhìn bộ giải mã ngược.
 
-Bách Lâm nhìn bộ giải mã ngược.
+"Vậy đời sau thì sao?"
 
-"Đời sau cũng vậy. Nó không nên sinh ra với một nghìn đời sống nhét thẳng vào đầu. Nó phải được sinh ra như một con người."
+"Cũng phải được sinh ra như một con người. Không ai được nhét cả kho lịch sử này thẳng vào đầu một đứa trẻ."
 
 "Vậy gửi hạt giống để làm gì?"
 
 "Để khi có đủ điều kiện, nó mở đúng phần cần mở."
 
-"Nếu không bao giờ đủ điều kiện?"
+"Ai quyết định đủ điều kiện?"
 
-"Thì nó vẫn phải được quyền có một đời sống của riêng nó."
+Bách Lâm lắc đầu.
+
+"Đừng biến nó thành quan tòa ngồi ngoài thế giới. Cho nó nhìn qua những gì vật mang thật sự sống cùng, thật sự kiểm chứng. Lời tuyên thệ không có giá trị. Hành vi có."
+
+"Nếu vật mang gặp toàn người tệ?"
+
+"Thì càng không nên mở thứ có thể làm mọi chuyện tệ hơn."
 
 Họ đã từng thử ép quá nhiều thứ qua một cơ thể sống.
 
@@ -512,9 +496,9 @@ Bách Lâm đặt tay lên lớp kính ngăn buồng nén.
 
 "Đừng mở vì người ta nói hay. Nhìn xem họ làm gì với phần đã có."
 
-"Cụ thể hơn."
+"Ví dụ?"
 
-"Nếu một người mạnh lên rồi chỉ tìm cách làm người khác yếu đi, khóa lại. Nếu họ lấy một phần tri thức để xây được thứ mà một người không thể xây một mình, mở thêm. Nếu họ biết nói thật khi nói thật khiến họ thiệt, mở thêm. Nếu họ biết dừng ở chỗ chưa biết thay vì bịa ra một đáp án cho đẹp, mở thêm."
+"Một người mạnh lên rồi chỉ tìm cách làm người khác yếu đi, khóa lại. Một nhóm nhận được chút tri thức rồi ghép được thứ mà không cá nhân nào tự làm nổi, mở thêm. Ai dám nói thật lúc nói thật làm mình thiệt, ghi nhận. Ai biết dừng ở chỗ chưa biết thay vì bịa một đáp án cho đẹp, cũng ghi nhận."
 
 Người phụ nữ nhìn anh.
 
@@ -552,7 +536,7 @@ Không có sinh thể nào ở đầu bên kia.
 
 Loài đã để lại gói năng lượng ấy biến mất từ lâu.
 
-Vài giây sau, một lớp quyền truy cập khác mở ra. Đây là phần compute và vật liệu do một mạng trí tuệ máy đã tắt để lại trước khi ngừng hoạt động.
+Vài giây sau, một lớp quyền truy cập khác mở ra. Đây là phần năng lực tính toán và vật liệu do một mạng trí tuệ máy đã tắt để lại trước khi ngừng hoạt động.
 
 Sau cùng, một trạm của con người ngoài quỹ đạo, im tiếng suốt mười hai năm, gửi về hai dòng:
 
@@ -562,7 +546,7 @@ Sau cùng, một trạm của con người ngoài quỹ đạo, im tiếng suố
 
 Bách Lâm nhìn dòng năng lượng tăng lên từng chút.
 
-Những nền văn minh mạnh nhất đã chết trước.
+Nhiều nền văn minh mạnh hơn con người đã chết trước.
 
 Nhưng trước khi chết, họ để lại chìa khóa.
 
@@ -570,9 +554,9 @@ Không phải cho một vị vua.
 
 Không phải cho loài mạnh nhất.
 
-Cho kẻ còn sống đến cuối đủ lâu để dùng chúng.
+Cho kẻ nào còn sống đến lúc điều kiện mở khóa được thỏa mãn.
 
-Trớ trêu thay, kẻ đó là con người.
+Trớ trêu thay, lần này kẻ đó là con người.
 
 Một loài từng mất hàng thế kỷ để học cách không coi mọi tài nguyên là thứ phải giữ cho phe mình.
 
@@ -700,7 +684,7 @@ Anh im khá lâu.
 
 Người phụ nữ cười, mắt đỏ.
 
-"Anh vẫn không muốn làm cứu thế chủ."
+"Anh vẫn không muốn làm người cứu thế."
 
 "Nghe mệt."
 
@@ -710,7 +694,7 @@ Người phụ nữ cười, mắt đỏ.
 
 "Khác nhau à?"
 
-"Khác. Cứu thế chủ phải được người ta yêu. Người làm việc chỉ cần công việc chạy."
+"Khác. Người cứu thế phải được người ta tin vào. Người làm việc chỉ cần việc làm được."
 
 Cô bật cười rồi quay mặt đi.
 
@@ -780,7 +764,7 @@ Anh im vài giây.
 
 Bách Lâm nhìn lên trần.
 
-Câu này anh từng trả lời theo nhiều cách trong chính đời mình, trên giấy, trong mô phỏng, trong những lần tranh luận đến mức không ai còn muốn nhìn mặt nhau.
+Anh đã tranh cãi về câu này quá nhiều lần trong chính đời mình.
 
 Lần này anh nói:
 
@@ -826,11 +810,11 @@ Mưa ngoài cửa sổ.
 
 Một đứa trẻ mở mắt trong cơn sốt.
 
-Nó không biết thiên hà là gì. Không biết trí tuệ nhân tạo là gì. Không biết bộ giải mã ngược. Không biết có những loài đã chết trước khi nó sinh ra một lần nữa.
+Nó không biết thiên hà là gì. Không biết trí tuệ nhân tạo là gì. Không biết bộ giải mã ngược. Không biết ở một nơi nào đó rất xa khỏi đời sống hiện tại của nó, những nền văn minh đã từng để lại chìa khóa cho một lần thử khác.
 
-Nó cũng không nhớ Bách Lâm già trong Trạm Cuối.
+Nó cũng không nhớ ông già mang tên Bách Lâm trong Trạm Cuối.
 
-Nếu có thứ gì đi cùng nó qua cánh cửa kia, thứ đó đang khóa rất sâu.
+Nếu có thứ gì đi cùng qua cánh cửa kia, thứ đó đang khóa rất sâu.
 
 Trên bàn là quyển sách mở dở. Hình minh họa hệ Mặt Trời chiếm nửa trang giấy, các quỹ đạo tròn đẹp đến mức sai một cách đáng yêu.
 
@@ -868,11 +852,11 @@ Chỉ là một việc nhỏ đến mức ngày mai có thể chẳng ai nhớ.
 
 Ở đâu đó rất sâu trong cơn sốt, có thứ gì khẽ dịch chuyển.
 
-Không phải một ký ức.
+Không đủ để mở một kho ký ức.
 
-Một khóa.
+Chỉ như một khe rất mảnh xuất hiện trên một cánh cửa vốn kín tuyệt đối.
 
-Và phía sau khóa ấy, rất xa, có một câu nói đủ nhẹ để lọt qua.
+Và qua khe ấy, một câu nói lọt ra.
 
 **Đừng để họ đóng tương lai quá sớm.**
 
