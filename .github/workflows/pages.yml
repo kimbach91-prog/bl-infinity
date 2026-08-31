@@ -54,6 +54,7 @@ jobs:
         run: >-
           python -m py_compile
           scripts/audit.py
+          scripts/audit_unified_system.py
           scripts/disclosure_audit.py
           scripts/security_audit.py
           scripts/build.py
@@ -62,6 +63,9 @@ jobs:
 
       - name: Validate epistemic object
         run: python scripts/audit.py --strict --release
+
+      - name: Validate BL∞ unified system graph
+        run: python scripts/audit_unified_system.py
 
       - name: Enforce BL-CPR source boundary
         run: python scripts/disclosure_audit.py --strict
