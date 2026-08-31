@@ -84,6 +84,21 @@ def inject_pairing(path: Path, vi_url: str, en_url: str, en_href: str) -> None:
     path.write_text(inject_security(text), encoding="utf-8")
 
 
+def inject_language_switch(path: Path, href: str, hreflang: str, label: str) -> None:
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    if 'class="lang-switch"' not in text:
+        text = text.replace(
+            "</nav>",
+            f'<a class="lang-switch" href="{html.escape(href, quote=True)}" '
+            f'hreflang="{html.escape(hreflang, quote=True)}" '
+            f'lang="{html.escape(hreflang, quote=True)}">{html.escape(label)}</a></nav>',
+            1,
+        )
+    path.write_text(text, encoding="utf-8")
+
+
 def inject_academic_democracy_technology_link(path: Path) -> None:
     if not path.exists():
         return
@@ -237,7 +252,16 @@ def update_discovery() -> None:
 
 def harden_all_html() -> None:
     for path in SITE.rglob("*.html"):
-        path.write_text(inject_security(path.read_text(encoding="utf-8")), encoding="utf-8")
+        text = path.read_text(encoding="utf-8")
+        if 'class="top"' in text and "assets/js/site.js" not in text:
+            depth = len(path.relative_to(SITE).parts) - 1
+            src = "../" * depth + "assets/js/site.js"
+            text = text.replace(
+                "</body>",
+                f'<script src="{html.escape(src, quote=True)}"></script></body>',
+                1,
+            )
+        path.write_text(inject_security(text), encoding="utf-8")
 
 
 if not SITE.exists():
@@ -254,6 +278,19 @@ if (SITE / "theory.html").exists():
         root_url + "en/theory.html",
         "en/theory.html",
     )
+if (SITE / "academic-democracy.html").exists():
+    inject_pairing(
+        SITE / "academic-democracy.html",
+        root_url + "academic-democracy.html",
+        root_url + "academic-democracy/en/",
+        "academic-democracy/en/",
+    )
+inject_language_switch(
+    SITE / "academic-democracy/en/index.html",
+    "../../academic-democracy.html",
+    "vi",
+    "VI",
+)
 inject_academic_democracy_technology_link(SITE / "academic-democracy.html")
 write_translation_status()
 enrich_manifest()
