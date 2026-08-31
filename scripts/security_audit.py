@@ -22,10 +22,12 @@ required = [
     ROOT / "assets/css/main.css",
     ROOT / "assets/js/site.js",
     ROOT / "machine/security-profile.json",
+    ROOT / "machine/git-write-gate.json",
     ROOT / "translations/translation-index.json",
     ROOT / "translations/en/README.md",
     ROOT / "translations/en/THEORY_CORE.md",
     ROOT / "public/academic-democracy-technology.html",
+    ROOT / "scripts/git_publication_gate.py",
     ROOT / "scripts/build.py",
     ROOT / "scripts/build_discovery.py",
     ROOT / "scripts/harden_site.py",
@@ -36,7 +38,6 @@ for path in required:
     if not path.exists():
         errors.append(f"missing required security/bilingual file: {path.relative_to(ROOT)}")
 
-# Translation provenance must stay explicit about partial coverage.
 try:
     tindex = json.loads((ROOT / "translations/translation-index.json").read_text(encoding="utf-8"))
 except Exception as exc:
@@ -77,7 +78,6 @@ for code, edition in discovery_languages.items():
 if draft_codes:
     warnings.append("owner review pending: indexable AI discovery drafts: " + ", ".join(draft_codes))
 
-# Hardening is deliberately separated from the legacy source renderer: check the hardener itself.
 hardener_path = ROOT / "scripts/harden_site.py"
 hardener_source = hardener_path.read_text(encoding="utf-8") if hardener_path.exists() else ""
 for marker in [
@@ -99,8 +99,6 @@ for marker in [
     if marker not in hardener_source:
         errors.append(f"harden_site.py missing hardening marker: {marker}")
 
-# Responsive reading/navigation regressions are part of bilingual integrity: a translated
-# object is not practically available when its switch, navigation or tables collapse on mobile.
 ui_css_path = ROOT / "assets/css/main.css"
 ui_js_path = ROOT / "assets/js/site.js"
 ui_css = ui_css_path.read_text(encoding="utf-8") if ui_css_path.exists() else ""
@@ -127,7 +125,6 @@ for marker in [
 if "replace(/theory\\.html$/, 'academic-democracy.html')" in ui_js:
     errors.append("navigation script reintroduced the broken relative English Academic Democracy link")
 
-# GitHub Actions: immutable action references, no pull_request_target, no persisted checkout credentials.
 workflow_path = ROOT / ".github/workflows/pages.yml"
 workflow = workflow_path.read_text(encoding="utf-8") if workflow_path.exists() else ""
 if "pull_request_target" in workflow:
@@ -144,6 +141,7 @@ for ref in uses_lines:
         errors.append(f"GitHub Action not pinned to full commit SHA: {ref}")
 for marker in [
     "persist-credentials: false",
+    "python scripts/git_publication_gate.py --strict --tree",
     "python scripts/security_audit.py --strict",
     "python scripts/harden_site.py",
     "python scripts/security_audit.py --strict --site",
@@ -157,7 +155,18 @@ for marker in [
 if "permissions:" not in workflow:
     errors.append("workflow must declare explicit permissions")
 
-# Direct Python build dependencies are exact pinned; security tooling is independently pinned.
+try:
+    gwg = json.loads((ROOT / "machine/git-write-gate.json").read_text(encoding="utf-8"))
+except Exception as exc:
+    gwg = {}
+    errors.append(f"invalid BL-GWG policy: {exc}")
+if gwg.get("policy_id") != "BL-GWG" or gwg.get("default_decision") != "DENY_UNTIL_ALL_GATES_PASS":
+    errors.append("BL-GWG must exist and remain fail-closed")
+if gwg.get("publication_requires_explicit_owner_command") is not True:
+    errors.append("BL-GWG must require explicit owner command for public publication mutation")
+if gwg.get("server_side_ruleset_required_for_hard_pre_receive_enforcement") is not True:
+    errors.append("BL-GWG must disclose platform ruleset requirement")
+
 def exact_requirements(path: Path):
     if not path.exists():
         errors.append(f"missing dependency lock input: {path.name}")
@@ -171,21 +180,19 @@ def exact_requirements(path: Path):
         if "==" not in line:
             errors.append(f"dependency must be exact-version pinned in {path.name}: {line}")
 
-
 exact_requirements(ROOT / "requirements.txt")
 exact_requirements(ROOT / "requirements-security.txt")
 
-# Source-level obvious unsafe URL schemes and common high-confidence secret formats.
 scan_ext = {".md", ".txt", ".json", ".jsonld", ".yml", ".yaml", ".html", ".js", ".css", ".py"}
 source_exclusions = {
     Path("scripts/security_audit.py"),
     Path("scripts/disclosure_audit.py"),
+    Path("scripts/git_publication_gate.py"),
     Path("SECURITY.md"),
     Path("DISCLOSURE_POLICY.md"),
     Path("machine/disclosure-policy.json"),
+    Path("machine/git-write-gate.json"),
 }
-# These documents describe blocked URL schemes literally. They remain inside the secret scan;
-# only the URL-execution heuristic is suppressed to avoid security-documentation false positives.
 url_scan_exclusions = source_exclusions | {
     Path("content/26_SECURITY_AND_INTEGRITY_MODEL.md"),
     Path("machine/security-profile.json"),
@@ -217,7 +224,6 @@ for path in ROOT.rglob("*"):
             if pattern.search(text):
                 errors.append(f"possible {label} in {rel.as_posix()}")
 
-# Generated site audit is the final active-content boundary after all render/discovery steps.
 if args.site:
     if not SITE.exists():
         errors.append("--site requested but generated site/ does not exist")
