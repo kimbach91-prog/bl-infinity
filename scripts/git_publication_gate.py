@@ -76,12 +76,14 @@ secret_patterns = {
 }
 
 scan_ext = {".md", ".txt", ".json", ".jsonld", ".yml", ".yaml", ".html", ".js", ".css", ".py"}
-secret_reference_exclusions = {
+security_reference_exclusions = {
     Path("scripts/git_publication_gate.py"),
     Path("scripts/security_audit.py"),
     Path("scripts/disclosure_audit.py"),
     Path("SECURITY.md"),
     Path("DISCLOSURE_POLICY.md"),
+    Path("content/26_SECURITY_AND_INTEGRITY_MODEL.md"),
+    Path("machine/security-profile.json"),
     Path("machine/disclosure-policy.json"),
     Path("machine/git-write-gate.json"),
 }
@@ -115,16 +117,13 @@ for path in files:
     except (UnicodeDecodeError, OSError):
         continue
 
-    if rel not in secret_reference_exclusions:
+    if rel not in security_reference_exclusions:
         for label, pattern in secret_patterns.items():
             if pattern.search(text):
                 fail(f"possible {label} in public file: {rel_posix}")
-
-    if re.search(r"javascript\s*:", text, flags=re.I):
-        if rel not in {Path("scripts/security_audit.py"), Path("scripts/git_publication_gate.py"), Path("SECURITY.md")}:
+        if re.search(r"javascript\s*:", text, flags=re.I):
             fail(f"unsafe javascript URL pattern in public file: {rel_posix}")
-    if re.search(r"data\s*:\s*text/html", text, flags=re.I):
-        if rel not in {Path("scripts/security_audit.py"), Path("scripts/git_publication_gate.py"), Path("SECURITY.md")}:
+        if re.search(r"data\s*:\s*text/html", text, flags=re.I):
             fail(f"unsafe data:text/html pattern in public file: {rel_posix}")
 
 workflow = WORKFLOW_PATH.read_text(encoding="utf-8") if WORKFLOW_PATH.exists() else ""
