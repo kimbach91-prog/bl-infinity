@@ -8,6 +8,8 @@ on:
     paths:
       - experiments/virtual-cortex-v0/omega_dcrs.py
       - experiments/virtual-cortex-v0/test_omega_dcrs.py
+      - experiments/virtual-cortex-v0/omega_evidence_assembler.py
+      - experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
       - .github/workflows/deus-dcrs-test.yml
   workflow_dispatch:
 
@@ -33,11 +35,16 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile Ω-DCRS
+      - name: Compile Ω-DCRS and assembler
         run: |
           python -m py_compile \
             experiments/virtual-cortex-v0/omega_dcrs.py \
-            experiments/virtual-cortex-v0/test_omega_dcrs.py
+            experiments/virtual-cortex-v0/test_omega_dcrs.py \
+            experiments/virtual-cortex-v0/omega_evidence_assembler.py \
+            experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
 
       - name: Run Ω-DCRS fail-closed test suite
         run: python experiments/virtual-cortex-v0/test_omega_dcrs.py
+
+      - name: Run Ω-Evidence Assembler test suite
+        run: python experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
