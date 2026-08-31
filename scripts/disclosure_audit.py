@@ -90,7 +90,6 @@ for path in files:
     if rel.suffix.lower() in {".key", ".pem", ".p12", ".pfx", ".keystore"}:
         errors.append(f"key/certificate material in public release: {rel_posix}")
 
-# Files whose job is to describe/enforce the boundary may mention protected names.
 reference_scan_exclusions = {
     Path("DISCLOSURE_POLICY.md"),
     Path("machine/disclosure-policy.json"),
@@ -137,7 +136,6 @@ for path in files:
         if pattern.search(text):
             errors.append(f"possible {label} in {rel.as_posix()}")
 
-# The public renderer must fail closed: explicit allowlists only.
 build_path = ROOT / "scripts/build.py"
 if not build_path.exists():
     errors.append("missing site build script: scripts/build.py")
@@ -163,7 +161,6 @@ else:
             errors.append("site build still auto-publishes directory contents instead of an allowlist")
             break
 
-# Public BL-REV machine file is an interface contract, not the production adversarial runtime.
 reverse_path = ROOT / "machine/bl-reverse-system.json"
 if reverse_path.exists():
     try:
@@ -176,19 +173,26 @@ if reverse_path.exists():
     except Exception as exc:
         errors.append(f"invalid BL-REV public contract: {exc}")
 
-# The public logic stack is a conceptual/dependency view only, never a runtime router.
+# Public logic stack may be static or dynamic conceptual view, never a runtime router.
 logic_stack_path = ROOT / "machine/logic-stack.json"
 if not logic_stack_path.exists():
     errors.append("missing public logic stack")
 else:
     try:
         logic_stack = json.loads(logic_stack_path.read_text(encoding="utf-8"))
-        if logic_stack.get("graph_type") != "LOGICAL_GRAPH_VIEW":
-            errors.append("logic stack must remain LOGICAL_GRAPH_VIEW")
+        graph_type = logic_stack.get("graph_type")
+        if graph_type not in {"LOGICAL_GRAPH_VIEW", "DYNAMIC_LOGICAL_GRAPH_VIEW"}:
+            errors.append("logic stack must remain a static/dynamic conceptual logical view")
         if logic_stack.get("interface_scope") != "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY":
             errors.append("logic stack missing public conceptual-only scope")
         if logic_stack.get("not_runtime_router") is not True:
             errors.append("logic stack must explicitly declare not_runtime_router=true")
+        if graph_type == "DYNAMIC_LOGICAL_GRAPH_VIEW":
+            if logic_stack.get("not_fixed_hierarchy") is not True:
+                errors.append("dynamic logic stack must explicitly reject fixed hierarchy")
+            modes = logic_stack.get("mode_cycles", {})
+            if "THUC_DINH" not in modes or "GIA_DINH" not in modes:
+                errors.append("dynamic public logic stack must expose both THUC_DINH and GIA_DINH")
         for protected_key in [
             "router",
             "routing_weights",
@@ -203,7 +207,29 @@ else:
     except Exception as exc:
         errors.append(f"invalid public logic stack: {exc}")
 
-# Public BL-REV doctrine must remain doctrine/interface, never an operator playbook.
+# Dedicated dynamic topology is a public conceptual contract only.
+topology_path = ROOT / "machine/reality-gia-tai-topology.json"
+if topology_path.exists():
+    try:
+        topology = json.loads(topology_path.read_text(encoding="utf-8"))
+        if topology.get("id") != "BL-RG-TOPOLOGY":
+            errors.append("unexpected Reality-GiaTai topology id")
+        if topology.get("not_fixed_hierarchy") is not True:
+            errors.append("Reality-GiaTai topology must reject fixed hierarchy")
+        if topology.get("not_runtime_router") is not True:
+            errors.append("Reality-GiaTai topology must declare not_runtime_router=true")
+        axes = topology.get("authority_axes", {})
+        if axes.get("actuality_authority") != "REALITY" or axes.get("generative_precedence") != "MODE_DEPENDENT":
+            errors.append("Reality-GiaTai topology must separate REALITY actuality authority from MODE_DEPENDENT generative precedence")
+        for protected_key in [
+            "router", "routing_weights", "activation_triggers", "operator_sequence",
+            "production_pipeline", "private_diagnostics", "target_ranking"
+        ]:
+            if protected_key in topology:
+                errors.append(f"Reality-GiaTai public topology contains protected runtime field: {protected_key}")
+    except Exception as exc:
+        errors.append(f"invalid Reality-GiaTai public topology: {exc}")
+
 reverse_doctrine_path = ROOT / "content/40_BL_REVERSE_SOVEREIGN_ADVERSARY.md"
 if not reverse_doctrine_path.exists():
     errors.append("missing public BL-REV doctrine")
@@ -228,7 +254,6 @@ else:
         "production sequencing",
         "target ranking",
     ]
-    # The last two concepts are allowed only inside the explicit protected-boundary paragraph.
     boundary_index = reverse_doctrine_lower.find("## 10. protected runtime boundary")
     for marker in forbidden_doctrine_runtime:
         found_at = reverse_doctrine_lower.find(marker)
@@ -238,7 +263,6 @@ else:
             continue
         errors.append(f"BL-REV public doctrine exposes protected runtime semantic: {marker}")
 
-# Public derivation/refinement/doctrine docs must explicitly declare reduced scope.
 marker_files = {
     ROOT / "content/32_REASONING_TO_CLAIM_MAP.md": "PUBLIC_DERIVATION_MAP",
     ROOT / "critiques/03_WEEKLY_REFINEMENT_PROTOCOL.md": "PUBLIC_INTERFACE_ONLY",
