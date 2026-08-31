@@ -88,8 +88,14 @@ if blok_event.get('precedes') != 'bl:event-optimizer-essence-chain':
     errors.append('historical graph must preserve owner-confirmed BLOK -> PRECEDES -> Optimizer/Essence edge')
 if blok_event.get('exactDateKnown') is not False:
     errors.append('BLOK foundational nucleus absolute date must remain unresolved')
-if logic_stack.get('graph_type') != 'LOGICAL_GRAPH_VIEW' or logic_stack.get('not_chronology') is not True:
-    errors.append('logic stack must declare that it is not chronology')
+logic_graph_type=logic_stack.get('graph_type')
+if logic_graph_type not in {'LOGICAL_GRAPH_VIEW','DYNAMIC_LOGICAL_GRAPH_VIEW'} or logic_stack.get('not_chronology') is not True:
+    errors.append('logic stack must declare a logical/dynamic logical graph view and not_chronology=true')
+if logic_graph_type == 'DYNAMIC_LOGICAL_GRAPH_VIEW':
+    if logic_stack.get('not_fixed_hierarchy') is not True:
+        errors.append('dynamic logic stack must declare not_fixed_hierarchy=true')
+    if 'THUC_DINH' not in logic_stack.get('mode_cycles',{}) or 'GIA_DINH' not in logic_stack.get('mode_cycles',{}):
+        errors.append('dynamic logic stack must expose THUC_DINH and GIA_DINH mode cycles')
 if logic_stack.get('historical_graph') != 'historical-graph.jsonld':
     errors.append('logic stack missing historical graph pointer')
 
