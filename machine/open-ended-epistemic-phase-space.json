@@ -1,0 +1,173 @@
+{
+  "schema_version": "0.1",
+  "id": "BL-OEPS",
+  "canonical_name_vi": "Không gian Pha Nhận thức Mở",
+  "canonical_name_en": "Open-Ended Epistemic Phase Space",
+  "class": [
+    "open-epistemic-state-space",
+    "ontology-evolution-architecture"
+  ],
+  "status": "proposed-canonical-public-projection",
+  "integration_anchor": "BL∞",
+  "canonical_source": "../content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md",
+  "preferred_chain_source": "../content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md",
+  "public_projection": true,
+  "not_runtime_router": true,
+  "taxonomy_is_exhaustive": false,
+  "dimensions_are_extensible": true,
+  "current_axes": [
+    "actuality",
+    "evidence",
+    "representability",
+    "accessibility",
+    "decidability",
+    "context_dependence",
+    "modality",
+    "ontology_fit",
+    "adversarial_integrity",
+    "temporal_stability"
+  ],
+  "named_regions_non_exhaustive": [
+    "REALITY_ANCHORED",
+    "GIA_TAI",
+    "MIXED",
+    "CONTESTED",
+    "UNDERDETERMINED",
+    "CONTEXTUAL",
+    "DYNAMIC",
+    "REPRESENTATION_CONFLICT",
+    "KNOWN_UNKNOWN",
+    "OPAQUE_UNKNOWN",
+    "UNREPRESENTABLE_YET",
+    "UNKNOWN_UNKNOWN_INDICATOR",
+    "UNKNOWN_DECIDABILITY",
+    "OUTSIDE_CURRENT_ONTOLOGY_CANDIDATE"
+  ],
+  "unknown_contract": {
+    "unknown_not_equal_falsehood": true,
+    "opaque_not_equal_meaningless": true,
+    "unknown_unknown_indicator_not_equal_known_content": true,
+    "boundary_awareness_not_equal_outside_content_knowledge": true,
+    "raw_preservation_before_semantic_inflation": true
+  },
+  "opaque_example": {
+    "raw": "&;&;@;&;@",
+    "semantic_status": "UNKNOWN",
+    "actuality_referent": "UNRESOLVED",
+    "preserve_raw": true,
+    "meaning_claimed": false
+  },
+  "engines": [
+    {
+      "id": "BL-UUH",
+      "name": "Unknown-Unknown Hunter",
+      "role": "hunt signatures of missing structure without fabricating unknown content",
+      "candidate_signatures": [
+        "structured_residual",
+        "persistent_directional_prediction_error",
+        "unexplained_dependence",
+        "cross_model_shared_failure",
+        "compression_failure",
+        "boundary_anomaly",
+        "measurement_blind_spot",
+        "category_leakage",
+        "instrument_model_disagreement"
+      ]
+    },
+    {
+      "id": "BL-DGE",
+      "name": "Dimension Genesis Engine",
+      "role": "propose and test new epistemic dimensions or primitives when current representation underfits structured residuals",
+      "lifecycle": [
+        "CANDIDATE",
+        "PROBATION",
+        "ACTIVE",
+        "CONDITIONAL",
+        "DORMANT",
+        "MERGED",
+        "SUPERSEDED",
+        "PRUNED"
+      ]
+    },
+    {
+      "id": "BL-OME",
+      "name": "Ontology Mutation Engine",
+      "role": "split, merge, retype, create, deprecate or re-coordinate ontology primitives with migration and provenance"
+    },
+    {
+      "id": "BL-CDE",
+      "name": "Civilizational Discovery Ecology",
+      "role": "coordinate candidate generation, representation invention, verification, engineering, action and reality feedback without replacing science"
+    }
+  ],
+  "dimension_genesis_loop": [
+    "RESIDUAL_OR_ANOMALY",
+    "KNOWN_EXPLANATION_SWEEP",
+    "MISSING_VALUE_OR_DIMENSION_QUESTION",
+    "CANDIDATE_DIMENSION_OR_PRIMITIVE",
+    "REENCODE_HISTORICAL_OBJECTS",
+    "DERIVE_NEW_DISTINCTIONS_OR_PREDICTIONS",
+    "ADVERSARIAL_ATTACK",
+    "REALITY_OR_FORMAL_TEST_WHERE_POSSIBLE",
+    "RETAIN_OR_CONDITIONAL_OR_DORMANT_OR_PRUNE",
+    "VERSION_PHASE_SPACE"
+  ],
+  "discovery_ecology_channels": [
+    "science",
+    "mathematics",
+    "engineering",
+    "philosophy",
+    "simulation",
+    "lived_observation",
+    "art_and_metaphor",
+    "citizen_observation",
+    "ai_generation",
+    "cross_domain_analogy",
+    "anomaly_and_noise"
+  ],
+  "hard_invariants": [
+    "current_state_taxonomy_not_equal_exhaustive_epistemic_ontology",
+    "unknown_not_equal_falsehood",
+    "opaque_not_equal_meaningless",
+    "unknown_unknown_indicator_not_equal_discovery_of_unknown_content",
+    "mixed_state_not_equal_one_permanent_third_truth_value",
+    "current_representation_boundary_not_equal_proven_reality_boundary",
+    "boundary_awareness_not_equal_outside_content_knowledge",
+    "open_ended_not_equal_anything_goes",
+    "discovery_not_equal_validation",
+    "generation_not_equal_evidence",
+    "new_dimension_must_earn_retention",
+    "ontology_mutation_must_preserve_history"
+  ],
+  "progress_delta_classes": [
+    "EVIDENCE_DELTA",
+    "NEGATIVE_KNOWLEDGE_DELTA",
+    "MODEL_DELTA",
+    "GIA_TAI_DELTA",
+    "UNKNOWN_STRUCTURE_DELTA",
+    "DIMENSION_DELTA",
+    "ONTOLOGY_DELTA",
+    "REPRESENTATION_DELTA",
+    "SCOPE_DELTA",
+    "MEASUREMENT_DELTA",
+    "CAPABILITY_DELTA",
+    "PROVENANCE_DELTA",
+    "RISK_DELTA"
+  ],
+  "withheld": [
+    "protected orchestration details",
+    "private ranking functions",
+    "private diagnostics",
+    "private corpora",
+    "credentials"
+  ],
+  "falsifiers": [
+    "dimension growth repeatedly increases complexity without explanatory, predictive, discovery or routing gain",
+    "Unknown is used to immunize claims from critique",
+    "opaque objects are assigned meaning without evidence or provenance",
+    "unknown-unknown language is used to validate arbitrary imagination",
+    "ontology mutation silently rewrites history or meaning",
+    "discovery ecology lowers validation standards rather than widening candidate generation",
+    "a finite taxonomy is again asserted to be exhaustive"
+  ]
+}
