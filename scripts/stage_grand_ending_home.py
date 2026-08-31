@@ -21,16 +21,16 @@ def main() -> None:
 
     unknown_entry = (
         '<li class="unknown-doctrine-entry"><a href="unknown.html">'
-        '<strong>Học thuyết UNKNOWN · Không gian Chưa-biết Mở</strong>'
-        '<span>UNKNOWN không chỉ là thiếu đáp án: quan hệ observer–model–reality–history; '
-        'unknown-unknown, false-known, future chưa thành thực tại, optionality và năng lực trí tuệ sống sót qua điều chưa biết.</span>'
+        '<strong>Học thuyết UNKNOWN · Trường Chưa-biết Sinh thành của BL∞</strong>'
+        '<span>UNKNOWN = contact frontier giữa cấu trúc hiện tại và độ mở BL∞; '
+        'nối GiaTai/imagination, ontology genesis, false-known, cooperation, actualization và biên UNKNOWN sâu hơn.</span>'
         '</a></li>'
     )
     grand_entry = (
         '<li class="grand-ending-entry"><a href="grand-ending.html">'
-        '<strong>Đại Kết Cục · UNKNOWN · Cosmic Optionality</strong>'
-        '<span>Infinity ≠ Power; mô hình mở về áp lực hội tụ thấp-optionality, UNKNOWN, '
-        'trí tuệ và sự sống như counter-pressure giữ thực tại còn khả năng sinh mới.</span>'
+        '<strong>Đại Kết Cục · BL∞ · UNKNOWN · Cosmic Optionality</strong>'
+        '<span>Infinity ≠ Power; phân biệt fixed infinity với B Infinity và mô hình sự sống/trí tuệ như counter-pressure '
+        'trước terminal convergence thấp-generativity.</span>'
         '</a></li>'
     )
     directory_anchor = '<ul class="home-directory-grid">'
@@ -46,7 +46,7 @@ def main() -> None:
         text = text.replace(directory_anchor, directory_anchor + entries, 1)
 
     INDEX.write_text(text, encoding="utf-8")
-    print("UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
+    print("BL∞ UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
