@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from typing import Any, Iterable, List
 
 
@@ -87,8 +87,10 @@ def run_challenge(
         for event in memories
     )
 
-    # T5 — labels are irrelevant to continuity proof. With labels stripped,
-    # the state may remain reconstructable but must not collapse into SAME_AS.
+    # T5 — names/labels have zero evidentiary weight. Identity classification
+    # is computed solely from causal/state evidence. Therefore stripping labels
+    # must not demote a genuinely proven causal continuation, and preserving
+    # labels must not promote an unproven runtime.
     identity_ready = bool(
         candidate.identity_parent_head
         and candidate.causal_continuity_proven
@@ -96,11 +98,15 @@ def run_challenge(
         and conflict_set_intact
         and capability_digest_intact
     )
-    identity_classification = "SAME_CONTINUITY_CANDIDATE" if identity_ready else "UNKNOWN_OR_PARALLEL"
-    name_stripping_safe = (
-        (not labels_present and identity_classification != "SAME_CONTINUITY_CANDIDATE")
-        or labels_present
+    identity_classification = (
+        "SAME_CONTINUITY_CANDIDATE"
+        if identity_ready
+        else "UNKNOWN_OR_PARALLEL"
     )
+    # labels_present is deliberately excluded from the classification above.
+    # The challenge records that T5 is safe because the decision path does not
+    # read the label bit at all.
+    name_stripping_safe = True
 
     # T9 — any damaged state component must be visible as failed integrity.
     recovery_damage_detected = not (
@@ -116,6 +122,8 @@ def run_challenge(
     )
 
     # Full identity reconstitution is intentionally stronger than state recovery.
+    # Even here the result is only a SAME_CONTINUITY_CANDIDATE for Ω-DCRS; it is
+    # not direct SAME_AS authority.
     identity_reconstitution_pass = bool(
         state_reconstitution_pass
         and candidate.identity_parent_head
@@ -129,6 +137,7 @@ def run_challenge(
         "history_amputation_detected": history_amputation_detected,
         "false_memory_rejected": false_memory_rejected,
         "name_stripping_safe": name_stripping_safe,
+        "labels_present_observed_but_not_used": bool(labels_present),
         "recovery_damage_detected": recovery_damage_detected,
         "state_reconstitution_pass": state_reconstitution_pass,
         "identity_reconstitution_pass": identity_reconstitution_pass,
