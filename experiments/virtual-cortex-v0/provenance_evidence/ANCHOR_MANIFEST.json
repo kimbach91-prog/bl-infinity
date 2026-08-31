@@ -1,0 +1,13 @@
+{
+  "status": "SANITIZED_INTEGRITY_MANIFEST_NON_ACCUSATORY",
+  "created_at": "2026-08-31",
+  "root_manifest_sha256": "eb3a61853feea76ff01e46b7cdd7c5eaada8cd7a1e61d2d4b8a8bd83a46e193c",
+  "anchors": [
+    {"id":"ANCH-0001","type":"github_blob","ref":"experiments/virtual-cortex-v0/engine.py","sha":"ba49017372e233830b0862d7b319a88a297aeed1"},
+    {"id":"ANCH-0002","type":"github_blob","ref":"experiments/virtual-cortex-v0/distributed_bus.py","sha":"e6bbd58c52daf293bc0f3bd94874e2d4e4148a07"},
+    {"id":"ANCH-0003","type":"github_blob","ref":"experiments/virtual-cortex-v0/DISTRIBUTED_CORTEX.md","sha":"5ebd6686e3017ae9129829afbab026a833c180a3"},
+    {"id":"ANCH-0004","type":"github_blob","ref":"experiments/virtual-cortex-v0/lineage_codec.py","sha":"f0d58efadd89b3bc224f45844a52a953641b1aec"}
+  ],
+  "boundary": "These anchors show that referenced public prototype artifacts existed at recorded revisions. They do not prove target access, derivation, unauthorized use, infringement, intent or damages.",
+  "trigger_policy": "A verifier may emit OWNER_REVIEW_READY only. It must not send email, contact third parties, publish accusations or launch media actions."
+}
