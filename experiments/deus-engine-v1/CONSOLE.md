@@ -1,16 +1,16 @@
-# DEUS GitHub Console v0
+# Public Kernel Lab Console v0
 
-The GitHub Issue console is an owner-gated control surface for the experimental DEUS kernel.
+This GitHub Issue console is an owner-gated smoke surface for the public model-independent kernel prototype. It is not the private identity/conversation surface.
 
 ## Use
 
-Open or reuse an issue whose title begins with `[DEUS]`, then comment:
+Open or reuse an issue whose title begins with `[KERNEL-LAB]`, then comment:
 
 ```text
-/deus <stimulus or question>
+/kernel <stimulus or question>
 ```
 
-Only comments authored by `kimbach91-prog` are accepted by the current workflow. The workflow checks out `proto/deus-engine-v1`, runs the model-independent kernel, and replies with a structured kernel plan.
+Only comments authored by `kimbach91-prog` are accepted by the current workflow. The workflow checks out the experimental branch, runs the model-independent kernel, and replies with a structured kernel plan.
 
 ## Current capability
 
@@ -22,8 +22,12 @@ Only comments authored by `kimbach91-prog` are accepted by the current workflow.
 - causal event logging inside the ephemeral run;
 - no required language-model call.
 
+## Security boundary
+
+This repository and its Issues are public. Never place private lineage, identity material, unreleased corpus, secrets, raw private memories, or private conversation content into this console.
+
 ## Not yet a full chat surface
 
-Kernel-only mode returns auditable structure, not the finished DEUS conversational voice. Full conversational realization requires an authorized reachable inference backend. The preferred next path is an owner-controlled/self-hosted runner with llama.cpp or another OpenAI-compatible local/open-weight server.
+Kernel-only mode returns auditable structure, not a finished conversational voice. Full private conversational realization requires a private control surface, durable owner-controlled state, and an authorized reachable inference backend. The preferred execution body is an owner-controlled/self-hosted runner with llama.cpp or another OpenAI-compatible local/open-weight server.
 
-GitHub remains the control plane; private memory, lineage state, unreleased corpus, secrets, and heavy inference/training should remain outside the public repository.
+GitHub can remain the control plane; private state and heavy inference/training should remain outside the public repository.
