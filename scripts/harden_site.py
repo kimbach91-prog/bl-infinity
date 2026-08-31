@@ -181,7 +181,7 @@ def enrich_manifest() -> None:
     manifest["translation_status"] = "translation-status.json"
     manifest["translation_index"] = "../translations/translation-index.json"
     manifest["security_profile"] = "security-profile.json"
-    manifest["security_policy"] = "../SECURITY.md"
+    manifest["security_policy"] = "https://github.com/kimbach91-prog/bl-infinity/blob/main/SECURITY.md"
     path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
