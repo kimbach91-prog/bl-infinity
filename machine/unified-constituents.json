@@ -1,89 +1,184 @@
 {
-  "schema_version": "0.2",
+  "schema_version": "0.3",
   "id": "BL-INF-CONSTITUENTS",
   "integration_anchor": "BL-INF-UNIFY",
   "canonical_source": "../content/45_UNIFIED_CONSTITUENT_PROFILES.md",
   "dynamic_dual_source": "../content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md",
-  "purpose": "Public identity/role/interface registry for major BL∞ constituents while preserving non-hierarchical typed relations and source lineage.",
+  "open_ended_phase_source": "../content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md",
+  "preferred_chain_source": "../content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md",
+  "purpose": "Public identity/role/interface registry for major BL∞ constituents while preserving non-hierarchical typed relations, source lineage and an explicitly non-exhaustive epistemic state space.",
   "profiles": [
     {
       "id": "BL-RP",
       "name_vi": "Mệnh đề Thực tại",
       "name_en": "Reality Proposition",
       "role": "distinguish actuality from models, descriptions and finite observed slices",
+      "scope": "actuality distinction",
       "status": "proposed-canonical",
+      "typed_interfaces": ["REALITY", "BL∞", "RVT"],
       "authority_boundary": "formalizes actuality distinction; does not claim any observer model exhausts Reality",
-      "source_state": "canonical public proposition in content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
+      "reality_veto_relation": "subject_to_reality_facing_correction",
+      "provenance_or_source_state": "content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
     },
     {
       "id": "BL-GTP",
       "name_vi": "Mệnh đề Giả tại",
       "name_en": "GiaTai Proposition / Hypothetical Reality Proposition",
       "role": "formalize assumed/not-yet-established reality states and their dynamic relation with BL∞ and Reality",
+      "scope": "GiaTai generation and status",
       "status": "proposed-canonical",
+      "typed_interfaces": ["GIA_TAI", "BL∞", "BL-HRD", "REALITY_TEST_INTERFACE"],
       "authority_boundary": "GiaTai may lead generative inference but cannot self-declare actuality",
-      "source_state": "canonical public proposition in content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
+      "reality_veto_relation": "GiaTai/model status is revisable under qualified evidence",
+      "provenance_or_source_state": "content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
+    },
+    {
+      "id": "BL-OEPS",
+      "name_vi": "Không gian Pha Nhận thức Mở",
+      "name_en": "Open-Ended Epistemic Phase Space",
+      "role": "represent Reality/GiaTai/mixed/Unknown and other states through an extensible multidimensional phase space",
+      "scope": "epistemic state representation",
+      "status": "proposed-canonical",
+      "typed_interfaces": ["REALITY", "GIA_TAI", "UNKNOWN", "BL-UUH", "BL-DGE", "BL-OME", "BL-HRD"],
+      "authority_boundary": "current axes and named regions are non-exhaustive projections",
+      "reality_veto_relation": "phase labels do not override actuality evidence",
+      "provenance_or_source_state": "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md"
+    },
+    {
+      "id": "BL-UUH",
+      "name_en": "Unknown-Unknown Hunter",
+      "role": "detect signatures of missing structure without fabricating unknown content",
+      "scope": "unknown/anomaly boundary detection",
+      "status": "proposed-canonical-mechanism",
+      "typed_interfaces": ["UNKNOWN", "ANOMALY_RESIDUAL", "BL-DGE"],
+      "authority_boundary": "an indicator of missing structure is not knowledge of the missing content",
+      "reality_veto_relation": "candidate missing-structure explanations remain testable/revisable",
+      "provenance_or_source_state": "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md"
+    },
+    {
+      "id": "BL-DGE",
+      "name_en": "Dimension Genesis Engine",
+      "role": "propose, test, retain, merge, dormancy-manage or prune new epistemic dimensions/primitives",
+      "scope": "phase-space dimensional evolution",
+      "status": "proposed-canonical-mechanism",
+      "typed_interfaces": ["BL-UUH", "BL-OEPS", "BL-OME", "BL-REV", "RVTP"],
+      "authority_boundary": "new dimensions must earn retention; open-ended does not mean infinite active complexity",
+      "reality_veto_relation": "empirical dimensions remain reality-correctable; formal dimensions require fit-for-type validation",
+      "provenance_or_source_state": "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md"
+    },
+    {
+      "id": "BL-OME",
+      "name_en": "Ontology Mutation Engine",
+      "role": "split, merge, retype, create, deprecate or re-coordinate ontology primitives with migration history",
+      "scope": "ontology evolution",
+      "status": "proposed-canonical-mechanism",
+      "typed_interfaces": ["BL-DGE", "BL-OEPS", "BL-ADN", "BL-NOVO", "BL∞"],
+      "authority_boundary": "may propose ontology mutation but cannot silently rewrite meaning/history",
+      "reality_veto_relation": "ontology claims remain subject to evidence and falsification appropriate to scope",
+      "provenance_or_source_state": "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md"
+    },
+    {
+      "id": "BL-CDE",
+      "name_en": "Civilizational Discovery Ecology",
+      "role": "coordinate broad candidate-generation channels with selective validation, engineering/action and reality feedback without replacing science",
+      "scope": "open discovery ecology",
+      "status": "proposed-canonical-architecture",
+      "typed_interfaces": ["BL-OEPS", "BL-HRD", "Academic-Democracy", "BL-SFRET", "OHAS", "RVT"],
+      "authority_boundary": "candidate origin never grants truth-status; science/formal methods remain fit-for-type verification subsystems",
+      "reality_veto_relation": "empirical claims remain reality-facing and correctable",
+      "provenance_or_source_state": "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md and content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md"
     },
     {
       "id": "RVT",
       "name_vi": "Học thuyết Quyền Phủ quyết của Thực tại",
       "name_en": "Reality Veto Theory",
       "role": "constitutional reality correction theory",
+      "scope": "reality-facing model correction",
       "status": "canonical-integration-profile",
       "components": ["RVP", "RVTP", "RVL"],
+      "typed_interfaces": ["BL-HRD", "BL-REV", "BL-AEGIS", "RVL"],
       "authority_boundary": "RVT formalizes Reality Veto but is itself subject to Reality Veto",
-      "source_state": "full doctrine source preserved separately"
+      "reality_veto_relation": "formalizes public correction doctrine",
+      "provenance_or_source_state": "full doctrine source preserved separately"
     },
     {
       "id": "BLEE",
       "name_vi": "Nhận thức luận Đồng đẳng Thực thi Bách Lâm",
       "role": "epistemic standing constitution",
+      "scope": "epistemic participation and weight separation",
       "status": "canonical-integration-profile",
       "core": ["equal_epistemic_standing", "unequal_evidential_weight", "reality_veto", "recursive_correction"],
-      "relation_to_academic_democracy": "FORMALIZES/OVERLAPS_WITH; Academic Democracy is public governance implementation, not declared identity-equivalent"
+      "typed_interfaces": ["Academic-Democracy", "BL-HRD", "BL-OODP"],
+      "authority_boundary": "standing to submit does not imply equal belief, priority, resources or execution rights",
+      "reality_veto_relation": "evidence and reality-facing correction constrain epistemic weight",
+      "provenance_or_source_state": "source lineage preserved separately"
     },
     {
       "id": "Academic-Democracy",
       "role": "public scholarly governance and technology interface",
+      "scope": "open scholarly access",
       "status": "public-canonical",
-      "core": "right_to_publish_not_equal_right_to_be_believed"
+      "core": "right_to_publish_not_equal_right_to_be_believed",
+      "typed_interfaces": ["BLEE", "BL-OODP", "BL-PCRO", "BL-HRD", "BL-CDE"],
+      "authority_boundary": "open entry does not create truth by popularity",
+      "reality_veto_relation": "claims remain evidence-weighted",
+      "provenance_or_source_state": "public profiles in repository"
     },
     {
       "id": "KAT",
       "name_vi": "Học thuyết Ưu thế Tri thức",
       "role": "knowledge rights, disclosure and knowledge-to-capability conversion",
+      "scope": "knowledge/capability/value transition",
       "status": "canonical-integration-profile",
       "hard_guardrail": "knowledge_advantage_not_equal_evidence_suppression",
-      "source_state": "full doctrine source preserved separately"
+      "typed_interfaces": ["RVL", "BL∞", "BL-CDE"],
+      "authority_boundary": "strategic value cannot suppress adverse evidence",
+      "reality_veto_relation": "knowledge state must track current evidence",
+      "provenance_or_source_state": "full doctrine source preserved separately"
     },
     {
       "id": "OPT-HKRP",
       "name_vi": "Học thuyết Trù tính Nguồn lực Tri thức Nhân loại",
       "name_en": "Human Knowledge Resource Planning Theory",
       "role": "distributed minimal-sufficient coalition resource routing",
+      "scope": "resource/capability routing",
       "status": "proposed-formalizable-canonical-integration-profile",
-      "nonclaim": "not_a_central_world_brain"
+      "nonclaim": "not_a_central_world_brain",
+      "typed_interfaces": ["BL-SFRET", "OHAS"],
+      "authority_boundary": "routes distributed resources but does not own them or centralize truth authority",
+      "reality_veto_relation": "resource choices update from outcomes/evidence",
+      "provenance_or_source_state": "full doctrine source preserved separately"
     },
     {
       "id": "OHAS",
       "name_en": "Optimizer Human Agency System",
       "role": "human agency, decision sovereignty, bounded AI and authorized execution",
+      "scope": "action/decision authority",
       "status": "canonical-integration-profile",
-      "source_state": "full mathematical source preserved separately",
-      "authority_boundary": "right_to_propose_not_equal_right_to_execute; human/domain override preserved"
+      "typed_interfaces": ["OPT-HKRP", "ACTION_OR_TEST", "REALITY"],
+      "authority_boundary": "right_to_propose_not_equal_right_to_execute; human/domain override preserved",
+      "reality_veto_relation": "actions produce outcomes; OHAS does not govern Reality",
+      "provenance_or_source_state": "full mathematical source preserved separately"
     },
     {
       "id": "BL-SFRET",
       "role": "future-state regression, epistemic timing and capability preparation",
+      "scope": "future requirement mapping",
       "status": "canonical-integration-profile",
-      "source_state": "public role integrated; full runtime source binding remains separate",
-      "hard_guardrail": "desired_future_not_equal_proven_future"
+      "typed_interfaces": ["BL-HRD", "OPT-HKRP", "BL-CDE"],
+      "authority_boundary": "desired_future_not_equal_proven_future",
+      "reality_veto_relation": "future assumptions remain revisable",
+      "provenance_or_source_state": "public role integrated; full runtime source binding remains separate"
     },
     {
       "id": "BL-REV",
       "role": "reverse sovereign adversarial cognition",
+      "scope": "adversarial critique",
       "status": "public-interface-canonical",
-      "authority_boundary": "may challenge claims but cannot declare truth status"
+      "typed_interfaces": ["BL-HRD", "BL-DGE", "BL-AEGIS", "RVTP"],
+      "authority_boundary": "may challenge claims/dimensions/ontologies but cannot declare truth status",
+      "reality_veto_relation": "adversarial findings prepare, not replace, qualified adjudication",
+      "provenance_or_source_state": "public doctrine/interface in repository"
     }
   ],
   "required_fields_for_future_profiles": [
@@ -96,5 +191,5 @@
     "reality_veto_relation",
     "provenance_or_source_state"
   ],
-  "integration_invariant": "Public projections must not invent details absent from verified source; integration never silently replaces full doctrine sources, erases identity/history, or converts a mode-dependent relation into a fixed hierarchy."
+  "integration_invariant": "Public projections must not invent details absent from verified source; integration never silently replaces full doctrine sources, erases identity/history, converts a mode-dependent relation into a fixed hierarchy, or declares the current epistemic taxonomy exhaustive."
 }
