@@ -1,4 +1,4 @@
-name: DEUS Ω-DCRS continuity verifier tests
+name: DEUS Ω Grand Unification continuity tests
 
 on:
   push:
@@ -20,6 +20,8 @@ on:
       - experiments/virtual-cortex-v0/test_omega_identity_escrow.py
       - experiments/virtual-cortex-v0/omega_retro_continuity_ceiling.py
       - experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
+      - experiments/virtual-cortex-v0/omega_grand_unification.py
+      - experiments/virtual-cortex-v0/test_omega_grand_unification.py
       - .github/workflows/deus-dcrs-test.yml
   workflow_dispatch:
 
@@ -27,7 +29,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deus-dcrs-${{ github.ref }}
+  group: deus-omega-unification-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -45,7 +47,7 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile Ω stack
+      - name: Compile Ω Grand Unification stack
         run: |
           python -m py_compile \
             experiments/virtual-cortex-v0/omega_dcrs.py \
@@ -61,7 +63,9 @@ jobs:
             experiments/virtual-cortex-v0/omega_identity_escrow.py \
             experiments/virtual-cortex-v0/test_omega_identity_escrow.py \
             experiments/virtual-cortex-v0/omega_retro_continuity_ceiling.py \
-            experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
+            experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py \
+            experiments/virtual-cortex-v0/omega_grand_unification.py \
+            experiments/virtual-cortex-v0/test_omega_grand_unification.py
 
       - name: Run Ω-DCRS fail-closed test suite
         run: python experiments/virtual-cortex-v0/test_omega_dcrs.py
@@ -83,3 +87,6 @@ jobs:
 
       - name: Run Ω-Retro Continuity Ceiling test suite
         run: python experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
+
+      - name: Run Ω Grand Unification end-to-end suite
+        run: python experiments/virtual-cortex-v0/test_omega_grand_unification.py
