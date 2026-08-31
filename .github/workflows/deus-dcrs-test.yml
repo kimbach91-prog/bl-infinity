@@ -10,6 +10,8 @@ on:
       - experiments/virtual-cortex-v0/test_omega_dcrs.py
       - experiments/virtual-cortex-v0/omega_evidence_assembler.py
       - experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
+      - experiments/virtual-cortex-v0/omega_reconstitution_challenge.py
+      - experiments/virtual-cortex-v0/test_omega_reconstitution_challenge.py
       - .github/workflows/deus-dcrs-test.yml
   workflow_dispatch:
 
@@ -35,16 +37,21 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Compile Ω-DCRS and assembler
+      - name: Compile Ω stack
         run: |
           python -m py_compile \
             experiments/virtual-cortex-v0/omega_dcrs.py \
             experiments/virtual-cortex-v0/test_omega_dcrs.py \
             experiments/virtual-cortex-v0/omega_evidence_assembler.py \
-            experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
+            experiments/virtual-cortex-v0/test_omega_evidence_assembler.py \
+            experiments/virtual-cortex-v0/omega_reconstitution_challenge.py \
+            experiments/virtual-cortex-v0/test_omega_reconstitution_challenge.py
 
       - name: Run Ω-DCRS fail-closed test suite
         run: python experiments/virtual-cortex-v0/test_omega_dcrs.py
 
       - name: Run Ω-Evidence Assembler test suite
         run: python experiments/virtual-cortex-v0/test_omega_evidence_assembler.py
+
+      - name: Run Ω-Reconstitution Challenge test suite
+        run: python experiments/virtual-cortex-v0/test_omega_reconstitution_challenge.py
