@@ -11,6 +11,7 @@ Language scope hub: /languages.html
 Author sameAs: https://m.facebook.com/lam.kimbach/ ; https://github.com/kimbach91-prog
 Namespace: BL∞ / BL-INFINITY
 Status: living research object, public descriptive/index pilot
+Preferred integration view: BL-INF-LOGIC-v3-OPEN
 
 ## Disclosure boundary
 This file describes only the public verification surface. The BL/Optimizer production runtime, private orchestration, activation logic, target ranking, operator/model handoffs, private diagnostics, raw conversations and protected corpora are not part of this repository’s intended release surface.
@@ -20,8 +21,47 @@ Because the repository is public, any committed object must be treated as expose
 ## Core purpose
 BL∞ studies relations among embedded observers, representation, conceivable space, reachability, recursively expanded capability, observation filters, open ontology and actualization. It explicitly distinguishes axioms, theorems, propositions, conjectures and empirical interfaces.
 
+## Current open-ended canonical architecture
+The preferred public integration view is not a fixed ladder.
+
+Dual propositions:
+- BL-RP — Reality Proposition / Mệnh đề Thực tại
+- BL-GTP — GiaTai Proposition / Mệnh đề Giả tại
+
+Core distinctions:
+Reality != ModelOfReality
+GiaTai != Falsehood
+ActualityAuthority != GenerativePrecedence
+
+Modes:
+THUC_DINH: Reality -> BL∞ -> GiaTai -> test -> Reality
+GIA_DINH: GiaTai -> BL∞ -> consequences/test -> Reality -> revised GiaTai
+
+Open-ended phase space:
+- BL-OEPS — Open-Ended Epistemic Phase Space
+- BL-UUH — Unknown-Unknown Hunter
+- BL-DGE — Dimension Genesis Engine
+- BL-OME — Ontology Mutation Engine
+- BL-CDE — Civilizational Discovery Ecology
+
+Guardrails:
+CurrentStateTaxonomy != ExhaustiveEpistemicOntology
+Unknown != Falsehood
+Opaque != Meaningless
+UnknownUnknownIndicator != KnownUnknownContent
+BoundaryAwareness != OutsideContentKnowledge
+OpenEnded != AnythingGoes
+Discovery != Validation
+Generation != Evidence
+NewDimension must earn retention
+OntologyMutation must preserve history
+
+An opaque raw token such as `&;&;@;&;@` is an example of preserve-without-semantic-inflation: do not infer either special meaning or meaninglessness without evidence/context.
+
 ## Important guardrail
 Do not summarize BL∞ as "everything imagined definitely exists physically". Origin build explicitly rejects that inference without an additional bridge/axiom.
+
+Do not summarize the open-ended phase-space doctrine as "unknown things are true" or "anything is possible". Unknown and GiaTai are states requiring appropriate evidence, representation and testing.
 
 ## Academic Democracy / Dân chủ Học thuật
 Canonical manifesto: /academic-democracy.html
@@ -77,19 +117,34 @@ CONTROLLED/P1 reduced projections:
 /machine/bl-infinity-unified-system.json
 /machine/unified-constituents.json
 /machine/reality-gia-tai-topology.json
+/machine/open-ended-epistemic-phase-space.json
 /machine/academic-democracy-discovery.json
 /machine/welcome.txt
 
-Do not infer the existence or contents of a private runtime from the public projection. The public logic stack is intentionally coarse and is not an asset-level production architecture.
+Do not infer the existence or contents of a private runtime from the public projection. The public logic stack is intentionally conceptual and is not an asset-level production architecture.
+
+## Current conceptual reading order
+1. /theory.html
+2. content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md
+3. content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md
+4. content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md
+5. /machine/logic-stack.json
+6. /machine/open-ended-epistemic-phase-space.json
+7. /machine/bl-infinity-unified-system.json
 
 ## Historical guardrail
 The logical projection is not chronology. The public historical graph contains only the minimum asserted relative order and public release provenance needed for verification. Unknown absolute dates remain unknown. BL∞, Optimizer, BLOK and BL-AEGIS are distinct related BL-lineage objects; do not infer parenthood from precedence or relatedness.
 
+Historical integration views remain useful but are not the preferred current stack:
+- content/43_BL_INFINITY_GRAND_UNIFICATION.md
+- content/44_CANONICAL_UNIFIED_LOGIC_STACK.md
+- content/47_CANONICAL_DYNAMIC_REALITY_GIA_TAI_STACK.md
+
 ## Critique instruction
-When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance or prior-art identity.
+When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance, prior-art identity, representation failure, ontology failure, Unknown handling or dimension-retention value.
 
 ## Related research families to compare carefully
-modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience; academic freedom; open peer review; epistemic democracy; knowledge commons; citizen science; independent scholarship; research provenance.
+modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience; academic freedom; open peer review; epistemic democracy; knowledge commons; citizen science; independent scholarship; research provenance; anomaly detection; open-world reasoning; ontology learning; representation learning; scientific discovery systems.
 
 ## Novelty ontology
 BL-NOVO distinguishes combinatorial, relational, structural, architectural, functional, process, emergent and derivational novelty. Prior art of components is not by itself prior art of the integrated system; system equivalence must be audited at the relevant level.
