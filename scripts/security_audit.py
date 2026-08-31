@@ -114,6 +114,22 @@ for marker in [
 ]:
     if marker not in ui_css:
         errors.append(f"responsive stylesheet missing regression marker: {marker}")
+mobile_css_match = re.search(
+    r"@media\s*\(max-width:\s*900px\)\s*\{(.*?)@media\s*\(max-width:\s*390px\)",
+    ui_css,
+    flags=re.S,
+)
+if not mobile_css_match:
+    errors.append("responsive stylesheet missing the 900px mobile layout block")
+else:
+    mobile_css = mobile_css_match.group(1)
+    if not re.search(r"\.language-menu\s*\{[^}]*position:\s*static", mobile_css, flags=re.S):
+        errors.append("mobile language menu must anchor its panel to the header, not the trigger button")
+    panel_match = re.search(r"\.language-menu-panel\s*\{([^}]*)\}", mobile_css, flags=re.S)
+    panel_css = panel_match.group(1) if panel_match else ""
+    for marker in ["inset-inline-start", "inset-inline-end", "width: auto"]:
+        if marker not in panel_css:
+            errors.append(f"mobile language panel missing viewport-safe rule: {marker}")
 for marker in [
     'new URL("academic-democracy.html", siteRoot)',
     'header.classList.add("nav-ready")',
@@ -278,6 +294,27 @@ if args.site:
             academic_en_text = academic_en.read_text(encoding="utf-8")
             if 'class="lang-switch" href="../../academic-democracy.html"' not in academic_en_text:
                 errors.append("English Academic Democracy page missing visible Vietnamese switch")
+        homepage = SITE / "index.html"
+        if homepage.exists():
+            homepage_text = homepage.read_text(encoding="utf-8")
+            if homepage_text.count('class="home-directory"') != 1:
+                errors.append("homepage must contain exactly one persistent full-system directory")
+            for href in [
+                "theory.html",
+                "academic-democracy.html",
+                "academic-democracy-technology.html",
+                "bl-adn.html",
+                "claims.html",
+                "assets.html",
+                "author.html",
+                "languages.html",
+                "provenance.html",
+                "critique.html",
+                "machine.html",
+                "academic-democracy/discovery.html",
+            ]:
+                if f'href="{href}"' not in homepage_text:
+                    errors.append(f"homepage full-system directory missing {href}")
         for rel in [
             "machine/security-profile.json",
             "machine/translation-status.json",

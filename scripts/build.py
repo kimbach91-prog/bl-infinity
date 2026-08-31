@@ -108,6 +108,54 @@ def topic_entry_points():
 <section><h3><a href="critique.html">Phản biện công khai</a></h3><p>Gắn phản ví dụ, evidence và lỗi suy luận vào đúng claim để sửa đổi có thể truy vết.</p></section>
 </div></section>'''
 
+def home_directory():
+    entries = [
+        ('theory.html', 'Học thuyết canonical', 'Toàn bộ chương công khai, tiên đề, mệnh đề, cơ chế và câu hỏi mở của BL∞.'),
+        ('academic-democracy.html', 'Dân chủ Học thuật', 'Tuyên ngôn mở quyền tham gia tạo tri thức mà không bình quân hóa trọng lượng bằng chứng.'),
+        ('academic-democracy-technology.html', 'Hồ sơ công nghệ', 'Claim graph, provenance, evidence routing, versioning, AI và ranh giới an toàn vận hành.'),
+        ('bl-adn.html', 'BL-ADN', 'Giao thức giữ tên người tạo ra, phả hệ object, vai trò đóng góp và lịch sử phiên bản.'),
+        ('claims.html', 'Claim Registry', 'Mỗi mệnh đề có ID, loại, phạm vi, dependency, trạng thái và bề mặt bác bỏ riêng.'),
+        ('assets.html', 'Asset Registry', 'Danh mục học thuyết, protocol, mechanism và cấu kiện được định danh trong BL-lineage.'),
+        ('author.html', 'Tác giả', 'Hồ sơ canonical của Lâm Kim Bách, định danh tác quyền Bách Lâm và hệ/phương pháp Optimizer.'),
+        ('languages.html', 'Ngôn ngữ', 'Chọn bản đọc tiếng Việt, English core hoặc các bản khám phá có ghi rõ phạm vi chất lượng.'),
+        ('provenance.html', 'Provenance', 'Kiểm tra nguồn gốc, chronology, quan hệ phái sinh, formalization và giới hạn tuyên bố ưu tiên.'),
+        ('critique.html', 'Phản biện', 'Đưa counterexample, evidence, lỗi logic hoặc xung đột provenance vào đúng object.'),
+        ('machine.html', 'Machine Layer', 'Manifest, graph, registry và public contracts để hệ thống máy tái dựng đúng BL∞.'),
+        ('academic-democracy/discovery.html', 'Discovery đa ngôn ngữ', 'Chỉ mục thuật ngữ và lối truy xuất về cùng object Dân chủ Học thuật canonical.'),
+    ]
+    items = ''.join(
+        '<li><a href="'+html.escape(href, quote=True)+'"><strong>'+html.escape(label)+'</strong>'
+        '<span>'+html.escape(description)+'</span></a></li>'
+        for href, label, description in entries
+    )
+    return '''<nav class="home-directory" aria-labelledby="home-directory-title">
+<p class="eyebrow">Mục lục toàn hệ</p>
+<h2 id="home-directory-title">Tất cả lối vào công khai</h2>
+<p class="home-directory-intro">Menu thu gọn phía trên phục vụ thao tác nhanh. Danh mục dưới đây luôn hiển thị đầy đủ trên trang chủ để người đọc không phải mở menu mới biết BL∞ đang có những lớp nào.</p>
+<ul class="home-directory-grid">'''+items+'''</ul></nav>'''
+
+def home_snapshot():
+    chapter_count=max(0,len(list((ROOT/'content').glob('*.md')))-1)
+    claim_count=len(CLAIMS.get('claims',[]))
+    asset_count=len(ASSETS.get('assets',[]))
+    discovery_count=max(0,len(TINDEX.get('discovery_editions',{}).get('languages',{}))-1)
+    return f'''<section class="system-snapshot" aria-labelledby="system-snapshot-title">
+<p class="eyebrow">Bề mặt đã materialize</p><h2 id="system-snapshot-title">Một hệ nghiên cứu có thể đọc, truy nguyên và phản biện</h2>
+<div class="snapshot-grid">
+<div class="snapshot-card"><strong>{chapter_count}</strong><span>chương học thuyết công khai sau trang dẫn nhập</span></div>
+<div class="snapshot-card"><strong>{claim_count}</strong><span>claim có định danh và bề mặt kiểm tra riêng</span></div>
+<div class="snapshot-card"><strong>{asset_count}</strong><span>cấu kiện trong Asset &amp; Technology Registry</span></div>
+<div class="snapshot-card"><strong>2 + {discovery_count}</strong><span>bản đọc chính + bản khám phá đa ngôn ngữ có ghi rõ trạng thái</span></div>
+</div></section>'''
+
+def home_body():
+    source=(ROOT/'content/00_README_FIRST.md').read_text(encoding='utf-8')
+    marker='<!-- HOME_DIRECTORY -->'
+    if marker not in source:
+        raise ValueError('content/00_README_FIRST.md is missing HOME_DIRECTORY marker')
+    before,after=source.split(marker,1)
+    return md(before)+home_directory()+home_snapshot()+md(after)+topic_entry_points()+author_spotlight()
+
 def language_hub_body():
     discovery=TINDEX.get('discovery_editions',{}).get('languages',{})
     cards=[]
@@ -165,9 +213,7 @@ shutil.copy(ROOT/'assets/css/main.css',SITE/'assets/css/main.css')
 shutil.copy(ROOT/'assets/js/site.js',SITE/'assets/js/site.js')
 
 content=sorted((ROOT/'content').glob('*.md'))
-intro=md((ROOT/'content/00_README_FIRST.md').read_text(encoding='utf-8'))
-intro+=topic_entry_points()
-intro+=author_spotlight()
+intro=home_body()
 write_page('index.html',CFG['seo']['title'],intro,desc='BL∞ — hệ nghiên cứu mở do Lâm Kim Bách (Bách Lâm) khởi phát, về quan sát hữu hạn, không gian khả năng, Giả tại, provenance, phản biện và tri thức máy đọc được.')
 write_page('theory.html','BL∞ — Học thuyết canonical',render_docs([p for p in content if p.name!='00_README_FIRST.md'],'BL∞ — Học thuyết canonical'),desc='Bản học thuyết canonical BL∞: Mệnh đề Vô hạn Bách Lâm, quan hệ Thực tại–Giả tại, giới hạn quan sát, khả đạt, phản biện và các cấu kiện đã nối phả hệ.')
 bl_adn_source=(ROOT/'BL-ADN.md').read_text(encoding='utf-8')

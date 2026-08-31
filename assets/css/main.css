@@ -399,6 +399,88 @@ article section {
   list-style: none;
 }
 
+.home-directory {
+  margin: 2.5rem 0;
+}
+
+.home-directory-intro {
+  max-width: 72ch;
+}
+
+.home-directory-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 1.25rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-directory-grid li {
+  min-width: 0;
+}
+
+.home-directory-grid a {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 5px;
+  padding: 15px 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #fff;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.home-directory-grid a:hover {
+  border-color: rgba(125, 21, 21, 0.36);
+  background: var(--accent-soft);
+}
+
+.home-directory-grid strong {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.home-directory-grid span {
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.45;
+}
+
+.system-snapshot {
+  margin: 2.5rem 0;
+}
+
+.snapshot-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.snapshot-card {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #f7f7f4;
+}
+
+.snapshot-card strong {
+  display: block;
+  color: var(--accent);
+  font-size: clamp(1.45rem, 3vw, 2rem);
+  line-height: 1;
+}
+
+.snapshot-card span {
+  display: block;
+  margin-top: 7px;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
 .identity-grid section,
 .language-grid li,
 .topic-grid section {
@@ -689,8 +771,17 @@ footer {
   }
 
   .language-menu {
+    position: static;
     grid-row: 1;
     grid-column: 4;
+  }
+
+  .language-menu-panel {
+    top: calc(100% + 1px);
+    inset-inline-start: max(10px, env(safe-area-inset-left));
+    inset-inline-end: max(10px, env(safe-area-inset-right));
+    width: auto;
+    max-height: calc(100dvh - 76px);
   }
 
   .nav-toggle {
@@ -780,8 +871,13 @@ footer {
 
   .identity-grid,
   .language-grid,
-  .topic-grid {
+  .topic-grid,
+  .home-directory-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .snapshot-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   h1 {
@@ -894,6 +990,10 @@ footer {
     margin: 0;
     font-size: 0.9rem;
     content: "文+";
+  }
+
+  .language-menu-panel {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
