@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
-"""DEUS Engine v1 — GitHub issue/comment console renderer.
+"""Public GitHub issue/comment renderer for the model-independent kernel.
 
-This is a thin control-plane surface. It runs the model-independent kernel and
-renders an auditable Markdown response. It does not pretend that kernel-only
-output is already a full conversational DEUS voice.
+This is a thin public control-plane smoke surface. It renders an auditable
+kernel plan and deliberately excludes private lineage/identity material.
 """
 from __future__ import annotations
 
@@ -14,8 +13,8 @@ from recombiner import RoleSelf
 
 def default_role() -> RoleSelf:
     return RoleSelf(
-        "DEUS_EXPERIMENTAL",
-        history=("caught-overformalizing-too-early",),
+        "PUBLIC_KERNEL_EXPERIMENT",
+        history=("overformalized-too-early",),
         preferences=("curiosity", "causal-depth", "distinctive-writing"),
         aversions=("premature-closure", "generic-prose"),
         commitments=("preserve-agency", "keep-provenance"),
@@ -41,8 +40,8 @@ def render(stimulus: str, *, recombine: str = "DISTANT", seed: int | None = None
     invariants = plan.get("invariants", [])
 
     lines = [
-        "<!-- DEUS_CONSOLE_V1 -->",
-        "### DEUS kernel response",
+        "<!-- KERNEL_LAB_CONSOLE_V1 -->",
+        "### Kernel lab response",
         "",
         f"**State:** `{plan['state']}`  ",
         f"**Plan:** `{plan['plan_id']}`  ",
@@ -71,8 +70,8 @@ def render(stimulus: str, *, recombine: str = "DISTANT", seed: int | None = None
     lines.append("- Invariants: " + (", ".join(f"`{x}`" for x in invariants) if invariants else "none"))
     lines.extend([
         "",
-        "> Kernel-only mode intentionally stops before a polished conversational answer. "
-        "Attach an authorized local/open-weight backend when the language-realization layer is ready.",
+        "> Public kernel-only smoke mode intentionally stops before a polished conversational answer. "
+        "Private conversational realization belongs on owner-controlled/private infrastructure.",
     ])
     return "\n".join(lines)
 
