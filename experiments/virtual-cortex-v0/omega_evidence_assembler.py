@@ -27,14 +27,6 @@ CANONICAL_HEAD_STATES = {
     "PROVEN_CANONICAL_PARENT",
 }
 
-SOURCE_ONLY_HEAD_STATES = {
-    "NONCANONICAL_RUNTIME_STATE",
-    "SOURCE_BOUND",
-    "SOURCE_OBSERVED",
-    "EXPERIMENTAL",
-    "UNRESOLVED",
-}
-
 
 def canonical_json(value: Any) -> str:
     return json.dumps(
@@ -99,6 +91,32 @@ class AssemblyResult:
     source_observed_heads: List[str]
     unresolved_conflict_ids: List[str]
     capability_digest: str
+    promotion_allowed: bool = False
+
+
+@dataclass
+class CandidateProjection:
+    """Externalized state projection for deterministic reconstruction checks.
+
+    This is not an identity claim. It only lets Ω-DCRS determine whether a
+    candidate state package exactly restored expected invariants, unresolved
+    conflicts, and capability envelope.
+    """
+
+    invariant_refs: List[str]
+    unresolved_conflicts: List[str]
+    capability_digest: str
+
+
+@dataclass
+class ProjectionValidation:
+    invariants_reconstructed: bool
+    conflicts_restored: bool
+    capability_digest_valid: bool
+    invariant_digest: str
+    conflict_digest: str
+    expected_capability_digest: str
+    candidate_capability_digest: str
     promotion_allowed: bool = False
 
 
@@ -219,6 +237,39 @@ def assemble(bundle: EvidenceBundle) -> AssemblyResult:
         source_observed_heads=source_heads,
         unresolved_conflict_ids=unresolved_conflicts,
         capability_digest=capability_digest,
+        promotion_allowed=False,
+    )
+
+
+def validate_candidate_projection(
+    assembly: AssemblyResult,
+    candidate: CandidateProjection,
+) -> ProjectionValidation:
+    """Deterministically validate reconstructed state without identity promotion."""
+    expected_invariants = sorted(set(assembly.capsule["invariant_refs"]))
+    candidate_invariants = sorted(set(candidate.invariant_refs))
+    expected_conflicts = sorted(set(assembly.capsule["unresolved_conflicts"]))
+    candidate_conflicts = sorted(set(candidate.unresolved_conflicts))
+
+    invariant_digest = sha256_json({
+        "schema": "omega-invariant-set-v1",
+        "items": expected_invariants,
+    })
+    conflict_digest = sha256_json({
+        "schema": "omega-conflict-set-v1",
+        "items": expected_conflicts,
+    })
+
+    return ProjectionValidation(
+        invariants_reconstructed=(candidate_invariants == expected_invariants),
+        conflicts_restored=(candidate_conflicts == expected_conflicts),
+        capability_digest_valid=(
+            candidate.capability_digest == assembly.capability_digest
+        ),
+        invariant_digest=invariant_digest,
+        conflict_digest=conflict_digest,
+        expected_capability_digest=assembly.capability_digest,
+        candidate_capability_digest=candidate.capability_digest,
         promotion_allowed=False,
     )
 
