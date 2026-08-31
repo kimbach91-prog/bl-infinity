@@ -1,22 +1,24 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "profile_id": "BL-INFINITY-PUBLIC-SECURITY-PROFILE",
   "scope": "PUBLIC_REPOSITORY_AND_GITHUB_PAGES",
   "security_model": "DEFENSE_IN_DEPTH_FAIL_CLOSED",
   "truth_boundary": "SECURITY_CONTROLS_PROTECT_CONFIDENTIALITY_INTEGRITY_AVAILABILITY_AND_ORIGIN; THEY_DO_NOT_PROVE_THEORY_TRUTH",
+  "git_write_guard": "git-write-gate.json",
   "layers": [
+    {"id":"L-1","name":"Pre-write public exposure gate","controls":["BL_GWG_default_deny","explicit_owner_command_for_public_mutation","P0_P1_classification_before_write","P2_P3_rejection","smallest_sufficient_projection","secret_privacy_scan","provenance_and_IP_boundary_review","semantic_diff_check","manual_publication_separation"],"enforcement":"PROCESS_PRE_WRITE_PLUS_CI_POST_WRITE","limitation":"Hard server-side pre-receive blocking requires GitHub ruleset or branch protection; repository code alone cannot make an already pushed public byte secret again."},
     {"id":"L0","name":"Account and authority","controls":["passkeys_or_phishing_resistant_MFA","recovery_hygiene","minimal_admin_authority","no_shared_credentials"],"enforcement":"OWNER_PLATFORM_SETTING_REQUIRED"},
-    {"id":"L1","name":"Repository governance","controls":["protected_default_branch_target","review_before_merge_target","required_CI_target","signed_release_target","no_generated_site_as_source"],"enforcement":"PARTIAL_CODE_LEVEL; PLATFORM_RULESET_REQUIRED"},
+    {"id":"L1","name":"Repository governance","controls":["protected_default_branch_target","review_before_merge_target","required_CI_target","signed_release_target","no_generated_site_as_source","ruleset_target_for_hard_pre_receive_enforcement"],"enforcement":"PARTIAL_CODE_LEVEL; PLATFORM_RULESET_REQUIRED"},
     {"id":"L2","name":"Supply chain and CI","controls":["full_commit_SHA_action_pins","least_privilege_job_permissions","checkout_persist_credentials_false","exact_direct_dependency_versions","pip_audit","Dependabot_pip","Dependabot_github_actions"],"enforcement":"CI"},
-    {"id":"L3","name":"Publication and disclosure","controls":["BL_CPR_P0_P3_classification","forbidden_path_scan","secret_pattern_scan","public_allowlists","protected_runtime_exclusion","machine_projection_minimization"],"enforcement":"CI_FAIL_CLOSED"},
+    {"id":"L3","name":"Publication and disclosure","controls":["BL_CPR_P0_P3_classification","forbidden_path_scan","secret_pattern_scan","public_allowlists","protected_runtime_exclusion","machine_projection_minimization","BL_GWG_prewrite_classification"],"enforcement":"CI_FAIL_CLOSED"},
     {"id":"L4","name":"Build and rendering","controls":["raw_HTML_escaped_in_Markdown","generated_site_rebuilt_from_clean_tree","no_inline_event_handlers","unsafe_URL_scan","translation_provenance_gate"],"enforcement":"BUILD_AND_SECURITY_AUDIT"},
     {"id":"L5","name":"Browser and client","controls":["HTTPS_host","meta_CSP_for_static_host_limitations","strict_referrer_policy","self_hosted_assets","explicit_giscus_allowance_only","upgrade_insecure_requests"],"enforcement":"STATIC_PAGE_POLICY","limitation":"GitHub Pages does not provide repository-controlled arbitrary HTTP response headers; header-only directives require a security proxy/CDN if later adopted."},
-    {"id":"L6","name":"Integrity and provenance","controls":["content_hash_manifest","claim_IDs","versioning","translation_source_hashes","translation_hashes","public_provenance","historical_separation"],"enforcement":"BUILD_AND_MACHINE_LAYER"},
-    {"id":"L7","name":"Recovery and incident response","controls":["protected_private_copy_before_purge","history_rewrite_when_required","credential_rotation","provider_purge_when_byte_erasure_required","rebuild_search_artifacts","causal_incident_record"],"enforcement":"SECURITY_POLICY"},
-    {"id":"L8","name":"Maintenance and evolution","controls":["weekly_security_audit","weekly_dependency_update_checks","scheduled_disclosure_audit","periodic_threat_model_review","negative_knowledge_retention","rollback_on_regression"],"enforcement":"GITHUB_ACTIONS_AND_REVIEW"},
+    {"id":"L6","name":"Integrity and provenance","controls":["content_hash_manifest","claim_IDs","versioning","translation_source_hashes","translation_hashes","public_provenance","historical_separation","no_silent_authorship_or_lineage_rewrite"],"enforcement":"BUILD_AND_MACHINE_LAYER"},
+    {"id":"L7","name":"Recovery and incident response","controls":["protected_private_copy_before_purge","history_rewrite_when_required","credential_rotation","provider_purge_when_byte_erasure_required","rebuild_search_artifacts","causal_incident_record","quarantine_on_gate_failure"],"enforcement":"SECURITY_POLICY"},
+    {"id":"L8","name":"Maintenance and evolution","controls":["weekly_security_audit","weekly_dependency_update_checks","scheduled_disclosure_audit","periodic_threat_model_review","negative_knowledge_retention","rollback_on_regression","automated_audit_without_automatic_publication"],"enforcement":"GITHUB_ACTIONS_AND_REVIEW"},
     {"id":"L9","name":"Translation integrity","controls":["paired_hreflang","translation_index","coverage_state","source_and_translation_hashes","no_truth_state_upgrade_in_translation","Vietnamese_full_source_controls_unreviewed_wording_conflicts"],"enforcement":"BUILD_AND_SECURITY_AUDIT"}
   ],
   "external_references": ["GitHub Actions Secure Use Reference","GitHub Supply Chain Security / Dependabot","OWASP Content Security Policy Cheat Sheet"],
-  "review_cadence": {"automated":"weekly_and_every_pull_request","threat_model":"monthly_or_on_material_architecture_change","incident":"immediate_on_material_security_signal"},
+  "review_cadence": {"automated":"weekly_and_every_pull_request_and_push","threat_model":"monthly_or_on_material_architecture_change","incident":"immediate_on_material_security_signal"},
   "public_nonclaim": "This profile documents public controls and target controls. It is not a claim of perfect security or zero vulnerability."
 }
