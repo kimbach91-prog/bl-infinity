@@ -1,0 +1,30 @@
+BL∞ INDEX PILOT v0.2 — QUICKSTART
+
+EASIEST PATH (one command):
+   python scripts/prepare_release.py --github YOUR_GITHUB_USERNAME --repo bl-infinity --zip
+   This configures + release-audits + builds + hashes + creates dist/BL_INFINITY_bl-infinity_configured.zip.
+
+1) Configure once (manual path):
+   python scripts/configure.py --github YOUR_GITHUB_USERNAME --repo bl-infinity
+   This defaults canonical URL to https://YOUR_GITHUB_USERNAME.github.io/bl-infinity/.
+   Or edit bl.config.yml manually.
+
+2) Upload everything in this folder to the ROOT of a public GitHub repository named bl-infinity.
+
+3) GitHub repo -> Settings -> Pages -> Source: GitHub Actions.
+
+4) Repo -> Settings -> Features -> Enable Discussions.
+
+5) Optional comments on site:
+   install giscus -> get repoId/categoryId -> put them in bl.config.yml -> comments.enabled: true -> push.
+
+6) Every push to main validates + builds + deploys automatically.
+
+7) Before claiming priority-grade provenance, import the exact raw chat transcript and run:
+   python scripts/hash_manifest.py
+
+8) Open the generated /claims/<ID>/ URL to share/audit one proposition at a time.
+
+9) Run the pilot loop: publish -> index -> reaction -> deep audit -> patch -> new version (BL-PIRAL).
+
+Read SETUP_GITHUB.md, SEO_INDEXING.md and TESTING.md for details.

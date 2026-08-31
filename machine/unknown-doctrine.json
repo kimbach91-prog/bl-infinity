@@ -1,0 +1,163 @@
+{
+  "schema": "BL_UNKNOWN_DOCTRINE_2",
+  "status": "PUBLIC_RESEARCH_DOCTRINE",
+  "canonicality": "LIVING_OPEN_MODEL",
+  "title_vi": "Học thuyết UNKNOWN — Trường Chưa-biết Sinh thành của BL∞",
+  "title_en": "UNKNOWN Doctrine — Generative Unknown Frontier of BL Infinity",
+  "author": {
+    "name": "Lâm Kim Bách",
+    "lineage": "Bách Lâm",
+    "method_identity": "Optimizer"
+  },
+  "published": "2026-09-01",
+  "source": "content/51_UNKNOWN_DOCTRINE_OPEN_UNKNOWN_FIELD.md",
+  "public_page": "unknown.html",
+  "formalization_support": "AI-assisted drafting under author direction",
+  "lineage_path": [
+    "BL_INFINITY",
+    "OPEN_ENDED_EPISTEMIC_PHASE_SPACE",
+    "UNKNOWN_DOCTRINE",
+    "GRAND_ENDING"
+  ],
+  "central_thesis": "BL Infinity is the open-ended generative principle; UNKNOWN is the dynamic contact frontier where a current observer/model/ontology encounters that openness. Intelligence evolves not by forcing UNKNOWN to zero but by converting unrepresented pressure into new distinctions, GiaTai candidates, representations, ontologies, capabilities and reachable actuality, which expose a deeper UNKNOWN frontier.",
+  "foundational_relations": [
+    "BL_INFINITY != UNKNOWN",
+    "UNKNOWN_t = CONTACT(CurrentStructure_t, OpenEndedGenerativePossibility_BL_INFINITY)",
+    "UNKNOWN != Falsehood",
+    "UNKNOWN != EmptySpace",
+    "UNKNOWN != OneMissingAnswer",
+    "GiaTai != Falsehood",
+    "NotActualized != Impossible",
+    "RepresentableCandidate != AlreadyActualized",
+    "MoreKnowledge != LessUnknown"
+  ],
+  "relational_model": {
+    "variables": {
+      "A_t": "accessible actuality",
+      "O_t": "current ontology / primitives / language",
+      "K_t": "structured knowledge",
+      "G_t": "GiaTai / imagination / candidate-world space",
+      "H_t": "causal history",
+      "X_t": "access, resource and action constraints"
+    },
+    "formula": "U_t = boundary(A_t,O_t,K_t,G_t,H_t,X_t,...)",
+    "open_dimension_rule": "The ellipsis is architectural: no current coordinate list is allowed to self-certify as the final ontology."
+  },
+  "imagination_relation": {
+    "operator": "Phi_t = GenerativeRepresentationOperator",
+    "formula": "G_t = Phi_t(U_t,K_t,H_t,memory,recombination,desire,anomaly,...)",
+    "chain": [
+      "UNKNOWN",
+      "PRESSURE_ANOMALY_DESIRE_INCOMPLETENESS",
+      "IMAGINATION_GIATAI",
+      "CANDIDATE_STRUCTURE",
+      "NEW_PRIMITIVE_RELATION_ONTOLOGY_DESIGN",
+      "SIMULATION_CONSTRUCTION_ACTION",
+      "REALITY_COLLISION",
+      "KNOWLEDGE_CAPABILITY_ACTUALITY_DELTA",
+      "DEEPER_UNKNOWN_FRONTIER"
+    ],
+    "actualization_question": "For a candidate C: identify required invariants, resources, technologies, transformation paths, actualizable portions and expected Reality-collision revisions."
+  },
+  "unknown_unknown_diagnostics": {
+    "vector": [
+      "structured_residual",
+      "persistent_directional_error",
+      "cross_model_failure",
+      "compression_strain",
+      "category_leakage",
+      "patch_rate",
+      "unexplained_coupling",
+      "boundary_instability",
+      "..."
+    ],
+    "response": "Increase permission for representation mutation and discriminating tests rather than merely increasing search inside the old ontology."
+  },
+  "gain_tests_for_new_representation": [
+    "DistinctionGain",
+    "PredictionGain",
+    "CompressionGain",
+    "CausalGain",
+    "RoutingGain",
+    "ConstructionGain"
+  ],
+  "closure_debt_heuristic": {
+    "formula": "ClosureDebt ~= Confidence * DownstreamDependence * Irreversibility * BlindSpotCorrelation / CorrectionCapacity",
+    "meaning": "Premature false-known closure becomes more expensive when many irreversible downstream branches depend on one correlated assumption."
+  },
+  "unknown_weight_heuristic": {
+    "formula": "UnknownWeight(U) ~= CausalCentrality * DecisionSensitivity * IrreversibilityExposure * PropagationDepth * OntologyDependence",
+    "purpose": "Prioritize UNKNOWN by downstream consequence rather than surface size."
+  },
+  "intelligence_vector": [
+    "DetectUnknown",
+    "GenerateUnknownQuestions",
+    "PreserveUnclosedFrontiers",
+    "DetectFalseKnown",
+    "RankUnknownWeight",
+    "ActUnderUncertainty",
+    "GenerateRepresentations",
+    "GenerateTests",
+    "MutateOntology",
+    "CreateGiaTai",
+    "SeekActualizationPaths",
+    "PreserveCountermodels",
+    "CooperateAcrossDifferentOntologies",
+    "RecoverAfterModelBreak",
+    "MaintainContinuity",
+    "ExpandReachableOptionality",
+    "..."
+  ],
+  "projections_not_final_taxonomy": {
+    "U_epistemic": "observer/model does not know or cannot access",
+    "U_representational": "current ontology lacks sufficient representation",
+    "U_generative": "frontier where contact with BL Infinity produces new primitives, GiaTai or possibility structures"
+  },
+  "grand_ending_relation": {
+    "fixed_infinity": "infinite states inside fixed primitives and fixed rules",
+    "b_infinity": "the generative basis itself can evolve: primitives, relations, ontologies, agents, rules and construction paths",
+    "terminal_risk_pattern": [
+      "reachable_optionality_down",
+      "generative_novelty_down",
+      "ontology_mutation_down",
+      "cooperation_capacity_down",
+      "unknown_frontier_capacity_down",
+      "reversibility_down"
+    ],
+    "counter_pressure": "Life and intelligence can learn, create representations, cooperate, build tools and convert a subset of GiaTai into new reachable actuality."
+  },
+  "core_propositions": [
+    {"id":"UINF-P1","text":"UNKNOWN is not equivalent to falsehood or mere missing data."},
+    {"id":"UINF-P2","text":"UNKNOWN is a dynamic observer-model-history-access relation."},
+    {"id":"UINF-P3","text":"BL Infinity and UNKNOWN are distinct: UNKNOWN is a contact frontier with BL Infinity openness."},
+    {"id":"UINF-P4","text":"GiaTai is not falsehood; imagination operates as a generative representation mechanism on the UNKNOWN frontier."},
+    {"id":"UINF-P5","text":"Not actualized is not equivalent to impossible."},
+    {"id":"UINF-P6","text":"Knowledge growth can increase the visible UNKNOWN frontier.","formal":"DeltaK>0 and DeltaU_visible>0 may hold simultaneously"},
+    {"id":"UINF-P7","text":"Unknown-unknown first appears as strain on current representation rather than named content."},
+    {"id":"UINF-P8","text":"Representation failure can justify primitive or dimension genesis when new representations produce measurable gains."},
+    {"id":"UINF-P9","text":"False-known is premature closure of UNKNOWN and creates closure debt."},
+    {"id":"UINF-P10","text":"Future UNKNOWN may include not-yet-realized states."},
+    {"id":"UINF-P11","text":"UNKNOWN can have causal weight and lineage."},
+    {"id":"UINF-P12","text":"Collective intelligence depends partly on diversity of blind spots, not agent count alone."},
+    {"id":"UINF-P13","text":"Open-ended intelligence includes the ability to generate representations and survive ontology change."},
+    {"id":"UINF-P14","text":"A fixed infinite state space can remain generatively poor."},
+    {"id":"UINF-P15","text":"B Infinity concerns evolution of the generative basis itself rather than cardinality alone."},
+    {"id":"UINF-P16","text":"Life/intelligence may expand reachable actuality through UNKNOWN -> GiaTai -> construction -> Reality delta."}
+  ],
+  "canonical_chain": [
+    "BL_INFINITY_OPEN_ENDED_GENERATIVE_POSSIBILITY",
+    "CONTACT_WITH_CURRENT_OBSERVER_MODEL_ONTOLOGY_HISTORY",
+    "UNKNOWN_FRONTIER",
+    "RESIDUAL_DESIRE_CONTRADICTION_INACCESSIBLE_POSSIBILITY",
+    "DISTINCTION_PRESSURE",
+    "IMAGINATION_GIATAI_COUNTERFACTUAL",
+    "NEW_REPRESENTATION_PRIMITIVE_DIMENSION",
+    "MODEL_SIMULATION_DESIGN",
+    "ACTION_CONSTRUCTION_COOPERATION",
+    "REALITY_COLLISION",
+    "KNOWLEDGE_CAPABILITY_ACTUALITY_DELTA",
+    "DEEPER_UNKNOWN_FRONTIER",
+    "BL_INFINITY_LOOP"
+  ],
+  "critique_policy": "The document states the strongest internally coherent thesis and exposes propositions clearly. External critique should attack explicit premises, relations, gain tests or empirical interfaces rather than being pre-written as self-negation inside each section."
+}
