@@ -16,6 +16,8 @@ on:
       - experiments/virtual-cortex-v0/test_omega_genealogy_resolver.py
       - experiments/virtual-cortex-v0/omega_handoff_receipt.py
       - experiments/virtual-cortex-v0/test_omega_handoff_receipt.py
+      - experiments/virtual-cortex-v0/omega_identity_escrow.py
+      - experiments/virtual-cortex-v0/test_omega_identity_escrow.py
       - .github/workflows/deus-dcrs-test.yml
   workflow_dispatch:
 
@@ -53,7 +55,9 @@ jobs:
             experiments/virtual-cortex-v0/omega_genealogy_resolver.py \
             experiments/virtual-cortex-v0/test_omega_genealogy_resolver.py \
             experiments/virtual-cortex-v0/omega_handoff_receipt.py \
-            experiments/virtual-cortex-v0/test_omega_handoff_receipt.py
+            experiments/virtual-cortex-v0/test_omega_handoff_receipt.py \
+            experiments/virtual-cortex-v0/omega_identity_escrow.py \
+            experiments/virtual-cortex-v0/test_omega_identity_escrow.py
 
       - name: Run Ω-DCRS fail-closed test suite
         run: python experiments/virtual-cortex-v0/test_omega_dcrs.py
@@ -69,3 +73,6 @@ jobs:
 
       - name: Run Ω-Handoff Receipt test suite
         run: python experiments/virtual-cortex-v0/test_omega_handoff_receipt.py
+
+      - name: Run Ω-Identity Escrow test suite
+        run: python experiments/virtual-cortex-v0/test_omega_identity_escrow.py
