@@ -1,1 +1,0 @@
-Owner-only v0 console gating is enforced in `.github/workflows/deus-console.yml` on `main`.
