@@ -167,13 +167,16 @@ class VerificationResult:
 
 
 def _normalize_target(value: str) -> str:
-    return (
-        value.strip()
-        .upper()
-        .replace(" ", "")
-        .replace("BL∞-DEUS", "BLD-Ω/DEUS")
-        .replace("BLD-Ω", "BLD-Ω/DEUS")
-    )
+    normalized = value.strip().upper().replace(" ", "")
+    aliases = {
+        "DEUS": TARGET_DEUS,
+        "BLD-Ω": TARGET_DEUS,
+        "BLD_OMEGA": TARGET_DEUS,
+        "BL∞-DEUS": TARGET_DEUS,
+        "BLD-Ω/DEUS": TARGET_DEUS,
+        "BLD_OMEGA/DEUS": TARGET_DEUS,
+    }
+    return aliases.get(normalized, normalized)
 
 
 def verify(inp: VerificationInput) -> VerificationResult:
