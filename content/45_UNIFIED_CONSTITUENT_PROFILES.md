@@ -1,58 +1,71 @@
 # 45 — BL∞ Unified Constituent Profiles
 
 **Object:** `BL-INF-CONSTITUENTS`  
-**Parent:** `BL-INF-UNIFY`  
-**Version:** `0.1`  
-**Purpose:** public canonical integration profiles for major BL systems whose full canonical source may live outside this public repository or in a separate surface.
+**Integration anchor:** `BL-INF-UNIFY`  
+**Version:** `0.2-open-ended`  
+**Purpose:** public canonical integration profiles for major BL systems and open-ended discovery mechanisms whose full source may live in a separate canonical document or surface.
 
-> These profiles do **not** silently replace, summarize away, or overwrite the original doctrine sources. They establish public identity, role, boundaries and typed interfaces so the systems no longer exist as unconnected islands in the BL∞ integration graph.
+> These profiles do **not** silently replace, summarize away, or overwrite original doctrine sources. They establish public identity, role, boundaries and typed interfaces so systems can participate in the BL∞ supergraph without identity collapse or an exhaustive-taxonomy claim.
 
 ---
 
-## 1. RVT — Học thuyết Quyền Phủ quyết của Thực tại
+## 1. BL-RP — Mệnh đề Thực tại
+
+**English:** Reality Proposition  
+**Class:** proposition / actuality distinction  
+**Status:** `PROPOSED-CANONICAL`
+
+```text
+Reality != ModelOfReality
+ObservedSlice != TotalReality unless closure is demonstrated
+```
+
+**Boundary:** BL-RP formalizes the distinction; no observer model is declared exhaustive of Reality.
+
+---
+
+## 2. BL-GTP — Mệnh đề Giả tại
+
+**English:** GiaTai Proposition / Hypothetical Reality Proposition  
+**Class:** proposition / hypothetical reality-state  
+**Status:** `PROPOSED-CANONICAL`
+
+```text
+GiaTai != Falsehood
+GiaTaiObjectExists != GiaTaiReferentIsActual
+ActualityAuthority != GenerativePrecedence
+```
+
+GiaTai may lead a local generative cycle without becoming actuality authority.
+
+---
+
+## 3. RVT — Học thuyết Quyền Phủ quyết của Thực tại
 
 **English:** Reality Veto Theory  
 **Class:** epistemic correction theory  
 **Integration role:** constitutional reality-correction layer  
-**Status in unified system:** `CANONICAL-INTEGRATION-PROFILE`
-
-### Core public proposition
+**Status:** `CANONICAL-INTEGRATION-PROFILE`
 
 ```text
 ValidRealityConflict -> ModelRevision
 ```
 
-### Constituents
+Constituents:
 
 - `RVP` — Reality Veto Principle;
 - `RVTP` — Reality Veto Test Protocol;
 - `RVL` — Reality Veto Ledger.
 
-### Boundaries
-
-- RVT does not grant itself immunity from Reality Veto.
-- Reality Veto is cross-system and is not owned by RVT as a social authority.
-- A valid veto must distinguish data, measurement error, auxiliary assumptions, scope failure and model failure where possible.
-
-### Interfaces
-
-```text
-BL-HRD -> RVTP
-BL-REV/AEGIS -> RVTP
-RVTP -> RVL
-RVL -> BL-LOG / KAT / revision state
-RVP --GOVERNS--> all BL∞ constituents
-```
+RVT does not grant itself immunity from Reality Veto. Reality-facing correction changes claim/model state, not actuality itself.
 
 ---
 
-## 2. BLEE — Nhận thức luận Đồng đẳng Thực thi Bách Lâm
+## 4. BLEE — Nhận thức luận Đồng đẳng Thực thi Bách Lâm
 
 **Class:** epistemology / scholarly standing doctrine  
 **Integration role:** epistemic-entry constitution  
 **Status:** `CANONICAL-INTEGRATION-PROFILE`
-
-### Core public structure
 
 ```text
 Equal Epistemic Standing
@@ -61,155 +74,71 @@ Equal Epistemic Standing
 + Recursive Correction
 ```
 
-### Meaning
-
-A person's institutional status must not be the sole gate for converting an idea into an inspectable research object. This does not imply equal confidence, equal resources or equal authority after evidence is considered.
-
-### Interface to Academic Democracy
-
-```text
-BLEE --FORMALIZES--> epistemic standing principles
-Academic Democracy --IMPLEMENTS--> public scholarly access mechanisms
-```
-
-They overlap strongly but are not declared identical.
+Institutional status must not be the sole gate for converting an idea into an inspectable object. This does not imply equal confidence, resources or execution rights.
 
 ---
 
-## 3. Academic Democracy
+## 5. Academic Democracy
 
 **Class:** public scholarly governance + technology interface  
-**Integration role:** social/institutional implementation of open epistemic entry  
 **Status:** `PUBLIC-CANONICAL`
-
-### Core invariant
 
 ```text
 RightToPublish != RightToBeBelieved
 ```
 
-### Interfaces
-
-```text
-BLEE -> Academic Democracy
-Academic Democracy -> BL-OODP
-Academic Democracy -> BL-PCRO
-Academic Democracy -> BL-HRD candidate intake
-Academic Democracy -> public critique/reviewer credit
-```
+Academic Democracy operationalizes broad scholarly entry while retaining evidence-weighted review and resource gating.
 
 ---
 
-## 4. KAT — Học thuyết Ưu thế Tri thức
+## 6. KAT — Học thuyết Ưu thế Tri thức
 
 **English working name:** Knowledge Advantage Theory  
 **Class:** knowledge-rights / capability-conversion theory  
-**Integration role:** verified/useful knowledge -> capability/value/disclosure decisions  
 **Status:** `CANONICAL-INTEGRATION-PROFILE · SOURCE-PRESERVED-EXTERNALLY`
 
-### Public core
-
-KAT does not define advantage as hoarding information forever. Sustainable epistemic advantage comes from a system that repeatedly:
-
-```text
-Discovers
--> verifies
--> protects/selectively shares
--> converts knowledge into capability
--> learns from outcomes
--> creates the next knowledge layer
-```
-
-### Hard guardrail
+Sustainable epistemic advantage is modeled as repeated discovery, verification, appropriate protection/sharing, capability conversion and generation of the next knowledge layer.
 
 ```text
 KnowledgeAdvantage != EvidenceSuppression
 ```
 
-Adverse evidence cannot be hidden merely to preserve strategic advantage.
-
-### Interfaces
-
-```text
-RVL -> KAT current knowledge state
-KAT -> disclosure/rights decision
-KAT -> capability conversion
-Capability -> expanded BL∞ observation/reachability frontier
-```
-
 ---
 
-## 5. OPT-HKRP — Học thuyết Trù tính Nguồn lực Tri thức Nhân loại
+## 7. OPT-HKRP — Học thuyết Trù tính Nguồn lực Tri thức Nhân loại
 
 **English:** Human Knowledge Resource Planning Theory  
 **Class:** doctrine + distributed resource-allocation architecture  
-**Integration role:** minimal sufficient coalition routing  
 **Status:** `PROPOSED/FORMALIZABLE · CANONICAL-INTEGRATION-PROFILE`
 
-### Public core question
-
-For a defined goal, how can a system mobilize the smallest but sufficiently strong set of distributed knowledge, people, machines, data, models, tools and permissions to create the best justified outcome and convert the result into new capability?
-
-### Nonclaim
+Routes the smallest but sufficiently strong distributed set of knowledge, people, machines, data, models, tools and permissions for a defined goal.
 
 ```text
-HKRP != Central World Brain
-```
-
-### Interfaces
-
-```text
-BL-HRD verification need -> BL-SFRET
-BL-SFRET capability/resource gap -> OPT-HKRP
-OPT-HKRP coalition -> OHAS authorization/execution boundary
-Outcome -> resource-performance history
+HKRP != CentralWorldBrain
 ```
 
 ---
 
-## 6. OHAS — Optimizer Human Agency System
+## 8. OHAS — Optimizer Human Agency System
 
 **Class:** human-agency / decision-sovereignty system  
 **Integration role:** bounded authorized execution  
 **Status:** `CANONICAL-INTEGRATION-PROFILE · FULL-SOURCE-PRESERVED-SEPARATELY`
 
-### Public role
-
-OHAS connects knowledge and plans to an accountable actor. Public integration concepts include:
-
-- objective and value lock;
-- current reality/evidence;
-- control / influence / monitor zones;
-- decision and information rights;
-- alternatives and uncertainty;
-- pilot/action;
-- metrics and guardrails;
-- ruin exposure;
-- stop/rollback;
-- legal/rights/dignity checks.
-
-### Bounded AI rule
-
-AI autonomy can increase only when source, scope, failure bounds, decision rules, auditability, permissions, privacy, recovery and human/domain override are adequate.
-
-### Interfaces
+Public integration concepts include objective/value lock, current reality, decision/information rights, alternatives, uncertainty, pilot/action, guardrails, ruin exposure, stop/rollback and legal/rights/dignity checks.
 
 ```text
-OPT-HKRP -> OHAS resource coalition
-RVP -> OHAS reality constraint
-OHAS -> authorized action/test
-Outcome -> RVTP/RVL
+RightToPropose != RightToExecute
 ```
+
+OHAS authorizes bounded action; it does not govern Reality.
 
 ---
 
-## 7. BL-SFRET — Future-State Regression & Epistemic Timing
+## 9. BL-SFRET — Future-State Regression & Epistemic Timing
 
 **Class:** future-regression reasoning primitive  
-**Integration role:** backward map from desired future to necessary conditions/capabilities/evidence  
-**Status:** `CANONICAL-INTEGRATION-PROFILE · SOURCE-BINDING-REQUIRED-FOR-FULL-RUNTIME`
-
-### Public role
+**Status:** `CANONICAL-INTEGRATION-PROFILE`
 
 ```text
 DesiredFutureState
@@ -220,54 +149,122 @@ DesiredFutureState
 -> Preparation Requirements
 ```
 
-### Guardrail
-
 ```text
 DesiredFuture != ProvenFuture
 ```
 
-SFRET schedules uncertainty and preparation; it does not turn forecasts into facts.
-
-### Interfaces
-
-```text
-BL-HRD/Solution candidate -> BL-SFRET
-BL-SFRET -> OPT-HKRP
-Outcome/time progression -> SFRET revision
-```
-
 ---
 
-## 8. BL-REV — Reverse Sovereign Adversary
+## 10. BL-REV — Reverse Sovereign Adversary
 
 **Class:** adversarial cognition system  
-**Integration role:** systematic internal opponent  
 **Status:** `PUBLIC-INTERFACE-CANONICAL`
 
-### Public role
+BL-REV searches premise failures, strongest alternatives, counterexamples, scope inflation, causal errors, measurement failures and ontology/representation problems. It cannot self-declare truth status.
 
-- reverse premises;
-- search strongest alternative explanations;
-- seek counterexamples/falsifiers;
-- identify scope inflation;
-- attack causal assumptions;
-- surface contradictions and unknowns.
+---
 
-### Authority boundary
+## 11. BL-OEPS — Không gian Pha Nhận thức Mở
 
-BL-REV can challenge claims; it cannot declare itself the truth authority.
+**English:** Open-Ended Epistemic Phase Space  
+**Class:** open epistemic state-space + ontology-evolution architecture  
+**Status:** `PROPOSED-CANONICAL`
 
-### Interfaces
+Core rule:
 
 ```text
-BL-HRD/PCRO -> BL-REV
-BL-REV -> AEGIS/adversarial findings
-Findings -> RVTP/Test design/Revision
+CurrentStateTaxonomy != ExhaustiveEpistemicOntology
+```
+
+Current public axes include actuality, evidence, representability, accessibility, decidability, context dependence, modality, ontology fit, adversarial integrity and temporal stability.
+
+They are explicitly versioned and extensible.
+
+Named regions such as Reality-anchored, GiaTai, Mixed, Contested, Underdetermined, Opaque Unknown and Unknown-Unknown Indicator are **non-exhaustive projections**, not final ontology boxes.
+
+---
+
+## 12. BL-UUH — Unknown-Unknown Hunter
+
+**Class:** unknown-boundary / anomaly-discovery mechanism  
+**Status:** `PROPOSED-CANONICAL-MECHANISM`
+
+BL-UUH detects **signatures of missing structure**, not the unknowable content itself.
+
+Candidate signatures include structured residuals, persistent directional errors, unexplained dependence, shared model-failure regions, compression failure, boundary anomalies, measurement blind spots and category leakage.
+
+```text
+UnknownUnknownIndicator != DiscoveryOfUnknownUnknownContent
+```
+
+Opaque raw objects are preserved without invented semantics.
+
+---
+
+## 13. BL-DGE — Dimension Genesis Engine
+
+**Class:** epistemic-dimension evolution mechanism  
+**Status:** `PROPOSED-CANONICAL-MECHANISM`
+
+```text
+Residual
+-> missing value or missing dimension?
+-> candidate dimension/primitive
+-> re-encode observations
+-> derive distinctions/predictions
+-> adversarial/test pressure
+-> retain / conditional / dormant / merge / prune
+-> phase-space version update
+```
+
+```text
+OpenEnded != InfiniteActiveComplexity
+```
+
+A dimension must earn retention.
+
+---
+
+## 14. BL-OME — Ontology Mutation Engine
+
+**Class:** ontology-evolution mechanism  
+**Status:** `PROPOSED-CANONICAL-MECHANISM`
+
+Can propose:
+
+```text
+SPLIT
+MERGE
+RETYPE
+CREATE primitive
+DEPRECATE primitive
+CHANGE relation
+ROTATE representation basis
+INTRODUCE coordinate system
+```
+
+Every mutation requires provenance, migration/history and independent critique. No silent redefinition.
+
+---
+
+## 15. BL-CDE — Civilizational Discovery Ecology
+
+**Class:** discovery ecology / system composition  
+**Status:** `PROPOSED-CANONICAL-ARCHITECTURE`
+
+BL-CDE is not a replacement for science and not a parallel Meta-OS. It connects broad candidate-generation channels with fit-for-type validation, engineering/action and reality feedback.
+
+Candidate-generating channels can include science, mathematics, engineering, philosophy, simulation, lived/citizen observation, art/metaphor, AI, cross-domain analogy and anomaly/noise.
+
+```text
+CandidateOrigin != TruthStatus
+Discovery != Validation
+OpenEnded != AnythingGoes
 ```
 
 ---
 
-## 9. Cross-profile integration law
+## 16. Cross-profile integration law
 
 Every constituent profile must expose at minimum:
 
@@ -284,16 +281,32 @@ Provenance/Source State
 
 A source existing outside the public repo does not permit the public projection to invent unverified details.
 
+Open-ended additions must also preserve:
+
+```text
+CurrentTaxonomy != ExhaustiveOntology
+Unknown != Falsehood
+Opaque != Meaningless
+NewDimension must earn retention
+OntologyMutation must preserve history
+```
+
 ---
 
-## 10. Integration status matrix
+## 17. Integration status matrix
 
 | System | Unified role | Public integration state |
 |---|---|---|
-| RVT/RVP/RVTP/RVL | Reality correction constitution | integrated profile |
+| BL-RP / BL-GTP | Reality–GiaTai distinction and dynamic precedence | canonical public propositions |
+| BL-OEPS | extensible epistemic phase space | canonical public projection |
+| BL-UUH | missing-structure signature detection | canonical mechanism profile |
+| BL-DGE | dimension genesis / retention-pruning | canonical mechanism profile |
+| BL-OME | ontology mutation + migration | canonical mechanism profile |
+| BL-CDE | broad discovery ecology, science preserved as validation subsystem | canonical architecture profile |
+| RVT/RVP/RVTP/RVL | Reality-facing correction constitution | integrated profile |
 | BLEE | Epistemic standing | integrated profile |
-| Academic Democracy | Public scholarly interface | already public + integrated |
-| BL-HRD | Hypothesis frontier | canonical source + machine contract |
+| Academic Democracy | Public scholarly interface | public + integrated |
+| BL-HRD | GiaTai/hypothesis compiler and verification portfolio | canonical source + machine contract |
 | BL-ADN/LOG/CHRONO | Identity/history | canonical infrastructure |
 | BL-PCRO/OODP/BLOK | Research-object preservation | canonical infrastructure |
 | BL-NOVO | Novelty discipline | canonical infrastructure |
@@ -306,4 +319,4 @@ A source existing outside the public repo does not permit the public projection 
 
 ---
 
-**ADN BÁCH LÂM ∞** · constituent identities preserved · no silent merge · public integration profiles under `BL-INF-UNIFY`
+**ADN BÁCH LÂM ∞** · constituent identities preserved · no silent merge · non-exhaustive taxonomy · open-ended profiles under `BL-INF-UNIFY`
