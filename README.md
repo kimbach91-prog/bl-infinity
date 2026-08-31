@@ -2,7 +2,7 @@
 
 **BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer / Bach Lam Infinity Proposition** là một hệ nghiên cứu do **Lâm Kim Bách (Bách Lâm)** khởi phát, tập trung vào giới hạn của quan sát, không gian khả năng, tính khả đạt, bản thể mở, cơ chế phát kiến, provenance và phản biện đệ quy.
 
-BL∞ hiện đồng thời đóng vai trò **integration supergraph** cho các học thuyết, giao thức và kiến trúc Bách Lâm đã được nối canonical. Đại thống hợp không xóa danh tính từng hệ; nó nối chúng bằng typed relations, Reality Veto, causal history và vòng tuần hoàn nhận thức–năng lực.
+BL∞ hiện đồng thời đóng vai trò **integration supergraph động** cho các học thuyết, giao thức và kiến trúc Bách Lâm đã được nối canonical. Đại thống hợp không xóa danh tính từng hệ và **không đặt Thực tại–BL∞–Giả tại vào một cây trên/dưới cố định**.
 
 ## Tác giả
 
@@ -18,67 +18,120 @@ Phả hệ tác quyền: **Bách Lâm**
 - Học thuyết Thực tại Giả định / BL-HRD: https://kimbach91-prog.github.io/bl-infinity/theory.html
 - Đại Thống Hợp BL∞ / Unified Epistemic System: https://kimbach91-prog.github.io/bl-infinity/theory.html
 - Machine unified graph: https://kimbach91-prog.github.io/bl-infinity/machine/bl-infinity-unified-system.json
+- Machine Reality–Giả tại topology: https://kimbach91-prog.github.io/bl-infinity/machine/reality-gia-tai-topology.json
+
+## Mệnh đề Thực tại và Mệnh đề Giả tại
+
+Canonical dual objects:
+
+- **`BL-RP` — Mệnh đề Thực tại / Reality Proposition**;
+- **`BL-GTP` — Mệnh đề Giả tại / GiaTai Proposition**.
+
+Phân biệt nền tảng:
+
+```text
+Reality != ModelOfReality
+GiaTai != Falsehood
+GiaTaiObjectExists != GiaTaiReferentIsActual
+ActualityAuthority != GenerativePrecedence
+```
+
+**Giả tại** là một trạng thái/thế giới/mô hình được giả định, biểu diễn hoặc suy diễn như một candidate reality-state nhưng chưa được đồng nhất với actuality.
+
+Trong operational frame BL∞:
+
+```text
+Reality + CapacityToRepresentAlternatives -> exists(GiaTai)
+```
+
+BL∞ không phải tầng giữa cố định. Nó là field mở của representation / possibility / reachability / recombination và hỗ trợ hai mode đảo chiều.
+
+### Thực định
+
+```text
+Reality -> BL∞ -> GiaTai -> Reality Test -> Reality
+```
+
+### Giả định
+
+```text
+GiaTai -> BL∞ -> Consequence/Test Space -> Reality -> revised GiaTai
+```
+
+Vì vậy **Reality hoặc GiaTai có thể dẫn generative cycle tùy mode**, trong khi actuality authority không bị đánh đồng với thứ tự sinh suy luận.
 
 ## Đại Thống Hợp Bách Lâm Infinity
 
-Canonical integration object: **`BL-INF-UNIFY`**.
+Canonical integration object: **`BL-INF-UNIFY`**. Preferred conceptual stack hiện là **`BL-INF-LOGIC-v2-DYNAMIC`**.
 
-BL∞ nối các hệ theo chuỗi khái niệm:
+Sau khi một GiaTai/hypothesis xuất hiện, hệ nối tiếp:
 
 ```text
-Reality
-→ BL∞
-→ BLEE / Academic Democracy
-→ BL-HRD
-→ BL-ADN / BL-PCRO / BL-OODP / BLOK
-→ BL-NOVO
-→ BL-REV / BL-AEGIS
-→ RVT / RVTP / RVL
-→ BL-SFRET
-→ OPT-HKRP
-→ OHAS
-→ Action / Test
-→ Reality Outcome
-→ Reality Veto Update
-→ KAT
-→ New Capability / Measurement / Access
-→ Expanded BL∞ Frontier
-→ New Reality Gap ↺
+Reality / GiaTai
+<-> BL∞
+-> BL-HRD
+-> BL-ADN / BL-PCRO / BL-OODP / BLOK
+-> BL-NOVO
+-> BL-REV / BL-AEGIS
+-> RVT / RVTP / RVL
+-> knowledge-state update
+-> BL-SFRET / OPT-HKRP / OHAS when action is required
+-> Action / Test
+-> Reality
+-> KAT when knowledge becomes capability
+-> New Capability / Measurement / Access
+-> BL∞
+-> Reality-determined or GiaTai-determined mode ↺
 ```
 
-Hai vòng khóa vào nhau:
+Ba vòng khóa vào nhau:
 
-- **Epistemic loop:** Gap → Hypothesis → Test → Evidence → Revision → New Gap.
-- **Capability loop:** Knowledge → Resources → Agency → Action → Capability → Better Observation → Better Knowledge.
+- **Reality-determined loop:** Reality → BL∞ → GiaTai → Test → Reality.
+- **Hypothesis-determined loop:** GiaTai → BL∞ → Consequences/Test → Reality → revised GiaTai.
+- **Capability loop:** Knowledge → Resources → Agency → Action → Capability → BL∞ → Reality/GiaTai mode.
 
 Cross-cutting constitutions:
 
-- **Reality Veto** — không module nào đứng trên thực tại;
+- **BL-RP / BL-GTP** — phân biệt actuality, model và Giả tại;
+- **Reality-facing correction / RVT-RVTP-RVL** — cập nhật truth-status của model theo evidence;
 - **BL-ADN / BL-LOG / BL-CHRONO** — identity, provenance và causal history;
 - **BL-CPR** — public verifiability không đồng nghĩa full runtime disclosure.
 
 Các doctrine như RVT, BLEE, KAT, OPT-HKRP, OHAS và các framework như BL-SFRET, BL-REV giữ namespace và truth-status riêng. `Unification ≠ Identity Collapse`.
 
-Canonical sources:
+Canonical current sources:
+
+- `content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md`
+- `content/47_CANONICAL_DYNAMIC_REALITY_GIA_TAI_STACK.md`
+- `machine/reality-gia-tai-topology.json`
+- `machine/bl-infinity-unified-system.json`
+- `machine/logic-stack.json`
+
+Historical integration views remain preserved:
 
 - `content/43_BL_INFINITY_GRAND_UNIFICATION.md`
 - `content/44_CANONICAL_UNIFIED_LOGIC_STACK.md`
-- `machine/bl-infinity-unified-system.json`
-- `machine/logic-stack.json`
 
 ## Dân chủ Học thuật
 
 Một nhánh công khai của BL∞ đang phát triển ý tưởng **Dân chủ Học thuật**: mở rộng quyền tham gia vào quá trình tạo tri thức mà không bình quân hóa chân lý.
 
-Nguyên tắc cốt lõi là: **cửa vào rộng, tiêu chuẩn bằng chứng cao**. Danh tính, học vị, tổ chức, số đông hay AI-generated volume không tự quyết định truth-status; claim cần có phạm vi, provenance, bằng chứng, đường phản biện, lịch sử sửa đổi và khả năng chịu quyền phủ quyết của thực tại.
+Nguyên tắc cốt lõi là: **cửa vào rộng, tiêu chuẩn bằng chứng cao**. Danh tính, học vị, tổ chức, số đông hay AI-generated volume không tự quyết định truth-status; claim cần có phạm vi, provenance, bằng chứng, đường phản biện, lịch sử sửa đổi và khả năng chịu kiểm định thực tại.
 
-Tuyên ngôn trình bày một kiến trúc hướng tới việc chuyển trọng tâm từ **địa vị người nói** sang **object tri thức có thể kiểm tra**, đồng thời mời nhà nghiên cứu, kỹ sư, sinh viên, archivist, tổ chức học thuật và đặc biệt là skeptic/critic tham gia thử nghiệm hoặc phá các claim bằng phản biện có chất lượng.
+Tuyên ngôn trình bày một kiến trúc hướng tới việc chuyển trọng tâm từ **địa vị người nói** sang **object tri thức có thể kiểm tra**, đồng thời mời nhà nghiên cứu, kỹ sư, sinh viên, archivist, tổ chức học thuật và skeptic/critic tham gia thử nghiệm hoặc phá các claim bằng phản biện có chất lượng.
 
 ## Học thuyết Thực tại Giả định / BL-HRD
 
-BL-HRD mô hình hóa **giả thuyết như một search instrument có provenance, prediction, falsifier, giá trị kỳ vọng và vòng đời kiểm chứng**, thay vì một câu đoán rời rạc. Học thuyết tách rõ `preserve ≠ endorse`, mở quyền đề xuất và bảo tồn hypothesis object cho mọi người nhưng giữ trọng lượng tri thức, attention và tài nguyên phụ thuộc vào bằng chứng, reproducibility, risk, expected information gain và Reality Veto.
+BL-HRD nay được hiểu là **mechanism xử lý Giả tại/hypothesis**, không phải một tầng cố định nằm dưới BL∞. Nó formalize candidate state thành object có provenance, prediction, falsifier, value, depth/risk và verification portfolio.
 
-BL-HRD nối trực tiếp với BL-OODP, BL-PCRO, Dân chủ Học thuật và trong Unified Stack còn nối với BL-SFRET → OPT-HKRP → OHAS để biến nhu cầu kiểm chứng thành capability/resource/action có quyền và rollback.
+BL-HRD có thể nhận đầu vào từ cả hai mode:
+
+```text
+THUC_DINH: Reality -> BL∞ -> GiaTai -> BL-HRD
+GIA_DINH: GiaTai -> BL∞ -> consequences -> BL-HRD / test interface
+```
+
+Sau đó BL-HRD nối BL-OODP, BL-PCRO, Dân chủ Học thuật và khi cần hành động thì nối BL-SFRET → OPT-HKRP → OHAS.
 
 ## Chính sách công khai hiện hành
 
@@ -90,4 +143,4 @@ Mục tiêu của hồ sơ công khai là để bên ngoài có thể nhận di�
 
 ---
 
-**ADN BÁCH LÂM ∞** · origin: Bách Lâm · formalization support: AI · unified architecture: BL-INF-UNIFY · Reality Veto sovereign
+**ADN BÁCH LÂM ∞** · origin: Bách Lâm · formalization support: AI · dynamic topology: BL-RP + BL-GTP + BL∞ · no fixed hierarchy
