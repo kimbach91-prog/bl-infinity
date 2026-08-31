@@ -36,11 +36,12 @@ def chapter_page(title: str, body: str) -> str:
 <link rel="stylesheet" href="../assets/css/main.css">
 <style>
 :root{{--paper:#fffdf8;--ink:#1c1a17;--muted:#6d6960;--line:#ded8cd;--accent:#6b3fa0;--soft:#f6f0e7;--night:#15141a}}
+html{{-webkit-text-size-adjust:100%;text-size-adjust:100%}}
 body{{background:var(--paper);color:var(--ink)}}
-main{{max-width:900px;margin:auto;padding:0 22px 90px}}.top{{padding-left:22px;padding-right:22px}}.top nav a.current{{font-weight:850;color:var(--accent)}}
-.hero{{padding:clamp(38px,8vw,90px) 0 34px;border-bottom:1px solid var(--line)}}.eyebrow{{font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;font-weight:850;color:var(--accent)}}h1{{font-size:clamp(2.7rem,7vw,6rem);line-height:.96;letter-spacing:-.04em;max-width:16ch;margin:.18em 0 .25em}}.meta{{font-size:.9rem;color:var(--muted)}}
-.prose{{padding-top:35px}}.prose p{{font-size:1.08rem;line-height:1.9;margin:1.2em 0;max-width:74ch}}.prose h2{{font-size:clamp(1.7rem,4vw,2.8rem);margin-top:2.2em;padding-top:.8em;border-top:1px solid var(--line)}}.prose blockquote{{margin:26px 0;padding:18px 20px;border-left:4px solid var(--accent);background:#f6f1fc;border-radius:0 14px 14px 0}}.prose blockquote p{{margin:.2em 0;font-size:1rem}}.prose strong{{font-weight:800}}.prose code{{font-size:.9em;background:var(--soft);padding:.12em .35em;border-radius:5px}}.prose pre{{overflow:auto;background:var(--night);color:#f5f1e8;padding:18px;border-radius:14px;line-height:1.55}}.prose ul{{line-height:1.8}}.back{{display:inline-block;margin-top:30px;padding:11px 16px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-weight:750}}
-@media(max-width:720px){{.prose p{{font-size:1rem}}}}
+main{{max-width:860px;margin:auto;padding:0 22px 86px}}.top{{padding-left:22px;padding-right:22px}}.top nav a.current{{font-weight:850;color:var(--accent)}}
+.hero{{padding:clamp(34px,7vw,78px) 0 30px;border-bottom:1px solid var(--line)}}.eyebrow{{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:var(--accent)}}h1{{font-size:clamp(2.55rem,6.5vw,5.6rem);line-height:.97;letter-spacing:-.04em;max-width:16ch;margin:.18em 0 .22em}}.meta{{font-size:.9rem;color:var(--muted)}}
+.prose{{padding-top:28px}}.prose p{{font-size:1.04rem;line-height:1.78;margin:.78em 0;max-width:70ch;text-wrap:pretty}}.prose p+p{{margin-top:.72em}}.prose h2{{font-size:clamp(1.7rem,4vw,2.8rem);margin-top:2.2em;padding-top:.8em;border-top:1px solid var(--line)}}.prose blockquote{{margin:20px 0;padding:15px 18px;border-left:4px solid var(--accent);background:#f6f1fc;border-radius:0 14px 14px 0}}.prose blockquote p{{margin:.15em 0;font-size:.96rem;line-height:1.65}}.prose hr{{border:0;border-top:1px solid var(--line);margin:2.15em 0}}.prose strong{{font-weight:800}}.prose code{{font-size:.9em;background:var(--soft);padding:.12em .35em;border-radius:5px}}.prose pre{{overflow:auto;background:var(--night);color:#f5f1e8;padding:18px;border-radius:14px;line-height:1.55}}.prose ul{{line-height:1.75}}.back{{display:inline-block;margin-top:30px;padding:11px 16px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-weight:750}}
+@media(max-width:720px){{main{{padding:0 18px 72px}}.hero{{padding:30px 0 24px}}.prose{{padding-top:22px}}.prose p{{font-size:1rem;line-height:1.72;margin:.65em 0}}.prose p+p{{margin-top:.58em}}.prose blockquote{{margin:16px 0;padding:13px 15px}}.prose hr{{margin:1.75em 0}}}}
 </style>
 <script type="application/ld+json">
 {{"@context":"https://schema.org","@type":"Chapter","name":"{safe_title}","isPartOf":{{"@type":"Book","name":"Bách Lâm: Lần Hồi Quy Thứ Một Triệu"}},"author":{{"@type":"Person","name":"Lâm Kim Bách","alternateName":["Bách Lâm","Optimizer"]}},"inLanguage":"vi","url":"https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html"}}
@@ -49,7 +50,7 @@ main{{max-width:900px;margin:auto;padding:0 22px 90px}}.top{{padding-left:22px;p
 <body>
 <header class="top"><a href="../index.html" class="brand">BL∞</a><span>Bách Lâm · Optimizer</span><nav><a href="../theory.html">Học thuyết</a><a href="../world.html">Bản kể</a><a href="index.html" class="current">Tiểu thuyết</a><a href="../unknown.html">UNKNOWN</a><a href="../grand-ending.html">Đại Kết Cục</a></nav></header>
 <main>
-<section class="hero"><p class="eyebrow">Bách Lâm: Lần Hồi Quy Thứ Một Triệu · Chương 1</p><h1>{safe_title}</h1><p class="meta">Bản tiếng Việt là source canon của chương. Translation chỉ mở sau khi chapter lock.</p></section>
+<section class="hero"><p class="eyebrow">Bách Lâm: Lần Hồi Quy Thứ Một Triệu · Chương 1</p><h1>{safe_title}</h1><p class="meta">Lâm Kim Bách</p></section>
 <article class="prose">{body}</article>
 <a class="back" href="index.html">Về mục Tiểu thuyết</a>
 </main>
