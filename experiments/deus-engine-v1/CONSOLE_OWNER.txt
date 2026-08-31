@@ -1,0 +1,3 @@
+owner: kimbach91-prog
+trigger: /deus
+surface: GitHub Issues
