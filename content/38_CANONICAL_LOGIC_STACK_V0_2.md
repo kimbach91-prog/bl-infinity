@@ -114,6 +114,60 @@ UniversalRightToPublish\neq UniversalEpistemicAuthority
 
 Assets: **BL-OODP, BL-PV, BL-TN, BL-ID, BL-CP, BL-LOG, BL-CHRONO, BL-SIGN**.
 
+## L7.5 — BL-HRD: hypothesis-driven reality search
+
+Khi hệ đã có open ontology, claim object, provenance và preservation-before-validation, một câu hỏi mới xuất hiện: **làm thế nào biến khoảng trống của tri thức thành một portfolio giả thuyết có thể kiểm chứng, ưu tiên và học lại?**
+
+BL-HRD thêm một search loop canonical:
+
+\[
+Gap
+\to Hypothesis
+\to Object
+\to Preserve
+\to Map
+\to Depth/Risk
+\to Value
+\to Portfolio
+\to Test
+\to RealityVeto
+\to State
+\to Lineage
+\to Learn
+\to Recombine
+\to Gap'
+\]
+
+Hard invariants:
+
+\[
+Preserve(H)\not\Rightarrow Believe(H)
+\]
+
+\[
+RightToPropose=Universal
+\]
+
+nhưng:
+
+\[
+OpenEntry\neq EqualWeight\neq EqualResources
+\]
+
+và:
+
+\[
+AIGenerated(H)\not\Rightarrow Evidence(H)
+\]
+
+Giá trị hypothesis không chỉ nằm ở xác suất đúng; một hypothesis bị bác vẫn có thể tạo information gain, measurement capability, negative knowledge hoặc recombination value.
+
+BL-HRD phân tầng reality depth từ `L0` tới `L5`; depth/risk càng cao thì evidence burden, safety burden và reversibility requirement càng tăng. Quyền đề xuất không đồng nghĩa quyền thực thi.
+
+Canonical chain chi tiết: **`content/42_HRD_CANONICAL_LOGIC_CHAIN.md`**.
+
+Assets/objects: **BL-HRD, BL-HRD-LOGIC, Global Hypothesis Commons (protocol composition)**.
+
 ## L8 — BL-AEGIS: technical/epistemic armor
 
 Các module được ghép thành shields/reactors/meshes thay vì tồn tại rời rạc.
@@ -160,9 +214,9 @@ Claim có thể được giữ, hạ cấp, sửa, chia hoặc loại.
 
 Assets: **BL-DAL, BL-MAJ, BL-ARS, BL-LC, BL-EOA**.
 
-## L12 — Release spiral
+## L12 — Release / hypothesis spiral
 
-Toàn vòng:
+Với research object thông thường:
 
 \[
 Idea
@@ -178,21 +232,35 @@ Idea
 \to Republish
 \]
 
-Asset: **BL-PIRAL**.
+Với BL-HRD, vòng này được nối thêm nhánh reality-search:
 
-Đây không phải circular proof. Output của mỗi vòng phải có thể thay đổi truth-status hoặc cấu trúc của object.
+\[
+Gap
+\to HypothesisObject
+\to Preservation
+\to Verification
+\to Evidence
+\to RealityVeto
+\to Revision/NegativeKnowledge
+\to Recombination
+\to NewGap
+\]
+
+Asset: **BL-PIRAL**, composition với **BL-HRD-LOGIC**.
+
+Đây không phải circular proof. Output của mỗi vòng phải có epistemic delta: evidence, critique, capability, measurement, state transition hoặc structural information mới.
 
 ## L13 — Recursion back into cognition/reality
 
-Một critique, tool hoặc finding mới trở lại environment của agent:
+Một critique, tool, falsified hypothesis, measurement capability hoặc finding mới trở lại environment của agent:
 
 \[
-Environment_t\to Cognition_t\to Theory_t\to Action_t\to Environment_{t+1}
+Environment_t\to Cognition_t\to Theory/Hypothesis_t\to Action/Test_t\to Environment_{t+1}
 \]
 
 Sau đó agent hấp thụ state mới và tiếp tục generation.
 
-Đây là điểm BL∞, Optimizer cognition và research infrastructure zic-zac vào nhau: **theory sinh technology để kiểm tra theory; technology tạo feedback làm thay đổi cognition; cognition sinh theory/version tiếp theo.**
+Đây là điểm BL∞, Optimizer cognition, BL-HRD và research infrastructure zic-zac vào nhau: **theory sinh technology để kiểm tra theory; hypothesis định hướng measurement; Reality Veto tạo feedback; failure trở thành negative knowledge; technology tạo feedback làm thay đổi cognition; cognition sinh theory/hypothesis/version tiếp theo.**
 
 ## Canonical non-claim
 
@@ -208,4 +276,10 @@ hay:
 HardToRefute\Rightarrow True
 \]
 
-Architecture tốt chỉ làm claim **dễ định vị, dễ kiểm tra, khó bị bóp méo và dễ sửa hơn**.
+hay:
+
+\[
+ManyHypotheses\Rightarrow MoreKnowledge
+\]
+
+Architecture tốt chỉ làm claim/hypothesis **dễ định vị, dễ kiểm tra, khó bị bóp méo, dễ sửa và dễ tái sử dụng information gain hơn**.
