@@ -50,6 +50,7 @@ jobs:
       - name: Compile release-path scripts
         run: >-
           python -m py_compile
+          scripts/git_publication_gate.py
           scripts/audit.py
           scripts/audit_unified_system.py
           scripts/disclosure_audit.py
@@ -59,6 +60,9 @@ jobs:
           scripts/harden_site.py
           scripts/navigation_audit.py
           scripts/run_discovery.py
+
+      - name: Enforce BL-GWG public Git write gate
+        run: python scripts/git_publication_gate.py --strict --tree
 
       - name: Validate epistemic object
         run: python scripts/audit.py --strict --release
