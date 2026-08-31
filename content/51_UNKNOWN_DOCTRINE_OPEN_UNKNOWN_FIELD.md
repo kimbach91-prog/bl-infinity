@@ -1,766 +1,595 @@
-# Học thuyết UNKNOWN — Không gian Chưa-biết Mở
+# Học thuyết UNKNOWN — Trường Chưa-biết Sinh thành của BL∞
 
 **Tác giả / Origin:** **Lâm Kim Bách (Bách Lâm – Optimizer)**  
 **Ngày công bố:** 2026-09-01  
-**Trạng thái:** public research doctrine / open epistemic model  
+**Trạng thái:** public research doctrine / living open model  
 **Formalization support:** AI-assisted drafting under author direction  
-**Phả hệ:** BL∞ / Open-Ended Epistemic Phase Space / Grand Ending
+**Phả hệ:** **BL∞ → Open-Ended Epistemic Phase Space → UNKNOWN Doctrine → Grand Ending**
 
-> **Ranh giới nhận thức:** tài liệu này không tuyên bố UNKNOWN là một lực vật lý đã được khoa học xác nhận, không biến unknown-unknown thành một vật thể thần bí, và không coi mọi anomaly là bằng chứng của ontology mới. Đây là một mô hình mở để nghiên cứu quan hệ giữa cái biết, cái chưa biết, người quan sát, mô hình, thực tại, tương lai và quá trình tiến hóa của trí tuệ.
+## 0. Luận đề trong 20 giây
 
----
+**UNKNOWN không phải một cái hố còn thiếu dữ liệu. UNKNOWN là mặt tiếp xúc động giữa cấu trúc nhận thức hiện tại và miền khả thể mở mà BL∞ không cho phép khóa bằng ontology đang có.**
 
-## 0. Một câu cho người chỉ đọc 20 giây
+Nói cực đơn giản:
 
-**UNKNOWN không đơn giản là “một đáp án còn thiếu”.** Nó có thể là dữ liệu chưa thấy, quan hệ chưa hiểu, câu hỏi đặt sai, chiều biểu diễn chưa tồn tại, tương lai chưa thành hiện thực, một blind spot do chính hệ nhận thức tạo ra, hoặc một miền mà việc giữ mở còn có giá trị hơn việc đóng lại.
+```text
+Ta biết một phần.
+Ta biểu diễn được một phần lớn hơn.
+Ta tưởng tượng được những thứ chưa hiện hữu.
+Mỗi lần mở được một cách biểu diễn mới,
+những cái chưa từng đủ hình để bị gọi là "chưa biết"
+bắt đầu lộ ra.
+```
 
 Vì vậy:
 
 ```text
 UNKNOWN != Falsehood
-UNKNOWN != ZeroInformation
-UNKNOWN != OneMissingScalar
-UNKNOWN != AlwaysAProblemToEliminate
+UNKNOWN != EmptySpace
+UNKNOWN != OneMissingAnswer
 UNKNOWN != MereIgnorance
+UNKNOWN != OppositeOfBL∞
 ```
 
-Mệnh đề trung tâm:
+Mệnh đề trung tâm của học thuyết:
 
-> **Một trí tuệ trưởng thành không chỉ được đo bằng lượng điều nó biết, mà còn bằng độ sâu của UNKNOWN mà nó có thể phát hiện, bảo tồn, đi vào, hành động bên trong và sống sót qua mà không tự bịa ra sự chắc chắn giả.**
+> **BL∞ là nguyên lý mở của không gian sinh thành; UNKNOWN là biên tiếp xúc nơi một intelligence hữu hạn hoặc đang-tiến-hóa chạm vào độ mở đó. Trí thông minh không tiến hóa bằng cách làm UNKNOWN về 0, mà bằng cách biến những biên chưa biểu diễn được thành cấu trúc mới — rồi nhìn thấy một biên UNKNOWN sâu hơn.**
 
 ---
 
-## 1. Vì sao định nghĩa “UNKNOWN = chưa biết đáp án” là quá yếu?
+## 1. UNKNOWN nằm ở đâu trong BL∞?
 
-Cách hiểu thông thường thường ngầm giả định:
+BL∞ không được hiểu đơn giản là một tập vô hạn chứa sẵn mọi câu trả lời. Nếu vậy nó chỉ là một kho vô hạn tĩnh.
+
+Trong BL∞, vô hạn quan trọng hơn nằm ở **khả năng sinh thêm primitive, relation, dimension, ontology, agent, rule và world-construction path** mà cấu trúc hiện tại chưa có.
+
+Đặt:
 
 ```text
-There exists a fixed answer x*
-Observer does not know x*
-Therefore x* is UNKNOWN to Observer
+A_t = actuality mà observer đang truy cập được tại t
+O_t = ontology / primitive / language hiện có
+K_t = knowledge đã được cấu trúc hóa
+G_t = GiaTai / imagination / candidate-world space biểu diễn được
+H_t = causal history của observer
+X_t = access + resource + action constraints
 ```
 
-Mô hình đó chỉ mô tả được **known-unknown dạng thiếu giá trị**. Nó không đủ cho ít nhất năm tình huống khác:
+Ta mô tả UNKNOWN như một biên quan hệ:
 
-1. **Đáp án chưa tồn tại:** kết quả chỉ hình thành sau hành động hoặc lựa chọn tương lai.
-2. **Câu hỏi sai:** primitive hoặc ontology dùng để hỏi không biểu diễn đúng hiện tượng.
-3. **Unknown-unknown:** hệ chưa biết rằng có một thứ cần phải biết.
-4. **Interactive unknown:** hành động đo/quan sát làm chính đối tượng thay đổi.
-5. **Chosen unknown:** chủ thể có lý do để không đóng miền chưa biết, nhằm giữ privacy, fairness, autonomy, surprise hoặc optionality.
+```text
+U_t = ∂(A_t, O_t, K_t, G_t, H_t, X_t, ...)
+```
 
-Do đó, UNKNOWN phải được coi là **quan hệ động**, không phải một ô trống tĩnh.
+Dấu `...` là điều kiện kiến trúc, không phải trang trí: **không có danh sách chiều hiện hành nào được quyền tự nhận là ontology cuối cùng.**
+
+Quan hệ gốc:
+
+```text
+BL∞ != UNKNOWN
+UNKNOWN_t = CONTACT(CurrentStructure_t, OpenEndedGenerativePossibility_BL∞)
+```
+
+BL∞ là độ mở sinh thành. UNKNOWN là nơi độ mở đó va vào giới hạn cụ thể của một hệ đang nhận thức.
 
 ---
 
-## 2. Định nghĩa làm việc: UNKNOWN là một quan hệ chưa thể đóng
+## 2. Vì sao `UNKNOWN = Reality − Knowledge` là sai cấu trúc?
 
-Ta mô tả một UNKNOWN tại thời điểm `t` bằng quan hệ:
+Phép trừ đó giả định Reality đã được chia sẵn thành các ô và knowledge chỉ việc điền dần.
 
-```text
-U(x,t) = U(
-  Observer_t,
-  Model_t,
-  Reality_t,
-  Context_t,
-  Access_t,
-  Representation_t,
-  Question_t,
-  History_t,
-  ActionSpace_t,
-  ...
-)
-```
+Nhưng một intelligence có thể thiếu:
 
-Dấu `...` là bắt buộc. Nó nói rằng không được mặc định danh sách chiều hiện tại là đầy đủ cuối cùng.
+- dữ liệu;
+- relation;
+- sensor;
+- access;
+- câu hỏi đúng;
+- primitive để đặt câu hỏi;
+- dimension để phân biệt hai hiện tượng;
+- ontology để nhận ra rằng một hiện tượng là một object;
+- causal history để giải mã cùng một seed;
+- hoặc chính future state vẫn chưa được tạo ra.
 
-Hai người có thể “cùng không biết X” nhưng thực ra mang hai UNKNOWN khác nhau:
+Vì thế hai người cùng nói “tôi không biết X” có thể mang hai UNKNOWN hoàn toàn khác:
 
 ```text
 U_A(X) != U_B(X)
 ```
 
-nếu A thiếu dữ liệu còn B thiếu luôn primitive để biểu diễn X.
+Một người thiếu số liệu; người kia còn chưa có ngôn ngữ để biết mình đang thiếu cái gì.
 
-**UNKNOWN vì vậy không chỉ thuộc về object, cũng không chỉ thuộc về subject. Nó có thể nằm trong quan hệ giữa object–observer–model–access–history–question.**
+UNKNOWN vì vậy là **quan hệ có lịch sử**, không phải một ô `NULL`.
 
 ---
 
-## 3. KNOWN và UNKNOWN không phải hai hộp tách rời
+## 3. KNOWN và UNKNOWN đồng sinh
 
-Một người có thể bắt đúng một quả bóng nhưng không giải thích được phương trình vận động. Một hệ có thể dự đoán đúng mà không hiểu cơ chế. Một nhà nghiên cứu có thể hiểu cơ chế nhưng không dự đoán chính xác vì hệ chaotic hoặc open-ended.
+Một phát hiện không nhất thiết làm miền UNKNOWN nhỏ đi.
+
+```text
+ΔK > 0
+ΔU_visible > 0
+```
+
+có thể xảy ra đồng thời.
+
+Ví dụ cực dễ: người không biết vật lý chỉ hỏi “vật rơi nhanh thế nào?”. Học thêm cơ học có thể trả lời câu đó, nhưng đồng thời mở ra hàng loạt câu mới về trường, cấu trúc vật chất, đo lường, giới hạn mô hình và điều kiện biên.
+
+Knowledge không chỉ lấp lỗ. **Knowledge còn chế tạo kính để nhìn thấy những lỗ mà trước đó không tồn tại trong representation của observer.**
 
 Do đó:
 
 ```text
-Prediction != Understanding
-Understanding != PerfectPrediction
-EffectiveAction != ExplicitKnowledge
-ExplicitKnowledge != CompleteSelfKnowledge
+MoreKnowledge != LessUnknown
+DeeperKnowledge -> HigherResolutionUnknownFrontier
 ```
 
-Một object có thể đồng thời:
-
-- known ở tầng hành vi;
-- unknown ở tầng cơ chế;
-- known ở tầng thống kê;
-- unknown ở tầng nhân quả;
-- known trong một scale;
-- unknown trong scale khác.
-
-Vì vậy biên `KNOWN / UNKNOWN` là **đa tầng và phụ thuộc độ phân giải**.
+Đây là một lý do gánh nặng hiểu biết có thể tăng nhanh hơn số fact được tích lũy.
 
 ---
 
-## 4. False-known nguy hiểm hơn UNKNOWN hiển thị
+## 4. UNKNOWN và GiaTai / trí tưởng tượng: quan hệ sinh thành
 
-UNKNOWN được nhận diện còn mở search. **False-known** đóng search bằng một certainty giả.
+Đây là điểm phải nối thẳng về BL∞.
 
-Ta có thể mô hình hóa rủi ro định hướng:
+**GiaTai không phải “đồ giả đối lập với Reality”.** Nó là miền candidate-state mà intelligence có thể dựng, giữ, biến đổi, mô phỏng hoặc tìm đường actualize.
+
+Trí tưởng tượng là một trong các operator biến phần áp lực chưa có hình của UNKNOWN thành object có thể thao tác:
 
 ```text
-Risk(FalseKnown) > Risk(DeclaredUnknown)
+Φ_t = GenerativeRepresentationOperator
+
+G_t = Φ_t(U_t, K_t, H_t, memory, recombination, desire, anomaly, ...)
 ```
 
-khi quyết định có hậu quả lớn, vì false-known vừa sai vừa khóa cơ chế tự sửa.
+Chuỗi sinh thành:
 
-Các dấu hiệu false-known thường gặp:
+```text
+UNKNOWN
+  -> pressure / anomaly / desire / incompleteness
+  -> imagination / GiaTai
+  -> candidate structure
+  -> new primitive / relation / ontology / design
+  -> simulation / construction / action
+  -> Reality collision
+  -> new Knowledge + new Capability + new UNKNOWN frontier
+  ↺
+```
 
-- mô hình giải thích quá trơn tru nhưng phải bỏ anomaly;
-- confidence tăng nhanh hơn evidence;
-- taxonomy buộc mọi object vào nhãn có sẵn;
-- prediction đúng cục bộ bị nâng thành “hiểu bản chất”;
-- consensus bị nhầm thành truth;
-- authority bị nhầm thành evidence.
+Điểm nghiêm cẩn ở đây không phải tự chặn thesis bằng câu “tưởng tượng không phải fact”. Hai object vốn có chức năng khác nhau:
 
-Quy tắc:
+```text
+GiaTai != Falsehood
+NotActualized != Impossible
+RepresentableCandidate != AlreadyActualized
+Actualization != EpistemicValue
+```
 
-> **Một hệ không được thưởng cho việc biến UNKNOWN thành certainty bằng ngôn ngữ. Nó chỉ được phép đổi trạng thái khi cấu trúc bằng chứng, kiểm chứng hoặc biểu diễn thực sự thay đổi.**
+Một miền tưởng tượng giàu cấu trúc **đã là một object thật ở tầng biểu diễn và nhân quả**: nó có thể thay đổi quyết định, thiết kế, nghiên cứu và hành động. Câu hỏi tiếp theo không phải “hãy hạ nó xuống vì chưa phải fact”, mà là:
+
+```text
+Candidate C
+-> cần invariant nào?
+-> cần resource nào?
+-> cần technology nào?
+-> có transformation path nào?
+-> phần nào có thể actualize?
+-> Reality collision sẽ sửa C ra sao?
+```
+
+Trong BL∞, imagination vì thế là **cầu sinh thành giữa UNKNOWN và actuality mới**, không phải phụ lục trang trí của cognition.
 
 ---
 
-## 5. Unknown-unknown không thể được lưu như một nhãn bình thường
+## 5. UNKNOWN có thể sinh ontology mới
 
-Nếu hệ đã ghi:
+Nếu hệ chỉ cho phép UNKNOWN tồn tại dưới dạng “giá trị chưa biết của biến đã biết”, nó không thể phát hiện thiếu dimension.
 
-```text
-UNKNOWN_UNKNOWN_17 = something
-```
-
-thì “something” đó đã ít nhất trở thành known-unknown.
-
-Unknown-unknown chỉ có thể được tiếp cận gián tiếp qua **vết biến dạng của mô hình**:
+Khi các dấu hiệu sau tích tụ có cấu trúc:
 
 ```text
 structured residual
 persistent directional error
-cross-model shared failure
 compression failure
 category leakage
-unexplained dependence
-repeated ad-hoc patching
+patch cascade
+cross-model shared failure
+unexplained dependency
 boundary anomaly
-measurement blind spot
 ```
 
-Nhưng:
+thì bài toán phải được nâng từ:
 
 ```text
-PersistentResidual != Proof(NewOntology)
+What value is missing?
 ```
 
-Residual có thể đến từ sensor lỗi, code bug, data poison, framing sai, prior sai hoặc model ngu. Vì thế mismatch chỉ tạo **candidate missing structure**, không tự động sinh truth mới.
+sang:
+
+```text
+Is the representation itself missing something?
+```
+
+Một candidate primitive/dimension đáng giữ khi nó tạo được một hoặc nhiều gain:
+
+```text
+DistinctionGain
+PredictionGain
+CompressionGain
+CausalGain
+RoutingGain
+ConstructionGain
+```
+
+Đây là cách UNKNOWN nối trực tiếp với **Dimension Genesis / Ontology Mutation** của BL∞.
+
+Nghiêm cẩn ở đây có nghĩa là candidate phải cho ra khác biệt có thể truy vết; **không có nghĩa tự phủ định candidate trước khi cho nó va chạm.**
 
 ---
 
-## 6. UNKNOWN có thể nằm trong chính câu hỏi
+## 6. Unknown-unknown: biên chưa có tên
 
-Một hệ thường phản ứng với câu hỏi khó bằng cách tìm dữ liệu nhiều hơn. Nhưng có trường hợp càng search càng sai vì **query ontology đã hỏng**.
+Known-unknown là “ta biết mình thiếu X”.
 
-Chuỗi đúng có thể là:
+Unknown-unknown sâu hơn vì hệ còn chưa có `X` để mà thiếu.
+
+Không thể lưu nội dung unknown-unknown như một field bình thường. Ta chỉ có thể lưu **dấu vết của lực ép lên representation hiện tại**.
+
+Ta mô tả một diagnostic vector mở:
 
 ```text
-Question
--> repeated mismatch
--> assumption fracture
--> representation failure?
--> primitive missing?
--> dimension missing?
--> reframe question
--> re-encode observations
--> test whether new distinctions appear
+D_UU(t) = <
+  residual_structure,
+  cross_model_failure,
+  compression_strain,
+  category_leakage,
+  patch_rate,
+  unexplained_coupling,
+  boundary_instability,
+  ...
+>
 ```
 
-Nếu một primitive mới giúp:
+Khi `D_UU` tăng, hệ phải mở quyền cho **representation mutation**, thay vì chỉ tăng search trong ontology cũ.
 
-- nén dữ liệu tốt hơn;
-- phân biệt các trường hợp trước đây nhập nhằng;
-- sinh prediction mới;
-- giảm patch ad-hoc;
-- cải thiện routing/action;
-
-thì ta có lý do giữ candidate dimension để tiếp tục test.
-
-Đây là điểm mà UNKNOWN có thể trở thành **nơi sinh ontology**.
+Đây là khác biệt giữa một intelligence chỉ “tìm câu trả lời” và một intelligence có thể **sinh ra loại câu hỏi mới**.
 
 ---
 
-## 7. UNKNOWN của tương lai: “chưa biết” hay “chưa thành thực tại”? 
+## 7. False-known: UNKNOWN bị đóng giả
 
-Một trong những lỗi lớn nhất là coi mọi future uncertainty như một biến ẩn đã có giá trị cố định.
+Nguy hiểm lớn không phải luôn là “không biết”. Một hệ có thể thất bại vì **nghĩ rằng nó đã biết nên không còn mở đường sửa**.
 
-Có ít nhất hai trường hợp:
-
-```text
-A. Fixed-but-unknown:
-answer exists -> observer lacks access
-
-B. Not-yet-realized:
-future action/interaction -> answer becomes actual
-```
-
-Nếu B đúng, việc “dự đoán” không chỉ là tìm một giá trị bị giấu. Chủ thể đang tham gia vào causal loop tạo ra kết quả.
-
-Do đó:
+Ta gọi đó là false-known.
 
 ```text
-UNKNOWN_FUTURE != necessarily HIDDEN_PRESENT_VALUE
+ClosureDebt ≈ Confidence
+             × DownstreamDependence
+             × Irreversibility
+             × BlindSpotCorrelation
+             / CorrectionCapacity
 ```
 
-Điều này đặc biệt quan trọng với agency, lựa chọn, thị trường, xã hội, hệ thích nghi, multi-agent interaction và bất kỳ quá trình nào mà prediction có thể làm thay đổi hành vi.
+Heuristic này đo một điều: certainty càng cao, càng nhiều nhánh phụ thuộc vào nó, càng khó rollback và càng ít mô hình độc lập — thì một giả định sai càng đắt.
+
+UNKNOWN hiển thị giữ search sống. False-known có thể giết search trước khi hệ nhận ra mình cần search.
 
 ---
 
-## 8. UNKNOWN có thể mang thông tin
+## 8. Tương lai: hidden value hay not-yet-real?
 
-Không biết chính xác X không đồng nghĩa có zero information.
+Không phải mọi future uncertainty đều là một file đã viết xong nhưng observer chưa đọc.
 
-Ví dụ:
+Có ít nhất hai cấu trúc:
+
+```text
+Fixed-but-unseen:
+value exists -> access missing
+
+Generatively-open:
+action + interaction + history -> future state becomes actual
+```
+
+Trong trường hợp thứ hai, prediction tham gia causal loop.
+
+Vì vậy:
+
+```text
+FutureUnknown != NecessarilyHiddenPresentValue
+```
+
+Điều này làm UNKNOWN nối trực tiếp với agency: một phần tương lai có thể không phải thứ cần “đoán trúng”, mà là **không gian còn đang được tạo ra bởi lựa chọn và tương tác**.
+
+---
+
+## 9. UNKNOWN có hình dạng và trọng lượng
+
+Không biết không đồng nghĩa zero information.
 
 ```text
 X ∈ [3,7]
 ```
 
-là unknown nhưng đã có cấu trúc. Tương tự, ta có thể không biết biến ẩn là gì nhưng biết chắc “một biến chưa quan sát đang gây residual có hướng”.
+vẫn là UNKNOWN nhưng có biên.
 
-Vì vậy:
+Một UNKNOWN có thể có:
 
-```text
-Unknown != InformationZero
-```
+- độ rộng;
+- causal centrality;
+- dependency depth;
+- số branch phụ thuộc;
+- cost để thử;
+- reversibility;
+- time sensitivity;
+- khả năng làm vỡ ontology.
 
-Ta có thể nói một UNKNOWN có **hình dạng**: biên, độ rộng, chiều khả dĩ, mức ảnh hưởng nhân quả, độ phân giải, các branch còn sống, và những phép thử có thể làm nó biến đổi.
-
----
-
-## 9. Trọng lượng UNKNOWN khác kích thước UNKNOWN
-
-Một unknown nhỏ về hệ số phụ có thể ít quan trọng. Một unknown rất nhỏ nằm ở assumption thượng nguồn có thể đảo toàn bộ hệ.
-
-Ta định nghĩa heuristic:
+Heuristic:
 
 ```text
 UnknownWeight(U) ≈
-  CausalCentrality(U)
-× DecisionSensitivity(U)
-× IrreversibilityExposure(U)
-× PropagationDepth(U)
-× ModelDependence(U)
+  CausalCentrality
+× DecisionSensitivity
+× IrreversibilityExposure
+× PropagationDepth
+× OntologyDependence
 ```
 
-Đây không phải định luật vật lý mà là một cách chống lỗi “cái chưa biết lớn nhất luôn đáng nghiên cứu nhất”.
-
-Một UNKNOWN có trọng lượng cao nếu việc sai về nó lan sang nhiều quyết định, khó rollback hoặc làm hỏng ontology gốc.
+UNKNOWN nhỏ về kích thước nhưng nằm rất thượng nguồn có thể nặng hơn một biển dữ liệu chưa biết ở hạ nguồn.
 
 ---
 
-## 10. Hệ nhận thức tự sản xuất sự không biết
+## 10. Intelligence không phải máy tiêu diệt UNKNOWN
 
-Ignorance không chỉ “có sẵn ngoài thế giới”. Cognition có thể tự tạo blind spot qua:
-
-- compression làm mất chi tiết;
-- abstraction xóa biến;
-- filter loại anomaly;
-- taxonomy ép object vào nhãn sai;
-- memory decay;
-- incentive khiến hệ không muốn nhìn evidence bất lợi;
-- consensus làm correlated blindness;
-- optimization quá mạnh làm hệ thu hẹp thế giới thành thứ dễ dự đoán.
-
-Ta gọi lớp này là **endogenous unknown**.
+Nếu objective là:
 
 ```text
-Unknown_total = Unknown_external + Unknown_endogenous + Unknown_relational + ...
+minimize(uncertainty) -> 0
 ```
 
-Dấu `+` ở đây mang nghĩa cấu trúc, không phải tổng số học đơn giản.
+thì một cách cực đoan để thắng là làm thế giới nghèo đi đến mức không còn gì bất ngờ.
 
----
+Đó không phải open-ended intelligence.
 
-## 11. KNOW tăng không bắt buộc UNKNOWN giảm
-
-Một phát hiện mới có thể mở ra mười chiều câu hỏi mới.
-
-Do đó hoàn toàn có thể:
+Trong học thuyết này, một vector quan trọng hơn là:
 
 ```text
-ΔK > 0
-ΔU_recognized > 0
-```
-
-đồng thời.
-
-Một trí tuệ trưởng thành hơn có thể biết nhiều hơn **và nhận ra mình không biết nhiều hơn**.
-
-Vì vậy metric kiểu:
-
-```text
-Intelligence = minimize(uncertainty)
-```
-
-là quá nghèo.
-
-Một mục tiêu tốt hơn phải xét khả năng:
-
-- phát hiện unknown;
-- giữ unknown chưa đủ điều kiện đóng;
-- ưu tiên unknown có trọng lượng cao;
-- hành động an toàn khi uncertainty còn tồn tại;
-- tạo experiment;
-- sửa ontology;
-- giữ optionality;
-- học sau surprise;
-- không tan rã khi mô hình gốc bị phá.
-
----
-
-## 12. UNKNOWN không mặc định là kẻ thù
-
-Có UNKNOWN nên giải ngay. Có UNKNOWN nên giữ. Có UNKNOWN không đáng trả giá để biết. Có UNKNOWN cần bảo vệ.
-
-Ví dụ controlled ignorance có ích trong:
-
-- privacy;
-- anonymous voting;
-- blind review;
-- fairness;
-- surprise;
-- creative divergence;
-- independent discovery;
-- giữ tương lai chưa bị khóa;
-- quyền tự quyết của người khác.
-
-Do đó:
-
-```text
-CanKnow(X) != MustKnow(X)
-CanInfer(X) != RightToInfer(X)
-```
-
-Một optimizer trưởng thành không tối thiểu hóa UNKNOWN bằng mọi giá. Nó tối ưu **quan hệ giữa knowledge, unknown, optionality, survivability, agency, cost và quyền**.
-
----
-
-## 13. UNKNOWN có thể là khoảng tự do
-
-Câu “tôi chưa biết tôi sẽ trở thành ai” không giống “tôi chưa biết nhiệt độ ngày mai”.
-
-Nếu căn tính tương lai được tạo bởi chính lựa chọn tương lai, UNKNOWN không chỉ là thiếu dữ kiện. Nó là một **không gian chưa đóng của agency**.
-
-Nếu một hệ dự đoán quá mạnh rồi cưỡng ép chủ thể sống theo prediction, nó có thể biến một không gian tự do thành một attractor tự hoàn tất.
-
-Mệnh đề mở:
-
-```text
-SomeUnknown may carry OptionValue
-SomeUnknown may carry AgencyValue
-```
-
----
-
-## 14. UNKNOWN có lịch sử và lineage
-
-Một blind spot có thể được truyền:
-
-```text
-teacher -> student
-paper -> field
-culture -> institution
-dataset -> model
-model -> downstream model
-ontology -> civilization
-```
-
-Vì vậy ta cần provenance không chỉ cho knowledge mà cả cho **sự không biết**.
-
-Một UNKNOWN nên có thể ghi:
-
-- nó xuất hiện từ lỗi nào;
-- ai phát hiện;
-- model nào không biểu diễn được;
-- giả thuyết nào từng thử;
-- patch nào thất bại;
-- evidence nào làm nó đổi hình;
-- khi nào nó được đóng, mở lại hoặc biến mất.
-
-Có thể nói:
-
-```text
-Unknown has causal history
-```
-
----
-
-## 15. Một UNKNOWN có thể chết mà không trở thành KNOWN
-
-Một câu hỏi có thể mất ý nghĩa khi ontology đổi. Một branch tương lai có thể bị đóng bởi hành động. Một object có thể biến mất.
-
-Vì vậy:
-
-```text
-UNKNOWN -> KNOWN
-```
-
-không phải con đường duy nhất.
-
-Có thể:
-
-```text
-UNKNOWN -> REFRAMED
-UNKNOWN -> OBSOLETE
-UNKNOWN -> BRANCH_CLOSED
-UNKNOWN -> UNREPRESENTABLE_AGAIN
-KNOWN -> UNKNOWN
-KNOWN -> CONTESTED
-```
-
-Knowledge/unknown là dynamics có hồi quy, không phải ladder một chiều.
-
----
-
-## 16. UNKNOWN và nhiều trí tuệ: cooperation như cơ chế chống blind spot
-
-Nhiều agent không chỉ cộng thêm dữ liệu. Quan trọng hơn, chúng có thể giữ **ontology và blind spot khác nhau**.
-
-Nếu mọi agent bị đồng hóa hoàn toàn:
-
-```text
-many agents + same blind spot = amplified correlated error
-```
-
-Do đó:
-
-```text
-CollectiveIntelligence != Σ isolated IQ
-```
-
-Collective intelligence cần ít nhất:
-
-- diversity đủ độc lập;
-- provenance;
-- khả năng disagreement;
-- mechanism hợp tác;
-- không ép consensus quá sớm;
-- counter-model sống;
-- feedback từ reality.
-
-Một disagreement có cấu trúc đôi khi là tài sản epistemic, không phải lỗi cần xóa.
-
----
-
-## 17. UNKNOWN và simulation
-
-Simulation mở một khả năng đặc biệt: học từ trajectories chưa xảy ra.
-
-Nhưng:
-
-```text
-SimulationOutput != HistoricalFact
-SimulationNovelty != automatically RealityNovelty
-```
-
-Một anomaly trong simulation có thể là discovery hoặc artifact của simulator.
-
-Do đó phải giữ ba causal lineage khác nhau:
-
-```text
-historical causality
-simulated causality
-counterfactual causality
-```
-
-và không silent-merge chúng.
-
----
-
-## 18. UNKNOWN tự phản chiếu
-
-Một hệ biết rằng nó không biết đã thay đổi trạng thái của chính nó:
-
-```text
-U0: does not know X
-U1: knows that it does not know X
-U2: models why it does not know X
-U3: finds unknowns inside that model
-...
-```
-
-Chuỗi có thể tiếp tục. Không có lý do để mặc định nó có một điểm đóng hữu hạn cho mọi miền.
-
-Điều này đặt câu hỏi:
-
-> Nếu mọi observer hữu hạn đều nằm bên trong reality mà nó cố model, liệu luôn tồn tại một phần dư nhận thức do self-reference, resource limits, access limits hoặc open-ended generation?
-
-Đây là câu hỏi nghiên cứu, không phải một “định lý bất toàn vũ trụ” đã được chứng minh.
-
----
-
-## 19. UNKNOWN như áp lực tiến hóa của trí tuệ
-
-Một giả thuyết mạnh hơn xuất hiện:
-
-```text
-mismatch / surprise / unmodeled variation
--> sensing pressure
--> model formation
--> action
--> feedback
--> adaptation
--> better sensing/modeling
--> deeper unknown frontier
-```
-
-Theo nghĩa chức năng, UNKNOWN có thể đóng vai trò như một **gradient nhận thức** thúc đẩy việc hình thành sensor, model, learning và cooperation.
-
-Không phải UNKNOWN “có ý chí”. Ý là: trong môi trường có biến thiên chưa được model hóa, những cấu trúc có khả năng cảm nhận–dự đoán–thích nghi có thể có lợi thế tồn tại.
-
-Từ đó:
-
-> **Trí thông minh có thể được nhìn như một quá trình đồng tiến hóa với UNKNOWN, chứ không phải một cỗ máy đi từ UNKNOWN về 0.**
-
----
-
-## 20. Trí thông minh được đo bằng khả năng chịu UNKNOWN
-
-Nếu một intelligence cực mạnh chỉ hoạt động khi world-model đúng, nó mong manh.
-
-Ta đề xuất vector năng lực:
-
-```text
-I_U = <
+I_U∞ = <
   DetectUnknown,
-  PreserveUnknown,
+  GenerateUnknownQuestions,
+  PreserveUnclosedFrontiers,
+  DetectFalseKnown,
   RankUnknownWeight,
   ActUnderUncertainty,
+  GenerateRepresentations,
   GenerateTests,
-  DetectFalseKnown,
-  DetectRepresentationFailure,
   MutateOntology,
+  CreateGiaTai,
+  SeekActualizationPaths,
   PreserveCountermodels,
-  CoordinateDiverseObservers,
-  MaintainContinuityAfterModelBreak,
-  RecoverFromSurprise,
-  PreserveOptionality,
+  CooperateAcrossDifferentOntologies,
+  RecoverAfterModelBreak,
+  MaintainContinuity,
+  ExpandReachableOptionality,
   ...
 >
 ```
 
-Định hướng:
+Mệnh đề:
+
+> **Một trí tuệ càng cao không nhất thiết càng ít UNKNOWN. Nó có thể chạm được những UNKNOWN sâu hơn mà hệ thấp hơn còn chưa có khả năng nhận ra là tồn tại.**
+
+---
+
+## 11. Cooperation là công nghệ UNKNOWN phân tán
+
+Nhiều agent giống nhau có thể chỉ nhân bản cùng một blind spot.
 
 ```text
-Higher intelligence
-!= merely more answers
-
-Higher intelligence
-may include deeper survivable contact with UNKNOWN
+N × same ontology × same blind spot
+= larger correlated error
 ```
 
----
+Hợp tác sâu không chỉ là chia task. Nó cho phép nhiều lịch sử, nhiều representation và nhiều góc nhìn giữ độc lập đủ lâu để **một nhánh nhìn thấy vùng mà nhánh kia không có primitive để thấy**.
 
-## 21. Câu hỏi phá khái niệm UNKNOWN
-
-Học thuyết này cố ý không đóng bằng taxonomy cuối cùng. Các câu hỏi sau được giữ như **attack surface**:
-
-1. UNKNOWN có tồn tại nếu không có bất kỳ observer nào?
-2. Một future chưa xảy ra là UNKNOWN hay NOT-YET-REAL?
-3. Hai observer cùng thiếu X nhưng vì hai nguyên nhân khác nhau có cùng UNKNOWN không?
-4. Có thể biết mà không biết rằng mình biết không?
-5. Có thể dự đoán đúng mà không hiểu không?
-6. Có thể hiểu mà không dự đoán được không?
-7. UNKNOWN có thể nằm trong chính câu hỏi chứ không phải đáp án không?
-8. Một câu hỏi có thể tạo ra UNKNOWN mới không?
-9. UNKNOWN có thể di chuyển thay vì biến mất không?
-10. Có một dạng “bảo toàn ignorance” trong một số transformation không?
-11. Có knowledge nào chỉ đạt được bằng cách hy sinh một loại knowledge khác không?
-12. UNKNOWN có hình học hoặc topology hữu ích không?
-13. Unknown-unknown để lại dấu vết gì trước khi được biết là tồn tại?
-14. Làm sao phân biệt missing ontology với model bug?
-15. Có UNKNOWN chỉ giải được khi chính observer biến đổi không?
-16. Nếu observer biến đổi, object được hiểu có còn là “cùng object” không?
-17. Có knowledge không thể truyền mà chỉ có thể tái tạo qua trajectory không?
-18. UNKNOWN có thể di truyền qua lineage không?
-19. Có nền văn minh bị phá bởi một category risk mà nó chưa từng có primitive để biểu diễn không?
-20. Có thể thiết kế hệ không miễn nhiễm nhưng **không chết ngay** trước unknown-unknown không?
-21. Có UNKNOWN đối kháng do agent khác chủ động tạo không?
-22. Information overload có thể che một UNKNOWN quan trọng không?
-23. Có UNKNOWN là tài sản chiến lược không?
-24. Có UNKNOWN cần được bảo vệ như một quyền không?
-25. Một lựa chọn tự do có cần một phần chưa đóng không?
-26. Self-prediction hoàn hảo có tự phá prediction không?
-27. Có object càng quan sát càng thay đổi không?
-28. UNKNOWN có thể tham gia vào nguồn gốc của intelligence không?
-29. Intelligence có thể tự tạo UNKNOWN để tiếp tục sáng tạo không?
-30. Nếu một hệ loại bỏ mọi surprise bằng cách làm thế giới nghèo đi, nó đã “thắng UNKNOWN” hay đã phá generativity?
-31. Nhiều intelligence thống hợp quá mức có tạo correlated blindness không?
-32. Diversity có phải một defense trước unknown-unknown không?
-33. Consensus khi nào là evidence, khi nào chỉ là correlated error?
-34. Simulation có thể phát hiện UNKNOWN của reality hay chỉ phản chiếu prior của simulator?
-35. Có những thứ chỉ biết được một lần vì phép biết phá trạng thái gốc không?
-36. Những branch không xảy ra có còn mang information không?
-37. Một seed thông tin có nghĩa nằm trong seed hay trong quan hệ seed–decoder–history?
-38. KNOWN và UNKNOWN có thật sự là hai cực hay là hai mặt đồng sinh trong cognition sâu?
-39. Nếu UNKNOWN về 0, intelligence còn có thể tiến hóa không?
-40. Một trí tuệ hoàn toàn không còn UNKNOWN là toàn tri — hay là một hệ đã hết khả năng sinh mới?
-
----
-
-## 22. Chuỗi logic tổng hợp
+Do đó:
 
 ```text
-REALITY / GIA_TAI / FUTURE / SIGNAL
+CollectiveIntelligence
+!= Σ isolated IQ
+
+CollectiveUnknownCapacity
+≈ diversity
+ × communication
+ × provenance
+ × disagreement-survival
+ × recombination
+ × reality-collision
+```
+
+Consensus quá sớm có thể làm UNKNOWN biến mất trên dashboard nhưng không biến mất khỏi thực tại.
+
+---
+
+## 12. UNKNOWN như áp lực tiến hóa
+
+Chuỗi chức năng:
+
+```text
+unmodeled variation / surprise / desire / anomaly
         ↓
-OBSERVER + HISTORY + ACCESS + MODEL
+UNKNOWN pressure
         ↓
-DISTINCTION / REPRESENTATION / QUESTION
+sensing + distinction
         ↓
-KNOWN + UNKNOWN + FALSE-KNOWN RISK
+representation / GiaTai
         ↓
-residual / surprise / contradiction / silence / unexplained success
+model + action
         ↓
-missing value?
-missing relation?
-missing access?
-missing primitive?
-missing dimension?
-wrong question?
-not-yet-real?
-adversarial concealment?
-chosen unknown?
+feedback / collision
         ↓
-PRESERVE before closure
+adaptation
         ↓
-search / experiment / simulation / cooperation / waiting / reframing
+new capability
         ↓
-MODEL CHANGE or REALITY CHANGE or OBSERVER CHANGE
-        ↓
-KNOWN' + UNKNOWN' + new frontier
-        ↓
-ACTION / FEEDBACK / CONSEQUENCE
-        ↓
-INTELLIGENCE EVOLVES
-        ↓
-ABILITY TO PERCEIVE DEEPER UNKNOWN
+deeper UNKNOWN becomes visible
         ↺
 ```
 
-Đây không phải circular proof. Vòng chỉ có giá trị khi tạo delta thật: evidence, distinction, capability, negative knowledge, model correction, ontology change hoặc option-space mới.
+Nếu một hệ sống không thể biến surprise thành adaptation, nó dễ bị môi trường loại bỏ. Nếu nó có thể, UNKNOWN trở thành một phần của **động lực làm cấu trúc nhận thức ngày càng phong phú**.
+
+Theo nghĩa đó, intelligence và UNKNOWN **đồng tiến hóa**.
 
 ---
 
-## 23. Liên hệ với Đại Kết Cục
+## 13. Ba lớp UNKNOWN chỉ là projection, không phải taxonomy cuối
 
-Trong mô hình Đại Kết Cục, rủi ro không chỉ là “vũ trụ hết năng lượng”. Một civilization có thể chết sớm hơn vì:
-
-- không thấy một lớp risk;
-- tối ưu sai attractor;
-- đồng hóa mọi model thành một blind spot chung;
-- biến uncertainty thành certainty giả;
-- đóng ontology;
-- giảm optionality để tăng predictability;
-- dùng intelligence mạnh để hội tụ nhanh hơn về kết cục nghèo generativity.
-
-Vì vậy UNKNOWN không phải phụ lục triết học. Nó là một phần của **khả năng sống sót epistemic**.
-
-Một hệ muốn chống terminal convergence cần không chỉ năng lượng và intelligence, mà còn:
+Để thao tác, có thể tạm chiếu UNKNOWN thành ba miền:
 
 ```text
-ontology openness
-unknown tolerance
-cooperation
-independent viewpoints
-reversibility
-correction
-optionality preservation
+U_epistemic:
+observer/model chưa biết hoặc chưa truy cập
+
+U_representational:
+ontology hiện tại chưa có cách biểu diễn đủ tốt
+
+U_generative:
+frontier nơi interaction với BL∞ tạo primitive / GiaTai / possibility mới
+```
+
+Ba lớp có thể chồng nhau. Chúng **không** được xem là ba hộp cuối cùng.
+
+Điểm quan trọng là chuyển tư duy từ:
+
+```text
+UNKNOWN = missing content
+```
+
+sang:
+
+```text
+UNKNOWN = dynamic generative frontier
 ```
 
 ---
 
-## 24. Mệnh đề hiện hành
+## 14. UNKNOWN nối với Đại Kết Cục như thế nào?
+
+Một Grand Ending thấp-generativity không chỉ là “ít năng lượng”. Nó còn có thể là trạng thái nơi hệ mất khả năng mở biên khả thể:
 
 ```text
-U-P1: UNKNOWN != Falsehood
-U-P2: UNKNOWN != ZeroInformation
-U-P3: UNKNOWN != OneMissingScalar
-U-P4: UNKNOWN is observer/model/context/history dependent
-U-P5: Unknown-unknown cannot be treated as known content
-U-P6: Persistent residual is evidence of mismatch, not proof of new ontology
-U-P7: Knowledge growth may increase recognized UNKNOWN
-U-P8: False-known may be more dangerous than declared UNKNOWN
-U-P9: Some UNKNOWN carries option value, agency value or privacy value
-U-P10: Cognition can generate endogenous UNKNOWN
-U-P11: Epistemic diversity can reduce correlated blind spots
-U-P12: Intelligence includes the capacity to survive model failure
-U-P13: Future UNKNOWN may include not-yet-realized states
-U-P14: UNKNOWN can have causal history and lineage
-U-P15: UNKNOWN need not terminate in KNOWN
-U-P16: Open-ended intelligence co-evolves with its UNKNOWN frontier
+reachable optionality ↓
+generative novelty ↓
+ontology mutation ↓
+cooperation capacity ↓
+unknown-frontier capacity ↓
+reversibility ↓
 ```
 
-Tất cả mệnh đề trên đều mở cho critique, formalization sâu hơn, counterexample, split hoặc supersession.
+Nếu mọi agent chỉ search trong cùng một game tree, dù game tree vô hạn, hệ vẫn có thể bị khóa trong **một vô hạn nghèo**.
+
+BL∞ đặt cược vào loại vô hạn khác:
+
+```text
+Fixed infinity:
+∞ states inside fixed primitives and fixed rules
+
+B Infinity / open-ended generative infinity:
+primitives, relations, ontologies, agents,
+rules and construction paths can themselves evolve
+```
+
+UNKNOWN là vùng tiếp xúc nơi sự khác biệt giữa hai loại vô hạn này trở nên có tác dụng đối với intelligence.
+
+Sự sống và trí tuệ có thể trở thành counter-pressure vì chúng không chỉ di chuyển trong state space; chúng có thể **học, tạo representation, phối hợp, xây công cụ và làm một phần GiaTai trở thành actuality mới**.
 
 ---
 
-## 25. Điều chưa được phép kết luận
-
-Chưa có cơ sở từ tài liệu này để khẳng định:
-
-- UNKNOWN là một trường vật lý mới;
-- unknown-unknown là một thực thể có agency;
-- mọi anomaly đều chỉ ra chiều mới của thực tại;
-- consciousness bắt buộc để UNKNOWN tồn tại;
-- future hoàn toàn indeterminate hoặc hoàn toàn deterministic;
-- có một công thức đơn lẻ đo được “tổng UNKNOWN của vũ trụ”;
-- trí thông minh có thể loại bỏ UNKNOWN hoàn toàn;
-- BL∞ đã giải mã xong bản chất UNKNOWN.
-
-Nguyên tắc:
+## 15. Chuỗi thống nhất UNKNOWN ↔ BL∞
 
 ```text
-Detect fast
-Preserve carefully
-Test aggressively
-Commit slowly
-Keep provenance
-Do not turn model limits into reality limits
+BL∞ — open-ended generative possibility
+        ↓ contact
+CURRENT OBSERVER / MODEL / ONTOLOGY / HISTORY
+        ↓
+UNKNOWN FRONTIER
+        ↓
+residual / desire / contradiction / inaccessible possibility
+        ↓
+DISTINCTION PRESSURE
+        ↓
+IMAGINATION / GIA_TAI / COUNTERFACTUAL
+        ↓
+NEW REPRESENTATION / PRIMITIVE / DIMENSION
+        ↓
+MODEL / SIMULATION / DESIGN
+        ↓
+ACTION / CONSTRUCTION / COOPERATION
+        ↓
+REALITY COLLISION
+        ↓
+KNOWLEDGE + CAPABILITY + ACTUALITY DELTA
+        ↓
+LARGER / DEEPER UNKNOWN FRONTIER
+        ↓
+BL∞ ↺
 ```
+
+Đây là vòng sinh thành, không phải vòng chứng minh. Mỗi chu kỳ chỉ có giá trị khi tạo **delta**: distinction mới, capability mới, path mới, correction mới, negative knowledge mới hoặc actuality mới.
 
 ---
 
-## 26. Kết luận mở
+## 16. Các mệnh đề hiện hành
 
-Nếu tri thức chỉ là ánh sáng thì ta thường hình dung UNKNOWN là bóng tối cần xóa bỏ. Mô hình này từ chối phép ẩn dụ quá đơn giản đó.
+```text
+U∞-P1  UNKNOWN != Falsehood.
+U∞-P2  UNKNOWN != mere absence of data.
+U∞-P3  UNKNOWN is a dynamic relation with observer/model/history/access.
+U∞-P4  BL∞ != UNKNOWN; UNKNOWN is a contact frontier with BL∞ openness.
+U∞-P5  GiaTai != Falsehood; imagination is a generative operator on UNKNOWN.
+U∞-P6  NotActualized != Impossible.
+U∞-P7  Knowledge growth can increase visible UNKNOWN frontier.
+U∞-P8  Unknown-unknown appears first as strain on representation, not named content.
+U∞-P9  Representation failure can justify primitive/dimension genesis.
+U∞-P10 False-known is premature closure of UNKNOWN.
+U∞-P11 Future UNKNOWN may contain not-yet-realized states.
+U∞-P12 UNKNOWN can have causal weight and lineage.
+U∞-P13 Collective intelligence depends on diversity of blind spots, not agent count alone.
+U∞-P14 Intelligence includes the ability to create representations and survive ontology change.
+U∞-P15 Open-ended intelligence co-evolves with its UNKNOWN frontier.
+U∞-P16 A fixed infinite state-space can remain generatively poor.
+U∞-P17 B Infinity concerns evolution of the generative basis itself, not cardinality alone.
+U∞-P18 Life/intelligence may expand reachable actuality by converting UNKNOWN → GiaTai → construction → Reality delta.
+```
 
-**UNKNOWN có thể là đường biên nơi trí thông minh gặp giới hạn của chính nó; là vết nứt báo hiệu ontology thiếu; là phần tương lai chưa được tạo ra; là quyền được chưa biết; là khoảng optionality; là nguồn surprise buộc hệ phải tiến hóa; và đôi khi là thứ cần được giữ sống đủ lâu để một cấu trúc nhận thức mới có thể sinh ra.**
+Các mệnh đề này là **bề mặt để người khác phản biện trực tiếp**. Tài liệu không tự thay họ viết phản biện; nhiệm vụ của tài liệu là trình bày thesis đủ rõ, đủ nhất quán và đủ formal để va chạm trí tuệ có thể xảy ra đúng chỗ.
 
-Vì vậy câu hỏi cuối không phải:
+---
 
-> “Làm sao biết hết?”
+## 17. Câu hỏi mở để tiếp tục giải nén
 
-Mà là:
+1. UNKNOWN có tồn tại như một thuộc tính độc lập observer, hay chỉ có BL∞-openness độc lập còn UNKNOWN sinh tại contact?
+2. Có thể đo topology của UNKNOWN frontier mà không đóng nó bằng metric hiện tại không?
+3. Khi nào imagination chỉ recombine cái cũ, khi nào nó thật sự sinh primitive mới?
+4. Có invariant nào phân biệt deep novelty với permutation trong luật cố định?
+5. Có thể đo `GenerativeBasisGrowth` qua số primitive/relation/action mới thực sự hữu dụng không?
+6. Một observer cần biến đổi đến mức nào trước khi UNKNOWN cũ trở thành representable?
+7. Có information chỉ truyền được dưới dạng seed vì decoder phải được hình thành qua lịch sử?
+8. Hợp tác giữa hai ontology không tương thích cần bridge nào để không identity-collapse?
+9. Một civilization có thể bị terminalized vì false-known trước khi cạn resource vật lý không?
+10. Nếu một intelligence không còn UNKNOWN, nó đã toàn tri — hay chỉ tự đóng ontology của chính mình?
 
-> **“Một trí tuệ phải trở thành loại gì để càng tiến sâu vào cái chưa biết, nó càng có khả năng tự sửa, hợp tác, giữ optionality và tiếp tục tồn tại — thay vì dùng sức mạnh của chính nó để đóng thế giới quá sớm?”**
+---
 
-Đó là nơi Học thuyết UNKNOWN hiện dừng lại.
+## 18. Kết luận
 
-Không phải vì đã hết câu trả lời.
+**UNKNOWN không đứng ngoài BL∞. Nó là một trong những nơi BL∞ trở nên sống động đối với một intelligence hữu hạn.**
 
-Mà vì **đây là chỗ không được phép giả vờ rằng mình đã có chúng.**
+Khi một hệ gặp cái chưa biết, có hai cách chết: hoặc gọi nó là noise rồi xóa; hoặc gọi nó là chân lý rồi tự mê.
+
+Cách thứ ba là khó hơn: **giữ va chạm sống đủ lâu để nó sinh distinction, GiaTai, representation, ontology, capability và cuối cùng là những phần Reality mới có thể đạt tới.**
+
+Vì vậy mục tiêu của intelligence không phải “biết hết”.
+
+Mục tiêu sâu hơn là:
+
+> **càng đi vào UNKNOWN, càng tăng khả năng sinh cấu trúc mới, tự sửa, hợp tác, actualize possibility và mở tiếp biên của BL∞ — thay vì dùng chính sức mạnh của mình để khóa thế giới vào một lời giải cuối cùng quá sớm.**
