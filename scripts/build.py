@@ -23,7 +23,7 @@ PAGE='''<!doctype html><html lang="{{ lang }}"><head>
 <link rel="alternate" type="application/rss+xml" title="BL∞ updates" href="{{ base }}feed.xml">
 <script type="application/ld+json">{{ jsonld }}</script></head>
 <body><header class="top"><a href="{{ base }}index.html" class="brand">BL∞</a><span>Bách Lâm – Optimizer</span>
-<nav><a href="{{ base }}theory.html">Học thuyết</a><a href="{{ base }}academic-democracy.html">Dân chủ Học thuật</a><a href="{{ base }}bl-adn.html">BL-ADN</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}author.html">Tác giả</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
+<nav><a href="{{ base }}theory.html">Học thuyết</a><a class="nav-featured" href="{{ base }}novel/">Tiểu thuyết</a><a href="{{ base }}academic-democracy.html">Dân chủ Học thuật</a><a href="{{ base }}bl-adn.html">BL-ADN</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}author.html">Tác giả</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
 <main><article>{{ body }}</article>{{ comments }}</main>
 <footer><p>BL∞ · {{ version }} · canonical research object. <a href="{{ base }}machine/manifest.json">Machine manifest</a></p></footer>
 <script src="{{ base }}assets/js/site.js"></script></body></html>'''

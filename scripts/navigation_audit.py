@@ -15,6 +15,7 @@ CONFIG = ROOT / "bl.config.yml"
 EXPECTED_PROJECT_ROOT = "/bl-infinity/"
 CORE_SECTIONS = (
     "theory",
+    "novel",
     "academic",
     "adn",
     "claims",
@@ -227,6 +228,10 @@ def target_relative(target: Path) -> str:
 def expected_current(relative: str) -> tuple[str, str] | None:
     if relative in {"theory.html", "en/theory.html"}:
         return "theory", "page"
+    if relative == "novel/index.html":
+        return "novel", "page"
+    if relative == "novel/chapter-001.html":
+        return "novel", "location"
     if relative == "academic-democracy.html" or re.fullmatch(
         r"academic-democracy/[^/]+/index\.html", relative
     ):
@@ -257,6 +262,7 @@ def expected_current(relative: str) -> tuple[str, str] | None:
 def allowed_section_target(section: str, relative: str) -> bool:
     fixed = {
         "theory": {"theory.html", "en/theory.html"},
+        "novel": {"novel/index.html"},
         "adn": {"bl-adn.html"},
         "claims": {"claims.html"},
         "assets": {"assets.html"},
