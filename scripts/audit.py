@@ -89,13 +89,22 @@ if blok_event.get('precedes') != 'bl:event-optimizer-essence-chain':
 if blok_event.get('exactDateKnown') is not False:
     errors.append('BLOK foundational nucleus absolute date must remain unresolved')
 logic_graph_type=logic_stack.get('graph_type')
-if logic_graph_type not in {'LOGICAL_GRAPH_VIEW','DYNAMIC_LOGICAL_GRAPH_VIEW'} or logic_stack.get('not_chronology') is not True:
-    errors.append('logic stack must declare a logical/dynamic logical graph view and not_chronology=true')
-if logic_graph_type == 'DYNAMIC_LOGICAL_GRAPH_VIEW':
+allowed_logic_types={'LOGICAL_GRAPH_VIEW','DYNAMIC_LOGICAL_GRAPH_VIEW','DYNAMIC_OPEN_ENDED_LOGICAL_GRAPH_VIEW'}
+if logic_graph_type not in allowed_logic_types or logic_stack.get('not_chronology') is not True:
+    errors.append('logic stack must declare an approved logical/dynamic/open-ended graph view and not_chronology=true')
+if logic_graph_type in {'DYNAMIC_LOGICAL_GRAPH_VIEW','DYNAMIC_OPEN_ENDED_LOGICAL_GRAPH_VIEW'}:
     if logic_stack.get('not_fixed_hierarchy') is not True:
         errors.append('dynamic logic stack must declare not_fixed_hierarchy=true')
     if 'THUC_DINH' not in logic_stack.get('mode_cycles',{}) or 'GIA_DINH' not in logic_stack.get('mode_cycles',{}):
         errors.append('dynamic logic stack must expose THUC_DINH and GIA_DINH mode cycles')
+if logic_graph_type == 'DYNAMIC_OPEN_ENDED_LOGICAL_GRAPH_VIEW':
+    if logic_stack.get('not_exhaustive_taxonomy') is not True:
+        errors.append('open-ended logic stack must declare not_exhaustive_taxonomy=true')
+    for mode in ['UNKNOWN_DISCOVERY','MIXED_CONTESTED']:
+        if mode not in logic_stack.get('mode_cycles',{}):
+            errors.append(f'open-ended logic stack missing mode cycle {mode}')
+    if logic_stack.get('open_ended_phase_space') != 'open-ended-epistemic-phase-space.json':
+        errors.append('open-ended logic stack missing phase-space machine pointer')
 if logic_stack.get('historical_graph') != 'historical-graph.jsonld':
     errors.append('logic stack missing historical graph pointer')
 
