@@ -1,10 +1,12 @@
 # GitHub Pages deployment for the materialized BL∞ public source.
-# Public-release throttle: internal repository evolution may continue rapidly,
-# but the public site is released on a weekly cadence or by explicit manual dispatch.
+# Public releases happen only after the same fail-closed gate chain used by PR validation.
+# Verified merges deploy immediately; the weekly schedule re-runs maintenance/audits even without a merge.
 name: Validate, secure, build and deploy BL∞
 
 on:
   pull_request:
+    branches: ["main"]
+  push:
     branches: ["main"]
   schedule:
     # Monday 05:30 UTC = Monday 12:30 Asia/Bangkok.
