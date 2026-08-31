@@ -9,14 +9,20 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.2.2-bl-adn-publication
-  date: '2026-08-29'
+  version: 0.3.0-bilingual-security
+  date: '2026-08-31'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
   language: vi
+  languages:
+  - vi
+  - en
+  language_roles:
+    vi: FULL_CANONICAL_PUBLIC_READING_SOURCE
+    en: CORE_RESEARCH_EDITION
   license_content: CC BY 4.0
   license_code: MIT
-  last_updated: '2026-08-29'
+  last_updated: '2026-08-31'
   date_created: '2026-08-28'
 seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
@@ -45,6 +51,8 @@ seo:
   - Publish Index Reaction Audit Loop
   - progressive disclosure
   - protected runtime
+  - bilingual research object
+  - translation provenance
 comments:
   enabled: true
   repo: kimbach91-prog/bl-infinity
@@ -52,4 +60,3 @@ comments:
   category: Page Comments
   category_id: "DIC_kwDOUHWEZc4DEaRD"
   mapping: pathname
-
