@@ -80,8 +80,10 @@ jobs:
       - name: Build multilingual SEO and AI discovery layer
         run: python scripts/run_discovery.py
 
-      - name: Publish BL-REV public interface contract
-        run: cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
+      - name: Publish public machine interface contracts
+        run: |
+          cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
+          cp machine/bl-hrd.json site/machine/bl-hrd.json
 
       - name: Apply bilingual and browser hardening layer
         run: python scripts/harden_site.py
