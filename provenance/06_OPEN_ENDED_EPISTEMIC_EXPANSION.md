@@ -3,7 +3,7 @@
 **Event:** `BL-INF-EPISTEMIC-EXPANSION-20260831`  
 **Date:** 2026-08-31  
 **Origin of conceptual correction:** Lâm Kim Bách / Bách Lâm  
-**Formalization support:** AI  
+**Formalization:** author-directed structured development
 **Scope:** public conceptual architecture only  
 **Status:** applied / versioned / open to critique
 
@@ -111,4 +111,4 @@ This event records only public conceptual roles, named invariants, phase-space a
 
 ---
 
-**ADN BÁCH LÂM ∞** · causal correction preserved · origin distinguished from AI formalization · no silent rewrite
+**ADN BÁCH LÂM ∞** · causal correction preserved · origin distinguished from assisted formalization · no silent rewrite

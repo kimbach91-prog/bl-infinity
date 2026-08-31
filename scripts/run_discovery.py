@@ -32,7 +32,7 @@ person = {
     ],
     'knowsAbout': [
         'BL∞', 'Academic Democracy', 'Dân chủ Học thuật', 'open scholarship',
-        'research provenance', 'epistemic governance', 'AI-assisted scholarship'
+        'research provenance', 'epistemic governance', 'assisted scholarship'
     ]
 }
 person_script = '<script type="application/ld+json">' + json.dumps(person, ensure_ascii=False) + '</script>'

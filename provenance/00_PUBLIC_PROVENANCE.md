@@ -7,7 +7,7 @@
 
 - **Origin actor / research owner:** Lâm Kim Bách (Bách Lâm).
 - **BL∞ public origin/formalization build:** 2026-08-28.
-- **AI role:** synthesis, formalization, coding and rendering under user direction where recorded; AI-generated wording is not retroactively represented as a verbatim statement by Lâm Kim Bách.
+- **Support role:** synthesis, formalization, coding and rendering under author direction where recorded; assisted wording is not retroactively represented as a verbatim statement by Lâm Kim Bách.
 - **Repository role:** public research object for claims, definitions, evidence, falsifiers, critique, versions and reference interfaces.
 
 ## Historical boundary
@@ -32,7 +32,7 @@ A public historical or authorship statement should distinguish, where applicable
 - retrospective owner testimony;
 - external witness/source;
 - source-derived synthesis;
-- AI formalization;
+- assisted formalization;
 - inference;
 - unknown.
 
@@ -74,7 +74,7 @@ Timestamp != Truth
 Timestamp != Novelty
 Hash != Truth
 Hash != Authorship proof by itself
-AI formalization != author verbatim quote
+Assisted formalization != author verbatim quote
 Public indexability != scientific validation
 ```
 

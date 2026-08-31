@@ -40,6 +40,6 @@ Previous files are not deleted or silently rewritten out of history. Files 43–
 ## Provenance
 
 Conceptual correction: **Lâm Kim Bách / Bách Lâm**.  
-Formalization and repository implementation support: **AI-assisted**.  
+Formalization and repository implementation support: **author-directed assistance**.
 
 **ADN BÁCH LÂM ∞** · causal correction preserved · no silent merge

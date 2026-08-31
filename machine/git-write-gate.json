@@ -39,7 +39,7 @@
   "lineage": {
     "parent_policies": ["BL-CPR", "BL-INFINITY-PUBLIC-SECURITY-PROFILE"],
     "origin_of_requirement": "Bach Lam",
-    "formalization": "AI-assisted",
+    "formalization": "author-directed assistance",
     "seal": "ADN BACH LAM"
   }
 }

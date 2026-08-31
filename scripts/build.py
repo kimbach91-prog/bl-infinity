@@ -103,7 +103,7 @@ def topic_entry_points():
 <p class="eyebrow">Lối vào theo chủ đề</p><h2 id="topic-entry-title">Bốn cụm tri thức chính của BL∞</h2>
 <div class="topic-grid">
 <section><h3><a href="academic-democracy.html">Dân chủ Học thuật</a></h3><p>Mở quyền tham gia tạo tri thức nhưng giữ trọng lượng bằng chứng, phản biện và quyền phủ quyết của thực tại.</p></section>
-<section><h3><a href="bl-adn.html">Phả hệ tri thức &amp; research provenance</a></h3><p>Truy nguyên tác giả, nguồn, vai trò AI formalization và lịch sử phiên bản ở cấp object.</p></section>
+<section><h3><a href="bl-adn.html">Phả hệ tri thức &amp; research provenance</a></h3><p>Truy nguyên tác giả, nguồn, vai trò formalization và lịch sử phiên bản ở cấp object.</p></section>
 <section><h3><a href="machine.html">Nghiên cứu máy đọc được</a></h3><p>Claim ID, registry, dependency graph và public machine contracts giúp người lẫn AI kiểm tra đúng canonical object.</p></section>
 <section><h3><a href="critique.html">Phản biện công khai</a></h3><p>Gắn phản ví dụ, evidence và lỗi suy luận vào đúng claim để sửa đổi có thể truy vết.</p></section>
 </div></section>'''
@@ -272,7 +272,7 @@ for a in ASSETS['assets']:
 arows.append('</div>')
 write_page('assets.html','BL∞ — Asset & Technology Registry','\n'.join(arows),desc='Sổ cấu kiện BL∞: học thuyết, nguyên lý, giao thức, cơ chế và công nghệ có định danh, quan hệ, trạng thái và provenance riêng.')
 
-write_page('provenance.html','BL∞ — Provenance',render_docs(PUBLIC_PROVENANCE_FILES,'BL∞ — Provenance'),desc='Nguồn gốc, phả hệ, vai trò tác giả và AI formalization của BL∞; phân biệt quan hệ, tác quyền, ưu tiên lịch sử và trạng thái kiểm chứng.')
+write_page('provenance.html','BL∞ — Provenance',render_docs(PUBLIC_PROVENANCE_FILES,'BL∞ — Provenance'),desc='Nguồn gốc, phả hệ, vai trò tác giả và formalization của BL∞; phân biệt quan hệ, tác quyền, ưu tiên lịch sử và trạng thái kiểm chứng.')
 write_page('critique.html','BL∞ — Giao thức phản biện',render_docs(PUBLIC_CRITIQUE_FILES,'BL∞ — Giao thức phản biện'),desc='Giao thức phản biện công khai BL∞: nêu đúng Claim ID, tiền đề, bước suy luận, countermodel, evidence hoặc xung đột provenance để hệ có thể sửa.')
 write_page('machine.html','BL∞ — Machine Layer',md((ROOT/'machine/README.md').read_text(encoding='utf-8')),desc='Các giao diện máy đọc được của BL∞: manifest, claim graph, asset index, topology, provenance, translation status và chính sách công khai BL-CPR.')
 

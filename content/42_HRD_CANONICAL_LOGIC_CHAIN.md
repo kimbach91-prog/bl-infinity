@@ -99,7 +99,7 @@ Nguồn candidate có thể là:
 - analogy;
 - cross-domain recombination;
 - inverse problem;
-- AI-assisted search;
+- assisted search;
 - derivation toán học;
 - counterfactual;
 - prediction từ theory hiện hữu.
@@ -531,7 +531,7 @@ RightToPropose=Universal
 
 nhưng epistemic weight và resource allocation phải kiếm bằng evidence/utility/risk.
 
-### I3 — AI Formalization ≠ Evidence
+### I3 — Assisted Formalization ≠ Evidence
 
 AI có thể tăng throughput nhưng không tự tạo truth-status.
 
@@ -670,4 +670,4 @@ Hay bằng lời:
 ---
 
 **ADN BÁCH LÂM ∞**  
-`origin: Lâm Kim Bách / Bách Lâm` · `parent: BL-HRD` · `formalization support: human + AI` · `truth authority: Reality Veto` · `runtime disclosure: BL-CPR governed`
+`origin: Lâm Kim Bách / Bách Lâm` · `parent: BL-HRD` · `formalization: author-directed` · `truth authority: Reality Veto` · `runtime disclosure: BL-CPR governed`

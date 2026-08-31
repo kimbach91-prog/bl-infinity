@@ -416,7 +416,7 @@
       "title": "Machine-first adversarial review is not machine truth vote",
       "statement": "Nhiều AI được dùng như heterogeneous attack processors; mức đồng ý của model không tự là proof.",
       "status": "canonical-protocol",
-      "scope": "AI-assisted review",
+      "scope": "assisted review",
       "falsifier": "Không phải theorem; có thể sửa khi evidence về ensemble review thay đổi.",
       "depends_on": [
         "BL-PROT-001"

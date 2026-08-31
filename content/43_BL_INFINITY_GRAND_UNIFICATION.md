@@ -8,7 +8,7 @@
 **Version:** `0.1`  
 **Status:** `ADOPTED-AS-INTEGRATION-ARCHITECTURE · OPEN-TO-AUDIT`  
 **Origin:** Lâm Kim Bách / Bách Lâm  
-**Formalization:** human + AI  
+**Formalization:** author-directed structured development
 
 ---
 
@@ -508,4 +508,4 @@ Cross-system sovereign constraint: REALITY VETO
 ---
 
 **ADN BÁCH LÂM ∞**  
-`origin: Lâm Kim Bách / Bách Lâm` · `integration architecture: BL-INF-UNIFY` · `formalization support: AI` · `status: adopted integration architecture` · `truth authority: Reality Veto`
+`origin: Lâm Kim Bách / Bách Lâm` · `integration architecture: BL-INF-UNIFY` · `formalization: author-directed` · `status: adopted integration architecture` · `truth authority: Reality Veto`
