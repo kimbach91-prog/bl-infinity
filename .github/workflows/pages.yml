@@ -134,7 +134,7 @@ jobs:
     needs: audit
     steps:
       - name: Configure Pages
-        uses: actions/configure-pages@983d7736caefa5fff74198d8649806c4678c61a1 # v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
 
       - name: Deploy to GitHub Pages
         id: deployment
