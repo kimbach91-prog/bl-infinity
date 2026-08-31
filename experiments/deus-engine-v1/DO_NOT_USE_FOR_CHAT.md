@@ -1,1 +1,0 @@
-This file is not the chat interface. Use the owner-gated GitHub Issue console workflow.
