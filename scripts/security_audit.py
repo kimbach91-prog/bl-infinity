@@ -120,6 +120,12 @@ source_exclusions = {
     Path("DISCLOSURE_POLICY.md"),
     Path("machine/disclosure-policy.json"),
 }
+# These documents describe blocked URL schemes literally. They remain inside the secret scan;
+# only the URL-execution heuristic is suppressed to avoid security-documentation false positives.
+url_scan_exclusions = source_exclusions | {
+    Path("content/26_SECURITY_AND_INTEGRITY_MODEL.md"),
+    Path("machine/security-profile.json"),
+}
 secret_patterns = {
     "private key": re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |PGP )?PRIVATE KEY-----"),
     "GitHub token": re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}\b"),
@@ -137,11 +143,12 @@ for path in ROOT.rglob("*"):
         text = path.read_text(encoding="utf-8")
     except (UnicodeDecodeError, OSError):
         continue
-    if rel not in source_exclusions:
+    if rel not in url_scan_exclusions:
         if re.search(r"javascript\s*:", text, flags=re.I):
             errors.append(f"unsafe javascript: URL in public source: {rel.as_posix()}")
         if re.search(r"data\s*:\s*text/html", text, flags=re.I):
             errors.append(f"unsafe data:text/html URL in public source: {rel.as_posix()}")
+    if rel not in source_exclusions:
         for label, pattern in secret_patterns.items():
             if pattern.search(text):
                 errors.append(f"possible {label} in {rel.as_posix()}")
