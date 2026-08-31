@@ -84,6 +84,20 @@ def inject_pairing(path: Path, vi_url: str, en_url: str, en_href: str) -> None:
     path.write_text(inject_security(text), encoding="utf-8")
 
 
+def inject_academic_democracy_technology_link(path: Path) -> None:
+    if not path.exists():
+        return
+    text = path.read_text(encoding="utf-8")
+    href = "academic-democracy-technology.html"
+    if href not in text:
+        text = text.replace(
+            "</nav>",
+            f'<a href="{href}">Technology Profile</a></nav>',
+            1,
+        )
+    path.write_text(inject_security(text), encoding="utf-8")
+
+
 def giscus_en() -> str:
     c = CFG.get("comments", {})
     required = ["repo", "repo_id", "category", "category_id"]
@@ -115,7 +129,7 @@ def english_page(title: str, description: str, canonical: str, vi_url: str, body
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="{html.escape(title, quote=True)}"><meta name="twitter:description" content="{html.escape(description, quote=True)}">
 <link rel="stylesheet" href="{base}assets/css/main.css"><link rel="alternate" type="application/rss+xml" title="BL∞ updates" href="{base}feed.xml">
 </head><body><header class="top"><a href="index.html" class="brand">BL∞</a><span>Bach Lam – Optimizer</span>
-<nav><a href="theory.html">Theory</a><a href="{base}bl-adn.html">BL-ADN</a><a href="{base}claims.html">Claims</a><a href="{base}assets.html">Assets</a><a href="{base}provenance.html">Provenance</a><a href="{base}critique.html">Critique</a><a href="{base}machine.html">Machine</a><a class="lang-switch" href="{html.escape(vi_url, quote=True)}" hreflang="vi" lang="vi">VI</a></nav></header>
+<nav><a href="theory.html">Theory</a><a href="{base}academic-democracy-technology.html">Technology Profile</a><a href="{base}bl-adn.html">BL-ADN</a><a href="{base}claims.html">Claims</a><a href="{base}assets.html">Assets</a><a href="{base}provenance.html">Provenance</a><a href="{base}critique.html">Critique</a><a href="{base}machine.html">Machine</a><a class="lang-switch" href="{html.escape(vi_url, quote=True)}" hreflang="vi" lang="vi">VI</a></nav></header>
 <main><article>{body}</article>{giscus_en()}</main>
 <footer><p>BL∞ · {html.escape(str(CFG['project']['version']))} · English derivative research edition. <a href="{base}machine/translation-status.json">Translation status</a> · <a href="{base}machine/manifest.json">Machine manifest</a></p></footer>
 <script src="{base}assets/js/site.js"></script></body></html>'''
@@ -182,6 +196,7 @@ def enrich_manifest() -> None:
     manifest["translation_index"] = "../translations/translation-index.json"
     manifest["security_profile"] = "security-profile.json"
     manifest["security_policy"] = "https://github.com/kimbach91-prog/bl-infinity/blob/main/SECURITY.md"
+    manifest["academic_democracy_technology_profile"] = "../academic-democracy-technology.html"
     path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -191,7 +206,11 @@ def update_discovery() -> None:
     if sitemap.exists():
         text = sitemap.read_text(encoding="utf-8")
         additions = []
-        for url in [root_url + "en/", root_url + "en/theory.html"]:
+        for url in [
+            root_url + "en/",
+            root_url + "en/theory.html",
+            root_url + "academic-democracy-technology.html",
+        ]:
             if url not in text:
                 additions.append(
                     f'<url><loc>{html.escape(url)}</loc><lastmod>{CFG["project"].get("last_updated", CFG["project"]["date"])}</lastmod></url>'
@@ -206,11 +225,14 @@ def update_discovery() -> None:
             "\n\nBilingual public entry points:\n"
             "- Vietnamese full theory: " + root_url + "theory.html\n"
             "- English core research edition: " + root_url + "en/theory.html\n"
+            "- Academic Democracy technology profile: " + root_url + "academic-democracy-technology.html\n"
             "- Translation status: " + root_url + "machine/translation-status.json\n"
             "- Public security profile: " + root_url + "machine/security-profile.json\n"
         )
         if "English core research edition" not in text:
             llms.write_text(text + block, encoding="utf-8")
+        elif "Academic Democracy technology profile" not in text:
+            llms.write_text(text + "\n- Academic Democracy technology profile: " + root_url + "academic-democracy-technology.html\n", encoding="utf-8")
 
 
 def harden_all_html() -> None:
@@ -232,8 +254,9 @@ if (SITE / "theory.html").exists():
         root_url + "en/theory.html",
         "en/theory.html",
     )
+inject_academic_democracy_technology_link(SITE / "academic-democracy.html")
 write_translation_status()
 enrich_manifest()
 update_discovery()
 harden_all_html()
-print("Hardened public site and generated bilingual English entry points")
+print("Hardened public site, generated bilingual English entry points, and linked Academic Democracy technology profile")
