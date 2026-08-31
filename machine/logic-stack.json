@@ -1,26 +1,45 @@
 {
-  "schema_version": "0.5",
-  "name": "BL∞ Canonical Logic Stack — Public Projection",
-  "version": "1.0-unified-public-projection",
-  "graph_type": "LOGICAL_GRAPH_VIEW",
+  "schema_version": "0.6",
+  "name": "BL∞ Canonical Logic Stack — Dynamic Public Projection",
+  "version": "2.0-dynamic-reality-gia-tai-public-projection",
+  "graph_type": "DYNAMIC_LOGICAL_GRAPH_VIEW",
   "interface_scope": "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY",
   "disclosure_class": "CONTROLLED/P1",
   "not_chronology": true,
   "not_runtime_router": true,
+  "not_fixed_hierarchy": true,
   "historical_graph": "historical-graph.jsonld",
-  "canonical_unified_source": "../content/44_CANONICAL_UNIFIED_LOGIC_STACK.md",
+  "canonical_dynamic_source": "../content/47_CANONICAL_DYNAMIC_REALITY_GIA_TAI_STACK.md",
+  "dual_proposition_source": "../content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md",
+  "historical_unified_source": "../content/44_CANONICAL_UNIFIED_LOGIC_STACK.md",
   "grand_unification_source": "../content/43_BL_INFINITY_GRAND_UNIFICATION.md",
   "unified_system_graph": "bl-infinity-unified-system.json",
+  "dynamic_topology": "reality-gia-tai-topology.json",
   "projection": [
     {
-      "id": "P0",
-      "name": "Reality / embedded observer",
-      "description": "Public conceptual starting point: observers are embedded in a reality larger than any single representation."
+      "id": "P0R",
+      "name": "BL-RP / Reality Proposition",
+      "description": "Reality is distinguished from every model, description and finite observed slice. Actuality authority and generative precedence are separate axes."
     },
     {
-      "id": "P1",
-      "name": "Representation / reachability",
-      "description": "Public distinction between what can be represented, what can be reached or constructed, and what is actually realized."
+      "id": "P0G",
+      "name": "BL-GTP / GiaTai Proposition",
+      "description": "GiaTai is an assumed, represented or derived reality-state whose actuality is not yet established. Existence of the GiaTai object does not imply actuality of its referent."
+    },
+    {
+      "id": "P0I",
+      "name": "BL∞ dynamic possibility field",
+      "description": "BL∞ has no permanent above/below relation to Reality or GiaTai. It expands representations, possibilities, reachability and consequences under mode-dependent precedence."
+    },
+    {
+      "id": "P1A",
+      "name": "THUC_DINH / Reality-Determined mode",
+      "description": "Reality -> BL∞ -> GiaTai -> test interface -> Reality. Reality leads the generative cycle locally."
+    },
+    {
+      "id": "P1B",
+      "name": "GIA_DINH / Hypothesis-Determined mode",
+      "description": "GiaTai -> BL∞ -> consequence/test interface -> Reality -> revised GiaTai. GiaTai leads the local generative frame without acquiring actuality authority."
     },
     {
       "id": "P2",
@@ -29,8 +48,8 @@
     },
     {
       "id": "P2H",
-      "name": "BL-HRD hypothesis search / reality feedback",
-      "description": "Reality gap -> hypothesis object -> preservation -> mapping -> depth/risk -> expected-value triage -> portfolio verification.",
+      "name": "BL-HRD GiaTai/hypothesis processing",
+      "description": "GiaTai or reality gaps become hypothesis objects with provenance, depth/risk, expected value, preservation and verification portfolios.",
       "source": "../content/42_HRD_CANONICAL_LOGIC_CHAIN.md",
       "machine_object": "bl-hrd.json"
     },
@@ -46,8 +65,8 @@
     },
     {
       "id": "P5",
-      "name": "Reality Veto adjudication",
-      "description": "RVT/RVP/RVTP/RVL provide the public conceptual correction path: valid reality conflict requires model revision. Reality Veto governs every system including the unified architecture itself."
+      "name": "Reality-facing adjudication",
+      "description": "RVT/RVP/RVTP/RVL update model status from qualified evidence. Generative precedence may invert, but representation alone cannot self-declare actuality."
     },
     {
       "id": "P6",
@@ -61,8 +80,8 @@
     },
     {
       "id": "P8",
-      "name": "Recursive frontier expansion",
-      "description": "New capabilities improve observation, measurement, access or construction; the expanded frontier creates new reality gaps and returns to BL∞/BL-HRD."
+      "name": "Dual recursive frontier return",
+      "description": "New capability may reveal more Reality and trigger THUC_DINH, or create new possible world-states and trigger GIA_DINH. The return path is dual, not a single fixed Reality-Gap node."
     },
     {
       "id": "P9",
@@ -72,42 +91,69 @@
     {
       "id": "PX",
       "name": "Cross-cutting constitutions",
-      "description": "Reality Veto provides sovereign correction; BL-ADN/LOG/CHRONO provide identity and causal memory; BL-CPR limits public disclosure to the smallest sufficient verification projection."
+      "description": "BL-ADN/LOG/CHRONO preserve identity and causal memory; BL-CPR limits public disclosure; Reality-facing correction constrains claim status while dynamic mode order remains non-hierarchical."
     }
   ],
-  "unified_cycle": [
-    "REALITY",
-    "BL∞",
-    "BLEE",
-    "Academic-Democracy",
-    "BL-HRD",
-    "BL-ADN/BL-PCRO/BL-OODP/BLOK",
-    "BL-NOVO",
-    "BL-REV/BL-AEGIS",
-    "RVT/RVTP/RVL",
-    "BL-SFRET",
-    "OPT-HKRP",
-    "OHAS",
-    "ACTION_OR_TEST",
-    "REALITY_OUTCOME",
-    "RVT/RVL_UPDATE",
-    "KAT",
-    "NEW_CAPABILITY",
-    "BL∞_EXPANDED_FRONTIER"
-  ],
-  "parallel_loops": {
-    "epistemic_loop": "Gap -> Hypothesis -> Critique/Test -> Evidence -> State Update -> New Gap",
-    "capability_loop": "Knowledge -> Resources -> Agency -> Action -> Capability -> Better Observation -> Knowledge"
+  "mode_cycles": {
+    "THUC_DINH": [
+      "REALITY",
+      "BL∞",
+      "GIA_TAI",
+      "BL-HRD",
+      "BL-ADN/BL-PCRO/BL-OODP/BLOK",
+      "BL-NOVO",
+      "BL-REV/BL-AEGIS",
+      "RVT/RVTP/RVL",
+      "REALITY"
+    ],
+    "GIA_DINH": [
+      "GIA_TAI",
+      "BL∞",
+      "BL-HRD",
+      "BL-ADN/BL-PCRO/BL-OODP/BLOK",
+      "BL-NOVO",
+      "BL-REV/BL-AEGIS",
+      "REALITY_TEST_INTERFACE",
+      "REALITY",
+      "GIA_TAI"
+    ],
+    "ACTION_CAPABILITY_BRANCH": [
+      "SUPPORTED_MODEL_OR_GIA_TAI",
+      "BL-SFRET",
+      "OPT-HKRP",
+      "OHAS",
+      "ACTION_OR_TEST",
+      "REALITY",
+      "KAT",
+      "NEW_CAPABILITY",
+      "BL∞",
+      "REALITY_OR_GIA_TAI_MODE"
+    ]
   },
-  "progress_rule": "A recursive pass counts as progress only when it produces an auditable epistemic or capability delta.",
+  "parallel_loops": {
+    "reality_determined_loop": "Reality -> BL∞ -> GiaTai -> Test -> Reality",
+    "hypothesis_determined_loop": "GiaTai -> BL∞ -> Consequences/Test -> Reality -> revised GiaTai",
+    "capability_loop": "Knowledge -> Resources -> Agency -> Action -> Capability -> BL∞ -> Reality or GiaTai mode"
+  },
+  "authority_axes": {
+    "actuality_authority": "REALITY",
+    "generative_precedence": "MODE_DEPENDENT",
+    "epistemic_weight": "EVIDENCE_DEPENDENT",
+    "action_authority": "PERMISSION_RISK_DOMAIN_GATED"
+  },
+  "progress_rule": "A recursive pass counts as progress only when it produces an auditable evidence, model, GiaTai, scope, measurement, capability, negative-knowledge, provenance or risk delta.",
   "hard_invariants": [
-    "unification_not_equal_identity_collapse",
-    "lineage_not_equal_dependency_not_equal_identity_not_equal_implementation",
+    "reality_not_equal_model_of_reality",
+    "gia_tai_not_equal_falsehood",
+    "gia_tai_object_existence_not_equal_referent_actuality",
+    "possible_not_equal_reachable_not_equal_actual",
+    "actuality_authority_not_equal_generative_precedence",
+    "bl_infinity_has_no_permanent_above_below_relation_to_reality_or_gia_tai",
+    "thuc_dinh_and_gia_dinh_are_reversible_search_modes",
     "preserve_not_equal_endorse",
     "open_entry_not_equal_equal_weight_not_equal_equal_resources",
     "ai_formalization_not_equal_evidence",
     "right_to_propose_not_equal_right_to_validate_not_equal_right_to_execute",
-    "reality_veto_is_cross_system_sovereign_correction",
     "no_silent_merge_or_history_rewrite",
     "knowledge_advantage_cannot_hide_adverse_evidence"
   ],
@@ -122,5 +168,5 @@
     "production_pipeline",
     "private_model_or_operator_handoffs"
   ],
-  "guardrail": "This artifact is a reduced public conceptual projection of the BL∞ unified epistemic system. It exposes roles, typed conceptual dependencies, invariants and recursive feedback only; it does not disclose the protected production router, private activation triggers, weights, ranking functions or operator playbook."
+  "guardrail": "This artifact is a reduced public conceptual projection of the BL∞ dynamic Reality-GiaTai system. It exposes dual propositions, mode-dependent generative precedence, roles and recursive feedback only; it does not disclose protected production implementation."
 }
