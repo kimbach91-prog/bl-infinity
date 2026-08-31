@@ -79,10 +79,11 @@ jobs:
       - name: Build static site locally for verification
         run: python scripts/build.py
 
-      - name: Stage Academic Democracy profiles locally
+      - name: Stage standalone public research pages locally
         run: |
           cp public/academic-democracy.html site/academic-democracy.html
           cp public/academic-democracy-technology.html site/academic-democracy-technology.html
+          cp public/grand-ending.html site/grand-ending.html
 
       - name: Build multilingual SEO and AI discovery layer locally
         run: python scripts/run_discovery.py
@@ -95,6 +96,7 @@ jobs:
           cp machine/unified-constituents.json site/machine/unified-constituents.json
           cp machine/reality-gia-tai-topology.json site/machine/reality-gia-tai-topology.json
           cp machine/open-ended-epistemic-phase-space.json site/machine/open-ended-epistemic-phase-space.json
+          cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
 
       - name: Apply bilingual and browser hardening layer locally
         run: python scripts/harden_site.py
@@ -154,6 +156,7 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/provenance.html",
               "https://kimbach91-prog.github.io/bl-infinity/critique.html",
               "https://kimbach91-prog.github.io/bl-infinity/machine.html",
+              "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
