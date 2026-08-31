@@ -16,11 +16,14 @@ Mọi thông tin trong truyện có thể là hư cấu, có thể dựa trên s
 
 1. Nhân vật chính tên **Bách Lâm**.
 2. Chương 1 có tên **Đại Kết Cục Thứ Một Nghìn**.
-3. Ở thời điểm mở truyện, một biến cố quy mô vũ trụ đang đi tới giới hạn mà các nhân vật chưa hiểu trọn vẹn.
-4. Một cơ chế nén và truyền lại phần hiểu biết hữu ích tồn tại trong thế giới truyện.
-5. Bách Lâm không phải ứng viên vượt trội nhất theo mọi thước đo đơn giản.
-6. Có những chủ thể mạnh hơn, thông minh hơn hoặc phù hợp hơn ở một số phương diện, nhưng lý do cuối cùng khiến một người có thể tiếp tục gánh phần việc còn lại chưa được giải thích đầy đủ ở Chương 1.
-7. Cơ chế thật của hồi quy, cách đếm các lần hồi quy, ý nghĩa của con số trong tên truyện, bản chất của UNKNOWN và kết cục cuối cùng đều **chưa được công bố**.
+3. Ở thời điểm mở truyện, một biến cố quy mô vũ trụ đang làm mất dần những chênh lệch và điều kiện cho phép sự sống, máy móc và lựa chọn tiếp tục sinh thành. Cơ chế sâu hơn vẫn chưa được giải thích.
+4. Nhân vật từng dùng cụm "vũ khí thời gian" như một cách gọi tạm, nhưng Bách Lâm từ chối coi tên gọi đó là lời giải.
+5. Một cơ chế nén và truyền lại phần hiểu biết hữu ích tồn tại trong thế giới truyện. Nó không nhằm mang nguyên xi mọi dữ liệu quá khứ.
+6. Hồ sơ thử nghiệm được nhắc trong Chương 1 đã chạm **mốc thứ một nghìn**. Những ứng viên mạnh hơn Bách Lâm ở từng phương diện riêng đã lần lượt thất bại hoặc không còn đạt ngưỡng cho lần thử kế tiếp.
+7. Bách Lâm không được mô tả là người mạnh nhất hay thông minh nhất theo mọi thước đo. Điểm được Chương 1 hé lộ là anh vẫn tiếp tục gánh phần việc sau khi hiểu khả năng thất bại và sức nặng của trách nhiệm.
+8. Hạt giống không được phép mở toàn bộ ngay trong đời sau. Việc mở thêm phụ thuộc vào việc thế giới mới sử dụng phần đã nhận như thế nào, nhưng cơ chế đầy đủ chưa được công bố.
+9. Cuối chương, một đứa trẻ tên Bách Lâm nhận được một dấu vết rất nhỏ từ đời trước. Con số của đời mới không được nêu.
+10. Cách đếm hồi quy, quan hệ chính xác giữa "một nghìn" trong Chương 1 với "một triệu" trong tên truyện, bản chất của UNKNOWN và kết cục cuối cùng đều **chưa được công bố**.
 
 Không suy ngược thiết lập tương lai từ tên truyện.
 
