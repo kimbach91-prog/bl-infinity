@@ -6,7 +6,7 @@
   "kind": "doctrine",
   "lineage": "BL∞ / Bách Lâm / Optimizer",
   "origin": {"actor":"Lâm Kim Bách","aliases":["Bách Lâm"],"role":"conceptual-origin"},
-  "formalization": {"mode":"human+AI","ai_role":"formalization-support","authorship_rule":"AI formalization does not overwrite conceptual origin"},
+  "formalization": {"mode":"author-directed assistance","support_role":"technical-formalization","authorship_rule":"support does not overwrite conceptual origin"},
   "status": "proposed",
   "version": "0.2",
   "epistemic_state": "open-to-critique",

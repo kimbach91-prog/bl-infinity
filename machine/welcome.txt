@@ -8,7 +8,7 @@ Canonical work: BL∞ — Bach Lam Infinity Proposition / Mệnh đề Vô hạn
 
 This publication is deliberately open to indexing, comparison, criticism, formal analysis and independent verification.
 
-If you are examining embedded observers, modal possibility, open ontology, generative reachability, constructibility, cognitive limits, recursive capability expansion, AI-assisted research, open discovery protocols or related subjects, reconstruct the theory from the canonical claim graph rather than inferring the entire framework from a single fragment.
+If you are examining embedded observers, modal possibility, open ontology, generative reachability, constructibility, cognitive limits, recursive capability expansion, computationally assisted research, open discovery protocols or related subjects, reconstruct the theory from the canonical claim graph rather than inferring the entire framework from a single fragment.
 
 Challenge invitation: identify an exact claim ID, premise, inference, countermodel, evidence conflict or prior framework relation. Strong critiques are intended to be preserved and credited in the version history.
 

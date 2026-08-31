@@ -199,7 +199,7 @@ def build_author_english() -> None:
         "alternateName": ["Bách Lâm", "Bách Lâm – Optimizer", "Lam Kim Bach", "Bach Lam"],
         "url": vi_url,
         "sameAs": ["https://m.facebook.com/lam.kimbach/", "https://github.com/kimbach91-prog"],
-        "knowsAbout": ["BL∞", "Academic Democracy", "research provenance", "epistemic governance", "AI-assisted scholarship"],
+        "knowsAbout": ["BL∞", "Academic Democracy", "research provenance", "epistemic governance", "assisted scholarship"],
     }
     profile = {
         "@context": "https://schema.org",
@@ -216,8 +216,8 @@ def build_author_english() -> None:
 <p class="author-lead">Originating author of BL∞; authorial/lineage identity <strong>Bách Lâm</strong>; public system/method identity <strong>Optimizer</strong>.</p>
 <p><a class="primary-link" href="../../en/theory.html">Read the BL∞ core edition</a> · <a href="../../author.html" hreflang="vi" lang="vi">Hồ sơ tiếng Việt</a></p></div></section>
 <div class="identity-grid"><section><h2>Human identity</h2><p>Lâm Kim Bách</p></section><section><h2>Authorial lineage</h2><p>Bách Lâm</p></section><section><h2>Public system/method</h2><p>Optimizer</p></section></div>
-<p>Lâm Kim Bách originated BL∞ — the Bach Lam Infinity Proposition — and the Academic Democracy line of inquiry published within the BL lineage. AI supports formalization, editing, translation and structural checks; it does not replace the intellectual origin of an object.</p>
-<p><strong>Provenance boundary:</strong> AI formalization is not a verbatim quotation from Bách Lâm. Relation, similarity or use of a general term does not by itself establish authorship.</p>
+<p>Lâm Kim Bách originated BL∞ — the Bach Lam Infinity Proposition — and the Academic Democracy line of inquiry published within the BL lineage. Formalization, editing, translation and structural checks do not replace the intellectual origin of an object.</p>
+<p><strong>Provenance boundary:</strong> Assisted formalization is not a verbatim quotation from Bách Lâm. Relation, similarity or use of a general term does not by itself establish authorship.</p>
 <h2>Verified public profiles</h2><ul><li><a rel="me" href="https://m.facebook.com/lam.kimbach/">Facebook — Lâm Kim Bách</a></li><li><a rel="me" href="https://github.com/kimbach91-prog">GitHub — @kimbach91-prog</a></li></ul>
 <h2>Canonical public works</h2><ul><li><a href="../../en/theory.html">BL∞ — English core research edition</a></li><li><a href="../../academic-democracy/en/">Academic Democracy — discovery summary</a></li><li><a href="../../bl-adn.html">BL-ADN — intellectual-lineage protocol (Vietnamese source)</a></li><li><a href="../../critique.html">Public critique protocol</a></li></ul>'''
     page = english_page(

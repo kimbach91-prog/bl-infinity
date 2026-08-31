@@ -7,7 +7,7 @@
 **Depends on:** `BL-RP`, `BL-GTP`, `BL-HRD`, `RVT/RVP/RVTP/RVL`, `BL-ADN`  
 **Status:** `PROPOSED-CANONICAL · OPEN-TO-AUDIT`  
 **Origin:** Lâm Kim Bách / Bách Lâm  
-**Formalization:** human + AI  
+**Formalization:** author-directed structured development
 
 ---
 

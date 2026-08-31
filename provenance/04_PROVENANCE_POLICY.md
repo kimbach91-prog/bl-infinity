@@ -11,7 +11,7 @@ Every historical or attribution claim should distinguish, when applicable:
 - public publication timestamp;
 - retrospective autobiographical/owner testimony;
 - source-derived synthesis;
-- AI formalization;
+- technical formalization;
 - inference from later behavior;
 - external witness/source;
 - unknown.

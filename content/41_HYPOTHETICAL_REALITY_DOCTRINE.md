@@ -5,9 +5,9 @@
 **Code:** `BL-HRD`  
 **Lineage:** Bách Lâm / BL∞ / Optimizer  
 **Origin:** Lâm Kim Bách (Bách Lâm)  
-**Formalization support:** human + AI  
+**Formalization:** author-directed structured development
 **State:** `PROPOSED · v0.1 · OPEN_TO_CRITIQUE`  
-**Scope:** epistemology, scientific discovery, public scholarship, AI-assisted research, global research coordination  
+**Scope:** epistemology, scientific discovery, public scholarship, assisted research, global research coordination
 
 > BL-HRD không khẳng định “thực tại là giả”. “Thực tại Giả định” ở đây chỉ một cơ chế nhận thức: khi thực tại chưa được biết đầy đủ, con người dựng các mô hình/giả thuyết có cấu trúc về phần chưa biết, rồi để bằng chứng và Reality Veto quyết định mô hình nào sống sót, bị thu hẹp, bị sửa hoặc bị loại.
 
@@ -327,7 +327,7 @@ Nhưng provenance bắt buộc tách:
 
 ```text
 conceptual origin        = human / named originator
-formalization            = human + AI (nếu có)
+formalization            = author-directed assistance (nếu có)
 retrieval                 = tool-assisted
 validation                = independent evidence process
 final responsibility      = accountable human/team/institution
@@ -433,7 +433,7 @@ Humanity-wide observations
         ↓
 Structured hypothesis generation
         ↓
-AI-assisted formalization
+Assisted formalization
         ↓
 Global searchable hypothesis graph
         ↓
@@ -500,7 +500,7 @@ BL-HRD có thể dùng các công nghệ trên nhưng không tự động kế t
 BL-HRD sẽ bị suy yếu mạnh nếu chứng minh được một hoặc nhiều điểm sau:
 
 - bảo tồn hypothesis số lượng lớn không giảm false rejection mà chỉ tạo attention collapse không kiểm soát được;
-- AI formalization làm tăng lỗi epistemic nhiều hơn giá trị nó tạo ra, ngay cả sau provenance/safety gates;
+- assisted formalization làm tăng lỗi epistemic nhiều hơn giá trị nó tạo ra, ngay cả sau provenance/safety gates;
 - expected-value routing không thể tránh gaming hoặc không cải thiện allocation so với cơ chế hiện hữu;
 - universal entry làm giảm chất lượng tổng thể mà không có guardrail khả thi;
 - hypothesis graph không tạo measurable coordination/reuse benefit;
@@ -530,4 +530,4 @@ These historical cases are **illustrative anchors**, not logical proof of BL-HRD
 ---
 
 **ADN BÁCH LÂM ∞**  
-`origin: Lâm Kim Bách / Bách Lâm` · `formalization: human + AI` · `status: proposed` · `truth authority: Reality Veto`
+`origin: Lâm Kim Bách / Bách Lâm` · `formalization: author-directed` · `status: proposed` · `truth authority: Reality Veto`

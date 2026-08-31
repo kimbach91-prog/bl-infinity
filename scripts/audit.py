@@ -114,7 +114,7 @@ if not public_provenance_path.exists():
 else:
     public_provenance=public_provenance_path.read_text(encoding='utf-8')
     public_provenance_lower=public_provenance.lower()
-    for marker in ['sanitized_public_provenance','blok foundational nucleus','precedes','relative order only','unknown','ai formalization != author verbatim quote']:
+    for marker in ['sanitized_public_provenance','blok foundational nucleus','precedes','relative order only','unknown','assisted formalization != author verbatim quote']:
         if marker not in public_provenance_lower:
             errors.append(f'public provenance missing boundary marker: {marker}')
 

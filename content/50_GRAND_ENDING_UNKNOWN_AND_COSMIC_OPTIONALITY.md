@@ -3,7 +3,7 @@
 **Tác giả / Origin:** **Lâm Kim Bách (Bách Lâm – Optimizer)**  
 **Ngày công bố:** 2026-09-01  
 **Trạng thái:** living BL∞ research proposition  
-**Formalization support:** AI-assisted drafting under author direction  
+**Formalization:** structured drafting under author direction
 **Phả hệ:** BL∞ / UNKNOWN Doctrine / Cosmic Optionality / Optimizer
 
 ## 0. Luận đề trong 20 giây
