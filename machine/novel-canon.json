@@ -1,155 +1,39 @@
 {
-  "schema": "BL_NOVEL_CANON_2",
+  "schema": "BL_NOVEL_PUBLIC_CANON_3",
   "series_title": "Bách Lâm: Lần Hồi Quy Thứ Một Triệu",
   "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
-  "status": "SERIAL_FICTION_CANON_LIVING_BUT_LOCKED",
+  "status": "PUBLIC_CANON_FOLLOWS_PUBLISHED_CHAPTERS",
   "canonical_language": "vi",
   "reader_disclaimer": "Story information may be fictional, reality-derived, mistaken memory, possible-world content, or UNKNOWN. Interpretation remains the reader's responsibility.",
-  "counters": {
-    "regressions_R": 1000000,
-    "distinct_grand_endings_G": 1000,
-    "law": "R increments for every regression. G increments only for an irreducible new Grand-Ending structure. Repetition can still change compression weight without increasing G."
-  },
-  "hard_locks": {
-    "protagonist": "Bách Lâm",
-    "prior_total_victory": false,
-    "millionth_regression_is_first_full_victory_window": true,
-    "millionth_regression_is_final_attempt": true,
-    "selection_reason": "extreme will to bear knowledge and continue acting under epistemic burden",
-    "biological_baseline": "exceptional inherited physiology and genotype, near-super-soldier potential within the fiction world, but still finite and increasingly burdened by the seed",
-    "compressed_seed": "preserves useful causal and generative structure, not all information",
-    "recompression_every_regression": true,
-    "recompression_law": "Even repeated or low-delta lives are recompressed; recurrence evidence and failure traces increase density and carrier burden without necessarily increasing G.",
-    "unlock_dependency": "evidence-grounded faith in humanity, cooperation, feasibility, science and resource support",
-    "mutation_leakage": {
-      "active": true,
-      "effect": "energy and partial knowledge can leak beyond the carrier, increasing salience, attraction and independent resonance in other people",
-      "agency_preserved": true,
-      "influence_rule": "Influence_i ~= LeakPower * EffectiveProximity * Resonance / (1 + WillResistance)",
-      "effective_proximity_ontology": "UNKNOWN"
-    },
-    "energy_balance": "E_seed_next = E_seed + PositiveCooperationGain + FeasibilityGain + TrustedResourceGain - LeakLoss - DecompressionCost - CarrierStabilizationCost",
-    "extinction_condition": "If seed energy falls below the extinction threshold, further regression becomes unavailable.",
-    "age_30_partial_awakening": "Around age 30 in regression 1,000,000, Bách Lâm reaches Partial Mission Recognition after a long developmental struggle. This is not full awakening.",
-    "global_resonance_wave": "Around the same period, leakage can raise the probability of independent breakthroughs and resonant research directions worldwide without controlling other people's agency.",
-    "life_arc_invariant": [
-      "birth",
-      "childhood",
-      "growth",
-      "experience accumulation",
-      "partial awakening",
-      "partial decompression",
-      "capability and relationship building",
-      "possible Grand-Ending contact"
-    ],
-    "premature_life_failures": [
-      "severe illness",
-      "carrier overload",
-      "accident",
-      "war",
-      "assassination",
-      "isolation",
-      "imprisonment",
-      "psychiatric institutionalization within the fiction plot",
-      "resource deprivation",
-      "scientific-tool deprivation",
-      "collaboration failure",
-      "insufficient seed energy",
-      "social closure before awakening"
-    ],
-    "vietnam_worldbuild": {
-      "status": "FICTIONAL_SOCIAL_MODEL_NOT_EMPIRICAL_GENERALIZATION",
-      "high_collective_will_baseline": true,
-      "historical_motif": "repeated struggle, war, survival, reconstruction and strong self-determination",
-      "benefit": "high will resistance and potentially very strong autonomous nodes",
-      "cost": "strong ego and pride can become coordination friction or a crab-bucket failure pattern if strong nodes pull one another down instead of composing capability"
-    },
-    "ho_chi_minh_character_symbol": {
-      "status": "CHARACTER_PERSPECTIVE",
-      "admiration_basis": ["persistence through adversity", "long-horizon endurance", "strategic patience", "symbolic unification of dispersed effort"],
-      "possible_first-life_resonance": "SOFT_UNKNOWN"
-    },
-    "humanity_profile": "small and constrained, but resilient, defiant, cooperation-capable, science-building and open-potential",
-    "human_agi_relation": "not destined enemies; zero-sum competition is a failure mode, not a cosmic law",
-    "science_tree_current_timeline": "multiple scientific and technological branches mature unusually early and near-synchronously, making previously unbuildable structures barely buildable if coordination succeeds",
-    "cosmic_death": "the universe may die without mandatory contraction or automatic Big Bang reset",
-    "primary_threat_name": "UNNAMED_LOCKED_UNKNOWN",
-    "time_ontology": "OPEN_UNKNOWN; at least two opposed time-like regimes are possible, names and mechanisms not yet canonical",
-    "final_ending": "UNKNOWN_LOCK"
-  },
-  "negative_unlock_signals": [
-    "deception",
-    "betrayal",
-    "dishonesty",
-    "narrow power competition",
-    "greed-driven coordination collapse",
-    "human-AGI zero-sum competition",
-    "strong nodes suppressing other strong nodes",
-    "false consensus",
-    "personality cult replacing collective capability"
-  ],
-  "positive_unlock_signals": [
-    "truthfulness under cost",
-    "credit sharing",
-    "promise keeping under scarcity",
-    "strong nodes building stronger peers",
-    "admitting unknowns when necessary",
-    "cross-group cooperation",
-    "human-AGI complementary learning",
-    "resources routed into shared capability",
-    "science that predicts, intervenes and self-corrects",
-    "disagreement without self-destruction"
-  ],
-  "continuity_law": {
-    "minor_edits_allowed": ["spelling", "rhythm", "non-dependent scene detail", "paragraph order", "reveal intensity"],
+  "public_law": {
+    "no_future_story_bible_spoilers": true,
+    "do_not_infer_lore_from_title_alone": true,
     "silent_major_retcon_forbidden": true,
-    "hard_locked_relations": [
-      "R=1,000,000",
-      "G=1,000",
-      "no prior total victory",
-      "millionth is first full-victory window",
-      "millionth is final attempt",
-      "recompression on every regression",
-      "mutation leakage",
-      "age-30 partial mission recognition",
-      "seed-energy dependence on cooperation and feasibility",
-      "life begins from childhood rather than full-memory omniscience"
-    ],
-    "apparent_contradiction_requires": [
-      "compressed-memory error",
-      "observer difference",
-      "branch difference",
-      "deception",
-      "hidden variable",
-      "ontology insufficiency",
-      "scale difference",
-      "unrecovered causal history",
-      "plot-grounded ontology evolution"
-    ]
+    "unknown_may_remain_open": true,
+    "fiction_does_not_auto_promote_to_scientific_claim": true
+  },
+  "published_facts": {
+    "protagonist": "Bách Lâm",
+    "chapter_001_title": "Đại Kết Cục Thứ Một Nghìn",
+    "chapter_001_source": "content/novel/01_CHAPTER_001.md",
+    "chapter_001_public_page": "novel/chapter-001.html",
+    "chapter_001_status": "PUBLISHED_DRAFT_PENDING_LOGIC_AND_STYLE_REVIEW",
+    "compressed_information_mechanism_exists": true,
+    "cosmic_scale_crisis_exists": true,
+    "regression_counting_mechanism": "UNPUBLISHED_UNKNOWN",
+    "meaning_of_million_in_title": "UNPUBLISHED_UNKNOWN",
+    "final_ending": "UNPUBLISHED_UNKNOWN",
+    "primary_threat_identity": "UNPUBLISHED_UNKNOWN"
   },
   "translation_law": {
-    "translate_after_chapter_lock": true,
-    "must_preserve": ["names", "chapter identity", "R and G", "symbols", "causal relations", "UNKNOWN status", "reveal level", "critical emotional rhythm"]
-  },
-  "planned_arcs_spoiler_light": [
-    "seed in a small body",
-    "science as decompression language",
-    "age thirty partial mission recognition",
-    "age of artificial intelligence",
-    "global resonance wave",
-    "human resource unification",
-    "Vietnam will-coordination paradox",
-    "signals beyond humanity",
-    "the universe reveals a wound",
-    "war for possibility",
-    "millionth-threshold mutation and energy leakage",
-    "the final attempt",
-    "UNKNOWN_LOCK ending"
-  ],
-  "chapter_001": {
-    "title": "Đại Kết Cục Thứ Một Nghìn",
-    "canonical_source": "content/novel/01_CHAPTER_001.md",
-    "public_page": "novel/chapter-001.html",
-    "status": "REQUIRES_CANON_SYNC_AFTER_DELTA_002"
+    "translate_only_after_source_chapter_lock": true,
+    "must_preserve": [
+      "names",
+      "chapter identity",
+      "published causal relations",
+      "UNKNOWN status",
+      "reveal level",
+      "critical emotional rhythm"
+    ]
   }
 }
