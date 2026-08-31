@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 PUBLIC_NOVEL = ROOT / "public" / "novel"
 NOVEL_SOURCE = ROOT / "content" / "novel" / "01_CHAPTER_001.md"
+CANONICAL_BASE = "https://kimbach91-prog.github.io/bl-infinity/"
 
 
 def chapter_body(markdown_text: str) -> tuple[str, str]:
@@ -64,6 +65,18 @@ def main() -> None:
     markdown_text = NOVEL_SOURCE.read_text(encoding="utf-8")
     title, body = chapter_body(markdown_text)
     (target_dir / "chapter-001.html").write_text(chapter_page(title, body), encoding="utf-8")
+
+    sitemap = SITE / "sitemap.xml"
+    if sitemap.exists():
+        text = sitemap.read_text(encoding="utf-8")
+        entries = []
+        for route in ("world.html", "novel/", "novel/chapter-001.html"):
+            url = CANONICAL_BASE + route
+            if url not in text:
+                entries.append(f"<url><loc>{url}</loc><lastmod>2026-09-01</lastmod></url>")
+        if entries:
+            text = text.replace("</urlset>", "\n".join(entries) + "\n</urlset>")
+            sitemap.write_text(text, encoding="utf-8")
     print("Serialized novel staged: novel/index.html + novel/chapter-001.html")
 
 

@@ -416,6 +416,7 @@ def normalize_navigation(path: Path, text: str) -> str:
 
     labels = {
         "theory": "Học thuyết" if vietnamese else "Theory",
+        "novel": "Tiểu thuyết" if vietnamese else "Novel",
         "academic": "Dân chủ Học thuật" if vietnamese else "Academic Democracy",
         "adn": "BL-ADN",
         "claims": "Claims",
@@ -437,6 +438,8 @@ def normalize_navigation(path: Path, text: str) -> str:
     current_kind = None
     if rel in {"theory.html", "en/theory.html"}:
         current_section, current_kind = "theory", "page"
+    elif rel in {"novel/index.html", "novel/chapter-001.html"}:
+        current_section, current_kind = "novel", "page" if rel == "novel/index.html" else "location"
     elif rel == "academic-democracy.html" or localized_match:
         current_section, current_kind = "academic", "page"
     elif rel == "academic-democracy/discovery.html" or rel == "academic-democracy-technology.html":
@@ -462,6 +465,7 @@ def normalize_navigation(path: Path, text: str) -> str:
 
     targets = [
         ("theory", theory_href),
+        ("novel", root + "novel/"),
         ("academic", academic_href),
         ("adn", root + "bl-adn.html"),
         ("claims", root + "claims.html"),
@@ -472,7 +476,13 @@ def normalize_navigation(path: Path, text: str) -> str:
         ("machine", root + "machine.html"),
     ]
     links = [
-        navigation_link(href, labels[key], key, current_kind if current_section == key else None)
+        navigation_link(
+            href,
+            labels[key],
+            key,
+            current_kind if current_section == key else None,
+            "nav-featured" if key == "novel" else "",
+        )
         for key, href in targets
     ]
     if "academic-democracy" in rel:

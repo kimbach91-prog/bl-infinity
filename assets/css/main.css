@@ -146,6 +146,23 @@ a:hover {
   font-weight: 800;
 }
 
+.top nav a.nav-featured {
+  padding: 7px 11px;
+  border: 1px solid rgba(125, 21, 21, 0.24);
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 850;
+}
+
+.top nav a.nav-featured:hover,
+.top nav a.nav-featured[aria-current="page"],
+.top nav a.nav-featured[aria-current="location"] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
 .top nav a[aria-current="page"]::after,
 .top nav a[aria-current="location"]::after {
   position: absolute;
@@ -447,6 +464,16 @@ article section {
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.45;
+}
+
+.home-directory-grid .novel-entry {
+  grid-column: span 2;
+}
+
+.home-directory-grid .novel-entry a {
+  border-color: rgba(125, 21, 21, 0.34);
+  background: linear-gradient(135deg, #fff 0%, var(--accent-soft) 100%);
+  box-shadow: 0 14px 34px rgba(125, 21, 21, 0.08);
 }
 
 .system-snapshot {
@@ -874,6 +901,10 @@ footer {
   .topic-grid,
   .home-directory-grid {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .home-directory-grid .novel-entry {
+    grid-column: auto;
   }
 
   .snapshot-grid {

@@ -13,6 +13,16 @@ Namespace: BL∞ / BL-INFINITY
 Status: living research object, public descriptive/index pilot
 Preferred integration view: BL-INF-LOGIC-v3-OPEN
 
+## Public reading routes
+Canonical theory: /theory.html
+Serialized novel: /novel/
+Published chapter 1: /novel/chapter-001.html
+Narrative research projection: /world.html
+UNKNOWN doctrine: /unknown.html
+Grand Ending: /grand-ending.html
+Novel canon projection: /machine/novel-canon.json
+Compressed regression hypothesis: /machine/compressed-regression-hypothesis.json
+
 ## Disclosure boundary
 This file describes only the public verification surface. The BL/Optimizer production runtime, private orchestration, activation logic, target ranking, operator/model handoffs, private diagnostics, raw conversations and protected corpora are not part of this repository’s intended release surface.
 
