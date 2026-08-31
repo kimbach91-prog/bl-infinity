@@ -72,8 +72,10 @@ jobs:
       - name: Build static site
         run: python scripts/build.py
 
-      - name: Publish Academic Democracy profile
-        run: cp public/academic-democracy.html site/academic-democracy.html
+      - name: Publish Academic Democracy profiles
+        run: |
+          cp public/academic-democracy.html site/academic-democracy.html
+          cp public/academic-democracy-technology.html site/academic-democracy-technology.html
 
       - name: Build multilingual SEO and AI discovery layer
         run: python scripts/run_discovery.py
@@ -129,6 +131,7 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/en/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/author.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/en/",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/es/",
