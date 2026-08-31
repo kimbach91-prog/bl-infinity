@@ -47,8 +47,16 @@ jobs:
       - name: Audit dependency vulnerabilities
         run: pip-audit -r requirements.txt
 
-      - name: Compile security/build scripts
-        run: python -m compileall -q scripts
+      - name: Compile release-path scripts
+        # build_discovery.py is a historical template repaired deterministically by run_discovery.py before compilation.
+        run: >-
+          python -m py_compile
+          scripts/audit.py
+          scripts/disclosure_audit.py
+          scripts/security_audit.py
+          scripts/build.py
+          scripts/harden_site.py
+          scripts/run_discovery.py
 
       - name: Validate epistemic object
         run: python scripts/audit.py --strict --release
