@@ -28,14 +28,13 @@ def main() -> None:
     novel_entry = (
         '<li class="novel-entry"><a href="novel/">'
         '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Tiểu thuyết dài kỳ</strong>'
-        '<span>Fiction surface riêng: Bách Lâm là nhân vật chính, compressed seed, UNKNOWN, khoa học, người và AGI, '
-        'hợp tác nhân loại và hành trình giữ cho thực tại còn khả năng sinh tương lai mới.</span>'
+        '<span>Fiction surface riêng. Chương 1: Đại Kết Cục Thứ Một Nghìn. Những gì truyện chưa kể sẽ không được mục lục kể hộ.</span>'
         '</a></li>'
     )
     world_entry = (
         '<li class="world-narrative-entry"><a href="world.html">'
-        '<strong>Lần Hồi Quy Thứ Một Triệu · Bản nghiên cứu kể chuyện</strong>'
-        '<span>World build tổng hợp BL∞, UNKNOWN, siêu thể nén thông tin, Grand Ending, trí thông minh, sự sống và hợp tác bằng một tuyến truyện dễ đọc nhưng giữ nguồn.</span>'
+        '<strong>Bản nghiên cứu kể chuyện BL∞</strong>'
+        '<span>Dành cho người muốn đào sâu hơn vào các ý tưởng và quan hệ nghiên cứu phía sau world build; không phải spoiler guide của tiểu thuyết.</span>'
         '</a></li>'
     )
     unknown_entry = (
