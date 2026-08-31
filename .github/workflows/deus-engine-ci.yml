@@ -1,0 +1,44 @@
+name: DEUS Engine v1 CI
+
+on:
+  push:
+    branches:
+      - proto/deus-engine-v1
+    paths:
+      - 'experiments/deus-engine-v1/**'
+      - '.github/workflows/deus-engine-ci.yml'
+  pull_request:
+    paths:
+      - 'experiments/deus-engine-v1/**'
+      - '.github/workflows/deus-engine-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kernel-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile experimental engine
+        run: python -m compileall experiments/deus-engine-v1
+      - name: Kernel-only smoke test
+        working-directory: experiments/deus-engine-v1
+        run: python engine.py 'CI kernel-only smoke' --seed 7 --backend none
+      - name: Recombination smoke test
+        working-directory: experiments/deus-engine-v1
+        run: python recombiner.py
+      - name: Provenance smoke test
+        working-directory: experiments/deus-engine-v1
+        run: python provenance.py
+      - name: Writing-lab smoke test
+        working-directory: experiments/deus-engine-v1
+        run: python writing_lab.py
+
+# Heavy inference/training is intentionally absent here. Use an authorized
+# self-hosted/GPU runner later and return sanitized metrics/artifacts only.
