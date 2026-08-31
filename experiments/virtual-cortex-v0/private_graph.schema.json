@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BL Virtual Cognitive Loop private graph",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "label"],
+        "properties": {
+          "id": {"type": "string"},
+          "label": {"type": "string"},
+          "text": {"type": "string"},
+          "tags": {"type": "array", "items": {"type": "string"}},
+          "provenance": {"type": "string"},
+          "maturity": {"type": "string"},
+          "base_weight": {"type": "number"}
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["src", "dst"],
+        "properties": {
+          "src": {"type": "string"},
+          "dst": {"type": "string"},
+          "kind": {"type": "string"},
+          "weight": {"type": "number"},
+          "delay": {"type": "integer", "minimum": 0}
+        }
+      }
+    }
+  }
+}
