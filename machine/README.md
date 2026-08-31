@@ -18,7 +18,8 @@ Because the `bl-infinity` repository and its GitHub Pages site are public, **any
 
 - `claims.json` — public claim registry; not private reasoning traces.
 - `novelty-ontology.json` — public ontology required to interpret novelty labels.
-- `logic-stack.json` — **reduced conceptual projection only**. It must not enumerate the production router, operator sequence, activation logic, ranking, weights or private implementation graph.
+- `logic-stack.json` — **reduced unified conceptual projection only**. It describes the BL∞ public reasoning/integration route but must not enumerate the production router, operator sequence, activation logic, ranking, weights or private implementation graph.
+- `bl-infinity-unified-system.json` — public typed supergraph for `BL-INF-UNIFY`: roles and conceptual relations among RVT/RVP/RVTP/RVL, BLEE, Academic Democracy, BL-HRD, BL-ADN, BL-PCRO/OODP/BLOK, BL-NOVO, BL-REV/AEGIS, BL-SFRET, OPT-HKRP, OHAS, KAT and release/feedback mechanisms. It is **not** an execution router.
 - `bl-hrd.json` — public BL-HRD doctrine/state-machine contract: hypothesis-object schema, public conceptual state sequence, invariants, rights boundaries, reality-depth classes and anti-collapse guards. It is **not** the private routing implementation or weighting system.
 - `graph.jsonld` — reduced public entity/relation graph.
 - `historical-graph.jsonld` — reduced public chronology/origin projection; no raw conversation or private provenance payload.
@@ -53,16 +54,21 @@ P2/P3 -> outside the public repository
 
 A machine resource may expose only the minimum information required to identify, verify, critique, cite or interoperate with a **public** BL∞ claim. If a richer internal object is not needed to verify the public claim, it is withheld.
 
-## Graph boundaries
+## Unified graph boundaries
 
-`logic-stack.json` is not chronology and is not a runtime router. `historical-graph.jsonld` is not a dependency graph. `bl-hrd.json` exposes a public epistemic state machine, not production scheduling/ranking logic. Relatedness, lineage membership, dependency, identity and historical priority remain distinct relations.
+`logic-stack.json` and `bl-infinity-unified-system.json` are conceptual public graphs. They do **not** mean that every named system is logically identical, historically derived from every other system, or operationally executed in the listed visual order.
 
 ```text
-Lineage != Dependency != Identity != Historical Priority
-ConceptualStateMachine != ProductionRouter
+Lineage != Dependency != Identity != Historical Priority != Implementation
+Unification != Identity Collapse
+ConceptualCycle != ProductionRouter
 ```
 
-Machine readability, graph density, indexability or architectural complexity do not prove truth or novelty.
+The unified cycle is considered meaningful only when a pass produces an auditable epistemic or capability delta. Graph density, integration complexity or recurrence do not prove truth.
+
+## Reality Veto boundary
+
+The public graph may state that Reality Veto is a cross-system sovereign correction constraint and may expose the public relation `ValidRealityConflict -> ModelRevision`. It must not represent system authority as superior to external evidence.
 
 ## BL-REV boundary
 
@@ -72,15 +78,27 @@ The BL-REV public JSON declares only purpose, public inputs/outputs, authority l
 
 The BL-HRD public machine contract may declare the conceptual path from reality gap to hypothesis formation, preservation, mapping, depth/risk classification, verification, Reality Veto, state transition, lineage, negative-knowledge capture and recursive discovery. It may declare invariants such as `preserve != endorse` and `right_to_propose != right_to_execute`. It must not publish private routing weights, target ranking, operational triggers or protected execution playbooks.
 
+## BL-INF-UNIFY boundary
+
+The unified-system graph may expose:
+
+- named systems and public roles;
+- typed conceptual relations such as `GOVERNS`, `FEEDS`, `FORMALIZES`, `IMPLEMENTS`, `VERIFIES`, `ROUTES_TO`, `PREPARES`, `CONVERTS` and `LEARNS_FROM`;
+- the public epistemic loop and capability loop;
+- hard invariants and falsification surface.
+
+It must not expose protected orchestration details, production scheduling, private coalition ranking, operational target selection, secret weights or private authority handoffs.
+
 ## Discovery rule
 
 ```text
 fragment
--> public claim ID / asset ID
+-> public claim ID / asset ID / unified-system node
 -> canonical public object
 -> provenance class
 -> version
 -> evidence / falsifier
+-> typed relations
 -> disclosure class
 ```
 
