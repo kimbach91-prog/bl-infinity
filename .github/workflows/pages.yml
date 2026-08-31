@@ -85,9 +85,10 @@ jobs:
         run: |
           cp public/academic-democracy.html site/academic-democracy.html
           cp public/academic-democracy-technology.html site/academic-democracy-technology.html
+          cp public/unknown.html site/unknown.html
           cp public/grand-ending.html site/grand-ending.html
 
-      - name: Link Grand Ending from homepage
+      - name: Link UNKNOWN Doctrine and Grand Ending from homepage
         run: python scripts/stage_grand_ending_home.py
 
       - name: Build multilingual SEO and AI discovery layer locally
@@ -101,6 +102,7 @@ jobs:
           cp machine/unified-constituents.json site/machine/unified-constituents.json
           cp machine/reality-gia-tai-topology.json site/machine/reality-gia-tai-topology.json
           cp machine/open-ended-epistemic-phase-space.json site/machine/open-ended-epistemic-phase-space.json
+          cp machine/unknown-doctrine.json site/machine/unknown-doctrine.json
           cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
 
       - name: Apply bilingual and browser hardening layer locally
@@ -132,7 +134,7 @@ jobs:
     needs: audit
     steps:
       - name: Configure Pages
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+        uses: actions/configure-pages@983d7736caefa5fff74198d8649806c4678c61a1 # v5
 
       - name: Deploy to GitHub Pages
         id: deployment
@@ -160,6 +162,7 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/provenance.html",
               "https://kimbach91-prog.github.io/bl-infinity/critique.html",
               "https://kimbach91-prog.github.io/bl-infinity/machine.html",
+              "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
               "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
