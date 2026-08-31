@@ -1,10 +1,29 @@
 {
-  "schema_version": "0.1",
+  "schema_version": "0.2",
   "id": "BL-INF-CONSTITUENTS",
-  "parent": "BL-INF-UNIFY",
+  "integration_anchor": "BL-INF-UNIFY",
   "canonical_source": "../content/45_UNIFIED_CONSTITUENT_PROFILES.md",
-  "purpose": "Public identity/role/interface registry for major BL∞ constituents that previously existed across separate doctrine or runtime surfaces.",
+  "dynamic_dual_source": "../content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md",
+  "purpose": "Public identity/role/interface registry for major BL∞ constituents while preserving non-hierarchical typed relations and source lineage.",
   "profiles": [
+    {
+      "id": "BL-RP",
+      "name_vi": "Mệnh đề Thực tại",
+      "name_en": "Reality Proposition",
+      "role": "distinguish actuality from models, descriptions and finite observed slices",
+      "status": "proposed-canonical",
+      "authority_boundary": "formalizes actuality distinction; does not claim any observer model exhausts Reality",
+      "source_state": "canonical public proposition in content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
+    },
+    {
+      "id": "BL-GTP",
+      "name_vi": "Mệnh đề Giả tại",
+      "name_en": "GiaTai Proposition / Hypothetical Reality Proposition",
+      "role": "formalize assumed/not-yet-established reality states and their dynamic relation with BL∞ and Reality",
+      "status": "proposed-canonical",
+      "authority_boundary": "GiaTai may lead generative inference but cannot self-declare actuality",
+      "source_state": "canonical public proposition in content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md"
+    },
     {
       "id": "RVT",
       "name_vi": "Học thuyết Quyền Phủ quyết của Thực tại",
@@ -77,5 +96,5 @@
     "reality_veto_relation",
     "provenance_or_source_state"
   ],
-  "integration_invariant": "Public projections must not invent details absent from verified source; integration never silently replaces full doctrine sources or erases identity/history."
+  "integration_invariant": "Public projections must not invent details absent from verified source; integration never silently replaces full doctrine sources, erases identity/history, or converts a mode-dependent relation into a fixed hierarchy."
 }
