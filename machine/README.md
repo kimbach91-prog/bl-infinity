@@ -18,10 +18,11 @@ Because the `bl-infinity` repository and its GitHub Pages site are public, **any
 
 - `claims.json` — public claim registry; not private reasoning traces.
 - `novelty-ontology.json` — public ontology required to interpret novelty labels.
-- `logic-stack.json` — **reduced dynamic conceptual projection only**. It exposes THỰC ĐỊNH/GIẢ ĐỊNH mode logic and constituent roles but not production routing.
+- `logic-stack.json` — **reduced open-ended dynamic conceptual projection only**. It exposes THỰC ĐỊNH/GIẢ ĐỊNH/Unknown/mixed-state routes and constituent roles but not production routing.
 - `reality-gia-tai-topology.json` — public machine contract for `BL-RP`, `BL-GTP`, Reality, GiaTai and BL∞ mode-dependent precedence. It distinguishes actuality authority from generative precedence and explicitly rejects a fixed hierarchy.
-- `bl-infinity-unified-system.json` — public typed supergraph for `BL-INF-UNIFY`, now using the dynamic Reality–GiaTai topology as the current precedence model.
-- `unified-constituents.json` — public identity/role profiles including `BL-RP` and `BL-GTP` plus the major BL∞ constituent doctrines/frameworks.
+- `open-ended-epistemic-phase-space.json` — public machine contract for `BL-OEPS`, Unknown classes, non-exhaustive phase axes, `BL-UUH`, `BL-DGE`, `BL-OME` and `BL-CDE`. It exposes conceptual state-space openness and retention/pruning rules only.
+- `bl-infinity-unified-system.json` — public typed supergraph for `BL-INF-UNIFY`, now integrating Reality, GiaTai, Unknown, mixed/contested regions, anomaly routes and ontology/dimension evolution.
+- `unified-constituents.json` — public identity/role profiles for the major BL∞ constituents and open-ended discovery mechanisms.
 - `bl-hrd.json` — public BL-HRD doctrine/state-machine contract for processing GiaTai/hypothesis objects.
 - `graph.jsonld` — reduced public entity/relation graph.
 - `historical-graph.jsonld` — reduced public chronology/origin projection; no raw conversation or private provenance payload.
@@ -82,21 +83,43 @@ Possible != Reachable != Actual
 
 The public topology must never silently reintroduce `Reality > BL∞ > GiaTai forever` or the inverse as a permanent hierarchy.
 
+## Open-ended phase-space boundary
+
+The current canonical integration also rejects the claim that Reality/GiaTai/Unknown or any other finite list exhausts all epistemic states.
+
+```text
+CurrentStateTaxonomy != ExhaustiveEpistemicOntology
+Unknown != Falsehood
+Opaque != Meaningless
+UnknownUnknownIndicator != KnownUnknownContent
+BoundaryAwareness != OutsideContentKnowledge
+```
+
+`BL-OEPS` may publicly expose current phase axes such as actuality, evidence, representability, accessibility, decidability, context dependence, modality, ontology fit, adversarial integrity and temporal stability. The axis list is versioned and explicitly extensible.
+
+`BL-UUH` may expose public signatures of possible missing structure, such as structured residuals, persistent directional error, cross-model shared failure or representation leakage. It must not claim knowledge of unknown content merely from an indicator.
+
+`BL-DGE` may expose the conceptual loop for proposing, attacking, testing, retaining, merging, dormancy-managing or pruning candidate dimensions. `BL-OME` may expose versioned ontology mutation types. None of these public contracts may reveal protected operational selection/ranking logic.
+
+The raw opaque example `&;&;@;&;@` is allowed only to demonstrate preservation-without-semantic-inflation: the public contract must not assign it hidden meaning.
+
 ## Unified graph boundaries
 
-`logic-stack.json`, `reality-gia-tai-topology.json` and `bl-infinity-unified-system.json` are conceptual public graphs. They do **not** mean that every named system is logically identical, historically derived from every other system, or operationally executed in a single fixed visual order.
+`logic-stack.json`, `reality-gia-tai-topology.json`, `open-ended-epistemic-phase-space.json` and `bl-infinity-unified-system.json` are conceptual public graphs. They do **not** mean that every named system is logically identical, historically derived from every other system, or operationally executed in a single fixed visual order.
 
 ```text
 Lineage != Dependency != Identity != Historical Priority != Implementation
 Unification != Identity Collapse
 ConceptualMode != ProductionRouter
+OpenEnded != AnythingGoes
+Discovery != Validation
 ```
 
-A recursive pass is meaningful only when it produces an auditable epistemic or capability delta. Merely switching between THỰC ĐỊNH and GIẢ ĐỊNH is not itself progress.
+A recursive pass is meaningful only when it produces an auditable epistemic, dimensional, ontological, representational or capability delta. Merely switching modes or adding complexity is not progress.
 
 ## Reality-facing correction boundary
 
-RVT/RVP/RVTP/RVL may update truth-status of claims/models from qualified evidence. This correction axis is separate from generative precedence: a GiaTai may lead inference in GIẢ ĐỊNH mode without self-declaring actuality.
+RVT/RVP/RVTP/RVL may update truth-status of claims/models from qualified evidence where empirical actuality is at stake. This correction axis is separate from generative precedence: a GiaTai may lead inference in GIẢ ĐỊNH mode without self-declaring actuality, and an Unknown may remain unresolved without being forced into falsehood.
 
 ## BL-REV boundary
 
@@ -111,9 +134,10 @@ The BL-HRD public machine contract may declare how a GiaTai/hypothesis is formal
 The unified-system graph may expose:
 
 - Reality / GiaTai / BL∞ dynamic conceptual topology;
-- named systems and public roles;
-- typed conceptual relations;
-- THỰC ĐỊNH, GIẢ ĐỊNH and capability-return loops;
+- Unknown and mixed/contested public phase regions;
+- `BL-OEPS`, `BL-UUH`, `BL-DGE`, `BL-OME`, `BL-CDE` public roles;
+- named systems and typed conceptual relations;
+- THỰC ĐỊNH, GIẢ ĐỊNH, Unknown-discovery, mixed-state and capability-return loops;
 - hard invariants and falsification surface.
 
 It must not expose protected orchestration details, production scheduling, private coalition ranking, operational target selection, secret weights or private authority handoffs.
@@ -121,13 +145,13 @@ It must not expose protected orchestration details, production scheduling, priva
 ## Discovery rule
 
 ```text
-fragment
--> BL-RP / BL-GTP / public claim or system node
--> canonical public object
+fragment / raw signal / claim / anomaly
+-> public state or system node
+-> phase-space projection
 -> current mode / typed relation
 -> provenance class
 -> version
--> evidence / falsifier
+-> evidence / falsifier / Unknown marker
 -> disclosure class
 ```
 
