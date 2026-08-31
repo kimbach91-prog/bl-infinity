@@ -1,0 +1,143 @@
+{
+  "schema": "BL_GRAND_ENDING_UNKNOWN_1",
+  "status": "PUBLIC_RESEARCH_HYPOTHESIS",
+  "canonicality": "NON_FINAL_OPEN_MODEL",
+  "title_vi": "Đại Kết Cục, UNKNOWN và Cứu Cánh của Trí Tuệ",
+  "title_en": "Grand Ending, UNKNOWN and the Salvational Role of Intelligence",
+  "author": {
+    "name": "Lâm Kim Bách",
+    "lineage": "Bách Lâm",
+    "method_identity": "Optimizer"
+  },
+  "published": "2026-09-01",
+  "source": "content/50_GRAND_ENDING_UNKNOWN_AND_COSMIC_OPTIONALITY.md",
+  "public_page": "grand-ending.html",
+  "formalization_support": "AI-assisted drafting under author direction",
+  "nonclaims": [
+    "This object does not claim a newly proven physical law.",
+    "It does not claim that a literal cosmic enemy has been scientifically identified.",
+    "It does not claim a proven final fate of the universe.",
+    "UNKNOWN is not promoted to fact merely because a hypothesis is philosophically attractive."
+  ],
+  "core_propositions": [
+    {
+      "id": "GEU-P1",
+      "text": "Infinity is not equivalent to power, energy, agency, generative capacity, or reachable optionality.",
+      "formal": "Cardinality(X)=∞ does not imply AvailableEnergy(X)=∞, Agency(X)=∞, or GenerativePower(X)=∞"
+    },
+    {
+      "id": "GEU-P2",
+      "text": "Time is not an energy source; longer duration can permit irreversible processes to accumulate rather than generate new usable gradients.",
+      "formal": "[time]=T; [energy]=M·L^2·T^-2"
+    },
+    {
+      "id": "GEU-P3",
+      "text": "A universe can be vast or unbounded while its reachable optionality, usable gradients, adaptive agency and generative novelty decline.",
+      "formal": "Size != ReachableOptionality"
+    },
+    {
+      "id": "GEU-P4",
+      "text": "A low-generativity grand ending is modeled as an attractor class in which escape routes and meaningful reachable alternatives shrink.",
+      "formal": "G*={x: reachable_optionalities↓, usable_gradients↓, adaptive_agency↓, generative_novelty↓, reversibility↓}"
+    },
+    {
+      "id": "GEU-P5",
+      "text": "Life and intelligence may function as local counter-pressures by capturing usable gradients, preserving organization, modeling alternatives, coordinating action and expanding reachable states.",
+      "truth_status": "PHILOSOPHICAL_FUNCTIONAL_HYPOTHESIS"
+    },
+    {
+      "id": "GEU-P6",
+      "text": "Intelligence is treated as a superstructure rather than a scalar IQ score.",
+      "formal": "I=<Sense,Distinguish,Model,Predict,Act,Learn,Reframe,Generate,Cooperate,PreserveOptionality,HandleUnknown,ModifyOwnOntology,MaintainContinuity>"
+    },
+    {
+      "id": "GEU-P7",
+      "text": "UNKNOWN is relational and open-ended, not merely a missing scalar value.",
+      "formal": "U(t)=U(Observer(t),Model(t),Reality(t),Context(t),Access(t))"
+    },
+    {
+      "id": "GEU-P8",
+      "text": "Knowledge growth can increase the recognized UNKNOWN frontier.",
+      "formal": "DeltaK>0 and DeltaU>0 may hold simultaneously"
+    },
+    {
+      "id": "GEU-P9",
+      "text": "Epistemic diversity and cooperation can be functional defenses against correlated blind spots and unknown-unknown risk.",
+      "formal": "CollectiveIntelligence != sum(isolated IQ)"
+    },
+    {
+      "id": "GEU-P10",
+      "text": "A more powerful intelligence can accelerate convergence to a bad attractor if optimization, cooperation, ontology openness and correction are defective.",
+      "formal": "MoreIntelligence without cooperation/ontology-openness/correction may increase terminal convergence speed"
+    }
+  ],
+  "conceptual_functional": {
+    "name": "Cosmic Optionality Functional",
+    "warning": "Research heuristic only; not an empirically established physical law.",
+    "formula": "V(t)=wE*E_free+wOmega*Omega_reachable+wA*Agency+wI*AdaptiveIntelligence+wC*CooperationCapacity+wD*EpistemicDiversity+wU*UnknownFrontierCapacity-wH*IrreversibleHomogenization",
+    "risk_condition": "persistent dV/dt<0 plus shrinking escape routes => terminal-risk regime",
+    "variables": {
+      "E_free": "usable resource/free-energy gradients in the modeled domain",
+      "Omega_reachable": "richness of actually reachable states",
+      "Agency": "capacity to select and execute state change",
+      "AdaptiveIntelligence": "sense-model-predict-act-learn-reframe capacity",
+      "CooperationCapacity": "capacity for coordinated multi-agent outcomes",
+      "EpistemicDiversity": "independence of world models and blind spots",
+      "UnknownFrontierCapacity": "capacity to detect, preserve and explore novel UNKNOWN",
+      "IrreversibleHomogenization": "pressure toward reduced usable gradients, distinctions and reversibility"
+    }
+  },
+  "unknown_model": {
+    "axioms": [
+      "UNKNOWN != Falsehood",
+      "UNKNOWN != ZeroInformation",
+      "UNKNOWN != OneMissingScalar",
+      "UNKNOWN != AlwaysAProblemToEliminate",
+      "UnknownUnknownIndicator != KnownUnknownContent"
+    ],
+    "unknown_unknown_signals": [
+      "structured residual",
+      "persistent directional error",
+      "cross-model shared failure",
+      "compression failure",
+      "category leakage",
+      "unexplained dependency",
+      "repeated ad-hoc patching"
+    ],
+    "guardrail": "PersistentStructuredResidual != proof(NewOntology); it only raises a missing-structure candidate."
+  },
+  "terminal_pressure_layers": {
+    "A_scientific_anchors": [
+      "thermodynamic irreversibility",
+      "loss of some usable gradients",
+      "resource and communication constraints",
+      "destruction/decay processes depending on cosmological scenario",
+      "game-theoretic coordination failure"
+    ],
+    "B_BL_formalizable_hypotheses": [
+      "option-space collapse",
+      "ontology closure",
+      "coordination collapse",
+      "correlated blindness",
+      "novelty exhaustion",
+      "terminal-attractor capture"
+    ],
+    "C_intentionally_unknown": "Whether these pressures are the full story, projections of deeper dynamics, or evidence that the current ontology omits a fundamentally different layer."
+  },
+  "simple_examples": [
+    "Pi has infinitely many digits, but calculating them consumes physical resources.",
+    "An infinite chess state space does not provide infinite energy or agency.",
+    "An infinite game can still be poor in meaningful futures if all branches converge to the same attractor."
+  ],
+  "open_questions": [
+    "Can reachable option-space be measured without arbitrary observer dependence?",
+    "Can deep novelty be distinguished from complex permutation inside fixed rules?",
+    "Does epistemic diversity measurably improve robustness to unknown-unknowns?",
+    "Can cooperation expand reachable state-space at civilization scale?",
+    "How can missing ontology be distinguished from sensor error, data poison or a weak model?",
+    "Can multiple different micro-laws independently generate the same low-generativity terminal pattern?",
+    "Is possibility-space ontologically open-ended or only open-ended relative to an embedded observer?",
+    "Can life and intelligence materially alter the long-horizon fate of their universe?"
+  ],
+  "closing": "Infinity is not enough. Time is not fuel. Size is not agency. Knowledge is not closure. Intelligence is not IQ. Cooperation is not decoration. UNKNOWN is not emptiness."
+}
