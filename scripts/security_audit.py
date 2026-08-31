@@ -19,6 +19,8 @@ notes = []
 required = [
     ROOT / "SECURITY.md",
     ROOT / "DISCLOSURE_POLICY.md",
+    ROOT / "assets/css/main.css",
+    ROOT / "assets/js/site.js",
     ROOT / "machine/security-profile.json",
     ROOT / "translations/translation-index.json",
     ROOT / "translations/en/README.md",
@@ -64,9 +66,36 @@ for marker in [
     "academic-democracy-technology.html",
     "sha256_file",
     "hreflang",
+    "academic-democracy/en/",
+    "assets/js/site.js",
 ]:
     if marker not in hardener_source:
         errors.append(f"harden_site.py missing hardening marker: {marker}")
+
+# Responsive reading/navigation regressions are part of bilingual integrity: a translated
+# object is not practically available when its switch, navigation or tables collapse on mobile.
+ui_css_path = ROOT / "assets/css/main.css"
+ui_js_path = ROOT / "assets/js/site.js"
+ui_css = ui_css_path.read_text(encoding="utf-8") if ui_css_path.exists() else ""
+ui_js = ui_js_path.read_text(encoding="utf-8") if ui_js_path.exists() else ""
+for marker in [
+    ".nav-toggle",
+    ".table-scroll--stacked",
+    ".shift-table td:first-child",
+    "white-space: normal",
+]:
+    if marker not in ui_css:
+        errors.append(f"responsive stylesheet missing regression marker: {marker}")
+for marker in [
+    'new URL("academic-democracy.html", siteRoot)',
+    'header.classList.add("nav-ready")',
+    "table-scroll--stacked",
+    'aria-current',
+]:
+    if marker not in ui_js:
+        errors.append(f"navigation script missing regression marker: {marker}")
+if "replace(/theory\\.html$/, 'academic-democracy.html')" in ui_js:
+    errors.append("navigation script reintroduced the broken relative English Academic Democracy link")
 
 # GitHub Actions: immutable action references, no pull_request_target, no persisted checkout credentials.
 workflow_path = ROOT / ".github/workflows/pages.yml"
@@ -190,6 +219,21 @@ if args.site:
                         errors.append(f"unexpected external script source in {rel.as_posix()}: {value}")
                 elif "application/ld+json" not in attrs:
                     errors.append(f"unexpected inline executable script in generated HTML: {rel.as_posix()}")
+            if 'class="top"' in text and "assets/js/site.js" not in text:
+                errors.append(f"generated navigable HTML missing responsive navigation script: {rel.as_posix()}")
+            if "/en/academic-democracy.html" in text:
+                errors.append(f"generated HTML contains broken English Academic Democracy URL: {rel.as_posix()}")
+
+        manifesto = SITE / "academic-democracy.html"
+        if manifesto.exists():
+            manifesto_text = manifesto.read_text(encoding="utf-8")
+            if 'class="lang-switch" href="academic-democracy/en/"' not in manifesto_text:
+                errors.append("Academic Democracy manifesto missing visible English switch")
+        academic_en = SITE / "academic-democracy/en/index.html"
+        if academic_en.exists():
+            academic_en_text = academic_en.read_text(encoding="utf-8")
+            if 'class="lang-switch" href="../../academic-democracy.html"' not in academic_en_text:
+                errors.append("English Academic Democracy page missing visible Vietnamese switch")
         for rel in [
             "machine/security-profile.json",
             "machine/translation-status.json",
