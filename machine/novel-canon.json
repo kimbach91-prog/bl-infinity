@@ -1,0 +1,67 @@
+{
+  "schema": "BL_NOVEL_CANON_1",
+  "series_title": "Bách Lâm: Lần Hồi Quy Thứ Một Triệu",
+  "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
+  "status": "SERIAL_FICTION_CANON_LIVING_BUT_LOCKED",
+  "canonical_language": "vi",
+  "reader_disclaimer": "Story information may be fictional, reality-derived, mistaken memory, possible-world content, or UNKNOWN. Interpretation remains the reader's responsibility.",
+  "hard_locks": {
+    "protagonist": "Bách Lâm",
+    "current_regression": 1000000,
+    "high_density_memory_anchor": "Grand Ending 1000",
+    "selection_reason": "extreme will to bear knowledge and continue acting under epistemic burden",
+    "compressed_seed": "preserves useful causal and generative structure, not all information",
+    "unlock_dependency": "evidence-grounded faith in humanity, cooperation, feasibility and resource support",
+    "negative_unlock_signals": [
+      "deception",
+      "betrayal",
+      "dishonesty",
+      "narrow power competition",
+      "greed-driven coordination collapse",
+      "human-AGI zero-sum competition"
+    ],
+    "body_risk": "increasing compressed-information density can burden a young biological carrier with health, attention and overload risks",
+    "humanity_profile": "small and constrained, but resilient, defiant, cooperation-capable and open-potential",
+    "human_agi_relation": "not destined enemies; cooperation failure is a failure mode, not a cosmic law",
+    "cosmic_death": "the universe may die without mandatory contraction or automatic Big Bang reset",
+    "primary_threat_name": "UNNAMED_LOCKED_UNKNOWN",
+    "time_ontology": "OPEN_UNKNOWN; at least two opposed time-like regimes are possible, names and mechanisms not yet canonical",
+    "final_ending": "UNKNOWN_LOCK"
+  },
+  "continuity_law": {
+    "minor_edits_allowed": ["spelling", "rhythm", "non-dependent scene detail", "paragraph order", "reveal intensity"],
+    "silent_major_retcon_forbidden": true,
+    "apparent_contradiction_requires": [
+      "compressed-memory error",
+      "observer difference",
+      "branch difference",
+      "deception",
+      "hidden variable",
+      "ontology insufficiency",
+      "scale difference",
+      "unrecovered causal history",
+      "plot-grounded ontology evolution"
+    ]
+  },
+  "translation_law": {
+    "translate_after_chapter_lock": true,
+    "must_preserve": ["names", "chapter identity", "regression counts", "symbols", "causal relations", "UNKNOWN status", "reveal level", "critical emotional rhythm"]
+  },
+  "planned_arcs_spoiler_light": [
+    "seed in a small body",
+    "science as decompression language",
+    "age of artificial intelligence",
+    "human resource unification",
+    "signals beyond humanity",
+    "the universe reveals a wound",
+    "war for possibility",
+    "millionth-threshold mutation",
+    "UNKNOWN_LOCK ending"
+  ],
+  "chapter_001": {
+    "title": "Đại Kết Cục Thứ Một Nghìn",
+    "canonical_source": "content/novel/01_CHAPTER_001.md",
+    "public_page": "novel/chapter-001.html",
+    "status": "DRAFT_LOCK_CANDIDATE"
+  }
+}
