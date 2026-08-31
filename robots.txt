@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://kimbach91-prog.github.io/bl-infinity/sitemap.xml

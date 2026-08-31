@@ -1,46 +1,12 @@
-__pycache__/
-*.pyc
 .DS_Store
-build-report.json
-.venv/
-
-# Generated public site is materialized in CI, not committed as source.
-site/
-
-# BL-CPR — protected runtime boundary. These paths never belong in the public repo.
+__pycache__/
+*.py[cod]
 .env
 .env.*
-!.env.example
-private-runtime/
-private_runtime/
-runtime-private/
-runtime_private/
+site/
+dist/
+build/
+experiments/
+private/
 runtime/
-private-diagnostics/
-private_diagnostics/
-raw-private/
-raw_private/
-secrets/
-credentials/
-operator-only/
-operator-handoff/
-handoff/
-provenance/raw/
-provenance/private/
-
-# Production/orchestration artifacts are private even when they contain no credentials.
-**/*NEXT_MODEL_PROMPT*
-**/*BOOT_PROMPT*
-**/*RUNTIME_CORE*
-**/*OPERATOR_PLAYBOOK*
-**/*RAW_TRANSCRIPT*
-**/*CONVERSATION_LOG*
-
-# Common secret/key material.
-*.pem
-*.key
-*.p12
-*.pfx
-*.keystore
-id_rsa*
-id_ed25519*
+internal/
