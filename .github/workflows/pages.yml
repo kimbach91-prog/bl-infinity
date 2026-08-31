@@ -9,7 +9,6 @@ on:
   push:
     branches: ["main"]
   schedule:
-    # Monday 05:30 UTC = Monday 12:30 Asia/Bangkok.
     - cron: "30 5 * * 1"
   workflow_dispatch:
 
@@ -27,13 +26,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout immutable source snapshot
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
           fetch-depth: 1
 
       - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1 # v6
+        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
         with:
           python-version: "3.12"
           cache: "pip"
@@ -59,6 +58,7 @@ jobs:
           scripts/build.py
           scripts/build_discovery.py
           scripts/harden_site.py
+          scripts/humanize_public_text.py
           scripts/navigation_audit.py
           scripts/run_discovery.py
           scripts/stage_grand_ending_home.py
@@ -87,8 +87,9 @@ jobs:
           cp public/academic-democracy-technology.html site/academic-democracy-technology.html
           cp public/unknown.html site/unknown.html
           cp public/grand-ending.html site/grand-ending.html
+          cp public/world.html site/world.html
 
-      - name: Link UNKNOWN Doctrine and Grand Ending from homepage
+      - name: Link world narrative, UNKNOWN Doctrine and Grand Ending from homepage
         run: python scripts/stage_grand_ending_home.py
 
       - name: Build multilingual SEO and AI discovery layer locally
@@ -104,9 +105,13 @@ jobs:
           cp machine/open-ended-epistemic-phase-space.json site/machine/open-ended-epistemic-phase-space.json
           cp machine/unknown-doctrine.json site/machine/unknown-doctrine.json
           cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
+          cp machine/compressed-regression-hypothesis.json site/machine/compressed-regression-hypothesis.json
 
       - name: Apply bilingual and browser hardening layer locally
         run: python scripts/harden_site.py
+
+      - name: Normalize human-facing typography
+        run: python scripts/humanize_public_text.py
 
       - name: Audit materialized local site
         run: python scripts/security_audit.py --strict --site
@@ -116,12 +121,11 @@ jobs:
 
       - name: Upload Pages artifact only on explicit manual publish
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
         with:
           path: "site"
 
   deploy:
-    # Automated PR/schedule/ordinary pushes are audit-only.
     if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
     permissions:
       contents: read
@@ -134,11 +138,11 @@ jobs:
     needs: audit
     steps:
       - name: Configure Pages
-        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b # v5
+        uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
 
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
 
       - name: Notify IndexNow only after explicit manual publish
         shell: bash
@@ -153,6 +157,9 @@ jobs:
             "urlList": [
               "https://kimbach91-prog.github.io/bl-infinity/",
               "https://kimbach91-prog.github.io/bl-infinity/theory.html",
+              "https://kimbach91-prog.github.io/bl-infinity/world.html",
+              "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
+              "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/en/",
               "https://kimbach91-prog.github.io/bl-infinity/en/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/author.html",
@@ -162,8 +169,6 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/provenance.html",
               "https://kimbach91-prog.github.io/bl-infinity/critique.html",
               "https://kimbach91-prog.github.io/bl-infinity/machine.html",
-              "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
-              "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",

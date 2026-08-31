@@ -1,0 +1,66 @@
+{
+  "schema": "BL_MRCSH_PUBLIC_1",
+  "title_vi": "Giả định Siêu thể Nén Thông tin và Kẻ Hồi Quy Một Triệu Lần",
+  "title_en": "Million Regression Compressed Superentity Hypothesis",
+  "code": "BL-MRCSH",
+  "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
+  "formalized_publicly": "2026-09-01",
+  "status": "HYPOTHESIS_WORLD_BUILD_RESEARCH_OBJECT",
+  "source_classes": [
+    "DIRECT_CURRENT_STATEMENT",
+    "BL_SOURCE_DERIVATION",
+    "NEW_FORMALIZATION"
+  ],
+  "lineage": ["BL_INFINITY", "UNKNOWN", "OPTIMIZER", "CAUSAL_HISTORY", "GRAND_ENDING"],
+  "core_model": {
+    "trajectory_set": "T={tau_1,...,tau_N}, N=10^6",
+    "capacity_condition": "CarrierCapacity << RawTrajectoryInformation",
+    "compressed_seed": "z=C(T,Endings,CausalHistory,Values)",
+    "reconstruction": "M_t=D(z,Signal_t,History_t,Context_t)",
+    "claim": "The retained object is modeled as a generative compressed seed rather than a complete transcript."
+  },
+  "retention_candidates": [
+    "Invariant",
+    "FailureGradient",
+    "AttractorSignature",
+    "CausalShortcut",
+    "RecognitionTrigger",
+    "PreferenceKernel",
+    "ValueConstraint",
+    "CooperationPattern",
+    "OntologyFracturePattern",
+    "OptionPreservationRule"
+  ],
+  "retention_heuristic": "RetentionPriority(x) ~= CausalCentrality * CrossTrajectoryRecurrence * DecisionSensitivity * ReconstructionPower * SurvivalValue",
+  "reading_model": {
+    "chain": "Read -> Trigger -> Reconstruct -> Recombine -> Test -> Retain",
+    "modes": ["retrieval", "reconstruction", "recombination"]
+  },
+  "bl_infinity_relation": "A viable seed must preserve ontology openness because a closed rule set can become a cognitive prison even after massive experience.",
+  "unknown_relation": "UNKNOWN is treated as the reopenable frontier that cannot be compressed into final answers without risking ontology closure.",
+  "grand_ending_relation": "Repeated trajectories can be compressed into attractor signatures such as optionality collapse, cooperation breakdown, ontology closure, correlated blindness and novelty exhaustion.",
+  "cooperation_relation": "Distributed cognition can extend beyond the capacity of one carrier while preserving independent blind spots and structured disagreement.",
+  "attack_surface": [
+    "compression_model",
+    "identity_continuity",
+    "cross_trajectory_recurrence",
+    "decoder_mechanism",
+    "ontology_growth",
+    "unknown_handling",
+    "cooperation_dynamics",
+    "attractor_analysis",
+    "transfer_prediction",
+    "reality_facing_consequences"
+  ],
+  "public_sources": [
+    "content/10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md",
+    "content/41_HYPOTHETICAL_REALITY_DOCTRINE.md",
+    "content/43_BL_INFINITY_GRAND_UNIFICATION.md",
+    "content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md",
+    "content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md",
+    "content/50_GRAND_ENDING_UNKNOWN_AND_COSMIC_OPTIONALITY.md",
+    "content/51_UNKNOWN_DOCTRINE_OPEN_UNKNOWN_FIELD.md",
+    "content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md"
+  ],
+  "public_narrative": "world.html"
+}
