@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.3.0-bilingual-security
+  version: 0.3.1-navigation-i18n-author
   date: '2026-08-31'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity

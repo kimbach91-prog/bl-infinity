@@ -1,6 +1,7 @@
 (() => {
   const documentLanguage = (document.documentElement.lang || "vi").toLowerCase();
-  const isEnglish = documentLanguage.startsWith("en");
+  const isVietnamese = documentLanguage.startsWith("vi");
+  const isEnglish = !isVietnamese;
 
   for (const link of document.querySelectorAll('a[href^="#"]')) {
     link.addEventListener("click", () => {
@@ -44,6 +45,8 @@
   for (const link of nav.querySelectorAll("a[href]")) {
     if (normalizePath(link.href) === currentPath) {
       link.setAttribute("aria-current", "page");
+    } else if (link.getAttribute("aria-current") === "location") {
+      // Build-time section state for claim/asset/discovery detail routes.
     } else {
       link.removeAttribute("aria-current");
     }
@@ -74,6 +77,7 @@
   );
   header.insertBefore(toggle, nav);
   header.classList.add("nav-ready");
+  const languageMenu = header.querySelector(".language-menu");
 
   const setNavigationOpen = (open) => {
     nav.classList.toggle("is-open", open);
@@ -92,6 +96,7 @@
   };
 
   toggle.addEventListener("click", () => {
+    if (languageMenu?.open) languageMenu.open = false;
     setNavigationOpen(!nav.classList.contains("is-open"));
   });
   nav.addEventListener("click", (event) => {
@@ -99,12 +104,29 @@
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
-      setNavigationOpen(false);
-      toggle.focus();
+      const navWasOpen = nav.classList.contains("is-open");
+      const languageWasOpen = Boolean(languageMenu?.open);
+      if (!navWasOpen && !languageWasOpen) return;
+      if (navWasOpen) setNavigationOpen(false);
+      if (languageMenu?.open) languageMenu.open = false;
+      if (languageWasOpen) {
+        languageMenu?.querySelector("summary")?.focus();
+      } else {
+        toggle.focus();
+      }
     }
   });
 
-  const mobileQuery = matchMedia("(max-width: 760px)");
+  languageMenu?.addEventListener("toggle", () => {
+    if (languageMenu.open) setNavigationOpen(false);
+  });
+  document.addEventListener("click", (event) => {
+    if (languageMenu?.open && !languageMenu.contains(event.target)) {
+      languageMenu.open = false;
+    }
+  });
+
+  const mobileQuery = matchMedia("(max-width: 900px)");
   const closeWhenDesktop = (event) => {
     if (!event.matches) setNavigationOpen(false);
   };

@@ -6,6 +6,8 @@ Authorial identity: Bách Lâm
 Public system identity: Optimizer
 Aliases: Bách Lâm; Bách Lâm – Optimizer; Lam Kim Bach; Bach Lam
 Author profile: /author.html
+English author profile: /author/en/
+Language scope hub: /languages.html
 Author sameAs: https://m.facebook.com/lam.kimbach/ ; https://github.com/kimbach91-prog
 Namespace: BL∞ / BL-INFINITY
 Status: living research object, public descriptive/index pilot
@@ -71,6 +73,10 @@ CONTROLLED/P1 reduced projections:
 /machine/graph.jsonld
 /machine/historical-graph.jsonld
 /machine/bl-reverse-system.json
+/machine/bl-hrd.json
+/machine/bl-infinity-unified-system.json
+/machine/unified-constituents.json
+/machine/reality-gia-tai-topology.json
 /machine/academic-democracy-discovery.json
 /machine/welcome.txt
 

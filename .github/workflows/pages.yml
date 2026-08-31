@@ -50,7 +50,6 @@ jobs:
         run: pip-audit -r requirements.txt
 
       - name: Compile release-path scripts
-        # build_discovery.py is a historical template repaired deterministically by run_discovery.py before compilation.
         run: >-
           python -m py_compile
           scripts/audit.py
@@ -58,7 +57,9 @@ jobs:
           scripts/disclosure_audit.py
           scripts/security_audit.py
           scripts/build.py
+          scripts/build_discovery.py
           scripts/harden_site.py
+          scripts/navigation_audit.py
           scripts/run_discovery.py
 
       - name: Validate epistemic object
@@ -97,6 +98,9 @@ jobs:
 
       - name: Audit materialized public site
         run: python scripts/security_audit.py --strict --site
+
+      - name: Audit navigation, accessibility and internal links
+        run: python scripts/navigation_audit.py --strict
 
       - name: Upload Pages artifact
         if: github.event_name != 'pull_request'
@@ -139,6 +143,12 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/en/",
               "https://kimbach91-prog.github.io/bl-infinity/en/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/author.html",
+              "https://kimbach91-prog.github.io/bl-infinity/author/en/",
+              "https://kimbach91-prog.github.io/bl-infinity/languages.html",
+              "https://kimbach91-prog.github.io/bl-infinity/bl-adn.html",
+              "https://kimbach91-prog.github.io/bl-infinity/provenance.html",
+              "https://kimbach91-prog.github.io/bl-infinity/critique.html",
+              "https://kimbach91-prog.github.io/bl-infinity/machine.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
