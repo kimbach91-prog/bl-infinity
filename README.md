@@ -4,9 +4,9 @@ BL∞ là chương trình nghiên cứu độc lập của **Lâm Kim Bách (Bá
 
 Bề mặt công khai hiện có ba cách đọc song song:
 
-1. **Canonical / research objects:** các chương học thuyết, claim, machine projections và provenance để người đọc kiểm tra đúng object.
-2. **Narrative research projection:** `world.html`, dùng world build để nén BL∞, UNKNOWN, Đại Kết Cục và giả định Kẻ Hồi Quy Một Triệu Lần thành một tuyến đọc liền mạch mà vẫn giữ đường về nguồn.
-3. **Serialized novel:** tuyến tiểu thuyết dài kỳ với Bách Lâm là nhân vật chính, có Canon Law riêng và không được silent retcon các thiết lập đã khóa.
+1. **Học thuyết và research objects:** dành cho người muốn đọc trực tiếp các mệnh đề, nguồn và cấu trúc nghiên cứu.
+2. **Bản nghiên cứu kể chuyện:** dùng văn xuôi và world build để đưa các ý tưởng khó vào một tuyến đọc mềm hơn.
+3. **Tiểu thuyết dài kỳ:** một fiction surface riêng. Những gì truyện chưa kể sẽ không được README kể hộ.
 
 ## Tiểu thuyết dài kỳ
 
@@ -14,44 +14,15 @@ Bề mặt công khai hiện có ba cách đọc song song:
 
 Chương 1: [Đại Kết Cục Thứ Một Nghìn](https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html)
 
-Public canon source:
+Bản tiếng Việt là source canon của chương. Bản dịch chỉ nên mở sau khi chương nguồn đủ ổn định để không nhân lỗi continuity sang nhiều ngôn ngữ.
 
-`content/novel/00_CANON_LAW.md`
-
-Chapter source:
-
-`content/novel/01_CHAPTER_001.md`
-
-Machine canon:
-
-`machine/novel-canon.json`
-
-Bản tiếng Việt là source canon của chapter. Các ngôn ngữ khác chỉ được mở sau khi chapter đủ ổn định để tránh nhân lỗi continuity qua nhiều bản dịch.
+README không giải thích ý nghĩa con số trong tên truyện, cơ chế hồi quy, tuyến nhân vật tương lai hay Đại Kết Cục cuối. Những phần đó thuộc về quá trình đọc.
 
 ## Bản nghiên cứu kể chuyện
 
-[Lần Hồi Quy Thứ Một Triệu](https://kimbach91-prog.github.io/bl-infinity/world.html)
+[Bản kể BL∞](https://kimbach91-prog.github.io/bl-infinity/world.html)
 
-Đây là narrative synthesis của cụm nghiên cứu BL∞, UNKNOWN, Grand Ending, intelligence, life và cooperation. Nó không xóa hay viết lại lịch sử nguồn.
-
-## Giả định Siêu thể Nén Thông tin
-
-Formal object:
-
-`content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md`
-
-Machine projection:
-
-`machine/compressed-regression-hypothesis.json`
-
-Hạt nhân của giả định:
-
-```text
-z = C({tau_i}_{i=1..10^6}, Endings, CausalHistory, Values)
-M_t = D(z, Signal_t, History_t, Context_t)
-```
-
-Kẻ hồi quy không được mô hình như một kho chứa mọi ký ức. Nó được mô hình như một chủ thể mang **compressed generative seed**, có khả năng giải nén, tái dựng, recombine và học tiếp khi gặp một thực tại mới.
+Đây là một bề mặt nghiên cứu riêng, không phải spoiler guide chính thức của tiểu thuyết. Người đọc có thể tìm thấy các quan hệ và giả định sâu hơn ở đó, nhưng không nên dùng chúng để mặc định tương lai của tuyến fiction.
 
 ## Đọc theo tuyến
 
@@ -66,10 +37,8 @@ Kẻ hồi quy không được mô hình như một kho chứa mọi ký ức. N
 
 ## Nguyên tắc công khai
 
-Public theory và fiction surface có thể mở rộng. Protected runtime, private lineage, secret material, credentials và các chi tiết triển khai không cần thiết cho việc kiểm chứng vẫn không được công bố chỉ vì một tuyến truyện được mở.
+Public theory và fiction surface có thể mở rộng. Protected runtime, private lineage, secret material, credentials và các chi tiết triển khai không cần thiết cho việc kiểm chứng không được công bố chỉ vì một tuyến truyện được mở.
 
-## Văn phong
-
-Bản narrative và tiểu thuyết ưu tiên nhịp đọc của con người: câu dài ngắn không đều, cảnh cụ thể, hình ảnh trước công thức, công thức chỉ xuất hiện khi cần làm lộ xương logic. Hệ không tạo provenance giả, không dựng lịch sử giả và không dùng dấu vết giả để mạo danh một người khác.
+Phần nghiên cứu có thể formal và truy nguyên nguồn. Phần tiểu thuyết phải được phép sống như tiểu thuyết: người đọc gặp thế giới qua cảnh, nhân vật, lựa chọn và hậu quả trước khi gặp bảng giải thích.
 
 © Lâm Kim Bách · Bách Lâm / Optimizer
