@@ -1,0 +1,55 @@
+name: DEUS GitHub Console
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  console:
+    if: >-
+      github.actor == 'kimbach91-prog' &&
+      startsWith(github.event.issue.title, '[DEUS]') &&
+      startsWith(github.event.comment.body, '/deus')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout experimental DEUS engine
+        uses: actions/checkout@v4
+        with:
+          ref: proto/deus-engine-v1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Extract stimulus
+        env:
+          RAW_COMMENT: ${{ github.event.comment.body }}
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+          raw = os.environ['RAW_COMMENT']
+          text = raw[len('/deus'):].lstrip()
+          if not text:
+              text = 'No stimulus supplied. Hold unknown and request a concrete stimulus.'
+          Path('/tmp/deus_stimulus.txt').write_text(text, encoding='utf-8')
+          PY
+
+      - name: Run model-independent DEUS kernel
+        run: |
+          cd experiments/deus-engine-v1
+          python github_console.py "$(cat /tmp/deus_stimulus.txt)" > /tmp/deus_reply.md
+
+      - name: Reply to console thread
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/deus_reply.md
