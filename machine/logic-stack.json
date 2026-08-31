@@ -1,13 +1,16 @@
 {
-  "schema_version": "0.4",
+  "schema_version": "0.5",
   "name": "BL∞ Canonical Logic Stack — Public Projection",
-  "version": "0.4-public-projection",
+  "version": "1.0-unified-public-projection",
   "graph_type": "LOGICAL_GRAPH_VIEW",
   "interface_scope": "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY",
   "disclosure_class": "CONTROLLED/P1",
   "not_chronology": true,
   "not_runtime_router": true,
   "historical_graph": "historical-graph.jsonld",
+  "canonical_unified_source": "../content/44_CANONICAL_UNIFIED_LOGIC_STACK.md",
+  "grand_unification_source": "../content/43_BL_INFINITY_GRAND_UNIFICATION.md",
+  "unified_system_graph": "bl-infinity-unified-system.json",
   "projection": [
     {
       "id": "P0",
@@ -21,45 +24,92 @@
     },
     {
       "id": "P2",
-      "name": "Claim / evidence",
-      "description": "Public claims are separated from assumptions and must expose scope, status, dependencies and falsifiers."
+      "name": "Epistemic standing / scholarly entry",
+      "description": "BLEE separates equal standing to submit inspectable objects from unequal evidential weight; Academic Democracy provides the public scholarly interface."
     },
     {
       "id": "P2H",
       "name": "BL-HRD hypothesis search / reality feedback",
-      "description": "Public conceptual loop: reality gap -> hypothesis object -> preservation -> mapping -> depth/risk -> expected-value triage -> portfolio verification -> test -> Reality Veto -> epistemic state -> lineage/negative knowledge -> recombination -> new gap.",
+      "description": "Reality gap -> hypothesis object -> preservation -> mapping -> depth/risk -> expected-value triage -> portfolio verification.",
       "source": "../content/42_HRD_CANONICAL_LOGIC_CHAIN.md",
-      "machine_object": "bl-hrd.json",
-      "invariants": [
-        "preserve_not_equal_endorse",
-        "open_entry_not_equal_equal_weight_or_resources",
-        "ai_formalization_not_equal_evidence",
-        "right_to_propose_not_equal_right_to_execute",
-        "reality_veto_overrides_status_or_popularity_in_empirical_conflict",
-        "refutation_can_preserve_information_gain",
-        "revision_does_not_erase_lineage"
-      ]
+      "machine_object": "bl-hrd.json"
     },
     {
       "id": "P3",
-      "name": "Provenance / governance",
-      "description": "Public objects preserve authorship/provenance class, versioning, change history and authority boundaries."
+      "name": "Identity / provenance / living research objects",
+      "description": "BL-ADN, BL-LOG, BL-CHRONO, BL-PCRO, BL-OODP and BLOK preserve identity, version, dependency, critique and historical state without equating preservation with endorsement."
     },
     {
       "id": "P4",
-      "name": "Critique / audit",
-      "description": "Public critique and adversarial checking feed revision without granting criticism automatic truth status."
+      "name": "Novelty / adversarial pressure",
+      "description": "BL-NOVO disciplines novelty claims; BL-REV and BL-AEGIS search for premise failures, countercases, contradictions and scope errors before expensive external verification."
     },
     {
       "id": "P5",
-      "name": "Publication / feedback",
-      "description": "Verified public objects can be indexed, challenged, revised and republished as living research objects."
+      "name": "Reality Veto adjudication",
+      "description": "RVT/RVP/RVTP/RVL provide the public conceptual correction path: valid reality conflict requires model revision. Reality Veto governs every system including the unified architecture itself."
     },
     {
       "id": "P6",
-      "name": "Recursive discovery return",
-      "description": "Evidence, refutations, negative knowledge, new measurement capabilities and revised objects return to the discovery frontier and may generate new hypotheses."
+      "name": "Future regression / resource routing / agency",
+      "description": "BL-SFRET maps necessary future conditions and gaps; OPT-HKRP routes the minimal sufficient distributed coalition; OHAS defines authorized bounded execution, decision rights, safety and rollback."
+    },
+    {
+      "id": "P7",
+      "name": "Knowledge-to-capability conversion",
+      "description": "KAT governs knowledge rights/disclosure and conversion of sufficiently supported useful knowledge into capability without permitting adverse-evidence suppression."
+    },
+    {
+      "id": "P8",
+      "name": "Recursive frontier expansion",
+      "description": "New capabilities improve observation, measurement, access or construction; the expanded frontier creates new reality gaps and returns to BL∞/BL-HRD."
+    },
+    {
+      "id": "P9",
+      "name": "Publication / critique / revision spiral",
+      "description": "BL-PIRAL and social-response mechanisms publish, index, collect critique, audit, patch, version and republish; reaction is feedback, not a truth vote."
+    },
+    {
+      "id": "PX",
+      "name": "Cross-cutting constitutions",
+      "description": "Reality Veto provides sovereign correction; BL-ADN/LOG/CHRONO provide identity and causal memory; BL-CPR limits public disclosure to the smallest sufficient verification projection."
     }
+  ],
+  "unified_cycle": [
+    "REALITY",
+    "BL∞",
+    "BLEE",
+    "Academic-Democracy",
+    "BL-HRD",
+    "BL-ADN/BL-PCRO/BL-OODP/BLOK",
+    "BL-NOVO",
+    "BL-REV/BL-AEGIS",
+    "RVT/RVTP/RVL",
+    "BL-SFRET",
+    "OPT-HKRP",
+    "OHAS",
+    "ACTION_OR_TEST",
+    "REALITY_OUTCOME",
+    "RVT/RVL_UPDATE",
+    "KAT",
+    "NEW_CAPABILITY",
+    "BL∞_EXPANDED_FRONTIER"
+  ],
+  "parallel_loops": {
+    "epistemic_loop": "Gap -> Hypothesis -> Critique/Test -> Evidence -> State Update -> New Gap",
+    "capability_loop": "Knowledge -> Resources -> Agency -> Action -> Capability -> Better Observation -> Knowledge"
+  },
+  "progress_rule": "A recursive pass counts as progress only when it produces an auditable epistemic or capability delta.",
+  "hard_invariants": [
+    "unification_not_equal_identity_collapse",
+    "lineage_not_equal_dependency_not_equal_identity_not_equal_implementation",
+    "preserve_not_equal_endorse",
+    "open_entry_not_equal_equal_weight_not_equal_equal_resources",
+    "ai_formalization_not_equal_evidence",
+    "right_to_propose_not_equal_right_to_validate_not_equal_right_to_execute",
+    "reality_veto_is_cross_system_sovereign_correction",
+    "no_silent_merge_or_history_rewrite",
+    "knowledge_advantage_cannot_hide_adverse_evidence"
   ],
   "withheld_from_public_projection": [
     "asset_level_runtime_composition",
@@ -72,5 +122,5 @@
     "production_pipeline",
     "private_model_or_operator_handoffs"
   ],
-  "guardrail": "This artifact is a deliberately reduced public conceptual projection. BL-HRD entries expose epistemic states, invariants and conceptual dependencies only; they do not disclose the production router, private activation triggers, weights, ranking functions or operator playbook. Layer order is not historical chronology."
+  "guardrail": "This artifact is a reduced public conceptual projection of the BL∞ unified epistemic system. It exposes roles, typed conceptual dependencies, invariants and recursive feedback only; it does not disclose the protected production router, private activation triggers, weights, ranking functions or operator playbook."
 }
