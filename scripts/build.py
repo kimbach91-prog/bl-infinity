@@ -9,12 +9,13 @@ SITE=ROOT/'site'
 CFG=yaml.safe_load((ROOT/'bl.config.yml').read_text(encoding='utf-8'))
 CLAIMS=json.loads((ROOT/'claims/claims.json').read_text(encoding='utf-8'))
 ASSETS=json.loads((ROOT/'machine/assets.json').read_text(encoding='utf-8'))
+TINDEX=json.loads((ROOT/'translations/translation-index.json').read_text(encoding='utf-8'))
 md=mistune.create_markdown(plugins=['table','strikethrough','task_lists'])
 
 PAGE='''<!doctype html><html lang="{{ lang }}"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{{ title }}</title><meta name="description" content="{{ description }}">
-<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
+<meta name="robots" content="{{ robots }}">
 <link rel="canonical" href="{{ canonical }}">
 <meta property="og:type" content="article"><meta property="og:title" content="{{ title }}"><meta property="og:description" content="{{ description }}"><meta property="og:url" content="{{ canonical }}">
 <meta name="twitter:card" content="summary"><meta name="twitter:title" content="{{ title }}"><meta name="twitter:description" content="{{ description }}">
@@ -22,7 +23,7 @@ PAGE='''<!doctype html><html lang="{{ lang }}"><head>
 <link rel="alternate" type="application/rss+xml" title="BL∞ updates" href="{{ base }}feed.xml">
 <script type="application/ld+json">{{ jsonld }}</script></head>
 <body><header class="top"><a href="{{ base }}index.html" class="brand">BL∞</a><span>Bách Lâm – Optimizer</span>
-<nav><a href="{{ base }}theory.html">Học thuyết</a><a href="{{ base }}bl-adn.html">BL-ADN</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
+<nav><a href="{{ base }}theory.html">Học thuyết</a><a href="{{ base }}academic-democracy.html">Dân chủ Học thuật</a><a href="{{ base }}bl-adn.html">BL-ADN</a><a href="{{ base }}claims.html">Claims</a><a href="{{ base }}assets.html">Assets</a><a href="{{ base }}author.html">Tác giả</a><a href="{{ base }}provenance.html">Provenance</a><a href="{{ base }}critique.html">Phản biện</a><a href="{{ base }}machine.html">Machine</a></nav></header>
 <main><article>{{ body }}</article>{{ comments }}</main>
 <footer><p>BL∞ · {{ version }} · canonical research object. <a href="{{ base }}machine/manifest.json">Machine manifest</a></p></footer>
 <script src="{{ base }}assets/js/site.js"></script></body></html>'''
@@ -49,34 +50,87 @@ def giscus(base=''):
 
 def schema_generic(title,url,desc,typ='ScholarlyArticle',identifier=None,extra=None):
     p=CFG['project']
+    author_url=p['canonical_url'].rstrip('/')+'/author.html'
     obj={
       '@context':'https://schema.org','@type':typ,'headline':title,'name':title,
       'alternateName':[p['canonical_name_en'],p['canonical_name_vi'],'BL Infinity'],
-      'author':{'@type':'Person','name':p['author'],'alternateName':p['aliases']},
-      'creator':{'@type':'Person','name':p['author']},
+      'author':{'@type':'Person','@id':author_url+'#person','name':p['author'],'alternateName':p['aliases'],'url':author_url,'sameAs':['https://m.facebook.com/lam.kimbach/','https://github.com/kimbach91-prog']},
+      'creator':{'@id':author_url+'#person'},
       'dateCreated':p.get('date_created',p['date']),'datePublished':p['date'],'dateModified':p.get('last_updated',p['date']),
       'version':p['version'],'description':desc,'url':url,'mainEntityOfPage':url,
       'isPartOf':{'@type':'CreativeWork','name':p['canonical_name_en'],'url':p['canonical_url']},
-      'keywords':CFG['seo']['keywords']
+      'inLanguage':'vi','keywords':CFG['seo']['keywords']
     }
-    if identifier: obj['identifier']=identifier
+    if identifier:
+      obj['identifier']=identifier
+      obj.pop('alternateName',None)
+      obj['keywords']=[identifier,title]
     if extra: obj.update(extra)
     return json.dumps(obj,ensure_ascii=False)
 
-def write_page(dest,title,body,desc=None,base='',jsonld=None,comments=True):
+def write_page(dest,title,body,desc=None,base='',jsonld=None,comments=True,robots='index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1'):
     desc=desc or CFG['seo']['description']
     canonical=canonical_for(dest)
     js=jsonld or schema_generic(title,canonical,desc)
     t=Template(PAGE)
     (SITE/dest).parent.mkdir(parents=True,exist_ok=True)
-    (SITE/dest).write_text(t.render(lang='vi',title=title,description=desc,canonical=canonical,base=base,jsonld=js,body=body,comments=giscus(base) if comments else '',version=CFG['project']['version']),encoding='utf-8')
+    (SITE/dest).write_text(t.render(lang='vi',title=title,description=desc,canonical=canonical,base=base,jsonld=js,body=body,comments=giscus(base) if comments else '',robots=robots,version=CFG['project']['version']),encoding='utf-8')
 
-def render_docs(paths):
+def shift_headings(fragment):
+    return re.sub(
+        r'<(/?)h([1-5])(\b[^>]*)>',
+        lambda match: f'<{match.group(1)}h{int(match.group(2))+1}{match.group(3)}>',
+        fragment,
+        flags=re.I,
+    )
+
+def render_docs(paths,page_heading):
     chunks=[]
     for path in paths:
       txt=path.read_text(encoding='utf-8')
-      chunks.append(f'<section data-source="{html.escape(path.name)}">{md(txt)}</section>')
-    return '\n'.join(chunks)
+      chunks.append(f'<section data-source="{html.escape(path.name)}">{shift_headings(md(txt))}</section>')
+    return f'<h1>{html.escape(page_heading)}</h1>\n'+'\n'.join(chunks)
+
+def author_spotlight():
+    return '''<section class="author-spotlight" aria-labelledby="author-spotlight-title">
+<p class="eyebrow">Tác giả &amp; phả hệ</p><h2 id="author-spotlight-title">Lâm Kim Bách · Bách Lâm · Optimizer</h2>
+<p><strong>Lâm Kim Bách</strong> là định danh con người; <strong>Bách Lâm</strong> là định danh tác quyền/phả hệ; <strong>Optimizer</strong> là định danh hệ/phương pháp công khai. Ba vai trò được nối nhưng không bị đánh đồng.</p>
+<p><a class="primary-link" href="author.html">Xem hồ sơ tác giả canonical</a> · <a href="provenance.html">Kiểm tra provenance</a> · <a href="critique.html">Phản biện công khai</a></p>
+</section>'''
+
+def topic_entry_points():
+    return '''<section class="topic-entry-points" aria-labelledby="topic-entry-title">
+<p class="eyebrow">Lối vào theo chủ đề</p><h2 id="topic-entry-title">Bốn cụm tri thức chính của BL∞</h2>
+<div class="topic-grid">
+<section><h3><a href="academic-democracy.html">Dân chủ Học thuật</a></h3><p>Mở quyền tham gia tạo tri thức nhưng giữ trọng lượng bằng chứng, phản biện và quyền phủ quyết của thực tại.</p></section>
+<section><h3><a href="bl-adn.html">Phả hệ tri thức &amp; research provenance</a></h3><p>Truy nguyên tác giả, nguồn, vai trò AI formalization và lịch sử phiên bản ở cấp object.</p></section>
+<section><h3><a href="machine.html">Nghiên cứu máy đọc được</a></h3><p>Claim ID, registry, dependency graph và public machine contracts giúp người lẫn AI kiểm tra đúng canonical object.</p></section>
+<section><h3><a href="critique.html">Phản biện công khai</a></h3><p>Gắn phản ví dụ, evidence và lỗi suy luận vào đúng claim để sửa đổi có thể truy vết.</p></section>
+</div></section>'''
+
+def language_hub_body():
+    discovery=TINDEX.get('discovery_editions',{}).get('languages',{})
+    cards=[]
+    for code,item in discovery.items():
+        if code=='en':
+            continue
+        cards.append(
+            '<li><a href="'+html.escape(item['route'],quote=True)+'" '
+            'hreflang="'+html.escape(item['hreflang'],quote=True)+'" '
+            'lang="'+html.escape(item['hreflang'],quote=True)+'">'+html.escape(item['name'])+'</a>'
+            '<span class="status-badge status-draft">Bản khám phá · AI draft</span>'
+            '<small>'+html.escape(item['known_gap'])+'</small></li>'
+        )
+    return '''<h1>Ngôn ngữ &amp; phạm vi bản dịch</h1>
+<p>BL∞ không dùng một nút đổi ngôn ngữ để ngụ ý rằng mọi trang đã được dịch đầy đủ. Mỗi lựa chọn dưới đây công khai đúng phạm vi và trạng thái của nó.</p>
+<section class="language-tier"><h2>Bản đọc chính</h2><ul class="language-grid">
+<li><a href="theory.html" hreflang="vi" lang="vi">Tiếng Việt</a><span class="status-badge status-ready">Canonical đầy đủ</span><small>Nguồn đọc công khai đầy đủ và ưu tiên khi có tranh chấp câu chữ.</small></li>
+<li><a href="en/theory.html" hreflang="en" lang="en">English</a><span class="status-badge status-core">Core research edition</span><small>Phiên bản lõi, chưa phải bản dịch từng dòng của toàn bộ corpus.</small></li>
+</ul></section>
+<section class="language-tier"><h2>Dân chủ Học thuật — 11 bản khám phá</h2>
+<p>Các trang này là bản tóm lược để khám phá và truy xuất, không thay thế tuyên ngôn tiếng Việt đầy đủ; nội dung chưa được coi là bản dịch học thuật đã duyệt.</p>
+<ul class="language-grid">'''+''.join(cards)+'''</ul></section>
+<p><strong>Không tự chuyển hướng theo ngôn ngữ.</strong> Người đọc luôn tự chọn phiên bản; canonical, provenance và trạng thái review vẫn hiển thị độc lập.</p>'''
 
 def require_public_files(paths):
     for path in paths:
@@ -112,10 +166,13 @@ shutil.copy(ROOT/'assets/js/site.js',SITE/'assets/js/site.js')
 
 content=sorted((ROOT/'content').glob('*.md'))
 intro=md((ROOT/'content/00_README_FIRST.md').read_text(encoding='utf-8'))
-write_page('index.html',CFG['seo']['title'],intro)
-write_page('theory.html','BL∞ — Học thuyết canonical',render_docs([p for p in content if p.name!='00_README_FIRST.md']))
+intro+=topic_entry_points()
+intro+=author_spotlight()
+write_page('index.html',CFG['seo']['title'],intro,desc='BL∞ — hệ nghiên cứu mở do Lâm Kim Bách (Bách Lâm) khởi phát, về quan sát hữu hạn, không gian khả năng, Giả tại, provenance, phản biện và tri thức máy đọc được.')
+write_page('theory.html','BL∞ — Học thuyết canonical',render_docs([p for p in content if p.name!='00_README_FIRST.md'],'BL∞ — Học thuyết canonical'),desc='Bản học thuyết canonical BL∞: Mệnh đề Vô hạn Bách Lâm, quan hệ Thực tại–Giả tại, giới hạn quan sát, khả đạt, phản biện và các cấu kiện đã nối phả hệ.')
 bl_adn_source=(ROOT/'BL-ADN.md').read_text(encoding='utf-8')
-write_page('bl-adn.html','BL-ADN — Giao thức Phả hệ Tri thức',md(bl_adn_source),desc='Giao thức Đóng dấu ADN Bách Lâm ∞ và Nối tiếp Phả hệ Tri thức, phiên bản 0.2.0.')
+write_page('bl-adn.html','BL-ADN — Giao thức Phả hệ Tri thức','<h1>BL-ADN — Giao thức Phả hệ Tri thức</h1>'+shift_headings(md(bl_adn_source)),desc='Giao thức Đóng dấu ADN Bách Lâm ∞ và Nối tiếp Phả hệ Tri thức, phiên bản 0.2.0.')
+write_page('languages.html','BL∞ — Ngôn ngữ & phạm vi bản dịch',language_hub_body(),desc='Chọn ngôn ngữ của BL∞ và xem rõ phạm vi: tiếng Việt canonical, English core research edition và 11 bản khám phá Dân chủ Học thuật chưa duyệt đầy đủ.',comments=False)
 shutil.copy(ROOT/'BL-ADN.md',SITE/'bl-adn.md')
 
 # Claim index + one canonical page per claim (BL-ICO implementation)
@@ -138,14 +195,14 @@ for c in CLAIMS['claims']:
 <p><strong>Version:</strong> {html.escape(CFG['project']['version'])}</p>
 <p><strong>Canonical URL:</strong> <a href="{html.escape(url)}">{html.escape(url)}</a></p>'''
     desc=(c['statement'][:190]+'…') if len(c['statement'])>190 else c['statement']
-    js=schema_generic(f'{cid} — {c["title"]}',url,desc,typ='CreativeWork',identifier=cid,extra={
+    js=schema_generic(f'{cid} claim — {c["title"]}',url,desc,typ='CreativeWork',identifier=cid,extra={
         'text':c['statement'],'creativeWorkStatus':c['status'],
         'about':{'@type':'Thing','name':c.get('scope','BL∞')}
     })
-    write_page(dest,f'{cid} — {c["title"]} | BL∞',body,desc=desc,base='../../',jsonld=js)
+    write_page(dest,f'{cid} claim — {c["title"]} | BL∞',body,desc=desc,base='../../',jsonld=js)
     claim_index.append({'id':cid,'title':c['title'],'type':c['type'],'status':c['status'],'url':url,'depends_on':deps,'novelty_dimensions':c.get('novelty_dimensions',[])})
 rows.append('</div>')
-write_page('claims.html','BL∞ — Claim Registry','\n'.join(rows))
+write_page('claims.html','BL∞ — Claim Registry','\n'.join(rows),desc='Sổ đăng ký 68 claim BL∞ với ID, loại, trạng thái, dependency, phạm vi và điều kiện bác bỏ để người và máy có thể kiểm tra từng mệnh đề.')
 
 # Asset index + one page per named asset.
 asset_by={a['code']:a for a in ASSETS['assets']}
@@ -163,15 +220,15 @@ for a in ASSETS['assets']:
 <p><strong>Origin phase:</strong> {html.escape(a.get('origin_phase','—'))}</p>
 <p><strong>Canonical URL:</strong> <a href="{html.escape(url)}">{html.escape(url)}</a></p>'''
     desc=f'{code}: {a["name"]}, {a["kind"]} trong BL∞ / BL-AEGIS.'
-    js=schema_generic(f'{code} — {a["name"]}',url,desc,typ='CreativeWork',identifier=code)
-    write_page(dest,f'{code} — {a["name"]} | BL∞',body,desc=desc,base='../../',jsonld=js)
+    js=schema_generic(f'{code} asset — {a["name"]}',url,desc,typ='CreativeWork',identifier=code)
+    write_page(dest,f'{code} asset — {a["name"]} | BL∞',body,desc=desc,base='../../',jsonld=js)
     asset_index.append({**a,'url':url})
 arows.append('</div>')
-write_page('assets.html','BL∞ — Asset & Technology Registry','\n'.join(arows))
+write_page('assets.html','BL∞ — Asset & Technology Registry','\n'.join(arows),desc='Sổ cấu kiện BL∞: học thuyết, nguyên lý, giao thức, cơ chế và công nghệ có định danh, quan hệ, trạng thái và provenance riêng.')
 
-write_page('provenance.html','BL∞ — Provenance',render_docs(PUBLIC_PROVENANCE_FILES))
-write_page('critique.html','BL∞ — Giao thức phản biện',render_docs(PUBLIC_CRITIQUE_FILES))
-write_page('machine.html','BL∞ — Machine Layer',md((ROOT/'machine/README.md').read_text(encoding='utf-8')))
+write_page('provenance.html','BL∞ — Provenance',render_docs(PUBLIC_PROVENANCE_FILES,'BL∞ — Provenance'),desc='Nguồn gốc, phả hệ, vai trò tác giả và AI formalization của BL∞; phân biệt quan hệ, tác quyền, ưu tiên lịch sử và trạng thái kiểm chứng.')
+write_page('critique.html','BL∞ — Giao thức phản biện',render_docs(PUBLIC_CRITIQUE_FILES,'BL∞ — Giao thức phản biện'),desc='Giao thức phản biện công khai BL∞: nêu đúng Claim ID, tiền đề, bước suy luận, countermodel, evidence hoặc xung đột provenance để hệ có thể sửa.')
+write_page('machine.html','BL∞ — Machine Layer',md((ROOT/'machine/README.md').read_text(encoding='utf-8')),desc='Các giao diện máy đọc được của BL∞: manifest, claim graph, asset index, topology, provenance, translation status và chính sách công khai BL-CPR.')
 
 # Machine layer
 manifest={
@@ -180,7 +237,7 @@ manifest={
   'canonical_url':CFG['project']['canonical_url'],'repository':CFG['project']['repository'],'date_created':CFG['project'].get('date_created',CFG['project']['date']),'date_released':CFG['project']['date'],'last_updated':CFG['project'].get('last_updated',CFG['project']['date']),
   'claim_registry':'claims.json','claim_index':'claim-index.json','claim_graph':'claim-graph.jsonld',
   'asset_registry':'assets.json','asset_index':'asset-index.json','novelty_ontology':'novelty-ontology.json','logic_stack':'logic-stack.json','historical_graph':'historical-graph.jsonld',
-  'disclosure_policy':'disclosure-policy.json','bl_adn_protocol':'../bl-adn.html','bl_adn_source':'../bl-adn.md','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','content_hash':None
+  'disclosure_policy':'disclosure-policy.json','bl_adn_protocol':'../bl-adn.html','bl_adn_source':'../bl-adn.md','author_profile':'../author.html','language_hub':'../languages.html','translation_index':'../translations/translation-index.json','translation_status':'translation-status.json','academic_democracy_discovery':'academic-democracy-discovery.json','reverse_system':'bl-reverse-system.json','hypothetical_reality_doctrine':'bl-hrd.json','unified_system':'bl-infinity-unified-system.json','constituent_registry':'unified-constituents.json','reality_gia_tai_topology':'reality-gia-tai-topology.json','machine_greeting':'welcome.txt','translation_pack':'../translations/greeting.multilingual.md','llms':'../llms.txt','feed':'../feed.xml','content_hash':None
 }
 allbytes=b''
 machine_hash_sources=sorted(p for p in (ROOT/'machine').iterdir() if p.is_file() and p.suffix in {'.json','.jsonld'})
@@ -211,7 +268,7 @@ graph=(ROOT/'machine/graph.jsonld').read_text(encoding='utf-8').replace('https:/
 (SITE/'machine/graph.jsonld').write_text(graph,encoding='utf-8')
 
 # sitemap: human pages + individual claim/asset objects + machine files
-urls=['','theory.html','bl-adn.html','bl-adn.md','claims.html','assets.html','provenance.html','critique.html','machine.html']
+urls=['','theory.html','bl-adn.html','claims.html','assets.html','languages.html','provenance.html','critique.html','machine.html']
 urls += [f'claims/{c["id"]}/' for c in CLAIMS['claims']]
 urls += [f'assets/{slug_code(a["code"])}/' for a in ASSETS['assets']]
 # Machine resources are discoverable from HTML/llms.txt but are not submitted as primary search landing pages.
@@ -225,10 +282,13 @@ smap.append('</urlset>')
 (SITE/'llms.txt').write_text((ROOT/'machine/llms.txt').read_text(encoding='utf-8'),encoding='utf-8')
 
 # RSS
-rss=f'''<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>BL∞ updates</title><link>{CFG['project']['canonical_url']}</link><description>{CFG['seo']['description']}</description><item><title>BL∞ {CFG['project']['version']}</title><link>{CFG['project']['canonical_url']}</link><guid>{CFG['project']['canonical_url']}#{CFG['project']['version']}</guid><pubDate>Sat, 29 Aug 2026 00:15:00 +0700</pubDate></item></channel></rss>'''
+release_dt=datetime.datetime.fromisoformat(CFG['project'].get('last_updated',CFG['project']['date'])).replace(tzinfo=datetime.timezone(datetime.timedelta(hours=7)))
+pub_date=release_dt.strftime('%a, %d %b %Y %H:%M:%S %z')
+rss=f'''<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>BL∞ updates</title><link>{CFG['project']['canonical_url']}</link><description>{CFG['seo']['description']}</description><lastBuildDate>{pub_date}</lastBuildDate><item><title>BL∞ {CFG['project']['version']}</title><link>{CFG['project']['canonical_url']}</link><guid>{CFG['project']['canonical_url']}#{CFG['project']['version']}</guid><pubDate>{pub_date}</pubDate></item></channel></rss>'''
 (SITE/'feed.xml').write_text(rss,encoding='utf-8')
 
 # GitHub Pages 404 keeps navigation usable.
-body404='<h1>Không tìm thấy object</h1><p>URL này không tồn tại ở version hiện tại. Hãy quay về <a href="index.html">BL∞</a> hoặc <a href="claims.html">Claim Registry</a>.</p>'
-write_page('404.html','BL∞ — Không tìm thấy',body404,comments=False)
+project_base='/'+CFG['project']['canonical_url'].split('/',3)[-1].strip('/')+'/'
+body404=f'<h1>Không tìm thấy object</h1><p>URL này không tồn tại ở version hiện tại. Hãy quay về <a href="{project_base}index.html">BL∞</a> hoặc <a href="{project_base}claims.html">Claim Registry</a>.</p>'
+write_page('404.html','BL∞ — Không tìm thấy',body404,base=project_base,comments=False,robots='noindex,follow')
 print(f'Built {SITE}: {len(CLAIMS["claims"])} claim pages, {len(ASSETS["assets"])} asset pages')

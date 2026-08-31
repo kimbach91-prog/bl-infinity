@@ -27,7 +27,9 @@ required = [
     ROOT / "translations/en/THEORY_CORE.md",
     ROOT / "public/academic-democracy-technology.html",
     ROOT / "scripts/build.py",
+    ROOT / "scripts/build_discovery.py",
     ROOT / "scripts/harden_site.py",
+    ROOT / "scripts/navigation_audit.py",
     ROOT / ".github/workflows/pages.yml",
 ]
 for path in required:
@@ -43,6 +45,8 @@ except Exception as exc:
 
 if tindex.get("policy") != "TRANSLATION_IS_DERIVATIVE_REPRESENTATION_NOT_INDEPENDENT_THEORY_VERSION":
     errors.append("translation index missing derivative-representation policy")
+if tindex.get("schema_version") != "2.0":
+    errors.append("translation index must use schema_version 2.0")
 en = tindex.get("languages", {}).get("en", {})
 for key in ["role", "entry", "coverage", "source_files", "translation_files", "review_status", "known_gap"]:
     if not en.get(key):
@@ -52,6 +56,26 @@ if en.get("coverage") == "FULL" and en.get("review_status") != "HUMAN_REVIEWED_F
 for rel in list(en.get("source_files", [])) + list(en.get("translation_files", [])):
     if not (ROOT / rel).exists():
         errors.append(f"translation index points to missing file: {rel}")
+discovery = tindex.get("discovery_editions", {})
+discovery_languages = discovery.get("languages", {})
+if discovery.get("scope_relation") != "DERIVATIVE_LOCALIZED_SUMMARY_NOT_SCOPE_EQUIVALENT_TO_FULL_MANIFESTO":
+    errors.append("discovery translations must state their narrower scope relation")
+if len(discovery_languages) != 12:
+    errors.append(f"translation index expected 12 discovery editions, found {len(discovery_languages)}")
+seen_routes = set()
+draft_codes = []
+for code, edition in discovery_languages.items():
+    for key in ["hreflang", "name", "route", "coverage", "translator_class", "review_status", "known_gap"]:
+        if not edition.get(key):
+            errors.append(f"discovery edition {code} missing {key}")
+    route = edition.get("route")
+    if route in seen_routes:
+        errors.append(f"duplicate discovery translation route: {route}")
+    seen_routes.add(route)
+    if edition.get("review_status") == "AI_DRAFT_UNREVIEWED":
+        draft_codes.append(code)
+if draft_codes:
+    warnings.append("owner review pending: indexable AI discovery drafts: " + ", ".join(draft_codes))
 
 # Hardening is deliberately separated from the legacy source renderer: check the hardener itself.
 hardener_path = ROOT / "scripts/harden_site.py"
@@ -68,6 +92,9 @@ for marker in [
     "hreflang",
     "academic-democracy/en/",
     "assets/js/site.js",
+    "language-menu",
+    "author/en/",
+    "languages.html",
 ]:
     if marker not in hardener_source:
         errors.append(f"harden_site.py missing hardening marker: {marker}")
@@ -83,6 +110,9 @@ for marker in [
     ".table-scroll--stacked",
     ".shift-table td:first-child",
     "white-space: normal",
+    ".skip-link",
+    ".language-menu",
+    "aria-current=\"location\"",
 ]:
     if marker not in ui_css:
         errors.append(f"responsive stylesheet missing regression marker: {marker}")
@@ -119,6 +149,8 @@ for marker in [
     "python scripts/security_audit.py --strict --site",
     "pip-audit -r requirements.txt",
     "cp public/academic-democracy-technology.html site/academic-democracy-technology.html",
+    "python scripts/navigation_audit.py --strict",
+    "scripts/build_discovery.py",
 ]:
     if marker not in workflow:
         errors.append(f"pages workflow missing security marker: {marker}")
@@ -214,6 +246,7 @@ if args.site:
                         value.startswith("assets/")
                         or value.startswith("../")
                         or value.startswith("../../")
+                        or value.startswith("/bl-infinity/assets/js/")
                         or value.startswith("https://giscus.app/")
                     ):
                         errors.append(f"unexpected external script source in {rel.as_posix()}: {value}")
@@ -223,6 +256,11 @@ if args.site:
                 errors.append(f"generated navigable HTML missing responsive navigation script: {rel.as_posix()}")
             if "/en/academic-democracy.html" in text:
                 errors.append(f"generated HTML contains broken English Academic Democracy URL: {rel.as_posix()}")
+            if rel.parts[:1] == ("academic-democracy",) and rel.name == "index.html" and rel.parts[-2] not in {"academic-democracy"}:
+                if "LOCALIZED_DISCOVERY_SUMMARY_AI_DRAFT_UNREVIEWED" not in text:
+                    errors.append(f"localized discovery page missing honest draft status: {rel.as_posix()}")
+                if 'hreflang="vi" href="https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html"' in text:
+                    errors.append(f"localized summary incorrectly pairs hreflang with full Vietnamese manifesto: {rel.as_posix()}")
 
         manifesto = SITE / "academic-democracy.html"
         if manifesto.exists():
@@ -241,6 +279,8 @@ if args.site:
             "en/index.html",
             "translations/translation-index.json",
             "academic-democracy-technology.html",
+            "author/en/index.html",
+            "languages.html",
         ]:
             if not (SITE / rel).exists():
                 errors.append(f"generated bilingual/security artifact missing: {rel}")
@@ -248,13 +288,16 @@ if args.site:
         if manifest_path.exists():
             try:
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                for field in ["languages", "translation_status", "security_profile", "academic_democracy_technology_profile"]:
+                for field in ["languages", "discovery_languages", "translation_status", "language_hub", "author_profile_en", "security_profile", "academic_democracy_technology_profile", "unified_system", "constituent_registry", "reality_gia_tai_topology"]:
                     if not manifest.get(field):
                         errors.append(f"generated machine manifest missing field: {field}")
             except Exception as exc:
                 errors.append(f"invalid generated machine manifest: {exc}")
         else:
             errors.append("generated machine manifest missing")
+        sitemap_path = SITE / "sitemap.xml"
+        if sitemap_path.exists() and "bl-adn.md" in sitemap_path.read_text(encoding="utf-8"):
+            errors.append("sitemap must prefer the BL-ADN HTML landing page over raw Markdown")
         notes.append(f"audited {len(html_files)} generated HTML files")
 
 result = {

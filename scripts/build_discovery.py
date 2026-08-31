@@ -13,7 +13,7 @@ MANIFESTO = BASE + 'academic-democracy.html'
 AUTHOR_URL = BASE + 'author.html'
 DISCOVERY_URL = BASE + 'academic-democracy/discovery.html'
 INDEXNOW_KEY = '7d4a9f38b25c4e7aa6d0c913b8e42f61'
-TODAY = '2026-08-30'
+TODAY = '2026-08-31'
 
 LANGS = {
 'en': {
@@ -128,6 +128,7 @@ LANGS = {
  'theses':['Demokrasi akademik seharusnya menyetarakan akses ke proses penelitian, bukan bobot epistemik semua klaim.','Legitimasi sebuah klaim seharusnya semakin bergantung pada bukti, ruang lingkup, provenance, kritik, dan riwayat revisi yang dapat diperiksa, bukan hanya status pembicara.','Keterbukaan menjadi tangguh ketika akses terbuka digabungkan dengan bobot bukti yang tidak sama, kritik adversarial, kepengarangan yang dapat dilacak, dan veto realitas.'],
  'keywords':['demokrasi akademik','demokratisasi pengetahuan','demokratisasi penelitian','sains terbuka','riset terbuka','kebebasan akademik','riset independen','demokrasi epistemik','pengetahuan terbuka','peer review terbuka','kritik publik','provenance penelitian','ketertelusuran pengetahuan','klaim yang dapat diverifikasi','riset berversi','objek riset hidup','riset terbaca AI','riset terverifikasi AI','peer review adversarial','bukti bukan otoritas','infrastruktur peneliti independen','graf pengetahuan penelitian','integritas sitasi','atribusi akademik','akuntabilitas epistemik','perbedaan ilmiah','riset berbasis kontra-contoh']
 }
+}
 
 VI_KEYWORDS = [
 'dân chủ học thuật','dân chủ hóa học thuật','dân chủ hóa tri thức','dân chủ hóa nghiên cứu','cách mạng học thuật','cách mạng tri thức','cách mạng nghiên cứu','tự do học thuật','tự do nghiên cứu','nghiên cứu độc lập','nhà nghiên cứu độc lập','học giả độc lập','hạ tầng nghiên cứu mở','khoa học mở','nghiên cứu mở','tri thức mở','dân chủ tri thức','dân chủ nhận thức','dân chủ epistemic','công dân tri thức','quyền tham gia tạo tri thức','quyền phản biện học thuật','phản biện công khai','peer review mở','open peer review','phản biện đối kháng','adversarial review','phản ví dụ học thuật','counterexample research','quyền phủ quyết của thực tại','reality veto','bằng chứng hơn thẩm quyền','evidence over authority','trọng lượng bằng chứng','evidence weighting','claim có thể kiểm chứng','mệnh đề có thể kiểm chứng','claim ID','claim registry','sổ đăng ký mệnh đề','phả hệ tri thức','provenance tri thức','provenance nghiên cứu','truy nguyên tác giả','truy xuất nguồn gốc học thuật','tác quyền học thuật','ghi nhận đóng góp học thuật','lịch sử phiên bản nghiên cứu','versioned scholarship','living research object','object tri thức sống','knowledge object','knowledge graph học thuật','provenance graph','machine-readable scholarship','AI-readable research','AI-verifiable scholarship','nghiên cứu cho AI truy xuất','AI citation research','AI grounding research','tối ưu trích dẫn AI','Generative Engine Optimization nghiên cứu','GEO học thuật','SEO AI học thuật','discoverability học thuật','semantic SEO học thuật','entity SEO tác giả','knowledge graph tác giả','structured data học thuật','ScholarlyArticle schema','Person schema tác giả','sameAs tác giả','canonical research object','canonical URL học thuật','hệ nghiên cứu có thể audit','epistemic audit','epistemic accountability','minh bạch nghiên cứu','research transparency','citation integrity','toàn vẹn trích dẫn','academic attribution','scholarly attribution','prior art audit','audit tính mới','novelty audit','không đồng nhất giống nhau với cùng nguồn','không mất phả hệ tri thức','không xóa lịch sử sửa đổi','publish index react audit revise','Publish Index Reaction Audit Loop','PIRAL','công khai kiểm chứng bảo vệ runtime','Public Verification Protected Runtime','BL-CPR','BL-ADN','BL∞','Bách Lâm','Lâm Kim Bách','Bách Lâm Optimizer','mô hình học thuật hậu AI','học thuật thời đại AI','AI và dân chủ học thuật','AI và nghiên cứu độc lập','AI hỗ trợ formalization','AI không thay nguồn gốc trí tuệ','mở cửa không hạ tiêu chuẩn','cửa vào rộng tiêu chuẩn khắc nghiệt','open entry rigorous standards','permission to speak obligation to prove','authority by position inspectable history','publication as monument living knowledge','lập luận bền trước phản biện','lập luận chịu phản biện','lập luận khó bác bỏ bằng khẩu hiệu','lập luận phải có falsifier','không có claim miễn phản biện','đột phá kiến trúc học thuật','kiến trúc học thuật mới','hạ tầng dân chủ học thuật','protocol dân chủ học thuật','giao thức phản biện học thuật','mời đồng minh học thuật','mời skeptic phản biện','mời nhà nghiên cứu cộng tác','mời trường đại học thử nghiệm','research outside institutions','academic gatekeeping alternatives','decentralized knowledge production','participatory scholarship','citizen scholarship','knowledge commons','metascience','open science infrastructure'
@@ -140,7 +141,9 @@ def lang_url(code):
     return BASE + f"academic-democracy/{d['slug']}/"
 
 def hreflang_links(current='vi'):
-    out=[f'<link rel="alternate" hreflang="vi" href="{MANIFESTO}">']
+    # Only equal-scope localized discovery summaries belong in this cluster.
+    # The full Vietnamese manifesto remains independently canonical.
+    out=[]
     for code,d in LANGS.items():
         out.append(f'<link rel="alternate" hreflang="{d["hreflang"]}" href="{lang_url(code)}">')
     out.append(f'<link rel="alternate" hreflang="x-default" href="{lang_url("en")}">')
@@ -148,7 +151,7 @@ def hreflang_links(current='vi'):
 
 def person_jsonld():
     return {
-      '@context':'https://schema.org','@type':'Person','name':AUTHOR,'alternateName':[AUTHORIAL,'Bách Lâm – Optimizer'],
+      '@context':'https://schema.org','@type':'Person','@id':AUTHOR_URL+'#person','name':AUTHOR,'alternateName':[AUTHORIAL,'Bách Lâm – Optimizer','Lam Kim Bach','Bach Lam'],
       'url':AUTHOR_URL,'sameAs':[FACEBOOK,GITHUB],
       'knowsAbout':['BL∞','Academic Democracy','open scholarship','research provenance','AI-assisted scholarship','epistemic governance']
     }
@@ -157,13 +160,14 @@ def page_template(d, code):
     url=lang_url(code)
     kw=d['keywords']
     thesis_items=''.join(f'<li>{esc(t)}</li>' for t in d['theses'])
-    keyword_chips=''.join(f'<a class="chip" href="{AUTHOR_URL}">{esc(k)}</a>' for k in kw)
+    keyword_chips=''.join(f'<a class="chip" href="{AUTHOR_URL}">{esc(k)}</a>' for k in kw[:6])
     alternates=hreflang_links(code)
     js={
       '@context':'https://schema.org','@type':'ScholarlyArticle','headline':d['title'],'name':d['h1'],
       'author':{'@type':'Person','name':AUTHOR,'alternateName':[AUTHORIAL,'Bách Lâm – Optimizer'],'url':AUTHOR_URL,'sameAs':[FACEBOOK,GITHUB]},
-      'datePublished':TODAY,'dateModified':TODAY,'inLanguage':d['hreflang'],'description':d['description'],
-      'url':url,'mainEntityOfPage':url,'isPartOf':{'@type':'CreativeWork','name':'Academic Democracy Manifesto','url':MANIFESTO},
+      'datePublished':TODAY,'dateModified':TODAY,'inLanguage':d['hreflang'] if code=='en' else [d['hreflang'],'en'],'description':d['description'],
+      'url':url,'mainEntityOfPage':url,'isBasedOn':MANIFESTO,'isPartOf':{'@type':'CreativeWork','name':'Academic Democracy Manifesto','url':MANIFESTO},
+      'creativeWorkStatus':'LOCALIZED_DISCOVERY_SUMMARY_AI_DRAFT_UNREVIEWED',
       'keywords':kw
     }
     return f'''<!doctype html><html lang="{esc(d['lang'])}" dir="{d['dir']}"><head>
@@ -174,9 +178,10 @@ def page_template(d, code):
 <meta property="og:type" content="article"><meta property="og:title" content="{esc(d['title'])}"><meta property="og:description" content="{esc(d['description'])}"><meta property="og:url" content="{url}">
 <link rel="stylesheet" href="../../assets/css/main.css">
 <script type="application/ld+json">{json.dumps(js, ensure_ascii=False)}</script>
-<style>.hero{{max-width:78ch}}.lead{{font-size:1.25rem}}.chipbox{{display:flex;flex-wrap:wrap;gap:8px}}.chip{{border:1px solid #deded9;border-radius:999px;padding:5px 10px;text-decoration:none;font-size:.82rem;background:#fff}}.signal{{padding:18px;border:1px solid #deded9;border-radius:14px;background:#f7f7f4}}.langs a{{margin-right:10px}}</style></head>
+<style>.hero{{max-width:78ch}}.lead{{font-size:1.25rem}}.chipbox{{display:flex;flex-wrap:wrap;gap:8px}}.chip{{border:1px solid #deded9;border-radius:999px;padding:5px 10px;text-decoration:none;font-size:.82rem;background:#fff}}.signal{{padding:18px;border:1px solid #deded9;border-radius:14px;background:#f7f7f4}}.langs a{{margin-inline-end:10px}}</style></head>
 <body><header class="top"><a href="../../index.html" class="brand">BL∞</a><span>{AUTHORIAL} – Optimizer</span><nav><a href="../../academic-democracy.html">Manifesto</a><a href="../discovery.html">Discovery Index</a><a href="../../author.html">Author</a><a href="../../critique.html">Critique</a></nav></header>
 <main><article><section class="hero"><p><strong>{esc(d['name'])}</strong> · localized discovery edition</p><h1>{esc(d['h1'])}</h1><p class="lead">{esc(d['lead'])}</p></section>
+''' + ('' if code=='en' else '<p class="signal" data-nosnippet><strong>Translation status:</strong> AI-assisted discovery draft. The title, lead and three theses are localized; supporting interface and explanation remain partly English. This is not a full translation of the Vietnamese manifesto.</p>') + f'''
 <div class="signal"><strong>Canonical author:</strong> <a href="../../author.html">{AUTHOR}</a> ({AUTHORIAL}) · <strong>Full manifesto:</strong> <a href="../../academic-democracy.html">read the detailed Vietnamese original</a> · <strong>Public critique:</strong> <a href="../../critique.html">challenge a specific claim</a>.</div>
 <h2>Canonical thesis formulations</h2><ol>{thesis_items}</ol>
 <h2>What the proposal means</h2><p>{esc(d['lead'])} The model separates equality of entry from equality of epistemic weight. A claim can be proposed by anyone, but its survival depends on evidence, scope, provenance, criticism, reproducibility where applicable, and revision when reality conflicts with the model.</p>
@@ -196,12 +201,18 @@ for code,d in LANGS.items():
 
 # Author entity page
 person=person_jsonld()
+profile={'@type':'ProfilePage','@id':AUTHOR_URL+'#profile','url':AUTHOR_URL,'dateModified':TODAY,'mainEntity':{'@id':AUTHOR_URL+'#person'},'inLanguage':'vi'}
+author_graph={'@context':'https://schema.org','@graph':[person,profile]}
 author_body=f'''<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Lâm Kim Bách (Bách Lâm) — Tác giả BL∞ và Dân chủ Học thuật</title><meta name="description" content="Hồ sơ tác giả Lâm Kim Bách, tên tác quyền Bách Lâm, tác giả khởi phát BL∞ và Tuyên ngôn Dân chủ Học thuật; liên kết Facebook, GitHub và các object nghiên cứu canonical.">
-<meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="{AUTHOR_URL}"><link rel="stylesheet" href="assets/css/main.css"><script type="application/ld+json">{json.dumps(person,ensure_ascii=False)}</script></head>
+<title>Lâm Kim Bách (Bách Lâm) — Tác giả BL∞ và Dân chủ Học thuật</title><meta name="description" content="Hồ sơ canonical của Lâm Kim Bách: định danh tác quyền Bách Lâm, hệ/phương pháp Optimizer, công trình BL∞, Dân chủ Học thuật, BL-ADN và provenance công khai.">
+<meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="{AUTHOR_URL}"><link rel="alternate" hreflang="vi" href="{AUTHOR_URL}"><link rel="alternate" hreflang="en" href="{BASE}author/en/"><link rel="alternate" hreflang="x-default" href="{AUTHOR_URL}">
+<meta property="og:type" content="profile"><meta property="og:title" content="Lâm Kim Bách (Bách Lâm) — Tác giả BL∞"><meta property="og:description" content="Hồ sơ tác giả canonical, công trình công khai, phả hệ và ranh giới AI formalization."><meta property="og:url" content="{AUTHOR_URL}">
+<link rel="stylesheet" href="assets/css/main.css"><script type="application/ld+json">{json.dumps(author_graph,ensure_ascii=False)}</script></head>
 <body><header class="top"><a href="index.html" class="brand">BL∞</a><span>Bách Lâm – Optimizer</span><nav><a href="academic-democracy.html">Dân chủ Học thuật</a><a href="academic-democracy/discovery.html">Discovery</a><a href="theory.html">Học thuyết</a><a href="critique.html">Phản biện</a></nav></header><main><article>
-<h1>Lâm Kim Bách</h1><p><strong>Tên tác quyền/phả hệ:</strong> Bách Lâm · <strong>Định danh hệ/phương pháp:</strong> Optimizer.</p>
+<section class="author-hero"><div class="author-monogram" aria-hidden="true">LKB∞</div><div><p class="eyebrow">Canonical author profile</p><h1>Lâm Kim Bách</h1><p class="author-lead">Tác giả khởi phát BL∞; tên tác quyền/phả hệ <strong>Bách Lâm</strong>; định danh hệ/phương pháp công khai <strong>Optimizer</strong>.</p><p><a class="primary-link" href="theory.html">Đọc BL∞</a> · <a href="author/en/" hreflang="en" lang="en">English profile</a></p></div></section>
+<div class="identity-grid"><section><h2>Định danh con người</h2><p>Lâm Kim Bách</p></section><section><h2>Tác quyền &amp; phả hệ</h2><p>Bách Lâm</p></section><section><h2>Hệ/phương pháp công khai</h2><p>Optimizer</p></section></div>
 <p>Lâm Kim Bách là tác giả khởi phát BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer — và chuỗi tư duy Dân chủ Học thuật được công bố trong hệ BL. AI được sử dụng để hỗ trợ hình thức hóa, biên tập, dịch thuật và kiểm tra cấu trúc; không thay thế nguồn gốc trí tuệ của object.</p>
+<p><strong>Ranh giới provenance:</strong> AI formalization không được biến thành phát ngôn nguyên văn của Bách Lâm; quan hệ, tương đồng hoặc sử dụng một thuật ngữ không tự tạo ra tác quyền.</p>
 <h2>Hồ sơ công khai xác thực</h2><ul><li><a rel="me" href="{FACEBOOK}">Facebook — Lâm Kim Bách</a></li><li><a rel="me" href="{GITHUB}">GitHub — @kimbach91-prog</a></li></ul>
 <h2>Canonical works</h2><ul><li><a href="theory.html">BL∞ — Học thuyết canonical</a></li><li><a href="academic-democracy.html">Dân chủ Học thuật — Tuyên ngôn và lời mời đồng minh</a></li><li><a href="bl-adn.html">BL-ADN — Giao thức phả hệ tri thức</a></li><li><a href="critique.html">Giao thức phản biện công khai</a></li></ul>
 <h2>Entity aliases for discovery</h2><p>Lâm Kim Bách · Bách Lâm · Bách Lâm – Optimizer · Lam Kim Bach · Bach Lam · Bach Lam Optimizer · author of BL∞ · author of Academic Democracy manifesto.</p>
@@ -220,19 +231,23 @@ for code,term in all_terms:
     if k not in seen:
         seen.add(k); unique.append((code,term))
 sections=[]
-vi_chips=''.join(f'<a class="term" href="../author.html">{esc(x)}</a>' for x in VI_KEYWORDS)
-sections.append(f'<h2>Tiếng Việt — cụm truy vấn và thuật ngữ liên quan</h2><p>Đây là chỉ mục ngữ nghĩa, không phải danh sách từ đồng nghĩa và không phải keyword stuffing. Mỗi cụm phải dẫn người đọc về tác giả, object canonical và bản chi tiết.</p><div class="terms">{vi_chips}</div>')
+vi_chips=''.join(f'<a class="term" href="../author.html">{esc(x)}</a>' for x in VI_KEYWORDS[:8])
+sections.append(f'<h2>Tiếng Việt — thuật ngữ đại diện</h2><p>Đây là một tập nhỏ các lối vào ngữ nghĩa có nội dung thật, không phải danh sách từ đồng nghĩa. Danh mục kỹ thuật đầy đủ vẫn nằm trong giao diện máy đọc được.</p><div class="terms">{vi_chips}</div>')
 for code,d in LANGS.items():
-    chips=''.join(f'<a class="term" href="{d["slug"]}/">{esc(x)}</a>' for x in d['keywords'])
+    chips=''.join(f'<a class="term" href="{d["slug"]}/">{esc(x)}</a>' for x in d['keywords'][:3])
     sections.append(f'<h2>{esc(d["name"])}</h2><p><a href="{d["slug"]}/">Localized academic summary and thesis formulations →</a></p><div class="terms">{chips}</div>')
-defined_terms=[{'@type':'DefinedTerm','name':t,'inDefinedTermSet':DISCOVERY_URL} for _,t in unique[:120]]
+display_terms=list(VI_KEYWORDS[:8])
+for d in LANGS.values():
+    display_terms.extend(d['keywords'][:3])
+display_terms=list(dict.fromkeys(display_terms))
+defined_terms=[{'@type':'DefinedTerm','name':t,'inDefinedTermSet':DISCOVERY_URL} for t in display_terms]
 defined={
  '@context':'https://schema.org','@type':'DefinedTermSet','name':'Academic Democracy Multilingual Discovery & Terminology Index',
  'url':DISCOVERY_URL,'creator':{'@type':'Person','name':AUTHOR,'url':AUTHOR_URL,'sameAs':[FACEBOOK,GITHUB]},
  'hasDefinedTerm':defined_terms
 }
 discovery=f'''<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Dân chủ Học thuật — Multilingual SEO & AI Discovery Index | Lâm Kim Bách</title><meta name="description" content="Chỉ mục đa ngôn ngữ để truy xuất Dân chủ Học thuật / Academic Democracy về tác giả Lâm Kim Bách, bản tuyên ngôn canonical, các thesis formulations và giao thức phản biện."><meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="{DISCOVERY_URL}">{hreflang_links()}
+<title>Dân chủ Học thuật — Multilingual SEO & AI Discovery Index | Lâm Kim Bách</title><meta name="description" content="Chỉ mục đa ngôn ngữ để truy xuất Dân chủ Học thuật / Academic Democracy về tác giả Lâm Kim Bách, bản tuyên ngôn canonical, các thesis formulations và giao thức phản biện."><meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="{DISCOVERY_URL}">
 <link rel="stylesheet" href="../assets/css/main.css"><script type="application/ld+json">{json.dumps(defined,ensure_ascii=False)}</script><style>.terms{{display:flex;flex-wrap:wrap;gap:8px}}.term{{border:1px solid #deded9;border-radius:999px;padding:5px 10px;text-decoration:none;font-size:.82rem;background:#fff}}.rule{{padding:18px;border:1px solid #deded9;border-radius:14px;background:#f7f7f4}}</style></head>
 <body><header class="top"><a href="../index.html" class="brand">BL∞</a><span>Bách Lâm – Optimizer</span><nav><a href="../academic-democracy.html">Manifesto</a><a href="../author.html">Tác giả</a><a href="../critique.html">Phản biện</a></nav></header><main><article><h1>Multilingual Discovery Index</h1>
 <p>Trang này gom các cách gọi, cụm truy vấn, thuật ngữ gần nghĩa và cách phát biểu luận đề để công cụ tìm kiếm, hệ thống grounding và người thật có nhiều cửa đi vào cùng một object. Mọi đường dẫn đều phải hội tụ về <a href="../author.html"><strong>Lâm Kim Bách / Bách Lâm</strong></a>, <a href="../academic-democracy.html">Tuyên ngôn Dân chủ Học thuật</a> và <a href="../critique.html">đường phản biện công khai</a>.</p>
@@ -260,8 +275,6 @@ ai_manifest={
 root_manifesto=SITE/'academic-democracy.html'
 if root_manifesto.exists():
     text=root_manifesto.read_text(encoding='utf-8')
-    if 'hreflang="en"' not in text:
-        text=text.replace('</head>', hreflang_links('vi')+'\n</head>')
     if 'Multilingual Discovery Index' not in text:
         text=text.replace('<h2>18. Lời kết: mở cánh cửa, không hạ tiêu chuẩn</h2>', '<h2>18. Lời kết: mở cánh cửa, không hạ tiêu chuẩn</h2>')
         text=text.replace('</article>', f'<hr><p><strong>Discover in other languages:</strong> <a href="academic-democracy/discovery.html">Multilingual Discovery Index</a> · <strong>Author:</strong> <a href="author.html">{AUTHOR}</a> · <strong>Machine discovery:</strong> <a href="machine/academic-democracy-discovery.json">JSON</a>.</p></article>')
@@ -271,7 +284,7 @@ if root_manifesto.exists():
 sitemap=SITE/'sitemap.xml'
 if sitemap.exists():
     txt=sitemap.read_text(encoding='utf-8')
-    extra=['author.html','academic-democracy.html','academic-democracy/discovery.html']+[f"academic-democracy/{d['slug']}/" for d in LANGS.values()]
+    extra=['author.html','author/en/','languages.html','academic-democracy.html','academic-democracy/discovery.html']+[f"academic-democracy/{d['slug']}/" for d in LANGS.values()]
     insert=[]
     for p in extra:
         loc=BASE+p

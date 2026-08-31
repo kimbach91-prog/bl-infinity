@@ -8,9 +8,6 @@ updates:
       time: "04:30"
       timezone: "Asia/Bangkok"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "security"
     groups:
       python-build-dependencies:
         patterns:
@@ -27,6 +24,3 @@ updates:
       time: "04:45"
       timezone: "Asia/Bangkok"
     open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "security"
