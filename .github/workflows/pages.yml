@@ -1,6 +1,7 @@
 # BL∞ verification workflow.
-# Publication is normally manual. This revision publishes the requested Grand Ending release from main.
-name: Audit BL∞; publish requested release
+# Governance: automated events are AUDIT-ONLY. Public Pages publication requires an explicit owner command.
+# Explicit owner command = workflow_dispatch OR an owner-authored main push whose head commit contains [OWNER-PUBLISH].
+name: Audit BL∞; explicit owner publish
 
 on:
   pull_request:
@@ -111,14 +112,15 @@ jobs:
       - name: Audit navigation, accessibility and internal links
         run: python scripts/navigation_audit.py --strict
 
-      - name: Upload Pages artifact for requested publish
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+      - name: Upload Pages artifact only on explicit manual publish
+        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b # v4
         with:
           path: "site"
 
   deploy:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    # Automated PR/schedule/ordinary pushes are audit-only.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
     permissions:
       contents: read
       pages: write
@@ -136,7 +138,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
 
-      - name: Notify IndexNow after publish
+      - name: Notify IndexNow only after explicit manual publish
         shell: bash
         run: |
           curl --proto '=https' --tlsv1.2 --fail-with-body --retry 2 -X POST 'https://api.indexnow.org/IndexNow' \
