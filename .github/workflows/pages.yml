@@ -62,6 +62,7 @@ jobs:
           scripts/navigation_audit.py
           scripts/run_discovery.py
           scripts/stage_grand_ending_home.py
+          scripts/stage_novel.py
 
       - name: Enforce BL-GWG public Git write gate
         run: python scripts/git_publication_gate.py --strict --tree
@@ -89,7 +90,10 @@ jobs:
           cp public/grand-ending.html site/grand-ending.html
           cp public/world.html site/world.html
 
-      - name: Link world narrative, UNKNOWN Doctrine and Grand Ending from homepage
+      - name: Stage serialized novel
+        run: python scripts/stage_novel.py
+
+      - name: Link novel, world narrative, UNKNOWN Doctrine and Grand Ending from homepage
         run: python scripts/stage_grand_ending_home.py
 
       - name: Build multilingual SEO and AI discovery layer locally
@@ -106,6 +110,7 @@ jobs:
           cp machine/unknown-doctrine.json site/machine/unknown-doctrine.json
           cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
           cp machine/compressed-regression-hypothesis.json site/machine/compressed-regression-hypothesis.json
+          cp machine/novel-canon.json site/machine/novel-canon.json
 
       - name: Apply bilingual and browser hardening layer locally
         run: python scripts/harden_site.py
@@ -158,6 +163,8 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/",
               "https://kimbach91-prog.github.io/bl-infinity/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/world.html",
+              "https://kimbach91-prog.github.io/bl-infinity/novel/",
+              "https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html",
               "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
               "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/en/",
