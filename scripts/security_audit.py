@@ -23,6 +23,7 @@ required = [
     ROOT / "translations/translation-index.json",
     ROOT / "translations/en/README.md",
     ROOT / "translations/en/THEORY_CORE.md",
+    ROOT / "public/academic-democracy-technology.html",
     ROOT / "scripts/build.py",
     ROOT / "scripts/harden_site.py",
     ROOT / ".github/workflows/pages.yml",
@@ -60,6 +61,7 @@ for marker in [
     "translation-status.json",
     "security-profile.json",
     "en/theory.html",
+    "academic-democracy-technology.html",
     "sha256_file",
     "hreflang",
 ]:
@@ -87,6 +89,7 @@ for marker in [
     "python scripts/harden_site.py",
     "python scripts/security_audit.py --strict --site",
     "pip-audit -r requirements.txt",
+    "cp public/academic-democracy-technology.html site/academic-democracy-technology.html",
 ]:
     if marker not in workflow:
         errors.append(f"pages workflow missing security marker: {marker}")
@@ -193,6 +196,7 @@ if args.site:
             "en/theory.html",
             "en/index.html",
             "translations/translation-index.json",
+            "academic-democracy-technology.html",
         ]:
             if not (SITE / rel).exists():
                 errors.append(f"generated bilingual/security artifact missing: {rel}")
@@ -200,7 +204,7 @@ if args.site:
         if manifest_path.exists():
             try:
                 manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
-                for field in ["languages", "translation_status", "security_profile"]:
+                for field in ["languages", "translation_status", "security_profile", "academic_democracy_technology_profile"]:
                     if not manifest.get(field):
                         errors.append(f"generated machine manifest missing field: {field}")
             except Exception as exc:
