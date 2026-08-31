@@ -19,6 +19,7 @@ Because the `bl-infinity` repository and its GitHub Pages site are public, **any
 - `claims.json` — public claim registry; not private reasoning traces.
 - `novelty-ontology.json` — public ontology required to interpret novelty labels.
 - `logic-stack.json` — **reduced conceptual projection only**. It must not enumerate the production router, operator sequence, activation logic, ranking, weights or private implementation graph.
+- `bl-hrd.json` — public BL-HRD doctrine/state-machine contract: hypothesis-object schema, public conceptual state sequence, invariants, rights boundaries, reality-depth classes and anti-collapse guards. It is **not** the private routing implementation or weighting system.
 - `graph.jsonld` — reduced public entity/relation graph.
 - `historical-graph.jsonld` — reduced public chronology/origin projection; no raw conversation or private provenance payload.
 - `bl-reverse-system.json` — public interface contract only; no adversarial production runtime.
@@ -54,10 +55,11 @@ A machine resource may expose only the minimum information required to identify,
 
 ## Graph boundaries
 
-`logic-stack.json` is not chronology and is not a runtime router. `historical-graph.jsonld` is not a dependency graph. Relatedness, lineage membership, dependency, identity and historical priority remain distinct relations.
+`logic-stack.json` is not chronology and is not a runtime router. `historical-graph.jsonld` is not a dependency graph. `bl-hrd.json` exposes a public epistemic state machine, not production scheduling/ranking logic. Relatedness, lineage membership, dependency, identity and historical priority remain distinct relations.
 
 ```text
 Lineage != Dependency != Identity != Historical Priority
+ConceptualStateMachine != ProductionRouter
 ```
 
 Machine readability, graph density, indexability or architectural complexity do not prove truth or novelty.
@@ -65,6 +67,10 @@ Machine readability, graph density, indexability or architectural complexity do 
 ## BL-REV boundary
 
 The BL-REV public JSON declares only purpose, public inputs/outputs, authority limits, guardrails, falsifiers and reference behavior. Internal activation, target ranking, operator inventory, sequencing and diagnostics remain outside this repository.
+
+## BL-HRD boundary
+
+The BL-HRD public machine contract may declare the conceptual path from reality gap to hypothesis formation, preservation, mapping, depth/risk classification, verification, Reality Veto, state transition, lineage, negative-knowledge capture and recursive discovery. It may declare invariants such as `preserve != endorse` and `right_to_propose != right_to_execute`. It must not publish private routing weights, target ranking, operational triggers or protected execution playbooks.
 
 ## Discovery rule
 
