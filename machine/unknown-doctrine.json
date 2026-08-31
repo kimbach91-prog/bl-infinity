@@ -1,0 +1,177 @@
+{
+  "schema": "BL_UNKNOWN_DOCTRINE_1",
+  "status": "PUBLIC_RESEARCH_DOCTRINE",
+  "canonicality": "OPEN_NON_FINAL_MODEL",
+  "title_vi": "Học thuyết UNKNOWN — Không gian Chưa-biết Mở",
+  "title_en": "UNKNOWN Doctrine — Open Unknown Field",
+  "author": {
+    "name": "Lâm Kim Bách",
+    "lineage": "Bách Lâm",
+    "method_identity": "Optimizer"
+  },
+  "published": "2026-09-01",
+  "source": "content/51_UNKNOWN_DOCTRINE_OPEN_UNKNOWN_FIELD.md",
+  "public_page": "unknown.html",
+  "formalization_support": "AI-assisted drafting under author direction",
+  "nonclaims": [
+    "UNKNOWN is not claimed here as a scientifically established physical field.",
+    "Unknown-unknown is not treated as known hidden content.",
+    "Persistent anomaly is not proof of a new ontology.",
+    "The doctrine does not claim the final nature of indeterminacy, consciousness, or the universe.",
+    "No finite taxonomy in this object is claimed to exhaust UNKNOWN."
+  ],
+  "axioms": [
+    "UNKNOWN != Falsehood",
+    "UNKNOWN != ZeroInformation",
+    "UNKNOWN != OneMissingScalar",
+    "UNKNOWN != AlwaysAProblemToEliminate",
+    "UNKNOWN != MereIgnorance",
+    "UnknownUnknownIndicator != KnownUnknownContent",
+    "Prediction != Understanding",
+    "Understanding != PerfectPrediction",
+    "CanKnow(X) != MustKnow(X)",
+    "CanInfer(X) != RightToInfer(X)"
+  ],
+  "relational_model": {
+    "formula": "U(x,t)=U(Observer_t,Model_t,Reality_t,Context_t,Access_t,Representation_t,Question_t,History_t,ActionSpace_t,...)",
+    "meaning": "UNKNOWN is modeled as a dynamic relation, not merely a blank value slot.",
+    "open_dimension_rule": "The ellipsis is architectural: current dimensions are never treated as exhaustive."
+  },
+  "core_propositions": [
+    {
+      "id": "U-P1",
+      "text": "UNKNOWN is not equivalent to falsehood."
+    },
+    {
+      "id": "U-P2",
+      "text": "UNKNOWN may contain structured information even when a precise value is absent.",
+      "formal": "UNKNOWN != InformationZero"
+    },
+    {
+      "id": "U-P3",
+      "text": "UNKNOWN is not generally reducible to one missing scalar value."
+    },
+    {
+      "id": "U-P4",
+      "text": "The shape of an UNKNOWN depends on observer, model, context, access, representation, question and causal history."
+    },
+    {
+      "id": "U-P5",
+      "text": "Unknown-unknown can only be approached through indicators of missing structure; naming it does not reveal its content."
+    },
+    {
+      "id": "U-P6",
+      "text": "Persistent structured residual creates a missing-structure candidate, not automatic ontology promotion."
+    },
+    {
+      "id": "U-P7",
+      "text": "Knowledge growth can increase the frontier of recognized UNKNOWN.",
+      "formal": "DeltaK>0 and DeltaU_recognized>0 may hold simultaneously"
+    },
+    {
+      "id": "U-P8",
+      "text": "False-known can be more dangerous than declared UNKNOWN when consequential decisions depend on correction."
+    },
+    {
+      "id": "U-P9",
+      "text": "Some UNKNOWN carries option value, agency value, privacy value or creative value and should not be eliminated by default."
+    },
+    {
+      "id": "U-P10",
+      "text": "Cognitive systems can generate endogenous UNKNOWN through compression, abstraction, filtering, taxonomy, incentive and memory decay."
+    },
+    {
+      "id": "U-P11",
+      "text": "Epistemic diversity can reduce correlated blind spots; many agents with the same blind spot can amplify error.",
+      "formal": "CollectiveIntelligence != sum(isolated IQ)"
+    },
+    {
+      "id": "U-P12",
+      "text": "Intelligence includes the capacity to remain coherent, corrigible and functional after model failure."
+    },
+    {
+      "id": "U-P13",
+      "text": "Future UNKNOWN may include not-yet-realized states rather than hidden present values."
+    },
+    {
+      "id": "U-P14",
+      "text": "UNKNOWN can have provenance, causal history and lineage."
+    },
+    {
+      "id": "U-P15",
+      "text": "UNKNOWN need not terminate in KNOWN; it may be reframed, become obsolete, close as a branch, reopen, or become contested."
+    },
+    {
+      "id": "U-P16",
+      "text": "Open-ended intelligence may co-evolve with the depth and structure of the UNKNOWN it can perceive and survive."
+    }
+  ],
+  "unknown_unknown_signals": [
+    "structured residual",
+    "persistent directional error",
+    "cross-model shared failure",
+    "compression failure",
+    "category leakage",
+    "unexplained dependence",
+    "repeated ad-hoc patching",
+    "boundary anomaly",
+    "measurement blind spot"
+  ],
+  "unknown_weight_heuristic": {
+    "formula": "UnknownWeight(U) ~= CausalCentrality * DecisionSensitivity * IrreversibilityExposure * PropagationDepth * ModelDependence",
+    "status": "RESEARCH_HEURISTIC_NOT_PHYSICAL_LAW",
+    "purpose": "Prioritize UNKNOWN by downstream consequence rather than surface size."
+  },
+  "intelligence_unknown_vector": [
+    "DetectUnknown",
+    "PreserveUnknown",
+    "RankUnknownWeight",
+    "ActUnderUncertainty",
+    "GenerateTests",
+    "DetectFalseKnown",
+    "DetectRepresentationFailure",
+    "MutateOntology",
+    "PreserveCountermodels",
+    "CoordinateDiverseObservers",
+    "MaintainContinuityAfterModelBreak",
+    "RecoverFromSurprise",
+    "PreserveOptionality",
+    "..."
+  ],
+  "state_transitions": [
+    "UNKNOWN -> KNOWN",
+    "UNKNOWN -> REFRAMED",
+    "UNKNOWN -> OBSOLETE",
+    "UNKNOWN -> BRANCH_CLOSED",
+    "UNKNOWN -> UNREPRESENTABLE_AGAIN",
+    "KNOWN -> UNKNOWN",
+    "KNOWN -> CONTESTED"
+  ],
+  "canonical_chain": [
+    "REALITY/GIA_TAI/FUTURE/SIGNAL",
+    "OBSERVER+HISTORY+ACCESS+MODEL",
+    "DISTINCTION/REPRESENTATION/QUESTION",
+    "KNOWN+UNKNOWN+FALSE_KNOWN_RISK",
+    "RESIDUAL/SURPRISE/CONTRADICTION/SILENCE",
+    "MISSING_VALUE_OR_RELATION_OR_ACCESS_OR_PRIMITIVE_OR_DIMENSION_OR_WRONG_QUESTION_OR_NOT_YET_REAL_OR_ADVERSARIAL_OR_CHOSEN_UNKNOWN",
+    "PRESERVE_BEFORE_CLOSURE",
+    "SEARCH/EXPERIMENT/SIMULATION/COOPERATION/WAITING/REFRAMING",
+    "MODEL_CHANGE_OR_REALITY_CHANGE_OR_OBSERVER_CHANGE",
+    "KNOWN_PRIME+UNKNOWN_PRIME+NEW_FRONTIER",
+    "ACTION/FEEDBACK/CONSEQUENCE",
+    "INTELLIGENCE_EVOLVES",
+    "DEEPER_UNKNOWN_BECOMES_PERCEIVABLE"
+  ],
+  "grand_ending_relation": {
+    "claim": "UNKNOWN competence is modeled as part of epistemic survivability against low-generativity terminal convergence.",
+    "risks": [
+      "unseen risk class",
+      "wrong-attractor optimization",
+      "correlated blindness",
+      "false certainty",
+      "ontology closure",
+      "optionality destruction for predictability"
+    ]
+  },
+  "governance_rule": "Detect fast; preserve carefully; test aggressively; commit slowly; keep provenance; never turn model limits into reality limits."
+}
