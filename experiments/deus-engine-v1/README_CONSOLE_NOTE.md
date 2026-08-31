@@ -1,0 +1,1 @@
+The dedicated owner command thread should be a GitHub Issue whose title begins with `[DEUS]`. The active workflow only accepts `/deus` comments from the repository owner account.
