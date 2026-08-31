@@ -90,6 +90,7 @@ jobs:
           cp machine/bl-hrd.json site/machine/bl-hrd.json
           cp machine/bl-infinity-unified-system.json site/machine/bl-infinity-unified-system.json
           cp machine/unified-constituents.json site/machine/unified-constituents.json
+          cp machine/reality-gia-tai-topology.json site/machine/reality-gia-tai-topology.json
 
       - name: Apply bilingual and browser hardening layer
         run: python scripts/harden_site.py
