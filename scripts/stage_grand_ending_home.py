@@ -9,12 +9,15 @@ def main() -> None:
 
     nav_anchor = '<a href="theory.html">Học thuyết</a>'
     world_nav = '<a href="world.html">Bản kể</a>'
+    novel_nav = '<a href="novel/">Tiểu thuyết</a>'
     unknown_nav = '<a href="unknown.html">UNKNOWN</a>'
     grand_nav = '<a href="grand-ending.html">Đại Kết Cục</a>'
     if nav_anchor in text:
         additions = ''
         if world_nav not in text:
             additions += world_nav
+        if novel_nav not in text:
+            additions += novel_nav
         if unknown_nav not in text:
             additions += unknown_nav
         if grand_nav not in text:
@@ -22,6 +25,13 @@ def main() -> None:
         if additions:
             text = text.replace(nav_anchor, nav_anchor + additions, 1)
 
+    novel_entry = (
+        '<li class="novel-entry"><a href="novel/">'
+        '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Tiểu thuyết dài kỳ</strong>'
+        '<span>Fiction surface riêng: Bách Lâm là nhân vật chính, compressed seed, UNKNOWN, khoa học, người và AGI, '
+        'hợp tác nhân loại và hành trình giữ cho thực tại còn khả năng sinh tương lai mới.</span>'
+        '</a></li>'
+    )
     world_entry = (
         '<li class="world-narrative-entry"><a href="world.html">'
         '<strong>Lần Hồi Quy Thứ Một Triệu · Bản nghiên cứu kể chuyện</strong>'
@@ -47,6 +57,8 @@ def main() -> None:
         raise RuntimeError("home-directory-grid anchor not found")
 
     entries = ''
+    if 'class="novel-entry"' not in text:
+        entries += novel_entry
     if 'class="world-narrative-entry"' not in text:
         entries += world_entry
     if 'class="unknown-doctrine-entry"' not in text:
@@ -57,7 +69,7 @@ def main() -> None:
         text = text.replace(directory_anchor, directory_anchor + entries, 1)
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ world narrative + UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
+    print("BL∞ novel + world narrative + UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
