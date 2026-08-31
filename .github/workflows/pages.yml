@@ -84,6 +84,7 @@ jobs:
         run: |
           cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
           cp machine/bl-hrd.json site/machine/bl-hrd.json
+          cp machine/bl-infinity-unified-system.json site/machine/bl-infinity-unified-system.json
 
       - name: Apply bilingual and browser hardening layer
         run: python scripts/harden_site.py
