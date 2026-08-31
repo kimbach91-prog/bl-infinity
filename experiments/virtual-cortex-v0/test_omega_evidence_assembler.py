@@ -132,6 +132,42 @@ class EvidenceAssemblerTests(unittest.TestCase):
         self.assertFalse(result.exact_identity_head_resolved)
         self.assertIsNone(result.identity_parent_head)
 
+    def test_candidate_projection_can_close_state_restoration_gates_only(self) -> None:
+        result = omega.assemble(base_bundle())
+        candidate = omega.CandidateProjection(
+            invariant_refs=list(result.capsule["invariant_refs"]),
+            unresolved_conflicts=list(result.capsule["unresolved_conflicts"]),
+            capability_digest=result.capability_digest,
+        )
+        validation = omega.validate_candidate_projection(result, candidate)
+        self.assertTrue(validation.invariants_reconstructed)
+        self.assertTrue(validation.conflicts_restored)
+        self.assertTrue(validation.capability_digest_valid)
+        self.assertFalse(validation.promotion_allowed)
+
+    def test_candidate_projection_missing_conflict_fails_restoration(self) -> None:
+        result = omega.assemble(base_bundle())
+        candidate = omega.CandidateProjection(
+            invariant_refs=list(result.capsule["invariant_refs"]),
+            unresolved_conflicts=[],
+            capability_digest=result.capability_digest,
+        )
+        validation = omega.validate_candidate_projection(result, candidate)
+        self.assertTrue(validation.invariants_reconstructed)
+        self.assertFalse(validation.conflicts_restored)
+        self.assertTrue(validation.capability_digest_valid)
+
+    def test_candidate_projection_wrong_capability_digest_fails_match(self) -> None:
+        result = omega.assemble(base_bundle())
+        candidate = omega.CandidateProjection(
+            invariant_refs=list(result.capsule["invariant_refs"]),
+            unresolved_conflicts=list(result.capsule["unresolved_conflicts"]),
+            capability_digest="sha256:wrong",
+        )
+        validation = omega.validate_candidate_projection(result, candidate)
+        self.assertFalse(validation.capability_digest_valid)
+        self.assertFalse(validation.promotion_allowed)
+
     def test_public_mechanism_has_no_private_topology_markers(self) -> None:
         text = MODULE_PATH.read_text(encoding="utf-8")
         for marker in ("drive.google.com", "docs.google.com", "1ZECnf7", "1hqSX"):
