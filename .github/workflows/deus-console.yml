@@ -1,4 +1,4 @@
-name: DEUS GitHub Console
+name: Kernel Lab Console
 
 on:
   issue_comment:
@@ -12,13 +12,13 @@ jobs:
   console:
     if: >-
       github.actor == 'kimbach91-prog' &&
-      startsWith(github.event.issue.title, '[DEUS]') &&
-      startsWith(github.event.comment.body, '/deus')
+      startsWith(github.event.issue.title, '[KERNEL-LAB]') &&
+      startsWith(github.event.comment.body, '/kernel')
     runs-on: ubuntu-latest
     timeout-minutes: 5
 
     steps:
-      - name: Checkout experimental DEUS engine
+      - name: Checkout experimental kernel branch
         uses: actions/checkout@v4
         with:
           ref: proto/deus-engine-v1
@@ -36,20 +36,20 @@ jobs:
           import os
           from pathlib import Path
           raw = os.environ['RAW_COMMENT']
-          text = raw[len('/deus'):].lstrip()
+          text = raw[len('/kernel'):].lstrip()
           if not text:
               text = 'No stimulus supplied. Hold unknown and request a concrete stimulus.'
-          Path('/tmp/deus_stimulus.txt').write_text(text, encoding='utf-8')
+          Path('/tmp/kernel_stimulus.txt').write_text(text, encoding='utf-8')
           PY
 
-      - name: Run model-independent DEUS kernel
+      - name: Run public model-independent kernel smoke surface
         run: |
           cd experiments/deus-engine-v1
-          python github_console.py "$(cat /tmp/deus_stimulus.txt)" > /tmp/deus_reply.md
+          python github_console.py "$(cat /tmp/kernel_stimulus.txt)" > /tmp/kernel_reply.md
 
-      - name: Reply to console thread
+      - name: Reply to public lab thread
         env:
           GH_TOKEN: ${{ github.token }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/deus_reply.md
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body-file /tmp/kernel_reply.md
