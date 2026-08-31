@@ -1,0 +1,81 @@
+{
+  "schema_version": "0.1",
+  "id": "BL-INF-CONSTITUENTS",
+  "parent": "BL-INF-UNIFY",
+  "canonical_source": "../content/45_UNIFIED_CONSTITUENT_PROFILES.md",
+  "purpose": "Public identity/role/interface registry for major BL∞ constituents that previously existed across separate doctrine or runtime surfaces.",
+  "profiles": [
+    {
+      "id": "RVT",
+      "name_vi": "Học thuyết Quyền Phủ quyết của Thực tại",
+      "name_en": "Reality Veto Theory",
+      "role": "constitutional reality correction theory",
+      "status": "canonical-integration-profile",
+      "components": ["RVP", "RVTP", "RVL"],
+      "authority_boundary": "RVT formalizes Reality Veto but is itself subject to Reality Veto",
+      "source_state": "full doctrine source preserved separately"
+    },
+    {
+      "id": "BLEE",
+      "name_vi": "Nhận thức luận Đồng đẳng Thực thi Bách Lâm",
+      "role": "epistemic standing constitution",
+      "status": "canonical-integration-profile",
+      "core": ["equal_epistemic_standing", "unequal_evidential_weight", "reality_veto", "recursive_correction"],
+      "relation_to_academic_democracy": "FORMALIZES/OVERLAPS_WITH; Academic Democracy is public governance implementation, not declared identity-equivalent"
+    },
+    {
+      "id": "Academic-Democracy",
+      "role": "public scholarly governance and technology interface",
+      "status": "public-canonical",
+      "core": "right_to_publish_not_equal_right_to_be_believed"
+    },
+    {
+      "id": "KAT",
+      "name_vi": "Học thuyết Ưu thế Tri thức",
+      "role": "knowledge rights, disclosure and knowledge-to-capability conversion",
+      "status": "canonical-integration-profile",
+      "hard_guardrail": "knowledge_advantage_not_equal_evidence_suppression",
+      "source_state": "full doctrine source preserved separately"
+    },
+    {
+      "id": "OPT-HKRP",
+      "name_vi": "Học thuyết Trù tính Nguồn lực Tri thức Nhân loại",
+      "name_en": "Human Knowledge Resource Planning Theory",
+      "role": "distributed minimal-sufficient coalition resource routing",
+      "status": "proposed-formalizable-canonical-integration-profile",
+      "nonclaim": "not_a_central_world_brain"
+    },
+    {
+      "id": "OHAS",
+      "name_en": "Optimizer Human Agency System",
+      "role": "human agency, decision sovereignty, bounded AI and authorized execution",
+      "status": "canonical-integration-profile",
+      "source_state": "full mathematical source preserved separately",
+      "authority_boundary": "right_to_propose_not_equal_right_to_execute; human/domain override preserved"
+    },
+    {
+      "id": "BL-SFRET",
+      "role": "future-state regression, epistemic timing and capability preparation",
+      "status": "canonical-integration-profile",
+      "source_state": "public role integrated; full runtime source binding remains separate",
+      "hard_guardrail": "desired_future_not_equal_proven_future"
+    },
+    {
+      "id": "BL-REV",
+      "role": "reverse sovereign adversarial cognition",
+      "status": "public-interface-canonical",
+      "authority_boundary": "may challenge claims but cannot declare truth status"
+    }
+  ],
+  "required_fields_for_future_profiles": [
+    "id",
+    "role",
+    "scope",
+    "status",
+    "typed_interfaces",
+    "authority_boundary",
+    "reality_veto_relation",
+    "provenance_or_source_state"
+  ],
+  "integration_invariant": "Public projections must not invent details absent from verified source; integration never silently replaces full doctrine sources or erases identity/history."
+}
