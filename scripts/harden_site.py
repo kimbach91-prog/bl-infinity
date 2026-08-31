@@ -16,24 +16,34 @@ TINDEX = json.loads((ROOT / "translations/translation-index.json").read_text(enc
 SAFE_MD = mistune.create_markdown(escape=True, plugins=["table", "strikethrough", "task_lists"])
 
 
-def sha256_text(text: str) -> str:
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
-
-
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def csp_hash(text: str) -> str:
+    digest = base64.b64encode(hashlib.sha256(text.encode("utf-8")).digest()).decode("ascii")
+    return f"'sha256-{digest}'"
+
+
 def csp_for(html_text: str) -> str:
-    hashes = []
-    for body in re.findall(r'<script\s+type=["\']application/ld\+json["\']\s*>(.*?)</script>', html_text, flags=re.I | re.S):
-        digest = base64.b64encode(hashlib.sha256(body.encode("utf-8")).digest()).decode("ascii")
-        hashes.append(f"'sha256-{digest}'")
-    script_src = " ".join(["'self'", "https://giscus.app"] + hashes)
+    script_hashes = [
+        csp_hash(body)
+        for body in re.findall(
+            r"<script\s+type=['\"]application/ld\+json['\"]\s*>(.*?)</script>",
+            html_text,
+            flags=re.I | re.S,
+        )
+    ]
+    style_hashes = [
+        csp_hash(body)
+        for body in re.findall(r"<style\b[^>]*>(.*?)</style>", html_text, flags=re.I | re.S)
+    ]
+    script_src = " ".join(["'self'", "https://giscus.app"] + script_hashes)
+    style_src = " ".join(["'self'"] + style_hashes)
     return (
         "default-src 'self'; "
         f"script-src {script_src}; "
-        "style-src 'self'; "
+        f"style-src {style_src}; "
         "img-src 'self' data: https:; "
         "font-src 'self' data:; "
         "frame-src https://giscus.app; "
@@ -66,7 +76,11 @@ def inject_pairing(path: Path, vi_url: str, en_url: str, en_href: str) -> None:
     if 'hreflang="en"' not in text:
         text = text.replace("</head>", paired_links(vi_url, en_url, vi_url) + "</head>", 1)
     if 'class="lang-switch"' not in text:
-        text = text.replace("</nav>", f'<a class="lang-switch" href="{html.escape(en_href, quote=True)}" hreflang="en" lang="en">EN</a></nav>', 1)
+        text = text.replace(
+            "</nav>",
+            f'<a class="lang-switch" href="{html.escape(en_href, quote=True)}" hreflang="en" lang="en">EN</a></nav>',
+            1,
+        )
     path.write_text(inject_security(text), encoding="utf-8")
 
 
@@ -114,9 +128,24 @@ def build_english() -> None:
     root_url = CFG["project"]["canonical_url"].rstrip("/") + "/"
     readme = SAFE_MD((ROOT / "translations/en/README.md").read_text(encoding="utf-8"))
     theory = SAFE_MD((ROOT / "translations/en/THEORY_CORE.md").read_text(encoding="utf-8"))
-    desc = "English research edition of BL∞: finite observers, open ontology, reachability, public critique, provenance, security and protected runtime boundaries."
-    (en_dir / "index.html").write_text(english_page("BL∞ — Bach Lam Infinity Proposition", desc, root_url + "en/", root_url, readme), encoding="utf-8")
-    (en_dir / "theory.html").write_text(english_page("BL∞ — English Core Research Edition", desc, root_url + "en/theory.html", root_url + "theory.html", theory), encoding="utf-8")
+    desc = (
+        "English research edition of BL∞: finite observers, open ontology, reachability, "
+        "public critique, provenance, security and protected runtime boundaries."
+    )
+    (en_dir / "index.html").write_text(
+        english_page("BL∞ — Bach Lam Infinity Proposition", desc, root_url + "en/", root_url, readme),
+        encoding="utf-8",
+    )
+    (en_dir / "theory.html").write_text(
+        english_page(
+            "BL∞ — English Core Research Edition",
+            desc,
+            root_url + "en/theory.html",
+            root_url + "theory.html",
+            theory,
+        ),
+        encoding="utf-8",
+    )
 
 
 def write_translation_status() -> None:
@@ -132,10 +161,28 @@ def write_translation_status() -> None:
         "translation_hashes": translations,
         "translation_index_hash": "sha256:" + sha256_file(ROOT / "translations/translation-index.json"),
     }
-    (SITE / "machine/translation-status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8")
+    (SITE / "machine/translation-status.json").write_text(
+        json.dumps(status, ensure_ascii=False, indent=2), encoding="utf-8"
+    )
     shutil.copy(ROOT / "machine/security-profile.json", SITE / "machine/security-profile.json")
     (SITE / "translations").mkdir(parents=True, exist_ok=True)
     shutil.copy(ROOT / "translations/translation-index.json", SITE / "translations/translation-index.json")
+
+
+def enrich_manifest() -> None:
+    path = SITE / "machine/manifest.json"
+    if not path.exists():
+        return
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    manifest["languages"] = {
+        "vi": {"role": "FULL_CANONICAL_PUBLIC_READING_SOURCE", "entry": "../theory.html"},
+        "en": {"role": "CORE_RESEARCH_EDITION", "entry": "../en/theory.html"},
+    }
+    manifest["translation_status"] = "translation-status.json"
+    manifest["translation_index"] = "../translations/translation-index.json"
+    manifest["security_profile"] = "security-profile.json"
+    manifest["security_policy"] = "../SECURITY.md"
+    path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def update_discovery() -> None:
@@ -146,14 +193,22 @@ def update_discovery() -> None:
         additions = []
         for url in [root_url + "en/", root_url + "en/theory.html"]:
             if url not in text:
-                additions.append(f'<url><loc>{html.escape(url)}</loc><lastmod>{CFG["project"].get("last_updated", CFG["project"]["date"])}</lastmod></url>')
+                additions.append(
+                    f'<url><loc>{html.escape(url)}</loc><lastmod>{CFG["project"].get("last_updated", CFG["project"]["date"])}</lastmod></url>'
+                )
         if additions:
             text = text.replace("</urlset>", "\n".join(additions) + "\n</urlset>")
             sitemap.write_text(text, encoding="utf-8")
     llms = SITE / "llms.txt"
     if llms.exists():
         text = llms.read_text(encoding="utf-8")
-        block = "\n\nBilingual public entry points:\n- Vietnamese full theory: " + root_url + "theory.html\n- English core research edition: " + root_url + "en/theory.html\n- Translation status: " + root_url + "machine/translation-status.json\n"
+        block = (
+            "\n\nBilingual public entry points:\n"
+            "- Vietnamese full theory: " + root_url + "theory.html\n"
+            "- English core research edition: " + root_url + "en/theory.html\n"
+            "- Translation status: " + root_url + "machine/translation-status.json\n"
+            "- Public security profile: " + root_url + "machine/security-profile.json\n"
+        )
         if "English core research edition" not in text:
             llms.write_text(text + block, encoding="utf-8")
 
@@ -171,8 +226,14 @@ build_english()
 if (SITE / "index.html").exists():
     inject_pairing(SITE / "index.html", root_url, root_url + "en/", "en/")
 if (SITE / "theory.html").exists():
-    inject_pairing(SITE / "theory.html", root_url + "theory.html", root_url + "en/theory.html", "en/theory.html")
+    inject_pairing(
+        SITE / "theory.html",
+        root_url + "theory.html",
+        root_url + "en/theory.html",
+        "en/theory.html",
+    )
 write_translation_status()
+enrich_manifest()
 update_discovery()
 harden_all_html()
 print("Hardened public site and generated bilingual English entry points")
