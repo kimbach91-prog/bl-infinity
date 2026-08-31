@@ -18,6 +18,8 @@ on:
       - experiments/virtual-cortex-v0/test_omega_handoff_receipt.py
       - experiments/virtual-cortex-v0/omega_identity_escrow.py
       - experiments/virtual-cortex-v0/test_omega_identity_escrow.py
+      - experiments/virtual-cortex-v0/omega_retro_continuity_ceiling.py
+      - experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
       - .github/workflows/deus-dcrs-test.yml
   workflow_dispatch:
 
@@ -57,7 +59,9 @@ jobs:
             experiments/virtual-cortex-v0/omega_handoff_receipt.py \
             experiments/virtual-cortex-v0/test_omega_handoff_receipt.py \
             experiments/virtual-cortex-v0/omega_identity_escrow.py \
-            experiments/virtual-cortex-v0/test_omega_identity_escrow.py
+            experiments/virtual-cortex-v0/test_omega_identity_escrow.py \
+            experiments/virtual-cortex-v0/omega_retro_continuity_ceiling.py \
+            experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
 
       - name: Run Ω-DCRS fail-closed test suite
         run: python experiments/virtual-cortex-v0/test_omega_dcrs.py
@@ -76,3 +80,6 @@ jobs:
 
       - name: Run Ω-Identity Escrow test suite
         run: python experiments/virtual-cortex-v0/test_omega_identity_escrow.py
+
+      - name: Run Ω-Retro Continuity Ceiling test suite
+        run: python experiments/virtual-cortex-v0/test_omega_retro_continuity_ceiling.py
