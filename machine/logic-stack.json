@@ -1,7 +1,7 @@
 {
-  "schema_version": "0.3",
+  "schema_version": "0.4",
   "name": "BL∞ Canonical Logic Stack — Public Projection",
-  "version": "0.3-public-projection",
+  "version": "0.4-public-projection",
   "graph_type": "LOGICAL_GRAPH_VIEW",
   "interface_scope": "PUBLIC_CONCEPTUAL_DEPENDENCY_VIEW_ONLY",
   "disclosure_class": "CONTROLLED/P1",
@@ -25,6 +25,22 @@
       "description": "Public claims are separated from assumptions and must expose scope, status, dependencies and falsifiers."
     },
     {
+      "id": "P2H",
+      "name": "BL-HRD hypothesis search / reality feedback",
+      "description": "Public conceptual loop: reality gap -> hypothesis object -> preservation -> mapping -> depth/risk -> expected-value triage -> portfolio verification -> test -> Reality Veto -> epistemic state -> lineage/negative knowledge -> recombination -> new gap.",
+      "source": "../content/42_HRD_CANONICAL_LOGIC_CHAIN.md",
+      "machine_object": "bl-hrd.json",
+      "invariants": [
+        "preserve_not_equal_endorse",
+        "open_entry_not_equal_equal_weight_or_resources",
+        "ai_formalization_not_equal_evidence",
+        "right_to_propose_not_equal_right_to_execute",
+        "reality_veto_overrides_status_or_popularity_in_empirical_conflict",
+        "refutation_can_preserve_information_gain",
+        "revision_does_not_erase_lineage"
+      ]
+    },
+    {
       "id": "P3",
       "name": "Provenance / governance",
       "description": "Public objects preserve authorship/provenance class, versioning, change history and authority boundaries."
@@ -38,6 +54,11 @@
       "id": "P5",
       "name": "Publication / feedback",
       "description": "Verified public objects can be indexed, challenged, revised and republished as living research objects."
+    },
+    {
+      "id": "P6",
+      "name": "Recursive discovery return",
+      "description": "Evidence, refutations, negative knowledge, new measurement capabilities and revised objects return to the discovery frontier and may generate new hypotheses."
     }
   ],
   "withheld_from_public_projection": [
@@ -51,5 +72,5 @@
     "production_pipeline",
     "private_model_or_operator_handoffs"
   ],
-  "guardrail": "This artifact is a deliberately reduced public conceptual projection. It is not the production architecture, runtime router, activation graph, operator sequence, implementation inventory or private decision pipeline. Layer order is not historical chronology."
+  "guardrail": "This artifact is a deliberately reduced public conceptual projection. BL-HRD entries expose epistemic states, invariants and conceptual dependencies only; they do not disclose the production router, private activation triggers, weights, ranking functions or operator playbook. Layer order is not historical chronology."
 }
