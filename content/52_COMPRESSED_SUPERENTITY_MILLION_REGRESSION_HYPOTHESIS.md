@@ -155,7 +155,7 @@ MoreExperience + SameTransitionRule
 may still -> SameFailureClass
 ```
 
-Đây nối trực tiếp với Nhận thức luận đệ quy Optimizer: chất lượng trí tuệ không nằm ở việc không sai, mà ở năng lực phát hiện lỗi, sửa model và giữ cấu trúc hữu ích. Xem [Nhận thức luận đệ quy Optimizer](10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md).
+Đây nối trực tiếp với Nhận thức luận đệ quy Optimizer: chất lượng trí tuệ không nằm ở việc không sai, mà ở năng lực phát hiện lỗi, sửa model và giữ cấu trúc hữu ích. Xem [Nhận thức luận đệ quy Optimizer](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md).
 
 Một triệu lần hồi quy chỉ tạo chất biến khi compression bắt đầu làm đổi **transition rule** của chủ thể và của mạng hợp tác quanh chủ thể.
 
@@ -163,7 +163,7 @@ Một triệu lần hồi quy chỉ tạo chất biến khi compression bắt đ
 
 BL∞ không thể được giản lược thành “nhiều trạng thái hơn”. Phả hệ hiện hành giữ nó như một open ended possibility space, nơi current ontology không được quyền tuyên bố mình là ontology cuối cùng.
 
-Xem [Đại thống hợp BL∞](43_BL_INFINITY_GRAND_UNIFICATION.md), [Không gian Pha Nhận thức Mở](48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md) và [Chuỗi Khám phá Mở](49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md).
+Xem [Đại thống hợp BL∞](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/43_BL_INFINITY_GRAND_UNIFICATION.md), [Không gian Pha Nhận thức Mở](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md) và [Chuỗi Khám phá Mở](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md).
 
 Do đó seed hồi quy tốt không thể chỉ là một bộ quy tắc bất biến.
 
@@ -186,7 +186,7 @@ CurrentOntology != FinalOntology
 
 Trong Học thuyết UNKNOWN hiện hành, cái chưa biết không chỉ là một scalar còn thiếu. Nó có thể nằm trong relation, question, primitive, future, observer hoặc chính hệ biểu diễn.
 
-Xem [Học thuyết UNKNOWN](51_UNKNOWN_DOCTRINE_OPEN_UNKNOWN_FIELD.md).
+Xem [Học thuyết UNKNOWN](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/51_UNKNOWN_DOCTRINE_OPEN_UNKNOWN_FIELD.md).
 
 Đối với kẻ hồi quy, UNKNOWN còn nguy hiểm hơn vì compression có thể làm mất cả dấu vết của thứ từng tồn tại.
 
@@ -220,7 +220,7 @@ pattern completion pressure
 
 Học thuyết Thực tại Giả định coi hypothesis là search instrument, không phải lời thú nhận yếu đuối. Một cấu trúc chưa xác nhận vẫn có thể tạo prediction, measurement, experiment, negative knowledge và option value.
 
-Xem [Học thuyết Thực tại Giả định](41_HYPOTHETICAL_REALITY_DOCTRINE.md).
+Xem [Học thuyết Thực tại Giả định](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/41_HYPOTHETICAL_REALITY_DOCTRINE.md).
 
 Trong giả định hồi quy, GiaTai có thêm một vai trò:
 
@@ -259,7 +259,7 @@ irreversibility growth
 
 thì seed có thể giữ `A*` như một cảnh báo thượng nguồn.
 
-Xem [Đại Kết Cục, BL∞, UNKNOWN và Cứu Cánh của Trí Tuệ](50_GRAND_ENDING_UNKNOWN_AND_COSMIC_OPTIONALITY.md).
+Xem [Đại Kết Cục, BL∞, UNKNOWN và Cứu Cánh của Trí Tuệ](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/50_GRAND_ENDING_UNKNOWN_AND_COSMIC_OPTIONALITY.md).
 
 ## 11. Trí thông minh không còn là một con số
 
@@ -353,7 +353,7 @@ SnapshotSimilarity != CausalIdentity
 
 Một seed copy giống nhau tại `t0` có thể sinh hai chủ thể khác nhau nếu history sau đó phân kỳ và được giữ lại.
 
-Xem [BL-ADN](../BL-ADN.md).
+Xem [BL-ADN](https://github.com/kimbach91-prog/bl-infinity/blob/main/BL-ADN.md).
 
 Do đó “kẻ hồi quy” trong giả định không được định nghĩa chỉ bằng memory dump. Identity của nó phải phụ thuộc origin, retained causal history, choice, correction, relation và continuity.
 
@@ -469,7 +469,7 @@ reality facing consequences
 
 Nếu người phản biện tìm được counterexample làm hỏng một relation, relation đó phải sửa. Nếu critique chỉ nói “nghe lạ” hoặc “không thuộc taxonomy quen thuộc”, critique chưa chạm truth condition của claim.
 
-Nguyên tắc này kế thừa [Nhận thức luận đệ quy Optimizer](10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md): global openness không tạo local immunity.
+Nguyên tắc này kế thừa [Nhận thức luận đệ quy Optimizer](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/10_OPTIMIZER_RECURSIVE_EPISTEMOLOGY.md): global openness không tạo local immunity.
 
 ## 20. Kết luận
 
