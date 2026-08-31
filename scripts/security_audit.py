@@ -24,6 +24,7 @@ required = [
     ROOT / "translations/en/README.md",
     ROOT / "translations/en/THEORY_CORE.md",
     ROOT / "scripts/build.py",
+    ROOT / "scripts/harden_site.py",
     ROOT / ".github/workflows/pages.yml",
 ]
 for path in required:
@@ -49,8 +50,9 @@ for rel in list(en.get("source_files", [])) + list(en.get("translation_files", [
     if not (ROOT / rel).exists():
         errors.append(f"translation index points to missing file: {rel}")
 
-# Build renderer must escape raw HTML and emit security/translation machine state.
-build_source = (ROOT / "scripts/build.py").read_text(encoding="utf-8") if (ROOT / "scripts/build.py").exists() else ""
+# Hardening is deliberately separated from the legacy source renderer: check the hardener itself.
+hardener_path = ROOT / "scripts/harden_site.py"
+hardener_source = hardener_path.read_text(encoding="utf-8") if hardener_path.exists() else ""
 for marker in [
     "escape=True",
     "Content-Security-Policy",
@@ -58,9 +60,11 @@ for marker in [
     "translation-status.json",
     "security-profile.json",
     "en/theory.html",
+    "sha256_file",
+    "hreflang",
 ]:
-    if marker not in build_source:
-        errors.append(f"build.py missing hardening marker: {marker}")
+    if marker not in hardener_source:
+        errors.append(f"harden_site.py missing hardening marker: {marker}")
 
 # GitHub Actions: immutable action references, no pull_request_target, no persisted checkout credentials.
 workflow_path = ROOT / ".github/workflows/pages.yml"
@@ -77,14 +81,22 @@ for ref in uses_lines:
     version = ref.rsplit("@", 1)[1]
     if not re.fullmatch(r"[0-9a-f]{40}", version):
         errors.append(f"GitHub Action not pinned to full commit SHA: {ref}")
-if "persist-credentials: false" not in workflow:
-    errors.append("checkout must set persist-credentials: false")
+for marker in [
+    "persist-credentials: false",
+    "python scripts/security_audit.py --strict",
+    "python scripts/harden_site.py",
+    "python scripts/security_audit.py --strict --site",
+    "pip-audit -r requirements.txt",
+]:
+    if marker not in workflow:
+        errors.append(f"pages workflow missing security marker: {marker}")
 if "permissions:" not in workflow:
     errors.append("workflow must declare explicit permissions")
 
 # Direct Python build dependencies are exact pinned; security tooling is independently pinned.
 def exact_requirements(path: Path):
     if not path.exists():
+        errors.append(f"missing dependency lock input: {path.name}")
         return
     for line in path.read_text(encoding="utf-8").splitlines():
         line = line.strip()
@@ -94,6 +106,8 @@ def exact_requirements(path: Path):
             errors.append(f"direct URL/VCS dependency forbidden in {path.name}: {line}")
         if "==" not in line:
             errors.append(f"dependency must be exact-version pinned in {path.name}: {line}")
+
+
 exact_requirements(ROOT / "requirements.txt")
 exact_requirements(ROOT / "requirements-security.txt")
 
@@ -132,7 +146,7 @@ for path in ROOT.rglob("*"):
             if pattern.search(text):
                 errors.append(f"possible {label} in {rel.as_posix()}")
 
-# Generated site audit.
+# Generated site audit is the final active-content boundary after all render/discovery steps.
 if args.site:
     if not SITE.exists():
         errors.append("--site requested but generated site/ does not exist")
@@ -149,19 +163,43 @@ if args.site:
                 errors.append(f"generated HTML missing strict referrer policy: {rel.as_posix()}")
             if re.search(r"\son[a-z]+\s*=", text, flags=re.I):
                 errors.append(f"inline event handler found in generated HTML: {rel.as_posix()}")
+            if re.search(r"\sstyle\s*=", text, flags=re.I):
+                errors.append(f"inline style attribute found in generated HTML: {rel.as_posix()}")
             if re.search(r"<(?:script|img|iframe|link)\b[^>]*(?:src|href)=['\"]http://", text, flags=re.I):
                 errors.append(f"insecure active-resource URL in generated HTML: {rel.as_posix()}")
             for attrs in re.findall(r"<script\b([^>]*)>", text, flags=re.I):
                 src = re.search(r"\bsrc=['\"]([^'\"]+)", attrs, flags=re.I)
                 if src:
                     value = src.group(1)
-                    if not (value.startswith("assets/") or value.startswith("../") or value.startswith("../../") or value.startswith("https://giscus.app/")):
+                    if not (
+                        value.startswith("assets/")
+                        or value.startswith("../")
+                        or value.startswith("../../")
+                        or value.startswith("https://giscus.app/")
+                    ):
                         errors.append(f"unexpected external script source in {rel.as_posix()}: {value}")
                 elif "application/ld+json" not in attrs:
                     errors.append(f"unexpected inline executable script in generated HTML: {rel.as_posix()}")
-        for rel in ["machine/security-profile.json", "machine/translation-status.json", "en/theory.html", "en/index.html"]:
+        for rel in [
+            "machine/security-profile.json",
+            "machine/translation-status.json",
+            "en/theory.html",
+            "en/index.html",
+            "translations/translation-index.json",
+        ]:
             if not (SITE / rel).exists():
                 errors.append(f"generated bilingual/security artifact missing: {rel}")
+        manifest_path = SITE / "machine/manifest.json"
+        if manifest_path.exists():
+            try:
+                manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+                for field in ["languages", "translation_status", "security_profile"]:
+                    if not manifest.get(field):
+                        errors.append(f"generated machine manifest missing field: {field}")
+            except Exception as exc:
+                errors.append(f"invalid generated machine manifest: {exc}")
+        else:
+            errors.append("generated machine manifest missing")
         notes.append(f"audited {len(html_files)} generated HTML files")
 
 result = {
