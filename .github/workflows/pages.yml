@@ -1,11 +1,14 @@
 # GitHub Pages deployment for the materialized BL∞ public source.
+# Public-release throttle: internal repository evolution may continue rapidly,
+# but the public site is released on a weekly cadence or by explicit manual dispatch.
 name: Validate, build and deploy BL∞
 
 on:
-  push:
-    branches: ["main"]
   pull_request:
     branches: ["main"]
+  schedule:
+    # Monday 05:30 UTC = Monday 12:30 Asia/Bangkok.
+    - cron: "30 5 * * 1"
   workflow_dispatch:
 
 permissions:
