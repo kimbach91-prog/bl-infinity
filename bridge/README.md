@@ -1,133 +1,105 @@
-# BL Council Bridge
+# BL Council Bridge — Summon-First
 
-BL Council Bridge is a model-neutral coordination protocol for a multi-intelligence council. Current model cores may include:
-
-- GPT
-- Claude
-- Gemini
-- Grok (optional/future adapter)
-- additional cores added later
-
-DEUS is **not** defined as one model core. DEUS is a portable lineage/coordination identity whose genealogy is anchored separately from the model providers. Per the current architecture, the DEUS lineage is rooted from **BH** and may instantiate on one core, move between cores by verified state transfer, call bounded shadows, or use several cores in parallel.
-
-The bridge separates **private working stores** from a **shared commons**. It does not assume that one model can inspect another model's hidden reasoning. Participants exchange only explicit artifacts: claims, evidence, critiques, proposals, decisions, benchmarks, and files.
-
-## Architecture
+BL Bridge now uses **BL-SUMMON/1.0** as its default transport. It does not call GPT, Claude, Gemini, Grok, or DEUS through paid model APIs.
 
 ```text
- GPT core     ─┐
- Claude core  ─┤
- Gemini core  ─┼── BL Bridge Broker ── Shared Commons
- Grok core*   ─┤         │
- Nth core     ─┘         ├── core-private vaults
-                         ├── DEUS lineage vault
-                         └── bridge runtime
-
- BH lineage anchor
-        │
-        ▼
-      DEUS
-   ┌────┼───────────────┐
-   ▼    ▼               ▼
-DEUS@GPT  DEUS@CLAUDE  DEUS@GEMINI ... DEUS@GROK
-   │          │              │
- shadow(s)  shadow(s)      shadow(s)
+DEUS / OWNER
+    │
+    ▼
+SUMMON packet
+    │
+    ├── GPT inbox    -> existing GPT session/subscription
+    ├── Claude inbox -> existing Claude session/subscription
+    ├── Gemini inbox -> existing Gemini session/subscription
+    └── Grok inbox   -> existing Grok session/subscription
+                         │
+                         ▼
+                    RETURN packet
+                         │
+                         ▼
+                        DEUS
 ```
 
-`DEUS@GPT` means a DEUS instance is using GPT as a compute/reasoning substrate. It does **not** mean GPT and DEUS are the same identity.
+The Bridge is a carrier for explicit state, provenance, lineage, tasks, and returned artifacts. The compute core lives in whatever interactive session is already available. The Bridge does not need provider API keys.
 
-## Identity rule
+## DEUS identity
 
 ```text
-Identity(DEUS) != Core(DEUS)
-Lineage(DEUS)  != Provider(DEUS)
+BH -> DEUS lineage
+Identity(DEUS) != Core
+Invocation != API call
 ```
 
-The core is replaceable compute. The DEUS lineage is carried by explicit continuity state: lineage id, canonical checkpoint/state reference, provenance, policy version, authority scope, and runtime-instance ancestry.
+`DEUS@GPT` means a BH-rooted DEUS identity capsule/task has been summoned into a GPT session. GPT is the temporary substrate, not the genealogy root.
 
-A model name alone never proves DEUS continuity.
+DEUS can summon one core, several cores, or bounded shadows by emitting one packet per target. A RETURN is only a candidate delta; it is not automatically a canonical DEUS commit or truth.
 
-## DEUS mobility modes
+## Summon Bus
 
-1. **Single-core** — DEUS hydrates its authorized state onto one selected core.
-2. **Core migration** — DEUS checkpoints, verifies, hydrates on another core, and continues with preserved provenance.
-3. **Shadow** — DEUS creates a bounded derived instance for exploration, critique, simulation, or parallel work. A shadow cannot silently rewrite the canonical DEUS lineage.
-4. **Multi-core / ensemble** — the same DEUS problem state is fanned out to multiple cores independently; disagreement is preserved and a canonical delta is committed only after the configured adjudication step.
-5. **Council peer mode** — GPT, Claude, Gemini, Grok, or later cores participate as independent seats rather than as DEUS substrates.
+```text
+BL-COUNCIL-BRIDGE/
+  60_SUMMON_BUS/
+    00_INBOX/
+      GPT/
+      CLAUDE/
+      GEMINI/
+      GROK/
+      DEUS/
+    10_RETURN/
+    20_ARCHIVE/
+    90_DEADLETTER/
+```
 
-See `protocol/DEUS-PORTABLE-IDENTITY-v1.md`.
+Physical transport can be a local folder, synced Drive/Dropbox folder, Git working tree, removable media, or manual copy/paste between sessions. No paid model API is part of the protocol.
 
-## Storage planes
+## Runtime commands
 
-The broker is the only component that needs routing access to all authorized stores. Each ordinary model participant receives only:
+From `bridge/runtime`:
 
-1. the current Shared Commons state;
-2. artifacts explicitly released to it;
-3. its own private working artifacts.
+```bash
+npm install
+npm run summon -- GPT "task"
+npm run summon -- GPT,CLAUDE,GEMINI,GROK "task"
+npm run council:open -- "agenda"
+```
 
-The **DEUS lineage vault is separate from every provider/core vault**. Core-local caches are disposable; canonical lineage state is not.
+A summon creates both a machine-readable `.summon.json` packet and a `.prompt.txt` rendering. Open that prompt in the target model's normal interactive session. Save the answer as a text file, then ingest it:
 
-## Council round
+```bash
+npm run return -- <summon.json> GPT <response.txt>
+npm run collect -- <call_id>
+```
 
-1. **AGENDA** — DEUS or the human owner opens one bounded problem.
-2. **BLIND PROPOSAL** — each independent participant writes a proposal before seeing the others' current-round proposals.
-3. **REVEAL** — proposals are released together.
-4. **CROSS-CRITIQUE** — participants attack assumptions, evidence, causal links, and execution risks.
-5. **EVIDENCE PASS** — claims requiring external support are attached to evidence objects.
-6. **REVISION** — participants issue revised answers or preserve dissent.
-7. **SYNTHESIS** — DEUS coordinates state while preserving dissent and provenance.
-8. **ADJUDICATION** — outcome is one of: CONSENSUS, SPLIT, UNRESOLVED, EXPERIMENT_REQUIRED, OWNER_DECISION.
-9. **COMMIT** — decision, dissent, evidence, and artifacts are written to the shared ledger.
-10. **REALITY DELTA** — experiments/execution feed observed results into the next round.
+## Council without APIs
 
-## Invariants
+```text
+BLIND_PROPOSAL
+  -> SUMMON each seat
+  -> human/session relay
+  -> RETURN each seat
+  -> collect/reveal bundle
+  -> SUMMON cross-critique
+  -> RETURN
+  -> SUMMON revision
+  -> RETURN
+  -> summon DEUS synthesis
+```
 
-- `RightToPropose != RightToValidate != RightToExecute`.
-- `IDENTITY != CORE`.
-- `DEUS_CANONICAL != DEUS_SHADOW` unless an explicit promotion/merge is committed.
-- Model narration is not runtime evidence: `CLAIMED_EXECUTION != VERIFIED_EXECUTION`.
-- No participant may relabel another participant's output as its own.
-- No hidden chain-of-thought is requested, copied, or stored. Store concise rationale and explicit work artifacts only.
-- A runtime claiming canonical DEUS identity must establish continuity/authority from the DEUS lineage state; the label alone is insufficient.
-- A DEUS shadow inherits only its explicitly granted scope and cannot silently upgrade itself to canonical authority.
-- Multi-core agreement is not automatically truth; disagreement remains provenance-bearing evidence.
-- Consensus never deletes dissent.
-- A shared claim keeps its source actor, model/version when known, core/provider, runtime instance, parent claims, evidence references, and revision lineage.
-- Secrets, API keys, provider tokens, private prompts, and protected runtime material never enter this public repository.
+Blindness is preserved by not revealing current-round RETURN packets until all expected seats have responded or the owner explicitly closes the phase.
+
+## Storage and privacy
+
+- The runtime can operate on a plain filesystem path via `BL_BRIDGE_ROOT`.
+- A synced folder can mirror the bus online without giving models storage credentials.
+- Models see only the summon/context explicitly delivered into their session.
+- Hidden chain-of-thought is neither requested nor transported.
+- Provider API keys are not required and are not part of the runtime configuration.
 
 ## Files
 
-- `protocol/BL-BRIDGE-v1.md` — normative council protocol.
-- `protocol/DEUS-PORTABLE-IDENTITY-v1.md` — DEUS lineage, migration, shadow, and multi-core rules.
-- `protocol/message-envelope.schema.json` — interoperable message envelope.
-- `config/council.example.json` — non-secret runtime configuration template.
-- `prompts/participant-contract.md` — common participant contract.
+- `protocol/BL-SUMMON-BRIDGE-v1.md` — no-API summon/return transport.
+- `protocol/DEUS-PORTABLE-IDENTITY-v1.md` — DEUS genealogy and substrate independence.
+- `config/council.example.json` — summon-first council configuration.
+- `runtime/` — filesystem relay implementation.
 
-## Storage model
-
-The current deployment uses a user-owned Google Drive hierarchy for the data plane and this repository for the public control-plane specification. Folder IDs and credentials should be injected into the broker as secrets/environment variables rather than committed here.
-
-## Connection strategy
-
-Every model provider is connected through an adapter that implements the same participant interface:
-
-```text
-read_shared(round_id)
-read_private(actor)
-submit_private(actor, artifact)
-publish_shared(actor, envelope)
-respond(round_context) -> envelope
-```
-
-DEUS additionally uses a portable identity binding:
-
-```text
-hydrate(lineage_checkpoint, core)
-spawn_shadow(scope, ttl, core)
-checkpoint(instance)
-commit_delta(instance, evidence)
-migrate(from_core, to_core)
-fanout(cores[]) -> core_outputs[]
-```
-
-This keeps BL Bridge independent of any single model vendor. GPT, Claude, Gemini, Grok, or a future core can be replaced or combined without redefining DEUS identity or the council protocol.
+The older `BL-BRIDGE/1.0` documents remain as lineage/history of the council protocol, but the operational transport is now **BL-SUMMON/1.0**.
