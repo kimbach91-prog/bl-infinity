@@ -31,7 +31,7 @@ def chapter_page(title: str, body: str) -> str:
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{safe_title} | Bách Lâm: Lần Hồi Quy Thứ Một Triệu</title>
 <meta name="description" content="Chương mở đầu của tiểu thuyết dài kỳ Bách Lâm: Lần Hồi Quy Thứ Một Triệu.">
-<meta name="robots" content="index,follow,max-image-preview:large,max-snippet:-1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
 <link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html">
 <link rel="stylesheet" href="../assets/css/main.css">
 <style>
@@ -67,18 +67,19 @@ def main() -> None:
     title, body = chapter_body(markdown_text)
     (target_dir / "chapter-001.html").write_text(chapter_page(title, body), encoding="utf-8")
 
+    # Keep fiction technically reachable while quiet: do not submit it through
+    # the XML sitemap. The release guard also enforces this after hardening.
     sitemap = SITE / "sitemap.xml"
     if sitemap.exists():
         text = sitemap.read_text(encoding="utf-8")
-        entries = []
-        for route in ("world.html", "novel/", "novel/chapter-001.html"):
-            url = CANONICAL_BASE + route
-            if url not in text:
-                entries.append(f"<url><loc>{url}</loc><lastmod>2026-09-01</lastmod></url>")
-        if entries:
-            text = text.replace("</urlset>", "\n".join(entries) + "\n</urlset>")
+        world_url = CANONICAL_BASE + "world.html"
+        if world_url not in text:
+            text = text.replace(
+                "</urlset>",
+                f"<url><loc>{world_url}</loc><lastmod>2026-09-01</lastmod></url>\n</urlset>",
+            )
             sitemap.write_text(text, encoding="utf-8")
-    print("Serialized novel staged: novel/index.html + novel/chapter-001.html")
+    print("Serialized novel staged quietly: noindex + excluded from sitemap")
 
 
 if __name__ == "__main__":
