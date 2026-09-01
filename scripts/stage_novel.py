@@ -29,9 +29,9 @@ def chapter_page(title: str, body: str) -> str:
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{safe_title} | Bách Lâm: Lần Hồi Quy Thứ Một Triệu</title>
-<meta name="description" content="Chương mở đầu của tiểu thuyết dài kỳ Bách Lâm: Lần Hồi Quy Thứ Một Triệu.">
-<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<title>{safe_title} | Demo tiểu thuyết BL∞</title>
+<meta name="description" content="Bản demo công khai, NON-CANON, của Chương 1 tiểu thuyết Bách Lâm: Lần Hồi Quy Thứ Một Triệu.">
+<meta name="robots" content="index,follow,max-image-preview:large">
 <link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html">
 <link rel="stylesheet" href="../assets/css/main.css">
 <style>
@@ -40,17 +40,18 @@ html{{-webkit-text-size-adjust:100%;text-size-adjust:100%}}
 body{{background:var(--paper);color:var(--ink)}}
 main{{max-width:860px;margin:auto;padding:0 22px 86px}}.top{{padding-left:22px;padding-right:22px}}.top nav a.current{{font-weight:850;color:var(--accent)}}
 .hero{{padding:clamp(34px,7vw,78px) 0 30px;border-bottom:1px solid var(--line)}}.eyebrow{{font-size:.76rem;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:var(--accent)}}h1{{font-size:clamp(2.55rem,6.5vw,5.6rem);line-height:.97;letter-spacing:-.04em;max-width:16ch;margin:.18em 0 .22em}}.meta{{font-size:.9rem;color:var(--muted)}}
+.demo-note{{margin:22px 0 0;padding:15px 17px;border:1px solid var(--line);border-radius:14px;background:var(--soft);font-size:.95rem;line-height:1.65;max-width:70ch}}
 .prose{{padding-top:28px}}.prose p{{font-size:1.04rem;line-height:1.78;margin:.78em 0;max-width:70ch;text-wrap:pretty}}.prose p+p{{margin-top:.72em}}.prose h2{{font-size:clamp(1.7rem,4vw,2.8rem);margin-top:2.2em;padding-top:.8em;border-top:1px solid var(--line)}}.prose blockquote{{margin:20px 0;padding:15px 18px;border-left:4px solid var(--accent);background:#f6f1fc;border-radius:0 14px 14px 0}}.prose blockquote p{{margin:.15em 0;font-size:.96rem;line-height:1.65}}.prose hr{{border:0;border-top:1px solid var(--line);margin:2.15em 0}}.prose strong{{font-weight:800}}.prose code{{font-size:.9em;background:var(--soft);padding:.12em .35em;border-radius:5px}}.prose pre{{overflow:auto;background:var(--night);color:#f5f1e8;padding:18px;border-radius:14px;line-height:1.55}}.prose ul{{line-height:1.75}}.back{{display:inline-block;margin-top:30px;padding:11px 16px;border:1px solid var(--line);border-radius:999px;text-decoration:none;font-weight:750}}
 @media(max-width:720px){{main{{padding:0 18px 72px}}.hero{{padding:30px 0 24px}}.prose{{padding-top:22px}}.prose p{{font-size:1rem;line-height:1.72;margin:.65em 0}}.prose p+p{{margin-top:.58em}}.prose blockquote{{margin:16px 0;padding:13px 15px}}.prose hr{{margin:1.75em 0}}}}
 </style>
 <script type="application/ld+json">
-{{"@context":"https://schema.org","@type":"Chapter","name":"{safe_title}","isPartOf":{{"@type":"Book","name":"Bách Lâm: Lần Hồi Quy Thứ Một Triệu"}},"author":{{"@type":"Person","name":"Lâm Kim Bách","alternateName":["Bách Lâm","Optimizer"]}},"inLanguage":"vi","url":"https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html"}}
+{{"@context":"https://schema.org","@type":"Chapter","name":"{safe_title}","isPartOf":{{"@type":"Book","name":"Bách Lâm: Lần Hồi Quy Thứ Một Triệu"}},"author":{{"@type":"Person","name":"Lâm Kim Bách","alternateName":["Bách Lâm","Optimizer"]}},"inLanguage":"vi","url":"https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html","description":"Public demo / non-canon draft. Not binding future continuity."}}
 </script>
 </head>
 <body>
 <header class="top"><a href="../index.html" class="brand">BL∞</a><span>Bách Lâm · Optimizer</span><nav><a href="../theory.html">Học thuyết</a><a href="../world.html">Bản kể</a><a href="index.html" class="current">Tiểu thuyết</a><a href="../unknown.html">UNKNOWN</a><a href="../grand-ending.html">Đại Kết Cục</a></nav></header>
 <main>
-<section class="hero"><p class="eyebrow">Bách Lâm: Lần Hồi Quy Thứ Một Triệu · Chương 1</p><h1>{safe_title}</h1><p class="meta">Lâm Kim Bách</p></section>
+<section class="hero"><p class="eyebrow">Bản demo · NON-CANON · Chương 1</p><h1>{safe_title}</h1><p class="meta">Lâm Kim Bách</p><div class="demo-note"><strong>Trạng thái:</strong> DEMO / NON-CANON. Bản này được mở công khai để người đọc cảm nhận thế giới và giọng truyện. Nó không khóa timeline, continuity hay nội dung của bản canon sau này.</div></section>
 <article class="prose">{body}</article>
 <a class="back" href="index.html">Về mục Tiểu thuyết</a>
 </main>
@@ -67,19 +68,20 @@ def main() -> None:
     title, body = chapter_body(markdown_text)
     (target_dir / "chapter-001.html").write_text(chapter_page(title, body), encoding="utf-8")
 
-    # Keep fiction technically reachable while quiet: do not submit it through
-    # the XML sitemap. The release guard also enforces this after hardening.
+    # The demo surface is public and discoverable again. This does not promote
+    # the demo into canon; canon status is explicit in-page and machine-readable.
     sitemap = SITE / "sitemap.xml"
     if sitemap.exists():
         text = sitemap.read_text(encoding="utf-8")
-        world_url = CANONICAL_BASE + "world.html"
-        if world_url not in text:
-            text = text.replace(
-                "</urlset>",
-                f"<url><loc>{world_url}</loc><lastmod>2026-09-01</lastmod></url>\n</urlset>",
-            )
-            sitemap.write_text(text, encoding="utf-8")
-    print("Serialized novel staged quietly: noindex + excluded from sitemap")
+        for route in ("novel/", "novel/chapter-001.html"):
+            url = CANONICAL_BASE + route
+            if f"<loc>{url}</loc>" not in text:
+                text = text.replace(
+                    "</urlset>",
+                    f"<url><loc>{url}</loc><lastmod>2026-09-01</lastmod></url>\n</urlset>",
+                )
+        sitemap.write_text(text, encoding="utf-8")
+    print("Serialized novel demo staged publicly: indexable + explicitly NON-CANON")
 
 
 if __name__ == "__main__":
