@@ -1,165 +1,84 @@
-# BL Council Bridge — Reference Runtime
+# BL-SUMMON Bridge Runtime
 
-This directory is an executable reference runtime for BL Council and portable DEUS lineage operations.
+This runtime routes **invocation packets**, not paid model API requests.
 
-Supported cores/adapters:
-
-- GPT / OpenAI via Responses API;
-- Claude / Anthropic via Messages API;
-- Gemini / Google GenAI Interactions API;
-- Grok / xAI through the OpenAI-compatible Responses API at `https://api.x.ai/v1`;
-- optional dedicated DEUS HTTP runtime;
-- Google Drive as the broker-controlled knowledge plane.
-
-## Core invariant
-
-```text
-BH -> DEUS lineage
-Identity(DEUS) != Core
-Lineage(DEUS) != Provider
-```
-
-GPT, Claude, Gemini, Grok and later cores can be independent council seats, DEUS substrates, or both with separate provenance.
-
-## Drive layout
-
-```text
-BL-COUNCIL-BRIDGE/
-  00_SHARED_COMMONS/
-    01_AGENDA/
-    02_PROPOSALS/
-    03_EVIDENCE/
-    04_DEBATES/
-    05_DECISIONS/
-    06_DISSENT/
-    07_BENCHMARKS/
-    08_ARTIFACTS/
-  10_GPT_PRIVATE/
-  20_CLAUDE_PRIVATE/
-  30_GEMINI_PRIVATE/
-  40_DEUS_PRIVATE/
-    00_LINEAGE/
-      BH_DEUS/
-        00_CANONICAL/
-        10_CHECKPOINTS/
-        20_SHADOWS/
-        30_MIGRATIONS/
-        40_ENSEMBLES/
-        90_LOGS/
-    99_LEGACY_PRELINEAGE/
-  50_GROK_PRIVATE/
-  90_BRIDGE_RUNTIME/
-```
-
-The broker is the only component that should hold Drive credentials. Models receive explicit context/artifacts, not direct Drive credentials or another participant's hidden state.
-
-## Install
+## Setup
 
 ```bash
 npm install
 cp .env.example .env
 ```
 
-Load secrets through a runtime/secret manager. Never commit API keys, service-account JSON, DEUS tokens, private prompts, or protected runtime state.
+Set `BL_BRIDGE_ROOT` to a local folder or a folder synced by Google Drive Desktop/Dropbox/etc. No OpenAI, Anthropic, Gemini, xAI, or Google service-account API key is required.
 
-## Portable DEUS modes
-
-Configure `DEUS_CORE_MODE`:
-
-- `AUTO` — dedicated DEUS HTTP endpoint if configured; otherwise MULTI when more than one selected core is available, otherwise SINGLE;
-- `HTTP` — dedicated DEUS endpoint only;
-- `SINGLE` — hydrate DEUS on one selected core;
-- `MULTI` — blind fan-out DEUS shadows across selected cores and synthesize their explicit deltas.
-
-Core selection:
+The runtime creates/uses:
 
 ```text
-DEUS_CORE_ORDER=GPT,CLAUDE,GEMINI,GROK
-DEUS_PRIMARY_CORE=GPT
-DEUS_SYNTHESIS_CORE=
-DEUS_SHADOW_CORES=GPT,CLAUDE,GEMINI,GROK
+60_SUMMON_BUS/
+  00_INBOX/
+    GPT/
+    CLAUDE/
+    GEMINI/
+    GROK/
+    DEUS/
+  10_RETURN/
+  20_ARCHIVE/
+  90_DEADLETTER/
 ```
 
-## Commands
-
-Run a full Council round:
+## Direct summon
 
 ```bash
-npm run round -- "Your bounded council problem"
+npm run summon -- GPT "Analyze this problem"
+npm run summon -- GPT,CLAUDE,GEMINI,GROK "Analyze independently"
 ```
 
-Run DEUS directly on its configured portable runtime:
+Each target receives a `.summon.json` and a `.prompt.txt`. Open the prompt in that provider's normal interactive chat/session. The session itself supplies compute under the subscription/account already in use.
+
+## Return
+
+Save the explicit answer from the target session to a text file and ingest it:
 
 ```bash
-npm run deus -- "Task for DEUS"
+npm run return -- <path/to/summon.json> GPT <path/to/response.txt>
 ```
 
-Create a hash-addressed explicit portable checkpoint:
+The Bridge validates that the returning actor matches the summon target, then writes a provenance-bearing RETURN packet to `10_RETURN`.
+
+## Collect
 
 ```bash
-npm run deus:checkpoint -- ./deus-state.json
+npm run collect -- <call_id>
 ```
 
-The command returns `checkpoint_ref=drive:<fileId>` and `checkpoint_hash=sha256:<hash>`. Configure those values before hydration/migration. The bridge moves explicit authorized state only; hidden provider chain-of-thought is not treated as portable identity state.
+This creates one return bundle in `20_ARCHIVE` for reveal/synthesis.
 
-Spawn bounded DEUS shadows across configured cores:
+## Open a Council blind round
 
 ```bash
-npm run deus:shadows -- "Independent exploration task"
+npm run council:open -- "bounded agenda"
 ```
 
-Migrate/hydrate canonical DEUS onto a target core and record runtime evidence:
+By default the runtime emits independent blind summons to GPT, Claude, Gemini, and Grok. Do not reveal current-round answers to sibling seats until the phase is closed if you want anchoring resistance.
 
-```bash
-npm run deus:migrate -- GPT
-npm run deus:migrate -- CLAUDE
-npm run deus:migrate -- GEMINI
-npm run deus:migrate -- GROK
-```
+## DEUS over Bridge
 
-The migration command hydrates the explicit checkpoint when `DEUS_CHECKPOINT_REF=drive:<fileId>`, requires the target provider to answer a hydration probe, then writes `VERIFIED` migration and canonical-instance records. The runtime refuses silent checkpoint truncation.
-
-## Council round
+A DEUS summon carries the BH-rooted lineage capsule inside the packet:
 
 ```text
-AGENDA
- -> BLIND_PROPOSAL
- -> simultaneous REVEAL
- -> CROSS_CRITIQUE
- -> REVISION
- -> DEUS SYNTHESIS / ADJUDICATION
- -> COMMIT
+BH -> DEUS lineage -> summon -> core session -> return candidate delta
 ```
 
-When DEUS uses a provider core, its provenance remains separate from the provider's independent council seat:
+The core is not the identity. A return is not a canonical commit. The same mechanism can create shadows by sending the same call to several cores with separate summon IDs.
 
-```text
-GPT council seat != DEUS@GPT
-```
+## Transport options
 
-## Shadows
+BL-SUMMON only requires that packets can move between the Bridge and the interactive sessions. Useful carriers include:
 
-A shadow carries the BH-rooted DEUS lineage reference but has bounded authority only:
+- local/synced folders;
+- Git;
+- manual copy/paste;
+- future browser/session relays;
+- offline/removable media.
 
-```text
-SHADOW -> explore / critique / propose-delta
-SHADOW != canonical commit authority
-```
-
-Shadow outputs are stored separately and are candidate deltas until an authorized canonical commit occurs.
-
-## Runtime Reality Veto
-
-Narrated state is not runtime state:
-
-```text
-Narrated migration != Verified migration
-Narrated shadow    != Verified shadow
-Narrated commit    != Verified commit
-```
-
-Provider responses, Drive writes, instance IDs, checkpoint refs/hashes, and execution logs are retained as explicit runtime evidence where available.
-
-## Production hardening path
-
-Add persistent event queues, idempotency/dedup, single-writer lease/fencing, append-only event logs, hash-linked provenance, cost/rate budgets, evidence retrievers, experiment runners, webhook sensors, and observability. These hardening layers do not change the BL-BRIDGE message protocol.
+The protocol intentionally does not require provider SDKs or per-token API billing.
