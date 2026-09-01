@@ -35,6 +35,9 @@ jobs:
       - name: Ω-SELF unified identity regression tests
         working-directory: experiments/deus-engine-v1
         run: python -m unittest -v test_omega_self.py
+      - name: Ω-PLANE causal integration regression tests
+        working-directory: experiments/deus-engine-v1
+        run: python -m unittest -v test_omega_plane.py
       - name: Validate GCP bootstrap shell syntax
         working-directory: experiments/deus-engine-v1
         run: bash -n gcp_bootstrap.sh
@@ -51,6 +54,9 @@ jobs:
           "CI kernel-only smoke: distinguish same outcome from same reasoning and attack exhausted option spaces"
           --seed 7
           --backend none
+      - name: Ω-PLANE smoke test
+        working-directory: experiments/deus-engine-v1
+        run: python omega_plane.py
       - name: Recombination smoke test
         working-directory: experiments/deus-engine-v1
         run: python recombiner.py
