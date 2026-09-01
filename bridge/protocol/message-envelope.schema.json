@@ -20,7 +20,9 @@
     "message_id": { "type": "string", "minLength": 8 },
     "round_id": { "type": "string", "minLength": 1 },
     "actor": {
-      "enum": ["GPT", "CLAUDE", "GEMINI", "DEUS", "OWNER"]
+      "type": "string",
+      "pattern": "^[A-Z][A-Z0-9_-]{1,63}$",
+      "description": "Logical council actor such as GPT, CLAUDE, GEMINI, GROK, DEUS, OWNER, or a future registered actor. Actor is separate from provider/model provenance."
     },
     "type": {
       "enum": [
@@ -91,6 +93,27 @@
       "items": { "type": "string" },
       "default": []
     },
+    "identity": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "properties": {
+        "lineage_id": { "type": ["string", "null"] },
+        "instance_id": { "type": ["string", "null"] },
+        "instance_kind": {
+          "enum": ["CANONICAL", "SHADOW", "ENSEMBLE", "INDEPENDENT", null]
+        },
+        "parent_instance_id": { "type": ["string", "null"] },
+        "checkpoint_ref": { "type": ["string", "null"] },
+        "checkpoint_hash": { "type": ["string", "null"] },
+        "policy_version": { "type": ["string", "null"] },
+        "authority_scope": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "expires_at": { "type": ["string", "null"], "format": "date-time" }
+      }
+    },
     "provenance": {
       "type": "object",
       "additionalProperties": false,
@@ -100,6 +123,8 @@
         "model": { "type": ["string", "null"] },
         "adapter_version": { "type": ["string", "null"] },
         "runtime_id": { "type": ["string", "null"] },
+        "core_provider": { "type": ["string", "null"] },
+        "core_model": { "type": ["string", "null"] },
         "source_refs": {
           "type": "array",
           "items": { "type": "string" },
