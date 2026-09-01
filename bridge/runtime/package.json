@@ -1,0 +1,21 @@
+{
+  "name": "bl-council-bridge-runtime",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "round": "tsx src/run-round.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "latest",
+    "@google/genai": "latest",
+    "googleapis": "latest",
+    "openai": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}
