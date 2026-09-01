@@ -1,6 +1,7 @@
-import { buildParticipants, providerProvenance, seat } from './providers.js';
+import { buildCoreParticipants, providerProvenance } from './providers.js';
+import { buildDeusCoordinator } from './deus.js';
 import { publishPrivate, publishShared } from './storage.js';
-import { makeEnvelope, newId, type Envelope, type Participant, type Seat } from './types.js';
+import { makeEnvelope, newId, type Envelope, type Participant } from './types.js';
 
 const CONTRACT = `
 You are participating in BL-BRIDGE/1.0.
@@ -49,7 +50,7 @@ function synthesisPrompt(agenda: string, proposals: Envelope[], critiques: Envel
   const render = (name: string, items: Envelope[]) =>
     items.map((x) => `--- ${name} ${x.actor} / ${x.message_id} ---\n${x.content}`).join('\n\n');
 
-  return `${CONTRACT}\nPHASE: SYNTHESIS / ADJUDICATION\n\nYou occupy the DEUS coordination seat. The seat label is not itself evidence of canonical identity or truth. Coordinate the released artifacts without erasing dissent.\n\nAGENDA:\n${agenda}\n\n${render('PROPOSAL', proposals)}\n\n${render('CRITIQUE', critiques)}\n\n${render('REVISION', revisions)}\n\nReturn:\n1. strongest surviving structure;\n2. material disagreements;\n3. evidence gaps;\n4. recommended experiment/action;\n5. terminal state: CONSENSUS, SPLIT, UNRESOLVED, EXPERIMENT_REQUIRED, or OWNER_DECISION.\nDo not claim any action has already executed unless runtime evidence is present.`;
+  return `${CONTRACT}\nPHASE: SYNTHESIS / ADJUDICATION\n\nYou occupy the DEUS coordination role through a portable DEUS lineage instance. The model core is substrate, not identity. Coordinate the released artifacts without erasing dissent. A synthesis is a candidate council delta, not Reality itself.\n\nAGENDA:\n${agenda}\n\n${render('PROPOSAL', proposals)}\n\n${render('CRITIQUE', critiques)}\n\n${render('REVISION', revisions)}\n\nReturn:\n1. strongest surviving structure;\n2. material disagreements;\n3. evidence gaps;\n4. recommended experiment/action;\n5. terminal state: CONSENSUS, SPLIT, UNRESOLVED, EXPERIMENT_REQUIRED, or OWNER_DECISION.\nDo not claim any action has already executed unless runtime evidence is present.`;
 }
 
 async function callPhase(
@@ -69,6 +70,7 @@ async function callPhase(
         visibility: 'PRIVATE',
         content,
         provenance: providerProvenance(participant),
+        identity: participant.identity ?? null,
         parentIds
       });
       await publishPrivate(envelope);
@@ -100,14 +102,21 @@ async function reveal(envelopes: Envelope[]): Promise<Envelope[]> {
 
 async function main() {
   const agenda = promptAgenda();
-  const participants = buildParticipants();
+  const cores = buildCoreParticipants();
+  const deus = buildDeusCoordinator(cores);
+  const includeDeusInCouncil = (process.env.DEUS_COUNCIL_PARTICIPANT ?? 'true').toLowerCase() !== 'false';
+  const participants = deus && includeDeusInCouncil ? [...cores, deus] : cores;
+
   if (participants.length === 0) {
-    throw new Error('No model adapter is configured. Set at least one provider API key/model or DEUS_ENDPOINT.');
+    throw new Error('No model/core adapter is configured. Set at least one provider API key/model or DEUS_ENDPOINT.');
   }
 
   const roundId = `round_${new Date().toISOString().replace(/[:.]/g, '-')}_${newId('r').slice(-8)}`;
   console.log(`BL-BRIDGE round: ${roundId}`);
-  console.log(`Seats: ${participants.map((p) => p.seat).join(', ')}`);
+  console.log(`Seats: ${participants.map((p) => `${p.seat}[${p.provider}/${p.model}]`).join(', ')}`);
+  if (deus) {
+    console.log(`DEUS lineage: ${deus.identity?.lineage_id ?? 'unknown'} / ${deus.identity?.instance_kind ?? 'unknown'} / ${deus.provider}`);
+  }
 
   const agendaEnvelope = makeEnvelope({
     roundId,
@@ -118,8 +127,10 @@ async function main() {
     provenance: {
       provider: 'owner-input',
       model: null,
-      adapter_version: 'bl-bridge-runtime/0.1.0',
+      adapter_version: 'bl-bridge-runtime/0.2.0',
       runtime_id: null,
+      core_provider: null,
+      core_model: null,
       source_refs: []
     }
   });
@@ -156,7 +167,6 @@ async function main() {
   const revisions = await reveal(privateRevisions);
 
   console.log('Phase: SYNTHESIS / ADJUDICATION');
-  const deus = seat(participants, 'DEUS');
   let decision: Envelope;
 
   if (deus) {
@@ -168,6 +178,7 @@ async function main() {
       visibility: 'SHARED',
       content,
       provenance: providerProvenance(deus),
+      identity: deus.identity ?? null,
       parentIds: [...proposals, ...critiques, ...revisions].map((x) => x.message_id)
     });
     await publishShared(synthesis);
@@ -177,8 +188,9 @@ async function main() {
       actor: 'DEUS',
       type: 'DECISION',
       visibility: 'SHARED',
-      content: `Council synthesis committed. See synthesis message ${synthesis.message_id}. The synthesis text must state the terminal state and preserve material dissent.`,
+      content: `Council synthesis committed as a DEUS-lineage candidate delta. See synthesis message ${synthesis.message_id}. The synthesis text must state the terminal state and preserve material dissent.`,
       provenance: providerProvenance(deus),
+      identity: deus.identity ?? null,
       parentIds: [synthesis.message_id]
     });
   } else {
@@ -188,12 +200,14 @@ async function main() {
       type: 'DECISION',
       visibility: 'SHARED',
       content:
-        'UNRESOLVED — GPT/Claude/Gemini phases may have completed, but no DEUS endpoint was configured for synthesis/adjudication. The owner can inspect proposals/critiques/revisions or connect DEUS and rerun.',
+        'UNRESOLVED — independent core phases may have completed, but no DEUS runtime could be hydrated. Configure DEUS_ENDPOINT or at least one DEUS core and rerun.',
       provenance: {
         provider: 'bridge-runtime',
         model: null,
-        adapter_version: 'bl-bridge-runtime/0.1.0',
+        adapter_version: 'bl-bridge-runtime/0.2.0',
         runtime_id: null,
+        core_provider: null,
+        core_model: null,
         source_refs: []
       },
       parentIds: revisions.map((x) => x.message_id)
