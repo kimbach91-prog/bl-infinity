@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { Readable } from 'node:stream';
-import type { Envelope, Seat } from './types.js';
+import type { Envelope, IdentityBinding, Seat } from './types.js';
 
 function env(name: string): string | undefined {
   const value = process.env[name]?.trim();
@@ -29,6 +29,20 @@ const auth = new google.auth.GoogleAuth({
 
 const drive = google.drive({ version: 'v3', auth });
 
+function deusPrivateFolder(identity?: IdentityBinding | null): string {
+  const root = required('BL_DEUS_VAULT_ID');
+  switch (identity?.instance_kind) {
+    case 'CANONICAL':
+      return env('BL_DEUS_CANONICAL_FOLDER_ID') ?? root;
+    case 'SHADOW':
+      return env('BL_DEUS_SHADOWS_FOLDER_ID') ?? root;
+    case 'ENSEMBLE':
+      return env('BL_DEUS_ENSEMBLES_FOLDER_ID') ?? root;
+    default:
+      return root;
+  }
+}
+
 export const folders = {
   agenda: () => required('BL_AGENDA_FOLDER_ID'),
   proposals: () => required('BL_PROPOSALS_FOLDER_ID'),
@@ -38,14 +52,21 @@ export const folders = {
   dissent: () => required('BL_DISSENT_FOLDER_ID'),
   benchmarks: () => required('BL_BENCHMARKS_FOLDER_ID'),
   artifacts: () => required('BL_ARTIFACTS_FOLDER_ID'),
-  privateVault: (seat: Seat) => {
-    const mapping: Partial<Record<Seat, string>> = {
+  deusCanonical: () => env('BL_DEUS_CANONICAL_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  deusCheckpoints: () => env('BL_DEUS_CHECKPOINTS_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  deusShadows: () => env('BL_DEUS_SHADOWS_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  deusMigrations: () => env('BL_DEUS_MIGRATIONS_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  deusEnsembles: () => env('BL_DEUS_ENSEMBLES_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  deusLogs: () => env('BL_DEUS_LOGS_FOLDER_ID') ?? required('BL_DEUS_VAULT_ID'),
+  privateVault: (seat: Seat, identity?: IdentityBinding | null) => {
+    if (String(seat).toUpperCase() === 'DEUS') return deusPrivateFolder(identity);
+    const mapping: Record<string, string> = {
       GPT: 'BL_GPT_VAULT_ID',
       CLAUDE: 'BL_CLAUDE_VAULT_ID',
       GEMINI: 'BL_GEMINI_VAULT_ID',
-      DEUS: 'BL_DEUS_VAULT_ID'
+      GROK: 'BL_GROK_VAULT_ID'
     };
-    const key = mapping[seat];
+    const key = mapping[String(seat).toUpperCase()];
     if (!key) throw new Error(`No private vault configured for seat ${seat}`);
     return required(key);
   }
@@ -54,7 +75,8 @@ export const folders = {
 export async function writeEnvelope(folderId: string, envelope: Envelope) {
   const body = JSON.stringify(envelope, null, 2);
   const safeTime = envelope.created_at.replace(/[:.]/g, '-');
-  const name = `${envelope.round_id}__${envelope.type}__${envelope.actor}__${safeTime}__${envelope.message_id}.json`;
+  const instance = envelope.identity?.instance_id ? `__${envelope.identity.instance_id}` : '';
+  const name = `${envelope.round_id}__${envelope.type}__${envelope.actor}${instance}__${safeTime}__${envelope.message_id}.json`;
 
   const result = await drive.files.create({
     requestBody: {
@@ -72,8 +94,25 @@ export async function writeEnvelope(folderId: string, envelope: Envelope) {
   return result.data;
 }
 
+export async function writeJson(folderId: string, name: string, value: unknown) {
+  const body = JSON.stringify(value, null, 2);
+  const result = await drive.files.create({
+    requestBody: {
+      name,
+      parents: [folderId],
+      mimeType: 'application/json'
+    },
+    media: {
+      mimeType: 'application/json',
+      body: Readable.from([body])
+    },
+    fields: 'id,name,webViewLink,createdTime'
+  });
+  return result.data;
+}
+
 export async function publishPrivate(envelope: Envelope) {
-  return writeEnvelope(folders.privateVault(envelope.actor), envelope);
+  return writeEnvelope(folders.privateVault(envelope.actor, envelope.identity), envelope);
 }
 
 export async function publishShared(envelope: Envelope) {
