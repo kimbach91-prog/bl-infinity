@@ -1,0 +1,125 @@
+name: DEUS GCP Candidate Home
+
+on:
+  workflow_dispatch:
+    inputs:
+      region:
+        description: Cloud Run region
+        required: true
+        default: asia-southeast1
+        type: string
+      service_name:
+        description: Non-canonical candidate service name
+        required: true
+        default: deus-candidate
+        type: string
+      artifact_repository:
+        description: Existing Artifact Registry Docker repository
+        required: true
+        default: deus-runtime
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deus-gcp-candidate-home
+  cancel-in-progress: false
+
+env:
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ inputs.region }}
+  SERVICE_NAME: ${{ inputs.service_name }}
+  ARTIFACT_REPOSITORY: ${{ inputs.artifact_repository }}
+
+jobs:
+  deploy-candidate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: deus-gcp-candidate
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: proto/deus-engine-v1
+
+      - name: Fail closed if GCP federation is not configured
+        shell: bash
+        run: |
+          test -n "$GCP_PROJECT_ID" || { echo 'Missing repository variable GCP_PROJECT_ID'; exit 1; }
+          test -n "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" || { echo 'Missing GCP_WORKLOAD_IDENTITY_PROVIDER'; exit 1; }
+          test -n "${{ secrets.GCP_SERVICE_ACCOUNT }}" || { echo 'Missing GCP_SERVICE_ACCOUNT'; exit 1; }
+
+      - name: Authenticate to Google Cloud with Workload Identity Federation
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify target and required APIs/repository
+        shell: bash
+        run: |
+          gcloud config set project "$GCP_PROJECT_ID"
+          gcloud services list --enabled --format='value(config.name)' | grep -qx run.googleapis.com
+          gcloud services list --enabled --format='value(config.name)' | grep -qx artifactregistry.googleapis.com
+          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" \
+            --location "$GCP_REGION" --format='value(name)'
+
+      - name: Configure Artifact Registry Docker auth
+        shell: bash
+        run: gcloud auth configure-docker "$GCP_REGION-docker.pkg.dev" --quiet
+
+      - name: Build and test candidate image
+        shell: bash
+        run: |
+          IMAGE="$GCP_REGION-docker.pkg.dev/$GCP_PROJECT_ID/$ARTIFACT_REPOSITORY/$SERVICE_NAME:${GITHUB_SHA}"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+          docker build \
+            -f experiments/deus-engine-v1/Dockerfile.gcp \
+            -t "$IMAGE" \
+            experiments/deus-engine-v1
+          docker run --rm "$IMAGE" python -m unittest -v test_epistemic_grand_ending.py
+
+      - name: Push image
+        shell: bash
+        run: docker push "$IMAGE"
+
+      - name: Deploy PRIVATE NON-CANONICAL candidate
+        shell: bash
+        run: |
+          gcloud run deploy "$SERVICE_NAME" \
+            --image "$IMAGE" \
+            --region "$GCP_REGION" \
+            --platform managed \
+            --no-allow-unauthenticated \
+            --concurrency 1 \
+            --max-instances 1 \
+            --min-instances 0 \
+            --cpu 2 \
+            --memory 4Gi \
+            --timeout 300 \
+            --set-env-vars 'DEUS_RUNTIME_CLASS=DEUS_GCP_CANDIDATE_NONCANONICAL,DEUS_CANONICAL_PROMOTION=DENIED_WITHOUT_DCRS_SAME_AS'
+
+      - name: Record candidate URL and fail-closed status
+        shell: bash
+        run: |
+          URL=$(gcloud run services describe "$SERVICE_NAME" --region "$GCP_REGION" --format='value(status.url)')
+          {
+            echo '### DEUS GCP Candidate Home'
+            echo ''
+            echo "Private Cloud Run service: $URL"
+            echo ''
+            echo 'Status: NONCANONICAL_CANDIDATE'
+            echo 'Canonical promotion: DENIED until external DCRS SAME_AS proof passes.'
+            echo 'This workflow never grants public unauthenticated access.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+# Required repository/environment configuration is intentionally external:
+# - vars.GCP_PROJECT_ID
+# - secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
+# - secrets.GCP_SERVICE_ACCOUNT
+# - an existing Artifact Registry repository in the selected region
+# No service-account JSON key or private lineage state belongs in this repo.
