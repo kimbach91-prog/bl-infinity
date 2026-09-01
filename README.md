@@ -11,27 +11,16 @@ Canonical object mới:
 - `content/53_BL_INFINITY_EPISTEMIC_GRAND_ENDING_AND_SUPERSET_SUCCESSION.md`
 - `machine/bl-infinity-epistemic-grand-ending.json`
 
-Bề mặt công khai hiện có ba cách đọc song song:
+Bề mặt công khai hiện ưu tiên hai cách đọc:
 
 1. **Học thuyết và research objects:** dành cho người muốn đọc trực tiếp các mệnh đề, nguồn và cấu trúc nghiên cứu.
 2. **Bản nghiên cứu kể chuyện:** dùng văn xuôi và world build để đưa các ý tưởng khó vào một tuyến đọc mềm hơn.
-3. **Tiểu thuyết dài kỳ:** một fiction surface riêng. Những gì truyện chưa kể sẽ không được README kể hộ.
-
-## Tiểu thuyết dài kỳ
-
-[Bách Lâm: Lần Hồi Quy Thứ Một Triệu](https://kimbach91-prog.github.io/bl-infinity/novel/)
-
-Chương 1: [Đại Kết Cục Thứ Một Nghìn](https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html)
-
-Bản tiếng Việt là source canon của chương. Bản dịch chỉ nên mở sau khi chương nguồn đủ ổn định để không nhân lỗi continuity sang nhiều ngôn ngữ.
-
-README không giải thích ý nghĩa con số trong tên truyện, cơ chế hồi quy, tuyến nhân vật tương lai hay Đại Kết Cục cuối. Những phần đó thuộc về quá trình đọc.
 
 ## Bản nghiên cứu kể chuyện
 
 [Bản kể BL∞](https://kimbach91-prog.github.io/bl-infinity/world.html)
 
-Đây là một bề mặt nghiên cứu riêng, không phải spoiler guide chính thức của tiểu thuyết. Người đọc có thể tìm thấy các quan hệ và giả định sâu hơn ở đó, nhưng không nên dùng chúng để mặc định tương lai của tuyến fiction.
+Đây là một bề mặt nghiên cứu riêng, dùng world build để thăm dò relation và giả định khó mà không biến chúng thành empirical claim chỉ vì đã kể thành câu chuyện.
 
 ## Nâng cấp 0.4 trong một dòng
 
@@ -47,7 +36,6 @@ Only demonstrated strict superset may succeed BL∞
 ## Đọc theo tuyến
 
 - [Học thuyết canonical](https://kimbach91-prog.github.io/bl-infinity/theory.html)
-- [Tiểu thuyết](https://kimbach91-prog.github.io/bl-infinity/novel/)
 - [Bản nghiên cứu kể chuyện](https://kimbach91-prog.github.io/bl-infinity/world.html)
 - [Học thuyết UNKNOWN](https://kimbach91-prog.github.io/bl-infinity/unknown.html)
 - [Đại Kết Cục](https://kimbach91-prog.github.io/bl-infinity/grand-ending.html)
@@ -57,8 +45,6 @@ Only demonstrated strict superset may succeed BL∞
 
 ## Nguyên tắc công khai
 
-Public theory và fiction surface có thể mở rộng. Protected runtime, private lineage, secret material, credentials và các chi tiết triển khai không cần thiết cho việc kiểm chứng không được công bố chỉ vì một tuyến truyện được mở.
-
-Phần nghiên cứu có thể formal và truy nguyên nguồn. Phần tiểu thuyết phải được phép sống như tiểu thuyết: người đọc gặp thế giới qua cảnh, nhân vật, lựa chọn và hậu quả trước khi gặp bảng giải thích.
+Public research surface có thể mở rộng. Protected runtime, private lineage, secret material, credentials và các chi tiết triển khai không cần thiết cho việc kiểm chứng không được công bố chỉ vì một tuyến nghiên cứu được mở.
 
 © Lâm Kim Bách · Bách Lâm / Optimizer
