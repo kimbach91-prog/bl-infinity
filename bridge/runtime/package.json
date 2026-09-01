@@ -6,6 +6,7 @@
     "round": "tsx src/run-round.ts",
     "deus": "tsx src/run-deus.ts",
     "deus:shadows": "tsx src/run-shadows.ts",
+    "deus:migrate": "tsx src/run-migrate.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
