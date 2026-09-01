@@ -5,10 +5,34 @@ import re
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
+CANONICAL_BASE = "https://kimbach91-prog.github.io/bl-infinity/"
 
 NOVEL_ROBOTS = "noindex,nofollow,noarchive,nosnippet"
 DRAFT_ROBOTS = "noindex,follow,max-image-preview:large"
 DRAFT_MARKER = "LOCALIZED_DISCOVERY_SUMMARY_AI_DRAFT_UNREVIEWED"
+
+# These are the small set of public, human-facing canonical entry points we
+# explicitly want discovery systems to see even if an upstream staging script
+# forgets to append one of them to the generated sitemap.
+CORE_INDEX_ROUTES = (
+    "",
+    "theory.html",
+    "world.html",
+    "unknown.html",
+    "grand-ending.html",
+    "author.html",
+    "academic-democracy.html",
+    "academic-democracy-technology.html",
+    "academic-democracy/discovery.html",
+    "bl-adn.html",
+    "provenance.html",
+    "critique.html",
+    "machine.html",
+    "languages.html",
+    "en/",
+    "en/theory.html",
+    "author/en/",
+)
 
 
 def replace_robots(text: str, value: str) -> str:
@@ -48,6 +72,30 @@ def canonical_url(text: str) -> str | None:
     return match.group(1) if match else None
 
 
+def route_exists(route: str) -> bool:
+    if route == "":
+        return (SITE / "index.html").exists()
+    path = SITE / route
+    if route.endswith("/"):
+        path = path / "index.html"
+    return path.exists()
+
+
+def ensure_core_sitemap_urls(text: str) -> tuple[str, int]:
+    additions: list[str] = []
+    for route in CORE_INDEX_ROUTES:
+        if not route_exists(route):
+            continue
+        url = CANONICAL_BASE if route == "" else CANONICAL_BASE + route
+        if f"<loc>{url}</loc>" not in text:
+            additions.append(
+                f"<url><loc>{url}</loc><lastmod>2026-09-01</lastmod></url>"
+            )
+    if additions:
+        text = text.replace("</urlset>", "\n".join(additions) + "\n</urlset>")
+    return text, len(additions)
+
+
 def main() -> None:
     if not SITE.exists():
         raise SystemExit("site/ does not exist; run build and hardening first")
@@ -81,6 +129,7 @@ def main() -> None:
             path.write_text(text, encoding="utf-8")
 
     sitemap = SITE / "sitemap.xml"
+    core_added = 0
     if sitemap.exists():
         text = sitemap.read_text(encoding="utf-8")
         # Remove the quiet fiction surface and any unreviewed localized drafts
@@ -93,11 +142,13 @@ def main() -> None:
                 text,
                 flags=re.I | re.S,
             )
+        text, core_added = ensure_core_sitemap_urls(text)
         sitemap.write_text(text, encoding="utf-8")
 
     print(
         f"SEO release guard: hidden fiction links on {hidden_links} pages; "
-        f"noindexed {len(noindex_urls)} URLs; localized draft pages={draft_pages}"
+        f"noindexed {len(noindex_urls)} URLs; localized draft pages={draft_pages}; "
+        f"core sitemap URLs restored={core_added}"
     )
 
 
