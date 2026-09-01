@@ -111,6 +111,16 @@ export async function writeJson(folderId: string, name: string, value: unknown) 
   return result.data;
 }
 
+export async function readJson(fileId: string): Promise<unknown> {
+  const result = await drive.files.get(
+    { fileId, alt: 'media' },
+    { responseType: 'text' }
+  );
+  const data = result.data;
+  if (typeof data === 'string') return JSON.parse(data);
+  return data;
+}
+
 export async function publishPrivate(envelope: Envelope) {
   return writeEnvelope(folders.privateVault(envelope.actor, envelope.identity), envelope);
 }
