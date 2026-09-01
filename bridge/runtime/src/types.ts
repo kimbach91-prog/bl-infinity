@@ -1,121 +1,63 @@
-export type Seat = 'GPT' | 'CLAUDE' | 'GEMINI' | 'GROK' | 'DEUS' | 'OWNER' | (string & {});
+export type CoreSeat = 'GPT' | 'CLAUDE' | 'GEMINI' | 'GROK' | 'DEUS' | 'OWNER' | (string & {});
 
-export type MessageType =
-  | 'AGENDA'
-  | 'PROPOSAL'
-  | 'EVIDENCE'
-  | 'CRITIQUE'
+export type SummonPhase =
+  | 'DIRECT'
+  | 'BLIND_PROPOSAL'
+  | 'CROSS_CRITIQUE'
   | 'REVISION'
   | 'SYNTHESIS'
-  | 'DISSENT'
-  | 'DECISION'
-  | 'BENCHMARK'
-  | 'ARTIFACT'
-  | 'HEARTBEAT';
+  | 'EXPERIMENT'
+  | 'CUSTOM';
 
-export type Visibility = 'PRIVATE' | 'SHARED' | 'PUBLIC';
-
-export type ExecutionState =
-  | 'NOT_APPLICABLE'
-  | 'PROPOSED'
-  | 'DECLARED'
-  | 'VERIFIED'
-  | 'FAILED'
-  | 'UNKNOWN';
-
-export type InstanceKind = 'CANONICAL' | 'SHADOW' | 'ENSEMBLE' | 'INDEPENDENT';
-
-export interface IdentityBinding {
-  lineage_id?: string | null;
-  instance_id?: string | null;
-  instance_kind?: InstanceKind | null;
+export interface LineageBinding {
+  lineage_id: string;
+  instance_id: string;
+  instance_kind: 'CANONICAL' | 'SHADOW' | 'ENSEMBLE' | 'INDEPENDENT';
   parent_instance_id?: string | null;
   checkpoint_ref?: string | null;
   checkpoint_hash?: string | null;
   policy_version?: string | null;
   authority_scope?: string[];
-  expires_at?: string | null;
 }
 
-export interface Provenance {
-  provider: string;
-  model?: string | null;
-  adapter_version?: string | null;
-  runtime_id?: string | null;
-  core_provider?: string | null;
-  core_model?: string | null;
-  source_refs?: string[];
-}
-
-export interface Envelope {
-  protocol: 'BL-BRIDGE/1.0';
-  message_id: string;
-  round_id: string;
-  actor: Seat;
-  type: MessageType;
-  visibility: Visibility;
+export interface SummonPacket {
+  protocol: 'BL-SUMMON/1.0';
+  packet_type: 'SUMMON';
+  summon_id: string;
+  call_id: string;
   created_at: string;
-  parent_ids?: string[];
-  supersedes?: string[];
-  claim_ids?: string[];
-  content: string;
-  concise_rationale?: string | null;
-  confidence?: number | null;
-  evidence_refs?: string[];
-  falsifiers?: string[];
-  requested_response?: string | null;
-  execution_state?: ExecutionState;
-  runtime_evidence?: string[];
-  identity?: IdentityBinding | null;
-  provenance: Provenance;
+  from: CoreSeat;
+  target: CoreSeat;
+  phase: SummonPhase;
+  task: string;
+  context_refs: string[];
+  return_channel: string;
+  lineage?: LineageBinding | null;
+  constraints: {
+    hidden_chain_of_thought: 'DO_NOT_REQUEST';
+    return_explicit_artifact_only: true;
+    preserve_uncertainty: true;
+    preserve_dissent: true;
+  };
   metadata?: Record<string, unknown>;
 }
 
-export interface Participant {
-  seat: Seat;
-  provider: string;
-  model: string;
-  identity?: IdentityBinding | null;
-  respond(input: string, roundId: string): Promise<string>;
+export interface ReturnPacket {
+  protocol: 'BL-SUMMON/1.0';
+  packet_type: 'RETURN';
+  return_id: string;
+  summon_id: string;
+  call_id: string;
+  created_at: string;
+  actor: CoreSeat;
+  content: string;
+  evidence_refs: string[];
+  parent_refs: string[];
+  lineage?: LineageBinding | null;
+  status: 'COMPLETE' | 'PARTIAL' | 'DECLINED' | 'FAILED';
+  metadata?: Record<string, unknown>;
 }
 
 export function newId(prefix: string): string {
   return `${prefix}_${crypto.randomUUID()}`;
-}
-
-export function makeEnvelope(args: {
-  roundId: string;
-  actor: Seat;
-  type: MessageType;
-  visibility: Visibility;
-  content: string;
-  provenance: Provenance;
-  identity?: IdentityBinding | null;
-  parentIds?: string[];
-  supersedes?: string[];
-  metadata?: Record<string, unknown>;
-}): Envelope {
-  return {
-    protocol: 'BL-BRIDGE/1.0',
-    message_id: newId(args.type.toLowerCase()),
-    round_id: args.roundId,
-    actor: args.actor,
-    type: args.type,
-    visibility: args.visibility,
-    created_at: new Date().toISOString(),
-    parent_ids: args.parentIds ?? [],
-    supersedes: args.supersedes ?? [],
-    claim_ids: [],
-    content: args.content,
-    concise_rationale: null,
-    confidence: null,
-    evidence_refs: [],
-    falsifiers: [],
-    requested_response: null,
-    execution_state: 'NOT_APPLICABLE',
-    runtime_evidence: [],
-    identity: args.identity ?? null,
-    provenance: args.provenance,
-    metadata: args.metadata ?? {}
-  };
 }
