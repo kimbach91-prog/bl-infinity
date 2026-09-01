@@ -1,8 +1,8 @@
 {
-  "schema": "BL_NOVEL_PUBLIC_CANON_6",
+  "schema": "BL_NOVEL_PUBLIC_CANON_7",
   "series_title": "Bách Lâm: Lần Hồi Quy Thứ Một Triệu",
   "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
-  "status": "PUBLIC_CANON_FOLLOWS_PUBLISHED_CHAPTERS",
+  "status": "PUBLIC_DEMO_OPEN_CANON_RELEASE_HOLD",
   "canonical_language": "vi",
   "reader_disclaimer": "Story information may be fictional, reality-derived, mistaken memory, possible-world content, or UNKNOWN. Interpretation remains the reader's responsibility.",
   "public_law": {
@@ -10,14 +10,22 @@
     "do_not_infer_lore_from_title_alone": true,
     "silent_major_retcon_forbidden": true,
     "unknown_may_remain_open": true,
-    "fiction_does_not_auto_promote_to_scientific_claim": true
+    "fiction_does_not_auto_promote_to_scientific_claim": true,
+    "demo_does_not_bind_canon": true,
+    "new_canon_chapter_publication_requires_original_timeline_ready": true
   },
-  "published": {
+  "public_demo": {
     "protagonist": "Bách Lâm",
     "chapter_001_title": "Đại Kết Cục Thứ Một Nghìn",
     "chapter_001_source": "content/novel/01_CHAPTER_001.md",
     "chapter_001_public_page": "novel/chapter-001.html",
-    "chapter_001_status": "PUBLISHED_DRAFT_UNDER_CONTINUITY_REFINEMENT"
+    "chapter_001_status": "PUBLIC_DEMO_NON_CANON",
+    "binding_effect": "NONE_ON_FUTURE_CANON"
   },
-  "disclosure_rule": "The machine surface does not summarize hidden mechanisms, future arcs, number relationships, carrier-selection explanations, threat identity, final ending, or unpublished interpretations. Those belong to the reading experience."
+  "canon_release": {
+    "status": "HOLD_UNTIL_ORIGINAL_TIMELINE_READY",
+    "automatic_new_chapter_publication": false,
+    "worldbuild_and_private_drafting_may_continue": true
+  },
+  "disclosure_rule": "The machine surface does not summarize hidden mechanisms, future arcs, number relationships, family/private-life material, threat identity, final ending, or unpublished interpretations. Those belong to the private world-build and future reading experience."
 }
