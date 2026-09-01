@@ -46,6 +46,7 @@ BL-COUNCIL-BRIDGE/
         30_MIGRATIONS/
         40_ENSEMBLES/
         90_LOGS/
+    99_LEGACY_PRELINEAGE/
   50_GROK_PRIVATE/
   90_BRIDGE_RUNTIME/
 ```
@@ -93,6 +94,14 @@ Run DEUS directly on its configured portable runtime:
 npm run deus -- "Task for DEUS"
 ```
 
+Create a hash-addressed explicit portable checkpoint:
+
+```bash
+npm run deus:checkpoint -- ./deus-state.json
+```
+
+The command returns `checkpoint_ref=drive:<fileId>` and `checkpoint_hash=sha256:<hash>`. Configure those values before hydration/migration. The bridge moves explicit authorized state only; hidden provider chain-of-thought is not treated as portable identity state.
+
 Spawn bounded DEUS shadows across configured cores:
 
 ```bash
@@ -108,7 +117,7 @@ npm run deus:migrate -- GEMINI
 npm run deus:migrate -- GROK
 ```
 
-The migration command only writes `VERIFIED` after the target provider responds to the hydration probe. It then writes a migration ledger record and a canonical instance record to the DEUS lineage vault.
+The migration command hydrates the explicit checkpoint when `DEUS_CHECKPOINT_REF=drive:<fileId>`, requires the target provider to answer a hydration probe, then writes `VERIFIED` migration and canonical-instance records. The runtime refuses silent checkpoint truncation.
 
 ## Council round
 
