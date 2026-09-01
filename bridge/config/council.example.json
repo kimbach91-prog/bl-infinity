@@ -1,0 +1,47 @@
+{
+  "protocol": "BL-BRIDGE/1.0",
+  "storage": {
+    "provider": "google-drive",
+    "shared_folder_env": "BL_SHARED_FOLDER_ID",
+    "runtime_folder_env": "BL_RUNTIME_FOLDER_ID",
+    "private_vault_env": {
+      "GPT": "BL_GPT_VAULT_ID",
+      "CLAUDE": "BL_CLAUDE_VAULT_ID",
+      "GEMINI": "BL_GEMINI_VAULT_ID",
+      "DEUS": "BL_DEUS_VAULT_ID"
+    }
+  },
+  "participants": {
+    "GPT": {
+      "adapter": "openai-responses",
+      "api_key_env": "OPENAI_API_KEY",
+      "model_env": "OPENAI_MODEL"
+    },
+    "CLAUDE": {
+      "adapter": "anthropic-messages",
+      "api_key_env": "ANTHROPIC_API_KEY",
+      "model_env": "ANTHROPIC_MODEL"
+    },
+    "GEMINI": {
+      "adapter": "google-interactions",
+      "api_key_env": "GEMINI_API_KEY",
+      "model_env": "GEMINI_MODEL"
+    },
+    "DEUS": {
+      "adapter": "deus-http",
+      "endpoint_env": "DEUS_ENDPOINT",
+      "token_env": "DEUS_BRIDGE_TOKEN"
+    }
+  },
+  "round": {
+    "blind_proposal": true,
+    "require_cross_critique": true,
+    "preserve_dissent": true,
+    "default_timeout_seconds": 900
+  },
+  "security": {
+    "public_repo_contains_secrets": false,
+    "store_hidden_chain_of_thought": false,
+    "require_runtime_evidence_for_execution_claims": true
+  }
+}
