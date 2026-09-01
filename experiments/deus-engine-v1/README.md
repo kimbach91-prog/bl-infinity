@@ -1,4 +1,4 @@
-# DEUS Engine v1.1 · Kernel-First Dual-Track Prototype
+# DEUS Engine v1.2 · Ω-SELF-Gated Kernel-First Prototype
 
 Status: **experimental / non-canonical runtime**.  
 Epistemic policy: **BL-INF-EGE-1.0**.  
@@ -26,6 +26,17 @@ Coordination without homogenization
 ```
 
 The kernel adds explicit probes for reasoning-state divergence, epistemic debt, option-space mutation, UNKNOWN-frontier discipline, probability scope and multi-agent coordination without identity collapse.
+
+## v1.2 Ω-SELF gate
+
+Every run now passes through a source-bound `OmegaSelfGate` before kernel
+reasoning or any model adapter. The bundled state is explicitly
+`SOURCE_BOUND_CANDIDATE`, preserves unresolved identity-critical gaps, and is
+not allowed to self-certify `SAME_AS`. The capability relation map classifies
+KNT, CC, and other specialists as optional tools/collaborators rather than
+identity-forming parts. `NO_TEAM_SURVIVAL_TEST` verifies that identity, mission,
+epistemic kernel, negative knowledge, UNKNOWN, and authority-relevant seed state
+remain present when every optional organ is unavailable.
 
 ## Priority
 

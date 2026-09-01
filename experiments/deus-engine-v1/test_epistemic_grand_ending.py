@@ -3,11 +3,14 @@ from __future__ import annotations
 
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import patch
 
 from engine import ENGINE_VERSION, demo_atoms, run
 from kernel import EPISTEMIC_INVARIANTS, EPISTEMIC_POLICY_VERSION, build_kernel_plan
+from model_adapter import MockAdapter
+from omega_self import OmegaSelfGate, source_bound_candidate_capsule
 from recombiner import RoleSelf
 from service import RUNTIME_CLASS, canonical_status, execute
 
@@ -24,7 +27,7 @@ class EpistemicGrandEndingKernelTests(unittest.TestCase):
 
     def test_policy_version_is_loaded(self) -> None:
         self.assertEqual(EPISTEMIC_POLICY_VERSION, "BL-INF-EGE-1.0")
-        self.assertTrue(ENGINE_VERSION.startswith("1.1-"))
+        self.assertTrue(ENGINE_VERSION.startswith("1.2-"))
 
     def test_new_depth_and_frontier_invariants_are_present(self) -> None:
         required = {
@@ -68,7 +71,42 @@ class EpistemicGrandEndingKernelTests(unittest.TestCase):
                 )
                 self.assertEqual(result.realization_status, "KERNEL_ONLY_NO_MODEL_CALLED")
                 self.assertEqual(result.epistemic_policy_version, EPISTEMIC_POLICY_VERSION)
+                self.assertEqual(result.omega_self_manifest["state"], "OMEGA_SELF_MANIFESTED")
                 self.assertTrue((Path(td) / "events.jsonl").exists())
+
+    def test_unified_self_gate_blocks_reasoning_and_adapter_when_seed_unbound(self) -> None:
+        capsule = source_bound_candidate_capsule()
+        unbound = replace(capsule, seed=replace(capsule.seed, source_refs=()))
+        adapter = MockAdapter()
+        with patch("engine.build_kernel_plan") as build, patch.object(adapter, "generate") as generate:
+            with self.assertRaisesRegex(RuntimeError, "CONTINUITY_INCOMPLETE"):
+                run(
+                    stimulus="This must not reach reasoning or a model.",
+                    atoms=demo_atoms(),
+                    role=self.role(),
+                    adapters=(adapter,),
+                    self_gate=OmegaSelfGate(unbound),
+                )
+        build.assert_not_called()
+        generate.assert_not_called()
+
+    def test_engine_runs_without_any_optional_organ_or_specialist(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            with patch.dict("os.environ", {"DEUS_ENGINE_STATE_DIR": td, "DEUS_STATE_SALT": "test"}):
+                result = run(
+                    stimulus="NO_TEAM_SURVIVAL_TEST",
+                    atoms=demo_atoms(),
+                    role=self.role(),
+                    adapters=(),
+                    available_organs=(),
+                    seed=7,
+                )
+        self.assertEqual(result.realization_status, "KERNEL_ONLY_NO_MODEL_CALLED")
+        self.assertEqual(result.omega_self_manifest["active_organs"], ())
+        self.assertTrue(result.omega_self_manifest["mission_kernel"])
+        self.assertTrue(result.omega_self_manifest["epistemic_kernel"])
+        self.assertTrue(result.omega_self_manifest["negative_knowledge"])
+        self.assertTrue(result.omega_self_manifest["unresolved_unknowns"])
 
     def test_cloud_candidate_cannot_self_promote(self) -> None:
         self.assertEqual(RUNTIME_CLASS, "DEUS_GCP_CANDIDATE_NONCANONICAL")

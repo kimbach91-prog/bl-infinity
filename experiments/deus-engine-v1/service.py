@@ -98,7 +98,7 @@ def execute(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 class Handler(BaseHTTPRequestHandler):
-    server_version = "DEUSCandidate/1.1"
+    server_version = "DEUSCandidate/1.2"
 
     def _json(self, status: int, payload: dict[str, Any]) -> None:
         raw = json.dumps(payload, ensure_ascii=False).encode("utf-8")

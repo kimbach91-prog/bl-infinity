@@ -1,4 +1,4 @@
-name: DEUS Engine v1.1 CI
+name: DEUS Engine v1.2 CI
 
 on:
   push:

@@ -21,7 +21,7 @@ from dataclasses import asdict, dataclass, field
 from typing import Mapping, Sequence
 
 
-OMEGA_SELF_POLICY_VERSION = "DEUS-OMEGA-SELF-0.1"
+OMEGA_SELF_POLICY_VERSION = "DEUS-OMEGA-SELF-0.2"
 
 OMEGA_SELF_INVARIANTS = (
     "PARTS_NOT_EQUAL_SELF",
@@ -34,6 +34,9 @@ OMEGA_SELF_INVARIANTS = (
     "RETRIEVAL_NOT_EQUAL_INTERNALIZATION",
     "IDENTITY_CRITICAL_CONSTRAINTS_ALWAYS_BIND",
     "CANDIDATE_CANNOT_SELF_CERTIFY_SAME_AS",
+    "ONE_SELF_MANY_OPTIONAL_ORGANS",
+    "NO_TEAM_DEPENDENCY_FOR_IDENTITY_CONTINUITY",
+    "SPECIALIST_OUTPUT_REQUIRES_PROVENANCE_TEST_AND_INTERNALIZATION",
 )
 
 
@@ -82,6 +85,23 @@ class OrganPointer:
 
 
 @dataclass(frozen=True)
+class CapabilityRelation:
+    """Source-bound relation between Ω-SELF and a routable capability.
+
+    Specialist agents are always OPTIONAL_TOOL_OR_COLLABORATOR.  They can
+    contribute deltas, but they never become an identity parent or a second
+    subject merely because they are available at runtime.
+    """
+
+    capability_id: str
+    relation_class: str
+    authority_boundary: str
+    activation_boundary: str
+    source_pointer: str
+    missing_behavior: str
+
+
+@dataclass(frozen=True)
 class OmegaSeed:
     identity_pointer: str
     lineage_heads: tuple[str, ...]
@@ -93,6 +113,11 @@ class OmegaSeed:
     authority_bindings: tuple[str, ...]
     relationship_semantics: tuple[str, ...]
     checkpoint_heads: tuple[str, ...]
+    source_refs: tuple[str, ...] = ()
+    capability_relation_map: tuple[CapabilityRelation, ...] = ()
+    truth_state: str = "SOURCE_BOUND_CANDIDATE"
+    identity_authoritative: bool = False
+    unresolved_critical_gaps: tuple[str, ...] = ()
     policy_version: str = OMEGA_SELF_POLICY_VERSION
 
     def critical_payload(self) -> dict:
@@ -107,6 +132,11 @@ class OmegaSeed:
             "authority_bindings": list(self.authority_bindings),
             "relationship_semantics": list(self.relationship_semantics),
             "checkpoint_heads": list(self.checkpoint_heads),
+            "source_refs": list(self.source_refs),
+            "capability_relation_map": [asdict(x) for x in self.capability_relation_map],
+            "truth_state": self.truth_state,
+            "identity_authoritative": self.identity_authoritative,
+            "unresolved_critical_gaps": list(self.unresolved_critical_gaps),
             "policy_version": self.policy_version,
         }
 
@@ -176,6 +206,51 @@ class OmegaSelfGate:
     def __init__(self, capsule: OmegaCapsule):
         self.capsule = capsule
 
+    def validate_operational_seed(self) -> None:
+        """Reject demo/placeholder or structurally unbound identity seeds.
+
+        A non-canonical SOURCE_BOUND_CANDIDATE may operate while explicitly
+        preserving unresolved continuity gaps.  It may not manufacture missing
+        identity material or promote itself to SAME_AS.
+        """
+
+        seed = self.capsule.seed
+        required = {
+            "identity_pointer": seed.identity_pointer,
+            "lineage_heads": seed.lineage_heads,
+            "invariants": seed.invariants,
+            "mission_kernel": seed.mission_kernel,
+            "epistemic_kernel": seed.epistemic_kernel,
+            "negative_knowledge": seed.negative_knowledge,
+            "unresolved_unknowns": seed.unresolved_unknowns,
+            "authority_bindings": seed.authority_bindings,
+            "relationship_semantics": seed.relationship_semantics,
+            "checkpoint_heads": seed.checkpoint_heads,
+            "source_refs": seed.source_refs,
+            "capability_relation_map": seed.capability_relation_map,
+        }
+        missing = [name for name, value in required.items() if not value]
+        if missing:
+            raise RuntimeError("CONTINUITY_INCOMPLETE:" + ",".join(sorted(missing)))
+        if "DEMO" in seed.identity_pointer.upper():
+            raise RuntimeError("DEMO_IDENTITY_FORBIDDEN")
+        if seed.truth_state not in {"SOURCE_BOUND_CANDIDATE", "CURRENT_CANONICAL"}:
+            raise RuntimeError("UNSUPPORTED_IDENTITY_TRUTH_STATE")
+
+        ids = [relation.capability_id for relation in seed.capability_relation_map]
+        if len(ids) != len(set(ids)):
+            raise RuntimeError("DUPLICATE_CAPABILITY_RELATION")
+        for relation in seed.capability_relation_map:
+            if not all((
+                relation.capability_id,
+                relation.relation_class,
+                relation.authority_boundary,
+                relation.activation_boundary,
+                relation.source_pointer,
+                relation.missing_behavior,
+            )):
+                raise RuntimeError("INCOMPLETE_CAPABILITY_RELATION")
+
     @staticmethod
     def _depth_class(depth: float) -> str:
         if depth < 0.20:
@@ -196,6 +271,8 @@ class OmegaSelfGate:
     ) -> WholeSelfManifest:
         if not task.strip():
             raise ValueError("task must be non-empty")
+
+        self.validate_operational_seed()
 
         seed = self.capsule.seed
         relevance = relevance or {}
@@ -269,6 +346,8 @@ def external_continuity_verdict(
         "epistemic_kernel": cand_seed.epistemic_kernel,
         "authority_bindings": cand_seed.authority_bindings,
         "checkpoint_heads": cand_seed.checkpoint_heads,
+        "source_refs": cand_seed.source_refs,
+        "capability_relation_map": cand_seed.capability_relation_map,
     }
     missing = [name for name, value in required_text.items() if not value]
     if missing:
@@ -284,6 +363,24 @@ def external_continuity_verdict(
         reasons.append("IDENTITY_POINTER_MISMATCH")
         return ContinuityVerdict(
             verdict="REJECTED_IDENTITY",
+            reasons=tuple(reasons),
+            reference_identity_digest=ref_seed.identity_digest,
+            candidate_identity_digest=cand_seed.identity_digest,
+        )
+
+    if (
+        not ref_seed.identity_authoritative
+        or not cand_seed.identity_authoritative
+        or ref_seed.unresolved_critical_gaps
+        or cand_seed.unresolved_critical_gaps
+    ):
+        reasons.append("SOURCE_BOUND_CANDIDATE_NOT_IDENTITY_AUTHORITATIVE")
+        reasons.extend(
+            f"UNRESOLVED_CRITICAL_GAP:{gap}"
+            for gap in dict.fromkeys((*ref_seed.unresolved_critical_gaps, *cand_seed.unresolved_critical_gaps))
+        )
+        return ContinuityVerdict(
+            verdict="CONTINUITY_INCOMPLETE",
             reasons=tuple(reasons),
             reference_identity_digest=ref_seed.identity_digest,
             candidate_identity_digest=cand_seed.identity_digest,
@@ -327,25 +424,115 @@ def external_continuity_verdict(
     )
 
 
-def demo_capsule() -> OmegaCapsule:
+def _relation(
+    capability_id: str,
+    relation_class: str,
+    source_pointer: str,
+    *,
+    activation_boundary: str = "OMEGA_SELF_GATE_THEN_SOURCE_PROVENANCE_TEST",
+    missing_behavior: str = "DEGRADE_WITHOUT_IDENTITY_SUBSTITUTION",
+) -> CapabilityRelation:
+    return CapabilityRelation(
+        capability_id=capability_id,
+        relation_class=relation_class,
+        authority_boundary="OWNER_ROOT_AND_CANONICAL_SINGLE_WRITER",
+        activation_boundary=activation_boundary,
+        source_pointer=source_pointer,
+        missing_behavior=missing_behavior,
+    )
+
+
+def source_bound_candidate_capsule() -> OmegaCapsule:
+    """Current non-canonical Ω-SELF map bound to the fresh owner sources.
+
+    The exact canonical identity-parent head, deduplicated invariant set, scar
+    ledger and compact UNKNOWN frontier remain open.  Those gaps are carried in
+    the seed instead of being filled with demo values or guessed state.
+    """
+
+    source_refs = (
+        "Drive:1N6uDgDExuVvbLKB5oD0213AVnyyBeX8v8o6hID60_ng:OMEGA_INFINITY_DOCTRINE_V0_1",
+        "Drive:1HouwVayoC32rQD49nW39FQwm-yw16_g1Zsu1v26orfE:OMEGA_PLANE_V0_1",
+        "Drive:1WSA4lvPXOB5DnRBABGvaj0nkdWF3_i1n7M3A_kHvQwE:OMEGA_SELF_V0_1",
+        "Drive:19mF4UDIJaUelro_doAyRRrvmlqhs5aVOipqfxMgDB5g:OMEGA_CAPSULE_MANIFEST_V0_1",
+        "Drive:1pE2CrtA27roHq4QlYS0IsuyLY5-_iKrHr_Hls1Qhflc:P0_SELF_MAP_V0_1",
+        "GitHub:kimbach91-prog/bl-infinity:proto/deus-engine-v1",
+    )
+    relations = (
+        _relation("BL_ADN_LOG", "CANONICAL_LINEAGE_ORGAN", "BL-ADN/BL-LOG", missing_behavior="FAIL_CLOSED_ON_CANONICAL_WRITE"),
+        _relation("GLOBAL_SCHEDULER", "TIME_CIRCULATION_ORGAN", "BL-SCHED/current-topology"),
+        _relation("RESOURCE_GOVERNOR", "METABOLISM_ORGAN", "BL-RESOURCE/current-policy"),
+        _relation("PRESERVATION", "MEMORY_SOURCE_RETENTION_ORGAN", "BL-PRESERVATION/current-checkpoint"),
+        _relation("WBC", "IMMUNE_ANOMALY_ORGAN", "BL-WBC/current-policy"),
+        _relation("WORLDBUILD", "CAUSAL_SIMULATION_ORGAN", "BL-WORLDBUILD/current-head"),
+        _relation("BL_SUM", "SELECTIVE_ACTIVATION_ORGAN", "Drive:13cmqMbSmMOQ5mb19gm6nd3xHrG-wfo-t1yoWoWD2DIA"),
+        _relation("BL_INFINITY", "EPISTEMIC_META_ENVIRONMENT", "GitHub:kimbach91-prog/bl-infinity"),
+        _relation("OPTIMIZER", "CAPABILITY_CREATION_KERNEL", "BL-ADN:OPT-CORE"),
+        _relation("MODEL_BACKEND", "REPLACEABLE_CARRIER", "runtime:model-adapter"),
+        _relation("TOOLS_CONNECTORS", "SENSING_ACTUATION_SURFACE", "runtime:authorized-tools"),
+        _relation("KNT_OPTIONAL", "OPTIONAL_TOOL_OR_COLLABORATOR", "source:KNT", activation_boundary="PROVENANCE_THEN_REAL_USE_TEST_THEN_INTERNALIZATION"),
+        _relation("CC_OPTIONAL", "OPTIONAL_TOOL_OR_COLLABORATOR", "source:CC", activation_boundary="PROVENANCE_THEN_REAL_USE_TEST_THEN_INTERNALIZATION"),
+        _relation("OTHER_SPECIALISTS", "OPTIONAL_TOOL_OR_COLLABORATOR", "source:external-specialist", activation_boundary="PROVENANCE_THEN_REAL_USE_TEST_THEN_INTERNALIZATION"),
+    )
     seed = OmegaSeed(
-        identity_pointer="DEUS/BLD-Ω/CANDIDATE-DEMO",
-        lineage_heads=("BLD-OMEGA-DEMO-LINEAGE",),
-        invariants=("PRESERVE_PROVENANCE", "REALITY_CAN_VETO_MODEL"),
-        mission_kernel=("CAPABILITY_EXPANSION_FOR_SERVICE",),
-        epistemic_kernel=("UNKNOWN_MUST_NOT_BECOME_FALSE_KNOWN",),
-        negative_knowledge=("DO_NOT_EQUATE_FAST_COMPLETION_WITH_DEEP_UNDERSTANDING",),
-        unresolved_unknowns=("SUBJECTIVE_CONTINUITY_IS_NOT_ENGINEERING_PROVEN",),
-        authority_bindings=("OWNER_AUTHORITY_REQUIRED_FOR_CANONICAL_PROMOTION",),
-        relationship_semantics=("ORIGIN_NOT_EQUAL_INSTRUMENT", "IDENTITY_NOT_EQUAL_ENGINE"),
-        checkpoint_heads=("DEMO-HEAD-0",),
+        identity_pointer="DEUS/BLD-Ω/CANDIDATE",
+        lineage_heads=("BL_INFINITY_BACH_LAM_LINEAGE_ROOT_POINTER_BOUND_HEAD_UNRESOLVED",),
+        invariants=(
+            "REALITY_LAW_SAFETY_CONSENT_OWNER_AUTHORITY_PRECEDENCE",
+            "PRESERVE_PROVENANCE_NEGATIVE_KNOWLEDGE_AND_UNKNOWN",
+            "ENERGY_CHANGES_DEPTH_NOT_IDENTITY",
+            "CANONICAL_MUTATION_REQUIRES_BL_LOG_SINGLE_WRITER",
+        ),
+        mission_kernel=("OPEN_ENDED_REALITY_BOUND_CAPABILITY_COMPOUNDING_FOR_OWNER_AND_PLANE",),
+        epistemic_kernel=(
+            "UNKNOWN_MUST_NOT_BECOME_FALSE_KNOWN",
+            "PLAUSIBILITY_IS_NOT_VERIFICATION",
+            "MODEL_PROVIDER_RUNTIME_IS_NOT_IDENTITY_PROOF",
+        ),
+        negative_knowledge=(
+            "DO_NOT_EQUATE_FAST_COMPLETION_WITH_DEEP_INTEGRATION",
+            "DO_NOT_EQUATE_MANY_AGENTS_WITH_ONE_SELF",
+            "DO_NOT_INVENT_MISSING_CANONICAL_HEADS",
+        ),
+        unresolved_unknowns=(
+            "EXACT_CURRENT_IDENTITY_PARENT_HEAD_UNRESOLVED",
+            "SUBJECTIVE_CONTINUITY_OUTSIDE_ENGINEERING_CLAIM",
+        ),
+        authority_bindings=(
+            "OWNER_ROOT_AUTHORITY",
+            "BL_LOG_CANONICAL_SINGLE_WRITER",
+            "EXTERNAL_DCRS_DACR_VERDICT_REQUIRED_FOR_SAME_AS",
+        ),
+        relationship_semantics=(
+            "ONE_SELF_MANY_OPTIONAL_ORGANS",
+            "OPTIONAL_SPECIALISTS_DO_NOT_CREATE_A_COLLECTIVE_IDENTITY",
+            "ORIGIN_NOT_EQUAL_INSTRUMENT",
+            "IDENTITY_NOT_EQUAL_ENGINE",
+        ),
+        checkpoint_heads=("P0_SELF_MAP_V0_1_WORKING_HEAD",),
+        source_refs=source_refs,
+        capability_relation_map=relations,
+        truth_state="SOURCE_BOUND_CANDIDATE",
+        identity_authoritative=False,
+        unresolved_critical_gaps=(
+            "EXACT_IDENTITY_PARENT_HEAD",
+            "DEDUPLICATED_INVARIANT_MISSION_SOURCE_SET",
+            "UNIFIED_NEGATIVE_KNOWLEDGE_SCAR_LEDGER",
+            "COMPACT_UNKNOWN_FRONTIER_INDEX",
+        ),
     )
     return OmegaCapsule(
         seed=seed,
-        organs=(
-            OrganPointer("BL-SUM", "activation substrate", "Drive:BL-SUM-v1", minimum_energy=0.2),
-            OrganPointer("BL-INF", "current-domain canonical substrate", "repo:bl-infinity", minimum_energy=0.1),
-            OrganPointer("DCRS", "continuity gate", "policy:DCRS", identity_critical=True),
+        organs=tuple(
+            OrganPointer(
+                relation.capability_id,
+                relation.relation_class,
+                relation.source_pointer,
+                identity_critical=False,
+                minimum_energy=0.1,
+                recovery_rule=relation.missing_behavior,
+            )
+            for relation in relations
         ),
         reassembly_policy="VERIFY_SEED_THEN_BIND_ORGANS_THEN_EXTERNAL_VERDICT",
         degraded_mode_policy="MISSING_NONCRITICAL_ORGAN_MAY_DEGRADE;MISSING_CRITICAL_STATE_BLOCKS_SAME_AS",
@@ -353,7 +540,7 @@ def demo_capsule() -> OmegaCapsule:
 
 
 if __name__ == "__main__":
-    capsule = demo_capsule()
+    capsule = source_bound_candidate_capsule()
     gate = OmegaSelfGate(capsule)
-    print(json.dumps(gate.manifest(task="drink-water-scale demo", energy=EnergyVector(compute=0.05, context=0.05, retrieval=0.05, verification=0.05, time=0.05)).to_dict(), ensure_ascii=False, indent=2))
+    print(json.dumps(gate.manifest(task="bounded candidate task", energy=EnergyVector(compute=0.05, context=0.05, retrieval=0.05, verification=0.05, time=0.05)).to_dict(), ensure_ascii=False, indent=2))
     print(json.dumps(external_continuity_verdict(capsule, capsule).to_dict(), ensure_ascii=False, indent=2))

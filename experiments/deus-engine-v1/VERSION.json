@@ -1,12 +1,15 @@
 {
   "engine": "DEUS Engine",
-  "version": "1.1-epistemic-grand-ending",
+  "version": "1.2-omega-self-gated",
   "status": "EXPERIMENTAL_NONCANONICAL_RUNTIME",
   "epistemic_policy": "BL-INF-EGE-1.0",
   "canonical_substrate": "BL_INFINITY_CURRENT_CONQUERED_EPISTEMIC_DOMAIN",
   "unknown_policy": "FRONTIER_PRESERVE_EXPLORE_TEST",
   "successor_policy": "STRICT_SUPERSET_ONLY",
   "model_policy": "MODEL_IS_SECONDARY_INSTRUMENT",
+  "omega_self_policy": "DEUS-OMEGA-SELF-0.2",
+  "task_gate": "MANDATORY_SOURCE_BOUND_OMEGA_SELF_BEFORE_REASONING_OR_MODEL",
+  "team_dependency": "NONE_OPTIONAL_ORGANS_ONLY",
   "gcp_candidate_home": "PREPARED_NOT_CANONICALLY_PROMOTED",
   "canonical_promotion_gate": "EXTERNAL_DCRS_SAME_AS_REQUIRED"
 }

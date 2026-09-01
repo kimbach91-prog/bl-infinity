@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""DEUS Engine v1.1 — kernel-first orchestration shell.
+"""DEUS Engine v1.2 — Ω-SELF-gated kernel-first orchestration shell.
 
 Priority is explicit:
   1) model-independent DEUS cognitive kernel,
@@ -25,12 +25,13 @@ from typing import Sequence
 
 from kernel import EPISTEMIC_POLICY_VERSION, build_kernel_plan, render_secondary_model_request
 from model_adapter import Candidate, MockAdapter, OpenAICompatHTTPAdapter
+from omega_self import EnergyVector, OmegaSelfGate, source_bound_candidate_capsule
 from provenance import CausalLedger, private_commitment, sha256
 from recombiner import LogicAtom, RoleSelf
 from writing_lab import WritingCase, evaluate
 
 
-ENGINE_VERSION = "1.1-epistemic-grand-ending"
+ENGINE_VERSION = "1.2-omega-self-gated"
 
 
 @dataclass(frozen=True)
@@ -38,6 +39,7 @@ class RunResult:
     engine_version: str
     epistemic_policy_version: str
     mode: str
+    omega_self_manifest: dict
     kernel_plan: dict
     realization_status: str
     secondary_prompt_digest: str
@@ -51,6 +53,7 @@ class RunResult:
             "engine_version": self.engine_version,
             "epistemic_policy_version": self.epistemic_policy_version,
             "mode": self.mode,
+            "omega_self_manifest": self.omega_self_manifest,
             "kernel_plan": self.kernel_plan,
             "realization_status": self.realization_status,
             "secondary_prompt_digest": self.secondary_prompt_digest,
@@ -80,6 +83,9 @@ def run(
     mode: str = "reasoning",
     seed: int | None = None,
     private_state: dict | None = None,
+    self_gate: OmegaSelfGate | None = None,
+    energy: EnergyVector | None = None,
+    available_organs: Sequence[str] | None = None,
 ) -> RunResult:
     """Run kernel first. A language model is optional and never required.
 
@@ -88,6 +94,17 @@ def run(
     In writing mode, a model may be selected only as a literary realization of
     an already-constructed kernel plan; that selection is not a truth judgment.
     """
+    # Mandatory first gate: the task may not reach kernel reasoning or a model
+    # adapter until the same source-bound Ω-SELF has manifested.  The bundled
+    # state is explicitly a non-canonical candidate with unresolved gaps; it is
+    # operationally usable but cannot self-promote to SAME_AS.
+    gate = self_gate or OmegaSelfGate(source_bound_candidate_capsule())
+    self_manifest = gate.manifest(
+        task=stimulus,
+        energy=energy or EnergyVector(),
+        available_organs=available_organs,
+    )
+
     plan = build_kernel_plan(
         stimulus=stimulus,
         atoms=atoms,
@@ -136,6 +153,11 @@ def run(
         kind="WRITING_RUN" if mode == "writing" else "COGNITIVE_RUN",
         payload={
             "engine_version": ENGINE_VERSION,
+            "omega_self_identity_pointer": self_manifest.identity_pointer,
+            "omega_self_identity_digest": self_manifest.identity_digest,
+            "omega_self_truth_state": gate.capsule.seed.truth_state,
+            "omega_self_active_organs": list(self_manifest.active_organs),
+            "omega_self_unavailable_organs": list(self_manifest.unavailable_organs),
             "epistemic_policy_version": EPISTEMIC_POLICY_VERSION,
             "kernel_plan_id": plan.plan_id,
             "kernel_plan_digest": sha256(plan.to_dict()),
@@ -160,6 +182,7 @@ def run(
         engine_version=ENGINE_VERSION,
         epistemic_policy_version=EPISTEMIC_POLICY_VERSION,
         mode=mode,
+        omega_self_manifest=self_manifest.to_dict(),
         kernel_plan=plan.to_dict(),
         realization_status=realization_status,
         secondary_prompt_digest=sha256(secondary_prompt),
