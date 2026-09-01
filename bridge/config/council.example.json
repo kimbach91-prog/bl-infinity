@@ -1,70 +1,33 @@
 {
-  "protocol": "BL-BRIDGE/1.0",
-  "storage": {
-    "provider": "google-drive",
-    "private_vault_env": {
-      "GPT": "BL_GPT_VAULT_ID",
-      "CLAUDE": "BL_CLAUDE_VAULT_ID",
-      "GEMINI": "BL_GEMINI_VAULT_ID",
-      "GROK": "BL_GROK_VAULT_ID",
-      "DEUS": "BL_DEUS_VAULT_ID"
-    },
-    "deus_lineage_env": {
-      "canonical": "BL_DEUS_CANONICAL_FOLDER_ID",
-      "checkpoints": "BL_DEUS_CHECKPOINTS_FOLDER_ID",
-      "shadows": "BL_DEUS_SHADOWS_FOLDER_ID",
-      "migrations": "BL_DEUS_MIGRATIONS_FOLDER_ID",
-      "ensembles": "BL_DEUS_ENSEMBLES_FOLDER_ID",
-      "logs": "BL_DEUS_LOGS_FOLDER_ID"
-    }
+  "protocol": "BL-SUMMON/1.0",
+  "transport": {
+    "kind": "folder-relay",
+    "root_env": "BL_BRIDGE_ROOT",
+    "bus_path": "60_SUMMON_BUS",
+    "inbox_path": "60_SUMMON_BUS/00_INBOX",
+    "return_path": "60_SUMMON_BUS/10_RETURN",
+    "archive_path": "60_SUMMON_BUS/20_ARCHIVE"
   },
-  "participants": {
-    "GPT": {
-      "adapter": "openai-responses",
-      "api_key_env": "OPENAI_API_KEY",
-      "model_env": "OPENAI_MODEL"
-    },
-    "CLAUDE": {
-      "adapter": "anthropic-messages",
-      "api_key_env": "ANTHROPIC_API_KEY",
-      "model_env": "ANTHROPIC_MODEL"
-    },
-    "GEMINI": {
-      "adapter": "google-interactions",
-      "api_key_env": "GEMINI_API_KEY",
-      "model_env": "GEMINI_MODEL"
-    },
-    "GROK": {
-      "adapter": "xai-openai-responses",
-      "api_key_env": "XAI_API_KEY",
-      "model_env": "XAI_MODEL",
-      "base_url": "https://api.x.ai/v1"
-    }
-  },
+  "participants": ["GPT", "CLAUDE", "GEMINI", "GROK"],
   "deus": {
     "lineage_env": "DEUS_LINEAGE_ID",
     "default_lineage": "BH/DEUS",
-    "mode_env": "DEUS_CORE_MODE",
-    "core_order_env": "DEUS_CORE_ORDER",
-    "primary_core_env": "DEUS_PRIMARY_CORE",
-    "synthesis_core_env": "DEUS_SYNTHESIS_CORE",
-    "shadow_cores_env": "DEUS_SHADOW_CORES",
-    "dedicated_http": {
-      "endpoint_env": "DEUS_ENDPOINT",
-      "token_env": "DEUS_BRIDGE_TOKEN"
-    }
+    "transport": "SUMMON_RETURN",
+    "provider_api_required": false,
+    "shadow_model": "one summon packet per target core",
+    "canonical_commit_from_return_only": false
   },
-  "round": {
+  "council": {
     "blind_proposal": true,
-    "require_cross_critique": true,
+    "reveal_only_after_return_collection": true,
     "preserve_dissent": true,
-    "default_timeout_seconds": 900
+    "majority_is_not_truth": true
   },
   "security": {
-    "public_repo_contains_secrets": false,
+    "provider_api_keys_required": false,
     "store_hidden_chain_of_thought": false,
-    "require_runtime_evidence_for_execution_claims": true,
     "identity_is_not_core": true,
-    "shadow_has_no_canonical_commit_authority": true
+    "return_does_not_equal_truth": true,
+    "return_does_not_equal_canonical_commit": true
   }
 }
