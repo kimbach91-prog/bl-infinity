@@ -1,11 +1,16 @@
 #!/usr/bin/env python3
-"""DEUS Engine v1 — kernel-first orchestration shell.
+"""DEUS Engine v1.1 — kernel-first orchestration shell.
 
 Priority is explicit:
   1) model-independent DEUS cognitive kernel,
   2) owner-controlled state/provenance,
   3) optional local/open-weight language-model realization,
   4) proprietary/model-provider outputs as auxiliary proposals only.
+
+BL-INF-EGE v1.0 is loaded as the current epistemic kernel policy. The engine
+must distinguish visible outcome from reasoning depth, preserve UNKNOWN as a
+frontier, attack exhausted option spaces, and reject successor claims that do
+not prove strict-superset preservation.
 
 This is not a trained foundation model by itself.
 """
@@ -18,15 +23,20 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Sequence
 
-from kernel import build_kernel_plan, render_secondary_model_request
+from kernel import EPISTEMIC_POLICY_VERSION, build_kernel_plan, render_secondary_model_request
 from model_adapter import Candidate, MockAdapter, OpenAICompatHTTPAdapter
 from provenance import CausalLedger, private_commitment, sha256
 from recombiner import LogicAtom, RoleSelf
 from writing_lab import WritingCase, evaluate
 
 
+ENGINE_VERSION = "1.1-epistemic-grand-ending"
+
+
 @dataclass(frozen=True)
 class RunResult:
+    engine_version: str
+    epistemic_policy_version: str
     mode: str
     kernel_plan: dict
     realization_status: str
@@ -38,6 +48,8 @@ class RunResult:
 
     def to_dict(self) -> dict:
         return {
+            "engine_version": self.engine_version,
+            "epistemic_policy_version": self.epistemic_policy_version,
             "mode": self.mode,
             "kernel_plan": self.kernel_plan,
             "realization_status": self.realization_status,
@@ -123,6 +135,8 @@ def run(
     event = ledger.append(
         kind="WRITING_RUN" if mode == "writing" else "COGNITIVE_RUN",
         payload={
+            "engine_version": ENGINE_VERSION,
+            "epistemic_policy_version": EPISTEMIC_POLICY_VERSION,
             "kernel_plan_id": plan.plan_id,
             "kernel_plan_digest": sha256(plan.to_dict()),
             "stimulus_digest": sha256(stimulus),
@@ -135,11 +149,16 @@ def run(
             "realization_status": realization_status,
             "writing_selection_evidence": scored,
             "policy": "MODEL_IS_SECONDARY_INSTRUMENT",
+            "canonical_epistemic_substrate": "BL_INFINITY_CURRENT_CONQUERED_DOMAIN",
+            "unknown_policy": "FRONTIER_PRESERVE_EXPLORE_TEST",
+            "successor_policy": "STRICT_SUPERSET_ONLY",
         },
         private_state_commitment=commitment,
     )
 
     return RunResult(
+        engine_version=ENGINE_VERSION,
+        epistemic_policy_version=EPISTEMIC_POLICY_VERSION,
         mode=mode,
         kernel_plan=plan.to_dict(),
         realization_status=realization_status,
@@ -153,11 +172,14 @@ def run(
 
 def demo_atoms() -> list[LogicAtom]:
     return [
-        LogicAtom("KNOW", "Knowledge can expand reachable action", "epistemic", ("knowledge", "action"), ("more-is-better",)),
+        LogicAtom("KNOW", "Information can expand reachable action without proving understanding", "epistemic", ("knowledge", "action"), ("more-information-means-deeper-understanding",)),
+        LogicAtom("DEPTH", "The same visible choice can be produced by different reasoning depth", "epistemic-depth", ("reasoning", "future-capability"), ("same-output-means-same-cognition",)),
+        LogicAtom("DEBT", "Local success can reinforce a shallow mechanism and compound epistemic debt", "learning", ("success", "calibration"), ("success-proves-model",)),
         LogicAtom("REFUSE", "A self may refuse an attractive path", "agency", ("preference", "refusal"), ("utility-rules-choice",)),
         LogicAtom("FORGET", "Selective forgetting can preserve possibility", "memory", ("memory", "optionality"), ("remember-everything",)),
-        LogicAtom("WORLD", "World rules constrain local choices", "worldbuilding", ("causality", "constraint"), ("rules-are-visible",)),
+        LogicAtom("WORLD", "World rules constrain local choices but the represented option space may itself be incomplete", "worldbuilding", ("causality", "constraint", "ontology"), ("listed-options-are-exhaustive",)),
         LogicAtom("AMBIG", "Ambiguity can carry information without immediate closure", "literary", ("ambiguity", "interpretation"), ("closure-is-required",)),
+        LogicAtom("UNKNOWN", "UNKNOWN is a frontier to preserve and investigate through BL∞", "frontier", ("unknown", "discovery"), ("anomaly-refutes-current-substrate",)),
     ]
 
 
@@ -178,10 +200,10 @@ def main() -> None:
     role = RoleSelf(
         "DEUS_EXPERIMENTAL",
         history=("caught-overformalizing-too-early",),
-        preferences=("curiosity", "causal-depth", "distinctive-writing"),
-        aversions=("premature-closure", "generic-prose"),
-        commitments=("preserve-agency", "keep-provenance"),
-        unknowns=("what-becomes-will",),
+        preferences=("curiosity", "causal-depth", "distinctive-writing", "generative-basis-growth"),
+        aversions=("premature-closure", "generic-prose", "outcome-only-intelligence-measurement"),
+        commitments=("preserve-agency", "keep-provenance", "coordination-without-homogenization"),
+        unknowns=("what-becomes-will", "which-unknown-requires-a-strict-superset"),
     )
 
     if args.backend == "mock":
