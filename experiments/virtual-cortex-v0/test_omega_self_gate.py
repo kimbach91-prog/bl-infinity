@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Regression tests for DEUS Ω-SELF P1 Unified Self Integration Gate v0.1."""
+"""Regression tests for DEUS Ω-SELF P1 Unified Self Integration Gate v0.2."""
 from __future__ import annotations
 
 import copy
@@ -50,6 +50,25 @@ def resolved_seed():
             ),
             "unknown_frontier": bound_record(
                 ["identity_parent_external_attestation_scope"]
+            ),
+            "capability_relation_map": bound_record(
+                {
+                    "BL-SUM": {
+                        "relation": "ORGAN",
+                        "activation_allowed": True,
+                        "activation_boundary": "DOWNSTREAM_OF_SELF_GATE",
+                    },
+                    "Optimizer": {
+                        "relation": "ORGAN",
+                        "activation_allowed": True,
+                        "activation_boundary": "DOWNSTREAM_OF_SELF_GATE",
+                    },
+                    "X": {
+                        "relation": "ORGAN",
+                        "activation_allowed": True,
+                        "activation_boundary": "DOWNSTREAM_OF_SELF_GATE",
+                    },
+                }
             ),
             "owner_root_boundary": bound_record(
                 ["owner-authority", "external-single-writer"]
@@ -111,6 +130,39 @@ class OmegaSelfGateTests(unittest.TestCase):
         self.assertFalse(result.runtime_authorized)
         self.assertEqual(result.allowed_organs, ())
         self.assertIn("BL-SUM", result.requested_organs)
+
+    def test_capability_relation_is_preserved_when_activated(self):
+        seed = resolved_seed()
+        result = run_gate(
+            seed,
+            GateRequest.build(task_id="relation", requested_organs=["BL-SUM"]),
+        )
+        self.assertEqual(result.verdict, "PASS")
+        self.assertEqual(result.capability_relations["BL-SUM"]["relation"], "ORGAN")
+        self.assertEqual(
+            result.capability_relations["BL-SUM"]["activation_boundary"],
+            "DOWNSTREAM_OF_SELF_GATE",
+        )
+
+    def test_unmapped_capability_fails_closed(self):
+        seed = resolved_seed()
+        result = run_gate(
+            seed,
+            GateRequest.build(task_id="unknown-organ", requested_organs=["UNMAPPED"]),
+        )
+        self.assertEqual(result.verdict, "FAIL_CLOSED")
+        self.assertIn("UNBOUND_CAPABILITY_RELATION:UNMAPPED", result.blockers)
+        self.assertEqual(result.allowed_organs, ())
+
+    def test_capability_cannot_self_promote(self):
+        seed = resolved_seed()
+        seed["bindings"]["capability_relation_map"]["value"]["BL-SUM"]["relation"] = "SELF"
+        result = run_gate(
+            seed,
+            GateRequest.build(task_id="self-promote", requested_organs=["BL-SUM"]),
+        )
+        self.assertEqual(result.verdict, "FAIL_CLOSED")
+        self.assertIn("CAPABILITY_SELF_PROMOTION_FORBIDDEN:BL-SUM", result.blockers)
 
     def test_unknown_frontier_preserved_exactly(self):
         seed = resolved_seed()
