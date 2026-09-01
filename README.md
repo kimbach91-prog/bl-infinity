@@ -4,6 +4,8 @@ BL∞ là chương trình nghiên cứu độc lập của **Lâm Kim Bách (Bá
 
 **Phiên bản hiện hành: `0.4.0-epistemic-grand-ending`.** Nâng cấp này xác lập BL∞ là **Đại Kết Cục nhận thức của miền hiểu biết hiện hành**: substrate canonical dùng để giữ, biên dịch, nối, kiểm tra và phát triển các hệ khác ontology. UNKNOWN được giữ như frontier cần chinh phục, không phải lý do tự động hạ cấp BL∞. Một hệ kế tiếp chỉ có quyền supersede khi chứng minh được strict-superset succession, tức giữ được BL∞ và mở thêm miền mà BL∞ hiện chưa hấp thụ nổi.
 
+**Release state:** `OWNER-PUBLISHED · 2026-09-01`.
+
 Canonical object mới:
 
 - `content/53_BL_INFINITY_EPISTEMIC_GRAND_ENDING_AND_SUPERSET_SUCCESSION.md`
