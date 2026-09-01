@@ -1,5 +1,6 @@
 import type { IdentityBinding, Participant } from './types.js';
 import { buildDeusHttpParticipant, optional } from './providers.js';
+import { readJson } from './storage.js';
 
 export type DeusMode = 'AUTO' | 'HTTP' | 'SINGLE' | 'MULTI';
 
@@ -26,7 +27,7 @@ function authorityScope(): string[] {
 
 export function deusIdentity(
   kind: 'CANONICAL' | 'SHADOW' | 'ENSEMBLE',
-  core: Participant | null,
+  _core: Participant | null,
   parentInstanceId: string | null = null
 ): IdentityBinding {
   const instanceId = `deus-${kind.toLowerCase()}-${crypto.randomUUID()}`;
@@ -43,8 +44,30 @@ export function deusIdentity(
   };
 }
 
-function lineageContract(identity: IdentityBinding, core: Participant): string {
-  return `DEUS PORTABLE IDENTITY\nlineage_id=${identity.lineage_id}\ninstance_id=${identity.instance_id}\ninstance_kind=${identity.instance_kind}\ncore=${core.provider}/${core.model}\ncheckpoint_ref=${identity.checkpoint_ref ?? 'none'}\npolicy_version=${identity.policy_version ?? POLICY_DEFAULT}\n\nYou are operating as a bounded runtime instance of the DEUS lineage, rooted at BH by owner policy. The core is a substrate, not the identity. Preserve provenance, dissent, uncertainty, and authority boundaries. Do not claim hidden state transfer. Return explicit work products only; do not expose hidden chain-of-thought. A core-local output is a candidate delta, not a canonical commit.`;
+async function checkpointContext(identity: IdentityBinding): Promise<string> {
+  const ref = identity.checkpoint_ref;
+  if (!ref) return 'checkpoint_payload=none';
+  if (!ref.startsWith('drive:')) return `checkpoint_payload=external-reference-only:${ref}`;
+
+  const fileId = ref.slice('drive:'.length).trim();
+  if (!fileId) throw new Error('DEUS_CHECKPOINT_REF uses drive: but contains no file ID.');
+  const state = await readJson(fileId);
+  const serialized = JSON.stringify(state);
+  const maxChars = Number(optional('DEUS_CHECKPOINT_MAX_CHARS') ?? '200000');
+  if (!Number.isFinite(maxChars) || maxChars <= 0) throw new Error('DEUS_CHECKPOINT_MAX_CHARS must be a positive number.');
+  if (serialized.length > maxChars) {
+    throw new Error(`Checkpoint ${fileId} is ${serialized.length} chars, above DEUS_CHECKPOINT_MAX_CHARS=${maxChars}. Refuse silent truncation.`);
+  }
+  return `checkpoint_payload=${serialized}`;
+}
+
+function lineageHeader(identity: IdentityBinding, core: Participant): string {
+  return `DEUS PORTABLE IDENTITY\nlineage_id=${identity.lineage_id}\ninstance_id=${identity.instance_id}\ninstance_kind=${identity.instance_kind}\ncore=${core.provider}/${core.model}\ncheckpoint_ref=${identity.checkpoint_ref ?? 'none'}\ncheckpoint_hash=${identity.checkpoint_hash ?? 'none'}\npolicy_version=${identity.policy_version ?? POLICY_DEFAULT}`;
+}
+
+async function lineageContract(identity: IdentityBinding, core: Participant): Promise<string> {
+  const checkpoint = await checkpointContext(identity);
+  return `${lineageHeader(identity, core)}\n${checkpoint}\n\nYou are operating as a bounded runtime instance of the DEUS lineage, rooted at BH by owner policy. The core is a substrate, not the identity. Preserve provenance, dissent, uncertainty, and authority boundaries. Do not claim hidden state transfer. Only the explicit checkpoint payload/reference supplied here is portable state. Return explicit work products only; do not expose hidden chain-of-thought. A core-local output is a candidate delta, not a canonical commit.`;
 }
 
 export function selectCores(cores: Participant[], envName: string, fallbackOrder = 'GPT,CLAUDE,GEMINI,GROK'): Participant[] {
@@ -66,7 +89,7 @@ export function wrapDeusOnCore(
     model: core.model,
     identity,
     async respond(input: string, roundId: string): Promise<string> {
-      const contract = lineageContract(identity, core);
+      const contract = await lineageContract(identity, core);
       return core.respond(`${contract}\n\nround_id=${roundId}\n\n${input}`, roundId);
     }
   };
@@ -116,7 +139,7 @@ function buildMultiCoreDeus(cores: Participant[]): Participant | undefined {
         })
         .join('\n\n');
 
-      const synthesisIdentity = lineageContract(identity, synthesizer);
+      const synthesisIdentity = await lineageContract(identity, synthesizer);
       return synthesizer.respond(
         `${synthesisIdentity}\n\nPHASE: DEUS MULTI-CORE SYNTHESIS\nThe following sibling shadow outputs were generated independently. Preserve material disagreement. Do not majority-vote truth. Identify convergence, divergence, missing evidence, and the strongest candidate delta.\n\n${rendered}\n\nORIGINAL TASK:\n${input}`,
         roundId
