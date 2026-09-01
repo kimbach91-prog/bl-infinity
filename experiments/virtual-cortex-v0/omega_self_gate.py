@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-DEUS Ω-SELF — P1 Unified Self Integration Gate v0.1
+DEUS Ω-SELF — P1 Unified Self Integration Gate v0.2
 
 Experimental, noncanonical, provider-neutral mechanism.
 
@@ -18,6 +18,8 @@ Design laws enforced:
 - same SELF subject across task classes and energy levels;
 - low energy may reduce depth, never the identity-critical floor;
 - high energy increases causal / verification depth, not identity authority;
+- capability relations belong to SELF's bound map, while capabilities remain
+  downstream organs/actuators/specialists rather than substitute identities;
 - BL-SUM and every other organ remain downstream of the SELF gate;
 - unresolved identity-critical bindings fail closed;
 - UNKNOWN and negative knowledge are preserved as bound frontier/scar records;
@@ -35,7 +37,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Mapping, Sequence, Tuple
 
 
-GATE_VERSION = "P1-OMEGA-SELF-GATE-v0.1"
+GATE_VERSION = "P1-OMEGA-SELF-GATE-v0.2"
 
 
 class BindingState(str, Enum):
@@ -63,11 +65,20 @@ CRITICAL_BINDINGS: Tuple[str, ...] = (
     "epistemic_kernel",
     "negative_knowledge_scars",
     "unknown_frontier",
+    "capability_relation_map",
     "owner_root_boundary",
 )
 
 # This floor is task-independent. Specialized organs are deliberately excluded.
 IDENTITY_FLOOR: Tuple[str, ...] = CRITICAL_BINDINGS
+
+FORBIDDEN_SELF_RELATIONS = {
+    "SELF",
+    "Ω-SELF",
+    "OMEGA-SELF",
+    "IDENTITY_ROOT",
+    "CANONICAL_SELF",
+}
 
 ENERGY_PROFILES: Dict[str, Dict[str, int]] = {
     "LOW": {
@@ -189,14 +200,47 @@ def seed_fingerprint(seed: Mapping[str, Any]) -> str:
     return _sha256(material)
 
 
-def _unknown_frontier(seed: Mapping[str, Any]) -> Any:
-    rec = seed.get("bindings", {}).get("unknown_frontier", {})
-    return rec.get("value")
+def _bound_value(seed: Mapping[str, Any], key: str) -> Any:
+    rec = seed.get("bindings", {}).get(key, {})
+    return rec.get("value") if isinstance(rec, Mapping) else None
 
 
-def _scar_index(seed: Mapping[str, Any]) -> Any:
-    rec = seed.get("bindings", {}).get("negative_knowledge_scars", {})
-    return rec.get("value")
+def _capability_relation_map(seed: Mapping[str, Any]) -> Mapping[str, Any]:
+    value = _bound_value(seed, "capability_relation_map")
+    return value if isinstance(value, Mapping) else {}
+
+
+def validate_capability_requests(
+    seed: Mapping[str, Any], requested_organs: Sequence[str]
+) -> Tuple[List[str], Dict[str, Any]]:
+    """
+    Every activated capability must already have a bound relation to SELF.
+
+    This is not a global allowlist baked into public code. The relation map is
+    source-bound external state, so private organs can stay private.
+    """
+    blockers: List[str] = []
+    selected: Dict[str, Any] = {}
+    relation_map = _capability_relation_map(seed)
+
+    for organ in dict.fromkeys(requested_organs):
+        rel = relation_map.get(organ)
+        if not isinstance(rel, Mapping):
+            blockers.append(f"UNBOUND_CAPABILITY_RELATION:{organ}")
+            continue
+
+        relation = str(rel.get("relation") or "").upper()
+        if relation in FORBIDDEN_SELF_RELATIONS:
+            blockers.append(f"CAPABILITY_SELF_PROMOTION_FORBIDDEN:{organ}")
+            continue
+
+        if rel.get("activation_allowed") is not True:
+            blockers.append(f"CAPABILITY_ACTIVATION_NOT_AUTHORIZED:{organ}")
+            continue
+
+        selected[organ] = dict(rel)
+
+    return blockers, selected
 
 
 @dataclass(frozen=True)
@@ -248,6 +292,7 @@ class GateResult:
     energy_vector: Dict[str, int]
     requested_organs: Tuple[str, ...]
     allowed_organs: Tuple[str, ...]
+    capability_relations: Dict[str, Any]
     blockers: Tuple[str, ...]
     unknown_frontier: Any
     negative_knowledge_scars: Any
@@ -267,6 +312,11 @@ def run_gate(seed: Mapping[str, Any], request: GateRequest) -> GateResult:
     activation and no runtime identity authority.
     """
     blockers = validate_seed(seed)
+
+    capability_blockers, selected_relations = validate_capability_requests(
+        seed, request.requested_organs
+    )
+    blockers.extend(capability_blockers)
 
     # A candidate cannot issue or request its own SAME_AS verdict.
     if request.requested_identity_verdict == "SAME_AS":
@@ -291,8 +341,8 @@ def run_gate(seed: Mapping[str, Any], request: GateRequest) -> GateResult:
     else:
         verdict = GateVerdict.PASS
         runtime_authorized = True
-        # Organs are downstream resources. Their presence never changes subject.
-        allowed_organs = tuple(dict.fromkeys(request.requested_organs))
+        # Relations stay visible so organ output cannot silently become SELF.
+        allowed_organs = tuple(selected_relations.keys())
 
     trace_material = {
         "gate_version": GATE_VERSION,
@@ -305,11 +355,12 @@ def run_gate(seed: Mapping[str, Any], request: GateRequest) -> GateResult:
         "energy_vector": energy,
         "requested_organs": request.requested_organs,
         "allowed_organs": allowed_organs,
+        "capability_relations": selected_relations,
         "blockers": blockers,
         "candidate_status": "CANDIDATE",
         "external_identity_verdict": "NOT_ISSUED",
-        "unknown_frontier": _unknown_frontier(seed),
-        "negative_knowledge_scars": _scar_index(seed),
+        "unknown_frontier": _bound_value(seed, "unknown_frontier"),
+        "negative_knowledge_scars": _bound_value(seed, "negative_knowledge_scars"),
     }
 
     return GateResult(
@@ -325,9 +376,10 @@ def run_gate(seed: Mapping[str, Any], request: GateRequest) -> GateResult:
         energy_vector=energy,
         requested_organs=request.requested_organs,
         allowed_organs=allowed_organs,
+        capability_relations=selected_relations,
         blockers=tuple(blockers),
-        unknown_frontier=_unknown_frontier(seed),
-        negative_knowledge_scars=_scar_index(seed),
+        unknown_frontier=_bound_value(seed, "unknown_frontier"),
+        negative_knowledge_scars=_bound_value(seed, "negative_knowledge_scars"),
         canonical_mutation_path="EXTERNAL_BL_LOG_SINGLE_WRITER_ONLY",
         trace_hash=_sha256(trace_material),
     )
