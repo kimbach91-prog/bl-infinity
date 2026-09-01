@@ -2,6 +2,13 @@
 
 BL∞ là chương trình nghiên cứu độc lập của **Lâm Kim Bách (Bách Lâm / Optimizer)** về nhận thức mở, không gian khả thể, UNKNOWN, provenance, phản biện đệ quy, hợp tác trí tuệ và khả năng giữ thực tại còn sinh thành.
 
+**Phiên bản hiện hành: `0.4.0-epistemic-grand-ending`.** Nâng cấp này xác lập BL∞ là **Đại Kết Cục nhận thức của miền hiểu biết hiện hành**: substrate canonical dùng để giữ, biên dịch, nối, kiểm tra và phát triển các hệ khác ontology. UNKNOWN được giữ như frontier cần chinh phục, không phải lý do tự động hạ cấp BL∞. Một hệ kế tiếp chỉ có quyền supersede khi chứng minh được strict-superset succession, tức giữ được BL∞ và mở thêm miền mà BL∞ hiện chưa hấp thụ nổi.
+
+Canonical object mới:
+
+- `content/53_BL_INFINITY_EPISTEMIC_GRAND_ENDING_AND_SUPERSET_SUCCESSION.md`
+- `machine/bl-infinity-epistemic-grand-ending.json`
+
 Bề mặt công khai hiện có ba cách đọc song song:
 
 1. **Học thuyết và research objects:** dành cho người muốn đọc trực tiếp các mệnh đề, nguồn và cấu trúc nghiên cứu.
@@ -23,6 +30,17 @@ README không giải thích ý nghĩa con số trong tên truyện, cơ chế h�
 [Bản kể BL∞](https://kimbach91-prog.github.io/bl-infinity/world.html)
 
 Đây là một bề mặt nghiên cứu riêng, không phải spoiler guide chính thức của tiểu thuyết. Người đọc có thể tìm thấy các quan hệ và giả định sâu hơn ở đó, nhưng không nên dùng chúng để mặc định tương lai của tuyến fiction.
+
+## Nâng cấp 0.4 trong một dòng
+
+```text
+Information != Understanding != Deep Understanding != Capability
+Same Outcome != Same Reasoning State
+Fixed Infinite Moves != Open-Ended Generative Infinity
+UNKNOWN != automatic refutation of BL∞
+BL∞ -> UNKNOWN conquest -> Reality collision -> capability delta -> BL∞ expansion
+Only demonstrated strict superset may succeed BL∞
+```
 
 ## Đọc theo tuyến
 
