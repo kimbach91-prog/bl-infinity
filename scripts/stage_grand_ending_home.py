@@ -27,8 +27,8 @@ def main() -> None:
 
     novel_entry = (
         '<li class="novel-entry"><a href="novel/">'
-        '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Tiểu thuyết dài kỳ</strong>'
-        '<span>Fiction surface riêng. Chương 1: Đại Kết Cục Thứ Một Nghìn. Những gì truyện chưa kể sẽ không được mục lục kể hộ.</span>'
+        '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Chương 1 DEMO</strong>'
+        '<span>Bản demo công khai, NON-CANON. Chương canon mới đang HOLD cho tới khi timeline dòng thời gian gốc đủ vững để khóa continuity.</span>'
         '</a></li>'
     )
     world_entry = (
@@ -68,7 +68,7 @@ def main() -> None:
         text = text.replace(directory_anchor, directory_anchor + entries, 1)
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ novel + world narrative + UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
+    print("BL∞ demo novel + world narrative + UNKNOWN Doctrine + Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
