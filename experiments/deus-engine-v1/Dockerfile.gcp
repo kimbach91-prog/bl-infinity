@@ -1,0 +1,19 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8080 \
+    DEUS_ENGINE_STATE_DIR=/tmp/deus-state
+
+WORKDIR /app
+
+COPY experiments/deus-engine-v1/ /app/
+
+RUN python -m compileall /app \
+    && python -m unittest -v test_epistemic_grand_ending.py
+
+USER 65532:65532
+
+EXPOSE 8080
+
+CMD ["python", "service.py"]
