@@ -7,7 +7,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-COPY experiments/deus-engine-v1/ /app/
+COPY . /app/
 
 RUN python -m compileall /app \
     && python -m unittest -v test_epistemic_grand_ending.py
