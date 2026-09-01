@@ -34,7 +34,11 @@ jobs:
         run: python -m unittest -v test_epistemic_grand_ending.py
       - name: Kernel-only smoke test
         working-directory: experiments/deus-engine-v1
-        run: python engine.py 'CI kernel-only smoke: distinguish same outcome from same reasoning and attack exhausted option spaces' --seed 7 --backend none
+        run: >-
+          python engine.py
+          "CI kernel-only smoke: distinguish same outcome from same reasoning and attack exhausted option spaces"
+          --seed 7
+          --backend none
       - name: Recombination smoke test
         working-directory: experiments/deus-engine-v1
         run: python recombiner.py
