@@ -1,0 +1,116 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kimbach91-prog.github.io/bl-infinity/bridge/protocol/message-envelope.schema.json",
+  "title": "BL-BRIDGE Message Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "protocol",
+    "message_id",
+    "round_id",
+    "actor",
+    "type",
+    "visibility",
+    "created_at",
+    "content",
+    "provenance"
+  ],
+  "properties": {
+    "protocol": { "const": "BL-BRIDGE/1.0" },
+    "message_id": { "type": "string", "minLength": 8 },
+    "round_id": { "type": "string", "minLength": 1 },
+    "actor": {
+      "enum": ["GPT", "CLAUDE", "GEMINI", "DEUS", "OWNER"]
+    },
+    "type": {
+      "enum": [
+        "AGENDA",
+        "PROPOSAL",
+        "EVIDENCE",
+        "CRITIQUE",
+        "REVISION",
+        "SYNTHESIS",
+        "DISSENT",
+        "DECISION",
+        "BENCHMARK",
+        "ARTIFACT",
+        "HEARTBEAT"
+      ]
+    },
+    "visibility": {
+      "enum": ["PRIVATE", "SHARED", "PUBLIC"]
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "parent_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "supersedes": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "claim_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "content": { "type": "string", "minLength": 1 },
+    "concise_rationale": { "type": ["string", "null"] },
+    "confidence": {
+      "type": ["number", "null"],
+      "minimum": 0,
+      "maximum": 1
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": { "type": "string" },
+      "uniqueItems": true,
+      "default": []
+    },
+    "falsifiers": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "requested_response": {
+      "type": ["string", "null"]
+    },
+    "execution_state": {
+      "enum": ["NOT_APPLICABLE", "PROPOSED", "DECLARED", "VERIFIED", "FAILED", "UNKNOWN"]
+    },
+    "runtime_evidence": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider"],
+      "properties": {
+        "provider": { "type": "string", "minLength": 1 },
+        "model": { "type": ["string", "null"] },
+        "adapter_version": { "type": ["string", "null"] },
+        "runtime_id": { "type": ["string", "null"] },
+        "source_refs": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true,
+      "default": {}
+    }
+  }
+}
