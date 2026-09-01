@@ -15,12 +15,9 @@ Preferred integration view: BL-INF-LOGIC-v3-OPEN
 
 ## Public reading routes
 Canonical theory: /theory.html
-Serialized novel: /novel/
-Published chapter 1: /novel/chapter-001.html
 Narrative research projection: /world.html
 UNKNOWN doctrine: /unknown.html
 Grand Ending: /grand-ending.html
-Novel canon projection: /machine/novel-canon.json
 Compressed regression hypothesis: /machine/compressed-regression-hypothesis.json
 
 ## Disclosure boundary
