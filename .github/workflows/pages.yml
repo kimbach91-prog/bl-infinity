@@ -59,6 +59,7 @@ jobs:
           scripts/build_discovery.py
           scripts/harden_site.py
           scripts/humanize_public_text.py
+          scripts/seo_release_guard.py
           scripts/navigation_audit.py
           scripts/run_discovery.py
           scripts/stage_grand_ending_home.py
@@ -90,10 +91,10 @@ jobs:
           cp public/grand-ending.html site/grand-ending.html
           cp public/world.html site/world.html
 
-      - name: Stage serialized novel
+      - name: Stage serialized novel quietly
         run: python scripts/stage_novel.py
 
-      - name: Link novel, world narrative, UNKNOWN Doctrine and Grand Ending from homepage
+      - name: Link world narrative, UNKNOWN Doctrine and Grand Ending from homepage
         run: python scripts/stage_grand_ending_home.py
 
       - name: Build multilingual SEO and AI discovery layer locally
@@ -110,13 +111,15 @@ jobs:
           cp machine/unknown-doctrine.json site/machine/unknown-doctrine.json
           cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
           cp machine/compressed-regression-hypothesis.json site/machine/compressed-regression-hypothesis.json
-          cp machine/novel-canon.json site/machine/novel-canon.json
 
       - name: Apply bilingual and browser hardening layer locally
         run: python scripts/harden_site.py
 
       - name: Normalize human-facing typography
         run: python scripts/humanize_public_text.py
+
+      - name: Apply SEO release guard
+        run: python scripts/seo_release_guard.py
 
       - name: Audit materialized local site
         run: python scripts/security_audit.py --strict --site
@@ -149,7 +152,7 @@ jobs:
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
 
-      - name: Notify IndexNow only after explicit manual publish
+      - name: Notify IndexNow only after explicit owner publish
         shell: bash
         run: |
           curl --proto '=https' --tlsv1.2 --fail-with-body --retry 2 -X POST 'https://api.indexnow.org/IndexNow' \
@@ -163,8 +166,6 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/",
               "https://kimbach91-prog.github.io/bl-infinity/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/world.html",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html",
               "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
               "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/en/",
@@ -178,19 +179,7 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/machine.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
               "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/en/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/es/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/fr/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/de/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/pt/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/zh/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ja/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ko/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ru/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/ar/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/hi/",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/id/"
+              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html"
             ]
           }
           JSON
