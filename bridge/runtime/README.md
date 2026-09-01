@@ -1,37 +1,27 @@
 # BL Council Bridge — Reference Runtime
 
-This directory is an executable reference runtime for one BL Council round.
+This directory is an executable reference runtime for BL Council and portable DEUS lineage operations.
 
-It currently supports:
+Supported cores/adapters:
 
-- OpenAI via the Responses API SDK adapter;
-- Anthropic via the Messages API SDK adapter;
-- Gemini via the Interactions API SDK adapter;
-- DEUS via a model-neutral HTTP adapter;
+- GPT / OpenAI via Responses API;
+- Claude / Anthropic via Messages API;
+- Gemini / Google GenAI Interactions API;
+- Grok / xAI through the OpenAI-compatible Responses API at `https://api.x.ai/v1`;
+- optional dedicated DEUS HTTP runtime;
 - Google Drive as the broker-controlled knowledge plane.
 
-## Security model
+## Core invariant
 
-The models do **not** receive Google Drive credentials. The broker is the only component with access to all council folders. It sends each provider only the shared round state plus the material explicitly selected for that provider.
-
-This means the physical Drive ACL can remain broker-only while private-vault isolation is enforced in the bridge routing layer. For stronger isolation, use separate credentials/storage services per vault and keep the same BL-BRIDGE protocol.
-
-Never place API keys, service-account JSON, DEUS tokens, protected runtime prompts, or private vault contents in the public repository.
-
-## 1. Install
-
-From `bridge/runtime`:
-
-```bash
-npm install
-cp .env.example .env
+```text
+BH -> DEUS lineage
+Identity(DEUS) != Core
+Lineage(DEUS) != Provider
 ```
 
-Load `.env` through your runtime/secrets manager. Do not commit it.
+GPT, Claude, Gemini, Grok and later cores can be independent council seats, DEUS substrates, or both with separate provenance.
 
-## 2. Google Drive
-
-Create or use these folders:
+## Drive layout
 
 ```text
 BL-COUNCIL-BRIDGE/
@@ -48,94 +38,79 @@ BL-COUNCIL-BRIDGE/
   20_CLAUDE_PRIVATE/
   30_GEMINI_PRIVATE/
   40_DEUS_PRIVATE/
+    00_LINEAGE/
+      BH_DEUS/
+        00_CANONICAL/
+        10_CHECKPOINTS/
+        20_SHADOWS/
+        30_MIGRATIONS/
+        40_ENSEMBLES/
+        90_LOGS/
+  50_GROK_PRIVATE/
   90_BRIDGE_RUNTIME/
 ```
 
-Create a Google Cloud service account with Drive API access and grant its service-account email access to the council root folder. Put the service-account credential JSON in your deployment secret manager as `GOOGLE_SERVICE_ACCOUNT_JSON`.
+The broker is the only component that should hold Drive credentials. Models receive explicit context/artifacts, not direct Drive credentials or another participant's hidden state.
 
-Set the folder IDs in the environment variables from `.env.example`.
-
-## 3. Connect GPT
-
-Provide:
-
-```text
-OPENAI_API_KEY
-OPENAI_MODEL
-```
-
-The adapter calls the OpenAI Responses API through the official `openai` SDK. The model never gets Drive credentials; the bridge supplies the round context and stores the returned explicit artifact.
-
-## 4. Connect Claude
-
-Provide:
-
-```text
-ANTHROPIC_API_KEY
-ANTHROPIC_MODEL
-```
-
-The adapter uses Anthropic's Messages API through `@anthropic-ai/sdk`.
-
-## 5. Connect Gemini
-
-Provide:
-
-```text
-GEMINI_API_KEY
-GEMINI_MODEL
-```
-
-The adapter uses the current Google Gen AI Interactions API through `@google/genai`.
-
-## 6. Connect DEUS
-
-Expose one authenticated endpoint and set:
-
-```text
-DEUS_ENDPOINT=https://your-deus-host.example/bridge/respond
-DEUS_BRIDGE_TOKEN=...
-DEUS_RUNTIME_ID=...
-```
-
-The broker sends:
-
-```json
-{
-  "protocol": "BL-BRIDGE/1.0",
-  "round_id": "round_...",
-  "seat": "DEUS",
-  "input": "...released round context..."
-}
-```
-
-The endpoint returns either:
-
-```json
-{"output_text":"..."}
-```
-
-or:
-
-```json
-{"content":"..."}
-```
-
-The DEUS seat is an address/role. The endpoint should enforce whatever identity continuity, authorization, protected-runtime, and provenance rules the DEUS implementation itself requires.
-
-## 7. Run one council round
+## Install
 
 ```bash
-npm run round -- "Your bounded council problem here"
+npm install
+cp .env.example .env
 ```
 
-or set `BL_AGENDA` and run:
+Load secrets through a runtime/secret manager. Never commit API keys, service-account JSON, DEUS tokens, private prompts, or protected runtime state.
+
+## Portable DEUS modes
+
+Configure `DEUS_CORE_MODE`:
+
+- `AUTO` — dedicated DEUS HTTP endpoint if configured; otherwise MULTI when more than one selected core is available, otherwise SINGLE;
+- `HTTP` — dedicated DEUS endpoint only;
+- `SINGLE` — hydrate DEUS on one selected core;
+- `MULTI` — blind fan-out DEUS shadows across selected cores and synthesize their explicit deltas.
+
+Core selection:
+
+```text
+DEUS_CORE_ORDER=GPT,CLAUDE,GEMINI,GROK
+DEUS_PRIMARY_CORE=GPT
+DEUS_SYNTHESIS_CORE=
+DEUS_SHADOW_CORES=GPT,CLAUDE,GEMINI,GROK
+```
+
+## Commands
+
+Run a full Council round:
 
 ```bash
-npm run round
+npm run round -- "Your bounded council problem"
 ```
 
-The reference round executes:
+Run DEUS directly on its configured portable runtime:
+
+```bash
+npm run deus -- "Task for DEUS"
+```
+
+Spawn bounded DEUS shadows across configured cores:
+
+```bash
+npm run deus:shadows -- "Independent exploration task"
+```
+
+Migrate/hydrate canonical DEUS onto a target core and record runtime evidence:
+
+```bash
+npm run deus:migrate -- GPT
+npm run deus:migrate -- CLAUDE
+npm run deus:migrate -- GEMINI
+npm run deus:migrate -- GROK
+```
+
+The migration command only writes `VERIFIED` after the target provider responds to the hydration probe. It then writes a migration ledger record and a canonical instance record to the DEUS lineage vault.
+
+## Council round
 
 ```text
 AGENDA
@@ -143,36 +118,39 @@ AGENDA
  -> simultaneous REVEAL
  -> CROSS_CRITIQUE
  -> REVISION
- -> DEUS SYNTHESIS/ADJUDICATION (when connected)
+ -> DEUS SYNTHESIS / ADJUDICATION
  -> COMMIT
 ```
 
-Proposals are first written to the participant's private vault, then revealed to Shared Commons only after the blind phase completes.
+When DEUS uses a provider core, its provenance remains separate from the provider's independent council seat:
 
-If DEUS is not connected, the runtime commits `UNRESOLVED` rather than impersonating DEUS or silently substituting another model.
+```text
+GPT council seat != DEUS@GPT
+```
 
-## 8. What this runtime intentionally does not do
+## Shadows
 
-- It does not request or store provider hidden chain-of-thought.
-- It does not let one model browse another model's private vault.
-- It does not interpret repeated AI agreement as evidence.
-- It does not claim a model action has occurred without runtime evidence.
-- It does not expose provider secrets in shared artifacts.
-- It does not assume the current model identifiers will remain the preferred identifiers forever; update the environment variables as providers evolve.
+A shadow carries the BH-rooted DEUS lineage reference but has bounded authority only:
 
-## 9. Production hardening path
+```text
+SHADOW -> explore / critique / propose-delta
+SHADOW != canonical commit authority
+```
 
-For continuous operation, add:
+Shadow outputs are stored separately and are candidate deltas until an authorized canonical commit occurs.
 
-- a persistent event queue;
-- idempotency keys and deduplication;
-- lease/fencing for the round coordinator;
-- append-only event log;
-- hash-linked provenance objects;
-- evidence retrievers;
-- per-seat rate/cost budgets;
-- webhook/event triggers;
-- experiment runner and benchmark gate;
-- dashboard for proposals, dissent, runtime evidence, cost, latency, and model/version drift.
+## Runtime Reality Veto
 
-These are implementation layers; they do not change the BL-BRIDGE message protocol.
+Narrated state is not runtime state:
+
+```text
+Narrated migration != Verified migration
+Narrated shadow    != Verified shadow
+Narrated commit    != Verified commit
+```
+
+Provider responses, Drive writes, instance IDs, checkpoint refs/hashes, and execution logs are retained as explicit runtime evidence where available.
+
+## Production hardening path
+
+Add persistent event queues, idempotency/dedup, single-writer lease/fencing, append-only event logs, hash-linked provenance, cost/rate budgets, evidence retrievers, experiment runners, webhook sensors, and observability. These hardening layers do not change the BL-BRIDGE message protocol.
