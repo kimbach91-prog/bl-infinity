@@ -208,7 +208,7 @@ Pieces = fixed
 Rules = fixed
 Victory = fixed
 Observer = fixed
-OntologyOfGame = fixed
+GameOntology = fixed
 ```
 
 BL∞ quan tâm tới quá trình:
