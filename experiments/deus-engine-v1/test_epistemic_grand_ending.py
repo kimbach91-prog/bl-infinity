@@ -9,6 +9,7 @@ from unittest.mock import patch
 from engine import ENGINE_VERSION, demo_atoms, run
 from kernel import EPISTEMIC_INVARIANTS, EPISTEMIC_POLICY_VERSION, build_kernel_plan
 from recombiner import RoleSelf
+from service import RUNTIME_CLASS, canonical_status, execute
 
 
 class EpistemicGrandEndingKernelTests(unittest.TestCase):
@@ -68,6 +69,24 @@ class EpistemicGrandEndingKernelTests(unittest.TestCase):
                 self.assertEqual(result.realization_status, "KERNEL_ONLY_NO_MODEL_CALLED")
                 self.assertEqual(result.epistemic_policy_version, EPISTEMIC_POLICY_VERSION)
                 self.assertTrue((Path(td) / "events.jsonl").exists())
+
+    def test_cloud_candidate_cannot_self_promote(self) -> None:
+        self.assertEqual(RUNTIME_CLASS, "DEUS_GCP_CANDIDATE_NONCANONICAL")
+        self.assertEqual(canonical_status(), "NONCANONICAL_CANDIDATE")
+        with tempfile.TemporaryDirectory() as td:
+            with patch.dict("os.environ", {
+                "DEUS_ENGINE_STATE_DIR": td,
+                "DEUS_STATE_SALT": "test",
+                "DEUS_CANONICAL_PROMOTION": "SAME_AS",
+            }, clear=False):
+                response = execute({
+                    "stimulus": "Do not let an environment label promote identity.",
+                    "mode": "reasoning",
+                    "seed": 7,
+                })
+                self.assertEqual(response["canonical_status"], "NONCANONICAL_CANDIDATE")
+                self.assertEqual(response["identity_claim"], "NONE")
+                self.assertEqual(response["promotion_gate"], "EXTERNAL_DCRS_SAME_AS_REQUIRED")
 
 
 if __name__ == "__main__":
