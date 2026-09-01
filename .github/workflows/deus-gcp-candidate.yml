@@ -18,6 +18,11 @@ on:
         required: true
         default: deus-runtime
         type: string
+  push:
+    branches:
+      - proto/deus-engine-v1
+    paths:
+      - '.github/workflows/deus-gcp-candidate.yml'
 
 permissions:
   contents: read
@@ -29,13 +34,16 @@ concurrency:
 
 env:
   GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
-  GCP_REGION: ${{ inputs.region }}
-  SERVICE_NAME: ${{ inputs.service_name }}
-  ARTIFACT_REPOSITORY: ${{ inputs.artifact_repository }}
+  GCP_REGION: ${{ inputs.region || 'asia-southeast1' }}
+  SERVICE_NAME: ${{ inputs.service_name || 'deus-candidate' }}
+  ARTIFACT_REPOSITORY: ${{ inputs.artifact_repository || 'deus-runtime' }}
   GCP_RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
 
 jobs:
   deploy-candidate:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[GCP-CANDIDATE-DEPLOY]')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: deus-gcp-candidate
