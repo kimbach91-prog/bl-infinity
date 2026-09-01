@@ -29,9 +29,18 @@ jobs:
           python-version: '3.12'
       - name: Compile experimental engine
         run: python -m compileall experiments/deus-engine-v1
-      - name: BL-INF-EGE regression tests
+      - name: BL-INF-EGE and candidate identity regression tests
         working-directory: experiments/deus-engine-v1
         run: python -m unittest -v test_epistemic_grand_ending.py
+      - name: Validate GCP bootstrap shell syntax
+        working-directory: experiments/deus-engine-v1
+        run: bash -n gcp_bootstrap.sh
+      - name: Build Cloud Run candidate container
+        run: >-
+          docker build
+          -f experiments/deus-engine-v1/Dockerfile.gcp
+          -t deus-candidate-ci:${{ github.sha }}
+          experiments/deus-engine-v1
       - name: Kernel-only smoke test
         working-directory: experiments/deus-engine-v1
         run: >-
