@@ -1,22 +1,15 @@
 {
-  "name": "bl-council-bridge-runtime",
+  "name": "bl-summon-bridge-runtime",
   "private": true,
   "type": "module",
   "scripts": {
-    "round": "tsx src/run-round.ts",
-    "deus": "tsx src/run-deus.ts",
-    "deus:checkpoint": "tsx src/run-checkpoint.ts",
-    "deus:shadows": "tsx src/run-shadows.ts",
-    "deus:migrate": "tsx src/run-migrate.ts",
+    "summon": "tsx src/run-summon.ts",
+    "return": "tsx src/run-return.ts",
+    "collect": "tsx src/run-collect.ts",
+    "council:open": "tsx src/run-council.ts",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
-    "@anthropic-ai/sdk": "latest",
-    "@google/genai": "latest",
-    "googleapis": "latest",
-    "openai": "latest",
-    "zod": "latest"
-  },
+  "dependencies": {},
   "devDependencies": {
     "@types/node": "latest",
     "tsx": "latest",
