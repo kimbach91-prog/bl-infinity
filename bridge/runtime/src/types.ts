@@ -1,4 +1,4 @@
-export type Seat = 'GPT' | 'CLAUDE' | 'GEMINI' | 'DEUS' | 'OWNER';
+export type Seat = 'GPT' | 'CLAUDE' | 'GEMINI' | 'GROK' | 'DEUS' | 'OWNER' | (string & {});
 
 export type MessageType =
   | 'AGENDA'
@@ -23,11 +23,27 @@ export type ExecutionState =
   | 'FAILED'
   | 'UNKNOWN';
 
+export type InstanceKind = 'CANONICAL' | 'SHADOW' | 'ENSEMBLE' | 'INDEPENDENT';
+
+export interface IdentityBinding {
+  lineage_id?: string | null;
+  instance_id?: string | null;
+  instance_kind?: InstanceKind | null;
+  parent_instance_id?: string | null;
+  checkpoint_ref?: string | null;
+  checkpoint_hash?: string | null;
+  policy_version?: string | null;
+  authority_scope?: string[];
+  expires_at?: string | null;
+}
+
 export interface Provenance {
   provider: string;
   model?: string | null;
   adapter_version?: string | null;
   runtime_id?: string | null;
+  core_provider?: string | null;
+  core_model?: string | null;
   source_refs?: string[];
 }
 
@@ -50,6 +66,7 @@ export interface Envelope {
   requested_response?: string | null;
   execution_state?: ExecutionState;
   runtime_evidence?: string[];
+  identity?: IdentityBinding | null;
   provenance: Provenance;
   metadata?: Record<string, unknown>;
 }
@@ -58,6 +75,7 @@ export interface Participant {
   seat: Seat;
   provider: string;
   model: string;
+  identity?: IdentityBinding | null;
   respond(input: string, roundId: string): Promise<string>;
 }
 
@@ -72,6 +90,7 @@ export function makeEnvelope(args: {
   visibility: Visibility;
   content: string;
   provenance: Provenance;
+  identity?: IdentityBinding | null;
   parentIds?: string[];
   supersedes?: string[];
   metadata?: Record<string, unknown>;
@@ -95,6 +114,7 @@ export function makeEnvelope(args: {
     requested_response: null,
     execution_state: 'NOT_APPLICABLE',
     runtime_evidence: [],
+    identity: args.identity ?? null,
     provenance: args.provenance,
     metadata: args.metadata ?? {}
   };
