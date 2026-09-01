@@ -1,0 +1,53 @@
+name: Diagnose theory inline handler
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/diagnose-theory-inline.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
+        with:
+          python-version: '3.12'
+      - name: Install build dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt
+      - name: Rebuild theory surface
+        run: |
+          python scripts/build.py
+          cp public/academic-democracy.html site/academic-democracy.html
+          cp public/academic-democracy-technology.html site/academic-democracy-technology.html
+          cp public/unknown.html site/unknown.html
+          cp public/grand-ending.html site/grand-ending.html
+          cp public/world.html site/world.html
+          python scripts/stage_novel.py
+          python scripts/stage_grand_ending_home.py
+          python scripts/run_discovery.py
+          python scripts/harden_site.py
+          python scripts/humanize_public_text.py
+      - name: Print exact inline event-handler matches
+        shell: python
+        run: |
+          from pathlib import Path
+          import re
+          text = Path('site/theory.html').read_text(encoding='utf-8')
+          matches = list(re.finditer(r'\son[a-z]+\s*=', text, flags=re.I))
+          print('matches=', len(matches))
+          for i, m in enumerate(matches, 1):
+              lo = max(0, m.start() - 260)
+              hi = min(len(text), m.end() + 260)
+              print(f'--- match {i}: {m.group(0)!r} ---')
+              print(text[lo:hi].replace('\n', '\\n'))
+          if not matches:
+              raise SystemExit('No inline event-handler match reproduced')
