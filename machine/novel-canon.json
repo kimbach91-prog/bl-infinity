@@ -21,10 +21,12 @@
     "chapter_001_public_page": "novel/chapter-001.html",
     "chapter_001_status": "PUBLIC_DEMO_NON_CANON",
     "discoverability": "PUBLIC_INDEXABLE",
+    "homepage_label": "CHAPTER_1_DEMO_NON_CANON",
     "binding_effect": "NONE_ON_FUTURE_CANON"
   },
   "canon_release": {
     "status": "HOLD_UNTIL_ORIGINAL_TIMELINE_READY",
+    "publication_schedule": "PAUSED",
     "automatic_new_chapter_publication": false,
     "worldbuild_and_private_drafting_may_continue": true
   },
