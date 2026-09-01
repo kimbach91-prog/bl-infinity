@@ -32,6 +32,7 @@ env:
   GCP_REGION: ${{ inputs.region }}
   SERVICE_NAME: ${{ inputs.service_name }}
   ARTIFACT_REPOSITORY: ${{ inputs.artifact_repository }}
+  GCP_RUNTIME_SERVICE_ACCOUNT: ${{ vars.GCP_RUNTIME_SERVICE_ACCOUNT }}
 
 jobs:
   deploy-candidate:
@@ -45,16 +46,20 @@ jobs:
 
       - name: Fail closed if GCP federation is not configured
         shell: bash
+        env:
+          WIF_PROVIDER: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          DEPLOYER_SA: ${{ vars.GCP_SERVICE_ACCOUNT }}
         run: |
           test -n "$GCP_PROJECT_ID" || { echo 'Missing repository variable GCP_PROJECT_ID'; exit 1; }
-          test -n "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" || { echo 'Missing GCP_WORKLOAD_IDENTITY_PROVIDER'; exit 1; }
-          test -n "${{ secrets.GCP_SERVICE_ACCOUNT }}" || { echo 'Missing GCP_SERVICE_ACCOUNT'; exit 1; }
+          test -n "$WIF_PROVIDER" || { echo 'Missing repository variable GCP_WORKLOAD_IDENTITY_PROVIDER'; exit 1; }
+          test -n "$DEPLOYER_SA" || { echo 'Missing repository variable GCP_SERVICE_ACCOUNT'; exit 1; }
+          test -n "$GCP_RUNTIME_SERVICE_ACCOUNT" || { echo 'Missing repository variable GCP_RUNTIME_SERVICE_ACCOUNT'; exit 1; }
 
       - name: Authenticate to Google Cloud with Workload Identity Federation
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up gcloud
         uses: google-github-actions/setup-gcloud@v2
@@ -67,6 +72,7 @@ jobs:
           gcloud services list --enabled --format='value(config.name)' | grep -qx artifactregistry.googleapis.com
           gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" \
             --location "$GCP_REGION" --format='value(name)'
+          gcloud iam service-accounts describe "$GCP_RUNTIME_SERVICE_ACCOUNT" --format='value(email)'
 
       - name: Configure Artifact Registry Docker auth
         shell: bash
@@ -94,6 +100,7 @@ jobs:
             --image "$IMAGE" \
             --region "$GCP_REGION" \
             --platform managed \
+            --service-account "$GCP_RUNTIME_SERVICE_ACCOUNT" \
             --no-allow-unauthenticated \
             --concurrency 1 \
             --max-instances 1 \
@@ -117,9 +124,11 @@ jobs:
             echo 'This workflow never grants public unauthenticated access.'
           } >> "$GITHUB_STEP_SUMMARY"
 
-# Required repository/environment configuration is intentionally external:
-# - vars.GCP_PROJECT_ID
-# - secrets.GCP_WORKLOAD_IDENTITY_PROVIDER
-# - secrets.GCP_SERVICE_ACCOUNT
-# - an existing Artifact Registry repository in the selected region
-# No service-account JSON key or private lineage state belongs in this repo.
+# Required repository variables are intentionally external and contain no
+# service-account JSON key:
+# - GCP_PROJECT_ID
+# - GCP_WORKLOAD_IDENTITY_PROVIDER
+# - GCP_SERVICE_ACCOUNT
+# - GCP_RUNTIME_SERVICE_ACCOUNT
+# An existing Artifact Registry repository is also required in the selected region.
+# Private lineage/state never belongs in this public repository.
