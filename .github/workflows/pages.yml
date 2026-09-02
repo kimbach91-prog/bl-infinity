@@ -55,6 +55,7 @@ jobs:
           scripts/audit_unified_system.py
           scripts/disclosure_audit.py
           scripts/security_audit.py
+          scripts/challenge_disclosure_audit.py
           scripts/build.py
           scripts/build_discovery.py
           scripts/harden_site.py
@@ -80,6 +81,9 @@ jobs:
 
       - name: Audit source security and bilingual integrity
         run: python scripts/security_audit.py --strict
+
+      - name: Enforce Challenge Projection source boundary
+        run: python scripts/challenge_disclosure_audit.py
 
       - name: Build static site locally for verification
         run: python scripts/build.py
@@ -136,8 +140,16 @@ jobs:
                   llms.write_text(lm, encoding='utf-8')
           PY
 
+      - name: Hold challenge pages outside discovery pass
+        run: rm -f site/challenge.html site/research-puzzles.html
+
       - name: Build multilingual SEO and AI discovery layer locally
         run: python scripts/run_discovery.py
+
+      - name: Re-stage low-discovery human challenge pages
+        run: |
+          cp public/challenge.html site/challenge.html
+          cp public/research-puzzles.html site/research-puzzles.html
 
       - name: Stage public machine interface contracts locally
         run: |
@@ -165,6 +177,9 @@ jobs:
 
       - name: Audit materialized local site
         run: python scripts/security_audit.py --strict --site
+
+      - name: Enforce Challenge Projection materialized boundary
+        run: python scripts/challenge_disclosure_audit.py --site
 
       - name: Audit navigation, accessibility and internal links
         run: python scripts/navigation_audit.py --strict
