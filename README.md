@@ -1,6 +1,6 @@
 # B∞ — UNKNOWN
 
-**Public state:** `~1% PUBLIC · 99% WITHHELD · UNKNOWN`  
+**Core public state:** `~1% PUBLIC · 99% WITHHELD · UNKNOWN`  
 **Effective:** 2026-09-03  
 **Author:** Lâm Kim Bách (Bách Lâm / Optimizer)
 
@@ -8,24 +8,28 @@
 >
 > **Giới hạn cuối của B∞: `UNKNOWN`.**
 
-Đây là **định nghĩa nghiên cứu công khai ở mức cố ý mơ hồ**, không phải tuyên bố rằng toàn bộ nội dung trên đã được chứng minh như một định luật vật lý hay toán học.
+Đây là định nghĩa nghiên cứu công khai ở mức cố ý mơ hồ. Nó không tự tuyên bố đã được chứng minh như định luật vật lý hay toán học.
 
-Khoảng **99% phần hình thành nội bộ của B∞ hiện không được công bố**. Đây là quyết định disclosure của tác giả; lý do được tác giả nêu là giá trị tiềm năng của phần chưa công bố hiện không thể định lượng một cách có ý nghĩa.
+Khoảng 99% phần hình thành nội bộ của B∞ hiện tiếp tục được giữ kín trong lúc tác giả đánh giá giá trị tiềm năng và chuyển hóa chúng thành những object có thể công bố, hiểu, kiểm tra và phản biện.
+
+## Public lanes độc lập
+
+- **Tiểu thuyết — PUBLIC:** `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, gồm Chương 1 hiện hành ở trạng thái fiction / HALF-CANON living draft.
+- **Tự do Học thuật — PUBLIC:** tuyên ngôn mở quyền đặt câu hỏi, đề xuất, phản biện và tham gia tạo tri thức mà không bình quân hóa trọng lượng bằng chứng.
+
+Hai nhánh này được công khai độc lập và **không phải disclosure của kiến trúc B∞ đang giữ kín**.
+
+## Author's Promise — Lời hứa công bố
+
+**Tác giả cam kết sẽ tiếp tục công bố các phần phù hợp sau khi đã đánh giá hết giá trị tiềm năng và hoàn tất quá trình chuyển hóa, phân loại, diễn giải chúng thành dạng đủ chín để công chúng có thể đọc, kiểm tra và phản biện.**
+
+Tác giả đồng thời tuyên bố rằng bề mặt public hiện tại **chưa đại diện cho những thiết kế tiên tiến nhất** đang được phát triển hoặc đánh giá. Đây là tuyên bố của tác giả về trạng thái nghiên cứu, không phải bằng chứng độc lập về giá trị hoặc hiệu năng của phần chưa công bố.
 
 ## OPEN CHALLENGE
 
-Lời thách thức mở gửi tới những bộ óc mạnh nhất muốn kiểm tra B∞:
-
 **Hãy tìm giới hạn cuối của B∞ — hoặc chứng minh thiết kế này sai.**
 
-Một lời giải đủ mạnh có thể đi theo bất kỳ con đường nào, miễn lập luận minh bạch:
-
-- đưa ra một ranh giới cuối cùng không tự mâu thuẫn và chứng minh không còn miền khả đạt nào nằm ngoài nó;
-- dựng phản ví dụ phá định nghĩa;
-- chứng minh khái niệm chứa mâu thuẫn nội tại;
-- hoặc chứng minh B∞ quá rỗng, vòng tròn hay không thể falsify đến mức không thể dùng như một thiết kế nghiên cứu hữu ích.
-
-Nếu một phản bác đứng vững trước phản biện, B∞ phải thu hẹp, sửa hoặc thất bại.
+Một phản bác đủ mạnh có thể chứng minh ranh giới cuối, dựng phản ví dụ, chỉ ra mâu thuẫn nội tại, hoặc chứng minh B∞ quá rỗng / vòng tròn / không falsifiable để có giá trị nghiên cứu. Nếu phản bác đứng vững, B∞ phải thu hẹp, sửa hoặc thất bại.
 
 `FINAL_BOUNDARY(B∞) = UNKNOWN`
 
