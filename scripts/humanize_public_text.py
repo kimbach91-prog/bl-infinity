@@ -17,9 +17,15 @@ HOME_ORDER = [
 GROUP_ORDER = ["core", "theory", "narrative", "external-science", "claims", "assets", "verification", "machine", "languages"]
 HEADING_RE = re.compile(r'<h([1-6])(\b[^>]*)>(.*?)</h\1>', flags=re.I | re.S)
 INFINITY_BRIDGE = '<span class="lineage-infinity-separator" aria-hidden="true" title="∞">∞</span>'
+UNPUBLISHED_ROLE_TERMS = ["Kẻ hề", "kẻ hề", "Kẻ thắng", "kẻ thắng", "Kẻ trung gian", "kẻ trung gian", "Kẻ quan sát", "Kẻ đứng ngoài"]
 
 
 def normalize(text: str) -> str:
+    # Public narrative can discuss scientific reversals, but working names for
+    # the unpublished BL role-theory stay out of rendered website surfaces.
+    text = text.replace("Kẻ thắng hôm nay, kẻ hề ngày mai", "Lịch sử đảo chiều của khoa học")
+    text = text.replace("“Kẻ thắng” không chết", "Một framework đang thắng không nhất thiết chết")
+    text = text.replace("\"Kẻ thắng\" không chết", "Một framework đang thắng không nhất thiết chết")
     text = text.replace(" — ", ": ")
     text = text.replace("—", ", ")
     text = text.replace(" – ", " · ")
@@ -202,6 +208,18 @@ def verify_heading_hierarchy() -> None:
     print(f"Heading hierarchy verified across {checked} HTML pages")
 
 
+def verify_unpublished_role_boundary() -> None:
+    leaks = []
+    for path in SITE.rglob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        for term in UNPUBLISHED_ROLE_TERMS:
+            if term in text:
+                leaks.append(f"{path.relative_to(SITE)}:{term}")
+    if leaks:
+        raise RuntimeError("unpublished BL role names leaked to public HTML: " + ", ".join(leaks[:20]))
+    print("Unpublished BL role-name boundary: public HTML clean")
+
+
 def verify_infinity_bridge(text: str, path: Path) -> None:
     for attribute, left, right in [("data-section", "theory", "novel"), ("data-topic", "theory", "novel")]:
         if f'{attribute}="{left}"' not in text or f'{attribute}="{right}"' not in text:
@@ -286,6 +304,7 @@ def main() -> None:
     reorder_scientific_index()
     verify_navigation_hierarchy()
     verify_heading_hierarchy()
+    verify_unpublished_role_boundary()
     print(f"Static navigation, infinity bridge, external science lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
 
 
