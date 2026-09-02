@@ -2,6 +2,7 @@
 
 **Core public state:** `~1% PUBLIC · 99% WITHHELD · UNKNOWN`  
 **Outer public surface:** `REOPENED / CURATED`  
+**Novel pacing state:** `SLOW-TIME · AUTHOR TIME-SKIP LOCK`  
 **Effective:** 2026-09-03  
 **Author:** Lâm Kim Bách (Bách Lâm / Optimizer)
 
@@ -9,15 +10,40 @@
 >
 > **Giới hạn cuối của B∞: `UNKNOWN`.**
 
-## Đã mở lại
+## Public index hiện hành
 
-- **Tiểu thuyết:** `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, Chương 1, worldbuilding/reality anchors và atlas ngôn ngữ–thời đại.
+1. **Đọc:** Tiểu thuyết → Tự do Học thuật → Dân chủ Học thuật.
+2. **Hậu trường văn học:** worldbuilding privacy-reduced + atlas ngôn ngữ/thời đại.
+3. **Tác giả & dự án:** hồ sơ tác giả, project notes mức cao, Author's Promise.
+4. **B∞ / UNKNOWN:** chỉ giữ public concept tối giản.
+
+Research core không nằm trong luồng đọc chính.
+
+## Novel pacing canon
+
+Chương 1 đã được audit lại theo yêu cầu tác giả và quay về xương sống của bản đầu:
+
+`Grand Ending -> countdown -> transfer -> one childhood scene`
+
+Nhịp mặc định:
+
+`beat / seconds / minutes -> hours -> day -> author-selected event`
+
+**Không được tự động nhảy tháng, năm, giai đoạn tuổi thơ hoặc montage tiểu sử.** Bước nhảy thời gian đáng kể chỉ được viết khi tác giả cho phép. Nếu chưa có mốc tiếp theo được tác giả mở, continuation phải HOLD thay vì tự bắc cầu.
+
+Public Chương 1 hiện dừng trong **một buổi sáng tuổi thơ**. Các đoạn tóm tắt trước đây về nhiều mùa hè, máy tính, trường học, quán net, các mốc nhiều năm và chronology đời tư đã bị rút khỏi narrative hiện hành.
+
+Public privacy cũng được siết lại: prose không cần công bố địa chỉ, tuyến đi, điểm trường, mapping người thật, chronology gia đình hoặc chi tiết định danh chỉ vì research layer đang có dữ liệu đó.
+
+## Vẫn mở
+
+- **Tiểu thuyết:** `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, Chương 1 hiện hành, worldbuilding rút gọn và atlas ngôn ngữ–thời đại.
 - **Tự do / Dân chủ Học thuật:** bản tuyên ngôn công khai ở tầng xã hội–nguyên tắc.
 - **Hồ sơ tác giả:** định danh công khai tối thiểu của Lâm Kim Bách · Bách Lâm / Optimizer.
 - **Project notes:** DEUS LLM, Theory Group và các thông tin tồn tại/trạng thái ở mức cao.
 - **Author's Promise:** lời hứa tiếp tục công bố những phần phù hợp sau khi đánh giá và chuyển hóa đủ chín.
 
-Các lane trên **không được dùng như cửa hậu để suy rằng academic core đã được công bố**.
+Các lane trên không được dùng như cửa hậu để suy rằng academic core đã được công bố.
 
 ## Vẫn giữ kín
 
