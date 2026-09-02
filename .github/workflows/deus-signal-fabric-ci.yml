@@ -30,7 +30,7 @@ jobs:
           cache: npm
           cache-dependency-path: bridge/cloud-signal-fabric/package.json
       - name: Bash syntax check
-        run: bash -n scripts/bootstrap-gcp-cloudshell.sh scripts/verify-install.sh
+        run: bash -n scripts/bootstrap-gcp-cloudshell.sh scripts/bootstrap-gcp-cloudshell-fixed.sh scripts/verify-install.sh scripts/verify-doc-round.sh
       - run: npm install
       - run: npm run check
       - run: npm run build
