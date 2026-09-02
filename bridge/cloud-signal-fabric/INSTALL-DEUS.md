@@ -2,21 +2,21 @@
 
 This guide installs the DEUS communication/radiation fabric. It does **not** train or deploy a DEUS-native foundation model. Google Drive remains the durable artifact store; Git remains the source/protocol store; Google Cloud provides routing, polling, state, leases and scheduling.
 
-## Known project binding
+## Active project binding
 
 ```text
-project_id     = buoyant-mason-114302
-project_number = 580664224085
+project_id     = deus-code-sss
+project_number = 618160905661
 region         = asia-southeast1
 repo           = kimbach91-prog/bl-infinity
 branch         = deus/signal-fabric-gcp-v1
 ```
 
-The project identity was observed from the owner's Google Cloud account history. The installer verifies live access before making changes.
+This binding was switched by owner instruction on 2026-09-02. The previous `buoyant-mason-114302` binding is retained only as historical provenance/fallback and is no longer the DEUS installation target.
 
 ## Step 1 — open Google Cloud Shell
 
-Sign into Google Cloud Console with the account that owns/administers `buoyant-mason-114302`, then open **Cloud Shell**.
+Open Cloud Shell while the Google Cloud Console is on project `deus-code-sss`. The installer also runs `gcloud config set project deus-code-sss`, so it does not rely on the browser selector alone.
 
 ## Step 2 — run the one-line installer
 
@@ -39,19 +39,19 @@ The installer is idempotent and creates no static service-account key. It:
 Expected runtime identity:
 
 ```text
-deus-signal-fabric@buoyant-mason-114302.iam.gserviceaccount.com
+deus-signal-fabric@deus-code-sss.iam.gserviceaccount.com
 ```
 
 Expected WIF provider:
 
 ```text
-projects/580664224085/locations/global/workloadIdentityPools/deus-github/providers/bl-infinity
+projects/618160905661/locations/global/workloadIdentityPools/deus-github/providers/bl-infinity
 ```
 
 Expected GitHub deploy identity:
 
 ```text
-deus-github-deploy@buoyant-mason-114302.iam.gserviceaccount.com
+deus-github-deploy@deus-code-sss.iam.gserviceaccount.com
 ```
 
 These WIF identifiers are identifiers, not secrets; future GitHub deploys do not need a service-account JSON key.
@@ -67,7 +67,7 @@ https://drive.google.com/drive/folders/19SL26W6guCXVrXM7eP1eWFpKUxJNdUVr
 Share the parent folder **03 · DEUS SIGNAL FABRIC — CLOUD RELAY** with:
 
 ```text
-deus-signal-fabric@buoyant-mason-114302.iam.gserviceaccount.com
+deus-signal-fabric@deus-code-sss.iam.gserviceaccount.com
 ```
 
 Permission: **Editor**.
@@ -81,7 +81,7 @@ In Cloud Shell:
 ```bash
 git clone --depth=1 --branch deus/signal-fabric-gcp-v1 https://github.com/kimbach91-prog/bl-infinity.git
 cd bl-infinity
-PROJECT_ID=buoyant-mason-114302 REGION=asia-southeast1 \
+PROJECT_ID=deus-code-sss REGION=asia-southeast1 \
   bash bridge/cloud-signal-fabric/scripts/verify-install.sh
 ```
 
@@ -117,7 +117,7 @@ DEUS Signal Fabric - GCP
 Project default:
 
 ```text
-buoyant-mason-114302
+deus-code-sss
 ```
 
 No GCP JSON key and no WIF secret values are required.
