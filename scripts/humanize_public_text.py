@@ -10,12 +10,13 @@ TOPIC_ORDER = ["overview", "theory", "novel", "regressor", "system", "academic",
 HOME_ORDER = [
     "theory.html", "novel/", "regressor-proposition.html", "system.html",
     "academic-democracy.html", "open-academic-publishing.html", "unknown.html",
-    "grand-ending.html", "world.html", "bl-adn.html", "claims.html", "assets.html",
+    "grand-ending.html", "world.html", "science-constellation.html", "bl-adn.html", "claims.html", "assets.html",
     "provenance.html", "critique.html", "author.html", "languages.html", "machine.html",
     "academic-democracy-technology.html", "academic-democracy/discovery.html",
 ]
-GROUP_ORDER = ["core", "theory", "narrative", "claims", "assets", "verification", "machine", "languages"]
+GROUP_ORDER = ["core", "theory", "narrative", "external-science", "claims", "assets", "verification", "machine", "languages"]
 HEADING_RE = re.compile(r'<h([1-6])(\b[^>]*)>(.*?)</h\1>', flags=re.I | re.S)
+INFINITY_BRIDGE = '<span class="lineage-infinity-separator" aria-hidden="true" title="∞">∞</span>'
 
 
 def normalize(text: str) -> str:
@@ -70,6 +71,22 @@ def reorder_topic_bar(text: str) -> str:
     return pattern.sub(replace, text, count=1)
 
 
+def insert_infinity_bridge(text: str) -> str:
+    """Render Học thuyết ∞ Tiểu thuyết / Theory ∞ Novel without merging their identities."""
+    def bridge_between(value: str, attribute: str, left: str, right: str) -> str:
+        pattern = re.compile(
+            rf'(<a\b(?=[^>]*\b{re.escape(attribute)}="{re.escape(left)}")[^>]*>.*?</a>)\s*'
+            rf'(?:<span class="lineage-infinity-separator"[^>]*>∞</span>\s*)?'
+            rf'(<a\b(?=[^>]*\b{re.escape(attribute)}="{re.escape(right)}")[^>]*>.*?</a>)',
+            flags=re.I | re.S,
+        )
+        return pattern.sub(lambda m: m.group(1) + INFINITY_BRIDGE + m.group(2), value, count=1)
+
+    text = bridge_between(text, "data-section", "theory", "novel")
+    text = bridge_between(text, "data-topic", "theory", "novel")
+    return text
+
+
 def home_route(item: str) -> str:
     match = re.search(r'<a\s+href="([^"]+)"', item)
     if not match:
@@ -105,6 +122,61 @@ def reorder_home_directory(text: str) -> str:
     return pattern.sub(replace, text, count=1)
 
 
+def science_anchor(domain: str, node_id: str) -> str:
+    d = (domain or "").lower()
+    if node_id in {"EXT-NEG-LK99", "EXT-NEG-OPERA"}:
+        return "turnovers"
+    if any(token in d for token in ["particle", "quantum", "gravitation", "astronomy", "cosmology"]):
+        return "physics"
+    if any(token in d for token in ["earth", "climate", "genom", "biology", "neuro", "medicine", "microbiology"]):
+        return "earth-life"
+    if any(token in d for token in ["material", "chemistry", "computer", "artificial intelligence", "statistical physics"]):
+        return "materials-compute"
+    return "compiler"
+
+
+def enrich_external_science_index() -> None:
+    index_path = SITE / "machine" / "scientific-index.json"
+    registry_path = SITE / "machine" / "external-science-constellation.json"
+    if not index_path.exists() or not registry_path.exists():
+        return
+    data = json.loads(index_path.read_text(encoding="utf-8"))
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    if registry.get("lineage_policy") != "EXTERNAL_SCIENCE_REMAINS_OUTSIDE_BL_GENEALOGY":
+        raise RuntimeError("external science lineage boundary missing")
+
+    entries = [{
+        "type": "external-science-atlas",
+        "id": registry.get("object_id", "EXT-SCI-CONSTELLATION-v1"),
+        "title": registry.get("title", "External Science Constellation"),
+        "url": "science-constellation.html",
+        "status": "public curated atlas",
+        "meta": "outside BL genealogy",
+    }]
+    for node in registry.get("nodes", []):
+        node_id = node.get("id", "")
+        entries.append({
+            "type": "external-science",
+            "id": node_id,
+            "title": node.get("title", node_id),
+            "url": f"science-constellation.html#{science_anchor(node.get('domain', ''), node_id)}",
+            "status": node.get("status", ""),
+            "meta": f"{node.get('domain', '')} · outside BL genealogy",
+        })
+
+    group = {
+        "id": "external-science",
+        "title": "External science / outside BL genealogy",
+        "entries": entries,
+    }
+    groups = [g for g in data.get("groups", []) if g.get("id") != "external-science"]
+    groups.append(group)
+    data["groups"] = groups
+    counts = data.setdefault("counts", {})
+    counts["external-science"] = len(entries)
+    index_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def reorder_scientific_index() -> None:
     path = SITE / "machine" / "scientific-index.json"
     if not path.exists():
@@ -112,6 +184,7 @@ def reorder_scientific_index() -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     rank = {group_id: index for index, group_id in enumerate(GROUP_ORDER)}
     data["groups"] = sorted(data.get("groups", []), key=lambda group: rank.get(group.get("id", ""), 999))
+    data["counts"] = {group.get("id", "unknown"): len(group.get("entries", [])) for group in data.get("groups", [])}
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
@@ -129,10 +202,25 @@ def verify_heading_hierarchy() -> None:
     print(f"Heading hierarchy verified across {checked} HTML pages")
 
 
+def verify_infinity_bridge(text: str, path: Path) -> None:
+    for attribute, left, right in [("data-section", "theory", "novel"), ("data-topic", "theory", "novel")]:
+        if f'{attribute}="{left}"' not in text or f'{attribute}="{right}"' not in text:
+            continue
+        pattern = re.compile(
+            rf'<a\b(?=[^>]*\b{attribute}="{left}")[^>]*>.*?</a>'
+            rf'<span class="lineage-infinity-separator"[^>]*>∞</span>'
+            rf'<a\b(?=[^>]*\b{attribute}="{right}")[^>]*>.*?</a>',
+            flags=re.I | re.S,
+        )
+        if not pattern.search(text):
+            raise RuntimeError(f"infinity bridge missing in {path.relative_to(SITE)} for {attribute}")
+
+
 def verify_navigation_hierarchy() -> None:
     checked = 0
     for path in SITE.rglob("*.html"):
         text = path.read_text(encoding="utf-8")
+        verify_infinity_bridge(text, path)
         topic_match = re.search(r'<div class="topic-bar-inner">(.*?)</div>', text, flags=re.S)
         if topic_match:
             found = re.findall(r'\bdata-topic="([^"]+)"', topic_match.group(1))
@@ -152,6 +240,10 @@ def verify_navigation_hierarchy() -> None:
             first_routes = [home_route(item) for item in items[:2]]
             if first_routes != ["theory.html", "novel/"]:
                 raise RuntimeError(f"homepage reading pair mismatch: {first_routes}")
+            routes = [home_route(item) for item in items]
+            if "world.html" in routes and "science-constellation.html" in routes:
+                if routes.index("science-constellation.html") != routes.index("world.html") + 1:
+                    raise RuntimeError("external science atlas must remain adjacent to world build on homepage")
 
     index_path = SITE / "machine" / "scientific-index.json"
     if index_path.exists():
@@ -159,6 +251,10 @@ def verify_navigation_hierarchy() -> None:
         groups = [group.get("id") for group in data.get("groups", [])]
         if "theory" in groups and "narrative" in groups and groups.index("narrative") != groups.index("theory") + 1:
             raise RuntimeError(f"Scientific Index theory/narrative adjacency lost: {groups}")
+        if "external-science" not in groups:
+            raise RuntimeError("Scientific Index external-science group missing")
+        if groups.index("external-science") != groups.index("narrative") + 1:
+            raise RuntimeError(f"External science group must follow narrative/world layer: {groups}")
     print(f"Navigation hierarchy verified across {checked} topic-bar pages")
 
 
@@ -177,17 +273,20 @@ def main() -> None:
     navigation_builder = ROOT / "scripts" / "build_navigation_system.py"
     runpy.run_path(str(navigation_builder), run_name="__main__")
 
+    enrich_external_science_index()
     hierarchy_changed = 0
     for path in SITE.rglob("*.html"):
         original = path.read_text(encoding="utf-8")
-        revised = normalize_heading_hierarchy(reorder_home_directory(reorder_topic_bar(original)))
+        revised = normalize_heading_hierarchy(
+            insert_infinity_bridge(reorder_home_directory(reorder_topic_bar(original)))
+        )
         if revised != original:
             path.write_text(revised, encoding="utf-8")
             hierarchy_changed += 1
     reorder_scientific_index()
     verify_navigation_hierarchy()
     verify_heading_hierarchy()
-    print(f"Static navigation and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
+    print(f"Static navigation, infinity bridge, external science lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
 
 
 if __name__ == "__main__":
