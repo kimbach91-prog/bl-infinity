@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "branch_id": "BL-HYP",
+  "title": "BL∞ Hypothesis Branch / Nhánh Giả thuyết",
+  "parent": "BL∞",
+  "status": "PUBLIC_HYPOTHESIS_BRANCH",
+  "policy": "THEORY_NOT_EQUAL_HYPOTHESIS_NOT_EQUAL_FICTION",
+  "truth_authority": "Reality Veto where empirical actuality is at stake",
+  "purpose": "Collect supportive speculative research objects without silently upgrading them into established BL theory or narrative canon.",
+  "hard_invariants": [
+    "hypothesis_not_equal_theory",
+    "hypothesis_not_equal_fiction",
+    "useful_hypothesis_not_equal_verified_fact",
+    "epistemic_backcasting_not_equal_backward_physical_signal",
+    "external_science_support_not_equal_bl_proof",
+    "promotion_requires_evidence_scope_and_provenance"
+  ],
+  "objects": [
+    {
+      "id": "BL-HYP-CSC",
+      "title": "Compressed Superentity / Information-Carrier Hypothesis",
+      "status": "OPEN_RESEARCH_HYPOTHESIS",
+      "source": "content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md",
+      "role": "Tests whether very large historical experience could be preserved as a compressed generative seed rather than literal full-memory transfer.",
+      "supports": ["BL∞ world-build", "million-regression research", "compression/provenance questions"],
+      "nonclaim": "Does not establish that such a carrier exists in physical reality."
+    },
+    {
+      "id": "BL-HYP-MR",
+      "title": "Million Regression Hypothesis",
+      "status": "OPEN_RESEARCH_HYPOTHESIS",
+      "source": "content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md",
+      "role": "Explores repeated trajectories and what structures might survive extreme iterative history compression and reconstruction.",
+      "supports": ["Regressor research", "novel world-line design", "recursive epistemology"],
+      "nonclaim": "The number one million is not presented as an experimentally verified physical history."
+    },
+    {
+      "id": "BL-HYP-PFTI",
+      "title": "Physical Future-to-Past Information Hypothesis",
+      "status": "UNVERIFIED_PHYSICS_HYPOTHESIS",
+      "source": "content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md",
+      "role": "Keeps open, but strictly separates, the strongest physical possibility of controllable future-to-past information from ordinary future-boundary backcasting.",
+      "supports": ["physics-boundary research around BL-RP-FRC"],
+      "nonclaim": "Current physics does not establish controllable backward-in-time information transfer; BackwardInference is not BackwardSignal."
+    },
+    {
+      "id": "BL-HYP-TLG",
+      "title": "Terminal Low-Generativity / Cosmic Optionality Hypothesis",
+      "status": "OPEN_COSMOLOGICAL_RESEARCH_HYPOTHESIS",
+      "source": "content/50_GRAND_ENDING_UNKNOWN_AND_COSMIC_OPTIONALITY.md",
+      "role": "Explores terminal regimes in which usable optionality and generative reachability collapse even when existence has not literally vanished.",
+      "supports": ["Grand Ending research", "cosmic-optionality world-build"],
+      "nonclaim": "Does not claim that a specific BL Grand Ending is established by contemporary cosmology."
+    }
+  ],
+  "promotion_gate": {
+    "from": "HYPOTHESIS",
+    "to": "THEORY_OR_STRONGER_BL_OBJECT",
+    "requires": [
+      "explicit_testable_consequences_where_applicable",
+      "evidence_or_formal_support",
+      "prior_art_and_external_science_audit",
+      "scope_statement",
+      "provenance",
+      "Reality_Veto_compatibility"
+    ]
+  }
+}
