@@ -1,0 +1,51 @@
+{
+  "schema_version": "2.0",
+  "id": "BL-PUBLIC-ARCHITECTURE",
+  "status": "OWNER_DESIGN_RECOVERY_PROJECTION",
+  "date": "2026-09-02",
+  "lineage_vs_system": {
+    "BL": "Bach Lam authorial/research lineage",
+    "BL∞": "ambient generative field / open system-space represented by this public site",
+    "rule": "lineage != system != display name"
+  },
+  "ambient_field": {
+    "id": "BL∞",
+    "kind": "AMBIENT_GENERATIVE_FIELD",
+    "not_a_peer_node": true,
+    "open_world": true,
+    "public_projection": "index.html",
+    "law": "BL∞ -> REALITY RELATION SPACE -> RVT/RVP/RVTP/RVL -> MODEL/DECISION/ACTION -> OUTCOME -> EXPANDED BL∞ FRONTIER"
+  },
+  "public_reading_surfaces": {
+    "chain": ["Học thuyết", "∞", "Giả thuyết", "∞", "Tiểu thuyết"],
+    "theory_first_among_finite_surfaces": true,
+    "rules": [
+      "Theory != Hypothesis",
+      "Hypothesis != Fiction",
+      "Infinity separators express continuity/bridge, not identity collapse"
+    ]
+  },
+  "boundary_planes": [
+    {
+      "id": "REALITY",
+      "role": "SPECIAL_ACTUALITY_AND_RELATION_BOUNDARY",
+      "route": "theory.html#doc-46_reality_gia_tai_dual_propositions"
+    },
+    {
+      "id": "L∞",
+      "role": "OWNER_DESIGN_PILLAR",
+      "status": "DEFINITION_RECOVERY_HOLD",
+      "public_route": null,
+      "rule": "preserve the slot; do not invent a public definition before provenance recovery"
+    }
+  ],
+  "classification_rules": [
+    "BL∞ is not represented as a peer card/node inside its own public directory",
+    "index.html is a projection/view of BL∞, not a scientific object competing with Theory",
+    "UNKNOWN is first an epistemic frontier/state; an UNKNOWN doctrine is a descriptive object about that frontier",
+    "explicit hypothesis objects belong in the Hypothesis branch rather than the Theory index",
+    "external science preserves external genealogy",
+    "BL-MTS is a bridge/compiler and does not rewrite external ancestry",
+    "narrative science coverage must distinguish available continuity constraints from science already woven into scenes"
+  ]
+}
