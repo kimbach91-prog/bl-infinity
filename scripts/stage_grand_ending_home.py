@@ -58,6 +58,12 @@ def main() -> None:
         '<span>Chương 1 đã được nâng thành PUBLIC HALF-CANON: sự kiện lõi tạo continuity, world build Việt Nam đầu thế kỷ XXI có Reality Anchor Ledger, còn các cơ chế sâu chưa đủ căn cứ vẫn giữ UNKNOWN.</span>'
         '</a></li>'
     )
+    regressor_entry = (
+        '<li class="regressor-entry"><a href="regressor-proposition.html">'
+        '<strong>Mệnh đề Kẻ Hồi Quy · BL-RP-FRC</strong>'
+        '<span>Nhánh trực tiếp của BL∞ về future boundary, suy ngược ràng buộc, hành động hiện tại và Reality Veto; giữ ranh giới rõ giữa backward inference và backward physical signal.</span>'
+        '</a></li>'
+    )
     system_entry = (
         '<li class="conservation-system-entry"><a href="system.html">'
         '<strong>Hệ Bảo Toàn BL∞ · BL-CONSERVE</strong>'
@@ -107,6 +113,8 @@ def main() -> None:
         entries += oap_entry
     if 'class="novel-entry"' not in text:
         entries += novel_entry
+    if 'class="regressor-entry"' not in text:
+        entries += regressor_entry
     if 'class="world-narrative-entry"' not in text:
         entries += world_entry
     if 'class="external-science-entry"' not in text:
@@ -130,7 +138,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ conservation + external science constellation + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ theory-first core + regressor + conservation + external science + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
