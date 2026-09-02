@@ -1,13 +1,28 @@
-# B∞ — Public Disclosure State
+# B∞ — Current Public Disclosure State
 
-`~1% PUBLIC · 99% WITHHELD · UNKNOWN`
+- Core state: `~1% PUBLIC · 99% WITHHELD · UNKNOWN`
+- Effective date: 2026-09-03
+- Authority: owner decision
 
-Current public projection: one intentionally ambiguous concept only.
+## Public B∞ core
 
-> B∞ is every future-reachable domain and every world that may belong to, emerge from, or remain beyond what the present can represent.
+Only one intentionally ambiguous research concept is public:
+
+> B∞ is every reachable domain of the future — and every world that may lie within, emerge from, or exceed what the present can imagine.
 
 `FINAL_BOUNDARY(B∞) = UNKNOWN`
 
-The ~99% figure is the author's current disclosure boundary, not a measured scientific quantity. The author's stated reason for withholding the remainder is that its potential value is not presently meaningfully measurable.
+The richer internal formation remains withheld while the author evaluates potential value, transforms material into clearer public objects, and determines what can responsibly be released.
 
-Earlier public history may still exist; this file defines the current active disclosure state only.
+## Explicitly public, separate lanes
+
+The following are public by separate owner decision and do not count as disclosure of the deeper B∞ research architecture:
+
+1. **Fiction / Novel** — `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, including the current public Chapter 1 as a living HALF-CANON fiction draft.
+2. **Academic Freedom** — a public manifesto supporting broad rights to question, propose, critique and participate in knowledge creation while preserving unequal evidence weight and falsifiability.
+
+## Author's promise
+
+The author promises to publish further material after its potential value has been evaluated and it has been sufficiently transformed, classified and explained for public review. The author also states that additional, more advanced designs remain under evaluation and are not represented by the current public surface.
+
+This is an author disclosure statement, not independent evidence that any undisclosed design has a particular scientific or commercial value.
