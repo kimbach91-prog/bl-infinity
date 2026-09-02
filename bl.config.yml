@@ -9,8 +9,8 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.4.1-deus-public-signal
-  date: '2026-09-01'
+  version: 0.5.0-conservation-half-canon
+  date: '2026-09-02'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
   language: vi
@@ -26,15 +26,25 @@ project:
   date_created: '2026-08-28'
 seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
-  description: BL∞ là hệ nghiên cứu mở về chủ thể nội tại, không gian khả năng, khả
-    đạt, bản thể mở, tính mới tổ hợp, provenance, phản biện đệ quy và hạ tầng phát
-    kiến có thể index ở cấp mệnh đề.
+  description: BL∞ là hệ nghiên cứu mở do Lâm Kim Bách khởi phát, nối bản thể mở,
+    Reality–GiaTai–UNKNOWN, Dân chủ Học thuật, provenance, phản biện, Hệ Bảo Toàn,
+    công nghệ xuất bản tự do học thuật và bề mặt world build HALF-CANON có neo thực tại.
   keywords:
   - BL∞
   - BL Infinity
   - Bach Lam Infinity Proposition
   - Mệnh đề Vô hạn Bách Lâm
   - Bách Lâm Optimizer
+  - BL-CONSERVE
+  - BL Infinity Conservation System
+  - Hệ Bảo Toàn BL∞
+  - BL-OAP
+  - Open Academic Publishing Technology
+  - Công nghệ Xuất bản Tự do Học thuật
+  - Academic Democracy
+  - Dân chủ Học thuật
+  - HALF-CANON
+  - reality anchored worldbuilding
   - open ontology
   - embedded observer
   - generative reachability
