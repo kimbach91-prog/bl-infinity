@@ -42,3 +42,16 @@ Test tối thiểu với nhiều model/session độc lập:
 - critique routing accuracy.
 
 Không dùng model consensus làm proof; dùng disagreements để tìm ambiguity.
+
+## Navigation and full-page UI tests
+
+- Học thuyết và Tiểu thuyết phải luôn đứng liền nhau ở primary navigation, horizontal topic navigation và Scientific Index.
+- Topic bar phải giữ đúng thứ tự khái niệm trên desktop/mobile và tự đưa mục hiện tại vào vùng nhìn thấy khi cuộn ngang.
+- Sticky header + topic bar không được che deep-link anchor; offset phải được đo lại khi header đổi chiều cao.
+- Scientific Index phải có accessible name trên mobile, role dialog, focus return, Escape close và keyboard focus containment.
+- Scientific Index search phải hỗ trợ truy vấn nhiều từ và tiếng Việt không dấu.
+- Current research object phải được đánh dấu trong Scientific Index.
+- Homepage directory phải ưu tiên cặp Học thuyết → Tiểu thuyết trước các route chuyên sâu.
+- Language priority không được biến discovery draft thành canonical translation; VI/EN core pairing và translation-scope labels vẫn là authority.
+- RTL, reduced-motion, coarse-pointer và viewport hẹp phải giữ usable navigation.
+- Mỗi HTML public route phải có đúng một H1, lang, canonical, description, skip-link khi có global header, và không có internal broken link.
