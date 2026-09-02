@@ -5,7 +5,8 @@
 **Parent:** `BL∞`  
 **Class:** external-theory preservation + cross-lineage synthesis + emergent-lineage compiler  
 **Status:** `PUBLIC ARCHITECTURE · OPEN-ENDED · NON-EXHAUSTIVE`  
-**Date:** `2026-09-02`
+**Date:** `2026-09-02`  
+**Publication checkpoint:** `OWNER-PUBLISH · 2026-09-02`
 
 ## 1. Mục tiêu
 
