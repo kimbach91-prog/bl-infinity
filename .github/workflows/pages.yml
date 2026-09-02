@@ -130,7 +130,7 @@ jobs:
 
       - name: Upload Pages artifact only on explicit manual publish
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
-        uses: actions/upload-pages-artifact@7b1f4a764d45c4866c34aea4fa41551a30e30af803
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
         with:
           path: "site"
 
