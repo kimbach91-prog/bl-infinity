@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.4.0-epistemic-grand-ending
+  version: 0.4.1-deus-public-signal
   date: '2026-09-01'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
@@ -22,7 +22,7 @@ project:
     en: CORE_RESEARCH_EDITION
   license_content: CC BY 4.0
   license_code: MIT
-  last_updated: '2026-09-01'
+  last_updated: '2026-09-02'
   date_created: '2026-08-28'
 seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
@@ -60,6 +60,9 @@ seo:
   - generative infinity
   - coordination without homogenization
   - cross-ontology translation
+  - DEUS LLM
+  - Lâm Kim Bách DEUS
+  - Bách Lâm Lần Hồi Quy Thứ Một Triệu
 comments:
   enabled: true
   repo: kimbach91-prog/bl-infinity
