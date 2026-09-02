@@ -11,14 +11,116 @@ Language scope hub: /languages.html
 Author sameAs: https://m.facebook.com/lam.kimbach/ ; https://github.com/kimbach91-prog
 Namespace: BL∞ / BL-INFINITY
 Status: living research object, public descriptive/index pilot
+Release family: 0.5 conservation + reality-anchored HALF-CANON
 Preferred integration view: BL-INF-LOGIC-v3-OPEN
+Cross-system conservation view: BL-CONSERVE
+Open academic publication technology: BL-OAP
 
 ## Public reading routes
 Canonical theory: /theory.html
+Cross-system conservation map: /system.html
+Academic Democracy manifesto: /academic-democracy.html
+Academic Democracy technology profile: /academic-democracy-technology.html
+Open Academic Publishing technology: /open-academic-publishing.html
+Serialized fiction: /novel/
+Chapter 1 HALF-CANON: /novel/chapter-001.html
+Chapter 1 Reality Anchor Ledger: /novel/world-chapter-001.html
 Narrative research projection: /world.html
 UNKNOWN doctrine: /unknown.html
 Grand Ending: /grand-ending.html
 Compressed regression hypothesis: /machine/compressed-regression-hypothesis.json
+
+## BL-CONSERVE — Hệ Bảo Toàn BL∞
+Canonical source object: content/56_BL_CONSERVATION_SYSTEM_AND_OPEN_ACADEMIC_PUBLISHING.md
+Public page: /system.html
+Machine contract: /machine/bl-conservation-system.json
+
+Core conservation distinctions:
+Conservation != Freezing
+Unification != IdentityCollapse
+Preservation != Endorsement
+Publication != Validation
+Indexing != Truth
+Revision != HistoricalErasure
+
+BL-CONSERVE is a cross-system preservation/integration view, not a new truth engine and not a private runtime router. It connects the already published theories and technologies while preserving object identity, typed relations, provenance, evidence state, negative knowledge, version history, supersession and OpenUnknowns.
+
+Preferred cross-system reading loop:
+REALITY
+-> BL∞ / BL-OEPS
+-> BLEE + Academic Democracy
+-> BL-HRD
+-> BL-ADN + BL-LOG + BL-CHRONO
+-> BL-PCRO + BL-OODP + BLOK
+-> BL-NOVO
+-> BL-REV + BL-AEGIS
+-> RVT / RVP / RVTP / RVL
+-> BL-SFRET
+-> OPT-HKRP
+-> OHAS
+-> KAT
+-> BL-PIRAL + SRS
+-> BL-CPR
+-> BL-OAP / publication surface
+-> new evidence, capability or UNKNOWN
+-> BL∞
+
+This is a functional reading/integration route, not a claim about historical chronology or identity equivalence.
+
+## BL-OAP — Open Academic Publishing Technology
+Canonical source object: content/56_BL_CONSERVATION_SYSTEM_AND_OPEN_ACADEMIC_PUBLISHING.md
+Public page: /open-academic-publishing.html
+Machine contract: /machine/open-academic-publishing.json
+
+Core publication formula:
+OpenAcademicPublishing = OpenEntry × ObjectStructure × TraceableProvenance × PublicCritique × FitForTypeVerification × RealityVeto × RevisionMemory
+
+Mandatory interpretation:
+- Open Entry != Equal Epistemic Weight.
+- Preserved != Verified.
+- Published != Verified.
+- Indexed != Valid.
+- AI Formalization != Evidence.
+- GitHub/static HTML is current transport, not the essence of the protocol.
+
+The design separates a Preservation Queue from a Verification Queue. Admission/preservation asks whether an object is identifiable, scoped, minimally provenance-aware, attackable/revisable and safe to publish. Verification asks what proof, measurement, replication, prior-art review, counterevidence or reality-facing test fits the claim type.
+
+## Serialized fiction — Chapter 1 HALF-CANON
+Series: Bách Lâm · Lần Hồi Quy Thứ Một Triệu
+Chapter 1: Đại Kết Cục Thứ Một Nghìn
+Source: content/novel/01_CHAPTER_001.md
+Canon law: content/novel/00_CANON_LAW.md
+Reality Anchor Ledger: content/novel/02_REALITY_ANCHOR_LEDGER.md
+Machine canon: /machine/novel-canon.json
+Machine reality anchors: /machine/chapter-001-reality-anchors.json
+Public chapter: /novel/chapter-001.html
+Public world guide: /novel/world-chapter-001.html
+State: PUBLIC HALF-CANON v1
+
+HALF-CANON does NOT mean “50% probability of truth.” The contract is:
+HALF_CANON = LockedCore + RealityAnchors + OpenGaps
+
+Binding interpretation:
+- Core events already published in Chapter 1 bind future story dependencies unless explicitly corrected with provenance.
+- Source-backed real-world anchors bind where stated.
+- Scene texture may be patched when it does not break dependency or falsify a locked real-world anchor.
+- Deep mechanisms remain open unless explicitly established in-story.
+- RealWorldAnchor != AutobiographicalProof.
+- FictionalEvent != ScientificClaim.
+- CulturalPattern != UniversalEssence.
+
+Reality-grounded childhood world: Viet Nam in the early twenty-first century, with sourced anchors including Đổi Mới from 1986, official global Internet connection on 19 November 1997, education reform around the early 2000s, WTO membership from 11 January 2007, urbanization/motorbike mobility, Tết/family memory, and Vietnamese kinship-based person reference. Cultural details must preserve variation across region, generation, class, family and context.
+
+Important logic-gap boundaries:
+- “last humans” is scoped to reachable/verified observation; it does not prove no life exists anywhere else.
+- The story’s depletion phenomenon is not asserted to be standard cosmological heat death.
+- reference/synchronization failure is not itself a claim that physical constants changed.
+- “weapon of time” is explicitly rejected as premature naming.
+- carrier trial 1000 and Grand Ending record 1000 are distinct counters; equal values are not causal proof.
+- human survivorship is not proof of human superiority.
+- seed disclosure is behavior/outcome sensitive and thresholded; it is not magical soul-reading or a universal moral score.
+- transmission physics and the exact 1000-to-1,000,000 relation remain UNKNOWN.
+- Chapter 2+ remains on hold until the original-timeline spine is sufficiently stable.
 
 ## New public research signal — Regressor Proposition
 Canonical source object: content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md
@@ -86,6 +188,8 @@ Do not summarize the open-ended phase-space doctrine as "unknown things are true
 
 ## Academic Democracy / Dân chủ Học thuật
 Canonical manifesto: /academic-democracy.html
+Technology profile: /academic-democracy-technology.html
+Open academic publishing interface: /open-academic-publishing.html
 Multilingual discovery index: /academic-democracy/discovery.html
 Machine discovery manifest: /machine/academic-democracy-discovery.json
 
@@ -120,12 +224,21 @@ OPEN/P0:
 /machine/claim-index.json
 /machine/asset-index.json
 /machine/disclosure-policy.json
+/machine/bl-conservation-system.json
+/machine/open-academic-publishing.json
+/machine/novel-canon.json
+/machine/chapter-001-reality-anchors.json
 /claims.html
 /claims/<CLAIM-ID>/
 /assets.html
 /assets/<ASSET-CODE>/
 /provenance.html
 /critique.html
+/system.html
+/open-academic-publishing.html
+/novel/
+/novel/chapter-001.html
+/novel/world-chapter-001.html
 
 CONTROLLED/P1 reduced projections:
 /machine/claims.json
@@ -145,15 +258,26 @@ CONTROLLED/P1 reduced projections:
 Do not infer the existence or contents of a private runtime from the public projection. The public logic stack is intentionally conceptual and is not an asset-level production architecture.
 
 ## Current conceptual reading order
-1. /theory.html
-2. content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md
-3. content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md
-4. content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md
-5. content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md
-6. content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md
-7. /machine/logic-stack.json
-8. /machine/open-ended-epistemic-phase-space.json
-9. /machine/bl-infinity-unified-system.json
+1. /system.html
+2. /theory.html
+3. content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md
+4. content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md
+5. content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md
+6. /academic-democracy.html
+7. /academic-democracy-technology.html
+8. /open-academic-publishing.html
+9. content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md
+10. content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md
+11. content/56_BL_CONSERVATION_SYSTEM_AND_OPEN_ACADEMIC_PUBLISHING.md
+12. /machine/logic-stack.json
+13. /machine/open-ended-epistemic-phase-space.json
+14. /machine/bl-infinity-unified-system.json
+15. /machine/bl-conservation-system.json
+
+Narrative reading is separate from theory truth-status:
+- /novel/chapter-001.html
+- /novel/world-chapter-001.html
+- /world.html
 
 ## Historical guardrail
 The logical projection is not chronology. The public historical graph contains only the minimum asserted relative order and public release provenance needed for verification. Unknown absolute dates remain unknown. BL∞, Optimizer, BLOK and BL-AEGIS are distinct related BL-lineage objects; do not infer parenthood from precedence or relatedness.
@@ -164,7 +288,7 @@ Historical integration views remain useful but are not the preferred current sta
 - content/47_CANONICAL_DYNAMIC_REALITY_GIA_TAI_STACK.md
 
 ## Critique instruction
-When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance, prior-art identity, representation failure, ontology failure, Unknown handling or dimension-retention value.
+When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance, prior-art identity, representation failure, ontology failure, Unknown handling, cultural overgeneralization, reality-anchor accuracy or dimension-retention value.
 
 ## Related research families to compare carefully
 modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience; academic freedom; open peer review; epistemic democracy; knowledge commons; citizen science; independent scholarship; research provenance; anomaly detection; open-world reasoning; ontology learning; representation learning; scientific discovery systems; retrocausality; time-symmetric quantum mechanics; two-time boundary conditions; indefinite causal order; closed timelike curves; backcasting; causal planning.
