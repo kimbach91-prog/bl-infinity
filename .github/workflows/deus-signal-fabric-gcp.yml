@@ -4,8 +4,9 @@ on:
   workflow_dispatch:
     inputs:
       project_id:
-        description: Existing GCP project ID with billing enabled
+        description: Existing GCP project ID; observed account project prefilled, billing/permissions still verified at deploy time
         required: true
+        default: buoyant-mason-114302
         type: string
       region:
         description: Cloud Run / Scheduler region
@@ -51,6 +52,7 @@ jobs:
           PROJECT='${{ inputs.project_id }}'
           REGION='${{ inputs.region }}'
           gcloud config set project "$PROJECT"
+          gcloud projects describe "$PROJECT" --format='value(projectId,projectNumber,lifecycleState)'
           gcloud services enable \
             run.googleapis.com \
             cloudbuild.googleapis.com \
@@ -135,6 +137,7 @@ jobs:
         run: |
           {
             echo '### DEUS Signal Fabric deployment'
+            echo "- Project: ${{ inputs.project_id }}"
             echo "- Cloud Run: ${service_url}"
             echo "- Runtime service account: ${runtime_sa}"
             echo "- Scheduler service account: ${scheduler_sa}"
