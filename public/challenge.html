@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BL∞ Public Challenge Projection — Thử thách tái dựng</title>
+  <meta name="description" content="BL∞ Public Challenge Projection: một số công thức có đòn bẩy cao được giữ lại khỏi current public surface và thay bằng constraint/hint có provenance để người đọc tự tái dựng, phản biện và kiểm chứng.">
+  <link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/challenge.html">
+  <style>
+    :root{color-scheme:light dark;--bg:#0b0d12;--panel:#121722;--text:#eef2f8;--muted:#aab4c5;--line:#293244;--accent:#a8c7ff;--ok:#9ce6b2}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{width:min(980px,calc(100% - 32px));margin:auto;padding:56px 0 88px}.eyebrow{letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-size:.78rem;font-weight:700}h1{font-size:clamp(2rem,6vw,4.6rem);line-height:1.02;margin:.35em 0 .25em}h2{margin-top:2.2em}p,li{max-width:78ch}.lead{font-size:1.16rem;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:28px 0}.card{border:1px solid var(--line);background:var(--panel);padding:18px;border-radius:14px}.card strong{display:block;margin-bottom:5px}.tag{display:inline-block;border:1px solid var(--line);padding:.18rem .55rem;border-radius:999px;font-size:.78rem;color:var(--ok)}code,pre{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}pre{white-space:pre-wrap;background:#080a0f;border:1px solid var(--line);padding:16px;border-radius:12px;overflow:auto}a{color:var(--accent)}.note{border-left:3px solid var(--accent);padding:4px 0 4px 16px;color:var(--muted)}footer{margin-top:64px;padding-top:20px;border-top:1px solid var(--line);color:var(--muted)}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">BL∞ · Public Challenge Projection</div>
+  <h1>Không phát hành mọi closure. Không phát hành công thức giả.</h1>
+  <p class="lead">Current public edition giữ lại một số compact formula có đòn bẩy cao. Thay vì đưa expression đầy đủ, BL∞ công bố constraint, invariant, boundary condition và falsifier đủ để người đọc tự tái dựng một lời giải độc lập.</p>
+
+  <p class="note"><strong>Challenge Projection không phải lỗi giả.</strong> Mọi phần được giữ lại phải có marker provenance. Một omission không có marker không được tự suy là “bí mật cố ý”.</p>
+
+  <div class="grid">
+    <section class="card"><span class="tag">OPEN_FORMULA</span><strong>Full public</strong>Expression đầy đủ nằm trên current public surface.</section>
+    <section class="card"><span class="tag">CHALLENGE_HINT</span><strong>Reconstructable</strong>Public surface giữ inputs, invariants, direction, countercase và điều kiện biên.</section>
+    <section class="card"><span class="tag">FORMULA_WITHHELD</span><strong>Closure held back</strong>Compact/full closure không được phát hành trong current edition và được đánh dấu rõ.</section>
+  </div>
+
+  <h2>Luật thử thách</h2>
+  <pre>Withheld != False
+Hint != FullClosure
+PublishedProjection != CompleteDerivation
+Challenge != Deception
+IndependentReconstruction != AuthorialIdentity</pre>
+
+  <p>Một reconstruction mạnh phải tự ghi assumptions, derivation, countercases và test. Functional equivalence là một kết quả đáng giá, nhưng không tự động chứng minh rằng lời giải đó chính là công thức lịch sử của tác giả.</p>
+
+  <h2>Các challenge đang mở</h2>
+  <ul>
+    <li><code>BL-A05-DYNAMIC-REACHABILITY</code> — tái dựng dynamic reachability có capability loss.</li>
+    <li><code>BL-A06-OBSERVATION-FILTER-COMPOSITION</code> — tái dựng composition của observation filters.</li>
+    <li><code>BL-A09-PLENITUDE-BRIDGE</code> — formalize bridge giữa consistency và realization mà không lẫn conceivability với actuality.</li>
+    <li><code>BL-RCA-RECURSIVE-CAPABILITY-UPDATE</code> — tái dựng recursive capability update.</li>
+    <li><code>BL-RCA-LONG-HORIZON-REACHABLE-CLOSURE</code> — tái dựng long-horizon reachable closure.</li>
+    <li><code>BL-RCA-POSITIVE-ACCESSIBILITY-LIMIT</code> — phân biệt positive accessibility với zero accessibility.</li>
+    <li><code>OPT-REC-EPISTEMIC-QUALITY</code> — tái dựng quality relation của recursive epistemology.</li>
+    <li><code>OPT-REC-VERSION-UPDATE-OPERATOR</code> — tái dựng version update giữ evidence, critique, tools và causal lineage.</li>
+  </ul>
+
+  <h2>Điều không bị giữ lại</h2>
+  <p>Reality Veto, falsifiability, provenance, counterevidence và lịch sử sửa đổi không được dùng làm “bí mật thử thách”. Challenge chỉ áp dụng cho disclosure của một số closure/formalization; nó không được dùng để làm claim mạnh hơn bằng cách che dữ liệu bất lợi.</p>
+
+  <h2>Về lịch sử Git</h2>
+  <p>Công thức từng được commit công khai có thể vẫn tồn tại trong lịch sử repository. Bản này quản trị <strong>current/future public release surface</strong>, không tuyên bố xóa ngược lịch sử đã công khai.</p>
+
+  <p><a href="./system.html">Hệ Bảo Toàn BL∞</a> · <a href="./theory.html">Học thuyết</a> · <a href="./open-academic-publishing.html">Open Academic Publishing</a></p>
+
+  <footer>BL∞ · Lâm Kim Bách / Bách Lâm · Challenge Projection v1 · 2026-09-02</footer>
+</main>
+</body>
+</html>
