@@ -61,7 +61,7 @@ main{{max-width:860px;margin:auto;padding:0 22px 86px}}.top{{padding-left:22px;p
 </head>
 <body>
 <header class="top"><a href="../index.html" class="brand">BL∞</a><span>Bách Lâm · Optimizer</span><nav><a href="../theory.html">Học thuyết</a><a href="../system.html">Hệ Bảo Toàn</a><a href="index.html">Tiểu thuyết</a><a href="world-chapter-001.html">World Ch.1</a><a href="era-language-style-atlas.html">Ngôn ngữ thời đại</a><a href="../unknown.html">UNKNOWN</a></nav></header>
-<main id="main-content">
+<main id="main-content" tabindex="-1">
 <section class="hero"><p class="eyebrow">PUBLIC HALF-CANON v1.1 · Era-Language Patch · Chương 1</p><h1>{safe_title}</h1><p class="meta">Lâm Kim Bách · Bách Lâm / Optimizer</p><div class="canon-note"><strong>Continuity:</strong> <code>LockedCore + RealityAnchors + OpenGaps</code>. HALF-CANON không phải 50% xác suất đúng. Bản v1.1 bổ sung texture ngôn ngữ–xã hội theo năm/medium nhưng không đổi locked core, không công bố năm sinh và không mở future canon.</div></section>
 <article class="prose">{body}</article>
 <a class="back" href="index.html">Về mục Tiểu thuyết</a><a class="back" href="world-chapter-001.html">World / Reality Anchors</a><a class="back" href="era-language-style-atlas.html">Atlas ngôn ngữ & bút pháp</a>
