@@ -1,0 +1,101 @@
+{
+  "object_id": "BL-INF-CC-HGCS-20260902",
+  "state": "INCUBATED_CANDIDATE_ONLY",
+  "canonical_effect": "NONE",
+  "primary_anchor": "Ho Chi Minh",
+  "primary_anchor_role": "owner_selected_historical_case_not_global_scientific_ranking",
+  "scope": "historical_comparative_research",
+  "present_day_operationalization": false,
+  "core_invariants": [
+    "HistoricalReconstruction_NE_PresentPoliticalPrescription",
+    "Respect_NE_ImmunityFromErrorAnalysis",
+    "Critique_NE_Denigration",
+    "Achievement_NE_Infallibility",
+    "Error_NE_TotalNegation",
+    "Leadership_NE_IndividualCausationOfAllOutcomes",
+    "Coalition_NE_IdentityCollapse",
+    "Doctrine_NE_Reality",
+    "NeverGiveUpOnGoal_NE_NeverChangePolicy",
+    "StrengthDoesNotCancelUncertainty",
+    "VictoryDoesNotCancelError"
+  ],
+  "historical_pattern_library": [
+    {
+      "figure": "Ho Chi Minh",
+      "patterns": ["open_world_learning", "goal_compression", "broad_front_coalition", "negotiation_with_optionality", "talent_multiplication", "long_horizon_persistence"]
+    },
+    {
+      "figure": "Vo Nguyen Giap",
+      "patterns": ["reality_veto", "operational_policy_change", "plan_loyalty_below_reality_loyalty"]
+    },
+    {
+      "figure": "Pham Van Dong",
+      "patterns": ["diplomatic_conversion", "asymmetric_negotiation", "capability_to_bargaining_position"]
+    },
+    {
+      "figure": "Truong Chinh",
+      "patterns": ["theory_and_organization", "doctrine_rigidity_failure_case", "later_intellectual_revision"]
+    },
+    {
+      "figure": "Ton Duc Thang",
+      "patterns": ["organizational_continuity", "mass_front_legitimacy"]
+    },
+    {
+      "figure": "Mahatma Gandhi",
+      "patterns": ["dimension_shift_from_force_to_legitimacy", "mass_nonviolent_action"]
+    },
+    {
+      "figure": "Nelson Mandela",
+      "patterns": ["conflict_to_coexistence", "former_opponent_not_eternal_enemy"]
+    },
+    {
+      "figure": "Abraham Lincoln",
+      "patterns": ["moral_goal_plus_legal_authority_plus_timing", "coalition_constraint_awareness"]
+    },
+    {
+      "figure": "George Washington",
+      "patterns": ["power_relinquishment", "succession_precedent", "civilian_control"]
+    },
+    {
+      "figure": "Charles Darwin",
+      "patterns": ["distributed_evidence_network", "critique_and_revision", "provenance_rich_learning"]
+    },
+    {
+      "figure": "John von Neumann",
+      "patterns": ["cross_domain_formalization", "abstraction_transfer", "optimization_requires_external_value_function"]
+    }
+  ],
+  "negative_cases": [
+    {
+      "case": "1945_party_dissolution_opacity",
+      "lesson": "tactical_opacity_can_create_future_trust_debt"
+    },
+    {
+      "case": "north_vietnam_land_reform_1950s",
+      "lesson": "imported_rigid_model_plus_quotas_plus_weak_due_process_can_amplify_error"
+    },
+    {
+      "case": "great_power_dependency",
+      "lesson": "external_support_equals_capability_gain_plus_dependency_and_bargaining_constraints"
+    }
+  ],
+  "compatibility_gaps": [
+    "protected_dissent",
+    "non_coercive_exit",
+    "authority_separation",
+    "minority_error_channel",
+    "anti_purity_gate",
+    "due_process",
+    "doctrine_sunset_and_revalidation",
+    "succession_safety",
+    "reconciliation_capacity",
+    "historical_non_erasure"
+  ],
+  "counterfactual_child": {
+    "object_id": "BL-INF-CC-HCLR-20260902",
+    "path": "incubator/bl-infinity-culture-chamber/2026-09-02/06_HISTORICAL_COUNTERFACTUAL_LOWER_REGRET_SCENARIO.md",
+    "state": "INCUBATED_COUNTERFACTUAL_ONLY",
+    "present_day_operationalization": false
+  },
+  "promotion": "DENIED_PENDING_BROADER_HISTORIOGRAPHY_AND_ADVERSARIAL_REVIEW"
+}
