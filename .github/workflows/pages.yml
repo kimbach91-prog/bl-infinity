@@ -90,6 +90,7 @@ jobs:
           cp public/unknown.html site/unknown.html
           cp public/grand-ending.html site/grand-ending.html
           cp public/world.html site/world.html
+          cp public/regressor-proposition.html site/regressor-proposition.html
 
       - name: Stage serialized novel quietly
         run: python scripts/stage_novel.py
@@ -129,7 +130,7 @@ jobs:
 
       - name: Upload Pages artifact only on explicit manual publish
         if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
+        uses: actions/upload-pages-artifact@7b1f4a764d45c4866c34aea4fa41551a30e30af803
         with:
           path: "site"
 
@@ -165,6 +166,7 @@ jobs:
             "urlList": [
               "https://kimbach91-prog.github.io/bl-infinity/",
               "https://kimbach91-prog.github.io/bl-infinity/theory.html",
+              "https://kimbach91-prog.github.io/bl-infinity/regressor-proposition.html",
               "https://kimbach91-prog.github.io/bl-infinity/world.html",
               "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
               "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
