@@ -6,7 +6,7 @@ on:
       project_id:
         description: Existing GCP project ID; live billing/permissions are verified at deploy time
         required: true
-        default: buoyant-mason-114302
+        default: deus-code-sss
         type: string
       region:
         description: Cloud Run / Scheduler region
@@ -29,8 +29,8 @@ env:
   SCHEDULER_SA_NAME: deus-signal-scheduler
   DRIVE_MANIFEST_FOLDER_ID: 17xOH5L1K9149PXKcBjvQ9qVgnq6faoYV
   DRIVE_ARTIFACTS_ID: 1jrAdJxsQLdKnhY6oWloZRQ8KBTwKSlo1
-  GCP_WIF_PROVIDER: projects/580664224085/locations/global/workloadIdentityPools/deus-github/providers/bl-infinity
-  GCP_DEPLOY_SERVICE_ACCOUNT: deus-github-deploy@buoyant-mason-114302.iam.gserviceaccount.com
+  GCP_WIF_PROVIDER: projects/618160905661/locations/global/workloadIdentityPools/deus-github/providers/bl-infinity
+  GCP_DEPLOY_SERVICE_ACCOUNT: deus-github-deploy@deus-code-sss.iam.gserviceaccount.com
 
 jobs:
   deploy:
