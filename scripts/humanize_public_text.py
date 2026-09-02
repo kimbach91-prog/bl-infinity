@@ -12,12 +12,15 @@ TOPIC_ORDER = ["theory", "novel", "regressor", "system", "academic", "claims", "
 HOME_ORDER = [
     "theory.html", "novel/", "regressor-proposition.html", "unknown.html",
     "grand-ending.html", "system.html", "world.html", "science-constellation.html",
-    "academic-democracy.html", "open-academic-publishing.html", "bl-adn.html",
+    "mature-theory-synthesis.html", "academic-democracy.html", "open-academic-publishing.html", "bl-adn.html",
     "claims.html", "assets.html", "provenance.html", "critique.html", "author.html",
     "languages.html", "machine.html", "academic-democracy-technology.html",
     "academic-democracy/discovery.html", "index.html",
 ]
-GROUP_ORDER = ["core", "theory", "narrative", "external-science", "claims", "assets", "verification", "machine", "languages"]
+GROUP_ORDER = [
+    "core", "theory", "narrative", "external-science", "mature-theory-synthesis",
+    "claims", "assets", "verification", "machine", "languages"
+]
 CORE_ORDER = [
     "theory.html", "regressor-proposition.html", "unknown.html", "grand-ending.html",
     "system.html", "world.html", "index.html", "academic-democracy.html",
@@ -191,6 +194,55 @@ def enrich_external_science_index() -> None:
     index_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def enrich_mature_theory_synthesis_index() -> None:
+    index_path = SITE / "machine" / "scientific-index.json"
+    registry_path = SITE / "machine" / "bl-mature-theory-synthesis.json"
+    if not index_path.exists() or not registry_path.exists():
+        return
+    data = json.loads(index_path.read_text(encoding="utf-8"))
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    if registry.get("lineage_policy") != "PRESERVE_EXTERNAL_ORIGIN_SYNTHESIZE_WITHOUT_APPROPRIATION":
+        raise RuntimeError("BL-MTS lineage policy missing")
+
+    entries = [{
+        "type": "bl-synthesis-branch",
+        "id": registry.get("branch_id", "BL-MTS"),
+        "title": registry.get("title", "BL Mature-Theory Synthesis Branch"),
+        "url": "mature-theory-synthesis.html",
+        "status": registry.get("status", "PUBLIC_OPEN_ENDED_NON_EXHAUSTIVE"),
+        "meta": "BL compiler · external origins preserved",
+    }]
+    for theory in registry.get("theory_families", []):
+        entries.append({
+            "type": "preserved-mature-theory",
+            "id": theory.get("id", ""),
+            "title": theory.get("title", theory.get("id", "")),
+            "url": "mature-theory-synthesis.html",
+            "status": theory.get("maturity", ""),
+            "meta": f"{theory.get('domain', '')} · external lineage preserved",
+        })
+    for candidate in registry.get("emergent_lineage", []):
+        entries.append({
+            "type": "bl-emergent-candidate",
+            "id": candidate.get("id", ""),
+            "title": candidate.get("title", candidate.get("id", "")),
+            "url": "mature-theory-synthesis.html",
+            "status": candidate.get("state", "BL_EMERGENT_CANDIDATE"),
+            "meta": f"new_delta · external parents={len(candidate.get('external_parents', []))} · prior-art gate",
+        })
+
+    group = {
+        "id": "mature-theory-synthesis",
+        "title": "BL-MTS · Mature theory synthesis / preserved origins → emergent BL candidates",
+        "entries": entries,
+    }
+    groups = [g for g in data.get("groups", []) if g.get("id") != "mature-theory-synthesis"]
+    groups.append(group)
+    data["groups"] = groups
+    data.setdefault("counts", {})["mature-theory-synthesis"] = len(entries)
+    index_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
 def reorder_scientific_index() -> None:
     path = SITE / "machine" / "scientific-index.json"
     if not path.exists():
@@ -283,6 +335,7 @@ def verify_navigation_hierarchy() -> None:
             expected_prefix = [
                 "theory.html", "novel/", "regressor-proposition.html", "unknown.html",
                 "grand-ending.html", "system.html", "world.html", "science-constellation.html",
+                "mature-theory-synthesis.html",
             ]
             actual_prefix = [route for route in routes if route in expected_prefix][:len(expected_prefix)]
             if actual_prefix != expected_prefix:
@@ -305,6 +358,19 @@ def verify_navigation_hierarchy() -> None:
             raise RuntimeError("Scientific Index external-science group missing")
         if groups.index("external-science") != groups.index("narrative") + 1:
             raise RuntimeError(f"External science group must follow narrative/world layer: {groups}")
+        if "mature-theory-synthesis" not in groups:
+            raise RuntimeError("Scientific Index BL-MTS group missing")
+        if groups.index("mature-theory-synthesis") != groups.index("external-science") + 1:
+            raise RuntimeError(f"BL-MTS must follow external science: {groups}")
+
+        mts = next((group for group in data.get("groups", []) if group.get("id") == "mature-theory-synthesis"), None)
+        if mts:
+            root = next((entry for entry in mts.get("entries", []) if entry.get("id") == "BL-MTS"), None)
+            if not root:
+                raise RuntimeError("BL-MTS root entry missing")
+            for entry in mts.get("entries", []):
+                if entry.get("type") == "bl-emergent-candidate" and "prior-art gate" not in entry.get("meta", ""):
+                    raise RuntimeError(f"BL-MTS emergent candidate missing prior-art gate: {entry.get('id')}")
     print(f"Theory-first BL∞ hierarchy verified across {checked} topic-bar pages")
 
 
@@ -324,6 +390,7 @@ def main() -> None:
     runpy.run_path(str(navigation_builder), run_name="__main__")
 
     enrich_external_science_index()
+    enrich_mature_theory_synthesis_index()
     hierarchy_changed = 0
     for path in SITE.rglob("*.html"):
         original = path.read_text(encoding="utf-8")
@@ -337,7 +404,7 @@ def main() -> None:
     verify_navigation_hierarchy()
     verify_heading_hierarchy()
     verify_unpublished_role_boundary()
-    print(f"Theory-first BL∞ hierarchy, infinity bridge, external science lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
+    print(f"Theory-first BL∞ hierarchy, infinity bridge, external science + BL-MTS lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
 
 
 if __name__ == "__main__":
