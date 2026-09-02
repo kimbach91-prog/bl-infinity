@@ -1,4 +1,4 @@
-name: Publish B∞ limited public surface
+name: Publish B∞ curated public surface
 
 on:
   push:
@@ -24,7 +24,7 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout limited public tree
+      - name: Checkout curated public tree
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
           persist-credentials: false
@@ -38,9 +38,24 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _site
-          mkdir -p _site/novel
-          cp index.html theory.html academic-freedom.html authors-promise.html robots.txt sitemap.xml _site/
-          cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
+          mkdir -p _site/novel _site/assets/css _site/assets/js
+          cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
+          cp novel/index.html novel/chapter-001.html novel/chapter-001.md novel/world-chapter-001.html novel/era-language-style-atlas.html _site/novel/
+          cp assets/css/main.css _site/assets/css/
+          cp assets/js/site.js _site/assets/js/
+
+      - name: Assert academic core remains excluded
+        shell: bash
+        run: |
+          set -euo pipefail
+          test ! -e _site/system.html
+          test ! -e _site/machine.html
+          test ! -e _site/bl-adn.html
+          test ! -e _site/provenance.html
+          test ! -e _site/critique.html
+          test ! -e _site/claims.html
+          test ! -e _site/assets.html
+          test ! -d _site/machine
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
