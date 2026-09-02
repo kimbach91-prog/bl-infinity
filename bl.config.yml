@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.5.8-challenge-projection
+  version: 0.5.9-reconstruction-puzzles-hardened
   date: '2026-09-02'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
@@ -28,7 +28,7 @@ seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
   description: BL∞ là trường sinh mở bao toàn public projection; các bề mặt hữu hạn giữ riêng Học thuyết,
     Giả thuyết, Tiểu thuyết, Reality–GiaTai–UNKNOWN, hệ thống, phả hệ, khoa học ngoài BL,
-    provenance, world build HALF-CANON và Public Challenge Projection mà không silent merge hoặc đóng biên thực tại.
+    provenance, world build HALF-CANON và Public Challenge Projection với Reconstruction Puzzles mà không silent merge hoặc đóng biên thực tại.
   keywords:
   - BL∞
   - BL Infinity
@@ -60,9 +60,11 @@ seo:
   - Công nghệ Xuất bản Tự do Học thuật
   - BL Challenge Projection
   - Public Challenge Projection
+  - BL Reconstruction Puzzles
   - formula challenge hint
   - provenance preserving redaction
   - reconstruction challenge
+  - human reconstruction
   - External Science Constellation
   - science worldbuilding
   - external science genealogy
