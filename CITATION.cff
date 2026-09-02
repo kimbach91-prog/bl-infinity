@@ -1,18 +1,18 @@
 cff-version: 1.2.0
-message: "Please cite the current public concept and note that the public projection is intentionally limited."
-title: "BL∞ — Bach Lam Infinity Proposition (Public Limited Concept)"
+message: "Please cite only the current public concept. The public projection is intentionally limited and marked UNKNOWN."
+title: "B∞ — UNKNOWN"
 type: software
 authors:
   - family-names: "Lâm"
     given-names: "Kim Bách"
-version: "public-limited-2026-09-03"
+version: "public-1pct-unknown-2026-09-03"
 date-released: "2026-09-03"
 url: "https://kimbach91-prog.github.io/bl-infinity/"
 repository-code: "https://github.com/kimbach91-prog/bl-infinity"
 license: CC-BY-4.0
 keywords:
+  - B Infinity
   - BL Infinity
-  - Bach Lam Infinity Proposition
-  - finite knowledge boundary
-  - open-ended cognition
-  - unknown
+  - UNKNOWN
+  - future reachable domains
+  - possible worlds
