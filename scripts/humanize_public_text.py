@@ -15,6 +15,7 @@ HOME_ORDER = [
     "academic-democracy-technology.html", "academic-democracy/discovery.html",
 ]
 GROUP_ORDER = ["core", "theory", "narrative", "claims", "assets", "verification", "machine", "languages"]
+HEADING_RE = re.compile(r'<h([1-6])(\b[^>]*)>(.*?)</h\1>', flags=re.I | re.S)
 
 
 def normalize(text: str) -> str:
@@ -23,6 +24,24 @@ def normalize(text: str) -> str:
     text = text.replace(" – ", " · ")
     text = text.replace("–", "-")
     return text
+
+
+def normalize_heading_hierarchy(text: str) -> str:
+    """Repair only rendered HTML heading levels; do not rewrite canonical source text."""
+    out = []
+    cursor = 0
+    previous_level = None
+    for match in HEADING_RE.finditer(text):
+        level = int(match.group(1))
+        repaired = level
+        if previous_level is not None and level > previous_level + 1:
+            repaired = previous_level + 1
+        out.append(text[cursor:match.start()])
+        out.append(f'<h{repaired}{match.group(2)}>{match.group(3)}</h{repaired}>')
+        cursor = match.end()
+        previous_level = repaired
+    out.append(text[cursor:])
+    return "".join(out)
 
 
 def reorder_topic_bar(text: str) -> str:
@@ -96,6 +115,20 @@ def reorder_scientific_index() -> None:
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def verify_heading_hierarchy() -> None:
+    checked = 0
+    for path in SITE.rglob("*.html"):
+        text = path.read_text(encoding="utf-8")
+        levels = [int(match.group(1)) for match in HEADING_RE.finditer(text)]
+        for previous, current in zip(levels, levels[1:]):
+            if current > previous + 1:
+                raise RuntimeError(
+                    f"heading hierarchy jump in {path.relative_to(SITE)}: h{previous} -> h{current}"
+                )
+        checked += 1
+    print(f"Heading hierarchy verified across {checked} HTML pages")
+
+
 def verify_navigation_hierarchy() -> None:
     checked = 0
     for path in SITE.rglob("*.html"):
@@ -147,13 +180,14 @@ def main() -> None:
     hierarchy_changed = 0
     for path in SITE.rglob("*.html"):
         original = path.read_text(encoding="utf-8")
-        revised = reorder_home_directory(reorder_topic_bar(original))
+        revised = normalize_heading_hierarchy(reorder_home_directory(reorder_topic_bar(original)))
         if revised != original:
             path.write_text(revised, encoding="utf-8")
             hierarchy_changed += 1
     reorder_scientific_index()
     verify_navigation_hierarchy()
-    print(f"Static navigation hierarchy finalized: {hierarchy_changed} HTML files changed")
+    verify_heading_hierarchy()
+    print(f"Static navigation and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
 
 
 if __name__ == "__main__":
