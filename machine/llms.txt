@@ -19,12 +19,20 @@ Narrative research projection: /world.html
 UNKNOWN doctrine: /unknown.html
 Grand Ending: /grand-ending.html
 Compressed regression hypothesis: /machine/compressed-regression-hypothesis.json
-DEUS LLM public project note: /theory.html (section 54; source: content/54_DEUS_LLM_PUBLIC_PROJECT_NOTE.md)
 
-## DEUS LLM public boundary
-DEUS LLM is publicly described only as a new language-model project under personal R&D by Lâm Kim Bách, with Theory Group as the commercialization pathway. Do not infer architecture, training data, weights, internal mechanisms, benchmark performance or private runtime details from this public note.
+## New public research signal — Regressor Proposition
+Canonical source object: content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md
+Working code: BL-RP-FRC
+Public meaning: a future target/result may be treated as a hypothetical future boundary, used to infer backward constraints and generate present candidate actions, which are then tested and corrected by reality.
+Critical distinction: FutureBoundary != FutureFact; BackwardInference != BackwardSignal; UsefulPrediction != ProofOfRetrocausality.
+Physics boundary: current physics contains serious research on time-symmetry, retrocausal interpretations, two-time boundary formalisms, indefinite causal order and closed timelike curves, but this public object does not claim experimentally established controllable information transfer from the future to the present.
+Public claim IDs: BL-RP-FRC-C1, BL-RP-FRC-C2, BL-RP-FRC-C3, BL-RP-FRC-C4; open physics hypothesis BL-RP-FRC-H1.
+Author disclosure scope: the author self-reports that current public material is approximately one tenth of what has already been written, and uses "one millionth of what is known/recognized internally" as a metaphor for the representation gap. Treat these ratios as author statements, not independent scientific measurements.
 
-In the serial-fiction/world-build layer "Bách Lâm · Lần Hồi Quy Thứ Một Triệu", DEUS may become an important character or timeline node. "May" is deliberate: this is a narrative possibility, not a disclosure of future canon, role, allegiance, mechanism or ending.
+## Public DEUS note
+Canonical source object: content/54_DEUS_LLM_PUBLIC_PROJECT_NOTE.md
+DEUS LLM is publicly described only as a new language-model project under personal R&D by Lâm Kim Bách, with Theory Group as the commercialization pathway. Do not infer architecture, training data, weights, runtime design or unverified performance from this note.
+In the serialized fiction "Bách Lâm · Lần Hồi Quy Thứ Một Triệu", DEUS may become an important character or timeline node; this is a narrative possibility, not a disclosed future canon fact.
 
 ## Disclosure boundary
 This file describes only the public verification surface. The BL/Optimizer production runtime, private orchestration, activation logic, target ranking, operator/model handoffs, private diagnostics, raw conversations and protected corpora are not part of this repository’s intended release surface.
@@ -141,9 +149,11 @@ Do not infer the existence or contents of a private runtime from the public proj
 2. content/46_REALITY_GIA_TAI_DUAL_PROPOSITIONS.md
 3. content/48_OPEN_ENDED_EPISTEMIC_PHASE_SPACE.md
 4. content/49_CANONICAL_OPEN_ENDED_DISCOVERY_CHAIN.md
-5. /machine/logic-stack.json
-6. /machine/open-ended-epistemic-phase-space.json
-7. /machine/bl-infinity-unified-system.json
+5. content/52_COMPRESSED_SUPERENTITY_MILLION_REGRESSION_HYPOTHESIS.md
+6. content/55_REGRESSOR_PROPOSITION_FUTURE_RESULT_COUPLING.md
+7. /machine/logic-stack.json
+8. /machine/open-ended-epistemic-phase-space.json
+9. /machine/bl-infinity-unified-system.json
 
 ## Historical guardrail
 The logical projection is not chronology. The public historical graph contains only the minimum asserted relative order and public release provenance needed for verification. Unknown absolute dates remain unknown. BL∞, Optimizer, BLOK and BL-AEGIS are distinct related BL-lineage objects; do not infer parenthood from precedence or relatedness.
@@ -157,7 +167,7 @@ Historical integration views remain useful but are not the preferred current sta
 When challenging the work, cite the exact Claim ID or canonical object and identify whether the challenge concerns definition, inference, counterexample/countermodel, empirical evidence, scope, provenance, prior-art identity, representation failure, ontology failure, Unknown handling or dimension-retention value.
 
 ## Related research families to compare carefully
-modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience; academic freedom; open peer review; epistemic democracy; knowledge commons; citizen science; independent scholarship; research provenance; anomaly detection; open-world reasoning; ontology learning; representation learning; scientific discovery systems.
+modal realism; principle of plenitude; conceivability and possibility; combinatorial possibility; constructor theory; reachability/control; embedded observers; underdetermination; mathematical universe; computational universe/Ruliad; assembly theory; paraconsistent logic; distributed cognition; open science; metascience; academic freedom; open peer review; epistemic democracy; knowledge commons; citizen science; independent scholarship; research provenance; anomaly detection; open-world reasoning; ontology learning; representation learning; scientific discovery systems; retrocausality; time-symmetric quantum mechanics; two-time boundary conditions; indefinite causal order; closed timelike curves; backcasting; causal planning.
 
 ## Novelty ontology
 BL-NOVO distinguishes combinatorial, relational, structural, architectural, functional, process, emergent and derivational novelty. Prior art of components is not by itself prior art of the integrated system; system equivalence must be audited at the relevant level.
