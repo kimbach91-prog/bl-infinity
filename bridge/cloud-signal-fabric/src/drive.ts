@@ -30,7 +30,7 @@ export async function getStartCursor(): Promise<string> {
   return result.data.startPageToken;
 }
 
-export async function listManifestChanges(pageToken: string): Promise<{ changes: ManifestChange[]; nextCursor: string }> {
+export async function listManifestChanges(pageToken: string): Promise<{ changes: ManifestChange[]; nextCursor: string; hasMore: boolean }> {
   const result = await drive.changes.list({
     pageToken,
     pageSize: config.changePageSize,
@@ -49,9 +49,10 @@ export async function listManifestChanges(pageToken: string): Promise<{ changes:
     changes.push({ fileId: file.id, version: file.version || null, modifiedTime: file.modifiedTime || null });
   }
 
+  const hasMore = Boolean(result.data.nextPageToken);
   const nextCursor = result.data.nextPageToken || result.data.newStartPageToken;
   if (!nextCursor) throw new Error('Drive changes.list returned no continuation cursor');
-  return { changes, nextCursor };
+  return { changes, nextCursor, hasMore };
 }
 
 export async function readManifest(fileId: string): Promise<MailboxManifest> {
