@@ -1,4 +1,5 @@
 from pathlib import Path
+import runpy
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
@@ -23,6 +24,9 @@ def main() -> None:
         if "—" in revised or "–" in revised:
             raise RuntimeError(f"long dash remains in {path.relative_to(SITE)}")
     print(f"Human-facing typography normalized: {changed} HTML files changed")
+
+    navigation_builder = ROOT / "scripts" / "build_navigation_system.py"
+    runpy.run_path(str(navigation_builder), run_name="__main__")
 
 
 if __name__ == "__main__":
