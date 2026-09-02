@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BL∞ Reconstruction Puzzles — Tự tái dựng công thức</title>
+  <meta name="description" content="Tám bài toán đố tái dựng BL∞ dành cho người đọc muốn tự formalize các closure đang được giữ lại khỏi public edition.">
+  <meta name="robots" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <meta name="googlebot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <meta name="bingbot" content="noindex,nofollow,noarchive,nosnippet,noimageindex">
+  <link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/research-puzzles.html">
+  <style>
+    :root{color-scheme:dark;--bg:#07090d;--panel:#10151f;--panel2:#0c1119;--text:#f0f3f8;--muted:#9ba9ba;--line:#273144;--accent:#9fc5ff;--hot:#f3c879;--ok:#8ee3ac}
+    *{box-sizing:border-box}html{background:var(--bg)}body{margin:0;color:var(--text);background:radial-gradient(circle at 80% 0,#101b2f 0,transparent 34rem),var(--bg);font:16px/1.65 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+    main{width:min(1040px,calc(100% - 30px));margin:auto;padding:48px 0 90px}.eyebrow{font-size:.76rem;letter-spacing:.15em;text-transform:uppercase;color:var(--accent);font-weight:800}h1{font-size:clamp(2.35rem,7vw,5.6rem);line-height:.96;letter-spacing:-.045em;margin:.18em 0 .28em;max-width:13ch}h2{margin:0 0 .45em;font-size:1.55rem}.lead{font-size:1.12rem;color:var(--muted);max-width:76ch}.notice{margin:24px 0;padding:16px 18px;border:1px solid #5b4929;background:#171309;border-radius:14px;color:#f7ddb0}.law{white-space:pre-wrap;background:#05070a;border:1px solid var(--line);padding:16px;border-radius:14px;color:#dce7f7}.grid{display:grid;gap:16px;margin-top:28px}.puzzle{background:linear-gradient(180deg,var(--panel),var(--panel2));border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,.16)}.puzzle header{display:flex;gap:12px;align-items:flex-start;justify-content:space-between}.id{font:750 .78rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--hot);letter-spacing:.04em}.rel{font:700 .78rem/1.2 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--accent);text-align:right}.puzzle p,.puzzle li{max-width:80ch}.puzzle ul,.puzzle ol{padding-left:1.25rem}.trap{border-left:3px solid var(--hot);padding-left:13px;color:#e9d4ae}.bonus{border-left:3px solid var(--ok);padding-left:13px;color:#bdeccb}details{margin-top:14px;border-top:1px dashed var(--line);padding-top:12px}summary{cursor:pointer;font-weight:750;color:var(--accent)}code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;background:#070b11;padding:.1em .35em;border-radius:5px}.foot{margin-top:54px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted)}a{color:var(--accent)}.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:.25rem .65rem;margin:.2rem .35rem .2rem 0;font-size:.78rem;color:var(--muted)}
+    @media(max-width:640px){main{padding-top:32px}.puzzle{padding:18px}.puzzle header{display:block}.rel{text-align:left;margin-top:6px}}
+  </style>
+</head>
+<body>
+<main data-nosnippet>
+  <div class="eyebrow">BL∞ · Human Reconstruction Layer</div>
+  <h1>Tự giải trước khi tìm công thức.</h1>
+  <p class="lead">Tám bài đố tương ứng với tám closure đang được giữ lại khỏi current public edition. Không có answer key canonical trên trang này. Mục tiêu không phải đoán đúng nguyên văn tác giả, mà là dựng một formalization đủ mạnh để sống sót qua invariant, boundary case và counterexample.</p>
+
+  <div class="notice"><strong>Research honor rule:</strong> static web không thể chứng minh ai có dùng GPT/CAS/prover hay không. Nếu muốn nhận nhãn <em>independent human reconstruction</em>, hãy tự khai công cụ đã dùng. AI-assisted solution vẫn có thể có giá trị, nhưng provenance phải nói thật.</div>
+
+  <pre class="law">Explicit assumptions
++ valid derivation
++ invariant preservation
++ countercase handling
++ testable consequence
++ provenance
+= lời giải đáng xem</pre>
+
+  <p><span class="badge">NO PUBLIC ANSWER KEY</span><span class="badge">NOINDEX</span><span class="badge">ORDER SHUFFLES ON LOAD</span></p>
+
+  <section class="grid" id="puzzle-grid">
+    <article class="puzzle" data-puzzle="P1">
+      <header><div><div class="id">P1 · Miền khả đạt biết mất trí nhớ</div><h2>Reachability nhưng capability có thể mất</h2></div><div class="rel">BL-A05-DYNAMIC-REACHABILITY</div></header>
+      <p>Agent có state <code>x_t</code>, repertoire <code>U_t</code>, tài nguyên <code>R_t</code>, quyền <code>P_t</code>. Ban đầu có <code>a,b</code>; có thể chế tạo <code>c</code> nếu còn <code>a</code> và đủ tài nguyên; sau đó <code>a</code> mất nhưng <code>c</code> vẫn tồn tại. Target <code>h</code> cần <code>b+c</code>.</p>
+      <p><strong>Nhiệm vụ:</strong> dựng recurrence cho reachable region sao cho không giả định monotonic, phân biệt owned/constructible capability và xử lý resource/permission loss.</p>
+      <p class="trap"><strong>Bẫy:</strong> chỉ dùng phép hợp kiểu “capability cũ ∪ capability mới” là chưa đủ.</p>
+      <details><summary>Hint tầng 1</summary><p>Hãy để transition phụ thuộc cả world state lẫn capability state, không chỉ một tập tool trừu tượng.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P2">
+      <header><div><div class="id">P2 · Năm tấm kính</div><h2>Composition của observation filters</h2></div><div class="rel">BL-A06-OBSERVATION-FILTER-COMPOSITION</div></header>
+      <p>Một tín hiệu phải đi qua stability, causal exposure, access, detector và cognition. Detector không ghi thứ chưa tới causal vicinity; cognition không thể phục hồi hoàn hảo dữ liệu detector chưa ghi; access có thể chặn tín hiệu vẫn tồn tại; một số filter không commute.</p>
+      <p><strong>Nhiệm vụ:</strong> dựng một composition hợp lý và cho counterexample chứng minh hai ordering có thể cho output khác nhau.</p>
+      <p class="bonus"><strong>Điểm cộng:</strong> phân biệt cấu trúc identifiable từ observation với các ordering observationally equivalent.</p>
+      <details><summary>Hint tầng 1</summary><p>Thử tìm hai filter mà đổi thứ tự sẽ làm mất thông tin theo hai cách khác nhau.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P3">
+      <header><div><div class="id">P3 · Cây cầu không được phép nhảy</div><h2>Consistency chưa phải actuality</h2></div><div class="rel">BL-A09-PLENITUDE-BRIDGE</div></header>
+      <p>Cho logic <code>L</code> và predicate <code>Cons_L(h)</code>. Không được suy trực tiếp từ “description nhất quán” sang “vật thể physical actual ngay đây”.</p>
+      <p><strong>Nhiệm vụ:</strong> đề xuất bridge assumption yếu nhất bạn dám bảo vệ; nêu countermodel khi bỏ bridge; tách formal realization, reachable construction và physical actuality.</p>
+      <p class="trap"><strong>Bẫy:</strong> đổi tên “tưởng tượng được” thành “tồn tại” không phải derivation.</p>
+      <details><summary>Hint tầng 1</summary><p>Bridge phải thêm một mệnh đề về realization-domain, không chỉ lặp lại consistency dưới tên khác.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P4">
+      <header><div><div class="id">P4 · Xưởng công cụ tự sinh</div><h2>Acquired, constructible, consumed</h2></div><div class="rel">BL-RCA-RECURSIVE-CAPABILITY-UPDATE</div></header>
+      <p><code>A</code> có sẵn; <code>B</code> xây từ <code>A</code>; <code>C</code> cần <code>A+B</code>; <code>D</code> cần <code>C</code> nhưng khi xây <code>D</code> thì <code>B</code> bị tiêu hao vĩnh viễn.</p>
+      <p><strong>Nhiệm vụ:</strong> thiết kế update operator phân biệt acquired/constructible/consumed/persistent capability rồi liệt kê state khả dĩ trong tối đa bốn bước.</p>
+      <p class="bonus"><strong>Điểm cộng:</strong> chứng minh closure phụ thuộc path.</p>
+      <details><summary>Hint tầng 1</summary><p>Closure trên một tập capability thuần túy có thể mất thông tin; thử thêm trạng thái tài nguyên hoặc lịch sử tối thiểu.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P5">
+      <header><div><div class="id">P5 · Closure có lịch sử</div><h2>Reachable set trong graph động</h2></div><div class="rel">BL-RCA-LONG-HORIZON-REACHABLE-CLOSURE</div></header>
+      <p>Directed graph có cạnh chỉ xuất hiện khi capability tương ứng đang tồn tại. Capability có thể sinh ra từ cạnh trước đó hoặc hết hạn sau <code>k</code> bước.</p>
+      <p><strong>Nhiệm vụ:</strong> formalize long-horizon reachable set có history dependence. Trả lời liệu cùng một state có thể reachable theo path 1 nhưng không theo path 2, và union các one-step reachable set có đủ hay không.</p>
+      <details><summary>Hint tầng 1</summary><p>Cân nhắc lift node từ <code>s</code> thành một augmented state chứa cả capability state.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P6">
+      <header><div><div class="id">P6 · Zero không phải rất nhỏ</div><h2>Positive accessibility limit</h2></div><div class="rel">BL-RCA-POSITIVE-ACCESSIBILITY-LIMIT</div></header>
+      <p>Mỗi trial độc lập có xác suất <code>p</code> hit target, nhưng không được giả định trước <code>p&gt;0</code>.</p>
+      <p><strong>Nhiệm vụ:</strong> tự dựng xác suất “chưa từng hit sau n trial” và phân tích giới hạn cho <code>p=0</code>, <code>0&lt;p&lt;1</code>, rồi mở rộng sang chuỗi <code>p_t</code> có thể tiến về 0.</p>
+      <p class="bonus"><strong>Điểm cộng:</strong> nêu điều kiện đủ trên <code>p_t</code> để eventual hit có xác suất 1.</p>
+      <details><summary>Hint tầng 1</summary><p>Với xác suất thay đổi theo thời gian, hãy nhìn vào tích của các xác suất “miss”.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P7">
+      <header><div><div class="id">P7 · Sửa nhanh nhưng quên sạch</div><h2>Quality functional của epistemology</h2></div><div class="rel">OPT-REC-EPISTEMIC-QUALITY</div></header>
+      <p>Ba biến chuẩn hóa: <code>e</code> = error detection, <code>r</code> = revision quality, <code>u</code> = useful retention.</p>
+      <p><strong>Nhiệm vụ:</strong> đề xuất ít nhất hai functional <code>Q(e,r,u)</code> tăng theo từng biến, không cho một biến cực lớn che hoàn toàn một biến gần 0, và có thể mở rộng thêm cost/latency.</p>
+      <p class="trap"><strong>Bẫy:</strong> weighted sum đơn giản có thể cho compensation quá mạnh.</p>
+      <details><summary>Hint tầng 1</summary><p>So sánh additive aggregation với một dạng có tính bottleneck hoặc multiplicative interaction.</p></details>
+    </article>
+
+    <article class="puzzle" data-puzzle="P8">
+      <header><div><div class="id">P8 · Phiên bản mới không giết lịch sử</div><h2>Version update có causal lineage</h2></div><div class="rel">OPT-REC-VERSION-UPDATE-OPERATOR</div></header>
+      <p>Cho <code>B_n</code>, evidence <code>E_n</code>, critique <code>C_n</code>, tool/theory <code>T_n</code> và dependency graph <code>G_n</code>. Claim <code>c</code> bị reject; ba claim phụ thuộc nó, claim thứ tư chỉ cùng lineage.</p>
+      <p><strong>Nhiệm vụ:</strong> thiết kế update operator propagation đúng dependency, giữ negative knowledge, không nhầm lineage với dependency và làm superseded state reconstructable.</p>
+      <p class="bonus"><strong>Điểm cộng:</strong> xác định minimal causal delta auditor cần để tái dựng mỗi status change.</p>
+      <details><summary>Hint tầng 1</summary><p>Tách object identity, dependency edges và event log trước khi viết update operator.</p></details>
+    </article>
+  </section>
+
+  <section class="foot">
+    <h2>Format lời giải</h2>
+    <pre class="law">Puzzle ID
+Assumptions
+Definitions
+Candidate formula/operator
+Derivation
+Counterexamples tested
+Boundary cases
+What remains UNKNOWN
+Tools used</pre>
+    <p>Không chấm theo việc “đoán trúng bí mật”. Một reconstruction tốt hơn expression lịch sử vẫn là một đóng góp đáng xem.</p>
+    <p><a href="./challenge.html">← Challenge Projection</a> · <a href="./theory.html">Học thuyết</a></p>
+  </section>
+</main>
+<script>
+(() => {
+  const grid = document.getElementById('puzzle-grid');
+  const cards = Array.from(grid.children);
+  for (let i = cards.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  cards.forEach(card => grid.appendChild(card));
+})();
+</script>
+</body>
+</html>
