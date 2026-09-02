@@ -146,6 +146,27 @@ jobs:
       - name: Build multilingual SEO and AI discovery layer locally
         run: python scripts/run_discovery.py
 
+      - name: Register era-language literary atlas in discovery
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          route = 'https://kimbach91-prog.github.io/bl-infinity/novel/era-language-style-atlas.html'
+          sitemap = Path('site/sitemap.xml')
+          if sitemap.exists():
+              sm = sitemap.read_text(encoding='utf-8')
+              entry = f'<url><loc>{route}</loc><lastmod>2026-09-02</lastmod></url>'
+              if route not in sm:
+                  sm = sm.replace('</urlset>', entry + '\n</urlset>')
+                  sitemap.write_text(sm, encoding='utf-8')
+          llms = Path('site/llms.txt')
+          if llms.exists():
+              text = llms.read_text(encoding='utf-8')
+              if 'era-language-style-atlas.html' not in text:
+                  text += '''\n\n## Novel Era-Language & Literary Style Atlas\nPublic route: /novel/era-language-style-atlas.html\nMachine registry: /machine/novel-era-language-style-registry.json\nUse: resolve historical scenes by year/era, region, generation, social relation, communication medium and literary mode; do not reduce an era to one authorial style or one national voice.\n'''
+                  llms.write_text(text, encoding='utf-8')
+          PY
+
       - name: Re-stage low-discovery human challenge pages
         run: |
           cp public/challenge.html site/challenge.html
@@ -234,6 +255,7 @@ jobs:
               "https://kimbach91-prog.github.io/bl-infinity/novel/",
               "https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html",
               "https://kimbach91-prog.github.io/bl-infinity/novel/world-chapter-001.html",
+              "https://kimbach91-prog.github.io/bl-infinity/novel/era-language-style-atlas.html",
               "https://kimbach91-prog.github.io/bl-infinity/en/",
               "https://kimbach91-prog.github.io/bl-infinity/en/theory.html",
               "https://kimbach91-prog.github.io/bl-infinity/author.html",
