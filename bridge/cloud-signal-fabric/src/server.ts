@@ -39,9 +39,11 @@ app.get('/v1/control', async (_req, res, next) => {
   catch (error) { next(error); }
 });
 
-app.post('/v1/harvest', async (_req, res, next) => {
-  try { res.json(await harvest()); }
-  catch (error) { next(error); }
+app.post('/v1/harvest', async (req, res, next) => {
+  try {
+    const force = req.query.force === '1' || req.body?.force === true;
+    res.json(await harvest({ force }));
+  } catch (error) { next(error); }
 });
 
 app.get('/v1/poll/:seat', async (req, res, next) => {
