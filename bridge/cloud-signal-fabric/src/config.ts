@@ -17,7 +17,7 @@ const integer = (name: string, fallback: number): number => {
 export const config = {
   port: Number.parseInt(process.env.PORT || '8080', 10),
   projectId: process.env.GOOGLE_CLOUD_PROJECT?.trim() || process.env.GCLOUD_PROJECT?.trim(),
-  signalToken: required('SIGNAL_FABRIC_TOKEN'),
+  signalToken: process.env.SIGNAL_FABRIC_TOKEN?.trim() || null,
   manifestFolderId: required('DRIVE_MANIFEST_FOLDER_ID'),
   artifactFolderId: required('DRIVE_ARTIFACTS_ID'),
   hotMinutes: integer('POLL_HOT_MINUTES', 1),
