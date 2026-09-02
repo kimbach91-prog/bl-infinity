@@ -1,0 +1,34 @@
+name: DEUS Signal Fabric - CI
+
+on:
+  push:
+    branches:
+      - deus/signal-fabric-gcp-v1
+    paths:
+      - 'bridge/cloud-signal-fabric/**'
+      - '.github/workflows/deus-signal-fabric-ci.yml'
+  pull_request:
+    paths:
+      - 'bridge/cloud-signal-fabric/**'
+      - '.github/workflows/deus-signal-fabric-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  typecheck-build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: bridge/cloud-signal-fabric
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: bridge/cloud-signal-fabric/package.json
+      - run: npm install
+      - run: npm run check
+      - run: npm run build
