@@ -6,15 +6,23 @@ import runpy
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
 
-TOPIC_ORDER = ["overview", "theory", "novel", "regressor", "system", "academic", "claims", "critique"]
+# Public hierarchy invariant: BL∞ theory is the first scientific entry surface.
+# Novel stays immediately adjacent, separated only by the infinity bridge.
+TOPIC_ORDER = ["theory", "novel", "regressor", "system", "academic", "claims", "critique", "overview"]
 HOME_ORDER = [
-    "theory.html", "novel/", "regressor-proposition.html", "system.html",
-    "academic-democracy.html", "open-academic-publishing.html", "unknown.html",
-    "grand-ending.html", "world.html", "science-constellation.html", "bl-adn.html", "claims.html", "assets.html",
-    "provenance.html", "critique.html", "author.html", "languages.html", "machine.html",
-    "academic-democracy-technology.html", "academic-democracy/discovery.html",
+    "theory.html", "novel/", "regressor-proposition.html", "unknown.html",
+    "grand-ending.html", "system.html", "world.html", "science-constellation.html",
+    "academic-democracy.html", "open-academic-publishing.html", "bl-adn.html",
+    "claims.html", "assets.html", "provenance.html", "critique.html", "author.html",
+    "languages.html", "machine.html", "academic-democracy-technology.html",
+    "academic-democracy/discovery.html", "index.html",
 ]
 GROUP_ORDER = ["core", "theory", "narrative", "external-science", "claims", "assets", "verification", "machine", "languages"]
+CORE_ORDER = [
+    "theory.html", "regressor-proposition.html", "unknown.html", "grand-ending.html",
+    "system.html", "world.html", "index.html", "academic-democracy.html",
+    "open-academic-publishing.html", "bl-adn.html",
+]
 HEADING_RE = re.compile(r'<h([1-6])(\b[^>]*)>(.*?)</h\1>', flags=re.I | re.S)
 INFINITY_BRIDGE = '<span class="lineage-infinity-separator" aria-hidden="true" title="∞">∞</span>'
 UNPUBLISHED_ROLE_TERMS = ["Kẻ hề", "kẻ hề", "Kẻ thắng", "kẻ thắng", "Kẻ trung gian", "kẻ trung gian", "Kẻ quan sát", "Kẻ đứng ngoài"]
@@ -190,6 +198,17 @@ def reorder_scientific_index() -> None:
     data = json.loads(path.read_text(encoding="utf-8"))
     rank = {group_id: index for index, group_id in enumerate(GROUP_ORDER)}
     data["groups"] = sorted(data.get("groups", []), key=lambda group: rank.get(group.get("id", ""), 999))
+
+    core_rank = {route: index for index, route in enumerate(CORE_ORDER)}
+    for group in data.get("groups", []):
+        if group.get("id") != "core":
+            continue
+        group["title"] = "BL∞ core / Học thuyết và các nhánh trực tiếp"
+        group["entries"] = sorted(
+            group.get("entries", []),
+            key=lambda entry: core_rank.get(entry.get("url", ""), 999),
+        )
+
     data["counts"] = {group.get("id", "unknown"): len(group.get("entries", [])) for group in data.get("groups", [])}
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
 
@@ -245,6 +264,8 @@ def verify_navigation_hierarchy() -> None:
             expected = [key for key in TOPIC_ORDER if key in found]
             if found != expected:
                 raise RuntimeError(f"topic hierarchy mismatch in {path.relative_to(SITE)}: {found}")
+            if "theory" in found and found[0] != "theory":
+                raise RuntimeError(f"theory must be first in topic hierarchy: {path.relative_to(SITE)}")
             if "theory" in found and "novel" in found and found.index("novel") != found.index("theory") + 1:
                 raise RuntimeError(f"theory/novel adjacency lost in {path.relative_to(SITE)}")
             checked += 1
@@ -259,21 +280,32 @@ def verify_navigation_hierarchy() -> None:
             if first_routes != ["theory.html", "novel/"]:
                 raise RuntimeError(f"homepage reading pair mismatch: {first_routes}")
             routes = [home_route(item) for item in items]
-            if "world.html" in routes and "science-constellation.html" in routes:
-                if routes.index("science-constellation.html") != routes.index("world.html") + 1:
-                    raise RuntimeError("external science atlas must remain adjacent to world build on homepage")
+            expected_prefix = [
+                "theory.html", "novel/", "regressor-proposition.html", "unknown.html",
+                "grand-ending.html", "system.html", "world.html", "science-constellation.html",
+            ]
+            actual_prefix = [route for route in routes if route in expected_prefix][:len(expected_prefix)]
+            if actual_prefix != expected_prefix:
+                raise RuntimeError(f"BL∞ core homepage hierarchy mismatch: {actual_prefix}")
 
     index_path = SITE / "machine" / "scientific-index.json"
     if index_path.exists():
         data = json.loads(index_path.read_text(encoding="utf-8"))
         groups = [group.get("id") for group in data.get("groups", [])]
+        if not groups or groups[0] != "core":
+            raise RuntimeError(f"BL∞ core group must be first in Scientific Index: {groups}")
+        core = next((group for group in data.get("groups", []) if group.get("id") == "core"), None)
+        if core and core.get("entries"):
+            first_core = core["entries"][0].get("url")
+            if first_core != "theory.html":
+                raise RuntimeError(f"canonical BL∞ theory must be first core entry: {first_core}")
         if "theory" in groups and "narrative" in groups and groups.index("narrative") != groups.index("theory") + 1:
             raise RuntimeError(f"Scientific Index theory/narrative adjacency lost: {groups}")
         if "external-science" not in groups:
             raise RuntimeError("Scientific Index external-science group missing")
         if groups.index("external-science") != groups.index("narrative") + 1:
             raise RuntimeError(f"External science group must follow narrative/world layer: {groups}")
-    print(f"Navigation hierarchy verified across {checked} topic-bar pages")
+    print(f"Theory-first BL∞ hierarchy verified across {checked} topic-bar pages")
 
 
 def main() -> None:
@@ -305,7 +337,7 @@ def main() -> None:
     verify_navigation_hierarchy()
     verify_heading_hierarchy()
     verify_unpublished_role_boundary()
-    print(f"Static navigation, infinity bridge, external science lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
+    print(f"Theory-first BL∞ hierarchy, infinity bridge, external science lineage and heading hierarchy finalized: {hierarchy_changed} HTML files changed")
 
 
 if __name__ == "__main__":
