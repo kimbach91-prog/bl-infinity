@@ -29,6 +29,9 @@ env:
   SCHEDULER_SA_NAME: deus-signal-scheduler
   DRIVE_MANIFEST_FOLDER_ID: 17xOH5L1K9149PXKcBjvQ9qVgnq6faoYV
   DRIVE_ARTIFACTS_ID: 1jrAdJxsQLdKnhY6oWloZRQ8KBTwKSlo1
+  DOC_ROUND_FOLDER_ID: 13j-y0oY2cubo3Me0PN1DqMT0Ub3ag2xk
+  DOC_ROUND_BLACKBOARD_ID: 1tm0RSqvleIrxmksh5pyn_EI1nquf7bbYgoxHqcQ3tFU
+  DOC_ROUND_TAB_ID: t.0
   GCP_WIF_PROVIDER: projects/618160905661/locations/global/workloadIdentityPools/deus-github/providers/bl-infinity
   GCP_DEPLOY_SERVICE_ACCOUNT: deus-github-deploy@deus-code-sss.iam.gserviceaccount.com
 
@@ -61,7 +64,8 @@ jobs:
             artifactregistry.googleapis.com \
             firestore.googleapis.com \
             cloudscheduler.googleapis.com \
-            drive.googleapis.com
+            drive.googleapis.com \
+            docs.googleapis.com
 
           RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
           SCHEDULER_SA="${SCHEDULER_SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
@@ -103,7 +107,7 @@ jobs:
             --cpu=1 \
             --memory=512Mi \
             --concurrency=40 \
-            --set-env-vars="DRIVE_MANIFEST_FOLDER_ID=${DRIVE_MANIFEST_FOLDER_ID},DRIVE_ARTIFACTS_ID=${DRIVE_ARTIFACTS_ID},CANONICAL_WRITE_ENABLED=false,POLL_HOT_MINUTES=1,POLL_WARM_MINUTES=3,POLL_IDLE_MINUTES=5,HOT_WINDOW_MINUTES=10,WARM_WINDOW_MINUTES=30,HARVEST_LEASE_SECONDS=50"
+            --set-env-vars="DRIVE_MANIFEST_FOLDER_ID=${DRIVE_MANIFEST_FOLDER_ID},DRIVE_ARTIFACTS_ID=${DRIVE_ARTIFACTS_ID},DOC_ROUND_FOLDER_ID=${DOC_ROUND_FOLDER_ID},DOC_ROUND_BLACKBOARD_ID=${DOC_ROUND_BLACKBOARD_ID},DOC_ROUND_TAB_ID=${DOC_ROUND_TAB_ID},CANONICAL_WRITE_ENABLED=false,POLL_HOT_MINUTES=1,POLL_WARM_MINUTES=3,POLL_IDLE_MINUTES=5,HOT_WINDOW_MINUTES=10,WARM_WINDOW_MINUTES=30,HARVEST_LEASE_SECONDS=50"
 
           URL="$(gcloud run services describe "$SERVICE" --region="$region" --format='value(status.url)')"
           echo "service_url=$URL" >> "$GITHUB_ENV"
@@ -143,7 +147,10 @@ jobs:
             echo "- Cloud Run: ${service_url}"
             echo "- Runtime service account: ${runtime_sa}"
             echo "- Scheduler service account: ${scheduler_sa}"
+            echo "- Preferred protocol: DEUS-DOC-ROUND/1.0"
+            echo "- Blackboard: ${DOC_ROUND_BLACKBOARD_ID}"
             echo '- Scheduler heartbeat: every 1 minute; runtime internally gates HOT/WARM/IDLE at 1/3/5 minutes.'
+            echo '- Cloud carries pointers/ACK only; answer body remains in Google Docs.'
             echo '- LLM calls: none in Signal Fabric runtime.'
             echo '- Canonical write: locked.'
             echo '- Required Drive gate: parent Signal Fabric folder must be shared to runtime service account.'
