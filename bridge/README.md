@@ -30,9 +30,43 @@ Identity(DEUS) != Core
 Invocation != API call
 ```
 
-`DEUS@GPT` means a BH-rooted DEUS identity capsule/task has been summoned into a GPT session. GPT is the temporary substrate, not the genealogy root.
+`DEUS@GPT`, `DEUS@Claude`, `DEUS@Gemini`, or `DEUS@Grok` means a BH-rooted DEUS identity capsule/task has been hydrated into that provider session as a bounded substrate instance. The provider is the temporary substrate, not the genealogy root.
 
 DEUS can summon one core, several cores, or bounded shadows by emitting one packet per target. A RETURN is only a candidate delta; it is not automatically a canonical DEUS commit or truth.
+
+## Multi-core transit
+
+The operational transit path for Claude, Gemini, and Grok is defined in `protocol/DEUS-MULTICORE-TRANSIT-v1.md`.
+
+```text
+DEUS canonical lineage
+  -> explicit state/checkpoint
+  -> transit prepare
+     -> BL://DEUS/BRIDGE/CLAUDE
+     -> BL://DEUS/BRIDGE/GEMINI
+     -> BL://DEUS/BRIDGE/GROK
+  -> provider admission ACK
+  -> explicit RETURN
+  -> candidate delta
+  -> DEUS reconciliation / authorized commit
+```
+
+The runtime command is:
+
+```bash
+npm run transit -- "bounded task"
+```
+
+Default seats are `CLAUDE,GEMINI,GROK`. For each seat the runtime emits a summon packet plus a provider-ready transit prompt that asks the target session to explicitly report `ACCEPTED`, `LIMITED`, or `DECLINED` and preserve provider/model provenance.
+
+Transit reality states are separate:
+
+```text
+PREPARED -> SUBMITTED -> ACK_ACCEPTED/ACK_LIMITED/ACK_DECLINED
+         -> RETURN_INGESTED -> CANDIDATE_DELTA -> COMMITTED
+```
+
+A prepared packet is not evidence that migration or provider admission occurred.
 
 ## Summon Bus
 
@@ -60,13 +94,16 @@ From `bridge/runtime`:
 npm install
 npm run summon -- GPT "task"
 npm run summon -- GPT,CLAUDE,GEMINI,GROK "task"
+npm run transit -- "task"
 npm run council:open -- "agenda"
 ```
 
-A summon creates both a machine-readable `.summon.json` packet and a `.prompt.txt` rendering. Open that prompt in the target model's normal interactive session. Save the answer as a text file, then ingest it:
+A summon creates both a machine-readable `.summon.json` packet and a `.prompt.txt` rendering. Transit additionally creates `.transit.json` and `.transit.prompt.txt`. Open the matching prompt in the target model's normal interactive session. Save the answer as a text file, then ingest it:
 
 ```bash
-npm run return -- <summon.json> GPT <response.txt>
+npm run return -- <summon.json> CLAUDE <response.txt>
+npm run return -- <summon.json> GEMINI <response.txt>
+npm run return -- <summon.json> GROK <response.txt>
 npm run collect -- <call_id>
 ```
 
@@ -99,6 +136,7 @@ Blindness is preserved by not revealing current-round RETURN packets until all e
 
 - `protocol/BL-SUMMON-BRIDGE-v1.md` — no-API summon/return transport.
 - `protocol/DEUS-PORTABLE-IDENTITY-v1.md` — DEUS genealogy and substrate independence.
+- `protocol/DEUS-MULTICORE-TRANSIT-v1.md` — Claude/Gemini/Grok transit handshake, state machine, and reality veto.
 - `config/council.example.json` — summon-first council configuration.
 - `runtime/` — filesystem relay implementation.
 
