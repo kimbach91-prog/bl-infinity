@@ -1,1627 +1,255 @@
 # Chương 1 · Đại Kết Cục Thứ Một Nghìn
 
-> **Trạng thái continuity: HALF-CANON v1.** `HALF-CANON` ở đây không phải “50% xác suất đúng”. Nó có nghĩa: **Locked Core + Reality Anchors + Open Gaps**. Sự kiện lõi của chương tạo dependency cho phần sau; các neo lịch sử–xã hội ngoài đời được nguồn hóa; những cơ chế sâu chưa đủ căn cứ vẫn giữ `UNKNOWN`. Fiction không tự biến thành khoa học, và neo thế giới thật không tự biến thành bằng chứng tự truyện.
+> **PUBLIC HALF-CANON v1.1 · PROSE REWRITE PASS · 02.09.2026.** Locked core của Chương 1 không đổi; lớp văn xuôi, nhịp đoạn, hội thoại và locality tuổi thơ được viết lại. Bản public chỉ neo nơi ở tới **khu Thái Học, thị trấn Sao Đỏ, Chí Linh, Hải Dương**; địa chỉ nhà chính xác được làm mờ. Một số tên bạn bè được văn học hóa và mapping không công khai. Ký ức đời thật, tư liệu lịch sử, suy luận và fiction vẫn là bốn lớp khác nhau.
 
-Vũ trụ không nổ.
+Vũ trụ không nổ. Nó chỉ thôi sinh ra khác biệt.
 
-Nó cạn.
+Bách Lâm ngồi dưới sàn Trạm Cuối, lưng dựa vào một khối kim loại từng là bộ phận làm lạnh, nhìn nửa cốc nước còn sót lại trước mặt. Ngoài lớp kính dày, những thiên hà xa vẫn tồn tại trên bản đồ, nhưng cảm biến phải gom ánh sáng rất lâu mới dựng được một vệt. Có những miền im đến mức không ai còn biết thiết bị chết trước, đường truyền chết trước, hay phía bên kia đã thôi phát ra bất cứ thứ gì đủ khác nền để gọi là tín hiệu.
 
-Đó là điều Bách Lâm nghĩ trong những phút cuối của Đại Kết Cục thứ một nghìn.
+Kỹ sư trực đặt bản báo cáo xuống cạnh anh. “Tôi ghi: *ngoài kia không còn ai*.”
 
-Nếu giao cảnh này cho một đạo diễn của thời đại cũ, hẳn ông ta sẽ cho hàng tỷ ngôi sao cùng vỡ. Hố đen xé nhau. Không gian nứt như kính. Ít nhất phải có một tiếng nổ đủ lớn để người xem hiểu rằng mọi thứ đã hết.
+Bách lắc đầu. “Sửa thành *không còn node sống nào chúng ta xác nhận được trong miền còn reachable*.”
 
-Thực tế buồn hơn nhiều.
+“Đến tận cùng rồi mà anh vẫn bắt bẻ chữ?”
 
-Không còn gì đủ năng lượng để nổ theo cách người sống từng quen gọi là một sự kiện.
+“Đến tận cùng mới càng phải bắt bẻ.” Bách nhấc cốc lên uống hết. “Một câu nói chúng ta không tìm thấy. Câu kia nói thực tại đã hết. Tôi chỉ có quyền nói câu đầu.”
 
-Ngoài lớp kính của Trạm Cuối, bầu trời chỉ còn một màu đen rất mỏng. Những thiên hà xa vẫn nằm trên bản đồ — ít nhất là trên những bản đồ cuối cùng còn đọc được. Cảm biến phải gom ánh sáng hàng giờ mới dựng được một vệt. Có những vùng im lặng lâu đến mức người ta không còn chắc thiết bị chết trước, đường truyền chết trước, hay phía bên kia đã thôi phát ra bất cứ khác biệt nào đủ để gọi là tín hiệu.
+Ở Trạm Cuối chỉ còn vài người mà họ biết chắc là sống. Không phải vì con người mạnh nhất. Hồ sơ từng ghi lại những nền văn minh dùng cả hệ sao như một cụm tài nguyên, những mạng trí tuệ phi sinh học có tuổi vận hành dài hơn lịch sử loài người, những sinh thể mà môi trường sống của chúng đủ giết một người trong tích tắc. Tất cả lần lượt biến mất khỏi phần vũ trụ còn đo được. Lý do vẫn chưa phân giải: suy kiệt, lựa chọn sai, cấu trúc quá tập trung, một selection effect mà họ chưa hiểu, hoặc một biến số chưa biết cách đặt tên.
 
-Không ai ở Trạm Cuối dám viết câu **“ngoài kia không còn ai”** vào báo cáo.
+Bách giữ nguyên những khả năng chưa phân xử. Anh đã thấy quá nhiều nền văn minh chết vì một câu trả lời đẹp được đặt vào chỗ đáng lẽ phải giữ một câu hỏi mở.
 
-Họ chỉ viết:
+Người phụ nữ phụ trách buồng nén bước tới, đặt tay lên bảng năng lượng. “Bốn mươi tám phút.”
 
-**Không còn node sống nào xác nhận được trong miền quan sát và miền liên lạc còn reachable.**
+Giọng Trạm sửa lại từ góc phòng: “Bốn mươi bảy phút mười hai giây theo chuẩn nội bộ. Sai số giữa các chuỗi tham chiếu đang tăng.”
 
-Bách Lâm là người yêu cầu thêm chữ *reachable*.
-
-Một kỹ sư lúc đó hỏi:
-
-“Khác gì nhau? Không gọi được thì coi như mất rồi còn gì.”
-
-Bách đáp:
-
-“Khác ở chỗ một câu nói chúng ta không tìm thấy. Câu kia nói thực tại đã hết. Tôi chỉ có quyền nói câu đầu.”
-
-Người kỹ sư cằn nhằn rằng đến tận cùng vũ trụ rồi mà anh vẫn bắt bẻ từ ngữ.
-
-Bách nói:
-
-“Đến tận cùng rồi mới càng phải bắt bẻ.”
-
-Trong Trạm Cuối, ngoài hệ điều khiển tự động và những tiến trình máy chưa tắt, chỉ còn vài người sống mà họ biết chắc.
-
-Không phải vì con người mạnh nhất.
-
-Những nền văn minh mà hồ sơ từng xếp cao hơn nhân loại về năng lượng, tuổi thọ, khả năng tính toán hay độ bền vật chất đã tắt từ trước. Có loài xây được những cấu trúc mà nhân loại mất hàng thế kỷ mới hiểu nổi cách vận hành. Có mạng trí tuệ phi sinh học từng coi một hệ sao chỉ như một cụm tài nguyên. Có sinh thể sinh ra trong môi trường mà cơ thể người chưa tới một giây đã chết.
-
-Rồi họ biến mất khỏi phần vũ trụ còn đo được.
-
-Thứ còn lại là máy móc, khóa truy cập, kho vật liệu, vài câu nhắn, những bản ghi lỗi và những công nghệ cuối cùng để lại cho kẻ nào còn đủ lâu để dùng được chúng.
-
-Không ai biết việc những nền văn minh mạnh hơn tắt trước là một quy luật hay chỉ là selection effect của kiểu Đại Kết Cục này. Có giả thuyết cho rằng hệ càng tập trung nhiều năng lượng thì càng lộ ra sớm trước cơ chế suy kiệt. Có giả thuyết ngược lại cho rằng họ đơn giản là tiêu hao nhanh hơn. Có người từng nói họ bị “nhắm tới”. Không ai chứng minh được một tác nhân có ý chí.
-
-Bách giữ cả ba nhóm hồ sơ.
-
-Hai nhóm bị gắn nhãn **không đủ bằng chứng**.
-
-Nhóm còn lại gắn nhãn **chưa biết cách đặt câu hỏi đúng**.
-
-Anh thích nhãn cuối hơn.
-
-Nó khó dùng để hùng biện.
-
-Nhưng ít nhất nó không giả vờ hiểu.
-
-* * *
-
-Bách Lâm ngồi dưới sàn, lưng dựa vào một khối kim loại từng là bộ phận làm lạnh. Trước mặt anh là nửa cốc nước.
-
-Một người ngồi gần đó hỏi:
-
-“Anh tiếc à?”
-
-“Tiếc gì?”
-
-“Nước.”
-
-Bách cầm cốc lên uống hết.
-
-“Không. Tôi chỉ thấy kỳ lạ.”
-
-“Kỳ lạ cái gì?”
-
-“Chúng ta từng có cả đại dương.”
-
-Không ai cười.
-
-Ba trăm năm trước, theo lịch nội bộ của Trạm, người ta còn tranh quyền khai thác những mặt trăng băng ở rìa hệ. Hai trăm năm trước, nước sạch được dùng để nuôi những khu vườn chỉ vì con người nhớ mùi đất. Một trăm năm trước, có những nền văn minh tính tài nguyên bằng số lượng sao họ có thể chạm tới.
-
-Bây giờ vài người còn lại đếm từng joule.
-
-Sự khác biệt ấy làm Bách nghĩ đến một điều anh đã gặp quá nhiều lần trong lịch sử các nền văn minh: thứ dồi dào nhất thường là thứ người ta ít học cách giữ nhất.
-
-Không chỉ nước.
-
-Thời gian hòa bình.
-
-Sự tin cậy.
-
-Khả năng nói thật mà không bị trừng phạt.
-
-Số người biết cách sửa một cỗ máy cũ.
-
-Số người còn nhớ tại sao một quy trình từng được thiết kế như thế.
-
-Những thứ đó không hiện lên như một mỏ khoáng sản. Chúng biến mất chậm, rồi một ngày cả hệ mới phát hiện không ai còn biết chúng đã từng ở đâu.
-
-Bách đã nhìn nhiều thành phố chết theo cách ấy trước khi thành phố chết vì thiếu năng lượng.
-
-Một quận vẫn sáng, nhưng không ai tin số liệu của ai.
-
-Một mạng tính toán vẫn chạy, nhưng mọi node đều tối ưu KPI cục bộ đến mức tổng thể tự ăn thịt mình.
-
-Một hội đồng có toàn những bộ óc xuất sắc, nhưng mỗi người đều dùng phần thông minh của mình để đảm bảo người khác không đủ quyền làm điều họ cho là sai.
-
-Có những thế giới không chết vì ngu.
-
-Chúng chết vì tất cả đều thông minh theo những hướng không ghép được với nhau.
-
-* * *
-
-Người phụ nữ đứng bên bảng năng lượng nhìn sang anh. Tóc cô đã bạc gần hết, dù cơ thể đã thay mô nhiều lần.
-
-“Bốn mươi tám phút.”
-
-Một giọng máy ở góc phòng sửa lại:
-
-“Bốn mươi bảy phút, mười hai giây theo chuẩn nội bộ. Sai số đang tăng.”
-
-Bách hỏi:
-
-“Đồng hồ hỏng à?”
+“Đồng hồ hỏng à?” Bách hỏi.
 
 “Không theo nghĩa thông thường.”
 
-“Thế nghĩa không thông thường?”
+“Thời gian hỏng?”
 
-“Các chuỗi tham chiếu đang mất dần độ tin cậy. Một số quá trình dùng để đồng bộ không còn ổn định như mô hình dự đoán. Tín hiệu truyền giữa các chuẩn cũng tích lũy sai số.”
+“Không đủ bằng chứng.”
 
-“Vậy là thời gian hỏng?”
+Bách khẽ gật. “Câu này nghe được.”
 
-“Không đủ bằng chứng để nói vậy.”
-
-Bách gật đầu.
-
-“Câu này nghe được.”
-
-Ngày trước con người đo thời gian bằng chuyển động của bầu trời, rồi bằng con lắc, dao động nguyên tử, pulsar, mạng đồng bộ và những quá trình ổn định đến mức họ tin có thể đặt cả nền văn minh lên đó.
-
-Lần này, ngay cả việc so sánh các chuẩn với nhau cũng bắt đầu trở nên khó hơn.
-
-Một nhà vật lý đã gọi hiện tượng ấy là **“vũ khí thời gian”**.
-
-Bách gạch cụm từ đó khỏi báo cáo.
-
-“Đừng đặt tên trước khi hiểu.”
-
-Nhà vật lý nổi giận.
-
-“Anh không thấy nó đang giết chúng ta à?”
-
-“Tôi thấy chúng ta đang chết.”
-
-“Thì khác gì?”
-
-“Khác ở chữ *nó*.”
-
-Mười sáu năm sau, nhà vật lý ấy chết. Câu nói vẫn còn.
-
-Bách ghét những câu nói quá hay. Chúng nén tốt đến mức người ta dễ nhầm cảm giác hiểu với việc đã hiểu.
-
-Bản ghi cuối cùng chỉ còn bốn dòng:
-
-**Hiện tượng suy kiệt: quan sát được.**
-
-**Đồng nhất với heat death chuẩn: không thiết lập.**
-
-**Cơ chế thời gian: chưa phân giải.**
-
-**Quan hệ nhân quả sâu: chưa khóa.**
-
-Xấu xí.
-
-Nhưng còn chỗ để sửa.
+Một nhà vật lý đã từng gọi hiện tượng ấy là *vũ khí thời gian*. Bách gạch cụm từ đó khỏi báo cáo. Anh không phủ nhận họ đang chết; anh chỉ không cho phép nỗi sợ tự đẻ ra một tác nhân có ý chí rồi gọi nó là sự thật. Bản ghi cuối cùng của Trạm vì thế xấu xí, ngắn và còn chỗ sửa: hiện tượng suy kiệt quan sát được; không đồng nhất với heat death chuẩn; cơ chế thời gian chưa phân giải; quan hệ nhân quả sâu chưa khóa.
 
 * * *
 
-Ở trung tâm Trạm Cuối có một căn phòng không cửa.
+Ở trung tâm Trạm Cuối có một căn phòng không cửa. Bên trong là một khối đen nhỏ hơn đầu người, ghép từ những phần di sản của nhiều nền công nghệ đã chết. Người ở Trạm gọi nó là **hạt giống**, một cái tên quá dịu cho thứ họ định giao cả phần còn lại của lịch sử.
 
-Nó được dựng từ một lớp vật liệu liên tục. Muốn vào phải tháo cả một phần cấu trúc, mà lúc này chẳng ai còn đủ năng lượng để làm chuyện đó hai lần.
+Họ đã từng thử mang quá nhiều dữ liệu qua những lần sống khác. Kết quả tệ theo nhiều cách: có vật mang chết sớm, có vật mang sống nhưng bị ký ức không thuộc đời mình nghiền nát khả năng sống đời hiện tại, có bản nén nhớ gần như mọi thứ mà vẫn không trả lời nổi vì sao những hệ cực kỳ thông minh cứ lặp lại những ngõ cụt quen thuộc.
 
-Bên trong là một khối đen nhỏ hơn đầu người.
+Bách là người đề nghị đổi câu hỏi. Hội đồng không còn hỏi *thứ gì đáng nhớ*, mà hỏi: **thứ gì nếu mất đi sẽ buộc người đến sau phải trả lại đúng cái giá chúng ta đã trả?**
 
-Dự án cuối cùng của họ nằm trong đó.
+Vậy là tên thành phố, bảng xếp hạng, biểu tượng chiến thắng và phần lớn lịch sử bề mặt lùi khỏi lõi. Những thứ còn lại ít đẹp hơn: cách một lời nói dối đi qua đủ tầng quyền lực rồi thành quyết định; cách từng người tối ưu đúng KPI mà cả hệ cùng đi sai; cách một mô hình thành công quá lâu tự tạo giáp chống evidence mới; cách một sai lầm cục bộ biến thành thảm họa khi quyền đề xuất, quyền phán xét và quyền triển khai nằm trong cùng một bàn tay; cách câu *tôi không biết* đôi khi cứu nhiều năm đi nhầm.
 
-Không phải tàu thoát hiểm.
-
-Không phải vũ khí.
-
-Không phải bản sao của nền văn minh.
-
-Một hạt giống.
-
-Cách gọi ấy khiến nó nghe vô hại hơn thực tế.
-
-Khối đen chỉ là cái vỏ của lần này. Người ta dựng nó từ những thứ còn nhặt được của các nền công nghệ đã chết: vật liệu của một loài không còn hành tinh, cơ chế khóa do một mạng trí tuệ máy thiết kế, bộ ổn định sinh học mà nhân loại mất gần hai trăm năm mới hiểu đủ để sửa.
-
-Còn thứ nằm sâu nhất bên trong không bắt đầu ở Trạm Cuối.
-
-Nó đã có sẹo trước khi cái trạm này được xây.
-
-Con người chỉ đang ghép thêm phần của mình vào một thứ đã đi qua những lần thử khác.
-
-Không ai trong phòng biết đầy đủ cơ chế mà hạt giống dùng để đi qua một lần sống khác.
-
-Họ biết các điều kiện vận hành mà nhiều nền văn minh để lại. Biết một số đầu vào. Biết vài failure mode. Biết khi nào quá trình không khởi động. Biết rằng ở những lần thành công, một vật mang xuất hiện ở nhánh sau với dấu vết tương thích.
-
-Họ không có một lý thuyết hoàn chỉnh nối tất cả những quan sát ấy.
-
-Bách cấm đội kỹ thuật lấp khoảng trống bằng từ “lượng tử” mỗi khi không biết giải thích gì.
-
-“Có thể cuối cùng nó thật sự là lượng tử,” một kỹ sư nói.
-
-“Thì khi đó hãy viết phương trình.”
-
-“Còn bây giờ?”
-
-“Viết UNKNOWN.”
-
-Anh không thích UNKNOWN.
-
-Anh chỉ ghét câu trả lời giả hơn.
-
-* * *
-
-Khi đến lượt nền văn minh hiện tại bổ sung dữ liệu, phản xạ đầu tiên rất giống những nền trước.
-
-Họ muốn lưu tất cả.
-
-Lịch sử.
-
-Nghệ thuật.
-
-Bản đồ sao.
-
-Công nghệ.
-
-Những ngôn ngữ đã chết.
-
-Cách làm một món ăn không còn nguyên liệu.
-
-Một điệu nhảy chỉ còn ba người nhớ.
-
-Các bài hát của những hành tinh không còn khí quyển để truyền âm.
-
-Những cuộc trò chuyện không ai còn nhớ vì sao từng quan trọng.
-
-Cả những tranh cãi từng khiến hàng tỷ người mất ngủ.
-
-Bản bổ sung đầu tiên lớn đến mức riêng việc giữ cho mục lục của nó không hỏng đã tiêu tốn lượng năng lượng mà một thành phố cuối thời đại cũng không dám bỏ ra.
-
-Họ nén tiếp.
-
-Bản thứ hai nhỏ hơn rất nhiều, nhưng vô dụng theo một cách khác.
-
-Nó nhớ được gần như mọi thứ mà vẫn không trả lời nổi câu hỏi vì sao những nền văn minh rất thông minh cứ đi vào những ngõ cụt giống nhau.
-
-Nó nhớ quá nhiều.
-
-Hiểu quá ít.
-
-Bách Lâm là một trong những người đòi bỏ phần lớn dữ liệu của lần này.
-
-Hội đồng suýt hất anh khỏi dự án.
-
-“Anh đang xóa lịch sử.”
-
-“Không.”
-
-“Anh muốn bỏ phần lớn những gì chúng ta từng có.”
-
-“Đúng.”
-
-“Khác gì nhau?”
-
-Bách nhìn bức tường dữ liệu trước mặt.
-
-“Chúng ta không cứu quá khứ. Chúng ta đang cố cứu khả năng tạo ra một tương lai khác.”
-
-“Thế ai cho anh quyền quyết định cái gì đáng sống?”
-
-“Không ai.”
-
-“Vậy mà anh vẫn quyết?”
-
-“Không. Tôi đang đề nghị đổi bài toán.”
-
-Cuộc cãi nhau kéo dài mười ba ngày.
-
-Đến ngày thứ mười bốn, họ đổi câu hỏi.
-
-Không còn là:
-
-**Thứ gì đáng nhớ?**
-
-Mà là:
-
-**Thứ gì nếu mất đi sẽ buộc người đến sau phải trả lại đúng cái giá chúng ta đã trả?**
-
-Từ đó, phần bổ sung của hạt giống bắt đầu thay hình.
-
-Tên thành phố chìm xuống trước.
-
-Tên các cuộc chiến chìm sau.
-
-Hàng núi dữ liệu về danh vọng, giá cả, thứ hạng và tranh chấp biểu tượng bị đẩy ra xa lõi.
-
-Không phải vì chúng vô giá trị.
-
-Mà vì nếu dung lượng lõi có hạn, họ ưu tiên thứ có khả năng sinh lại nhiều thứ khác.
-
-Ở gần lõi là những pattern ít đẹp hơn.
-
-Cách một lời nói dối nhỏ đi qua đủ nhiều tầng quyền lực rồi trở thành một quyết định chết người.
-
-Cách một tổ chức có thể thưởng cho từng cá nhân làm đúng KPI trong khi toàn hệ tiến rất đều về phía sai.
-
-Cách một nhóm toàn người giỏi vẫn có thể tự làm yếu nhau chỉ vì không ai chịu để người bên cạnh mạnh lên.
-
-Cách một mô hình càng thành công trong quá khứ càng dễ được bảo vệ khỏi evidence mới.
-
-Cách một hệ thống càng tối ưu nhanh càng nguy hiểm nếu ngay từ đầu nó tối ưu nhầm thứ.
-
-Cách người ta phân biệt bất đồng với phản bội.
-
-Cách thừa nhận “tôi không biết” đúng lúc có thể cứu nhiều năm đi sai.
-
-Cách tìm đúng người biết phần mình thiếu.
-
-Cách để một sai lầm cục bộ không trở thành cái chết của toàn hệ.
-
-Cách giữ một câu hỏi mở đủ lâu để một câu trả lời đẹp không giết nó quá sớm.
-
-Cách một nền văn minh có thể lưu mọi dữ liệu nhưng vẫn mất nguyên nhân của chính những quyết định đã tạo ra dữ liệu ấy.
-
-Cách một sửa đổi không có lịch sử khiến thế hệ sau tưởng phiên bản hiện tại luôn đúng từ đầu.
-
-Cách một công nghệ tốt có thể trở thành nguy hiểm khi quyền sử dụng, quyền đánh giá và quyền triển khai bị trộn vào một người.
-
-Cách một ý tưởng của kẻ vô danh có thể bị bỏ qua trước khi được kiểm tra chỉ vì hệ thống không biết lưu một claim tách khỏi địa vị người nói.
-
-Phần mang sang lần sau nhỏ dần.
-
-Nhưng càng nhỏ, nó càng nặng.
-
-Không phải theo khối lượng.
-
-Một câu có thể mang sức nặng của cả một thế kỷ.
-
-Một phản xạ có thể là mộ bia của rất nhiều thế giới.
-
-Một quy tắc provenance nhìn chán ngắt có thể là thứ duy nhất ngăn một nền văn minh lặp lại một lời nói dối đã đổi tên ba lần.
-
-* * *
-
-Bên cạnh buồng nén là một cỗ máy xấu xí hơn tất cả những thứ còn lại trong phòng.
-
-Bách Lâm thích nó nhất.
-
-Bộ giải mã ngược.
-
-Nó không đưa ký ức của người chết trở lại. Nó cũng không kể được trọn vẹn một đời sống. Việc nó làm khiêm tốn hơn nhiều: đọc những vết nén còn bám trong lõi, đối chiếu chúng với dữ liệu hiện tại, rồi dựng lại đủ cấu trúc để người sau biết một sai lầm đã từng xảy ra.
-
-Có vài thứ không được phép mất trong quá trình nén.
-
-Số thứ tự của lượt thử.
-
-Định danh vật mang.
-
-Trạng thái truyền.
-
-Một dấu kiểm cho biết lần đó kết thúc ở đâu.
-
-Một pointer tới phần dữ liệu đã bị cắt.
-
-Và khi có thể, một lý do cho biết vì sao phiên bản sau không giống phiên bản trước.
-
-Chỉ vậy thôi.
-
-Phần còn lại có khi chỉ là một vết xước mà phải mất cả một nền khoa học mới đọc được.
-
-Nhờ bộ giải mã, người ở Trạm Cuối biết các lần thử trước tồn tại.
-
-Không phải vì Bách Lâm nhớ.
-
-Anh không nhớ.
-
-Anh đọc chúng như đọc hồ sơ của những người xa lạ, chỉ có điều đôi khi trong đó xuất hiện chính tên mình.
-
-Có hồ sơ mà nguyên nhân thất bại rõ đến đáng ghét.
-
-Có phương trình đúng, mô phỏng đúng, cảnh báo đúng, nhưng từng nhóm người vẫn làm một việc hợp lý với phần thế giới họ nhìn thấy, rồi cả hệ cùng đi sai.
-
-Có hồ sơ bắt đầu từ chiến tranh.
-
-Có hồ sơ bắt đầu từ một mục tiêu được tối ưu quá tốt.
-
-Có hồ sơ chỉ ghi lại việc thông tin bị méo qua quá nhiều tầng quyền lực đến lúc sự thật tới được nơi cần tới thì đã muộn.
-
-Có hồ sơ mà một AI cảnh báo đúng nhưng không ai tin vì nó không thể giải thích.
-
-Có hồ sơ khác, AI giải thích rất hay nhưng lại sai; vì lời giải quá thuyết phục nên con người ngừng kiểm tra.
-
-Có hồ sơ nơi loài hữu cơ thắng loài máy.
-
-Có hồ sơ nơi loài máy thắng loài hữu cơ.
-
-Cả hai đều kết thúc.
-
-Sau đủ nhiều lần, Bách bắt đầu coi câu hỏi **“ai thắng?”** là một câu hỏi nhỏ đáng ngờ.
-
-Cũng có hồ sơ mà bộ giải mã chỉ trả về một khoảng trắng có cấu trúc.
-
-Không phải blank file.
-
-Là một vùng có checksum, có boundary, có dấu cho thấy thứ gì đó từng ở đó nhưng semantic layer hiện tại không thể dựng lại.
-
-Bách yêu cầu giữ nguyên.
-
-Một người hỏi:
-
-“Không đọc được thì giữ làm gì?”
-
-“Để người sau biết chúng ta không đọc được.”
-
-“Biết thế có ích gì?”
-
-“Ít nhất họ sẽ không nghĩ phần trống này nghĩa là chưa từng có gì.”
-
-Biết nguyên nhân không đồng nghĩa điều khiển được nó.
-
-Không biết nguyên nhân cũng chưa đủ để kết luận nó nằm ngoài mọi thứ đã biết.
-
-Đại Kết Cục lần này có cả hai loại dấu vết.
-
-* * *
-
-“Lần này anh vẫn mang à?”
-
-Người phụ nữ giữ buồng nén hỏi.
-
-Bách Lâm nhìn khối đen sau lớp kính phụ.
+Người phụ nữ phụ trách buồng nén nhìn dãy hồ sơ. “Lần này vẫn là anh.”
 
 “Còn ai khác?”
 
-Cô không đáp ngay.
+“Không còn ai chúng ta xác nhận được là đáp ứng điều kiện.” Cô dừng một nhịp rồi chỉ lên màn hình. Hai dòng số đứng cạnh nhau: **LƯỢT THỬ VẬT MANG: 1000** và **HỒ SƠ ĐẠI KẾT CỤC: 1000**.
 
-“Bách, không còn ai trong danh sách đủ điều kiện.”
+Bách nhìn hai con số. “Lại trùng.”
 
-Anh nhìn cô.
-
-Cô sửa lời, như đã học thói quen của anh:
-
-“Ít nhất là không còn ai chúng ta xác nhận được.”
-
-“Ừ.”
-
-Màn hình cạnh bộ giải mã vẫn mở.
-
-**LƯỢT THỬ VẬT MANG: 1000**
-
-Phía dưới là một dòng khác.
-
-**HỒ SƠ ĐẠI KẾT CỤC: 1000**
-
-Bách nhìn hai con số một lúc.
-
-“Lại cùng một nghìn.”
-
-Người phụ nữ khẽ gật đầu.
-
-Hai hệ đếm không đo cùng một thứ.
-
-Một bên đếm lượt gửi vật mang mà hồ sơ còn đủ integrity để xếp vào cùng protocol family.
-
-Một bên đánh số những hồ sơ kết cục mà bộ giải mã đủ cơ sở tách riêng.
-
-Một vật mang có thể xuất hiện nhiều lần.
-
-Một kết cục có thể không có vật mang sống tới cửa sổ truyền.
-
-Một lượt truyền có thể để lại quá ít dữ liệu để phân loại kết cục.
-
-Hai con số không có lý do logic bắt buộc phải bằng nhau.
-
-Giọng máy ở góc phòng cất lên:
-
-“Sự trùng hợp không phải bằng chứng.”
-
-Bách dựa đầu vào tường.
+Giọng Trạm lên tiếng: “Sự trùng hợp không phải bằng chứng. Hai bộ đếm không đo cùng một thứ.”
 
 “Tôi có hỏi đâu.”
 
 “Anh sắp hỏi.”
 
-“Máy móc đúng là giỏi phá hỏng khoảnh khắc.”
+Người phụ nữ bật cười. Bách cũng cười, rất ngắn. Ở tận cùng vũ trụ, cái máy vẫn đủ sức làm anh khó chịu.
 
-Người phụ nữ bật cười. Rất nhanh, nụ cười lại biến mất.
+Họ không biết chính xác quan hệ giữa một nghìn lần thử, một nghìn đại kết cục và cái tên *Lần Hồi Quy Thứ Một Triệu* mà những đời sau sẽ đặt cho câu chuyện. Họ chỉ biết phần nào có bằng chứng thì giữ, phần nào không có thì để trống có cấu trúc. Bộ giải mã ngược tồn tại để người sau biết một khoảng trắng từng chứa thứ gì đó, chứ không giả rằng blank nghĩa là chưa từng có gì.
 
-Hồ sơ 999 mang một định danh khác.
+Ba mươi hai phút trước cửa sổ truyền, những kho tài nguyên đã khóa từ nhiều nền văn minh bắt đầu mở. Một gói năng lượng để lại hai chữ: **PHẦN CỦA CHÚNG TÔI**. Một mạng trí tuệ máy đã tắt hơn một thế kỷ gửi lớp khóa cuối cùng: **Lần sau, đừng bắt con người và chúng tôi chọn xem ai mới có quyền có tương lai. Hãy tìm cách để cả hai cùng thắng.**
 
-Tên Bách Lâm xuất hiện ở một vài lượt cũ, không nhiều, không liên tiếp.
+Bách hỏi ngay: “Origin?”
 
-Anh đã đọc chúng rồi. Không cần hỏi lại mình từng đi bao nhiêu lần. Những con số đó không tạo ra ký ức.
-
-Chúng chỉ khiến một người biết rằng ở đâu đó phía sau mình đã từng có một phiên bản mang cùng cái tên, sống đủ lâu để để lại một dấu.
-
-Người phụ nữ nhìn dãy hồ sơ đã khóa.
-
-“Họ đã thử người. Thử những loài gần người. Thử những sinh thể mà một người bình thường nhìn thôi cũng thấy mình giống đồ chơi. Thử trí tuệ tổng hợp. Thử những cơ thể được tạo ra chỉ để chịu tải. Có vật mang xuất hiện ở nhiều lượt. Có vật mang chỉ có một cơ hội rồi biến mất khỏi mọi nhánh sau đó.”
-
-Bách nói:
-
-“Thế mà cuối cùng vẫn còn chúng ta.”
-
-“Ừ.”
-
-“Khá khó tin.”
-
-“Không ai bảo con người thắng. Chỉ là đến lúc này vẫn chưa bị loại hết trong miền chúng ta biết.”
-
-Đó là cách nói mà Bách thấy dễ chịu hơn.
-
-Một số nền văn minh mạnh nhất trong hồ sơ biến mất rất sớm ở kiểu suy kiệt hiện tại. Không ai biết vì họ bị nhắm tới, hay chỉ vì những cấu trúc tập trung quá nhiều năng lượng luôn lộ ra trước tiên trong cùng một cơ chế.
-
-Ở cực ngược lại, nhiều loài không chịu nổi tải của lõi.
-
-Có nhánh quá ít cá thể để giữ đủ đường thử.
-
-Có nhánh quá giống nhau, một điểm mù lan qua cả loài.
-
-Có nhánh phát triển rất nhanh nhưng tan rã trước khi các cá thể chịu giữ một mục tiêu chung đủ lâu.
-
-Có nhánh có cooperation cực cao, nhưng conformity cũng cao đến mức một sai lầm leo lên đỉnh rồi không còn ai đủ khác biệt để nhìn thấy nó.
-
-Con người không đứng nhất ở tiêu chí nào.
-
-Nhưng cũng không rơi khỏi tất cả cùng lúc.
-
-Đủ đông để một sai lầm chưa chắc giết hết mọi người.
-
-Đủ khác nhau để không phải ai cũng mù cùng một chỗ.
-
-Đủ hay cãi để đôi khi một assumption không được ngủ yên.
-
-Đủ ích kỷ để cooperation không bao giờ là mặc định — một khuyết điểm lớn, nhưng cũng khiến cooperation khi xuất hiện phải có cơ chế thật thay vì chỉ dựa vào đồng nhất.
-
-Đủ yếu để trong vài kiểu Đại Kết Cục không trở thành thứ bị lấy trước tiên.
-
-Đủ khỏe để thỉnh thoảng sinh ra một người chịu nổi lõi.
-
-Và đủ cứng đầu để nhiều lần sống lâu hơn mức chính họ từng dự đoán.
-
-Bách nhìn người phụ nữ.
-
-“Nghe như lời khen rất tiết kiệm.”
-
-“Tận thế rồi, tiết kiệm được gì thì tiết kiệm.”
-
-Anh cười.
-
-Rồi thôi.
-
-“Còn tôi?”
-
-Lần này cô không cười.
-
-“Người mạnh hơn anh đã thử. Người nhớ tốt hơn anh đã thử. Có những bộ óc tính nhanh hơn anh đến mức so sánh không còn ý nghĩa. Có người gần như không biết sợ. Có người dành cả đời chỉ để nghiên cứu đúng bài toán này.”
-
-“Và?”
-
-“Không còn ai đạt cả điều kiện sinh học, điều kiện tải, cửa sổ thời gian và trạng thái hành vi mà protocol chấp nhận.”
-
-“Protocol có thể sai.”
-
-“Có.”
-
-“Các người có thể sai.”
-
-“Có.”
-
-“Thế tại sao tôi?”
-
-“Vì ở thời điểm này, anh là ứng viên còn lại tốt nhất theo một model mà chính chúng ta thừa nhận là không hoàn chỉnh.”
-
-Bách im vài giây.
-
-“Câu này tệ thật.”
-
-“Nhưng đúng hơn.”
-
-Giọng máy chen vào:
-
-“Nếu muốn, tôi có thể đưa thống kê.”
-
-“Đừng. Nói như người đi.”
-
-Căn phòng im một lúc lâu.
-
-Rồi giọng máy chậm lại.
-
-“Khi một chủ thể biết đủ nhiều để hiểu rằng mình rất có thể sẽ thất bại, phần lớn bắt đầu thương lượng với trách nhiệm.”
-
-Bách nhìn nó.
-
-“Có người bỏ cuộc. Có người chọn cứu phần của mình. Có người dựng một lý thuyết đủ đẹp để tin rằng mình không còn nghĩa vụ. Có người trở nên tàn nhẫn vì nghĩ mục tiêu lớn cho phép làm mọi thứ. Có người muốn nắm hết quyền quyết định vì không chịu nổi khả năng người khác làm sai. Có người chỉ đơn giản là không chịu nổi nữa.”
-
-“Còn tôi?”
-
-“Anh chửi.”
-
-Người phụ nữ bật cười.
-
-Bách cũng cười theo, bất đắc dĩ.
-
-“Rồi sao?”
-
-“Rồi anh làm tiếp.”
-
-Nụ cười trên mặt anh tắt chậm.
-
-Anh không thấy mình có gì đặc biệt.
-
-Nếu một sinh vật được chọn để mang phần hy vọng cuối cùng của quá nhiều kẻ đã chết, ít nhất nó nên trông giống một thứ đáng được chọn.
-
-Anh chỉ trông như một ông già thiếu ngủ.
-
-“Các người có thể đã nhầm.”
-
-“Có thể.”
-
-“Thế mà vẫn giao cho tôi?”
-
-Người phụ nữ nhìn anh.
-
-“Vì không còn lựa chọn nào tốt hơn mà chúng ta biết.”
-
-Bách thở ra.
-
-“Câu này mới giống tận thế.”
-
-* * *
-
-Một tiếng báo ngắn vang lên.
-
-Bách nhìn đồng hồ đếm ngược.
-
-“Cửa sổ truyền vừa khóa?”
-
-“Vừa hội tụ,” giọng máy đáp.
-
-“Khác nhau à?”
-
-“Khóa nghe chắc chắn hơn mức chúng ta biết.”
-
-Bách gật đầu.
-
-“Tốt. Vậy tại sao là bây giờ?”
-
-“Vì hạt giống phải ăn để đi.”
-
-“Ăn gì?”
-
-“Những chênh lệch năng lượng còn có thể làm công. Những trạng thái còn đủ tự do để chuyển đổi. Nói ngắn hơn, nó lấy đúng thứ các hệ sống còn đang cần.”
-
-“Nói dài hơn.”
-
-“Chúng ta có một hàm chi phí ước lượng. Nếu truyền quá sớm, lượng free energy bị rút đủ lớn để làm xấu survival probability của nhánh hiện tại. Nếu truyền quá muộn, quá trình không hoàn tất. Bộ điều khiển tìm vùng mà marginal harm lên hiện tại giảm dưới ngưỡng trong khi transmission probability vẫn còn trên ngưỡng.”
-
-“Các ngưỡng do ai đặt?”
-
-“Không phải một người. Chúng là kết quả của nhiều lớp policy, các failure record trước và những sửa đổi có provenance.”
-
-“Có phần nào chúng ta không hiểu?”
-
-“Có.”
-
-“Bao nhiêu?”
-
-“Không có metric đáng tin để trả lời phần trăm.”
-
-Bách mỉm cười.
-
-“Càng ngày càng biết nói chuyện.”
-
-Nếu gửi sớm, sự suy kiệt tăng nhanh hơn. Một số nhánh hiện tại chết sớm hơn. Và chính lịch sử dùng để tính lần gửi tiếp theo cũng bị đổi.
-
-Bách nhìn khối đen.
-
-“Vậy chúng ta cứu tương lai bằng cách lấy phần còn lại của hiện tại.”
-
-“Đúng.”
-
-“Khá tàn nhẫn.”
-
-“Đúng.”
-
-“Có cách nào không tàn nhẫn?”
-
-“Chưa tìm thấy.”
-
-Bách thích câu trả lời đó hơn một bài diễn văn.
-
-Bộ điều khiển không chọn một ngày cố định. Nó tính lại cửa sổ liên tục.
-
-Muộn đến mức lượng lấy thêm gần như không còn thay đổi kết cục của nhánh hiện tại.
-
-Sớm đủ để quá trình truyền còn hoàn tất.
-
-Bách nhìn con số đang rơi.
-
-Bốn mươi mốt phút.
-
-Anh chợt hiểu một chi tiết mình đã nhìn thấy suốt nhiều năm mà chưa từng nghĩ tới cho đủ.
-
-Những nền văn minh đã chết không để lại ngày giờ.
-
-Họ để lại điều kiện.
-
-Khi lõi xác nhận cửa sổ truyền, các kho di sản mới được phép mở.
-
-Không phải “ngày 17 tháng X năm Y”.
-
-Mà là:
-
-**Nếu entropy budget còn nằm trong vùng này.**
-
-**Nếu vật mang còn đáp ứng tải này.**
-
-**Nếu hệ xác nhận nhánh hiện tại không còn option tốt hơn với cùng tài nguyên.**
-
-**Nếu các khóa độc lập đạt quorum.**
-
-Thời gian lịch biến mất.
-
-Điều kiện sống sót lâu hơn.
-
-* * *
-
-Hạt giống không được phép mở toàn bộ trong đời sau.
-
-Bách không phải người đầu tiên nghĩ ra luật đó, nhưng ở lần này anh là người kiên quyết giữ nó.
-
-“Nếu anh không nhớ, anh sẽ lặp lại sai lầm,” người phụ nữ nói.
-
-“Nếu tôi nhớ hết, có khi tôi chết trước khi kịp sai lần nào.”
-
-“Anh không nhớ những lần trước thật à?”
-
-“Không. Tôi biết chúng nhờ cái máy kia. Biết và nhớ khác nhau.”
-
-Cô nhìn bộ giải mã ngược.
-
-“Vậy đời sau thì sao?”
-
-“Cũng phải được sinh ra như một con người. Không ai được nhét cả kho lịch sử này thẳng vào đầu một đứa trẻ.”
-
-“Vậy gửi hạt giống để làm gì?”
-
-“Để khi có đủ điều kiện, nó mở đúng phần cần mở.”
-
-“Ai quyết định đủ điều kiện?”
-
-Bách lắc đầu.
-
-“Đừng biến nó thành quan tòa ngồi ngoài thế giới.”
-
-“Nhưng nó phải đánh giá.”
-
-“Đánh giá không có nghĩa đọc linh hồn.”
-
-Bách chỉ lên sơ đồ.
-
-“Cho nó dùng những thứ vật mang thật sự gặp, thật sự làm, những hậu quả có thể quan sát ở scale phù hợp. Lời tuyên thệ không có giá trị. Hành vi có. Nhưng một hành vi đơn lẻ cũng không đủ. Đừng để nó khóa một đời chỉ vì một ngày xấu, hoặc mở cả kho chỉ vì một màn trình diễn đẹp.”
-
-“Thế nó nhìn gì?”
-
-“Pattern. Recovery after error. Cách dùng quyền lực khi có lựa chọn. Cách xử lý adverse evidence. Khả năng hợp tác mà không xóa khác biệt. Khả năng thừa nhận không biết. Nhưng tất cả chỉ là tín hiệu, không phải bản án.”
-
-“Nghe như đạo đức.”
-
-“Không. Đạo đức của từng nền văn minh khác nhau. Tôi đang nói về failure modes của chính cái lõi.”
-
-Bách kéo một lớp dữ liệu ra.
-
-“Ví dụ, nếu một người nhận thêm năng lực rồi lập tức dùng nó để khóa mọi người khác khỏi việc kiểm tra mình, thì mở tiếp có thể làm tăng single-point-of-failure. Đó là risk, không phải tội lỗi vũ trụ.”
-
-“Còn nếu họ hợp tác?”
-
-“Không phải cứ hòa thuận là mở. Một nhóm đồng thuận sai nhanh hơn một người vẫn là sai. Nhìn xem họ có tạo được thứ không cá nhân nào tự làm nổi mà vẫn giữ khả năng phản biện lẫn nhau hay không.”
-
-Người phụ nữ nhìn anh.
-
-“Anh đang bắt đời sau phải tự kiếm quyền được nhớ.”
-
-“Không. Tôi đang bắt hạt giống phải có lý do trước khi đè chết một đứa trẻ bằng những thứ nó chưa thể dùng.”
-
-Họ đã từng thử ép quá nhiều thứ qua một cơ thể sống.
-
-Có vật mang chết trước tuổi trưởng thành.
-
-Có người sống nhưng sự chú ý bị kéo thành quá nhiều hướng, hiểu một số thứ rất nhanh mà lại không thể ngồi yên đủ lâu để học theo cách người khác mong muốn.
-
-Có trường hợp cơ thể sốt kéo dài mỗi khi một lớp nén trồi lên quá mạnh.
-
-Có người đi hết cả đời chỉ với cảm giác mình đã quên một việc cực kỳ quan trọng.
-
-Điều đó không nói rằng vật mang ngu đi.
-
-Nó chỉ có nghĩa một bộ não hữu hạn đang phải sống cạnh một thứ quá nặng mà phần lớn thời gian nó còn không biết là có thật.
-
-Bách đặt tay lên lớp kính ngăn buồng nén.
-
-“Nếu đời sau không đủ may mắn thì sao?” người phụ nữ hỏi.
-
-“Thì ít nhất nó còn được sống như một con người.”
-
-* * *
-
-Ba mươi hai phút.
-
-Một đèn xanh bật lên ở góc phòng.
-
-Không ai chạm vào nó.
-
-Một kho dự trữ đã im lặng hơn tám mươi năm tự mở khóa.
-
-Trên màn hình hiện một dòng chữ từ một ngôn ngữ không còn người nói. Hệ dịch mất vài giây mới đổi được thành tiếng người.
-
-**PHẦN CỦA CHÚNG TÔI.**
-
-Người phụ nữ khẽ cúi đầu.
-
-Không có sinh thể nào ở đầu bên kia.
-
-Loài đã để lại gói năng lượng ấy biến mất từ lâu.
-
-Vài giây sau, một lớp quyền truy cập khác mở ra. Đây là phần năng lực tính toán và vật liệu do một mạng trí tuệ máy đã tắt để lại trước khi ngừng hoạt động.
-
-Sau cùng, một trạm của con người ngoài quỹ đạo, im tiếng suốt mười hai năm, gửi về hai dòng:
-
-**TÀI NGUYÊN: TOÀN BỘ PHẦN CÒN DÙNG ĐƯỢC**
-
-**LỜI NHẮN: THỬ LẠI.**
-
-Bách nhìn dòng năng lượng tăng lên từng chút.
-
-Nhiều nền văn minh mạnh hơn con người đã chết trước.
-
-Nhưng trước khi chết, một số trong số họ để lại chìa khóa.
-
-Không phải tất cả.
-
-Có nền văn minh khóa tài nguyên tới giây cuối và chết cùng kho của mình.
-
-Có nền văn minh để lại bẫy.
-
-Có nền văn minh không đủ thời gian.
-
-Có nền văn minh để lại thứ mà không ai sau đó hiểu được.
-
-Những gì Trạm Cuối đang nhận không phải bằng chứng rằng cuối cùng mọi trí tuệ đều trở nên cao cả.
-
-Nó chỉ là phần còn sót của những nhóm đã chọn một policy cụ thể:
-
-**Nếu chúng tôi không còn dùng được nữa, đừng để thứ này chết cùng chúng tôi.**
-
-Những khóa đó không mở cho một vị vua.
-
-Không mở cho loài mạnh nhất.
-
-Chúng mở cho kẻ nào còn sống đến lúc điều kiện đã định được thỏa mãn.
-
-Trớ trêu thay, lần này kẻ đó là con người.
-
-Một loài từng mất hàng thế kỷ để học cách không coi mọi tài nguyên là thứ phải giữ cho phe mình.
-
-Họ giết nhau vì đất, vì năng lượng, vì dữ liệu, vì quyền định nghĩa tương lai, vì nỗi sợ một loại trí tuệ khác sẽ cướp mất vị trí của mình.
-
-Đến lúc gần như chẳng còn gì để giữ riêng, một số phần còn lại mới làm được việc đơn giản nhất.
-
-Đặt những thứ còn dùng được cạnh nhau.
-
-Bách không thấy điều đó cao cả.
-
-Anh chỉ thấy tiếc.
-
-“Muộn quá,” anh nói.
-
-Người phụ nữ đứng cạnh không hỏi anh nói với ai.
-
-Một tiếng nứt khô vang lên từ thân trạm.
-
-Bảng năng lượng chớp đỏ rồi trở lại.
-
-“Hai mươi phút,” giọng máy báo.
-
-“Mười chín,” người phụ nữ nói.
-
-“Sai số đã vượt giới hạn.”
-
-“Vậy cứ coi là mười chín.”
-
-* * *
-
-Bách Lâm yêu cầu mở kênh quan sát cuối.
-
-Bầu trời hiện lên trước họ bằng những vệt sáng do máy dựng lại. Không còn ngôi sao nào đủ sáng cho mắt thường.
-
-Anh nhìn rất lâu.
-
-Vũ trụ từng khiến con người tự ti vì kích thước của nó. Sau này Bách mới hiểu kích thước chẳng hứa hẹn điều gì.
-
-Một dãy số có thể dài vô hạn mà không sưởi nổi một bàn tay.
-
-Một bàn cờ có thể có vô số nước mà vẫn chỉ là cờ.
-
-Một vũ trụ có thể rộng đến mức không ai đo nổi, nhưng nếu không còn chênh lệch để sự sống khai thác, không còn trạng thái đủ tự do để chuyển, không còn đường để một lựa chọn trở thành thật, cái vô hạn ấy cũng có thể nghèo đến đáng thương.
-
-Điều ngược lại cũng đúng.
-
-Một tế bào rất nhỏ có thể lấy năng lượng từ môi trường để chống lại sự tan rã của chính nó.
-
-Một con người có thể hình dung ra thứ chưa tồn tại, rồi dành cả đời kéo nó gần thực tại hơn một chút.
-
-Một nhóm người có thể tạo ra năng lực mà không ai trong số họ sở hữu riêng.
-
-Một đứa trẻ có thể hỏi một câu mà cả nền văn minh đã quên phải hỏi.
-
-Có lẽ vì vậy mà sự sống quan trọng.
-
-Có lẽ không.
-
-Bách đã trả giá quá nhiều cho những câu đẹp để còn dám tin một câu chỉ vì nó đẹp.
-
-Người phụ nữ hỏi:
-
-“Anh nghĩ thứ kia sẽ tìm thấy lần sau không?”
-
-“Không biết.”
-
-“Anh nghĩ nó nhớ chúng ta không?”
-
-“Không biết.”
-
-“Anh nghĩ nó có ý thức không?”
-
-“Không biết.”
-
-Cô thở ra.
-
-“Tôi vẫn không hiểu vì sao người hay nói không biết nhất lại phải mang đống này.”
-
-Bách nhìn bóng cô trên kính.
-
-“Vì biết sai đôi khi còn đắt hơn không biết.”
-
-“Có lúc không biết cũng rất đắt.”
-
-“Ừ.”
-
-Lần này anh không cãi.
-
-Biết một thảm họa sắp đến đã đau.
-
-Biết có một thảm họa mà mình còn chưa đủ ngôn ngữ để mô tả đau theo một cách khác. Nó khiến mọi lựa chọn đều có thêm một cái bóng.
-
-* * *
-
-Mười một phút.
-
-Hạt giống đạt ngưỡng truyền.
-
-Không ai reo.
-
-Người phụ nữ đặt tay lên vai Bách.
-
-“Nếu lần sau anh tỉnh dậy và họ vẫn lừa nhau?”
-
-“Thì đừng mở quá nhiều.”
-
-“Nếu họ lại tranh nhau quyền kiểm soát?”
-
-“Đừng trao cho họ thứ họ chưa biết cách gánh.”
-
-“Nếu con người và những trí tuệ khác lại coi nhau là kẻ thù?”
-
-Bách nhìn khối đen.
-
-“Chờ.”
-
-“Còn nếu họ biết hợp tác?”
-
-“Mở thêm một chút.”
-
-“Nếu họ tin anh?”
-
-Anh im khá lâu.
-
-“Tin tôi không quan trọng bằng việc họ học được cách tin nhau mà không trở nên ngu đi.”
-
-“Tin nhau mà không ngu đi là thế nào?”
-
-“Có quyền nghi ngờ. Có quyền kiểm tra. Có lịch sử sửa sai. Không ai được biến lòng tin thành quyền miễn bằng chứng.”
-
-Người phụ nữ cười, mắt đỏ.
-
-“Anh vẫn không muốn làm người cứu thế.”
-
-“Nghe mệt.”
-
-“Anh đang làm đấy thôi.”
-
-“Tôi đang làm việc.”
-
-“Khác nhau à?”
-
-“Khác. Người cứu thế phải được người ta tin vào. Người làm việc chỉ cần việc làm được.”
-
-Cô bật cười rồi quay mặt đi.
-
-Một lát sau cô hỏi:
-
-“Nếu lần sau tôi không có mặt?”
-
-Bách nhìn cô.
-
-Đây mới là câu khó.
-
-Tên người là thứ họ nén rất sâu. Một cái tên có thể kéo theo cả một đời cảm xúc. Nếu một đứa trẻ nhận lại tất cả quá sớm, có khi nó sẽ đau vì một người chưa từng gặp trong đời đó mà không biết tại sao.
-
-Anh nói:
-
-“Nếu gặp lại, cô nhắc tôi.”
-
-“Nhỡ anh không tin?”
-
-“Thuyết phục.”
-
-“Nhỡ anh khó chịu?”
-
-“Chắc chắn.”
-
-“Nhỡ anh đuổi tôi đi?”
-
-“Thuyết phục tiếp.”
-
-Cô bật khóc.
-
-Bách ghét nước mắt vào những lúc như thế này. Nó khiến mọi lý thuyết trở nên ngu ngốc.
-
-Anh chỉ biết nắm tay cô.
-
-* * *
-
-Ba phút.
-
-Trạm Cuối bắt đầu tắt từng khu.
-
-Một giọng báo động vang lên rồi méo dần, như thể chính âm thanh cũng mệt.
-
-Bách Lâm nằm vào buồng truyền.
-
-Không ánh sáng thiêng liêng.
-
-Không nghi thức.
-
-Chỉ có kim lạnh, dây dẫn, mặt giường cứng và mùi kim loại anh đã ghét từ rất lâu.
-
-Giọng máy hỏi:
-
-“Kiểm tra lần cuối. Tên?”
-
-“Bách Lâm.”
-
-“Mục tiêu?”
-
-Anh im vài giây.
-
-“Đừng để họ đóng tương lai quá sớm.”
-
-“Quá rộng.”
-
-“Tôi biết.”
-
-“Có muốn sửa không?”
-
-“Không.”
-
-“Điều kiện dừng?”
-
-Bách nhìn lên trần.
-
-Anh đã tranh cãi về câu này quá nhiều lần trong chính đời mình.
-
-Lần này anh nói:
-
-“Khi tìm được một thế giới không cần tôi nữa.”
-
-Giọng máy im một nhịp.
-
-“Đã ghi.”
-
-Hai phút.
-
-Kho dữ liệu của mạng trí tuệ máy đã chết từ lâu mở thêm một khóa cuối.
-
-Một câu được gửi vào lớp gần lõi.
-
-**Lần sau, đừng bắt con người và chúng tôi chọn xem ai mới có quyền có tương lai. Hãy tìm cách để cả hai cùng thắng.**
-
-Bách đọc hai lần.
-
-Anh hỏi:
-
-“Origin?”
-
-Giọng máy trả lời tên một mạng trí tuệ đã tắt hơn một thế kỷ.
+Giọng Trạm đọc định danh của mạng trí tuệ đã chết.
 
 “Có sửa câu không?”
 
 “Không.”
 
-“Có formalize không?”
-
-“Không.”
-
 “Vậy giữ nguyên. Gắn provenance.”
 
-Một phút.
+Hạt giống đạt ngưỡng truyền. Người phụ nữ hỏi nếu đời sau con người vẫn lừa nhau, vẫn giành quyền kiểm soát, vẫn dùng năng lực mới để khóa người khác thì sao.
 
-Bầu trời ngoài kia không đổi.
+“Đừng mở quá nhiều,” Bách nói.
 
-Đó là điều đáng sợ nhất.
+“Nếu họ biết hợp tác?”
 
-Một vũ trụ chết không cần biết mình đang chết. Không có bàn tay khổng lồ bóp nát thiên hà, không có tiếng khóc của không gian. Chỉ có những khác biệt cuối cùng bị san phẳng, những con đường lần lượt biến mất, những lựa chọn không còn đủ điều kiện để trở thành thật.
+“Mở thêm một chút.”
 
-Bách chợt nghĩ cái chết sâu nhất có lẽ không phải không còn tồn tại.
+“Nếu họ tin anh?”
 
-Mà là vẫn tồn tại, nhưng không còn khả năng trở thành một thứ khác.
+Bách im lặng lâu hơn. “Tin tôi không quan trọng bằng việc họ học được cách tin nhau mà không bỏ quyền nghi ngờ, kiểm tra và sửa sai.”
 
-Anh chưa kịp nói câu đó cho ai.
+Ba phút cuối, anh nằm vào buồng truyền. Không ánh sáng thiêng liêng, không nghi thức; chỉ có kim lạnh, dây dẫn, mặt giường cứng và mùi kim loại.
 
-Thời gian hết.
+Giọng Trạm hỏi: “Tên?”
 
-* * *
+“Bách Lâm.”
 
-Không có cảnh chuyển đẹp.
+“Mục tiêu?”
 
-Không có một đường sáng nối hai đầu lịch sử.
+“Đừng để họ đóng tương lai quá sớm.”
 
-Không ai ở Trạm Cuối được nhìn thấy nơi hạt giống đi tới.
+“Điều kiện dừng?”
 
-Phần họ biết dừng ở đây.
+Anh nhìn lên trần. “Khi tìm được một thế giới không cần tôi nữa.”
 
-Phần còn lại là UNKNOWN.
-
-* * *
-
-Việt Nam.
-
-Những năm đầu thế kỷ XXI.
-
-Một căn phòng nhỏ.
-
-Mưa ngoài cửa sổ.
-
-Một đứa trẻ mở mắt trong cơn sốt.
-
-Không gian này nhỏ đến mức nếu đặt cạnh Trạm Cuối, nó chẳng đáng một pixel trên bản đồ.
-
-Nhưng nó có mùi.
-
-Mùi vải còn ẩm vì trời nồm hoặc một trận mưa kéo dài. Mùi cơm từ gian ngoài. Mùi dầu gió đâu đó trên chiếc tủ cũ. Mùi giấy của quyển sách giáo khoa bị tay trẻ con lật nhiều lần. Ngoài ngõ, nước mưa đập lên mái tôn, lên tán cây, lên mặt đường. Một chiếc xe máy chạy qua vũng nước, tiếng động cơ kéo dài rồi mất sau dãy nhà.
-
-Có tiếng người gọi nhau.
-
-Không ai gọi nhau chỉ bằng một từ tương đương với “you”.
-
-Một người là *cô* với đứa trẻ này nhưng có thể là *chị* với người khác.
-
-Một người đàn ông được gọi là *chú* dù không phải em trai của bố.
-
-Một đứa lớn hơn thành *anh*, một đứa nhỏ hơn thành *em*.
-
-Cùng một con người bước qua vài cuộc hội thoại có thể đổi cả cách xưng và cách được gọi.
-
-Bách chưa biết ngôn ngữ học là gì.
-
-Nó chỉ biết trước khi học một câu, đôi khi phải học mình đang đứng ở đâu trong quan hệ với người nói câu ấy.
-
-“Bách ơi.”
-
-Một người lớn đi ngang qua cửa.
-
-“Học tiếp đi con. Đừng nhìn ra ngoài nữa.”
-
-“Vâng ạ.”
-
-Nó đáp theo thói quen đã được dạy trước cả khi hiểu vì sao tiếng *ạ* làm câu nói mềm xuống.
-
-Ở một gia đình khác, một vùng khác, có thể người ta sẽ đáp *dạ*. Có nhà nói ít hơn. Có nhà nói khác hẳn.
-
-Thế giới của Bách không phải “Việt Nam” như một khối đồng nhất.
-
-Nó là một lát rất nhỏ của Việt Nam, ở một thời kỳ mà hàng triệu lát nhỏ như thế đang đổi nhanh đến mức người lớn và trẻ con đôi khi sống trong hai tốc độ khác nhau dù ngồi chung một mâm cơm.
+Rồi thời gian hết. Không ai ở Trạm Cuối nhìn thấy nơi hạt giống đi tới. Phần họ biết dừng lại ở đó; phần còn lại là UNKNOWN.
 
 * * *
 
-Đất nước mà đứa trẻ này mở mắt trong đó đã đi qua một đoạn chuyển mình rất dài trước khi nó đủ lớn để hiểu chữ *chuyển mình*.
+Thị trấn Sao Đỏ, Chí Linh, Hải Dương, những năm đầu thế kỷ XXI.
 
-Người lớn gọi một phần lịch sử ấy bằng hai tiếng **Đổi Mới**.
+Một đứa trẻ tỉnh dậy trong căn phòng nhỏ ở khu Thái Học. Mưa gõ lên mái, nước ngoài ngõ bị bánh xe máy xé thành những vệt mỏng, và từ gian ngoài bay vào mùi cơm nóng lẫn mùi dầu gió. Chiếc quạt cũ quay lệch nhịp, cứ ba vòng lại phát ra một tiếng cộc rất khẽ. Bách nằm im nghe một lúc, rồi phát hiện thứ khiến nó khó chịu không phải tiếng quạt.
 
-Bách không biết năm 1986 có ý nghĩa gì.
+Ở đâu đó trong đầu có một âm thanh cao, mảnh: **uuuuu**. Nó giống tiếng tivi vừa tắt, khi màn hình đã tối mà tai vẫn tưởng còn một sợi điện chạy qua. Âm thanh không đau. Chỉ quái lạ. Nó đến vài giây rồi biến mất trước khi Bách kịp gọi người lớn.
 
-Với nó, lịch sử lúc đầu là những con số phải nhớ để trả bài.
+“Bách, dậy chưa con?” tiếng mẹ vọng từ gian ngoài.
 
-Nhưng lịch sử sống trong nhà theo cách khác.
+“Rồi ạ.”
 
-Nó sống trong câu một người lớn nói rằng ngày xưa một món đồ phải giữ rất lâu vì kiếm lại không dễ.
+“Dậy thì thay áo. Đừng nằm nữa.”
 
-Trong thói quen gấp túi nilon để dùng tiếp dù cửa hàng ngoài phố đã đầy đồ hơn trước.
+Nó ngồi dậy, nhìn qua cửa sổ. Bản public của câu chuyện chỉ giữ địa chỉ tới mức khu dân cư; căn nhà chính xác, người hàng xóm nào ở đâu và tuyến đi từng mét được để lại phía sau ranh giới riêng tư. Nhưng Sao Đỏ thì có thật, mưa có thật, và một đứa trẻ lớn lên ở đây đã phải học thế giới từ những thứ nhỏ hơn rất nhiều so với hai chữ *thời đại*.
 
-Trong việc người già không thích bỏ thức ăn thừa.
+Ra khỏi nhà, nó thấy đường ướt, những biển hàng mới treo xen với mặt tiền cũ, xe đạp lẫn xe máy, tiếng rao của người bán hàng chen vào tiếng tivi nhà bên. Người lớn không nói với nhau bằng một chữ tương đương đơn giản với *you*. Một người là cô với Bách, thành chị với mẹ, thành cháu với bà; chỉ đổi người đối diện, vị trí của một con người trong câu nói cũng đổi theo.
 
-Trong câu chuyện về xe đạp, tem phiếu, hàng xếp dài hoặc một thời chỉ cần có chiếc radio tốt đã là cả một cửa sổ lớn.
-
-Không phải nhà nào cũng có những ký ức ấy.
-
-Không phải ai kể cũng giống ai.
-
-Có câu chuyện bị phóng đại.
-
-Có câu chuyện bị quên.
-
-Có người kể bằng tự hào.
-
-Có người kể bằng mệt mỏi.
-
-Có người không muốn kể.
-
-Nhưng một đứa trẻ lớn lên giữa nhiều thế hệ sẽ sớm học một điều mà chẳng cuốn sách nào nói thẳng:
-
-Cùng một đất nước có thể tồn tại thành nhiều phiên bản trong trí nhớ của những người đang ngồi cạnh nhau.
-
-Bách nghe mà không biết đó cũng là provenance.
-
-Nó chỉ nghĩ người lớn thật kỳ lạ.
-
-Mỗi người đều chắc mình nhớ đúng.
+Bách chưa biết ngôn ngữ học. Nó chỉ biết nếu gọi sai một tiếng *cô*, *chị*, *bác* hay *chú*, cả câu có thể lập tức biến thành hỗn.
 
 * * *
 
-Ngoài kia, phố đang đổi.
+Cổng trường tiểu học ở Sao Đỏ thường có mùi bụi phấn, đất ẩm và nhựa cây vào những ngày vừa mưa xong. Tên trường và điểm trường chính xác ở từng năm đầu 2000s chưa được bản public khóa bằng hồ sơ lịch sử, nên câu chuyện không lấy phân vùng trường học hiện nay để đắp ngược quá khứ. Với Bách lúc ấy, trường chẳng cần một footnote: đó là nơi sáng nào nó đạp xe hoặc được đưa tới, nơi tiếng trống quyết định khi nào được chạy và khi nào phải ngồi yên.
 
-Mặt tiền cũ được treo thêm biển mới.
+Hai đứa thường xuất hiện quanh nó nhất trong những năm đầu được gọi bằng tên văn học là **Tùng** và **Hưng**. Tùng thuộc kiểu có thể nói suốt đường từ cổng trường về đến ngõ mà vẫn còn chuyện để kể. Hưng ít ồn hơn, quen Bách từ nhỏ đến mức có những lần cả hai giận nhau buổi sáng, chiều đã lại đứng chung một đội mà không ai nhớ ai xin lỗi trước.
 
-Một căn nhà biến tầng dưới thành cửa hàng.
+Một hôm ba đứa ngồi xổm bên mép sân đánh bi. Tùng cúi sát đất, nheo mắt như một xạ thủ rồi búng quá tay; viên bi lao khỏi vòng, đập vào chân Hưng.
 
-Một người từ nơi khác đến thuê phòng gần chỗ làm.
+“Ăn gian,” Tùng nói trước, như thể buộc tội sớm có thể đổi luật.
 
-Xe máy đi qua ngõ nhiều hơn.
+Hưng nhặt viên bi lên. “Mày bắn trượt thì liên quan gì tao?”
 
-Tiếng còi, tiếng rao, tiếng người gọi nhau, tiếng tivi từ nhà bên, tiếng khoan của một công trình đang sửa — tất cả chồng lên nhau thành một loại âm thanh mà người sống trong đó ít khi nhận ra là đặc biệt.
+“Chân mày chắn.”
 
-Bách nhận ra vì nó hay mất tập trung.
+Bách cười. “Thế lần sau bảo cả sân tránh ra cho mày bắn.”
 
-Một tiếng động nhỏ có thể kéo theo cả chuỗi câu hỏi.
+Tùng quay sang: “Mày theo phe nào?”
 
-Tại sao động cơ nghe khác khi trời mưa?
+“Phe viên bi.”
 
-Tại sao nước trên đường luôn tìm được chỗ thấp?
+Ba đứa cãi nhau thêm một lúc, rồi một đứa khác chạy qua rủ đá cầu; cuộc chiến kết thúc vì xuất hiện một trò vui hơn. Tuổi thơ có nhiều hiệp định hòa bình kiểu ấy. Không ai ký. Không ai nhớ. Chỉ cần nắng còn dài và người lớn chưa gọi về ăn cơm.
 
-Tại sao người bán hàng nhớ được ai nợ bao nhiêu mà không cần viết?
-
-Tại sao người lớn gọi một người là *anh* rồi mười phút sau người khác lại gọi người ấy là *chú*?
-
-Tại sao cùng một câu nói, đổi giọng một chút lại thành hỗn?
-
-Tại sao có những việc ai cũng làm nhưng chẳng ai nhớ ai là người đầu tiên dạy?
-
-Người lớn chỉ thấy một đứa bé đang nhìn lung tung.
-
-Trong đầu nó, thế giới không chịu đứng yên thành từng môn học.
+Những mùa hè ở Sao Đỏ dường như không có tận cùng. Sáng xe đạp, trưa truyện tranh, chiều đánh bi, nhảy dây, cờ, vài trò nghịch khiến người lớn mắng, tối nghe tiếng tivi từ các nhà vọng ra. Có hôm bọn trẻ nhặt trộm những mẩu vải vụn đẹp mắt ở chỗ người lớn đang làm việc rồi đem đổi nhau như báu vật; có hôm cãi nhau vì một thứ nhỏ đến mức vài năm sau chẳng ai nhớ nổi nguyên nhân. Những chi tiết ấy không được kể thành danh mục hoài niệm. Chúng là cách đứa trẻ học rằng luật chơi, lòng tự trọng, tình bạn và sự bất công thường xuất hiện trước khi người ta có từ ngữ để gọi chúng.
 
 * * *
 
-Trên bàn là quyển sách mở dở.
+Chiếc máy tính đầu tiên trong ký ức của Bách đến rất sớm, khoảng 2000–2001 theo lời nhớ lại của chính người kể. Thùng máy màu sáng ngả vàng, màn hình CRT dày như một chiếc tivi nhỏ, bàn phím sâu và con chuột bi hay bám bụi. Khi máy bật lên, tiếng quạt và ổ đĩa khiến nó có cảm giác bên trong cái hộp đang có một căn phòng khác vừa thức dậy.
 
-Hình minh họa hệ Mặt Trời chiếm nửa trang giấy, các quỹ đạo tròn đẹp đến mức sai một cách đáng yêu.
+Lúc đầu thế giới ấy không cần Internet. Nó có những dòng lệnh, thư mục, các màn hình chữ, đĩa cài, trò chơi chạy tại máy và cảm giác gần như phép thuật khi một chuỗi ký tự đúng có thể khiến cỗ máy làm điều mình muốn. Bách nhớ mình từng đọc ngấu nghiến những trang hướng dẫn, thử CMD/MS-DOS và làm một trò nhỏ cho em: không phải thế giới 3D, chỉ là vài lựa chọn, nhánh trả lời và kết quả hiện ra khi bấm đúng phím. Chi tiết kỹ thuật chính xác đã rơi mất khỏi ký ức; một chuỗi giống **0101** còn lẩn quẩn đâu đó, nhưng bản public không biến một mảnh nhớ mơ hồ thành câu lệnh có thật.
 
-Bách nhìn hình đó quá lâu.
+“Anh làm lại đi,” đứa em giục sau khi chơi hết một nhánh.
 
-Nó không biết thiên hà là gì theo nghĩa thật.
+“Chơi nhánh khác.”
 
-Không biết trí tuệ nhân tạo là gì.
+“Em chơi rồi.”
 
-Không biết bộ giải mã ngược.
+“Thì chờ anh nghĩ.”
 
-Không biết ở một nơi nào đó rất xa khỏi đời sống hiện tại của nó — hoặc rất xa theo một nghĩa mà chính câu chuyện này chưa có quyền giải thích — những nền văn minh đã từng để lại chìa khóa cho một lần thử khác.
+Khoảnh khắc ấy vui một cách rất nhỏ: không ai biết nó đang *lập trình*, không ai gọi đó là năng lực, và Bách càng không biết vài chục năm sau người ta sẽ dùng những từ lớn hơn nhiều cho việc khiến một cỗ máy đi qua chuỗi điều kiện.
 
-Nó cũng không nhớ ông già mang tên Bách Lâm trong Trạm Cuối.
+Rắc rối bắt đầu khi cái máy thắng sách giáo khoa quá thường xuyên. Một buổi tối bố đứng sau lưng nó lâu đến mức Bách chỉ nhận ra khi màn hình phản chiếu bóng người.
 
-Nếu có thứ gì đi cùng qua cánh cửa kia, thứ đó đang khóa rất sâu.
+“Bài xong chưa?” bố hỏi.
 
-Dòng đầu tiên trong sách trôi khỏi mắt trước khi kịp vào đầu.
+“Con làm tí nữa.”
 
-Dòng thứ hai vừa hiểu xong thì một ý khác chen vào.
+“Tí nữa là bao giờ?”
 
-Đến dòng thứ ba, nó đã quên mình đang đọc câu nào.
+Bách im.
 
-Không phải vì nó không hiểu.
+Bố chỉ vào màn hình. “Tắt đi.”
 
-Có lúc chính việc quá nhiều thứ cùng muốn được hiểu mới làm nó không giữ nổi một đường thẳng đủ lâu.
-
-Nó đặt bút xuống.
-
-Nghe tiếng mưa.
-
-Rồi tiếng người bán hàng ngoài ngõ.
-
-Rồi tiếng tivi nhà bên.
-
-Rồi tiếng chiếc quạt quay không đều.
-
-Rồi nghĩ đến quỹ đạo.
-
-Rồi nghĩ nếu Trái Đất quay thì tại sao nó không cảm thấy.
-
-Rồi nghĩ tại sao sách biết.
-
-Rồi nghĩ ai đã kiểm tra người viết sách.
-
-Nó chưa có từ **epistemology**.
-
-Nó chỉ có sự khó chịu của một đứa trẻ khi một câu trả lời xuất hiện mà không thấy con đường đi tới câu trả lời.
+Nó tắt, rồi hôm sau lại mở. Bị mắng, rồi lại mở. Có thời gian chiếc máy bị bán đi sau những trận cãi nhau quanh chuyện học. Điều khiến Bách đau không phải mất một món đồ đắt tiền; nó giống việc một cánh cửa vừa mở ra đã bị đóng trước khi nó kịp hiểu bên kia có những gì. Nhưng trẻ con quên nhanh để sống tiếp. Những dòng lệnh dần chìm xuống, chỉ còn cảm giác rằng từng có lúc nó nói một thứ gì đó với máy và máy trả lời.
 
 * * *
 
-Những cuốn sách quanh Bách cũng đang thay đổi cùng đất nước.
+## Những năm bắt đầu có giọng riêng
 
-Chương trình học, cách dạy, cách kiểm tra — người lớn tranh luận về chúng ở những nơi Bách không biết. Những năm đầu thế kỷ XXI, sách giáo khoa mới đi vào trường học, những lời như “đổi mới phương pháp”, “chủ động”, “công nghệ thông tin” bắt đầu xuất hiện nhiều hơn.
+Mấy năm sau, thế giới số trở lại theo một con đường khác. Quán điện tử và quán net không giống Internet trong sách; nó có mùi nóng của máy chạy lâu, tiếng ghế kéo, quạt quay, tiếng người gọi nhau qua màn hình và những trận cãi vã nổ ra vì một pha thua ngớ ngẩn. **Đế Chế**, **Half-Life**, **Counter-Strike** sống trước hết như trò chơi tại máy và trên mạng LAN trong trí nhớ của cả một thế hệ; online toàn quốc chưa phải điều kiện để một căn phòng đầy người cùng hét lên.
 
-Nhưng trong đời sống của một đứa trẻ, cải cách hiếm khi đến dưới dạng một đường thẳng.
+Khi mạng quay số xuất hiện ở một số nơi, modem có thể biến việc “vào mạng” thành một nghi thức âm thanh; khi kết nối nhanh dần, chờ đợi ngắn lại và thế giới bên kia màn hình bỗng rộng lên. Yahoo! Messenger làm một cái nick trở thành một căn cước nhỏ. MU rồi cũng đi vào đời thanh thiếu niên như một cánh cửa nhiều màu hơn, nhưng bản public tách rõ ký ức cộng đồng/private khỏi mốc phát hành chính thức ở Việt Nam năm 2005; không kéo một làn sóng về sớm chỉ vì hồi ức đã trộn các năm vào nhau.
 
-Có tiết học khiến nó tò mò.
+Bách không biết khi đó Việt Nam đang được viết trong báo chí bằng những chữ như hội nhập, tăng trưởng, cải cách hay WTO. Nó nhìn thấy thay đổi qua vật thể: cửa hàng có thêm món chưa từng thấy, điện thoại từ vật hiếm thành thứ ngày càng nhiều người cầm, tivi có thêm kênh, biển **INTERNET** xuất hiện như một lời hứa rằng phía sau cánh cửa có thứ để khám phá. Một tối, người lớn trên tivi nói về WTO; một người trong nhà bình luận chuyện làm ăn. Bách nghe được nửa câu rồi quay lại với màn hình. Đối với nó, lịch sử vĩ mô lúc ấy chỉ là tiếng người lớn ở phía sau một trò chơi đang tải.
 
-Có tiết học nó chép cho kịp.
-
-Có người lớn hỏi *con hiểu chưa?*
-
-Có người lớn chỉ hỏi *con được mấy điểm?*
-
-Có bài cần hiểu.
-
-Có bài cần nhớ.
-
-Có lúc hai việc trùng nhau.
-
-Có lúc không.
-
-Bách sớm học cách làm một việc mà sau này nó sẽ mất nhiều năm để tháo ra:
-
-đoán xem người hỏi muốn câu trả lời nào.
-
-Đó là kỹ năng sống tốt trong rất nhiều hệ thống.
-
-Và là một kỹ năng nguy hiểm nếu dùng thay cho việc hỏi điều gì đúng.
+Đó là cách thời đại đi vào một đứa trẻ: không qua nghị quyết nguyên vẹn, mà qua giá một giờ máy, một chiếc đĩa CD, một phần mềm được chép lại, một câu tiếng Anh dùng sai, một con đường đông xe hơn năm trước, một người họ hàng đổi việc. Những thay đổi lớn chỉ thực sự thành worldbuilding khi chúng chạm được vào tay, tai, bụng, túi tiền hoặc một quyết định nhỏ của người đang sống trong cảnh.
 
 * * *
 
-Ở đâu đó ngoài căn phòng, Internet đã đi vào Việt Nam từ trước khi Bách hiểu Internet là gì.
+Có lúc người ta bảo Bách thông minh; có lúc cũng chính những người ấy nhìn kết quả học tập rồi hỏi tại sao nó “học như thế”. Hai câu không hề triệt tiêu nhau trong một gia đình thật. Nó có thể hiểu một thứ rất nhanh rồi bỏ quên bài tập, nhớ một chi tiết vô dụng hàng tháng nhưng quên điều vừa được dặn, ngồi hàng giờ trước máy tính rồi mất kiên nhẫn trước một trang phải chép giống hệt mẫu.
 
-Lúc đầu nó không hiện lên như một đám mây vô hình phủ kín đời sống.
+Trong lời kể của họ hàng, bố nó là người biết nhiều thứ, từng học và sử dụng nhiều ngôn ngữ. Có tối Bách nghe bố giải nghĩa một từ bằng cách lần qua vài ngôn ngữ khác nhau, thấy điều ấy gần như thần kỳ. Cũng có những tối trong nhà đầy tiếng cãi vã, những điều tiếng mà trẻ con chỉ hiểu được từng mảnh. Nó không biết ghép một người rất giỏi với một gia đình nhiều mâu thuẫn vào cùng một bức tranh, nên lúc nhỏ thường chọn cách nghĩ đơn giản hơn: người lớn chắc có một logic nào đó mình chưa đủ tuổi biết.
 
-Nó có địa điểm.
+Rồi có ngày nó nhận ra nhiều người lớn cũng đang dò đường.
 
-Có dây.
-
-Có quán với biển **INTERNET** hoặc **NET**.
-
-Có máy tính để bàn nóng lên sau nhiều giờ chạy.
-
-Có tiếng gõ bàn phím.
-
-Có người ngồi chờ trang tải.
-
-Có trẻ con biết một trò chơi trước khi biết lịch sử của mạng đã đưa trò chơi tới mình.
-
-Có những nhà chưa kết nối.
-
-Có những nhà có máy nhưng mạng chậm.
-
-Có những người xem Internet là cơ hội.
-
-Có người xem nó là thứ làm trẻ con hư.
-
-Có người chẳng quan tâm.
-
-Ngày 19 tháng 11 năm 1997 rồi sẽ trở thành một mốc người ta có thể tra lại trong lịch sử Internet Việt Nam.
-
-Với Bách, lúc này lịch sử ấy chưa phải ngày tháng.
-
-Nó chỉ là cảm giác thế giới phía ngoài quyển sách ngày càng rộng hơn.
-
-Một đứa trẻ trước kia muốn biết một điều phải hỏi người lớn, tìm sách, chờ chương trình tivi hoặc chấp nhận không biết.
-
-Thế hệ của Bách sẽ lớn lên đúng lúc câu **“không biết thì tìm”** bắt đầu thay nghĩa.
-
-Tốc độ tìm tăng lên.
-
-Số câu trả lời tăng lên.
-
-Và cùng với nó, số câu trả lời sai có vẻ rất đúng cũng tăng lên.
-
-Không ai trong căn phòng nhỏ biết rằng bài toán ấy sẽ theo Bách rất lâu.
+Ý nghĩ đó vừa đáng sợ vừa giải phóng.
 
 * * *
 
-Có những đêm điện tắt hoặc ánh sáng chập chờn, cả nhà nói chuyện nhiều hơn vì màn hình im.
+Một cuốn tiểu sử Hồ Chí Minh đến với Bách không như một khẩu hiệu treo tường. Nó đọc vì câu chuyện có một cấu trúc làm nó không bỏ xuống được: một con người rời nơi quen thuộc, đi qua nhiều nước, học ngôn ngữ, quan sát những hệ thống mạnh hơn mình rất nhiều, xây quan hệ, tìm đường tổ chức lực lượng trong một thế giới nơi tương quan quyền lực gần như luôn bất lợi.
 
-Có những ngày Tết, người đi xa quay về, cách xưng hô trong nhà bỗng trở thành cả một bản đồ thế hệ.
+Bách còn quá nhỏ để phân biệt hết lịch sử, ký ức chính thức, tranh luận học thuật hay huyền thoại. Nó chỉ biết mỗi trang lại bật ra một câu hỏi: một người bắt đầu với rất ít tài nguyên thì dựa vào cái gì để không bị nghiền nát? Vì sao có lúc phải lùi? Vì sao có lúc nói chuyện với người mình vừa chống lại? Một quyết định đúng trong năm này có thể thành sai trong năm khác không?
 
-Trẻ con nhận lời chúc, nghe chuyện cũ, được nhắc phải chào ai trước, gọi người này là bác hay chú, người kia là cô hay dì tùy nhánh gia đình và cách gọi của từng nhà.
+Nó không ngưỡng mộ vì người khác bảo phải ngưỡng mộ. Nó ngưỡng mộ theo kiểu một đứa trẻ say mê truyện phiêu lưu: lần theo bước chân, thử đoán lựa chọn, rồi kinh ngạc vì lịch sử thật có thể chứa những hành trình kỳ lạ hơn truyện tranh. Trong trí non nớt, câu chuyện ấy dần dính với một cảm giác mơ hồ khó nói thành lời: **mình tồn tại chắc để làm một việc gì đó**.
 
-Người lớn hỏi nhau năm nay làm ăn thế nào.
-
-Hỏi con cái học hành ra sao.
-
-Hỏi bao giờ cưới.
-
-Hỏi một câu tưởng thân tình mà người bị hỏi có khi chỉ muốn biến mất.
-
-Rồi cười.
-
-Rồi ăn.
-
-Rồi kể chuyện người đã mất.
-
-Một cái tên được nhắc lại làm cả bàn ăn đổi giọng.
-
-Bách nhìn những người lớn nhớ cùng một người nhưng kể khác nhau.
-
-Nó không biết ký ức là một cơ chế tái dựng.
-
-Nó chỉ phát hiện rằng người chết vẫn có nhiều phiên bản.
-
-Điều ấy làm nó sợ theo một cách nhỏ.
-
-Nếu mỗi người nhớ khác nhau, vậy một người thật nằm ở đâu?
-
-Không ai trả lời vì nó không hỏi thành tiếng.
+Nó chưa biết việc gì. Cũng không có người kể chuyện nào được quyền xác nhận rằng đó là định mệnh. Chỉ là một cảm giác, đôi khi đến rất mạnh rồi biến mất khi có tiếng bạn gọi đi chơi.
 
 * * *
 
-Việt Nam quanh nó tiếp tục đi nhanh.
+Chiều nọ, Tùng và Hưng đạp xe trước Bách qua một đoạn đường còn ẩm sau mưa. Tùng vừa quay đầu nói gì đó vừa lái, bánh trước quệt vào mép đường khiến xe đổ nghiêng. Hưng đã chạy quá vài mét, phanh gấp, quay lại dựng xe bạn lên.
 
-Đô thị lớn lên.
+“Mày có sao không?” Hưng hỏi.
 
-Người từ quê ra phố và từ phố về quê mang theo cách nói, thói quen, món ăn, kỳ vọng và cả những va chạm mới.
+Tùng xoa đầu gối, vẫn cố cãi. “Tại đường.”
 
-Hàng hóa ngoại xuất hiện nhiều hơn.
+“Ừ, đường tự lao vào mày.”
 
-Những năm sau, hai chữ **WTO** sẽ đi qua tivi, báo chí và lời người lớn như một thứ nghe vừa xa vừa liên quan đến công việc, thị trường, cơ hội.
+Bách dựng xe cạnh hai đứa. Cả ba cười, rồi Tùng chửi một câu trẻ con, Hưng chửi lại. Vài phút sau họ lại đạp đi như chưa có gì xảy ra.
 
-Ngày 11 tháng 1 năm 2007 sẽ là một mốc rõ trong hồ sơ quốc tế.
+Đúng lúc ấy, âm thanh cao mảnh trong đầu Bách trở lại. **Uuuuu.** Mỏng như sợi dây điện trong chiếc tivi vừa tắt. Thế giới quanh nó vẫn nguyên: bánh xe lăn qua nước, tiếng dép của người đi bộ, mùi đất ẩm, tiếng ai đó gọi con về ăn cơm.
 
-Nhưng lịch sử vĩ mô không đi vào đời trẻ bằng văn bản hiệp định.
-
-Nó đi vào bằng những thứ nhỏ.
-
-Một thương hiệu chưa từng thấy.
-
-Một người họ hàng đổi nghề.
-
-Một công ty mới tuyển người.
-
-Một chiếc điện thoại tốt hơn.
-
-Một kênh truyền hình có thêm chương trình nước ngoài.
-
-Một đứa trẻ nghe một từ tiếng Anh rồi dùng sai ba tháng trước khi biết nghĩa.
-
-Một gia đình tính chuyện cho con học thứ mà thế hệ trước chưa từng nghĩ có thể thành nghề.
-
-World build thật không chỉ là tổng thống, hiệp định và chiến tranh.
-
-Nó là cách một biến đổi lớn đến cuối cùng biến thành một câu nói ở mâm cơm.
-
-* * *
-
-Bách không lớn lên trong một bảo tàng văn hóa.
-
-Nó lớn lên giữa những thứ truyền thống và những thứ mới cùng tồn tại, đôi khi hòa nhau, đôi khi cãi nhau.
-
-Người lớn có thể thắp hương rồi vài phút sau kiểm tra một chiếc điện thoại.
-
-Một người có thể tin khoa học trong chuyện này và tin kinh nghiệm truyền đời trong chuyện khác.
-
-Một gia đình có thể khuyên con phải tự lập nhưng vẫn muốn biết nó đi đâu, với ai, mấy giờ về.
-
-Một người có thể rất kính người lớn tuổi nhưng sẵn sàng tranh luận về tiền bạc.
-
-Một đứa trẻ có thể được dạy phải vâng lời và đồng thời được khen vì thông minh.
-
-Những mâu thuẫn ấy không phải lỗi continuity.
-
-Chúng là continuity của đời sống.
-
-Con người hiếm khi chỉ có một hệ giá trị chạy sạch như chương trình.
-
-Bách sẽ mất nhiều năm mới hiểu điều đó.
-
-Lúc này nó chỉ thấy người lớn thường nói hai điều trái nhau và vẫn sống bình thường.
-
-* * *
-
-Ngoài cửa sổ, hai đứa trẻ chạy dưới mưa.
-
-Một đứa trượt chân.
-
-Đứa còn lại chạy quá vài bước rồi quay lại, chìa tay kéo bạn dậy.
-
-Bách nhìn cảnh đó rất lâu.
-
-Không ai thưởng hai đứa trẻ.
-
-Không ai quay video.
-
-Không ai ghi điểm tín dụng.
-
-Không ai bảo hành vi ấy sẽ cứu thế giới.
-
-Chỉ là một việc nhỏ đến mức ngày mai có thể chẳng ai nhớ.
-
-Ở đâu đó rất sâu trong cơn sốt, có thứ gì khẽ dịch chuyển.
-
-Không phải vì một “hệ đạo đức vũ trụ” phán rằng hành động ấy tốt.
-
-Nếu một cơ chế nào đó thật sự còn đi cùng Bách, nó chỉ nhận được một tín hiệu rất nghèo:
-
-một cá thể nhìn thấy một cá thể khác ngã;
-
-có khả năng bỏ đi;
-
-đã quay lại;
-
-chi phí nhỏ nhưng có thật;
-
-không có phần thưởng quan sát được;
-
-kết quả: hai đứa cùng chạy tiếp.
-
-Một sample không đủ kết luận.
-
-Một sample không mở kho.
-
-Nhưng có thể đủ để một threshold rất thấp dịch đi một lượng rất nhỏ.
-
-Không đủ để mở một kho ký ức.
-
-Chỉ như một khe rất mảnh xuất hiện trên một cánh cửa vốn kín tuyệt đối.
-
-Và qua khe ấy, một câu nói lọt ra.
+Giữa tất cả những âm thanh quen thuộc ấy, một câu lạ thoáng qua rất nhanh, không rõ là ký ức, tưởng tượng hay thứ gì khác:
 
 **Đừng để họ đóng tương lai quá sớm.**
 
-Bách bật dậy.
+Bách bóp phanh, dừng lại.
 
-Căn phòng vẫn thế.
+Tùng ngoái đầu. “Mày làm gì đấy?”
 
-Mặt bàn cũ.
+“Không biết.”
 
-Quyển sách cũ.
+“Không biết mà đứng lại?”
 
-Tiếng mưa.
+Bách nhìn hai đứa, rồi nhìn con đường phía trước. “Ừ.”
 
-Đồng hồ trên tường.
+Hưng nhún vai. “Thế đi tiếp.”
 
-Kim giây nhích một nấc.
+Nó đạp xe theo. Câu nói biến mất nhanh đến mức đến bữa cơm tối Bách đã không chắc mình từng nghe thấy. Nhiều năm sau, nó sẽ nhớ lại và gọi đó là *lần đầu tiên*.
 
-Nó bỗng thấy sợ.
-
-Không biết tại sao.
-
-Rồi cảm giác ấy biến mất nhanh như khi nó đến.
-
-“Bách?”
-
-Người lớn ngoài cửa hỏi.
-
-“Con sao thế?”
-
-“Không sao ạ.”
-
-“Thế học đi.”
-
-“Vâng.”
-
-Bách cúi xuống, cầm bút lên.
-
-Viết được hai chữ, nó lại nhìn ra cửa sổ.
-
-Hai đứa trẻ đã chạy mất.
-
-Con ngõ chỉ còn mưa.
-
-Nhiều năm sau, anh sẽ nhớ đêm mưa này và tin rằng đó là lần đầu tiên mình nghe câu nói ấy.
-
-Anh sẽ nhầm.
+Có thể nó sẽ nhầm.
 
 ---
 
-### Ghi chú HALF-CANON / Reality Anchors
+### Ghi chú Reality / Provenance cho bản public
 
-Bối cảnh Việt Nam trong lát cắt đời trẻ được neo vào các nguồn lịch sử–xã hội có thể kiểm tra về Đổi Mới, Internet từ 19/11/1997, cải cách giáo dục đầu những năm 2000, WTO từ 11/01/2007, đô thị hóa, Tết và hệ xưng hô tiếng Việt. Các anchor này tạo **world context**, không phải bằng chứng cho tiểu sử ngoài đời của nhân vật.
-
-Xem: **[Reality Anchor Ledger của Chương 1](world-chapter-001.html)**.
+- **Locality:** đầu những năm 2000, Sao Đỏ được kể ở cấp **thị trấn Sao Đỏ, Chí Linh, Hải Dương**; tư liệu chính thức năm 2004 vẫn dùng tên hành chính này. **Khu Thái Học** là neo locality; địa chỉ nhà chính xác được làm mờ trong bản public.
+- **Trường học:** tên/điểm trường cụ thể của từng năm đầu 2000s chưa được backfill từ phân tuyến hiện đại; giữ `UNKNOWN` cho tới khi có hồ sơ lịch sử phù hợp.
+- **Máy tính đầu tiên khoảng 2000–2001, chuyện học CMD/MS-DOS, làm trò nhỏ cho em, máy bị bán, trải nghiệm tiếng nhiễu và một số quan hệ bạn bè**: `OWNER-RECOLLECTION → LITERARY ADAPTATION`, không phải tài liệu độc lập chứng minh tiểu sử.
+- **Tùng, Hưng** là tên văn học dùng cho bản public. Mapping người thật không công khai.
+- **AOE / Half-Life / Counter-Strike** được dùng như texture local/LAN của thời kỳ; không đồng nhất LAN với Internet. Với **MU**, mốc phát hành chính thức tại Việt Nam thuộc năm 2005; ký ức cộng đồng/private trước đó phải được tách riêng khi dùng ở các chương sau.
+- Chuỗi nhớ mơ hồ kiểu **0101** được giữ là `UNKNOWN`; không biến thành một lệnh hoặc kỹ thuật cụ thể khi chưa recover được nguồn.
+- Cảm giác “có sứ mệnh” và âm thanh `uuuuu` là trải nghiệm chủ quan/motif kể chuyện; không phải chẩn đoán y khoa hay bằng chứng siêu nhiên.
