@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.5.3-theory-first-infinity-hierarchy
+  version: 0.5.4-mature-theory-synthesis
   date: '2026-09-02'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
@@ -28,8 +28,8 @@ seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
   description: BL∞ là hệ nghiên cứu mở do Lâm Kim Bách khởi phát, nối bản thể mở,
     Reality–GiaTai–UNKNOWN, Dân chủ Học thuật, provenance, phản biện, Hệ Bảo Toàn,
-    công nghệ xuất bản tự do học thuật, External Science Constellation và bề mặt
-    world build HALF-CANON có neo thực tại.
+    công nghệ xuất bản tự do học thuật, External Science Constellation, BL-MTS Mature-Theory
+    Synthesis và bề mặt world build HALF-CANON có neo thực tại.
   keywords:
   - BL∞
   - BL Infinity
@@ -39,6 +39,13 @@ seo:
   - BL-CONSERVE
   - BL Infinity Conservation System
   - Hệ Bảo Toàn BL∞
+  - BL-MTS
+  - BL Mature-Theory Synthesis Branch
+  - mature theory synthesis
+  - preserved external theory lineage
+  - cross-lineage synthesis
+  - synthesis without appropriation
+  - BL emergent lineage
   - BL-OAP
   - Open Academic Publishing Technology
   - Công nghệ Xuất bản Tự do Học thuật
