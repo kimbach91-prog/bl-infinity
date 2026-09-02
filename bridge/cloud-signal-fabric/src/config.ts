@@ -17,9 +17,17 @@ const integer = (name: string, fallback: number): number => {
 export const config = {
   port: Number.parseInt(process.env.PORT || '8080', 10),
   projectId: process.env.GOOGLE_CLOUD_PROJECT?.trim() || process.env.GCLOUD_PROJECT?.trim(),
-  signalToken: required('SIGNAL_FABRIC_TOKEN'),
+  signalToken: process.env.SIGNAL_FABRIC_TOKEN?.trim() || null,
+
+  // Compatibility/recovery path.
   manifestFolderId: required('DRIVE_MANIFEST_FOLDER_ID'),
   artifactFolderId: required('DRIVE_ARTIFACTS_ID'),
+
+  // Preferred low-cost DOC-ROUND path.
+  docRoundBlackboardId: process.env.DOC_ROUND_BLACKBOARD_ID?.trim() || '1tm0RSqvleIrxmksh5pyn_EI1nquf7bbYgoxHqcQ3tFU',
+  docRoundFolderId: process.env.DOC_ROUND_FOLDER_ID?.trim() || '13j-y0oY2cubo3Me0PN1DqMT0Ub3ag2xk',
+  docRoundTabId: process.env.DOC_ROUND_TAB_ID?.trim() || 't.0',
+
   hotMinutes: integer('POLL_HOT_MINUTES', 1),
   warmMinutes: integer('POLL_WARM_MINUTES', 3),
   idleMinutes: integer('POLL_IDLE_MINUTES', 5),

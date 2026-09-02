@@ -9,7 +9,7 @@ export interface ControlState {
   lastActivityAt?: string | null;
   lastHarvestAt?: string | null;
   leaseOwner?: string | null;
-  leaseUntil?: FirebaseFirestore.Timestamp | null;
+  leaseUntil?: Timestamp | null;
   fencingEpoch?: number;
 }
 
@@ -50,16 +50,21 @@ export async function finalizeHarvest(args: {
   nextPollAt: string;
 }): Promise<void> {
   await db.runTransaction(async (tx) => {
-    const snap = await tx.get(controlRef);
-    const state = (snap.data() || {}) as ControlState;
+    const controlSnap = await tx.get(controlRef);
+    const state = (controlSnap.data() || {}) as ControlState;
     if (state.leaseOwner !== args.owner || state.fencingEpoch !== args.fencingEpoch) {
       throw new Error(`FENCING_REJECTED expected owner=${args.owner} epoch=${args.fencingEpoch}`);
     }
 
-    for (const delivery of args.deliveries) {
-      const ref = db.collection('deus_signal_seats').doc(delivery.seat).collection('deliveries').doc(delivery.deliveryId);
-      tx.set(ref, delivery, { merge: true });
-    }
+    const refs = args.deliveries.map((delivery) =>
+      db.collection('deus_signal_seats').doc(delivery.seat).collection('deliveries').doc(delivery.deliveryId)
+    );
+    const existing = refs.length ? await tx.getAll(...refs) : [];
+
+    // Delivery rows are immutable on replay. ACK/status must never be reset to PENDING.
+    args.deliveries.forEach((delivery, index) => {
+      if (!existing[index]?.exists) tx.create(refs[index], delivery);
+    });
 
     const now = new Date().toISOString();
     tx.set(controlRef, {

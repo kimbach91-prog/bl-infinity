@@ -47,3 +47,58 @@ export interface PublishRequest {
   requires_ack?: boolean;
   metadata?: Record<string, unknown>;
 }
+
+export type DocRoundSignalType = 'ROUND_READY' | 'REVIEW_REQUIRED' | 'FINAL_READY' | 'ROUND_CLOSED';
+export type DocRoundState = 'CANDIDATE' | 'REVIEW' | 'FINAL' | 'CLOSED';
+
+export interface DocRoundContribution {
+  actor: Seat;
+  final_text: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DocRoundBatchRequest {
+  round_id: string;
+  tenant_id: string;
+  task_id: string;
+  from: Seat;
+  to: Seat[];
+  signal_type: DocRoundSignalType;
+  state: DocRoundState;
+  document_id?: string;
+  contributions: DocRoundContribution[];
+  metadata?: Record<string, unknown>;
+}
+
+export interface DocRoundSignalRequest {
+  round_id: string;
+  tenant_id: string;
+  task_id: string;
+  from: Seat;
+  to: Seat[];
+  signal_type: DocRoundSignalType;
+  state: DocRoundState;
+  document_id?: string;
+  marker?: string;
+  doc_revision_id?: string | null;
+  metadata?: Record<string, unknown>;
+}
+
+export interface DocRoundSignalRecord {
+  protocol: 'DEUS-DOC-ROUND/1.0';
+  deliveryId: string;
+  seat: Seat;
+  roundId: string;
+  tenantId: string;
+  taskId: string;
+  signalType: DocRoundSignalType;
+  from: Seat;
+  documentId: string;
+  marker: string;
+  docRevisionId?: string | null;
+  state: DocRoundState;
+  status: DeliveryState;
+  createdAt: string;
+  updatedAt: string;
+  metadata?: Record<string, unknown>;
+}
