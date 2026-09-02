@@ -1,19 +1,18 @@
 cff-version: 1.2.0
-message: "If you use or critique this research object, please cite the canonical version and the exact claim IDs you address."
-title: "BL∞ — Bach Lam Infinity Proposition"
+message: "Please cite the current public concept and note that the public projection is intentionally limited."
+title: "BL∞ — Bach Lam Infinity Proposition (Public Limited Concept)"
 type: software
 authors:
   - family-names: "Lâm"
     given-names: "Kim Bách"
-version: "0.2.0-index-pilot"
-date-released: "2026-08-29"
+version: "public-limited-2026-09-03"
+date-released: "2026-09-03"
 url: "https://kimbach91-prog.github.io/bl-infinity/"
 repository-code: "https://github.com/kimbach91-prog/bl-infinity"
 license: CC-BY-4.0
 keywords:
   - BL Infinity
   - Bach Lam Infinity Proposition
-  - open ontology
-  - embedded observer
-  - generative reachability
-  - recursive critique
+  - finite knowledge boundary
+  - open-ended cognition
+  - unknown

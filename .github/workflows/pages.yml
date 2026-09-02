@@ -1,218 +1,20 @@
-# BL∞ verification workflow.
-# Governance: automated events are AUDIT-ONLY. Public Pages publication requires an explicit owner command.
-# Explicit owner command = workflow_dispatch OR an owner-authored main push whose head commit contains [OWNER-PUBLISH].
-name: Audit BL∞; explicit owner publish
+name: Publish BL∞ public-limited concept
 
 on:
-  pull_request:
-    branches: ["main"]
   push:
     branches: ["main"]
-  schedule:
-    - cron: "30 5 * * 1"
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: "pages"
+  group: pages
   cancel-in-progress: false
 
 jobs:
-  audit:
-    permissions:
-      contents: read
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout immutable source snapshot
-        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
-        with:
-          persist-credentials: false
-          fetch-depth: 1
-
-      - name: Setup Python
-        uses: actions/setup-python@ece7cb06caefa5fff74198d8649806c4678c61a1
-        with:
-          python-version: "3.12"
-          cache: "pip"
-          cache-dependency-path: |
-            requirements.txt
-            requirements-security.txt
-
-      - name: Install pinned build and security dependencies
-        run: |
-          python -m pip install --disable-pip-version-check -r requirements.txt -r requirements-security.txt
-
-      - name: Audit dependency vulnerabilities
-        run: pip-audit -r requirements.txt
-
-      - name: Compile release-path scripts
-        run: >-
-          python -m py_compile
-          scripts/git_publication_gate.py
-          scripts/audit.py
-          scripts/audit_unified_system.py
-          scripts/disclosure_audit.py
-          scripts/security_audit.py
-          scripts/challenge_disclosure_audit.py
-          scripts/build.py
-          scripts/build_discovery.py
-          scripts/harden_site.py
-          scripts/humanize_public_text.py
-          scripts/apply_hypothesis_science_patch.py
-          scripts/seo_release_guard.py
-          scripts/navigation_audit.py
-          scripts/run_discovery.py
-          scripts/stage_grand_ending_home.py
-          scripts/stage_novel.py
-
-      - name: Enforce BL-GWG public Git write gate
-        run: python scripts/git_publication_gate.py --strict --tree
-
-      - name: Validate epistemic object
-        run: python scripts/audit.py --strict --release
-
-      - name: Validate BL∞ unified system graph
-        run: python scripts/audit_unified_system.py
-
-      - name: Enforce BL-CPR source boundary
-        run: python scripts/disclosure_audit.py --strict
-
-      - name: Audit source security and bilingual integrity
-        run: python scripts/security_audit.py --strict
-
-      - name: Enforce Challenge Projection source boundary
-        run: python scripts/challenge_disclosure_audit.py
-
-      - name: Build static site locally for verification
-        run: python scripts/build.py
-
-      - name: Stage standalone public research pages locally
-        run: |
-          cp public/academic-democracy.html site/academic-democracy.html
-          cp public/academic-democracy-technology.html site/academic-democracy-technology.html
-          cp public/unknown.html site/unknown.html
-          cp public/grand-ending.html site/grand-ending.html
-          cp public/world.html site/world.html
-          cp public/regressor-proposition.html site/regressor-proposition.html
-
-      - name: Stage serialized novel quietly
-        run: python scripts/stage_novel.py
-
-      - name: Link world narrative, UNKNOWN Doctrine and Grand Ending from homepage
-        run: python scripts/stage_grand_ending_home.py
-
-      - name: Feature Regressor Proposition on homepage
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          index = Path('site/index.html')
-          text = index.read_text(encoding='utf-8')
-          marker = '<main><article>'
-          feature = '''<section class="author-spotlight" aria-labelledby="regressor-feature-title">
-          <p class="eyebrow">Công bố mới · 02.09.2026 · BL-RP-FRC</p>
-          <h2 id="regressor-feature-title">Mệnh đề Kẻ Hồi Quy — Liên kết Kết quả Tương lai với Hiện tại</h2>
-          <p>Một kết quả tương lai còn vô khả định lượng đầy đủ được dùng như <strong>điều kiện biên giả định</strong>: suy ngược các ràng buộc cần hình thành, tạo hành động ở hiện tại, rồi để Reality Veto liên tục phá những nhánh sai.</p>
-          <p><strong>FutureBoundary ≠ FutureFact.</strong> BackwardInference ≠ BackwardSignal. Phần vật lý được giữ ở trạng thái giả thuyết mở cho tới khi có bằng chứng thực nghiệm thích hợp.</p>
-          <p><a class="primary-link" href="regressor-proposition.html">Đọc Mệnh đề Kẻ Hồi Quy, sơ đồ phả hệ và claim map →</a></p>
-          </section>'''
-          if 'regressor-feature-title' not in text:
-              if marker not in text:
-                  raise SystemExit('homepage main/article marker not found')
-              text = text.replace(marker, marker + feature, 1)
-              index.write_text(text, encoding='utf-8')
-
-          sitemap = Path('site/sitemap.xml')
-          sm = sitemap.read_text(encoding='utf-8')
-          route = '<url><loc>https://kimbach91-prog.github.io/bl-infinity/regressor-proposition.html</loc><lastmod>2026-09-02</lastmod></url>'
-          if 'regressor-proposition.html' not in sm:
-              sm = sm.replace('</urlset>', route + '\n</urlset>')
-              sitemap.write_text(sm, encoding='utf-8')
-
-          llms = Path('site/llms.txt')
-          if llms.exists():
-              lm = llms.read_text(encoding='utf-8')
-              if 'regressor-proposition.html' not in lm:
-                  lm += '''\n\n## Regressor Proposition / Mệnh đề Kẻ Hồi Quy\nPublic route: /regressor-proposition.html\nStatus: research proposition; future-boundary backcasting is a current epistemic mechanism, while controllable backward physical information remains an unverified physics hypothesis.\n'''
-                  llms.write_text(lm, encoding='utf-8')
-          PY
-
-      - name: Hold challenge pages outside discovery pass
-        run: rm -f site/challenge.html site/research-puzzles.html
-
-      - name: Build multilingual SEO and AI discovery layer locally
-        run: python scripts/run_discovery.py
-
-      - name: Register era-language literary atlas in discovery
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-          route = 'https://kimbach91-prog.github.io/bl-infinity/novel/era-language-style-atlas.html'
-          sitemap = Path('site/sitemap.xml')
-          if sitemap.exists():
-              sm = sitemap.read_text(encoding='utf-8')
-              entry = f'<url><loc>{route}</loc><lastmod>2026-09-02</lastmod></url>'
-              if route not in sm:
-                  sm = sm.replace('</urlset>', entry + '\n</urlset>')
-                  sitemap.write_text(sm, encoding='utf-8')
-          llms = Path('site/llms.txt')
-          if llms.exists():
-              text = llms.read_text(encoding='utf-8')
-              if 'era-language-style-atlas.html' not in text:
-                  text += '''\n\n## Novel Era-Language & Literary Style Atlas\nPublic route: /novel/era-language-style-atlas.html\nMachine registry: /machine/novel-era-language-style-registry.json\nUse: resolve historical scenes by year/era, region, generation, social relation, communication medium and literary mode; do not reduce an era to one authorial style or one national voice.\n'''
-                  llms.write_text(text, encoding='utf-8')
-          PY
-
-      - name: Re-stage low-discovery human challenge pages
-        run: |
-          cp public/challenge.html site/challenge.html
-          cp public/research-puzzles.html site/research-puzzles.html
-
-      - name: Stage public machine interface contracts locally
-        run: |
-          cp machine/bl-reverse-system.json site/machine/bl-reverse-system.json
-          cp machine/bl-hrd.json site/machine/bl-hrd.json
-          cp machine/bl-infinity-unified-system.json site/machine/bl-infinity-unified-system.json
-          cp machine/unified-constituents.json site/machine/unified-constituents.json
-          cp machine/reality-gia-tai-topology.json site/machine/reality-gia-tai-topology.json
-          cp machine/open-ended-epistemic-phase-space.json site/machine/open-ended-epistemic-phase-space.json
-          cp machine/unknown-doctrine.json site/machine/unknown-doctrine.json
-          cp machine/grand-ending-unknown.json site/machine/grand-ending-unknown.json
-          cp machine/compressed-regression-hypothesis.json site/machine/compressed-regression-hypothesis.json
-
-      - name: Apply bilingual and browser hardening layer locally
-        run: python scripts/harden_site.py
-
-      - name: Normalize human-facing typography
-        run: python scripts/humanize_public_text.py
-
-      - name: Apply BL∞ hypothesis chain and global science weave
-        run: python scripts/apply_hypothesis_science_patch.py
-
-      - name: Apply SEO release guard
-        run: python scripts/seo_release_guard.py
-
-      - name: Audit materialized local site
-        run: python scripts/security_audit.py --strict --site
-
-      - name: Enforce Challenge Projection materialized boundary
-        run: python scripts/challenge_disclosure_audit.py --site
-
-      - name: Audit navigation, accessibility and internal links
-        run: python scripts/navigation_audit.py --strict
-
-      - name: Upload Pages artifact only on explicit manual publish
-        if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
-        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
-        with:
-          path: "site"
-
-  deploy:
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
+  publish:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]')
     permissions:
       contents: read
       pages: write
@@ -221,53 +23,29 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: audit
     steps:
+      - name: Checkout public-limited tree
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
 
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
-
-      - name: Notify IndexNow only after explicit manual publish
+      - name: Stage only the concept projection
         shell: bash
         run: |
-          curl --proto '=https' --tlsv1.2 --fail-with-body --retry 2 -X POST 'https://api.indexnow.org/IndexNow' \
-            -H 'Content-Type: application/json; charset=utf-8' \
-            --data-binary @- <<'JSON'
-          {
-            "host": "kimbach91-prog.github.io",
-            "key": "7d4a9f38b25c4e7aa6d0c913b8e42f61",
-            "keyLocation": "https://kimbach91-prog.github.io/bl-infinity/7d4a9f38b25c4e7aa6d0c913b8e42f61.txt",
-            "urlList": [
-              "https://kimbach91-prog.github.io/bl-infinity/",
-              "https://kimbach91-prog.github.io/bl-infinity/theory.html",
-              "https://kimbach91-prog.github.io/bl-infinity/hypotheses.html",
-              "https://kimbach91-prog.github.io/bl-infinity/system.html",
-              "https://kimbach91-prog.github.io/bl-infinity/open-academic-publishing.html",
-              "https://kimbach91-prog.github.io/bl-infinity/regressor-proposition.html",
-              "https://kimbach91-prog.github.io/bl-infinity/world.html",
-              "https://kimbach91-prog.github.io/bl-infinity/science-constellation.html",
-              "https://kimbach91-prog.github.io/bl-infinity/mature-theory-synthesis.html",
-              "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
-              "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/world-chapter-001.html",
-              "https://kimbach91-prog.github.io/bl-infinity/novel/era-language-style-atlas.html",
-              "https://kimbach91-prog.github.io/bl-infinity/en/",
-              "https://kimbach91-prog.github.io/bl-infinity/en/theory.html",
-              "https://kimbach91-prog.github.io/bl-infinity/author.html",
-              "https://kimbach91-prog.github.io/bl-infinity/author/en/",
-              "https://kimbach91-prog.github.io/bl-infinity/languages.html",
-              "https://kimbach91-prog.github.io/bl-infinity/bl-adn.html",
-              "https://kimbach91-prog.github.io/bl-infinity/provenance.html",
-              "https://kimbach91-prog.github.io/bl-infinity/critique.html",
-              "https://kimbach91-prog.github.io/bl-infinity/machine.html",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy.html",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy-technology.html",
-              "https://kimbach91-prog.github.io/bl-infinity/academic-democracy/discovery.html"
-            ]
-          }
-          JSON
+          set -euo pipefail
+          rm -rf _site
+          mkdir _site
+          cp index.html theory.html robots.txt sitemap.xml _site/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
+        with:
+          path: _site
+
+      - name: Deploy Pages
+        id: deployment
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e
