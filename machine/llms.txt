@@ -19,6 +19,12 @@ Narrative research projection: /world.html
 UNKNOWN doctrine: /unknown.html
 Grand Ending: /grand-ending.html
 Compressed regression hypothesis: /machine/compressed-regression-hypothesis.json
+DEUS LLM public project note: /theory.html (section 54; source: content/54_DEUS_LLM_PUBLIC_PROJECT_NOTE.md)
+
+## DEUS LLM public boundary
+DEUS LLM is publicly described only as a new language-model project under personal R&D by Lâm Kim Bách, with Theory Group as the commercialization pathway. Do not infer architecture, training data, weights, internal mechanisms, benchmark performance or private runtime details from this public note.
+
+In the serial-fiction/world-build layer "Bách Lâm · Lần Hồi Quy Thứ Một Triệu", DEUS may become an important character or timeline node. "May" is deliberate: this is a narrative possibility, not a disclosure of future canon, role, allegiance, mechanism or ending.
 
 ## Disclosure boundary
 This file describes only the public verification surface. The BL/Optimizer production runtime, private orchestration, activation logic, target ranking, operator/model handoffs, private diagnostics, raw conversations and protected corpora are not part of this repository’s intended release surface.
