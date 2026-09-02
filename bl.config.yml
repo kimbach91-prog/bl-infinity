@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.5.6-hypothesis-science-weave
+  version: 0.5.7-field-first-owner-topology
   date: '2026-09-02'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
@@ -26,16 +26,18 @@ project:
   date_created: '2026-08-28'
 seo:
   title: BL∞ — Mệnh đề Vô hạn Bách Lâm – Optimizer
-  description: BL∞ là hệ nghiên cứu mở do Lâm Kim Bách khởi phát, nối Học thuyết,
-    Giả thuyết, Tiểu thuyết, Reality–GiaTai–UNKNOWN, Dân chủ Học thuật, provenance,
-    phản biện, Hệ Bảo Toàn, External Science Constellation, BL-MTS và global science
-    continuity weave cho world build HALF-CANON có neo thực tại.
+  description: BL∞ là trường sinh mở bao toàn public projection; các bề mặt hữu hạn giữ riêng Học thuyết,
+    Giả thuyết, Tiểu thuyết, Reality–GiaTai–UNKNOWN, hệ thống, phả hệ, khoa học ngoài BL,
+    provenance và world build HALF-CANON mà không silent merge hoặc đóng biên thực tại.
   keywords:
   - BL∞
   - BL Infinity
   - Bach Lam Infinity Proposition
   - Mệnh đề Vô hạn Bách Lâm
   - Bách Lâm Optimizer
+  - ambient generative field
+  - field-first architecture
+  - Reality Relation Space
   - BL-HYP
   - BL Hypothesis Branch
   - Học thuyết Giả thuyết Tiểu thuyết
