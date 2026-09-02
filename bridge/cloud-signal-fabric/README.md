@@ -48,6 +48,18 @@ Parent: `03 · DEUS SIGNAL FABRIC — CLOUD RELAY`
 
 Only `00_MANIFESTS` is scanned by the Global Drive Harvester. Large artifacts are never used as the polling surface.
 
+## Observed GCP project candidate
+
+An existing Google Cloud account notification dated 2026-02-26 identifies:
+
+```text
+project_id=buoyant-mason-114302
+project_number=580664224085
+project_name=My Project
+```
+
+This establishes an observed historical project identity, not current billing/permission verification. The deploy workflow pre-fills this project ID but validates access with `gcloud projects describe` during the real deployment.
+
 ## Required runtime environment
 
 ```text
@@ -94,9 +106,11 @@ POST /v1/publish
 
 ## Current reality state
 
-- Git runtime: `CODE_READY` on deployment branch.
+- Git runtime: `CODE_VERIFIED_CI_PASS` on deployment branch.
 - Drive relay layout: `PROVISIONED`.
-- GCP deployment: `BLOCKED_ON_PROJECT_ID_AND_REAL_GCP_IDENTITY`.
+- GCP project identity: `OBSERVED_HISTORICAL_PROJECT / LIVE_ACCESS_UNVERIFIED` (`buoyant-mason-114302`).
+- GitHub→GCP Workload Identity/deploy identity: `NOT_FOUND / REQUIRED`.
+- GCP runtime deployment: `BLOCKED_ON_REAL_GCP_IDENTITY_AND_LIVE_PROJECT_ACCESS`.
 - Canonical identity write: `LOCKED` by existing Shared Store governance.
 
 Narrated deployment is not runtime evidence. Promote the GCP state only after Cloud Run URL, service identity, Firestore state, Drive access, scheduler execution, and an end-to-end publish→harvest→poll→ACK loop are observed.
