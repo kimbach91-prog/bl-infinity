@@ -8,6 +8,7 @@ SCIENCE_PAGE_SOURCE = ROOT / "public" / "science-constellation.html"
 SCIENCE_REGISTRY_SOURCE = ROOT / "machine" / "external-science-constellation.json"
 MTS_PAGE_SOURCE = ROOT / "public" / "mature-theory-synthesis.html"
 MTS_REGISTRY_SOURCE = ROOT / "machine" / "bl-mature-theory-synthesis.json"
+MTS_INTEGRATION_SOURCE = ROOT / "machine" / "bl-mts-integration.json"
 
 
 def stage_external_science_constellation() -> None:
@@ -52,10 +53,13 @@ def stage_mature_theory_synthesis() -> None:
         raise RuntimeError("public/mature-theory-synthesis.html missing")
     if not MTS_REGISTRY_SOURCE.exists():
         raise RuntimeError("machine/bl-mature-theory-synthesis.json missing")
+    if not MTS_INTEGRATION_SOURCE.exists():
+        raise RuntimeError("machine/bl-mts-integration.json missing")
 
     shutil.copy(MTS_PAGE_SOURCE, SITE / "mature-theory-synthesis.html")
     (SITE / "machine").mkdir(parents=True, exist_ok=True)
     shutil.copy(MTS_REGISTRY_SOURCE, SITE / "machine" / "bl-mature-theory-synthesis.json")
+    shutil.copy(MTS_INTEGRATION_SOURCE, SITE / "machine" / "bl-mts-integration.json")
 
     science = SITE / "science-constellation.html"
     if science.exists():
@@ -174,7 +178,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS + integration contract + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
