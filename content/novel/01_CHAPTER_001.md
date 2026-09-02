@@ -180,6 +180,8 @@ Nó tắt, rồi hôm sau lại mở. Bị mắng, rồi lại mở. Có thời 
 
 ## Những năm bắt đầu có giọng riêng
 
+<span id="global-science-continuity-weave" aria-hidden="true"></span>
+
 Mấy năm sau, thế giới số trở lại theo một con đường khác. Quán điện tử và quán net không giống Internet trong sách; nó có mùi nóng của máy chạy lâu, tiếng ghế kéo, quạt quay, tiếng người gọi nhau qua màn hình và những trận cãi vã nổ ra vì một pha thua ngớ ngẩn. **Đế Chế**, **Half-Life**, **Counter-Strike** sống trước hết như trò chơi tại máy và trên mạng LAN trong trí nhớ của cả một thế hệ; online toàn quốc chưa phải điều kiện để một căn phòng đầy người cùng hét lên.
 
 Khi mạng quay số xuất hiện ở một số nơi, modem có thể biến việc “vào mạng” thành một nghi thức âm thanh; khi kết nối nhanh dần, chờ đợi ngắn lại và thế giới bên kia màn hình bỗng rộng lên. Yahoo! Messenger làm một cái nick trở thành một căn cước nhỏ. MU rồi cũng đi vào đời thanh thiếu niên như một cánh cửa nhiều màu hơn, nhưng bản public tách rõ ký ức cộng đồng/private khỏi mốc phát hành chính thức ở Việt Nam năm 2005; không kéo một làn sóng về sớm chỉ vì hồi ức đã trộn các năm vào nhau.
