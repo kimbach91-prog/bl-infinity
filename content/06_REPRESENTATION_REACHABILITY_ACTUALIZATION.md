@@ -1,6 +1,9 @@
 # 06 — Từ tưởng tượng tới khả đạt và hiện thực hóa
 
-Đây là phần BL∞ phải giữ chặt nhất để tránh lỗi “nghĩ ra ⇒ đã có ngoài kia”.
+**Public disclosure:** `CHALLENGE_PROJECTION v1`  
+**Policy:** `content/57_PUBLIC_CHALLENGE_PROJECTION.md`
+
+Đây là phần BL∞ phải giữ chặt nhất để tránh lỗi “nghĩ ra ⇒ đã có ngoài kia”. Một số closure có đòn bẩy cao được giữ lại trong current public edition; public surface chỉ công bố constraint và gợi ý tái dựng.
 
 ## Bốn tầng tối thiểu
 
@@ -54,19 +57,19 @@ Máy bay, integrated circuit hay vật liệu tổng hợp từng là những c�
 
 ## Recursive capability expansion
 
-Ta định nghĩa:
+```text
+[FORMULA_WITHHELD: BL-RCA-RECURSIVE-CAPABILITY-UPDATE]
+[FORMULA_WITHHELD: BL-RCA-LONG-HORIZON-REACHABLE-CLOSURE]
+```
 
-\[
-U_{n+1}=U_n\cup ConstructibleTools(U_n)
-\]
+**Public hint:** bắt đầu từ repertoire ban đầu \(U_0\). Ở mỗi bước, một phần tool/capability mới có thể được xây từ repertoire hiện có và sau đó trở thành input cho bước kế tiếp. Reachable frontier dài hạn là closure sinh ra qua chuỗi capability update này, không chỉ là vùng reachable ở bước đầu.
 
-và reachable closure dài hạn:
+Constraint quan trọng:
 
-\[
-\mathcal R_A^*=\bigcup_{n=0}^{\infty}Reach(x,U_n)
-\]
-
-Một target có thể nằm ngoài \(Reach(x,U_0)\) nhưng nằm trong \(\mathcal R_A^*\).
+- target có thể nằm ngoài reachable set ban đầu nhưng nằm trong closure sau nhiều vòng;
+- capability loss có thể phá monotonicity;
+- constructor/resource/permission/physical constraints phải được giữ trong mỗi bước;
+- “có thể mô tả target” không đủ để chứng minh target reachable.
 
 Điều này tạo một câu hỏi BL∞ quan trọng hơn “hiện nay có làm được không?”:
 
@@ -76,24 +79,25 @@ Một target có thể nằm ngoài \(Reach(x,U_0)\) nhưng nằm trong \(\mathc
 
 Nếu target có zero accessibility hoặc nằm ở component không liên thông của state graph, để thời gian chạy vô hạn không làm nó xuất hiện.
 
-Trong mô hình xác suất đơn giản, nếu mỗi cơ hội độc lập cho h với xác suất \(p_h>0\):
+Mô hình xác suất độc lập đơn giản vẫn cho intuition rằng với một target có xác suất dương cố định ở mỗi cơ hội, xác suất “không bao giờ trúng” giảm theo số thử. Nhưng compact limiting expression của current public edition được giữ lại:
 
-\[
-P(\text{never hit }h\text{ in }n\text{ trials})=(1-p_h)^n
-\]
+```text
+[FORMULA_WITHHELD: BL-RCA-POSITIVE-ACCESSIBILITY-LIMIT]
+```
 
-và:
+**Public hint:** reconstruction phải phân biệt rõ trường hợp \(p_h>0\) với \(p_h=0\); kết luận hội tụ của trường hợp đầu không được kéo sang trường hợp zero-accessibility.
 
-\[
-\lim_{n\to\infty}(1-p_h)^n=0
-\]
+Vì vậy BL∞ chuẩn hóa ở mức nguyên tắc:
 
-Nhưng nếu \(p_h=0\), kết quả không theo.
-
-Vì vậy BL∞ chuẩn hóa:
-
-\[
-InfiniteOpportunities+Accessibility+SuitableDynamics\Rightarrow\text{realization under specified conditions}
-\]
+```text
+Infinite opportunities alone are insufficient.
+Accessibility and suitable dynamics remain necessary conditions.
+```
 
 không dùng câu tuyệt đối “vô hạn thời gian ⇒ mọi thứ”.
+
+---
+
+### Challenge note
+
+Một reconstruction mạnh phải tái tạo được cả recursive capability growth lẫn failure cases: unreachable component, resource loss, zero accessibility và non-monotonic capability history.
