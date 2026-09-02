@@ -1,10 +1,52 @@
 from pathlib import Path
+import shutil
 
 ROOT = Path(__file__).resolve().parents[1]
-INDEX = ROOT / "site" / "index.html"
+SITE = ROOT / "site"
+INDEX = SITE / "index.html"
+SCIENCE_PAGE_SOURCE = ROOT / "public" / "science-constellation.html"
+SCIENCE_REGISTRY_SOURCE = ROOT / "machine" / "external-science-constellation.json"
+
+
+def stage_external_science_constellation() -> None:
+    if not SCIENCE_PAGE_SOURCE.exists():
+        raise RuntimeError("public/science-constellation.html missing")
+    if not SCIENCE_REGISTRY_SOURCE.exists():
+        raise RuntimeError("machine/external-science-constellation.json missing")
+
+    shutil.copy(SCIENCE_PAGE_SOURCE, SITE / "science-constellation.html")
+    (SITE / "machine").mkdir(parents=True, exist_ok=True)
+    shutil.copy(SCIENCE_REGISTRY_SOURCE, SITE / "machine" / "external-science-constellation.json")
+
+    world = SITE / "world.html"
+    if world.exists():
+        text = world.read_text(encoding="utf-8")
+        marker = 'id="external-science-constellation"'
+        if marker not in text:
+            block = '''
+<section class="chapter" id="external-science-constellation">
+<h2>External Science Constellation: thế giới này không chỉ có phả hệ BL</h2>
+<p class="first">Một world đủ trưởng thành phải va chạm với những phả hệ tri thức không thuộc mình. Standard Model, thuyết tương đối, Bell tests, LIGO, plate tectonics, Human Genome Project, CRISPR, AlphaFold, BRAIN Initiative, vật liệu 2D, quasicrystals, machine learning và những thất bại như LK-99 hay OPERA đều được giữ nguyên nguồn gốc khoa học bên ngoài BL.</p>
+<p>BL∞ chỉ dùng chúng như <strong>constraint, đối trọng, bridge hoặc negative knowledge</strong> cho world-build. Điểm giống nhau không tạo tác quyền; điểm giao không tạo identity; và một science object không trở thành bằng chứng cho BL chỉ vì có cấu trúc tương tự.</p>
+<div class="formula">External science
+-> preserve external lineage
+-> evidence status
+-> intersection with BL
+-> NON-intersection with BL
+-> merge / bridge / hold / reject
+-> world-build consequence
+-> reality collision</div>
+<p class="bridge"><a href="science-constellation.html">Mở External Science Constellation: atlas khoa học ngoài BL, lịch sử đảo chiều và negative knowledge →</a></p>
+</section>
+'''
+            if "</article>" not in text:
+                raise RuntimeError("world.html article close not found")
+            text = text.replace("</article>", block + "</article>", 1)
+            world.write_text(text, encoding="utf-8")
 
 
 def main() -> None:
+    stage_external_science_constellation()
     text = INDEX.read_text(encoding="utf-8")
 
     # Homepage directory is the durable cross-system entry surface. Global nav
@@ -34,6 +76,12 @@ def main() -> None:
         '<span>Dành cho người muốn đào sâu hơn vào các ý tưởng và quan hệ nghiên cứu phía sau world build; không phải spoiler guide của tiểu thuyết.</span>'
         '</a></li>'
     )
+    science_entry = (
+        '<li class="external-science-entry"><a href="science-constellation.html">'
+        '<strong>External Science Constellation · World-build Science Atlas</strong>'
+        '<span>Khoa học ngoài phả hệ BL được giữ nguyên attribution: physics, quantum, cosmology, earth/climate, genomics, neuroscience, medicine, materials và computing; ghi rõ evidence status, điểm giao, điểm không giao và các claim đã bị thực tại bác.</span>'
+        '</a></li>'
+    )
     unknown_entry = (
         '<li class="unknown-doctrine-entry"><a href="unknown.html">'
         '<strong>Học thuyết UNKNOWN · Trường Chưa-biết Sinh thành của BL∞</strong>'
@@ -61,6 +109,8 @@ def main() -> None:
         entries += novel_entry
     if 'class="world-narrative-entry"' not in text:
         entries += world_entry
+    if 'class="external-science-entry"' not in text:
+        entries += science_entry
     if 'class="unknown-doctrine-entry"' not in text:
         entries += unknown_entry
     if 'class="grand-ending-entry"' not in text:
@@ -80,7 +130,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ conservation + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ conservation + external science constellation + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
