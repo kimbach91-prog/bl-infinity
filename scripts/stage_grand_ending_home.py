@@ -10,6 +10,9 @@ MTS_PAGE_SOURCE = ROOT / "public" / "mature-theory-synthesis.html"
 MTS_REGISTRY_SOURCE = ROOT / "machine" / "bl-mature-theory-synthesis.json"
 MTS_INTEGRATION_SOURCE = ROOT / "machine" / "bl-mts-integration.json"
 MTS_INGESTION_SOURCE = ROOT / "machine" / "bl-mts-ingestion-map.json"
+HYPOTHESIS_PAGE_SOURCE = ROOT / "public" / "hypotheses.html"
+HYPOTHESIS_REGISTRY_SOURCE = ROOT / "machine" / "hypothesis-registry.json"
+NOVEL_SCIENCE_WEAVE_SOURCE = ROOT / "machine" / "novel-global-science-weave.json"
 
 
 def stage_external_science_constellation() -> None:
@@ -81,11 +84,59 @@ def stage_mature_theory_synthesis() -> None:
             science.write_text(text, encoding="utf-8")
 
 
+def stage_hypothesis_branch_and_science_weave() -> None:
+    required = [HYPOTHESIS_PAGE_SOURCE, HYPOTHESIS_REGISTRY_SOURCE, NOVEL_SCIENCE_WEAVE_SOURCE]
+    missing = [path.relative_to(ROOT).as_posix() for path in required if not path.exists()]
+    if missing:
+        raise RuntimeError("BL-HYP/science-weave source missing: " + ", ".join(missing))
+
+    shutil.copy(HYPOTHESIS_PAGE_SOURCE, SITE / "hypotheses.html")
+    (SITE / "machine").mkdir(parents=True, exist_ok=True)
+    shutil.copy(HYPOTHESIS_REGISTRY_SOURCE, SITE / "machine" / "hypothesis-registry.json")
+    shutil.copy(NOVEL_SCIENCE_WEAVE_SOURCE, SITE / "machine" / "novel-global-science-weave.json")
+
+    chapter = SITE / "novel" / "chapter-001.html"
+    if not chapter.exists():
+        raise RuntimeError("rendered Chapter 1 missing before science weave")
+    text = chapter.read_text(encoding="utf-8")
+    if 'id="global-science-continuity-weave"' not in text:
+        marker = '<p>Ở đâu đó ngoài căn phòng, Internet đã đi vào Việt Nam từ trước khi Bách hiểu Internet là gì.'
+        if marker not in text:
+            raise RuntimeError("Chapter 1 science-weave insertion marker missing")
+        block = '''
+<section id="global-science-continuity-weave">
+<h2>Khoa học ngoài kia không đứng yên chờ một đứa trẻ lớn lên</h2>
+<p>Bách lớn lên trong một thời kỳ mà những thứ từng nằm sâu trong sách và phòng thí nghiệm liên tục tràn ra màn hình của người bình thường. Năm 2003, Human Genome Project khép lại mục tiêu chính của một bản tham chiếu bộ gene người; nhiều năm sau người ta vẫn tiếp tục lấp những khoảng trống còn lại. Một bản đồ rất lớn vừa hoàn thành không có nghĩa con người đã được giải thích xong.</p>
+<p>Đến năm 2012, hai câu chuyện khác nhau cùng làm đường biên giữa <em>biết</em> và <em>làm được</em> dịch chuyển. Ở CERN, ATLAS và CMS công bố một hạt mới phù hợp với Higgs boson, thứ đã sống hàng thập kỷ trong lý thuyết trước khi máy gia tốc đủ mạnh để chạm vào nó bằng dữ liệu. Cũng trong năm ấy, CRISPR-Cas9 mở ra một con đường chỉnh sửa gene có thể lập trình: từ đọc một phần mã của sự sống sang can thiệp vào nó.</p>
+<p>Năm 2015, LIGO ghi được GW150914; đầu 2016 thế giới nghe công bố về lần đầu gravitational waves được phát hiện trực tiếp. Những gợn của không-thời gian từng chỉ nằm trong phương trình trở thành tín hiệu trong máy đo. Bách không cần hiểu hết vật lý để nhận ra một pattern: đôi khi Reality không đổi, chỉ là nền văn minh cuối cùng cũng chế tạo được giác quan để nhìn phần trước đó nó không nhìn thấy.</p>
+<p>Rồi máy học đi từ một ngành người ngoài khó hình dung thành hạ tầng len vào tìm kiếm, hình ảnh, ngôn ngữ và nghiên cứu. Đến 2024, Nobel Vật lý ghi nhận những nền tảng của machine learning bằng artificial neural networks; Nobel Hóa học cùng năm ghi nhận computational protein design và protein structure prediction. Một cỗ máy có thể dự đoán cấu trúc rất giỏi vẫn không làm thí nghiệm biến mất. Nó chỉ đẩy câu hỏi tiếp theo sang một biên mới.</p>
+<p>Bách không coi những mốc ấy là bằng chứng cho bất kỳ học thuyết nào của mình. Chúng làm một việc khác: dạy cả một thế hệ rằng <strong>representation, prediction, observation và intervention là bốn ngưỡng khác nhau</strong>. Có thứ ta viết được trước khi đo được. Có thứ đo được trước khi hiểu hết. Có thứ dự đoán được trước khi điều khiển được. Và có những chỗ, sau tất cả, câu trả lời tốt nhất vẫn là: chưa biết.</p>
+<p class="source">Reality anchors: <a href="https://www.genome.gov/human-genome-project">NHGRI · Human Genome Project</a> · <a href="https://home.cern/science/physics/higgs-boson">CERN · Higgs boson</a> · <a href="https://www.nobelprize.org/prizes/chemistry/2020/press-release/">Nobel · CRISPR</a> · <a href="https://ligo.org/science-summaries/gw150914/">LIGO · GW150914</a> · <a href="https://www.nobelprize.org/prizes/physics/2024/press-release/">Nobel Physics 2024</a> · <a href="https://www.nobelprize.org/prizes/chemistry/2024/press-release/">Nobel Chemistry 2024</a>.</p>
+</section>
+
+'''
+        text = text.replace(marker, block + marker, 1)
+        chapter.write_text(text, encoding="utf-8")
+
+
 def main() -> None:
     stage_external_science_constellation()
     stage_mature_theory_synthesis()
+    stage_hypothesis_branch_and_science_weave()
     text = INDEX.read_text(encoding="utf-8")
 
+    root_entry = (
+        '<li class="bl-infinity-root-entry"><a href="index.html">'
+        '<strong>BL∞ · Toàn hệ</strong>'
+        '<span>Root public surface của BL∞: Học thuyết, Giả thuyết, Tiểu thuyết, Reality–GiaTai–UNKNOWN, Regressor, hệ bảo toàn, khoa học ngoài BL, provenance và critique.</span>'
+        '</a></li>'
+    )
+    hypothesis_entry = (
+        '<li class="hypothesis-entry"><a href="hypotheses.html">'
+        '<strong>Giả thuyết BL∞ · BL-HYP</strong>'
+        '<span>Nhánh riêng cho các hypothesis hỗ trợ hệ; Theory ≠ Hypothesis ≠ Fiction và mọi promotion đều phải qua evidence, prior art, provenance và Reality Veto.</span>'
+        '</a></li>'
+    )
     novel_entry = (
         '<li class="novel-entry"><a href="novel/">'
         '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Chương 1 HALF-CANON</strong>'
@@ -145,6 +196,10 @@ def main() -> None:
         raise RuntimeError("home-directory-grid anchor not found")
 
     entries = ''
+    if 'class="bl-infinity-root-entry"' not in text:
+        entries += root_entry
+    if 'class="hypothesis-entry"' not in text:
+        entries += hypothesis_entry
     if 'class="conservation-system-entry"' not in text:
         entries += system_entry
     if 'class="open-academic-publishing-entry"' not in text:
@@ -176,7 +231,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS registry/integration/ingestion + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ root + hypothesis branch + global science narrative weave + BL-MTS/world surfaces staged: OK")
 
 
 if __name__ == "__main__":
