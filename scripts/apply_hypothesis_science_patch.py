@@ -2,6 +2,7 @@ from pathlib import Path
 import html
 import json
 import re
+import runpy
 
 ROOT = Path(__file__).resolve().parents[1]
 SITE = ROOT / "site"
@@ -280,3 +281,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    runpy.run_path(str(ROOT / "scripts" / "apply_public_architecture_v2.py"), run_name="__main__")
