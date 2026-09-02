@@ -4,7 +4,7 @@
 
 **Tác giả / Origin:** Lâm Kim Bách, Bách Lâm / Optimizer  
 **Trạng thái series:** `SERIAL FICTION · REALITY-ANCHORED OPEN CONTINUITY`  
-**Trạng thái Chương 1:** `PUBLIC HALF-CANON v1`  
+**Trạng thái Chương 1:** `PUBLIC HALF-CANON v1.1 · ERA-LANGUAGE TEXTURE PATCH`  
 **Ngôn ngữ nguồn:** Tiếng Việt
 
 ---
@@ -54,7 +54,7 @@ Không được bịa pseudo-science để đóng lỗ.
 
 ---
 
-## 3. Những gì được khóa sau Chương 1 HALF-CANON v1
+## 3. Những gì được khóa sau Chương 1 HALF-CANON v1.1
 
 1. Nhân vật chính tên **Bách Lâm**.
 2. Chương 1 có tên **Đại Kết Cục Thứ Một Nghìn**.
@@ -75,10 +75,11 @@ Không được bịa pseudo-science để đóng lỗ.
 17. Điều kiện dừng anh ghi là: **“Khi tìm được một thế giới không cần tôi nữa.”**
 18. Lát cắt đời trẻ của Chương 1 được neo vào **Việt Nam đầu thế kỷ XXI** như một bối cảnh xã hội thật có biến thiên vùng miền/gia đình/thế hệ.
 19. Các neo được phép dùng gồm Đổi Mới, Internet từ 19/11/1997, cải cách giáo dục đầu những năm 2000, WTO từ 11/01/2007, đô thị hóa, Tết và hệ xưng hô tiếng Việt; nguồn nằm trong Reality Anchor Ledger.
-20. Cuối chương, một đứa trẻ tên Bách Lâm nhận được một dấu vết rất nhỏ. Một hành vi hợp tác nhỏ chỉ làm dịch một threshold cực thấp; nó không chứng minh toàn bộ phẩm chất hay mở kho ký ức.
-21. Câu **“Đừng để họ đóng tương lai quá sớm.”** đi qua khe đầu tiên.
-22. Con số của đời trẻ không được nêu.
-23. Quan hệ chính xác giữa “một nghìn” trong Chương 1 với “một triệu” trong tên truyện, bản chất sâu của `UNKNOWN`, cơ chế truyền và kết cục cuối cùng đều **chưa được công bố**.
+20. Bản v1.1 bổ sung texture theo các mốc 1997, 2003, 2007 và 2009 về Internet/ADSL/WTO/3G và sự thay đổi medium giao tiếp. Các mốc này **không khóa năm sinh của Bách**.
+21. Cuối chương, một đứa trẻ tên Bách Lâm nhận được một dấu vết rất nhỏ. Một hành vi hợp tác nhỏ chỉ làm dịch một threshold cực thấp; nó không chứng minh toàn bộ phẩm chất hay mở kho ký ức.
+22. Câu **“Đừng để họ đóng tương lai quá sớm.”** đi qua khe đầu tiên.
+23. Con số của đời trẻ không được nêu.
+24. Quan hệ chính xác giữa “một nghìn” trong Chương 1 với “một triệu” trong tên truyện, bản chất sâu của `UNKNOWN`, cơ chế truyền và kết cục cuối cùng đều **chưa được công bố**.
 
 Không suy ngược future lore từ tên truyện.
 
@@ -94,6 +95,7 @@ Mỗi chương khi đã công bố ở trạng thái canon/half-canon sẽ tạo
 - nhịp câu;
 - âm thanh/mùi/vật dụng/cảnh quan nếu không đổi dependency;
 - chi tiết cultural texture tương thích Reality Anchor Ledger;
+- ngôn ngữ xã hội, xưng hô và medium texture nếu audit theo năm/vùng/quan hệ tốt hơn;
 - diễn đạt khoa học chính xác hơn nếu không lén đổi event;
 - thêm source hoặc provenance;
 - tách một câu quá rộng thành statement có scope đúng hơn.
@@ -139,6 +141,43 @@ Canonical ledger:
 Machine registry:
 
 `machine/chapter-001-reality-anchors.json`
+
+### 5.1. Luật Era-Language & Literary Style
+
+Canonical atlas:
+
+`content/novel/03_SOCIAL_LANGUAGE_LITERARY_ATLAS.md`
+
+Machine registry:
+
+`machine/novel-era-language-style-registry.json`
+
+Chapter 1 texture patch:
+
+`content/novel/04_CHAPTER_001_ERA_LANGUAGE_PATCH.md`
+
+Mọi historical dialogue quan trọng phải resolve tối thiểu:
+
+```text
+YearOrEra
++ Region
++ Generation
++ SocialRelation
++ Medium
++ LiteraryMode
+```
+
+Các bất biến:
+
+```text
+PeriodAuthenticity != ArchaicOverload
+LiteraryEra != AuthorImitation
+DialogueRegister != NarratorRegister
+OneYear != OneUniformVoice
+Region != NationAsMonolith
+```
+
+Không lấy fingerprint của một tác giả cụ thể làm giọng cả thời đại. Không bịa slang chính xác theo năm nếu chưa có source/corpus. Nếu chưa chắc thì giảm specificity và tăng provenance.
 
 ---
 
@@ -194,6 +233,7 @@ Những dấu vết sâu hơn, nếu còn tồn tại trong lịch sử phiên b
 CoreEventBinding = STRONG
 RealityAnchorBinding = STRONG_WHERE_SOURCED
 SceneTextureBinding = PATCHABLE
+EraLanguageTextureBinding = PATCHABLE_WITH_PROVENANCE
 DeepMechanismBinding = OPEN_UNLESS_EXPLICITLY_PROVEN_IN_STORY
 FutureCanonBinding = NONE_BEYOND_PUBLISHED_DEPENDENCIES
 ```
