@@ -1,19 +1,22 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "BL-NOVEL-CH001-REALITY-ANCHORS",
   "series": "Bách Lâm · Lần Hồi Quy Thứ Một Triệu",
   "chapter": "001",
   "chapter_title": "Đại Kết Cục Thứ Một Nghìn",
-  "continuity_state": "HALF_CANON",
+  "continuity_state": "HALF_CANON_V1_1",
   "last_audited": "2026-09-02",
   "source_ledger": "../content/novel/02_REALITY_ANCHOR_LEDGER.md",
+  "era_language_atlas": "../content/novel/03_SOCIAL_LANGUAGE_LITERARY_ATLAS.md",
   "public_guide": "../novel/world-chapter-001.html",
+  "public_era_language_atlas": "../novel/era-language-style-atlas.html",
   "contracts": {
     "real_world_anchor_not_autobiographical_proof": true,
     "cultural_pattern_not_universal_essence": true,
     "historical_fact_not_fictional_event": true,
     "fictional_mechanism_not_scientific_claim": true,
-    "variation_across_region_generation_class_family_context_must_be_preserved": true
+    "variation_across_region_generation_class_family_context_must_be_preserved": true,
+    "year_specific_language_requires_year_or_era_resolution": true
   },
   "anchor_types": {
     "R1": "source-backed historical/social anchor",
@@ -33,8 +36,15 @@
       "id": "VN-INTERNET-1997",
       "type": "R1",
       "statement": "Viet Nam officially connected to the global Internet on 19 November 1997; early access used fixed-line infrastructure and limited speeds.",
-      "source": "https://vnnic.vn/sites/default/files/whitebook/ReportOnVietNamInternetResources2022.pdf",
+      "source": "https://archive.vnnic.vn/sites/default/files/whitebook/BaoCaoTainguyenInternet2022.pdf",
       "use": "Internet cafés, early home/commercial connectivity, rapid change in information access"
+    },
+    {
+      "id": "VN-ADSL-2003",
+      "type": "R1",
+      "statement": "ADSL broadband entered the Vietnamese market in 2003, marking a shift from narrowband access toward higher-speed Internet; VNNIC reports about 3.1 million Internet users that year.",
+      "source": "https://archive.vnnic.vn/sites/default/files/whitebook/BaoCaoTainguyenInternet2022.pdf",
+      "use": "change in waiting time, Internet cafés/home access, faster information-seeking behavior without assuming universal household adoption"
     },
     {
       "id": "VN-EDUCATION-2000S",
@@ -48,7 +58,14 @@
       "type": "R1",
       "statement": "Viet Nam has been a WTO member since 11 January 2007.",
       "source": "https://www.wto.org/english/thewto_e/countries_e/vietnam_e.htm",
-      "use": "later childhood/youth backdrop of accelerated international integration"
+      "use": "later childhood/youth backdrop of accelerated international integration and household-level talk about work, prices, markets and foreign goods"
+    },
+    {
+      "id": "VN-3G-MOBILE-SHIFT-2009",
+      "type": "R1",
+      "statement": "Vietnam inaugurated 3G in 2009; VNNIC's 25-year Internet timeline identifies the PC-to-mobile shift as a major change in Internet usage habits around this period.",
+      "source": "https://vnnic.vn/sites/default/files/bao-cao-tai-nguyen/report-on-internet-internet-resources-in-viet-nam-2022.pdf",
+      "use": "Internet beginning to travel with users rather than remaining tied mainly to desktop/location-based access; faster multi-context communication"
     },
     {
       "id": "VN-ADDRESS-KINSHIP",
@@ -85,6 +102,7 @@
     {"gap": "seed_reads_morality", "status": "DEMYSTIFIED_WITH_OPEN_MECHANISM", "resolution": "observable locally verifiable behavior and thresholds; no soul-reading claim"},
     {"gap": "transmission_physics", "status": "OPEN_U1", "resolution": "operational observations only; no fabricated pseudo-scientific closure"},
     {"gap": "child_scene_is_autobiography", "status": "BOUNDARY_LOCKED", "resolution": "real history/culture anchors do not establish biography"},
-    {"gap": "vietnamese_culture_is_uniform", "status": "BOUNDARY_LOCKED", "resolution": "variation rule across region, generation, class, family and context"}
+    {"gap": "vietnamese_culture_is_uniform", "status": "BOUNDARY_LOCKED", "resolution": "variation rule across region, generation, class, family and context"},
+    {"gap": "year_specific_language_is_uniform", "status": "BOUNDARY_LOCKED", "resolution": "year/era must additionally resolve region, generation, relation and medium"}
   ]
 }
