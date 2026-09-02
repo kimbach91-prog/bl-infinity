@@ -98,6 +98,43 @@ jobs:
       - name: Link world narrative, UNKNOWN Doctrine and Grand Ending from homepage
         run: python scripts/stage_grand_ending_home.py
 
+      - name: Feature Regressor Proposition on homepage
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          index = Path('site/index.html')
+          text = index.read_text(encoding='utf-8')
+          marker = '<main><article>'
+          feature = '''<section class="author-spotlight" aria-labelledby="regressor-feature-title">
+          <p class="eyebrow">Công bố mới · 02.09.2026 · BL-RP-FRC</p>
+          <h2 id="regressor-feature-title">Mệnh đề Kẻ Hồi Quy — Liên kết Kết quả Tương lai với Hiện tại</h2>
+          <p>Một kết quả tương lai còn vô khả định lượng đầy đủ được dùng như <strong>điều kiện biên giả định</strong>: suy ngược các ràng buộc cần hình thành, tạo hành động ở hiện tại, rồi để Reality Veto liên tục phá những nhánh sai.</p>
+          <p><strong>FutureBoundary ≠ FutureFact.</strong> BackwardInference ≠ BackwardSignal. Phần vật lý được giữ ở trạng thái giả thuyết mở cho tới khi có bằng chứng thực nghiệm thích hợp.</p>
+          <p><a class="primary-link" href="regressor-proposition.html">Đọc Mệnh đề Kẻ Hồi Quy, sơ đồ phả hệ và claim map →</a></p>
+          </section>'''
+          if 'regressor-feature-title' not in text:
+              if marker not in text:
+                  raise SystemExit('homepage main/article marker not found')
+              text = text.replace(marker, marker + feature, 1)
+              index.write_text(text, encoding='utf-8')
+
+          sitemap = Path('site/sitemap.xml')
+          sm = sitemap.read_text(encoding='utf-8')
+          route = '<url><loc>https://kimbach91-prog.github.io/bl-infinity/regressor-proposition.html</loc><lastmod>2026-09-02</lastmod></url>'
+          if 'regressor-proposition.html' not in sm:
+              sm = sm.replace('</urlset>', route + '\n</urlset>')
+              sitemap.write_text(sm, encoding='utf-8')
+
+          llms = Path('site/llms.txt')
+          if llms.exists():
+              lm = llms.read_text(encoding='utf-8')
+              if 'regressor-proposition.html' not in lm:
+                  lm += '''\n\n## Regressor Proposition / Mệnh đề Kẻ Hồi Quy\nPublic route: /regressor-proposition.html\nStatus: research proposition; future-boundary backcasting is a current epistemic mechanism, while controllable backward physical information remains an unverified physics hypothesis.\n'''
+                  llms.write_text(lm, encoding='utf-8')
+          PY
+
       - name: Build multilingual SEO and AI discovery layer locally
         run: python scripts/run_discovery.py
 
