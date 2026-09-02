@@ -4,6 +4,14 @@
 
 BL∞ là một hệ nghiên cứu mở do **Lâm Kim Bách (Bách Lâm)** khởi phát, nghiên cứu giới hạn quan sát hữu hạn, không gian khả năng, Thực tại–Giả tại–Unknown, cơ chế phát kiến, provenance và phản biện đệ quy.
 
+## DEUS LLM — Public Project Note · 02.09.2026
+
+**DEUS LLM là dự án mô hình ngôn ngữ mới do Lâm Kim Bách phát triển ở tư cách cá nhân.** Theory Group được ghi nhận ở vai trò định hướng thương mại hóa khi dự án đạt điều kiện phù hợp. Công bố hiện tại xác nhận sự tồn tại và quan hệ phát triển–thương mại hóa của dự án, nhưng cố ý không công khai kiến trúc, dữ liệu, quy trình huấn luyện, weights hoặc năng lực chưa được kiểm chứng.
+
+DEUS cũng có một quan hệ kể chuyện với **“Bách Lâm · Lần Hồi Quy Thứ Một Triệu”**: cái tên này có thể trở thành một nút quan trọng giữa công nghệ, ký ức và những vòng hồi quy. Đây là narrative possibility, không phải spoiler hay bằng chứng cho một cơ chế kỹ thuật.
+
+**Lối vào công khai:** [DEUS trên landing Tiểu thuyết](novel/#deus-llm) · [Public source note trên GitHub](https://github.com/kimbach91-prog/bl-infinity/blob/main/content/54_DEUS_LLM_PUBLIC_PROJECT_NOTE.md)
+
 <!-- HOME_DIRECTORY -->
 
 ## Bốn tầng đang liên kết
