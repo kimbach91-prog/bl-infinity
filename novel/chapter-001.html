@@ -16,7 +16,7 @@
 <nav><a href="./">← Mục lục tiểu thuyết</a><a href="../">Mục lục chung</a></nav>
 <section class="hero"><p class="kicker">PUBLIC FICTION · HALF-CANON · SLOW-TIME EDITION</p><h1>Đại Kết Cục Thứ Một Nghìn</h1><p class="lead">Bản đọc ưu tiên văn xuôi. Research notes và dữ liệu worldbuilding không chen vào cuối chương; phần tuổi thơ chỉ đi trong cửa sổ thời gian tác giả đã cho phép.</p></section>
 <details class="toc" open><summary>Mục lục chương</summary><div id="toc-links"></div></details>
-<article id="reader" class="reader"><p>Đang tải văn bản…</p></article>
+<article id="reader" class="reader prose"><p>Đang tải văn bản…</p></article>
 <section class="status"><strong>Quy tắc thời gian:</strong> chương không tự nhảy sang ngày, tuổi hoặc giai đoạn đời tiếp theo. Bước nhảy đáng kể chỉ được viết khi tác giả cho phép.</section>
 <footer>© Lâm Kim Bách · Bách Lâm / Optimizer</footer>
 </main>
@@ -35,6 +35,7 @@ function render(md){
  }
  return {html,toc};
 }
-fetch('chapter-001.md',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error();return r.text()}).then(md=>{const out=render(md);document.getElementById('reader').innerHTML=out.html;document.getElementById('toc-links').innerHTML=out.toc.map(([id,t])=>`<a href="#${id}">${esc(t)}</a>`).join('')}).catch(()=>{document.getElementById('reader').innerHTML='<p>Không tải được văn bản. Có thể mở bản nguồn Markdown từ repository.</p>'});
+fetch('chapter-001.md',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error();return r.text()}).then(md=>{const out=render(md);document.getElementById('reader').innerHTML=out.html;document.getElementById('toc-links').innerHTML=out.toc.map(([id,t])=>`<a href="#${id}">${esc(t)}</a>`).join('');window.dispatchEvent(new Event('resize'))}).catch(()=>{document.getElementById('reader').innerHTML='<p>Không tải được văn bản. Có thể mở bản nguồn Markdown từ repository.</p>';window.dispatchEvent(new Event('resize'))});
 </script>
+<script src="../assets/js/site.js"></script>
 </body></html>
