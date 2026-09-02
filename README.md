@@ -1,6 +1,7 @@
 # B∞ — UNKNOWN
 
 **Core public state:** `~1% PUBLIC · 99% WITHHELD · UNKNOWN`  
+**Outer public surface:** `REOPENED / CURATED`  
 **Effective:** 2026-09-03  
 **Author:** Lâm Kim Bách (Bách Lâm / Optimizer)
 
@@ -8,28 +9,29 @@
 >
 > **Giới hạn cuối của B∞: `UNKNOWN`.**
 
-Đây là định nghĩa nghiên cứu công khai ở mức cố ý mơ hồ. Nó không tự tuyên bố đã được chứng minh như định luật vật lý hay toán học.
+## Đã mở lại
 
-Khoảng 99% phần hình thành nội bộ của B∞ hiện tiếp tục được giữ kín trong lúc tác giả đánh giá giá trị tiềm năng và chuyển hóa chúng thành những object có thể công bố, hiểu, kiểm tra và phản biện.
+- **Tiểu thuyết:** `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, Chương 1, worldbuilding/reality anchors và atlas ngôn ngữ–thời đại.
+- **Tự do / Dân chủ Học thuật:** bản tuyên ngôn công khai ở tầng xã hội–nguyên tắc.
+- **Hồ sơ tác giả:** định danh công khai tối thiểu của Lâm Kim Bách · Bách Lâm / Optimizer.
+- **Project notes:** DEUS LLM, Theory Group và các thông tin tồn tại/trạng thái ở mức cao.
+- **Author's Promise:** lời hứa tiếp tục công bố những phần phù hợp sau khi đánh giá và chuyển hóa đủ chín.
 
-## Public lanes độc lập
+Các lane trên **không được dùng như cửa hậu để suy rằng academic core đã được công bố**.
 
-- **Tiểu thuyết — PUBLIC:** `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, gồm Chương 1 hiện hành ở trạng thái fiction / HALF-CANON living draft.
-- **Tự do Học thuật — PUBLIC:** tuyên ngôn mở quyền đặt câu hỏi, đề xuất, phản biện và tham gia tạo tri thức mà không bình quân hóa trọng lượng bằng chứng.
+## Vẫn giữ kín
 
-Hai nhánh này được công khai độc lập và **không phải disclosure của kiến trúc B∞ đang giữ kín**.
+Theory core, hypotheses sâu, system/machine, claim graph, BL-ADN, provenance nội bộ, critique kỹ thuật, formalization và các object đủ chi tiết để tái dựng học thuật gốc vẫn không thuộc public Pages hiện hành.
 
-## Author's Promise — Lời hứa công bố
+## Author's Promise
 
 **Tác giả cam kết sẽ tiếp tục công bố các phần phù hợp sau khi đã đánh giá hết giá trị tiềm năng và hoàn tất quá trình chuyển hóa, phân loại, diễn giải chúng thành dạng đủ chín để công chúng có thể đọc, kiểm tra và phản biện.**
 
-Tác giả đồng thời tuyên bố rằng bề mặt public hiện tại **chưa đại diện cho những thiết kế tiên tiến nhất** đang được phát triển hoặc đánh giá. Đây là tuyên bố của tác giả về trạng thái nghiên cứu, không phải bằng chứng độc lập về giá trị hoặc hiệu năng của phần chưa công bố.
+Tác giả đồng thời tuyên bố rằng bề mặt public hiện tại chưa đại diện cho những thiết kế tiên tiến nhất đang được phát triển hoặc đánh giá. Đây là tuyên bố của tác giả về trạng thái nghiên cứu, không phải bằng chứng độc lập về giá trị hoặc hiệu năng của phần chưa công bố.
 
 ## OPEN CHALLENGE
 
 **Hãy tìm giới hạn cuối của B∞ — hoặc chứng minh thiết kế này sai.**
-
-Một phản bác đủ mạnh có thể chứng minh ranh giới cuối, dựng phản ví dụ, chỉ ra mâu thuẫn nội tại, hoặc chứng minh B∞ quá rỗng / vòng tròn / không falsifiable để có giá trị nghiên cứu. Nếu phản bác đứng vững, B∞ phải thu hẹp, sửa hoặc thất bại.
 
 `FINAL_BOUNDARY(B∞) = UNKNOWN`
 
