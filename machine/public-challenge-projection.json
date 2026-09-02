@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "id": "BL-CHALLENGE-PROJECTION",
   "canonical_name_vi": "Bản Chiếu Thử Thách Công khai BL∞",
   "canonical_name_en": "BL Infinity Public Challenge Projection",
@@ -9,7 +9,7 @@
     "provenance-preserving-redaction-contract"
   ],
   "status": "ADOPTED_PUBLIC_OPEN_TO_AUDIT",
-  "version": "1.0",
+  "version": "1.1",
   "date": "2026-09-02",
   "origin": "Lâm Kim Bách / Bách Lâm",
   "canonical_source": "../content/57_PUBLIC_CHALLENGE_PROJECTION.md",
@@ -18,7 +18,9 @@
     "hint_not_equal_full_closure",
     "published_projection_not_equal_complete_derivation",
     "challenge_not_equal_deception",
-    "current_disclosure_choice_does_not_erase_historical_release"
+    "current_disclosure_choice_does_not_erase_historical_release",
+    "public_browser_delivery_not_equal_confidentiality",
+    "human_only_credit_requires_declared_tool_provenance"
   ],
   "formula_states": {
     "OPEN_FORMULA": "full expression is on the current public surface",
@@ -38,7 +40,8 @@
     "hiding_known_counterevidence",
     "strengthening_claim_status_by_omission",
     "erasing_causal_history",
-    "claiming_a_reconstructor_is_wrong_only_because_they_did_not_guess_withheld_material"
+    "claiming_a_reconstructor_is_wrong_only_because_they_did_not_guess_withheld_material",
+    "claiming_public_static_html_is_ai_proof_or_copy_proof"
   ],
   "current_withheld_objects": [
     "BL-A05-DYNAMIC-REACHABILITY",
@@ -59,8 +62,31 @@
       "invariants",
       "countercases",
       "test_or_prediction",
-      "provenance"
+      "provenance",
+      "tools_used"
     ]
+  },
+  "puzzle_layer": {
+    "id": "BL-RECON-PUZZLES",
+    "source": "../content/58_RECONSTRUCTION_PUZZLES.md",
+    "human_page": "../research-puzzles.html",
+    "puzzle_count": 8,
+    "public_answer_key": false,
+    "puzzle_is_not_ciphertext_of_answer": true,
+    "human_only_credit_is_provenance_claim_not_drm": true,
+    "discovery_policy": {
+      "sitemap": false,
+      "indexnow": false,
+      "llms_txt": false,
+      "machine_manifest": false,
+      "meta_robots": ["noindex", "nofollow", "noarchive", "nosnippet"]
+    }
+  },
+  "release_gate": {
+    "script": "../scripts/challenge_disclosure_audit.py",
+    "blocks_legacy_formula_reappearance": true,
+    "blocks_public_answer_key_heading": true,
+    "blocks_low_discovery_route_leakage": true
   },
   "historical_note": "Previously committed public formulas may remain recoverable from Git history. This contract governs current and future public release surfaces and does not claim retroactive erasure."
 }
