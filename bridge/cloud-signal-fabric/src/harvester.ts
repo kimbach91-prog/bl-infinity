@@ -25,15 +25,15 @@ function cadenceMinutes(mode: 'HOT' | 'WARM' | 'IDLE'): number {
   return config.idleMinutes;
 }
 
-export async function harvest(): Promise<Record<string, unknown>> {
+export async function harvest(options: { force?: boolean } = {}): Promise<Record<string, unknown>> {
   const before = await readControl();
   if (!before.driveCursor) {
     const cursor = await getStartCursor();
     await bootstrapCursor(cursor);
-    return { ok: true, state: 'BOOTSTRAPPED', cursorInitialized: true, modelCalls: 0 };
+    return { ok: true, state: 'BOOTSTRAPPED', cursorInitialized: true, forced: Boolean(options.force), modelCalls: 0 };
   }
 
-  if (before.nextPollAt && Date.parse(before.nextPollAt) > Date.now()) {
+  if (!options.force && before.nextPollAt && Date.parse(before.nextPollAt) > Date.now()) {
     return { ok: true, state: 'NOT_DUE', mode: before.mode || 'IDLE', nextPollAt: before.nextPollAt, modelCalls: 0 };
   }
 
@@ -86,6 +86,7 @@ export async function harvest(): Promise<Record<string, unknown>> {
   return {
     ok: true,
     state: 'HARVESTED',
+    forced: Boolean(options.force),
     fencingEpoch: epoch,
     manifestChanges: page.changes.length,
     deliveries: deliveries.length,
