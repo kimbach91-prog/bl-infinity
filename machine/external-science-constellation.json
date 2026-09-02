@@ -1,0 +1,280 @@
+{
+  "schema_version": "1.0",
+  "object_id": "EXT-SCI-CONSTELLATION-v1",
+  "title": "External Science Constellation for BL∞ World Build",
+  "date_curated": "2026-09-02",
+  "lineage_policy": "EXTERNAL_SCIENCE_REMAINS_OUTSIDE_BL_GENEALOGY",
+  "authorship_boundary": "This registry curates external scientific work. It does not attribute those discoveries, theories, experiments or consensus objects to Lâm Kim Bách, Bách Lâm, Optimizer or BL∞.",
+  "worldbuild_policy": "External science may constrain, enrich, contradict or inspire BL∞ world-building. Similarity or intersection does not create genealogy, identity or proof of BL claims.",
+  "epistemic_statuses": {
+    "ESTABLISHED": "Strongly confirmed within a defined domain and routinely used as scientific infrastructure.",
+    "STRONG_SUPPORT": "Supported by converging evidence but with important open mechanism or parameter questions.",
+    "OPEN_FRONTIER": "Serious active research question with multiple viable models or unresolved mechanisms.",
+    "CONTESTED": "Active disagreement where evidence or interpretation does not yet justify closure.",
+    "REFUTED_OR_REVISED": "A previously prominent claim or framing that was rejected, narrowed or superseded by later evidence."
+  },
+  "nodes": [
+    {
+      "id": "EXT-PHY-STANDARD-MODEL",
+      "domain": "particle physics",
+      "title": "Standard Model of particle physics",
+      "status": "ESTABLISHED",
+      "external_lineage": "20th-century quantum field theory and collider physics; CERN and global collaborations",
+      "intersection_with_bl": "A mature example of a powerful model that is highly successful inside scope while openly incomplete outside scope.",
+      "non_intersection": "It does not imply BL∞ ontology, future regression, UNKNOWN Doctrine or any BL claim.",
+      "worldbuild_use": "Institutions can possess an extraordinarily successful map while knowing the map is incomplete; characters can confuse local closure with total closure.",
+      "source": "https://home.cern/science/physics/standard-model/"
+    },
+    {
+      "id": "EXT-PHY-HIGGS",
+      "domain": "particle physics",
+      "title": "Brout-Englert-Higgs mechanism and Higgs boson",
+      "status": "ESTABLISHED",
+      "external_lineage": "Theoretical work in the 1960s; ATLAS and CMS observation announced in 2012",
+      "intersection_with_bl": "Useful example of a theoretical object surviving for decades before decisive experimental contact.",
+      "non_intersection": "Prediction-before-observation is not evidence that information travelled from the future.",
+      "worldbuild_use": "Long-latency theories, expensive verification bottlenecks, and generations that work on a result they may never personally see.",
+      "source": "https://home.cern/science/physics/higgs-boson/"
+    },
+    {
+      "id": "EXT-PHY-GRAVITATIONAL-WAVES",
+      "domain": "gravitation and astronomy",
+      "title": "General relativity and direct gravitational-wave detection",
+      "status": "ESTABLISHED",
+      "external_lineage": "Einsteinian gravitation; LIGO Scientific Collaboration",
+      "intersection_with_bl": "Shows how a deep theory can generate century-scale predictions and how new instruments create new observable reality surfaces.",
+      "non_intersection": "Gravitational waves and relativistic spacetime do not establish controllable backward-in-time information transfer.",
+      "worldbuild_use": "A civilization becomes different when it gains a new sense organ for the universe.",
+      "source": "https://ligo.org/science-summaries/gw150914/"
+    },
+    {
+      "id": "EXT-PHY-BELL-ENTANGLEMENT",
+      "domain": "quantum foundations",
+      "title": "Bell inequalities and quantum entanglement",
+      "status": "ESTABLISHED",
+      "external_lineage": "Bell-test experiments; Aspect, Clauser, Zeilinger and wider quantum-foundations community",
+      "intersection_with_bl": "Demonstrates that classical intuitions about separability and hidden variables can fail experimentally.",
+      "non_intersection": "Entanglement does not by itself permit faster-than-light signalling or prove retrocausal messaging.",
+      "worldbuild_use": "Characters may live in a world where correlations are real but naive communication metaphors are wrong.",
+      "source": "https://www.nobelprize.org/prizes/physics/2022/press-release/"
+    },
+    {
+      "id": "EXT-PHY-MACRO-QUANTUM-2025",
+      "domain": "quantum physics",
+      "title": "Macroscopic quantum tunnelling and energy quantisation in an electric circuit",
+      "status": "ESTABLISHED",
+      "external_lineage": "Clarke, Devoret, Martinis; experiments originating in 1984-1985; Nobel Physics 2025",
+      "intersection_with_bl": "Useful evidence that boundaries between intuitive scale categories can move when a system is engineered appropriately.",
+      "non_intersection": "Macroscopic quantum behaviour is not evidence for arbitrary macroscopic superposition, time travel or BL metaphysics.",
+      "worldbuild_use": "Technological civilizations enlarge the scale at which previously microscopic rules become operational.",
+      "source": "https://www.nobelprize.org/prizes/physics/2025/press-release/"
+    },
+    {
+      "id": "EXT-PHY-NEUTRINO-MASS",
+      "domain": "particle physics",
+      "title": "Neutrino oscillations and nonzero neutrino mass",
+      "status": "ESTABLISHED",
+      "external_lineage": "Super-Kamiokande and Sudbury Neutrino Observatory; Nobel Physics 2015",
+      "intersection_with_bl": "A strong example of evidence forcing revision of an otherwise successful theoretical framework.",
+      "non_intersection": "Model revision does not imply that every anomaly requires a new ontology.",
+      "worldbuild_use": "The winning theory can remain useful while one of its simplifying assumptions is broken by reality.",
+      "source": "https://www.nobelprize.org/prizes/physics/2015/press-release/"
+    },
+    {
+      "id": "EXT-COS-ACCELERATION",
+      "domain": "cosmology",
+      "title": "Accelerating expansion of the universe",
+      "status": "ESTABLISHED",
+      "external_lineage": "Supernova Cosmology Project and High-z Supernova Search Team; Nobel Physics 2011",
+      "intersection_with_bl": "A case where observation forced a surprising reversal of the expected large-scale future trajectory.",
+      "non_intersection": "Cosmic acceleration does not establish any specific BL Grand Ending or terminal attractor.",
+      "worldbuild_use": "A civilization can discover that its best expectation of the future has the wrong sign.",
+      "source": "https://www.nobelprize.org/prizes/physics/2011/press-release/"
+    },
+    {
+      "id": "EXT-COS-DARK-SECTOR",
+      "domain": "cosmology",
+      "title": "Dark matter and dark energy",
+      "status": "OPEN_FRONTIER",
+      "external_lineage": "Modern observational cosmology, gravitational lensing, large-scale structure and expansion measurements",
+      "intersection_with_bl": "A powerful narrative analogue for the difference between evidence for an effect and knowledge of the underlying entity.",
+      "non_intersection": "BL UNKNOWN is an epistemic construct; dark matter and dark energy are specific scientific inference problems and must not be relabelled as BL objects.",
+      "worldbuild_use": "Most of the inferred cosmic budget can be observationally consequential while its underlying nature remains unknown.",
+      "source": "https://science.nasa.gov/dark-matter/"
+    },
+    {
+      "id": "EXT-QIS-QUANTUM-INFORMATION",
+      "domain": "quantum information science",
+      "title": "Quantum information, sensing, networking and computing",
+      "status": "STRONG_SUPPORT",
+      "external_lineage": "Quantum physics plus information theory; NIST and global research community",
+      "intersection_with_bl": "Useful bridge between abstract information and physical implementation constraints.",
+      "non_intersection": "The existence of quantum information does not prove that information is independent of physical carriers or constraints.",
+      "worldbuild_use": "Information becomes a physical resource with architecture, error budgets and hardware limits.",
+      "source": "https://www.nist.gov/quantum-information-science"
+    },
+    {
+      "id": "EXT-EARTH-PLATE-TECTONICS",
+      "domain": "earth science",
+      "title": "Continental drift to plate tectonics",
+      "status": "ESTABLISHED",
+      "external_lineage": "Wegener's continental-drift evidence plus post-war ocean-floor, paleomagnetic and seismic evidence",
+      "intersection_with_bl": "Canonical case for preserving anomalous evidence without assuming the original mechanism was complete.",
+      "non_intersection": "Wegener's eventual partial vindication does not make rejected ideas generally more likely to be true.",
+      "worldbuild_use": "An idea can be socially defeated, mechanistically incomplete, and still preserve a structure later absorbed into a stronger theory.",
+      "source": "https://pubs.usgs.gov/gip/dynamic/developing.html"
+    },
+    {
+      "id": "EXT-CLIMATE-AR6",
+      "domain": "climate science",
+      "title": "IPCC AR6 physical climate science",
+      "status": "ESTABLISHED",
+      "external_lineage": "Intergovernmental Panel on Climate Change synthesis of multiple independent evidence lines",
+      "intersection_with_bl": "Demonstrates calibrated confidence, scenario reasoning, model comparison and explicit uncertainty language.",
+      "non_intersection": "Climate scenarios are conditional projections, not remembered futures or backward signals.",
+      "worldbuild_use": "Institutions must act under uncertainty where future states are model-dependent but risk is already measurable.",
+      "source": "https://www.ipcc.ch/report/ar6/wg1/"
+    },
+    {
+      "id": "EXT-BIO-HUMAN-GENOME",
+      "domain": "genomics",
+      "title": "Human Genome Project",
+      "status": "ESTABLISHED",
+      "external_lineage": "International Human Genome Project, 1990-2003",
+      "intersection_with_bl": "Strong example of shared infrastructure, open data and a representation that changes what future questions become askable.",
+      "non_intersection": "A genome sequence is not a complete causal specification of a human being or society.",
+      "worldbuild_use": "New maps generate new sciences but also new temptations toward determinism.",
+      "source": "https://www.genome.gov/genetics-glossary/human-genome-project"
+    },
+    {
+      "id": "EXT-BIO-CRISPR",
+      "domain": "genome engineering",
+      "title": "CRISPR-Cas9 genome editing",
+      "status": "ESTABLISHED",
+      "external_lineage": "Charpentier, Doudna and broader microbial/genome-editing research lineage; Nobel Chemistry 2020",
+      "intersection_with_bl": "Shows how understanding a mechanism can become a capability to intervene in the generator of future states.",
+      "non_intersection": "Genome editing does not imply unlimited biological controllability or predictability.",
+      "worldbuild_use": "Knowledge crosses a threshold from description to editable causation, creating governance conflict.",
+      "source": "https://www.nobelprize.org/prizes/chemistry/2020/press-release/"
+    },
+    {
+      "id": "EXT-BIO-ALPHAFOLD",
+      "domain": "computational biology and AI",
+      "title": "AlphaFold protein structure prediction",
+      "status": "ESTABLISHED",
+      "external_lineage": "DeepMind/Google DeepMind, CASP, structural biology; Nobel Chemistry 2024",
+      "intersection_with_bl": "AI can become a scientific instrument that compresses search spaces and exposes structures humans did not enumerate manually.",
+      "non_intersection": "A highly accurate predictive model is not automatically a mechanistic explanation or experimental proof for every downstream claim.",
+      "worldbuild_use": "Machine prediction changes the tempo of science and moves bottlenecks from discovery to validation and use.",
+      "source": "https://www.nobelprize.org/prizes/chemistry/2024/press-release/"
+    },
+    {
+      "id": "EXT-NEURO-BRAIN-INITIATIVE",
+      "domain": "neuroscience",
+      "title": "NIH BRAIN Initiative",
+      "status": "OPEN_FRONTIER",
+      "external_lineage": "NIH and partner neurotechnology programs",
+      "intersection_with_bl": "Useful for world-building cognition as a multi-scale system spanning cells, circuits, systems and behaviour.",
+      "non_intersection": "Circuit mapping does not currently provide a settled scientific theory of consciousness, identity or complete memory transfer.",
+      "worldbuild_use": "A civilization gains finer access to the brain while the ontology of mind remains partly unresolved.",
+      "source": "https://www.nih.gov/brain/about"
+    },
+    {
+      "id": "EXT-MED-H-PYLORI",
+      "domain": "medicine and microbiology",
+      "title": "Helicobacter pylori and peptic ulcer disease",
+      "status": "ESTABLISHED",
+      "external_lineage": "Warren and Marshall; Nobel Physiology or Medicine 2005",
+      "intersection_with_bl": "A model can be culturally dominant yet causally incomplete until a neglected mechanism becomes measurable and treatable.",
+      "non_intersection": "The episode does not license rejecting medical consensus without evidence; the change succeeded through reproducible causal evidence and treatment outcomes.",
+      "worldbuild_use": "A mocked or low-status mechanism becomes operationally superior when it cures what the old framing could only manage.",
+      "source": "https://www.nobelprize.org/prizes/medicine/2005/press-release/"
+    },
+    {
+      "id": "EXT-MED-PRIONS",
+      "domain": "medicine and molecular biology",
+      "title": "Prions as infectious proteins",
+      "status": "ESTABLISHED",
+      "external_lineage": "Stanley Prusiner and transmissible spongiform encephalopathy research; Nobel Physiology or Medicine 1997",
+      "intersection_with_bl": "A useful case where an accepted category of causal agents had to expand.",
+      "non_intersection": "Category expansion occurred because of evidence; it does not justify arbitrary ontology expansion.",
+      "worldbuild_use": "The dangerous agent is not where the civilization's taxonomy says an infectious agent must be.",
+      "source": "https://www.nobelprize.org/prizes/medicine/1997/press-release/"
+    },
+    {
+      "id": "EXT-MAT-GRAPHENE",
+      "domain": "materials science",
+      "title": "Graphene and two-dimensional materials",
+      "status": "ESTABLISHED",
+      "external_lineage": "Geim, Novoselov and 2D-materials research; Nobel Physics 2010",
+      "intersection_with_bl": "A seemingly simple dimensional change creates a qualitatively different material possibility space.",
+      "non_intersection": "Novel material properties do not imply unrestricted transformation across domains.",
+      "worldbuild_use": "Worlds can pivot when a familiar substance is placed in a new structural regime rather than when a new element is discovered.",
+      "source": "https://www.nobelprize.org/prizes/physics/2010/press-release/"
+    },
+    {
+      "id": "EXT-MAT-QUASICRYSTALS",
+      "domain": "materials science and crystallography",
+      "title": "Quasicrystals",
+      "status": "ESTABLISHED",
+      "external_lineage": "Dan Shechtman and crystallography; Nobel Chemistry 2011",
+      "intersection_with_bl": "Shows that an observation can force a taxonomy rewrite when the old definition excludes a real object.",
+      "non_intersection": "Not every taxonomy violation is a new natural kind; replication and structure determination remain necessary.",
+      "worldbuild_use": "A character is told the observed pattern is impossible because the dictionary says so; reality survives the dictionary.",
+      "source": "https://www.nobelprize.org/prizes/chemistry/2011/press-release/"
+    },
+    {
+      "id": "EXT-MAT-MOF-2025",
+      "domain": "chemistry and materials science",
+      "title": "Metal-organic frameworks",
+      "status": "ESTABLISHED",
+      "external_lineage": "Kitagawa, Robson, Yaghi and reticular chemistry; Nobel Chemistry 2025",
+      "intersection_with_bl": "An architecture-first view: capability emerges from how components are arranged, not merely which components exist.",
+      "non_intersection": "Structural analogy to BL architectures is not shared genealogy.",
+      "worldbuild_use": "Civilizations engineer empty space itself as a functional part of matter.",
+      "source": "https://www.nobelprize.org/prizes/chemistry/2025/press-release/"
+    },
+    {
+      "id": "EXT-CS-NEURAL-NETWORKS",
+      "domain": "computer science, AI and statistical physics",
+      "title": "Artificial neural networks and modern machine learning foundations",
+      "status": "ESTABLISHED",
+      "external_lineage": "Hopfield, Hinton and wider machine-learning research; Nobel Physics 2024",
+      "intersection_with_bl": "Pattern storage, reconstruction and learned representations are useful world-building mechanisms for memory and model formation.",
+      "non_intersection": "Artificial neural networks are not evidence that brains, persons or BL identities are reducible to current neural-network architectures.",
+      "worldbuild_use": "Machines become epistemic actors because they can learn representations, not because they possess proven human-equivalent inner life.",
+      "source": "https://www.nobelprize.org/prizes/physics/2024/press-release/"
+    },
+    {
+      "id": "EXT-NEG-LK99",
+      "domain": "materials science",
+      "title": "LK-99 room-temperature superconductivity claim",
+      "status": "REFUTED_OR_REVISED",
+      "external_lineage": "2023 preprints followed by rapid independent replication and materials analysis",
+      "intersection_with_bl": "A clean negative-knowledge case: high excitement plus suggestive signals are not enough; decomposition of impurities and mechanisms matters.",
+      "non_intersection": "Being rejected, mocked or exciting does not increase a claim's truth probability.",
+      "worldbuild_use": "A civilization briefly reorganizes around a miracle material, then learns that the anomaly came from phase complexity and misread signals.",
+      "source": "https://journals.aps.org/prb/abstract/10.1103/PhysRevB.108.235127"
+    },
+    {
+      "id": "EXT-NEG-OPERA",
+      "domain": "particle physics and metrology",
+      "title": "OPERA faster-than-light neutrino anomaly",
+      "status": "REFUTED_OR_REVISED",
+      "external_lineage": "OPERA/CERN neutrino time-of-flight measurement and independent scrutiny, 2011-2012",
+      "intersection_with_bl": "A model case for Reality Veto, independent replication and instrument-debugging before ontology revolution.",
+      "non_intersection": "An anomaly is not a portal to preferred theories; instrument error can imitate a foundational discovery.",
+      "worldbuild_use": "The apparent collapse of a century-old law is traced to timing infrastructure, changing who is hero, fool, critic and observer without changing the underlying physics.",
+      "source": "https://www.aip.org/inside-science/errors-reportedly-identified-in-faster-than-light-particle-experiment"
+    }
+  ],
+  "intersection_rule": {
+    "merge": "Merge only operationally compatible constraints or mechanisms; preserve source identity and scope.",
+    "bridge": "Create an explicit bridge object when two lineages illuminate the same problem through different representations.",
+    "hold": "Keep unresolved conflict alive when evidence cannot discriminate.",
+    "reject": "Reject or narrow a candidate when reality-facing evidence defeats it in scope.",
+    "never": "Never infer BL authorship, BL priority, or BL truth from resemblance to external science."
+  },
+  "worldbuild_compiler": "external science -> evidence status -> causal affordance -> BL intersection/non-intersection -> conflict/bridge -> scene/institution/technology -> reality consequence",
+  "scope_note": "This is a curated seed atlas, not an exhaustive inventory of all science. Its schema is designed for continuous expansion without collapsing external scientific genealogies into BL∞."
+}
