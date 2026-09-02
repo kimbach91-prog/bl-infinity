@@ -1,0 +1,145 @@
+name: DEUS Signal Fabric - GCP
+
+on:
+  workflow_dispatch:
+    inputs:
+      project_id:
+        description: Existing GCP project ID with billing enabled
+        required: true
+        type: string
+      region:
+        description: Cloud Run / Scheduler region
+        required: true
+        default: asia-southeast1
+        type: string
+      firestore_location:
+        description: Firestore database location if (default) does not exist
+        required: true
+        default: asia-southeast1
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  SERVICE: deus-signal-fabric
+  RUNTIME_SA_NAME: deus-signal-fabric
+  SCHEDULER_SA_NAME: deus-signal-scheduler
+  DRIVE_MANIFEST_FOLDER_ID: 17xOH5L1K9149PXKcBjvQ9qVgnq6faoYV
+  DRIVE_ARTIFACTS_ID: 1jrAdJxsQLdKnhY6oWloZRQ8KBTwKSlo1
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud with WIF
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOY_SERVICE_ACCOUNT }}
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v3.0.1
+
+      - name: Configure project and APIs
+        shell: bash
+        run: |
+          set -euo pipefail
+          PROJECT='${{ inputs.project_id }}'
+          REGION='${{ inputs.region }}'
+          gcloud config set project "$PROJECT"
+          gcloud services enable \
+            run.googleapis.com \
+            cloudbuild.googleapis.com \
+            artifactregistry.googleapis.com \
+            firestore.googleapis.com \
+            cloudscheduler.googleapis.com \
+            drive.googleapis.com
+
+          RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
+          SCHEDULER_SA="${SCHEDULER_SA_NAME}@${PROJECT}.iam.gserviceaccount.com"
+
+          gcloud iam service-accounts describe "$RUNTIME_SA" >/dev/null 2>&1 || \
+            gcloud iam service-accounts create "$RUNTIME_SA_NAME" --display-name='DEUS Signal Fabric runtime'
+          gcloud iam service-accounts describe "$SCHEDULER_SA" >/dev/null 2>&1 || \
+            gcloud iam service-accounts create "$SCHEDULER_SA_NAME" --display-name='DEUS Signal Fabric scheduler'
+
+          for ROLE in roles/datastore.user roles/logging.logWriter; do
+            gcloud projects add-iam-policy-binding "$PROJECT" \
+              --member="serviceAccount:${RUNTIME_SA}" \
+              --role="$ROLE" \
+              --condition=None >/dev/null
+          done
+
+          if ! gcloud firestore databases describe --database='(default)' >/dev/null 2>&1; then
+            gcloud firestore databases create \
+              --database='(default)' \
+              --location='${{ inputs.firestore_location }}' \
+              --type=firestore-native
+          fi
+
+          echo "runtime_sa=$RUNTIME_SA" >> "$GITHUB_ENV"
+          echo "scheduler_sa=$SCHEDULER_SA" >> "$GITHUB_ENV"
+          echo "region=$REGION" >> "$GITHUB_ENV"
+
+      - name: Deploy private Cloud Run service
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE" \
+            --source=bridge/cloud-signal-fabric \
+            --region="$region" \
+            --service-account="$runtime_sa" \
+            --no-allow-unauthenticated \
+            --min=0 \
+            --max=3 \
+            --cpu=1 \
+            --memory=512Mi \
+            --concurrency=40 \
+            --set-env-vars="DRIVE_MANIFEST_FOLDER_ID=${DRIVE_MANIFEST_FOLDER_ID},DRIVE_ARTIFACTS_ID=${DRIVE_ARTIFACTS_ID},CANONICAL_WRITE_ENABLED=false,POLL_HOT_MINUTES=1,POLL_WARM_MINUTES=3,POLL_IDLE_MINUTES=5,HOT_WINDOW_MINUTES=10,WARM_WINDOW_MINUTES=30,HARVEST_LEASE_SECONDS=50"
+
+          URL="$(gcloud run services describe "$SERVICE" --region="$region" --format='value(status.url)')"
+          echo "service_url=$URL" >> "$GITHUB_ENV"
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --region="$region" \
+            --member="serviceAccount:${scheduler_sa}" \
+            --role='roles/run.invoker' >/dev/null
+
+      - name: Install one-minute scheduler heartbeat
+        shell: bash
+        run: |
+          set -euo pipefail
+          JOB='deus-signal-harvest'
+          COMMON=(
+            --location="$region"
+            --schedule='* * * * *'
+            --time-zone='Asia/Bangkok'
+            --uri="${service_url}/v1/harvest"
+            --http-method=POST
+            --oidc-service-account-email="$scheduler_sa"
+            --oidc-token-audience="$service_url"
+            --attempt-deadline=50s
+          )
+          if gcloud scheduler jobs describe "$JOB" --location="$region" >/dev/null 2>&1; then
+            gcloud scheduler jobs update http "$JOB" "${COMMON[@]}"
+          else
+            gcloud scheduler jobs create http "$JOB" "${COMMON[@]}"
+          fi
+
+      - name: Reality-state summary
+        shell: bash
+        run: |
+          {
+            echo '### DEUS Signal Fabric deployment'
+            echo "- Cloud Run: ${service_url}"
+            echo "- Runtime service account: ${runtime_sa}"
+            echo "- Scheduler service account: ${scheduler_sa}"
+            echo '- Scheduler heartbeat: every 1 minute; runtime internally gates HOT/WARM/IDLE at 1/3/5 minutes.'
+            echo '- LLM calls: none in Signal Fabric runtime.'
+            echo '- Canonical write: locked.'
+            echo '- REQUIRED external gate: share the Drive Signal Fabric folders with the runtime service account before claiming end-to-end Drive connectivity.'
+          } >> "$GITHUB_STEP_SUMMARY"
