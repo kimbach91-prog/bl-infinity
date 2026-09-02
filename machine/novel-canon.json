@@ -1,34 +1,77 @@
 {
-  "schema": "BL_NOVEL_PUBLIC_CANON_7",
+  "schema": "BL_NOVEL_PUBLIC_CANON_8",
   "series_title": "Bách Lâm: Lần Hồi Quy Thứ Một Triệu",
   "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
-  "status": "PUBLIC_DEMO_OPEN_CANON_RELEASE_HOLD",
+  "status": "PUBLIC_HALF_CANON_OPEN_CONTINUITY",
   "canonical_language": "vi",
-  "reader_disclaimer": "Story information may be fictional, reality-derived, mistaken memory, possible-world content, or UNKNOWN. Interpretation remains the reader's responsibility.",
+  "reader_disclaimer": "Story information may be fictional, reality-derived, mistaken memory, possible-world content, or UNKNOWN. Real-world anchors do not establish autobiography and fictional mechanisms do not auto-promote to scientific claims.",
+  "half_canon_contract": {
+    "formula": "LockedCore + RealityAnchors + OpenGaps",
+    "not_probability_statement": true,
+    "core_event_binding": "STRONG",
+    "reality_anchor_binding": "STRONG_WHERE_SOURCED",
+    "scene_texture_binding": "PATCHABLE",
+    "deep_mechanism_binding": "OPEN_UNLESS_EXPLICITLY_PROVEN_IN_STORY",
+    "future_canon_binding": "NONE_BEYOND_PUBLISHED_DEPENDENCIES"
+  },
   "public_law": {
     "no_future_story_bible_spoilers": true,
     "do_not_infer_lore_from_title_alone": true,
     "silent_major_retcon_forbidden": true,
     "unknown_may_remain_open": true,
     "fiction_does_not_auto_promote_to_scientific_claim": true,
-    "demo_does_not_bind_canon": true,
-    "new_canon_chapter_publication_requires_original_timeline_ready": true
+    "real_world_anchor_does_not_establish_autobiography": true,
+    "cultural_pattern_does_not_establish_universal_essence": true,
+    "half_canon_core_does_bind_future_dependencies": true,
+    "new_full_canon_chapter_publication_requires_original_timeline_ready": true
   },
-  "public_demo": {
+  "chapter_001": {
     "protagonist": "Bách Lâm",
-    "chapter_001_title": "Đại Kết Cục Thứ Một Nghìn",
-    "chapter_001_source": "content/novel/01_CHAPTER_001.md",
-    "chapter_001_public_page": "novel/chapter-001.html",
-    "chapter_001_status": "PUBLIC_DEMO_NON_CANON",
+    "title": "Đại Kết Cục Thứ Một Nghìn",
+    "source": "content/novel/01_CHAPTER_001.md",
+    "canon_law": "content/novel/00_CANON_LAW.md",
+    "reality_anchor_ledger": "content/novel/02_REALITY_ANCHOR_LEDGER.md",
+    "reality_anchor_registry": "chapter-001-reality-anchors.json",
+    "public_page": "novel/chapter-001.html",
+    "public_world_guide": "novel/world-chapter-001.html",
+    "status": "PUBLIC_HALF_CANON_V1",
     "discoverability": "PUBLIC_INDEXABLE",
-    "homepage_label": "CHAPTER_1_DEMO_NON_CANON",
-    "binding_effect": "NONE_ON_FUTURE_CANON"
+    "homepage_label": "CHAPTER_1_HALF_CANON",
+    "binding_effect": "CORE_EVENTS_AND_SOURCED_REALITY_ANCHORS_BIND; TEXTURE_PATCHABLE; DEEP_MECHANISMS_OPEN"
   },
+  "locked_core_summary": [
+    "Bach Lam is the protagonist",
+    "Chapter 1 is Dai Ket Cuc Thu Mot Nghin",
+    "Terminal Station faces a universe-scale depletion phenomenon whose deep cause remains unresolved",
+    "depletion is not asserted to equal standard cosmological heat death",
+    "reachable survivor scope does not prove no life exists outside observation",
+    "weapon of time is rejected as premature naming",
+    "a compressed seed preserves useful generative understanding rather than full historical data",
+    "carrier trial 1000 and Grand Ending record 1000 are distinct counters",
+    "Bach Lam is not strongest or smartest by all measures",
+    "seed disclosure is delayed and behavior/outcome-sensitive rather than soul-reading",
+    "resource inheritance comes from conditional legacies of extinct civilizations",
+    "a dead machine intelligence asks future humans and machines not to be forced into a winner-takes-future choice",
+    "Bach's objective is do not let them close the future too early",
+    "Bach's stop condition is when a world no longer needs him",
+    "the childhood slice is reality-anchored in Viet Nam in the early twenty-first century",
+    "child Bach receives only a tiny trace; the new-life count is not disclosed",
+    "the exact relation between one thousand and one million remains undisclosed"
+  ],
+  "open_gaps": [
+    "deep mechanism of the Grand Ending",
+    "physics of transmission across lives/branches",
+    "exact one-thousand to one-million relationship",
+    "new-life number",
+    "threat identity",
+    "future story bible",
+    "final ending"
+  ],
   "canon_release": {
-    "status": "HOLD_UNTIL_ORIGINAL_TIMELINE_READY",
-    "publication_schedule": "PAUSED",
+    "chapter_001": "PUBLIC_HALF_CANON_V1",
+    "chapter_002_plus": "HOLD_UNTIL_ORIGINAL_TIMELINE_READY",
     "automatic_new_chapter_publication": false,
     "worldbuild_and_private_drafting_may_continue": true
   },
-  "disclosure_rule": "The machine surface does not summarize hidden mechanisms, future arcs, number relationships, family/private-life material, threat identity, final ending, or unpublished interpretations. Those belong to the private world-build and future reading experience."
+  "disclosure_rule": "The machine surface may expose published Chapter 1 continuity and sourced reality anchors but does not summarize hidden mechanisms, future arcs, number relationships, family/private-life material, threat identity, final ending, or unpublished interpretations."
 }
