@@ -5,8 +5,8 @@ set -Eeuo pipefail
 # Intended to be run from Google Cloud Shell by the project owner/admin.
 # No static service-account key is created.
 
-PROJECT_ID="${PROJECT_ID:-buoyant-mason-114302}"
-PROJECT_NUMBER_EXPECTED="${PROJECT_NUMBER_EXPECTED:-580664224085}"
+PROJECT_ID="${PROJECT_ID:-deus-code-sss}"
+PROJECT_NUMBER_EXPECTED="${PROJECT_NUMBER_EXPECTED:-618160905661}"
 REGION="${REGION:-asia-southeast1}"
 FIRESTORE_LOCATION="${FIRESTORE_LOCATION:-asia-southeast1}"
 REPO_URL="${REPO_URL:-https://github.com/kimbach91-prog/bl-infinity.git}"
@@ -84,7 +84,7 @@ say 'Granting runtime roles'
 for role in roles/datastore.user roles/logging.logWriter; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${RUNTIME_SA}" --role="$role" --condition=None >/dev/null
- done
+done
 
 say 'Granting GitHub deployer roles'
 DEPLOY_ROLES=(
@@ -101,7 +101,7 @@ DEPLOY_ROLES=(
 for role in "${DEPLOY_ROLES[@]}"; do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${DEPLOY_SA}" --role="$role" --condition=None >/dev/null
- done
+done
 
 # Cloud Run source deploys use Cloud Build. Newer projects might not auto-grant broad
 # default-SA roles, so explicitly grant only the documented Cloud Run Builder role.
