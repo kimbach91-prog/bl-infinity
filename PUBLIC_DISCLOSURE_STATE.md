@@ -1,13 +1,13 @@
-# BL∞ — Current Public Disclosure State
+# B∞ — Public Disclosure State
 
-- State: `PUBLIC-LIMITED`
-- Projection: `CONCEPT-ONLY`
-- Public scope target: approximately one-third or less of the previously exposed conceptual surface
-- Effective date: 2026-09-03
-- Authority: owner decision
+`~1% PUBLIC · 99% WITHHELD · UNKNOWN`
 
-Only one rough public concept is retained: current knowledge models are finite slices and must not be presumed to define the final boundary of reality or possibility.
+Current public projection: one intentionally ambiguous concept only.
 
-Not in the current public projection: deep architecture, constituent/module map, kernel, action/capability routes, machine registries, internal provenance, operational methods, strategic mechanisms, protected runtime, private corpora, operator playbooks and richer internal derivations.
+> B∞ is every future-reachable domain and every world that may belong to, emerge from, or remain beyond what the present can represent.
 
-This state narrows the active public surface. It does not assert that earlier public commits never existed.
+`FINAL_BOUNDARY(B∞) = UNKNOWN`
+
+The ~99% figure is the author's current disclosure boundary, not a measured scientific quantity. The author's stated reason for withholding the remainder is that its potential value is not presently meaningfully measurable.
+
+Earlier public history may still exist; this file defines the current active disclosure state only.
