@@ -1,5 +1,5 @@
 {
-  "schema": "BL_NOVEL_PUBLIC_CANON_8",
+  "schema": "BL_NOVEL_PUBLIC_CANON_9",
   "series_title": "Bách Lâm: Lần Hồi Quy Thứ Một Triệu",
   "origin": "Lâm Kim Bách / Bách Lâm / Optimizer",
   "status": "PUBLIC_HALF_CANON_OPEN_CONTINUITY",
@@ -23,21 +23,42 @@
     "real_world_anchor_does_not_establish_autobiography": true,
     "cultural_pattern_does_not_establish_universal_essence": true,
     "half_canon_core_does_bind_future_dependencies": true,
-    "new_full_canon_chapter_publication_requires_original_timeline_ready": true
+    "new_full_canon_chapter_publication_requires_original_timeline_ready": true,
+    "historical_dialogue_must_resolve_year_region_relation_medium": true,
+    "literary_era_must_not_be_reduced_to_single_author_imitation": true,
+    "anachronism_audit_required_for_historical_texture": true
   },
   "chapter_001": {
     "protagonist": "Bách Lâm",
     "title": "Đại Kết Cục Thứ Một Nghìn",
     "source": "content/novel/01_CHAPTER_001.md",
+    "era_language_patch_source": "content/novel/04_CHAPTER_001_ERA_LANGUAGE_PATCH.md",
     "canon_law": "content/novel/00_CANON_LAW.md",
     "reality_anchor_ledger": "content/novel/02_REALITY_ANCHOR_LEDGER.md",
+    "era_language_atlas": "content/novel/03_SOCIAL_LANGUAGE_LITERARY_ATLAS.md",
     "reality_anchor_registry": "chapter-001-reality-anchors.json",
+    "era_language_registry": "novel-era-language-style-registry.json",
     "public_page": "novel/chapter-001.html",
     "public_world_guide": "novel/world-chapter-001.html",
-    "status": "PUBLIC_HALF_CANON_V1",
+    "public_era_language_atlas": "novel/era-language-style-atlas.html",
+    "status": "PUBLIC_HALF_CANON_V1_1_ERA_LANGUAGE_PATCH",
     "discoverability": "PUBLIC_INDEXABLE",
     "homepage_label": "CHAPTER_1_HALF_CANON",
-    "binding_effect": "CORE_EVENTS_AND_SOURCED_REALITY_ANCHORS_BIND; TEXTURE_PATCHABLE; DEEP_MECHANISMS_OPEN"
+    "binding_effect": "CORE_EVENTS_AND_SOURCED_REALITY_ANCHORS_BIND; ERA_LANGUAGE_TEXTURE_PATCHABLE; DEEP_MECHANISMS_OPEN",
+    "patch_effect": {
+      "locked_core_changed": false,
+      "birth_year_disclosed": false,
+      "future_plot_disclosed": false,
+      "adds": [
+        "year-sensitive social language texture",
+        "communication-medium evolution",
+        "1997 internet context",
+        "2003 ADSL context",
+        "2007 WTO household-language context",
+        "2009 3G and PC-to-mobile context",
+        "provenance-awareness emerging from source checking"
+      ]
+    }
   },
   "locked_core_summary": [
     "Bach Lam is the protagonist",
@@ -55,6 +76,7 @@
     "Bach's objective is do not let them close the future too early",
     "Bach's stop condition is when a world no longer needs him",
     "the childhood slice is reality-anchored in Viet Nam in the early twenty-first century",
+    "the childhood social-language texture changes across real communication milestones without disclosing Bach's birth year",
     "child Bach receives only a tiny trace; the new-life count is not disclosed",
     "the exact relation between one thousand and one million remains undisclosed"
   ],
@@ -65,13 +87,29 @@
     "new-life number",
     "threat identity",
     "future story bible",
-    "final ending"
+    "final ending",
+    "exact future-language registers beyond sourced or in-world corpora"
   ],
+  "era_language_contract": {
+    "registry": "novel-era-language-style-registry.json",
+    "resolver": [
+      "year_or_era_band",
+      "region",
+      "age_generation",
+      "social_context",
+      "communication_medium",
+      "relationship_state",
+      "literary_mode"
+    ],
+    "fallback": "SPECIFICITY_DOWN + PROVENANCE_UP + UNKNOWN_PRESERVED",
+    "author_style_imitation_forbidden_as_era_proxy": true,
+    "future_slang_as_fact_forbidden_without_in_world_corpus": true
+  },
   "canon_release": {
-    "chapter_001": "PUBLIC_HALF_CANON_V1",
+    "chapter_001": "PUBLIC_HALF_CANON_V1_1_ERA_LANGUAGE_PATCH",
     "chapter_002_plus": "HOLD_UNTIL_ORIGINAL_TIMELINE_READY",
     "automatic_new_chapter_publication": false,
     "worldbuild_and_private_drafting_may_continue": true
   },
-  "disclosure_rule": "The machine surface may expose published Chapter 1 continuity and sourced reality anchors but does not summarize hidden mechanisms, future arcs, number relationships, family/private-life material, threat identity, final ending, or unpublished interpretations."
+  "disclosure_rule": "The machine surface may expose published Chapter 1 continuity, sourced reality anchors and the public era-language method, but does not summarize hidden mechanisms, future arcs, number relationships, family/private-life material, threat identity, final ending, or unpublished interpretations."
 }
