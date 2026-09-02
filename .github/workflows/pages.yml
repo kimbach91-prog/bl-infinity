@@ -59,6 +59,7 @@ jobs:
           scripts/build_discovery.py
           scripts/harden_site.py
           scripts/humanize_public_text.py
+          scripts/apply_hypothesis_science_patch.py
           scripts/seo_release_guard.py
           scripts/navigation_audit.py
           scripts/run_discovery.py
@@ -156,6 +157,9 @@ jobs:
       - name: Normalize human-facing typography
         run: python scripts/humanize_public_text.py
 
+      - name: Apply BL∞ hypothesis chain and global science weave
+        run: python scripts/apply_hypothesis_science_patch.py
+
       - name: Apply SEO release guard
         run: python scripts/seo_release_guard.py
 
@@ -203,10 +207,13 @@ jobs:
             "urlList": [
               "https://kimbach91-prog.github.io/bl-infinity/",
               "https://kimbach91-prog.github.io/bl-infinity/theory.html",
+              "https://kimbach91-prog.github.io/bl-infinity/hypotheses.html",
               "https://kimbach91-prog.github.io/bl-infinity/system.html",
               "https://kimbach91-prog.github.io/bl-infinity/open-academic-publishing.html",
               "https://kimbach91-prog.github.io/bl-infinity/regressor-proposition.html",
               "https://kimbach91-prog.github.io/bl-infinity/world.html",
+              "https://kimbach91-prog.github.io/bl-infinity/science-constellation.html",
+              "https://kimbach91-prog.github.io/bl-infinity/mature-theory-synthesis.html",
               "https://kimbach91-prog.github.io/bl-infinity/unknown.html",
               "https://kimbach91-prog.github.io/bl-infinity/grand-ending.html",
               "https://kimbach91-prog.github.io/bl-infinity/novel/",
