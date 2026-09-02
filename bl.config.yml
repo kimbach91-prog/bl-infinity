@@ -9,7 +9,7 @@ project:
   aliases:
   - Bách Lâm
   - Bách Lâm – Optimizer
-  version: 0.5.1-external-science-worldbuild
+  version: 0.5.2-external-science-public-boundary
   date: '2026-09-02'
   canonical_url: https://kimbach91-prog.github.io/bl-infinity/
   repository: kimbach91-prog/bl-infinity
