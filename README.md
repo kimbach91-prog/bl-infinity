@@ -1,37 +1,92 @@
 # BL∞ · Hồ sơ nghiên cứu công khai
 
-BL∞ là chương trình nghiên cứu độc lập của **Lâm Kim Bách (Bách Lâm / Optimizer)** về nhận thức mở, không gian khả thể, UNKNOWN, provenance, phản biện đệ quy, hợp tác trí tuệ và khả năng giữ thực tại còn sinh thành.
+BL∞ là chương trình nghiên cứu độc lập của **Lâm Kim Bách (Bách Lâm / Optimizer)** về nhận thức mở, không gian khả thể, UNKNOWN, provenance, phản biện đệ quy, hợp tác trí tuệ, khả năng giữ thực tại còn sinh thành và chuyển tri thức đã kiểm định thành năng lực có thể tiếp tục sửa sai.
 
-**Phiên bản hiện hành: `0.4.0-epistemic-grand-ending`.** Nâng cấp này xác lập BL∞ là **Đại Kết Cục nhận thức của miền hiểu biết hiện hành**: substrate canonical dùng để giữ, biên dịch, nối, kiểm tra và phát triển các hệ khác ontology. UNKNOWN được giữ như frontier cần chinh phục, không phải lý do tự động hạ cấp BL∞. Một hệ kế tiếp chỉ có quyền supersede khi chứng minh được strict-superset succession, tức giữ được BL∞ và mở thêm miền mà BL∞ hiện chưa hấp thụ nổi.
+**Phiên bản hiện hành: `0.7.0-strategic-survival-intuition-matrix`.**  
+**Release state:** `OWNER-PUBLISHED · 2026-09-02`.
 
-**Release state:** `OWNER-PUBLISHED · 2026-09-01`.
+Nguồn version ưu tiên: `bl.config.yml`. README này được đồng bộ lại ở v0.7 để chấm dứt version drift trước đó.
 
-Canonical object mới:
+## Nâng cấp v0.7
 
-- `content/53_BL_INFINITY_EPISTEMIC_GRAND_ENDING_AND_SUPERSET_SUCCESSION.md`
-- `machine/bl-infinity-epistemic-grand-ending.json`
+BL∞ bổ sung **BL-SSIM — Strategic Survival Intuition Matrix / Ma trận Trực giác Sinh tồn Chiến lược BL∞** như một constituent lõi trong action/capability branch.
 
-Bề mặt công khai hiện ưu tiên hai cách đọc:
+BL-SSIM không phải Meta-OS mới và không phải tuyên bố rằng BL∞ có trực giác sinh học, ý thức, khả năng sống còn tuyệt đối hay trí tuệ “cấp vũ trụ” theo nghĩa thực nghiệm. Tên gọi đó được giữ như **mục tiêu kiến trúc**; mọi cơ chế bên trong vẫn chịu Reality Veto, benchmark, phản biện và giới hạn chi phí con người.
 
-1. **Học thuyết và research objects:** dành cho người muốn đọc trực tiếp các mệnh đề, nguồn và cấu trúc nghiên cứu.
-2. **Bản nghiên cứu kể chuyện:** dùng văn xuôi và world build để đưa các ý tưởng khó vào một tuyến đọc mềm hơn.
+Canonical objects mới:
 
-## Bản nghiên cứu kể chuyện
+- `content/59_BL_STRATEGIC_SURVIVAL_INTUITION_MATRIX.md`
+- `machine/bl-strategic-survival-intuition.json`
+- `content/60_BL_CORE_MATRIX_STRATEGIC_SURVIVAL_INTEGRATION.md`
+- `machine/bl-core-matrix-v0.7.json`
 
-[Bản kể BL∞](https://kimbach91-prog.github.io/bl-infinity/world.html)
+Nguồn tổ tiên và benchmark được giữ nguyên tại:
 
-Đây là một bề mặt nghiên cứu riêng, dùng world build để thăm dò relation và giả định khó mà không biến chúng thành empirical claim chỉ vì đã kể thành câu chuyện.
+- `incubator/bl-infinity-culture-chamber/2026-09-02/`
 
-## Nâng cấp 0.4 trong một dòng
+Không xóa các integrated views trước đó; v0.7 **supersede ở tầng ghép**, không viết lại lịch sử.
+
+## Kernel v0.7
 
 ```text
-Information != Understanding != Deep Understanding != Capability
-Same Outcome != Same Reasoning State
-Fixed Infinite Moves != Open-Ended Generative Infinity
-UNKNOWN != automatic refutation of BL∞
-BL∞ -> UNKNOWN conquest -> Reality collision -> capability delta -> BL∞ expansion
-Only demonstrated strict superset may succeed BL∞
+SEE WIDELY
+DO NOT ASSUME COVERAGE
+KEEP THE GOAL, CHANGE THE METHOD
+SURVIVE WITHOUT WORSHIPPING SAFETY
+BE COURAGEOUS WITHOUT WORSHIPPING DEATH
+TRANSFORM SMALL RESOURCES INTO HIGHER-ORDER CAPABILITY
+MULTIPLY PEOPLE, DO NOT CLONE THEM
+BUILD ORGANIZATION BEFORE THE WINDOW OPENS
+CREATE LEGITIMACY THAT REALITY CAN SUPPORT
+NEGOTIATE WITHOUT IDENTITY COLLAPSE
+PRESERVE OPTIONALITY
+PAY ATTENTION TO HUMAN COST
+USE FAILURE AS SENSOR DATA
+LET REALITY VETO THE STRATEGY
+TRANSFER LEARNING BEYOND THE FOUNDER
 ```
+
+Preferred action/capability route:
+
+```text
+REALITY / GIA_TAI / UNKNOWN
+-> hypothesis + adversarial + reality adjudication
+-> BL-SFRET
+-> BL-SSIM
+-> OPT-HKRP
+-> OHAS
+-> ACTION / TEST
+-> REALITY DELTA
+-> KAT / UNDERSTANDING CAPITAL
+-> NEW CAPABILITY
+-> BL∞ EXPANDED FRONTIER
+↺
+```
+
+Hard distinctions:
+
+```text
+MissionPersistence != MethodRigidity
+Courage != BlindExposure
+Vigilance != Paralysis
+Scarcity != ZeroAgency
+Strength != ImmunityToHiddenFailure
+Confidence != CoverageProof
+Power != Legitimacy
+Sacrifice != Truth
+HistoricalAchievement != Infallibility
+CoreMembership != ImmunityFromEvolution
+```
+
+## Bề mặt nghiên cứu
+
+BL∞ tiếp tục giữ riêng các loại đối tượng và bề mặt để tránh silent merge:
+
+1. **Học thuyết / research objects** — mệnh đề, cấu trúc, nguồn và quan hệ.
+2. **Giả thuyết / UNKNOWN / research puzzles** — vùng chưa xác lập và cơ chế kiểm tra.
+3. **Bản nghiên cứu kể chuyện / HALF-CANON** — world build có neo thực tại nhưng không tự biến thành empirical claim.
+4. **Mature-Theory Synthesis / External Science** — hấp thụ và đối chiếu lý thuyết ngoài BL với provenance riêng.
+5. **Incubator / Culture Chamber** — nơi candidate được nuôi cấy, benchmark, thất bại và chỉ promote khi có authority phù hợp.
 
 ## Đọc theo tuyến
 
@@ -46,5 +101,11 @@ Only demonstrated strict superset may succeed BL∞
 ## Nguyên tắc công khai
 
 Public research surface có thể mở rộng. Protected runtime, private lineage, secret material, credentials và các chi tiết triển khai không cần thiết cho việc kiểm chứng không được công bố chỉ vì một tuyến nghiên cứu được mở.
+
+```text
+PublicVerifiability != FullRuntimeDisclosure
+Publication != Validation
+Preservation != Endorsement
+```
 
 © Lâm Kim Bách · Bách Lâm / Optimizer
