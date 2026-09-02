@@ -1,6 +1,11 @@
 # 03 — Các tiên đề lõi BL∞
 
+**Public disclosure:** `CHALLENGE_PROJECTION v1`  
+**Policy:** `content/57_PUBLIC_CHALLENGE_PROJECTION.md`
+
 Origin build dùng các tiên đề ở mức tối thiểu. Một số tiên đề là quy ước ontology; một số là research hypothesis mạnh hơn. Chúng phải được giữ tách biệt.
+
+Một số compact formula có đòn bẩy cao trong current public edition được chuyển thành **Challenge Hint**. Đây là omission có chủ đích, không phải lỗi đánh máy và không phải công thức sai.
 
 ## BL-A01 — Tiên đề Nội tại
 
@@ -50,27 +55,27 @@ trừ khi có một closure argument đủ mạnh.
 
 ## BL-A05 — Tiên đề Khả đạt Động
 
-Đối với agent có thể chế tạo công cụ, reachable space phụ thuộc repertoire và có thể thay đổi:
+Đối với agent có thể chế tạo công cụ, reachable space phụ thuộc state hiện tại và repertoire/capability hiện có.
 
-\[
-\mathcal R_A(t)=Reach(x_t,U_t)
-\]
+```text
+[FORMULA_WITHHELD: BL-A05-DYNAMIC-REACHABILITY]
+```
 
-\[
-U_t\neq U_{t+1}\Rightarrow \mathcal R_A(t)\text{ có thể thay đổi}
-\]
+**Public hint:** candidate closure phải nhận ít nhất state hiện tại và repertoire hiện tại làm input; khi repertoire thay đổi, reachable region có thể thay đổi. Không được mặc định expansion monotonic: tool có thể mất, resource có thể suy giảm và capability cũ có thể không được bảo toàn.
 
-Không khẳng định mọi expansion đều monotonic trong đời thực; tool có thể mất, tài nguyên có thể suy giảm. Monotonicity chỉ đúng khi các capability cũ được bảo toàn.
+Một reconstruction không xử lý được capability loss hoặc resource loss là chưa đủ mạnh.
 
 ## BL-A06 — Tiên đề Bộ lọc Quan sát
 
-Dữ liệu mà A gọi là “thực tại đã biết” là đầu ra của chuỗi bộ lọc:
+Dữ liệu mà A gọi là “thực tại đã biết” là đầu ra của nhiều lớp lọc giữa Total Reality và representation cuối cùng của observer.
 
-\[
-D_A=F_{cognition}\circ F_{detector}\circ F_{access}\circ F_{causal}\circ F_{stability}(\Omega)
-\]
+```text
+[FORMULA_WITHHELD: BL-A06-OBSERVATION-FILTER-COMPOSITION]
+```
 
-Vì vậy không mặc định distribution của dữ liệu quan sát bằng distribution toàn ontology.
+**Public hint:** ít nhất phải phân biệt các lớp liên quan tới stability/causal exposure, accessibility, detector/sensor và cognition/interpretation. Thứ tự/composition chính xác của compact public formula không còn nằm trong current release surface.
+
+Constraint bất biến: distribution của dữ liệu quan sát không được mặc định bằng distribution của toàn ontology chỉ vì observer không thấy phần còn lại.
 
 ## BL-A07 — Tiên đề Bảo tồn Phát kiến
 
@@ -90,14 +95,22 @@ A08 không cấm critique về phương pháp hay công cụ; nếu công cụ t
 
 ## BL-A09 — Tiên đề Plenitude BL∞ (tùy chọn, phiên bản mạnh)
 
-Đây là **extension**, không phải lõi bắt buộc:
+Đây là **extension**, không phải lõi bắt buộc.
 
-\[
-Cons_L(h)\Rightarrow \exists W\subseteq\Omega:W\models_L h
-\]
+```text
+[FORMULA_WITHHELD: BL-A09-PLENITUDE-BRIDGE]
+```
 
-Nếu chấp nhận A09, mọi cấu trúc nhất quán theo logic L được hiện thực hóa ở ít nhất một miền của Total Reality. Origin build không tuyên bố A09 đã được vật lý chứng minh.
+**Public hint:** extension này nối một điều kiện consistency theo logic được chọn với sự tồn tại của ít nhất một realization-domain phù hợp trong Total Reality. Chính bridge này là phần cần được chứng minh hoặc giả định; BL∞ không cho phép suy từ “tưởng tượng được” sang “actual vật lý” mà bỏ qua bridge.
+
+Origin build không tuyên bố A09 đã được vật lý chứng minh.
 
 ## BL-A10 — Hyper-Plenitude (speculative)
 
 Trong extension phi cổ điển, một số “impossible structures” theo classical logic có thể được xét trong logic paraconsistent hoặc impossible-world semantics. Đây là vùng nghiên cứu mở và phải luôn gắn nhãn speculative.
+
+---
+
+### Challenge note
+
+Người đọc có thể công bố reconstruction độc lập của A05/A06/A09 kèm assumptions, derivation, countercase và test. Functional equivalence không tự động chứng minh historical identity với full authorial closure.
