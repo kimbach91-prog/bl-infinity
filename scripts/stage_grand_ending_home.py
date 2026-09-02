@@ -6,6 +6,8 @@ SITE = ROOT / "site"
 INDEX = SITE / "index.html"
 SCIENCE_PAGE_SOURCE = ROOT / "public" / "science-constellation.html"
 SCIENCE_REGISTRY_SOURCE = ROOT / "machine" / "external-science-constellation.json"
+MTS_PAGE_SOURCE = ROOT / "public" / "mature-theory-synthesis.html"
+MTS_REGISTRY_SOURCE = ROOT / "machine" / "bl-mature-theory-synthesis.json"
 
 
 def stage_external_science_constellation() -> None:
@@ -45,8 +47,34 @@ def stage_external_science_constellation() -> None:
             world.write_text(text, encoding="utf-8")
 
 
+def stage_mature_theory_synthesis() -> None:
+    if not MTS_PAGE_SOURCE.exists():
+        raise RuntimeError("public/mature-theory-synthesis.html missing")
+    if not MTS_REGISTRY_SOURCE.exists():
+        raise RuntimeError("machine/bl-mature-theory-synthesis.json missing")
+
+    shutil.copy(MTS_PAGE_SOURCE, SITE / "mature-theory-synthesis.html")
+    (SITE / "machine").mkdir(parents=True, exist_ok=True)
+    shutil.copy(MTS_REGISTRY_SOURCE, SITE / "machine" / "bl-mature-theory-synthesis.json")
+
+    science = SITE / "science-constellation.html"
+    if science.exists():
+        text = science.read_text(encoding="utf-8")
+        if 'id="bl-mts-compiler"' not in text and "</article>" in text:
+            block = '''
+<section class="section" id="bl-mts-compiler">
+<h2>BL-MTS: giữ nguyên khoa học cũ, chỉ ghi cái mới sinh từ va chạm</h2>
+<p>External Science Constellation bảo tồn atlas khoa học ngoài BL. <strong>BL-MTS</strong> là compiler riêng: ghi intersection, harmonization, disagreement và cannot-merge; chỉ object có <code>new_delta</code> và parent provenance mới được đi vào BL-emergent lineage.</p>
+<p><a href="mature-theory-synthesis.html">Mở BL Mature-Theory Synthesis Branch →</a></p>
+</section>
+'''
+            text = text.replace("</article>", block + "</article>", 1)
+            science.write_text(text, encoding="utf-8")
+
+
 def main() -> None:
     stage_external_science_constellation()
+    stage_mature_theory_synthesis()
     text = INDEX.read_text(encoding="utf-8")
 
     # Homepage directory is the durable cross-system entry surface. Global nav
@@ -88,6 +116,12 @@ def main() -> None:
         '<span>Khoa học ngoài phả hệ BL được giữ nguyên attribution: physics, quantum, cosmology, earth/climate, genomics, neuroscience, medicine, materials và computing; ghi rõ evidence status, điểm giao, điểm không giao và các claim đã bị thực tại bác.</span>'
         '</a></li>'
     )
+    mts_entry = (
+        '<li class="mature-theory-synthesis-entry"><a href="mature-theory-synthesis.html">'
+        '<strong>BL-MTS · Nhánh Thống Hợp Học Thuyết Trưởng Thành</strong>'
+        '<span>Giữ nguyên phả hệ theory family ngoài BL; lập intersection, harmonization, disagreement, cannot-merge; cấu trúc mới sinh từ va chạm chỉ vào BL-emergent lineage khi có new_delta + parent provenance + prior-art/Reality gate.</span>'
+        '</a></li>'
+    )
     unknown_entry = (
         '<li class="unknown-doctrine-entry"><a href="unknown.html">'
         '<strong>Học thuyết UNKNOWN · Trường Chưa-biết Sinh thành của BL∞</strong>'
@@ -119,6 +153,8 @@ def main() -> None:
         entries += world_entry
     if 'class="external-science-entry"' not in text:
         entries += science_entry
+    if 'class="mature-theory-synthesis-entry"' not in text:
+        entries += mts_entry
     if 'class="unknown-doctrine-entry"' not in text:
         entries += unknown_entry
     if 'class="grand-ending-entry"' not in text:
@@ -138,7 +174,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ theory-first core + regressor + conservation + external science + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
