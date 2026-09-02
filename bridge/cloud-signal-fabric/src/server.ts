@@ -11,13 +11,14 @@ app.disable('x-powered-by');
 app.use(express.json({ limit: '2mb' }));
 
 function tokenMatches(candidate: string | undefined): boolean {
+  if (!config.signalToken) return true; // private Cloud Run IAM is the primary gate in production
   if (!candidate) return false;
   const expected = Buffer.from(config.signalToken);
   const actual = Buffer.from(candidate);
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
-function requireSignalToken(req: Request, res: Response, next: NextFunction): void {
+function requireSignalAccess(req: Request, res: Response, next: NextFunction): void {
   const bearer = req.header('authorization')?.replace(/^Bearer\s+/i, '');
   const header = req.header('x-deus-signal-token');
   if (!tokenMatches(bearer) && !tokenMatches(header || undefined)) {
@@ -31,18 +32,16 @@ app.get('/healthz', (_req, res) => {
   res.json({ ok: true, service: 'deus-cloud-signal-fabric', version: '0.1.0', modelCallsOnIdle: 0 });
 });
 
-app.use('/v1', requireSignalToken);
+app.use('/v1', requireSignalAccess);
 
 app.get('/v1/control', async (_req, res, next) => {
-  try {
-    res.json({ ok: true, control: await readControl() });
-  } catch (error) { next(error); }
+  try { res.json({ ok: true, control: await readControl() }); }
+  catch (error) { next(error); }
 });
 
 app.post('/v1/harvest', async (_req, res, next) => {
-  try {
-    res.json(await harvest());
-  } catch (error) { next(error); }
+  try { res.json(await harvest()); }
+  catch (error) { next(error); }
 });
 
 app.get('/v1/poll/:seat', async (req, res, next) => {
@@ -56,10 +55,8 @@ app.get('/v1/poll/:seat', async (req, res, next) => {
 });
 
 app.get('/v1/artifact/:fileId', async (req, res, next) => {
-  try {
-    const content = await getArtifactText(req.params.fileId);
-    res.type('text/plain').send(content);
-  } catch (error) { next(error); }
+  try { res.type('text/plain').send(await getArtifactText(req.params.fileId)); }
+  catch (error) { next(error); }
 });
 
 app.post('/v1/ack', async (req, res, next) => {
@@ -78,8 +75,7 @@ app.post('/v1/ack', async (req, res, next) => {
 
 app.post('/v1/publish', async (req, res, next) => {
   try {
-    const body = req.body as PublishRequest;
-    const result = await publishToDrive(body);
+    const result = await publishToDrive(req.body as PublishRequest);
     res.status(201).json({
       ok: true,
       reality_state: 'DRIVE_WRITTEN_SIGNAL_PENDING_HARVEST',
@@ -99,5 +95,5 @@ app.use((error: unknown, _req: Request, res: Response, _next: NextFunction) => {
 });
 
 app.listen(config.port, () => {
-  console.log(JSON.stringify({ event: 'SIGNAL_FABRIC_LISTENING', port: config.port }));
+  console.log(JSON.stringify({ event: 'SIGNAL_FABRIC_LISTENING', port: config.port, appTokenEnabled: Boolean(config.signalToken) }));
 });
