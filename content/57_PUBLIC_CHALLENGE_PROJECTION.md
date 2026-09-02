@@ -5,7 +5,7 @@
 **Class:** progressive-disclosure / public research challenge / provenance-preserving redaction policy  
 **Status:** `ADOPTED · PUBLIC · OPEN-TO-AUDIT`  
 **Origin:** Lâm Kim Bách / Bách Lâm  
-**Version:** `1.0`  
+**Version:** `1.1`  
 **Date:** `2026-09-02`
 
 ---
@@ -116,3 +116,46 @@ Mục tiêu không phải khiến người đọc thất bại. Mục tiêu là 
 - người có thể độc lập tái dựng, kiểm chứng và cải tiến.
 
 Một reconstruction tốt có thể trở thành critique, alternate formalization hoặc independent result trong BL-OAP, nhưng vẫn giữ đúng attribution và provenance.
+
+## 7. BL-RECON-PUZZLES — lớp toán đố tái dựng
+
+Challenge Projection có một lớp bài toán người đọc tự giải tại `content/58_RECONSTRUCTION_PUZZLES.md` và public human surface `/research-puzzles.html`.
+
+Mỗi bài gắn với một `FORMULA_WITHHELD` object nhưng **không phải encoded answer key**. Puzzle chỉ cung cấp:
+
+- scenario;
+- invariants;
+- boundary cases;
+- trap/countercase;
+- một hint có kiểm soát.
+
+Public repository **không chứa canonical answer key** cho lớp này.
+
+```text
+Puzzle != CiphertextOfAnswer
+Hint != EncodedFormula
+Solve != GuessAuthorText
+```
+
+Người giải được phép tạo một formalization tốt hơn expression lịch sử. Đánh giá dựa trên sức mạnh logic, countercase survival và provenance, không dựa trên việc đoán đúng từng ký hiệu tác giả từng dùng.
+
+### Human-only credit là một provenance claim, không phải DRM
+
+Một static public site không có cách đáng tin cậy để chứng minh người đọc không dùng GPT, CAS, theorem prover, code hoặc công cụ ngoài. Vì vậy BL∞ không giả vờ có “AI-proof DRM”. Thay vào đó submission muốn nhận nhãn `INDEPENDENT_HUMAN_RECONSTRUCTION` phải tự khai tool provenance.
+
+```text
+UndeclaredToolUse -> provenance failure
+DeclaredAIAssistance -> valid assisted submission, not human-only credit
+```
+
+### Discovery minimization
+
+Human puzzle surface được thiết kế để:
+
+- không nằm trong sitemap;
+- không được gửi IndexNow;
+- không được thêm vào `llms.txt` hoặc machine discovery manifest;
+- dùng `noindex`, `nofollow`, `noarchive`, `nosnippet` trên trang;
+- vẫn thừa nhận rằng bất kỳ nội dung nào thực sự gửi tới browser đều có thể bị người dùng hoặc công cụ đọc/copy.
+
+Do đó lớp bảo vệ thật là **không phát hành full closure/answer key**, còn noindex/obfuscation chỉ là defense-in-depth và friction.
