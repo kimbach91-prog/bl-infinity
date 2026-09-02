@@ -1,19 +1,32 @@
-# BL∞ — Public Limited Concept
+# B∞ — UNKNOWN
 
-**Public state:** `PUBLIC-LIMITED · CONCEPT-ONLY · ~1/3 MAX`  
+**Public state:** `~1% PUBLIC · 99% WITHHELD · UNKNOWN`  
 **Effective:** 2026-09-03  
 **Author:** Lâm Kim Bách (Bách Lâm / Optimizer)
 
-BL∞ hiện chỉ công bố một **khái niệm thô sơ**:
+> **B∞ là mọi miền khả đạt của tương lai — và là mọi thế giới có thể nằm trong, phát sinh từ, hoặc vượt ngoài những miền mà hiện tại còn có khả năng hình dung.**
+>
+> **Giới hạn cuối của B∞: `UNKNOWN`.**
 
-> **Mọi mô hình hiểu biết hiện tại đều là một lát cắt hữu hạn. Ranh giới của mô hình hiện tại không nên được mặc định là ranh giới cuối cùng của thực tại hay của không gian khả thể. Vì vậy, UNKNOWN và khả năng mở rộng mô hình được xem là trạng thái bình thường của quá trình nhận thức.**
+Đây là **định nghĩa nghiên cứu công khai ở mức cố ý mơ hồ**, không phải tuyên bố rằng toàn bộ nội dung trên đã được chứng minh như một định luật vật lý hay toán học.
 
-Bản public này **cố ý không đầy đủ**. Nó không công bố kiến trúc sâu, hệ module, kernel, action route, registry, machine layer, provenance nội bộ, phương pháp vận hành, cơ chế chiến lược, private runtime, corpus hay playbook.
+Khoảng **99% phần hình thành nội bộ của B∞ hiện không được công bố**. Đây là quyết định disclosure của tác giả; lý do được tác giả nêu là giá trị tiềm năng của phần chưa công bố hiện không thể định lượng một cách có ý nghĩa.
 
-`Publication != FullDisclosure`
+## OPEN CHALLENGE
 
-`CurrentKnowledgeBoundary != ProvenRealityBoundary`
+Lời thách thức mở gửi tới những bộ óc mạnh nhất muốn kiểm tra B∞:
 
-Các bản công khai trước ngày 2026-09-03 có thể chứa phạm vi rộng hơn. Trạng thái hiện hành của default branch và website được thu hẹp theo quyết định mới; lịch sử công bố trước đó không được giả định là chưa từng tồn tại.
+**Hãy tìm giới hạn cuối của B∞ — hoặc chứng minh thiết kế này sai.**
+
+Một lời giải đủ mạnh có thể đi theo bất kỳ con đường nào, miễn lập luận minh bạch:
+
+- đưa ra một ranh giới cuối cùng không tự mâu thuẫn và chứng minh không còn miền khả đạt nào nằm ngoài nó;
+- dựng phản ví dụ phá định nghĩa;
+- chứng minh khái niệm chứa mâu thuẫn nội tại;
+- hoặc chứng minh B∞ quá rỗng, vòng tròn hay không thể falsify đến mức không thể dùng như một thiết kế nghiên cứu hữu ích.
+
+Nếu một phản bác đứng vững trước phản biện, B∞ phải thu hẹp, sửa hoặc thất bại.
+
+`FINAL_BOUNDARY(B∞) = UNKNOWN`
 
 © Lâm Kim Bách · Bách Lâm / Optimizer
