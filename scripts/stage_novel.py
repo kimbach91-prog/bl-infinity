@@ -89,6 +89,12 @@ def enrich_manifest() -> None:
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def stage_low_discovery_challenge_surfaces() -> None:
+    """Stage human challenge pages without adding them to sitemap or machine discovery."""
+    shutil.copyfile(PUBLIC_ROOT / "challenge.html", SITE / "challenge.html")
+    shutil.copyfile(PUBLIC_ROOT / "research-puzzles.html", SITE / "research-puzzles.html")
+
+
 def main() -> None:
     target_dir = SITE / "novel"
     target_dir.mkdir(parents=True, exist_ok=True)
@@ -98,6 +104,7 @@ def main() -> None:
     shutil.copyfile(PUBLIC_NOVEL / "world-chapter-001.html", target_dir / "world-chapter-001.html")
     shutil.copyfile(PUBLIC_ROOT / "system.html", SITE / "system.html")
     shutil.copyfile(PUBLIC_ROOT / "open-academic-publishing.html", SITE / "open-academic-publishing.html")
+    stage_low_discovery_challenge_surfaces()
 
     for name in (
         "novel-canon.json",
@@ -119,7 +126,7 @@ def main() -> None:
         "system.html",
         "open-academic-publishing.html",
     ))
-    print("Serialized novel HALF-CANON + reality world guide + BL conservation/publication surfaces staged")
+    print("Serialized novel HALF-CANON + reality world guide + BL conservation/publication surfaces + low-discovery challenge surfaces staged")
 
 
 if __name__ == "__main__":
