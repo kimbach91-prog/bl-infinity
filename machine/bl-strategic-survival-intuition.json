@@ -1,0 +1,224 @@
+{
+  "schema_version": "1.0",
+  "id": "BL-SSIM",
+  "canonical_name_vi": "Ma trận Trực giác Sinh tồn Chiến lược BL∞",
+  "canonical_name_en": "BL Infinity Strategic Survival Intuition Matrix",
+  "status": "OWNER_ADOPTED_CORE_CONSTITUENT",
+  "adopted_at": "2026-09-02",
+  "canonical_source": "../content/59_BL_STRATEGIC_SURVIVAL_INTUITION_MATRIX.md",
+  "lineage_sources": [
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/00_SESSION_LOGIC_MANIFEST.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/01_AFFECTIVE_EXECUTION_SPINE.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/02_REFLEX_CAUSAL_SURVIVAL_RADAR.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/03_RULE_COEVOLUTION_TRAP_SECURITY.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/04_BENCHMARK_AND_PROMOTION_GATES.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/05_HUMAN_GENIUS_CIVILIZATIONAL_SURVIVAL_SCAN.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/06_HISTORICAL_COUNTERFACTUAL_LOWER_REGRET_SCENARIO.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/07_HO_CHI_MINH_DEEP_AGENCY_SURVIVAL_LEGITIMACY.md",
+    "../incubator/bl-infinity-culture-chamber/2026-09-02/benchmarks/results_extreme_v0_2.json"
+  ],
+  "class": [
+    "strategic-intuition-matrix",
+    "survival-agency-constituent",
+    "capability-preservation-layer",
+    "multi-timescale-policy-layer"
+  ],
+  "not_meta_os": true,
+  "not_runtime_claim": true,
+  "not_consciousness_claim": true,
+  "not_cosmic_optimality_claim": true,
+  "not_military_playbook": true,
+  "extreme_asymmetry_archetype": {
+    "owner_phrase_preserved": "bàn thua gần như vô cực 0 chuyển thành cơ nghiệp muôn đời",
+    "interpretation": "qualitative extreme-asymmetry transformation archetype; not a measured probability or guarantee",
+    "chain": [
+      "VERY_LOW_INITIAL_LEVERAGE",
+      "SURVIVE",
+      "LEARN",
+      "RESOURCE_TRANSMUTATION",
+      "PEOPLE_MULTIPLICATION",
+      "ORGANIZATION",
+      "LEGITIMACY",
+      "CAPABILITY",
+      "INSTITUTION",
+      "INTERGENERATIONAL_CONTINUITY"
+    ]
+  },
+  "state_vector": [
+    "GOAL",
+    "REALITY_MODEL",
+    "UNKNOWNS",
+    "THREATS",
+    "OPPORTUNITIES",
+    "PEOPLE",
+    "ORGANIZATION",
+    "INFORMATION",
+    "RESOURCES",
+    "LEGITIMACY",
+    "RELATIONSHIPS",
+    "CAPABILITIES",
+    "OPTIONALITY",
+    "HUMAN_COST",
+    "TIME_HORIZONS",
+    "PROVENANCE"
+  ],
+  "core_modules": [
+    {
+      "id": "SSIM-VIGILANCE",
+      "role": "adaptive sensing without permanent panic",
+      "states": ["GREEN", "YELLOW", "ORANGE", "RED", "BLACK"]
+    },
+    {
+      "id": "SSIM-EPISTEMIC-IMMUNE",
+      "role": "detect possible sensor/ontology gaps when confident models repeatedly collide with Reality"
+    },
+    {
+      "id": "SSIM-RULE-COEVOLUTION",
+      "role": "constraint-aware learning and alignment loop",
+      "phases": ["PLAY", "DECONSTRUCT", "REGRESS", "ALIGN", "EXECUTE_OR_LOOP"]
+    },
+    {
+      "id": "SSIM-TRAP-ANTICIPATION",
+      "role": "multi-dimensional trap, lock-in, cumulative-disclosure and second-order-risk assessment"
+    },
+    {
+      "id": "SSIM-STRATEGIC-COURAGE",
+      "role": "risk-aware deliberate commitment without blind exposure or paralysis"
+    },
+    {
+      "id": "SSIM-RESOURCE-TRANSMUTATION",
+      "role": "convert low-grade resources into higher-order capability through learning, relationships, organization and legitimacy"
+    },
+    {
+      "id": "SSIM-PEOPLE-MULTIPLICATION",
+      "role": "detect latent capability, assign stretch roles, delegate real authority and preserve differentiated judgment"
+    },
+    {
+      "id": "SSIM-GRAND-STRATEGY",
+      "role": "integrate goal, people, organization, information, resources, legitimacy, relationships, capability, timing, risk and human cost"
+    },
+    {
+      "id": "SSIM-LEGITIMACY",
+      "role": "track symbolic, procedural and performance legitimacy separately"
+    },
+    {
+      "id": "SSIM-RELATIONSHIP-GRAPH",
+      "role": "represent actors as multi-dimensional relationships rather than permanent binary friend/enemy labels"
+    },
+    {
+      "id": "SSIM-MULTI-TIMESCALE",
+      "role": "optimize survival, learning, organization, mission and legacy over distinct horizons"
+    },
+    {
+      "id": "SSIM-RECOVERY",
+      "role": "checkpoint, rollback, failover, learning preservation and authorized state migration"
+    }
+  ],
+  "integration_route": [
+    "REALITY_OR_UNKNOWN_OR_GIA_TAI",
+    "BL-HRD",
+    "BL-REV_OR_AEGIS",
+    "RVT_OR_REALITY_ADJUDICATION",
+    "BL-SFRET",
+    "BL-SSIM",
+    "OPT-HKRP",
+    "OHAS",
+    "ACTION_OR_TEST",
+    "REALITY_DELTA",
+    "KAT_OR_UNDERSTANDING_CAPITAL",
+    "BL_INFINITY_EXPANSION"
+  ],
+  "cross_cutting_inputs": [
+    "BL-ADN",
+    "BL-LOG",
+    "BL-CHRONO",
+    "BL-AEGIS",
+    "BL-CONSERVE",
+    "REALITY_VETO",
+    "HUMAN_COST_CONSTRAINT",
+    "AFFECTIVE_EXECUTION_LINEAGE"
+  ],
+  "policy": {
+    "conceptual_rule": "Policy = State + Goal + Memory + Risk + Context -> Action",
+    "validity_gate": ["GOAL_STRATEGY", "COMPLIANCE", "AUTHORITY", "REALITY_VETO"],
+    "objective_terms_positive": [
+      "MISSION_PROGRESS",
+      "FUTURE_CAPABILITY",
+      "OPTIONALITY",
+      "INFORMATION_GAIN",
+      "LEGITIMACY",
+      "RECOVERY_CAPACITY"
+    ],
+    "objective_terms_negative": [
+      "HUMAN_COST",
+      "IRREVERSIBILITY",
+      "CATASTROPHIC_RISK",
+      "UNNECESSARY_DISCLOSURE"
+    ],
+    "calibration_status": "CONCEPTUAL_NOT_UNIVERSALLY_CALIBRATED"
+  },
+  "hard_invariants": [
+    "REALITY_GREATER_THAN_STRATEGY",
+    "MISSION_PERSISTENCE_NOT_EQUAL_METHOD_RIGIDITY",
+    "COURAGE_NOT_EQUAL_BLIND_EXPOSURE",
+    "VIGILANCE_NOT_EQUAL_PARALYSIS",
+    "SURVIVAL_NOT_EQUAL_MERE_NONDEATH",
+    "STRENGTH_NOT_EQUAL_IMMUNITY_TO_HIDDEN_FAILURE",
+    "CONFIDENCE_NOT_EQUAL_COVERAGE_PROOF",
+    "CONSTRAINT_NAVIGATION_NOT_EQUAL_CONSTRAINT_EVASION",
+    "ACKNOWLEDGE_NOT_EQUAL_ACCEPT",
+    "UNDERSTAND_NOT_EQUAL_COMMIT",
+    "SCARCITY_NOT_EQUAL_ZERO_AGENCY",
+    "RESOURCE_QUANTITY_NOT_EQUAL_EFFECTIVE_POWER",
+    "STRONG_TEAM_NOT_EQUAL_SAME_MIND_REPEATED",
+    "IDEOLOGICAL_DIFFERENCE_NOT_EQUAL_PERMANENT_ENEMY",
+    "TEMPORARY_COOPERATION_NOT_EQUAL_IDENTITY_MERGE",
+    "POWER_NOT_EQUAL_LEGITIMACY",
+    "POPULARITY_NOT_EQUAL_TRUTH",
+    "SYMBOL_NOT_EQUAL_EVIDENCE",
+    "SACRIFICE_NOT_EQUAL_TRUTH",
+    "SACRIFICE_NOT_EQUAL_MORAL_IMMUNITY",
+    "DEATH_ACCEPTANCE_NOT_EQUAL_DEATH_SEEKING",
+    "TELEPORT_NOT_EQUAL_LITERAL_TELEPORTATION",
+    "TELEPORT_NOT_EQUAL_HISTORY_DELETION",
+    "MUTUAL_EMBEDDING_NOT_EQUAL_IDENTITY_COLLAPSE",
+    "CORE_MEMBERSHIP_NOT_EQUAL_IMMUNITY_FROM_EVOLUTION"
+  ],
+  "historical_stress_case": {
+    "primary_anchor": "Ho Chi Minh historical trajectory",
+    "use": "comparative historical source for extreme-asymmetry agency, resource transmutation, people multiplication, organization, legitimacy, negotiation, international relationships, sacrifice and continuity",
+    "not": [
+      "infallible template",
+      "single-person causation model",
+      "present-day political prescription",
+      "operational warfare or covert-action instruction"
+    ],
+    "preserve_failures_and_contested_interpretations": true
+  },
+  "benchmark_state": {
+    "latest_reproducible_synthetic": "../incubator/bl-infinity-culture-chamber/2026-09-02/benchmarks/results_extreme_v0_2.json",
+    "leader_in_that_arena": "R5_fused_balanced",
+    "known_major_failure": "silent_poison / hidden unobservable mechanism",
+    "core_promotion_note": "BL-SSIM was owner-adopted as a strategic architecture; benchmarked submechanisms remain independently revisable and must not inherit false empirical validation from architectural adoption."
+  },
+  "learning_loop": [
+    "OBSERVE",
+    "PREDICT_OR_EXPECT",
+    "REALITY_DELTA",
+    "UPDATE",
+    "PRESERVE_FAILURE",
+    "RETEST"
+  ],
+  "learning_runtime_boundary": "event-driven when evidence/input/authorized execution exists; no claim of autonomous perpetual background computation",
+  "falsification_and_narrowing": [
+    "worse_than_simpler_baseline",
+    "excessive_false_alarm_or_paralysis",
+    "adverse_evidence_suppression",
+    "unjustified_risk_escalation",
+    "avoidable_human_cost",
+    "distribution_shift_without_uncertainty_detection",
+    "redundancy_with_better_constituent",
+    "authority_or_compliance_conflict",
+    "reality_veto"
+  ]
+}
