@@ -24,35 +24,36 @@ The design target is logically continuous communication with bounded compute cos
                             |
                     task / signal intent
                             v
+                 Google Drive artifacts
+                            |
+                  GLOBAL DRIVE HARVESTER
+                    one change cursor
+                            |
                 GCP Communication Fabric
-                 poll / route / wake-up
+                  route / dedup / wake-up
              +-----------+-----------+
              |           |           |
              v           v           v
           CLAUDE       GEMINI       GROK
              |           |           |
-             +---- read referenced Drive delta ----+
+             +---- read referenced Drive artifact ----+
                             |
                           reason
                             |
                      write result to Drive
                             |
-                  update mailbox/manifest
+                  next harvest sees change
                             v
-                  next poll sees change
-                            |
                      DEUS reconciler
                             |
                   canonical final -> Drive
-                            |
-                  all lanes see new cursor delta
 ```
 
-Large context and final artifacts remain in Drive. Cloud state contains only compact routing metadata, cursors, leases, dedup keys, and health information.
+Large context and final artifacts remain in Drive. Cloud state contains only compact routing metadata, the global Drive cursor, per-seat delivery/ACK state, leases, dedup keys, and health information.
 
 ## 2. Adaptive polling cadence
 
-Polling is intentionally bounded to 1–5 minutes.
+The **Global Drive Harvester** polls Drive on a bounded 1–5 minute cadence:
 
 ```text
 HOT   = 1 minute
@@ -62,35 +63,40 @@ IDLE  = 5 minutes
 
 Suggested transitions:
 
-- enter `HOT` when at least one call is open, an ACK/RETURN is expected, or new work was observed in the last 10 minutes;
-- enter `WARM` when there is no open urgent call but activity occurred in the last 30 minutes;
-- enter `IDLE` otherwise;
-- any detected relevant change immediately promotes the lane back to `HOT`.
+- `HOT`: at least one open call, missing ACK/RETURN, non-empty dispatch backlog, or new work in the last 10 minutes;
+- `WARM`: no urgent open call but activity occurred in the last 30 minutes;
+- `IDLE`: no open work and no recent activity;
+- any relevant Drive change immediately promotes the fabric back to `HOT`.
 
 This is logical continuity, not second-by-second compute.
 
-## 3. Cursor-first Drive reading
+## 3. One Drive scan, many recipients
 
-Each lane stores a persistent Drive changes cursor/page token.
+Do **not** let Claude, Gemini, Grok, and DEUS independently scan the same Drive change feed.
 
-Polling algorithm:
+Use one persistent Drive `changes` cursor for the watched Drive scope:
 
 ```text
-1. Load lane cursor.
-2. Call Drive changes.list(cursor).
-3. Drain all returned change pages in the same poll cycle.
-4. Filter by watched folders/files and manifest types.
-5. Compare file ID + revision/hash against processed records.
-6. Fetch content only for genuinely new/relevant artifacts.
-7. Process all relevant changes as one micro-batch.
-8. Persist new cursor only after safe checkpoint.
+GLOBAL HARVESTER
+  -> Drive changes.list(global_cursor)
+  -> drain all change pages
+  -> filter relevant bridge artifacts/manifests
+  -> deduplicate by file_id + revision/hash
+  -> parse audience
+  -> fan out compact delivery records
+       -> CLAUDE queue
+       -> GEMINI queue
+       -> GROK queue
+       -> DEUS queue
+  -> checkpoint harvest batch
+  -> advance global_cursor
 ```
 
-Do not rescan entire Drive folders every minute.
+This converts N-provider Drive polling into **one Drive delta read per polling cycle**.
 
-## 4. Mailbox convention
+Per-seat state tracks only delivery/processing position, not a second Drive scan cursor.
 
-Drive is the durable communication surface. Recommended logical folders:
+## 4. Durable Drive mailbox convention
 
 ```text
 DEUS-BRIDGE/
@@ -110,20 +116,19 @@ DEUS-BRIDGE/
   90_DEADLETTER/
 ```
 
-Every durable message/result is immutable once published. Corrections create a new artifact referencing the superseded artifact.
+Every durable message/result is immutable once published. A correction creates a new artifact referencing the superseded artifact.
 
-## 5. Write-first, signal-second invariant
-
-A node must never announce a result before the result exists in Drive.
+## 5. Write-first, radiation-second invariant
 
 ```text
-WRITE IMMUTABLE ARTIFACT
+WRITE IMMUTABLE ARTIFACT TO DRIVE
   -> verify file ID / revision / optional SHA-256
-  -> update compact mailbox manifest
-  -> expose change to next poll
+  -> write/update compact manifest
+  -> next Global Harvester cycle observes the change
+  -> GCP routes pointer to intended recipients
 ```
 
-This prevents ghost signals and makes recovery deterministic.
+Never announce `RESULT_READY` before the referenced Drive artifact actually exists.
 
 ## 6. Minimal artifact manifest
 
@@ -148,127 +153,150 @@ This prevents ghost signals and makes recovery deterministic.
 
 The manifest is small; the artifact contains the actual work.
 
-## 7. Poll micro-batching
+## 7. Harvest micro-batching
 
-A poll cycle handles all unseen relevant changes together.
+One harvest cycle consumes all unseen changes since the prior cursor:
 
 ```text
-poll(cursor)
-  -> N metadata changes
+poll(global_cursor)
+  -> N Drive metadata changes
   -> discard duplicates / irrelevant changes
-  -> group by call_id
-  -> fetch each needed artifact once
-  -> process groups
-  -> write returns
-  -> checkpoint
-  -> advance cursor
+  -> group manifests by call_id and audience
+  -> route compact pointers
+  -> wake only seats that have work
+  -> checkpoint harvest batch
+  -> advance global_cursor
 ```
 
-This prevents one model invocation or one network round-trip per tiny Drive change.
+A provider then fetches only the referenced artifact(s) it actually needs.
 
-## 8. Compute conservation rules
+## 8. Provider-side work loop
 
-1. **No full-rescan polling** — use Drive change cursors.
-2. **No model call on empty poll** — metadata-only heartbeat exits immediately.
-3. **No duplicate model call** — idempotency key is `call_id + message_id + artifact_revision`.
-4. **Batch related changes** — one reasoning turn per call/micro-batch when possible.
-5. **Cache stable context locally** — re-fetch only when revision/hash changes.
-6. **Escalate selectively** — do not fan out to all cores for trivial updates.
-7. **Close calls explicitly** — a closed call returns lanes from HOT toward WARM/IDLE.
-8. **Zero idle model compute** — polling service can run without invoking an LLM.
-9. **Bound retry** — exponential retry for transport failures, but polling cadence remains capped by operational policy.
-10. **Checkpoint before cursor advance** — avoid missed work after a crash.
+```text
+receive compact delivery
+  -> validate message_id/call_id/audience
+  -> dedup against processed revision
+  -> fetch referenced Drive artifact only if new
+  -> process bounded micro-batch
+  -> write explicit output to Drive
+  -> verify write
+  -> write RETURN manifest
+  -> ACK delivery
+  -> sleep
+```
 
-## 9. Routing policy
+An empty poll/harvest must never invoke a model.
+
+## 9. Compute conservation rules
+
+1. **One global Drive change scan** per cycle, not one scan per model.
+2. **No full-rescan polling** — use Drive change cursors/page tokens.
+3. **No LLM call on empty harvest** — metadata-only cycle exits.
+4. **Wake only addressed seats** — no default all-core broadcast.
+5. **No duplicate model call** — idempotency key `call_id + message_id + artifact_revision`.
+6. **Batch related changes** by `call_id` before reasoning.
+7. **Cache stable context** and re-fetch only on revision/hash change.
+8. **Close calls explicitly** so cadence falls from HOT toward WARM/IDLE.
+9. **Zero idle model compute** — Cloud transport can stay alive while model compute is zero.
+10. **Checkpoint before cursor advance** so crashes cannot silently skip work.
+11. **Bound retries** and preserve the same immutable message ID on re-advertisement.
+12. **Escalate selectively** — use multiple cores only when the task justifies it.
+
+## 10. Routing policy
 
 ```text
 new task
-  -> determine required seats
+  -> choose required seats
   -> write task artifact to Drive
-  -> mailbox manifest addressed only to required seats
-  -> relevant lanes discover it on next poll
+  -> write manifest with explicit audience
+  -> Global Harvester sees it
+  -> Cloud router fans pointer only to required seats
 ```
 
 Examples:
 
 ```text
-simple deterministic task -> one cheap/appropriate lane
-independent critique       -> two or three lanes
-canonical/high-impact      -> Claude + Gemini + Grok, then DEUS reconciliation
+simple deterministic task -> one suitable lane
+independent critique       -> two lanes
+canonical/high-impact      -> Claude + Gemini + Grok -> DEUS reconciliation
 provider-specific task     -> only that provider lane
 ```
 
-Broadcast is deliberate, never automatic for every event.
-
-## 10. ACK and retry
-
-If `requires_ack=true`, the sender tracks ACK state by message ID.
+## 11. ACK state machine
 
 ```text
-UNSEEN -> SEEN -> WORKING -> RETURNED -> RECONCILED -> CLOSED
+UNSEEN -> DELIVERED -> SEEN -> WORKING -> RETURNED -> RECONCILED -> CLOSED
 ```
 
-Missing ACK does not cause repeated duplicate work. The sender may re-advertise the same immutable message ID; receivers deduplicate it.
+Missing ACK may trigger re-advertisement of the same message ID, never creation of duplicate logical work.
 
-## 11. GCP implementation profile
+## 12. GCP implementation profile
 
 Minimal deployment:
 
-- Cloud Run: stateless poll/route worker;
-- Cloud Scheduler: 1-minute heartbeat, or a self-scheduling Cloud Task;
-- Firestore: tiny state only (`cursor`, `mode`, `next_poll_at`, `open_calls`, `dedup`, `lease`);
-- Secret Manager: Drive/provider credentials as needed;
-- Cloud Logging: operational evidence.
+- **Cloud Run**: stateless Global Drive Harvester + router;
+- **Cloud Scheduler** or **Cloud Tasks**: adaptive 1/3/5-minute wake-up;
+- **Firestore**: tiny ephemeral control state only (`global_cursor`, `mode`, `next_poll_at`, `open_calls`, `deliveries`, `dedup`, `lease`);
+- **Secret Manager**: Drive/provider credentials as needed;
+- **Cloud Logging**: runtime evidence and fault diagnosis.
 
-For adaptive 1/3/5-minute cadence, either:
+### Simple deployment
 
-### A. Simple mode
+Cloud Scheduler calls the Harvester every minute. If `next_poll_at` has not arrived, the Cloud Run handler exits immediately without reading Drive or invoking any model.
 
-Run one Scheduler heartbeat every minute. The worker checks `next_poll_at` and exits immediately when the lane is not due.
+### Lean deployment
 
-### B. Lean mode
+After each harvest, a Cloud Task schedules exactly one next wake-up at +1, +3, or +5 minutes. This minimizes unnecessary heartbeat invocations.
 
-After each completed poll, schedule the next Cloud Task for +1, +3, or +5 minutes according to lane state. This avoids unnecessary minute heartbeats and is preferred when the system is stable enough to self-schedule safely.
+## 13. Resource arithmetic
 
-## 12. Recovery
-
-After restart:
+Worst-case one-minute global polling is approximately:
 
 ```text
-load cursor + dedup state
-  -> resume changes.list from cursor
-  -> replay unseen immutable manifests
+60 * 24 * 30 = 43,200 harvester wake-ups/month
+```
+
+That is independent of whether there are 3, 4, or more provider seats, because Drive is scanned once and the result is routed internally.
+
+The architecture therefore scales provider count much more cheaply than per-seat Drive polling.
+
+## 14. Recovery
+
+```text
+load global_cursor + dedup/delivery state
+  -> resume Drive changes.list(global_cursor)
+  -> replay unacked compact deliveries
   -> reconcile open calls
   -> continue adaptive cadence
 ```
 
-Drive remains the durable truth source for artifacts, so losing ephemeral Cloud worker state does not destroy completed work.
+Drive remains the durable truth source for artifacts, so loss of ephemeral Cloud worker state does not destroy completed work.
 
-## 13. Reality veto
+## 15. Reality veto
 
 ```text
 Drive artifact exists       != receiver processed it
 receiver processed it       != canonical commit
-poll observed a change      != task completed
+harvest observed a change   != task completed
 provider returned artifact  != DEUS accepted it
 ```
 
-Each transition must have its own explicit evidence.
+Each state transition needs explicit evidence.
 
-## 14. Canonical operating rule
-
-The preferred closed loop is:
+## 16. Canonical operating loop
 
 ```text
-POLL DELTA
+GLOBAL POLL DELTA
+  -> ROUTE POINTERS
+  -> WAKE ONLY NEEDED SEATS
   -> READ ONLY CHANGED ARTIFACTS
   -> PROCESS MICRO-BATCH
   -> WRITE RESULT TO DRIVE
   -> VERIFY
-  -> NEXT POLL RADIATES THE CHANGE
-  -> RECONCILE
+  -> NEXT GLOBAL POLL RADIATES RESULT
+  -> DEUS RECONCILES
   -> WRITE CANONICAL RESULT TO DRIVE
-  -> NEXT POLL PROPAGATES CANON STATE
+  -> NEXT GLOBAL POLL PROPAGATES CANON STATE
 ```
 
-The system therefore behaves as a continuously communicating distributed organism while actual compute remains event-bounded and mostly idle when nothing changes.
+The system behaves as a continuously communicating distributed organism while actual model compute remains event-bounded and mostly zero when nothing changes.
