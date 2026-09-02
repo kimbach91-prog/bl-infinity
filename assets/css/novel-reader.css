@@ -1,0 +1,291 @@
+/* BL∞ Novel Reader — mobile-first long-form reading layer */
+:root{
+  --reader-font-size:18px;
+  --reader-line-height:1.78;
+  --reader-measure:62ch;
+  --reader-bg:#fffdf8;
+  --reader-surface:rgba(255,253,248,.94);
+  --reader-ink:#211f1b;
+  --reader-muted:#756f65;
+  --reader-line:#e2dbce;
+  --reader-accent:#6b3fa0;
+  --reader-shadow:0 10px 32px rgba(31,25,20,.14);
+}
+
+body.bl-novel-reader{
+  background:var(--reader-bg)!important;
+  color:var(--reader-ink)!important;
+  transition:background .18s ease,color .18s ease;
+  padding-bottom:calc(72px + env(safe-area-inset-bottom));
+}
+
+body.bl-novel-reader[data-reader-theme="sepia"]{
+  --reader-bg:#f5ecd9;
+  --reader-surface:rgba(245,236,217,.95);
+  --reader-ink:#302a21;
+  --reader-muted:#766a58;
+  --reader-line:#d9cbb1;
+  --reader-accent:#744d2d;
+}
+body.bl-novel-reader[data-reader-theme="night"]{
+  --reader-bg:#111214;
+  --reader-surface:rgba(23,24,27,.95);
+  --reader-ink:#e9e4db;
+  --reader-muted:#aaa49b;
+  --reader-line:#32343a;
+  --reader-accent:#c6a5ff;
+  --reader-shadow:0 10px 34px rgba(0,0,0,.38);
+}
+
+body.bl-novel-reader main{
+  width:min(100%,calc(var(--reader-measure) + 44px))!important;
+  max-width:none!important;
+  padding-left:22px!important;
+  padding-right:22px!important;
+}
+
+body.bl-novel-reader .hero{
+  max-width:var(--reader-measure);
+  margin-inline:auto;
+}
+body.bl-novel-reader .hero h1{
+  max-width:14ch!important;
+  text-wrap:balance;
+}
+body.bl-novel-reader .hero .canon-note{
+  color:var(--reader-muted);
+  background:color-mix(in srgb,var(--reader-bg) 82%,#f3dfad 18%);
+  border-color:var(--reader-line);
+}
+
+body.bl-novel-reader .prose{
+  width:100%;
+  max-width:var(--reader-measure)!important;
+  margin-inline:auto;
+  font-family:var(--reader-font-family,"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif);
+  font-kerning:normal;
+  font-optical-sizing:auto;
+}
+body.bl-novel-reader .prose p,
+body.bl-novel-reader .prose li{
+  max-width:none!important;
+  font-size:var(--reader-font-size)!important;
+  line-height:var(--reader-line-height)!important;
+  color:var(--reader-ink);
+  text-wrap:pretty;
+  hanging-punctuation:first last;
+}
+body.bl-novel-reader .prose p{
+  margin:.88em 0!important;
+}
+body.bl-novel-reader .prose p + p{
+  margin-top:.88em!important;
+}
+body.bl-novel-reader .prose h2,
+body.bl-novel-reader .prose h3{
+  color:var(--reader-ink);
+  border-color:var(--reader-line)!important;
+  text-wrap:balance;
+}
+body.bl-novel-reader .prose hr{
+  width:5.5rem;
+  margin:2.55em auto!important;
+  border:0!important;
+  height:1px;
+  background:linear-gradient(90deg,transparent,var(--reader-line),transparent);
+  overflow:visible;
+}
+body.bl-novel-reader .prose hr::after{
+  content:"◆";
+  display:block;
+  transform:translateY(-.64em);
+  text-align:center;
+  font-size:.58rem;
+  color:var(--reader-muted);
+  background:var(--reader-bg);
+  width:2.5rem;
+  margin:auto;
+}
+body.bl-novel-reader .prose blockquote{
+  color:var(--reader-ink);
+  background:color-mix(in srgb,var(--reader-bg) 92%,var(--reader-accent) 8%)!important;
+  border-color:var(--reader-accent)!important;
+}
+body.bl-novel-reader .prose code{
+  background:color-mix(in srgb,var(--reader-bg) 88%,var(--reader-ink) 12%)!important;
+  color:var(--reader-ink);
+}
+
+body.bl-novel-reader .prose .aura-beat{
+  position:relative;
+  max-width:34ch!important;
+  margin:1.65em 0 1.7em 0!important;
+  padding:.12em 0 .12em 1rem;
+  border-left:2px solid color-mix(in srgb,var(--reader-accent) 72%,transparent);
+  font-family:var(--reader-font-family,"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif);
+  font-size:calc(var(--reader-font-size) * 1.08)!important;
+  line-height:1.55!important;
+  font-weight:720;
+  letter-spacing:-.012em;
+  color:var(--reader-ink);
+}
+body.bl-novel-reader .prose .aura-beat em{font-weight:600}
+
+.reader-progress-track{
+  position:fixed;
+  z-index:1200;
+  top:0;left:0;right:0;
+  height:3px;
+  pointer-events:none;
+  background:transparent;
+}
+.reader-progress-bar{
+  height:100%;width:0;
+  background:var(--reader-accent);
+  transition:width .08s linear;
+}
+
+.reader-dock{
+  position:fixed;
+  z-index:1190;
+  right:12px;
+  bottom:calc(12px + env(safe-area-inset-bottom));
+  display:flex;
+  align-items:center;
+  gap:6px;
+  padding:6px;
+  border:1px solid color-mix(in srgb,var(--reader-line) 84%,transparent);
+  border-radius:999px;
+  background:var(--reader-surface);
+  box-shadow:var(--reader-shadow);
+  -webkit-backdrop-filter:blur(16px) saturate(1.15);
+  backdrop-filter:blur(16px) saturate(1.15);
+}
+.reader-dock button{
+  min-width:42px;
+  min-height:42px;
+  padding:0 11px;
+  border:0;
+  border-radius:999px;
+  background:transparent;
+  color:var(--reader-ink);
+  font:700 .9rem/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  cursor:pointer;
+}
+.reader-dock button:hover,
+.reader-dock button:focus-visible{
+  background:color-mix(in srgb,var(--reader-bg) 78%,var(--reader-accent) 22%);
+  outline:2px solid transparent;
+}
+.reader-dock .reader-percent{
+  min-width:40px;
+  padding:0 4px;
+  text-align:center;
+  color:var(--reader-muted);
+  font:650 .76rem/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-variant-numeric:tabular-nums;
+}
+
+.reader-panel{
+  position:fixed;
+  z-index:1185;
+  right:12px;
+  bottom:calc(70px + env(safe-area-inset-bottom));
+  width:min(330px,calc(100vw - 24px));
+  padding:14px;
+  border:1px solid var(--reader-line);
+  border-radius:18px;
+  background:var(--reader-surface);
+  color:var(--reader-ink);
+  box-shadow:var(--reader-shadow);
+  -webkit-backdrop-filter:blur(18px) saturate(1.1);
+  backdrop-filter:blur(18px) saturate(1.1);
+}
+.reader-panel[hidden]{display:none!important}
+.reader-panel-head{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin-bottom:10px;
+  font:750 .9rem/1.25 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.reader-panel-close{
+  width:36px;height:36px;border:0;border-radius:50%;
+  background:transparent;color:var(--reader-ink);font-size:1.1rem;
+}
+.reader-setting-row{
+  display:grid;
+  grid-template-columns:90px 1fr;
+  gap:10px;
+  align-items:center;
+  padding:9px 0;
+  border-top:1px solid var(--reader-line);
+  font:600 .82rem/1.25 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.reader-controls{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.reader-controls button{
+  min-height:38px;
+  padding:0 11px;
+  border:1px solid var(--reader-line);
+  border-radius:10px;
+  background:var(--reader-bg);
+  color:var(--reader-ink);
+  font:650 .8rem/1 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+.reader-controls button[aria-pressed="true"]{
+  border-color:var(--reader-accent);
+  box-shadow:inset 0 0 0 1px var(--reader-accent);
+}
+
+.reader-notes{
+  margin-top:3.3em;
+  padding:0;
+  border-top:1px solid var(--reader-line);
+  color:var(--reader-muted);
+}
+.reader-notes summary{
+  cursor:pointer;
+  padding:16px 0;
+  font:700 .9rem/1.4 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color:var(--reader-muted);
+}
+.reader-notes .reader-notes-body p,
+.reader-notes .reader-notes-body li{
+  font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  font-size:15px!important;
+  line-height:1.65!important;
+  color:var(--reader-muted)!important;
+}
+
+body.bl-novel-reader.reader-focus .top,
+body.bl-novel-reader.reader-focus .topic-bar,
+body.bl-novel-reader.reader-focus .hero .eyebrow,
+body.bl-novel-reader.reader-focus .hero .meta,
+body.bl-novel-reader.reader-focus .hero .canon-note{
+  display:none!important;
+}
+body.bl-novel-reader.reader-focus .hero{
+  padding-top:28px!important;
+}
+
+@media (max-width:720px){
+  :root{--reader-font-size:18px;--reader-line-height:1.76;--reader-measure:100%}
+  body.bl-novel-reader main{
+    width:100%!important;
+    padding-left:18px!important;
+    padding-right:18px!important;
+  }
+  body.bl-novel-reader .hero{padding:28px 0 22px!important}
+  body.bl-novel-reader .hero h1{font-size:clamp(2.25rem,12.2vw,3.65rem)!important;line-height:.98!important}
+  body.bl-novel-reader .prose{padding-top:20px!important}
+  body.bl-novel-reader .prose p{margin:.82em 0!important}
+  body.bl-novel-reader .prose p+p{margin-top:.82em!important}
+  body.bl-novel-reader .prose .aura-beat{
+    max-width:31ch!important;
+    margin:1.45em 0 1.5em!important;
+  }
+  .reader-dock{right:10px;bottom:calc(10px + env(safe-area-inset-bottom));}
+  .reader-panel{right:10px;bottom:calc(68px + env(safe-area-inset-bottom));width:calc(100vw - 20px)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  body.bl-novel-reader,.reader-progress-bar{transition:none!important}
+}
