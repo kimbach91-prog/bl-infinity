@@ -9,6 +9,7 @@ SCIENCE_REGISTRY_SOURCE = ROOT / "machine" / "external-science-constellation.jso
 MTS_PAGE_SOURCE = ROOT / "public" / "mature-theory-synthesis.html"
 MTS_REGISTRY_SOURCE = ROOT / "machine" / "bl-mature-theory-synthesis.json"
 MTS_INTEGRATION_SOURCE = ROOT / "machine" / "bl-mts-integration.json"
+MTS_INGESTION_SOURCE = ROOT / "machine" / "bl-mts-ingestion-map.json"
 
 
 def stage_external_science_constellation() -> None:
@@ -49,17 +50,21 @@ def stage_external_science_constellation() -> None:
 
 
 def stage_mature_theory_synthesis() -> None:
-    if not MTS_PAGE_SOURCE.exists():
-        raise RuntimeError("public/mature-theory-synthesis.html missing")
-    if not MTS_REGISTRY_SOURCE.exists():
-        raise RuntimeError("machine/bl-mature-theory-synthesis.json missing")
-    if not MTS_INTEGRATION_SOURCE.exists():
-        raise RuntimeError("machine/bl-mts-integration.json missing")
+    required = [
+        MTS_PAGE_SOURCE,
+        MTS_REGISTRY_SOURCE,
+        MTS_INTEGRATION_SOURCE,
+        MTS_INGESTION_SOURCE,
+    ]
+    missing = [path.relative_to(ROOT).as_posix() for path in required if not path.exists()]
+    if missing:
+        raise RuntimeError("BL-MTS source missing: " + ", ".join(missing))
 
     shutil.copy(MTS_PAGE_SOURCE, SITE / "mature-theory-synthesis.html")
     (SITE / "machine").mkdir(parents=True, exist_ok=True)
     shutil.copy(MTS_REGISTRY_SOURCE, SITE / "machine" / "bl-mature-theory-synthesis.json")
     shutil.copy(MTS_INTEGRATION_SOURCE, SITE / "machine" / "bl-mts-integration.json")
+    shutil.copy(MTS_INGESTION_SOURCE, SITE / "machine" / "bl-mts-ingestion-map.json")
 
     science = SITE / "science-constellation.html"
     if science.exists():
@@ -81,9 +86,6 @@ def main() -> None:
     stage_mature_theory_synthesis()
     text = INDEX.read_text(encoding="utf-8")
 
-    # Homepage directory is the durable cross-system entry surface. Global nav
-    # is normalized later by harden_site.py, so new conceptual routes are also
-    # linked from body content instead of depending on a one-off nav mutation.
     novel_entry = (
         '<li class="novel-entry"><a href="novel/">'
         '<strong>Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Chương 1 HALF-CANON</strong>'
@@ -129,15 +131,13 @@ def main() -> None:
     unknown_entry = (
         '<li class="unknown-doctrine-entry"><a href="unknown.html">'
         '<strong>Học thuyết UNKNOWN · Trường Chưa-biết Sinh thành của BL∞</strong>'
-        '<span>UNKNOWN là contact frontier giữa cấu trúc hiện tại và độ mở BL∞; '
-        'nối GiaTai/imagination, ontology genesis, false-known, cooperation, actualization và biên UNKNOWN sâu hơn.</span>'
+        '<span>UNKNOWN là contact frontier giữa cấu trúc hiện tại và độ mở BL∞; nối GiaTai/imagination, ontology genesis, false-known, cooperation, actualization và biên UNKNOWN sâu hơn.</span>'
         '</a></li>'
     )
     grand_entry = (
         '<li class="grand-ending-entry"><a href="grand-ending.html">'
         '<strong>Đại Kết Cục · BL∞ · UNKNOWN · Cosmic Optionality</strong>'
-        '<span>Infinity != Power; phân biệt fixed infinity với B Infinity và mô hình sự sống/trí tuệ như counter-pressure '
-        'trước terminal convergence thấp-generativity.</span>'
+        '<span>Infinity != Power; phân biệt fixed infinity với B Infinity và mô hình sự sống/trí tuệ như counter-pressure trước terminal convergence thấp-generativity.</span>'
         '</a></li>'
     )
     directory_anchor = '<ul class="home-directory-grid">'
@@ -166,8 +166,6 @@ def main() -> None:
     if entries:
         text = text.replace(directory_anchor, directory_anchor + entries, 1)
 
-    # If an older staged homepage happens to carry the former demo wording,
-    # normalize it during the same pass. Fresh builds do not contain it.
     text = text.replace(
         'Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Chương 1 DEMO',
         'Bách Lâm · Lần Hồi Quy Thứ Một Triệu · Chương 1 HALF-CANON',
@@ -178,7 +176,7 @@ def main() -> None:
     )
 
     INDEX.write_text(text, encoding="utf-8")
-    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS + integration contract + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
+    print("BL∞ theory-first core + regressor + conservation + external science + BL-MTS registry/integration/ingestion + open academic publishing + HALF-CANON novel + world/UNKNOWN/Grand Ending linked from homepage: OK")
 
 
 if __name__ == "__main__":
