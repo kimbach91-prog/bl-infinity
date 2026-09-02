@@ -20,20 +20,6 @@ export const config = {
   signalToken: required('SIGNAL_FABRIC_TOKEN'),
   manifestFolderId: required('DRIVE_MANIFEST_FOLDER_ID'),
   artifactFolderId: required('DRIVE_ARTIFACTS_ID'),
-  inboxFolders: {
-    DEUS: required('DRIVE_INBOX_DEUS_ID'),
-    CLAUDE: required('DRIVE_INBOX_CLAUDE_ID'),
-    GEMINI: required('DRIVE_INBOX_GEMINI_ID'),
-    GROK: required('DRIVE_INBOX_GROK_ID')
-  } satisfies Record<Seat, string>,
-  returnFolders: {
-    CLAUDE: required('DRIVE_RETURN_CLAUDE_ID'),
-    GEMINI: required('DRIVE_RETURN_GEMINI_ID'),
-    GROK: required('DRIVE_RETURN_GROK_ID')
-  } satisfies Record<Exclude<Seat, 'DEUS'>, string>,
-  canonicalFolderId: required('DRIVE_CANONICAL_FOLDER_ID'),
-  archiveFolderId: required('DRIVE_ARCHIVE_FOLDER_ID'),
-  deadletterFolderId: required('DRIVE_DEADLETTER_FOLDER_ID'),
   hotMinutes: integer('POLL_HOT_MINUTES', 1),
   warmMinutes: integer('POLL_WARM_MINUTES', 3),
   idleMinutes: integer('POLL_IDLE_MINUTES', 5),
