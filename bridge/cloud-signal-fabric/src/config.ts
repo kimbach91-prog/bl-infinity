@@ -19,6 +19,7 @@ export const config = {
   projectId: process.env.GOOGLE_CLOUD_PROJECT?.trim() || process.env.GCLOUD_PROJECT?.trim(),
   signalToken: required('SIGNAL_FABRIC_TOKEN'),
   manifestFolderId: required('DRIVE_MANIFEST_FOLDER_ID'),
+  artifactFolderId: required('DRIVE_ARTIFACTS_ID'),
   inboxFolders: {
     DEUS: required('DRIVE_INBOX_DEUS_ID'),
     CLAUDE: required('DRIVE_INBOX_CLAUDE_ID'),
