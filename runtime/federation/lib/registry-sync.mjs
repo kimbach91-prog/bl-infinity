@@ -3,24 +3,24 @@ const MAX_BATCH_SIZE = 5000;
 
 export class PostgresProviderDeltaView {
   constructor(store, { batchSize = DEFAULT_BATCH_SIZE } = {}) {
-    if (!store?.pool?.query || !store?.get) throw new Error('PostgresProviderStore with pool is required');
+    if (!store?.pool?.query) throw new Error('PostgresProviderStore with pool is required');
     this.store = store;
     this.pool = store.pool;
     this.batchSize = boundedBatch(batchSize);
   }
 
   async snapshot({ now = Date.now() } = {}) {
-    const result = await this.pool.query('SELECT id,change_seq FROM federation_providers ORDER BY id');
-    const items = await hydrateRows(this.store, result.rows, now);
+    const result = await this.pool.query('SELECT * FROM federation_providers ORDER BY id');
+    const items = hydrateRows(result.rows, now);
     const cursor = result.rows.reduce((max, row) => Math.max(max, Number(row.change_seq) || 0), 0);
-    return { items, cursor };
+    return { items, cursor, rowsRead: result.rows.length, queries: 1 };
   }
 
   async changesSince(cursor = 0, { limit = this.batchSize, now = Date.now() } = {}) {
     const safeCursor = nonNegativeInteger(cursor, 'cursor');
     const safeLimit = boundedBatch(limit);
     const result = await this.pool.query(`
-      SELECT id,change_seq
+      SELECT *
       FROM federation_providers
       WHERE change_seq > $1
       ORDER BY change_seq ASC
@@ -28,9 +28,9 @@ export class PostgresProviderDeltaView {
     `, [safeCursor, safeLimit + 1]);
     const hasMore = result.rows.length > safeLimit;
     const rows = hasMore ? result.rows.slice(0, safeLimit) : result.rows;
-    const items = await hydrateRows(this.store, rows, now);
+    const items = hydrateRows(rows, now);
     const nextCursor = rows.length ? Number(rows.at(-1).change_seq) : safeCursor;
-    return { items, cursor: nextCursor, hasMore };
+    return { items, cursor: nextCursor, hasMore, rowsRead: result.rows.length, queries: 1 };
   }
 }
 
@@ -46,6 +46,7 @@ export class ProviderRegistrySynchronizer {
     this.bootstrapped = false;
     this.changeSeqById = new Map();
     this.expiryHeap = [];
+    this.lastSync = null;
   }
 
   async bootstrap({ now = Date.now() } = {}) {
@@ -57,7 +58,9 @@ export class ProviderRegistrySynchronizer {
     this.cursor = nonNegativeInteger(snapshot.cursor ?? 0, 'snapshot cursor');
     this.bootstrapped = true;
     const expired = this.#expire(now);
-    return { mode: 'bootstrap', cursor: this.cursor, applied, expired, hasMore: false };
+    const result = { mode: 'bootstrap', cursor: this.cursor, applied, expired, batches: 1, hasMore: false, rowsRead: snapshot.rowsRead ?? snapshot.items.length, queries: snapshot.queries ?? 1 };
+    this.lastSync = { ...result, at: new Date(now).toISOString() };
+    return result;
   }
 
   async sync({ now = Date.now(), maxBatches = this.maxBatchesPerSync } = {}) {
@@ -65,10 +68,14 @@ export class ProviderRegistrySynchronizer {
     const batchLimit = positiveInteger(maxBatches, 'maxBatches');
     let applied = 0;
     let batches = 0;
+    let rowsRead = 0;
+    let queries = 0;
     let hasMore = false;
     while (batches < batchLimit) {
       const delta = await this.deltaView.changesSince(this.cursor, { limit: this.batchSize, now });
       batches += 1;
+      rowsRead += Number(delta.rowsRead ?? delta.items.length);
+      queries += Number(delta.queries ?? 1);
       for (const item of delta.items) applied += this.#apply(item, now);
       if (delta.cursor < this.cursor) throw new Error('provider delta cursor moved backwards');
       this.cursor = delta.cursor;
@@ -76,7 +83,21 @@ export class ProviderRegistrySynchronizer {
       if (!hasMore) break;
     }
     const expired = this.#expire(now);
-    return { mode: 'delta', cursor: this.cursor, applied, expired, batches, hasMore };
+    const result = { mode: 'delta', cursor: this.cursor, applied, expired, batches, hasMore, rowsRead, queries };
+    this.lastSync = { ...result, at: new Date(now).toISOString() };
+    return result;
+  }
+
+  status() {
+    return {
+      bootstrapped: this.bootstrapped,
+      cursor: this.cursor,
+      trackedProviders: this.changeSeqById.size,
+      scheduledExpiries: this.expiryHeap.length,
+      batchSize: this.batchSize,
+      maxBatchesPerSync: this.maxBatchesPerSync,
+      lastSync: this.lastSync ? structuredClone(this.lastSync) : null,
+    };
   }
 
   #apply(item, now) {
@@ -123,14 +144,43 @@ export class ProviderRegistrySynchronizer {
   }
 }
 
-async function hydrateRows(store, rows, now) {
-  const providers = await Promise.all(rows.map((row) => store.get(row.id, { now })));
-  const items = [];
-  for (let i = 0; i < rows.length; i += 1) {
-    if (!providers[i]) continue;
-    items.push({ provider: providers[i], changeSeq: Number(rows[i].change_seq) });
-  }
-  return items;
+export function providerFromDeltaRow(row, now = Date.now()) {
+  if (!row) return null;
+  const grant = structuredClone(row.grant_json);
+  const signature = row.signature_json ? structuredClone(row.signature_json) : null;
+  const telemetry = { ...(row.telemetry_json ?? {}) };
+  const grantExpired = row.grant_expires_at ? new Date(row.grant_expires_at).getTime() <= now : false;
+  const heartbeatRequired = grant.liveness?.heartbeatRequired === true;
+  const heartbeatFresh = row.heartbeat_expires_at ? new Date(row.heartbeat_expires_at).getTime() > now : false;
+  const revoked = row.status === 'revoked';
+  const effectiveDisabled = row.status !== 'active' || grantExpired || (heartbeatRequired && !heartbeatFresh);
+  const authorization = { ...grant.authorization };
+  if (revoked) authorization.revokedAt = new Date(row.revoked_at ?? row.updated_at).toISOString();
+  return {
+    ...grant,
+    ...(signature ? { signature } : {}),
+    authorization,
+    status: effectiveDisabled ? 'disabled' : 'active',
+    telemetry,
+    runtime: {
+      storedStatus: row.status,
+      grantHash: row.grant_hash,
+      revision: Number(row.revision),
+      source: row.source,
+      registeredAt: new Date(row.registered_at).toISOString(),
+      updatedAt: new Date(row.updated_at).toISOString(),
+      lastHeartbeatAt: row.last_heartbeat_at ? new Date(row.last_heartbeat_at).toISOString() : null,
+      heartbeatExpiresAt: row.heartbeat_expires_at ? new Date(row.heartbeat_expires_at).toISOString() : null,
+      heartbeatSeq: Number(row.heartbeat_seq),
+      heartbeatRequired,
+      heartbeatFresh,
+      revokeReason: row.revoke_reason ?? null,
+    },
+  };
+}
+
+function hydrateRows(rows, now) {
+  return rows.map((row) => ({ provider: providerFromDeltaRow(row, now), changeSeq: Number(row.change_seq) }));
 }
 
 function parseTime(value) {
