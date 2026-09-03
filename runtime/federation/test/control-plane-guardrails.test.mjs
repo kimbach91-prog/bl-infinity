@@ -51,8 +51,14 @@ pgtest('two control planes share principal quota and enforce tenant/scope bounda
   assert.equal(health.status, 200);
   const healthBody = await health.json();
   assert.equal(healthBody.rateLimitBackend, 'postgres');
+  assert.equal(healthBody.rateLimitMode, 'shared');
   assert.equal(healthBody.controlAuthConfigured, true);
   assert.equal(healthBody.scopedControlPrincipals, 2);
+  assert.deepEqual(healthBody.publicReadScopes, []);
+
+  const anonymousProviders = await getJson(a.base, '/providers');
+  assert.equal(anonymousProviders.response.status, 401);
+  assert.equal(anonymousProviders.body.error, 'unauthorized');
 
   await pool.query('TRUNCATE TABLE federation_rate_limit_buckets');
 
@@ -95,26 +101,60 @@ pgtest('two control planes share principal quota and enforce tenant/scope bounda
   assert.ok(Array.isArray(opsProviders.body.providers));
 });
 
+pgtest('Postgres control plane can explicitly roll rate limiting back to memory mode', async (t) => {
+  const port = await freePort();
+  const runtime = await startControlPlane(port, { BL_RATE_LIMIT_MODE: 'memory' });
+  t.after(() => stopChild(runtime.child));
+  const health = await fetch(`${runtime.base}/health`);
+  assert.equal(health.status, 200);
+  const body = await health.json();
+  assert.equal(body.stateBackend, 'postgres');
+  assert.equal(body.rateLimitMode, 'memory');
+  assert.equal(body.rateLimitBackend, 'memory');
+});
+
+pgtest('public read exposure is explicit rather than implied by missing auth', async (t) => {
+  const port = await freePort();
+  const runtime = await startControlPlane(port, {
+    BL_CONTROL_PRINCIPALS_JSON: '',
+    BL_CONTROL_TOKEN: '',
+    BL_PUBLIC_READ_SCOPES: 'provider:read',
+  });
+  t.after(() => stopChild(runtime.child));
+  const providers = await getJson(runtime.base, '/providers');
+  assert.equal(providers.response.status, 200);
+  assert.ok(Array.isArray(providers.body.providers));
+  const submit = await postJson(runtime.base, '/tasks/submit', null, {
+    task: { id:'public-cannot-submit', capability:'compute.echo', dataClass:'public' },
+  });
+  assert.equal(submit.response.status, 503);
+  assert.equal(submit.body.error, 'control-auth-not-configured');
+});
+
 async function jobExists(id) {
   const result = await pool.query('SELECT 1 FROM federation_jobs WHERE id=$1', [id]);
   return result.rowCount > 0;
 }
 
 async function postJson(base, path, token, body) {
+  const headers = { 'content-type':'application/json' };
+  if (token) headers.authorization = `Bearer ${token}`;
   const response = await fetch(`${base}${path}`, {
     method: 'POST',
-    headers: { 'content-type':'application/json', authorization:`Bearer ${token}` },
+    headers,
     body: JSON.stringify(body),
   });
   return { response, body: await response.json() };
 }
 
-async function getJson(base, path, token) {
-  const response = await fetch(`${base}${path}`, { headers: { authorization:`Bearer ${token}` } });
+async function getJson(base, path, token = null) {
+  const headers = {};
+  if (token) headers.authorization = `Bearer ${token}`;
+  const response = await fetch(`${base}${path}`, { headers });
   return { response, body: await response.json() };
 }
 
-async function startControlPlane(port) {
+async function startControlPlane(port, overrides = {}) {
   const env = {
     ...process.env,
     HOST: '127.0.0.1',
@@ -125,11 +165,13 @@ async function startControlPlane(port) {
     BL_POSTGRES_ALLOWED_DATA_CLASSES: 'public',
     BL_CONTROL_TOKEN: '',
     BL_CONTROL_PRINCIPALS_JSON: principalConfig,
+    BL_PUBLIC_READ_SCOPES: '',
     TENANT_A_CONTROL_TOKEN: tenantToken,
     OPS_CONTROL_TOKEN: opsToken,
     BL_RATE_LIMIT_BURST: '4',
     BL_RATE_LIMIT_PER_SECOND: '0.001',
     BL_RATE_LIMIT_CLEANUP_EVERY: '10000',
+    ...overrides,
   };
   const child = spawn(process.execPath, ['dev-server.mjs'], { cwd: runtimeDir, env, stdio: ['ignore','pipe','pipe'] });
   const stderr = [];
