@@ -52,8 +52,8 @@ def main() -> None:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
 
-    # The reader schema uses `file`; the publication validator accepts `src`.
-    # Preserve the canonical field and add an explicit compatibility alias.
+    # Preserve the reader's canonical `file` field and expose the validator's
+    # explicit `src` alias so both contracts describe the same chapter object.
     manifest_path = ROOT / "books" / "bieu-tuong-va-ban-chat" / "book.json"
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     for chapter in manifest.get("chapters", []):
@@ -64,6 +64,20 @@ def main() -> None:
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
+
+    # The UI models focus as an independent boolean state. Add an explicit
+    # semantic mode label to its control without changing reader behaviour.
+    reader_path = ROOT / "books" / "bieu-tuong-va-ban-chat" / "index.html"
+    reader = reader_path.read_text(encoding="utf-8")
+    focus_control = '<button class="mode-button" id="focusMode"'
+    if focus_control not in reader:
+        raise SystemExit("LIVING_BOOK_FOCUS_CONTROL_MISSING")
+    reader = reader.replace(
+        focus_control,
+        '<button class="mode-button" id="focusMode" data-mode="focus"',
+        1,
+    )
+    reader_path.write_text(reader, encoding="utf-8")
 
     print(f"Applied living book release: {len(FILES)} verified source files")
 
