@@ -11,3 +11,16 @@ export class ContributionLedger {
   list({ providerId = null, tenantId = null } = {}) { return this.entries.filter((e) => (!providerId || e.providerId === providerId) && (!tenantId || e.tenantId === tenantId)).map((e) => structuredClone(e)); }
   summary() { const out = {}; for (const e of this.entries) { const x = out[e.providerId] ??= { tasks: 0, success: 0, failure: 0, measuredLatencyMs: 0, billedCostUsd: 0, inputBytes: 0, outputBytes: 0 }; x.tasks += 1; x[e.status === 'succeeded' ? 'success' : 'failure'] += 1; x.measuredLatencyMs += e.measuredLatencyMs; x.billedCostUsd += e.billedCostUsd; x.inputBytes += e.inputBytes; x.outputBytes += e.outputBytes; } return out; }
 }
+
+export function verifyContributionLedger(entries) {
+  let prevHash = null;
+  for (let i = 0; i < entries.length; i += 1) {
+    const entry = entries[i];
+    if (entry.seq !== i + 1) return { ok: false, index: i, reason: 'sequence' };
+    if (entry.prevHash !== prevHash) return { ok: false, index: i, reason: 'prevHash' };
+    const { hash, ...core } = entry;
+    if (sha256(canonicalize(core)) !== hash) return { ok: false, index: i, reason: 'hash' };
+    prevHash = hash;
+  }
+  return { ok: true, records: entries.length, head: prevHash };
+}
