@@ -22,6 +22,9 @@ CREATE TABLE IF NOT EXISTS federation_jobs (
   result jsonb,
   error jsonb
 );
+-- v0.4 pre-hardening prototypes may have created a global UNIQUE constraint.
+-- Drop that known legacy constraint before enforcing tenant-scoped idempotency.
+ALTER TABLE federation_jobs DROP CONSTRAINT IF EXISTS federation_jobs_idempotency_key_key;
 CREATE UNIQUE INDEX IF NOT EXISTS federation_jobs_tenant_idempotency_idx ON federation_jobs (tenant_id, idempotency_key);
 CREATE INDEX IF NOT EXISTS federation_jobs_claim_idx ON federation_jobs (state, available_at, priority DESC, created_at);
 CREATE INDEX IF NOT EXISTS federation_jobs_lease_idx ON federation_jobs (state, lease_expires_at) WHERE state='running';
@@ -83,11 +86,13 @@ CREATE TABLE IF NOT EXISTS federation_audit (
   hash text NOT NULL UNIQUE
 );
 
--- Horizontal invariants for an executable adapter:
+-- Horizontal invariants for the executable adapter:
 -- 1. queue claim: transaction + FOR UPDATE SKIP LOCKED;
--- 2. budget reserve/actual-cost settlement: serialize the relevant budget namespace
---    (row lock or transaction-scoped advisory lock) before checking sums and writing;
--- 3. audit/ledger hash heads: serialize appenders so two coordinators cannot create
---    competing records with the same predecessor;
--- 4. a provider-success/accounting-failure must be treated as non-retryable until
---    reconciled, because the external side effect may already have happened.
+-- 2. budget reserve/actual-cost settlement: transaction-scoped advisory lock before
+--    checking aggregate spend/reservations and writing;
+-- 3. audit/ledger hash heads: transaction-scoped advisory lock so two coordinators
+--    cannot append competing records with the same predecessor;
+-- 4. PostgreSQL sequences may have gaps after transaction rollback. Chain validity
+--    therefore requires strictly increasing seq + valid prev_hash/hash, not gaplessness;
+-- 5. provider-success/accounting-failure is non-retryable until reconciled because
+--    the external side effect may already have happened.

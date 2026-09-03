@@ -17,15 +17,35 @@ permissions:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      BL_TEST_POSTGRES_URL: postgresql://postgres:postgres@127.0.0.1:5432/blcf_test
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: blcf_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d blcf_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     defaults:
       run:
         working-directory: runtime/federation
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: '22'
-      - run: npm test
+          package-manager-cache: false
+      - name: Install pinned runtime dependencies
+        run: npm install --no-audit --no-fund
+      - name: Test memory, SQLite, network and PostgreSQL lanes
+        run: npm test
       - name: Syntax check
         run: |
           find . -name '*.mjs' -type f -print0 | xargs -0 -n1 node --check

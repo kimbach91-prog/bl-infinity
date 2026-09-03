@@ -1,6 +1,6 @@
 {
   "name": "bl-compute-federation",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,9 @@
     "start": "node dev-server.mjs",
     "worker": "node worker/server.mjs",
     "keys": "node scripts/generate-provider-keypair.mjs"
+  },
+  "dependencies": {
+    "pg": "8.23.0"
   },
   "engines": { "node": ">=22" }
 }

@@ -14,8 +14,10 @@ export class MemoryAuditLog {
   }
 
   async append(type, data) {
-    const prev = this.records.at(-1)?.hash ?? null;
-    const record = makeRecord(this.records.length + 1, type, structuredClone(data), prev);
+    const previous = this.records.at(-1) ?? null;
+    const prev = previous?.hash ?? null;
+    const nextSeq = Number(previous?.seq ?? 0) + 1;
+    const record = makeRecord(nextSeq, type, structuredClone(data), prev);
     this.records.push(record);
     return structuredClone(record);
   }
@@ -40,13 +42,15 @@ export class JsonlAuditLog extends MemoryAuditLog {
 
 export function verifyAuditChain(records) {
   let prevHash = null;
+  let prevSeq = 0;
   for (let i = 0; i < records.length; i += 1) {
     const record = records[i];
-    if (record.seq !== i + 1) return { ok: false, index: i, reason: 'sequence' };
+    if (!Number.isSafeInteger(record.seq) || record.seq <= prevSeq) return { ok: false, index: i, reason: 'sequence' };
     if (record.prevHash !== prevHash) return { ok: false, index: i, reason: 'prevHash' };
     const { hash, ...core } = record;
     if (sha256(canonicalize(core)) !== hash) return { ok: false, index: i, reason: 'hash' };
+    prevSeq = record.seq;
     prevHash = hash;
   }
-  return { ok: true, records: records.length, head: prevHash };
+  return { ok: true, records: records.length, head: prevHash, lastSeq: prevSeq };
 }

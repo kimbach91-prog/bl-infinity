@@ -4,11 +4,18 @@ import { MemoryResultCache } from './cache.mjs';
 import { ContributionLedger } from './ledger.mjs';
 
 export class FederationOrchestrator {
-  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null } = {}) {
+  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null, allowedStateDataClasses = null } = {}) {
     if (!registry || !executor) throw new Error('registry and executor are required');
     this.registry = registry; this.executor = executor; this.queue = queue; this.budget = budget; this.cache = cache; this.ledger = ledger; this.audit = audit;
+    this.allowedStateDataClasses = allowedStateDataClasses ? new Set(allowedStateDataClasses) : null;
   }
   async submit(task, options = {}) {
+    const dataClass = task.dataClass ?? 'public';
+    if (this.allowedStateDataClasses && !this.allowedStateDataClasses.has(dataClass)) {
+      const error = new Error(`state backend rejects dataClass: ${dataClass}`);
+      error.code = 'STATE_DATA_CLASS_REJECTED';
+      throw error;
+    }
     const effective = { ...options };
     if (task.sideEffect === true && !(task.idempotencyKey && task.retrySafe === true)) effective.maxAttempts = 1;
     const enqueued = await this.queue.enqueue(task, effective);
@@ -52,7 +59,7 @@ export class FederationOrchestrator {
       this.queue.list({ state: 'pending' }), this.queue.list({ state: 'running' }), this.queue.list({ state: 'succeeded' }), this.queue.list({ state: 'deadletter' }),
       this.budget.snapshot(), this.cache.stats(), this.ledger.summary(),
     ]);
-    return { queue: { pending: pending.length, running: running.length, succeeded: succeeded.length, deadletter: deadletter.length }, budget, cache, ledger, circuits: this.executor.circuit?.snapshot?.() ?? {} };
+    return { queue: { pending: pending.length, running: running.length, succeeded: succeeded.length, deadletter: deadletter.length }, budget, cache, ledger, circuits: this.executor.circuit?.snapshot?.() ?? {}, allowedStateDataClasses: this.allowedStateDataClasses ? [...this.allowedStateDataClasses] : null };
   }
 }
 function byteSize(value) { return Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value ?? null)); }
