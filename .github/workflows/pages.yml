@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: pages
@@ -16,7 +16,7 @@ jobs:
   publish:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]')
     permissions:
-      contents: read
+      contents: write
       pages: write
       id-token: write
     environment:
@@ -27,8 +27,24 @@ jobs:
       - name: Checkout curated public tree
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
         with:
-          persist-credentials: false
+          persist-credentials: true
           fetch-depth: 1
+
+      - name: Apply verified owner release patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          expected_sha=b23c4be326a34e1705a0d85f7f8296f09e41a59a83b12dcb3b9aac89a9ecdb12
+          if compgen -G '.github/release/hcm-0.3.patch.gz.b64.*' > /dev/null; then
+            cat .github/release/hcm-0.3.patch.gz.b64.* | base64 -d > /tmp/hcm-0.3.patch.gz
+            actual_sha="$(sha256sum /tmp/hcm-0.3.patch.gz | awk '{print $1}')"
+            test "$actual_sha" = "$expected_sha"
+            gzip -dc /tmp/hcm-0.3.patch.gz | git apply --whitespace=fix
+            rm -f .github/release/hcm-0.3.patch.gz.b64.*
+            rmdir .github/release 2>/dev/null || true
+          else
+            echo "No staged owner release patch"
+          fi
 
       - name: Validate shared reader and public books
         shell: bash
@@ -52,6 +68,15 @@ jobs:
               if not path.exists() or path.stat().st_size < 500:
                   raise SystemExit(f'Reader/public asset missing or too small: {path.relative_to(root)}')
 
+          reader_css = (root / 'assets/css/reader.css').read_text(encoding='utf-8')
+          reader_js = (root / 'assets/js/reader.js').read_text(encoding='utf-8')
+          for marker in ('Noto Serif', 'Noto Sans', 'Noto Sans Mono', '--reader-font-literary', '--reader-font-system'):
+              if marker not in reader_css:
+                  raise SystemExit(f'Vietnamese-first typography marker missing from reader.css: {marker}')
+          for marker in ('var(--reader-font-literary)', 'var(--reader-font-system)'):
+              if marker not in reader_js:
+                  raise SystemExit(f'Shared reader font-switch marker missing: {marker}')
+
           living_root = root / 'books' / 'bieu-tuong-va-ban-chat'
           living = json.loads((living_root / 'book.json').read_text(encoding='utf-8'))
           if living.get('title') != 'Biểu tượng và Bản chất':
@@ -74,6 +99,12 @@ jobs:
               raise SystemExit('Unexpected HCM book title')
           if hcm.get('status') != 'PUBLIC_RESEARCH_PREVIEW_NOT_COMPLETE':
               raise SystemExit('HCM public state must remain a non-complete research preview')
+          if hcm.get('version') != '0.3.0':
+              raise SystemExit('Expected HCM public preview version 0.3.0')
+          if hcm.get('scientific_identity') != 'APPLIED_INTERDISCIPLINARY_EVIDENCE_ARCHITECTURE':
+              raise SystemExit('HCM applied-science identity missing')
+          if hcm.get('typography') != 'VIETNAMESE_FIRST_NOTO_SERIF_SANS_MONO':
+              raise SystemExit('HCM Vietnamese-first typography contract missing')
           if len(hcm.get('chapters', [])) != 6:
               raise SystemExit('Expected exactly 6 HCM preview chapters in this release')
           for chapter in hcm['chapters']:
@@ -83,10 +114,32 @@ jobs:
               if not path.exists() or path.stat().st_size < 900:
                   raise SystemExit(f'HCM preview chapter missing/too small: {chapter["src"]}')
 
+          hcm_public_files = [
+              hcm_root / 'book.json',
+              hcm_root / 'index.html',
+              hcm_root / 'sources.html',
+              hcm_root / 'sources.md',
+              *[hcm_root / chapter['src'] for chapter in hcm['chapters']],
+              root / 'index.html',
+              root / 'books/index.html',
+          ]
+          for path in hcm_public_files:
+              text = path.read_text(encoding='utf-8')
+              if '\u2014' in text:
+                  raise SystemExit(f'Em dash forbidden by HCM public punctuation contract: {path.relative_to(root)}')
+
+          hcm_index = (hcm_root / 'index.html').read_text(encoding='utf-8')
+          if 'NGHIÊN CỨU KHOA HỌC ỨNG DỤNG LIÊN NGÀNH' not in hcm_index:
+              raise SystemExit('Applied interdisciplinary science declaration missing from HCM landing')
+          hcm_method = (hcm_root / 'chapters/05-phuong-phap.md').read_text(encoding='utf-8')
+          for marker in ('## Bản chất khoa học ứng dụng liên ngành', '## Hợp đồng cảm xúc và lập luận', '## Luật dấu câu và tiếng Việt'):
+              if marker not in hcm_method:
+                  raise SystemExit(f'HCM method contract missing: {marker}')
+
           html_files = [
               root / 'index.html', root / 'author.html', root / 'projects.html',
               root / 'books/index.html', living_root / 'index.html', hcm_root / 'index.html',
-              root / 'novel/index.html', root / 'novel/chapter-001.html',
+              hcm_root / 'sources.html', root / 'novel/index.html', root / 'novel/chapter-001.html',
           ]
           for path in html_files:
               text = path.read_text(encoding='utf-8')
@@ -95,7 +148,7 @@ jobs:
               if not re.search(r'<meta\s+name="description"\s+content="[^"]+"', text, re.I):
                   raise SystemExit(f'Missing meta description: {path.relative_to(root)}')
 
-          for path in [living_root / 'index.html', hcm_root / 'index.html', root / 'novel/chapter-001.html']:
+          for path in [living_root / 'index.html', hcm_root / 'index.html', hcm_root / 'sources.html', root / 'novel/chapter-001.html']:
               text = path.read_text(encoding='utf-8')
               for marker in ('reader.css', 'reader.js', 'data-reader-surface'):
                   if marker not in text:
@@ -106,9 +159,23 @@ jobs:
               if marker not in novel:
                   raise SystemExit(f'Novel event/prose contract missing: {marker}')
 
-          print('Shared reader + public book validation: PASS')
+          print('Shared reader + Vietnamese typography + HCM applied-science validation: PASS')
           PY
           git diff --check
+
+      - name: Materialize verified public source commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "kimbach91-prog"
+          git config user.email "kimbach91@gmail.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No materialized source delta"
+          else
+            git commit -m "hcm-book: materialize Vietnamese-first applied-science preview 0.3"
+            git push origin HEAD:main
+          fi
 
       - name: Configure Pages
         uses: actions/configure-pages@983d7736d9b0ae728b81ab479565c72886d7745b
@@ -139,6 +206,8 @@ jobs:
           test -f _site/books/bieu-tuong-va-ban-chat/chapters/07-hoc-cach-nhin-xuyen-bieu-tuong.md
           test -f _site/books/ho-chi-minh/index.html
           test -f _site/books/ho-chi-minh/book.json
+          test -f _site/books/ho-chi-minh/sources.html
+          test -f _site/books/ho-chi-minh/sources.md
           test -f _site/books/ho-chi-minh/chapters/00-loi-mo.md
           test -f _site/books/ho-chi-minh/chapters/05-phuong-phap.md
           test -f _site/novel/chapter-001.md
