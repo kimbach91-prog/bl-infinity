@@ -14,13 +14,15 @@ export class ContributionLedger {
 
 export function verifyContributionLedger(entries) {
   let prevHash = null;
+  let prevSeq = 0;
   for (let i = 0; i < entries.length; i += 1) {
     const entry = entries[i];
-    if (entry.seq !== i + 1) return { ok: false, index: i, reason: 'sequence' };
+    if (!Number.isSafeInteger(entry.seq) || entry.seq <= prevSeq) return { ok: false, index: i, reason: 'sequence' };
     if (entry.prevHash !== prevHash) return { ok: false, index: i, reason: 'prevHash' };
     const { hash, ...core } = entry;
     if (sha256(canonicalize(core)) !== hash) return { ok: false, index: i, reason: 'hash' };
+    prevSeq = entry.seq;
     prevHash = hash;
   }
-  return { ok: true, records: entries.length, head: prevHash };
+  return { ok: true, records: entries.length, head: prevHash, lastSeq: prevSeq };
 }
