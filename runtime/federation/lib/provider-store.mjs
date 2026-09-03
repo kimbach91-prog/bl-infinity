@@ -12,7 +12,7 @@ export class PostgresProviderStore {
     this.defaultHeartbeatTtlMs = clampHeartbeatTtl(defaultHeartbeatTtlMs);
   }
 
-  async put(manifest, { replace = false, source = 'operator', now = Date.now() } = {}) {
+  async put(manifest, { replace = false, source = 'operator', seedTelemetry = false, now = Date.now() } = {}) {
     validateProviderGrant(manifest, now);
     if (this.manifestVerifier) {
       const verdict = this.manifestVerifier(manifest);
@@ -21,7 +21,9 @@ export class PostgresProviderStore {
     const grant = providerGrantPayload(manifest);
     const grantHash = sha256(canonicalize(grant));
     const signature = manifest.signature ? structuredClone(manifest.signature) : null;
-    const seedTelemetry = sanitizeMeasuredTelemetry(manifest.telemetry ?? {});
+    const initialTelemetry = seedTelemetry
+      ? { ...neutralTelemetry(), ...sanitizeMeasuredTelemetry(manifest.telemetry ?? {}) }
+      : neutralTelemetry();
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -32,7 +34,7 @@ export class PostgresProviderStore {
             (id,grant_json,signature_json,grant_hash,consent_ref,key_id,status,source,revision,telemetry_json,registered_at,updated_at,grant_expires_at)
           VALUES($1,$2::jsonb,$3::jsonb,$4,$5,$6,'active',$7,1,$8::jsonb,$9,$9,$10)
           RETURNING *
-        `, [manifest.id, JSON.stringify(grant), signature ? JSON.stringify(signature) : null, grantHash, grant.authorization.consentRef, signature?.keyId ?? null, source, JSON.stringify(seedTelemetry), new Date(now), grant.authorization.expiresAt ? new Date(grant.authorization.expiresAt) : null]);
+        `, [manifest.id, JSON.stringify(grant), signature ? JSON.stringify(signature) : null, grantHash, grant.authorization.consentRef, signature?.keyId ?? null, source, JSON.stringify(initialTelemetry), new Date(now), grant.authorization.expiresAt ? new Date(grant.authorization.expiresAt) : null]);
         await client.query('COMMIT');
         return rowToProvider(inserted.rows[0], now);
       }
@@ -57,7 +59,7 @@ export class PostgresProviderStore {
             updated_at=$8, grant_expires_at=$9, revoked_at=NULL, revoke_reason=NULL,
             last_heartbeat_at=NULL, heartbeat_expires_at=NULL, heartbeat_seq=0
         WHERE id=$10 RETURNING *
-      `, [JSON.stringify(grant), signature ? JSON.stringify(signature) : null, grantHash, grant.authorization.consentRef, signature?.keyId ?? null, source, JSON.stringify(seedTelemetry), new Date(now), grant.authorization.expiresAt ? new Date(grant.authorization.expiresAt) : null, manifest.id]);
+      `, [JSON.stringify(grant), signature ? JSON.stringify(signature) : null, grantHash, grant.authorization.consentRef, signature?.keyId ?? null, source, JSON.stringify(initialTelemetry), new Date(now), grant.authorization.expiresAt ? new Date(grant.authorization.expiresAt) : null, manifest.id]);
       await client.query('COMMIT');
       return rowToProvider(updated.rows[0], now);
     } catch (error) {
@@ -205,6 +207,9 @@ function rowToProvider(row, now = Date.now()) {
   };
 }
 
+function neutralTelemetry() {
+  return { inFlight: 0, trust: 0.5, availability: 0.5, p95LatencyMs: 1000, costPerUnitUsd: 0 };
+}
 function sanitizeMeasuredTelemetry(input) {
   const out = {};
   if (input.inFlight != null) out.inFlight = nonNegativeNumber(input.inFlight, 'inFlight');
@@ -215,12 +220,7 @@ function sanitizeMeasuredTelemetry(input) {
   if (input.carbonIntensity != null) out.carbonIntensity = nonNegativeNumber(input.carbonIntensity, 'carbonIntensity');
   return out;
 }
-
-function clampHeartbeatTtl(value) {
-  const ttl = Number(value);
-  if (!Number.isFinite(ttl) || ttl < HEARTBEAT_MIN_MS || ttl > HEARTBEAT_MAX_MS) throw new Error(`heartbeatTtlMs must be between ${HEARTBEAT_MIN_MS} and ${HEARTBEAT_MAX_MS}`);
-  return ttl;
-}
+function clampHeartbeatTtl(value) { const ttl = Number(value); if (!Number.isFinite(ttl) || ttl < HEARTBEAT_MIN_MS || ttl > HEARTBEAT_MAX_MS) throw new Error(`heartbeatTtlMs must be between ${HEARTBEAT_MIN_MS} and ${HEARTBEAT_MAX_MS}`); return ttl; }
 function nonNegativeNumber(value, name) { const n = Number(value); if (!Number.isFinite(n) || n < 0) throw new Error(`${name} must be a non-negative number`); return n; }
 function bounded01(value, name) { const n = Number(value); if (!Number.isFinite(n) || n < 0 || n > 1) throw new Error(`${name} must be between 0 and 1`); return n; }
 function taggedError(code, message) { const error = new Error(message); error.code = code; return error; }
