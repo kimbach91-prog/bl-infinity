@@ -8,6 +8,7 @@ import { validateProviderGrant, verifyProviderManifest } from './lib/manifest.mj
 import { TokenBucketLimiter } from './lib/rate-limit.mjs';
 import { hasControlAccess } from './lib/control-auth.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
+import { openPostgresFederationState } from './lib/postgres-state.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -18,7 +19,7 @@ const trustStore = parseJsonEnv('BL_TRUST_STORE_JSON', {});
 const providers = await loadProviders();
 const manifestVerifier = requireSignedManifests ? (manifest) => verifyProviderManifest(manifest, trustStore, { requireSignature: true }) : null;
 const budgetConfig = parseJsonEnv('BL_BUDGET_JSON', {});
-const durableState = process.env.BL_STATE_DB ? createSqliteFederationState(process.env.BL_STATE_DB, { budget: budgetConfig }) : null;
+const { state: durableState, backend: stateBackend } = await loadDurableState(budgetConfig);
 const runtime = createFederationRuntime({ providers, localHandlers: safeDefaultHandlers, manifestVerifier, budgetConfig, state: durableState });
 const search = new HybridSearchFabric();
 const limiter = new TokenBucketLimiter({ capacity: Number(process.env.BL_RATE_LIMIT_BURST || 120), refillPerSecond: Number(process.env.BL_RATE_LIMIT_PER_SECOND || 2) });
@@ -28,7 +29,7 @@ const server = http.createServer(async (req, res) => {
   const rate = limiter.take(req.socket.remoteAddress || 'unknown');
   if (!rate.ok) { res.setHeader('retry-after', String(Math.max(1, Math.ceil(rate.retryAfterMs / 1000)))); return send(res, 429, { error: 'rate limit exceeded' }); }
   try {
-    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, service: 'bl-compute-federation', version: '0.4.0', stateBackend: durableState ? 'sqlite' : 'memory', providers: runtime.registry.list().length, search: search.stats(), signedManifestsRequired: requireSignedManifests });
+    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, service: 'bl-compute-federation', version: '0.5.0', stateBackend, providers: runtime.registry.list().length, search: search.stats(), signedManifestsRequired: requireSignedManifests });
     if (req.method === 'GET' && req.url === '/providers') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); return send(res, 200, { providers: runtime.registry.list().map(sanitizeProvider) }); }
     if (req.method === 'POST' && req.url === '/route') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); return send(res, 200, planRoute(runtime.registry, await readJson(req, maxBodyBytes))); }
     if (req.method === 'POST' && req.url === '/tasks/submit') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for task submission' }); const body = await readJson(req, maxBodyBytes); const task = body.task ?? body; const options = body.options ?? {}; return send(res, 202, await runtime.orchestrator.submit(task, options)); }
@@ -57,7 +58,32 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => { console.log(`BL federation control plane listening on http://${host}:${port}`); if (!controlToken) console.warn('BL_CONTROL_TOKEN is not set: execution and mutation endpoints remain disabled.'); });
-for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => { try { durableState?.close(); } finally { server.close(() => process.exit(0)); } });
+let shuttingDown = false;
+for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
+
+async function loadDurableState(budget) {
+  if (process.env.BL_POSTGRES_URL) {
+    const state = await openPostgresFederationState({
+      connectionString: process.env.BL_POSTGRES_URL,
+      applySchema: process.env.BL_POSTGRES_AUTO_MIGRATE === 'true',
+      budget,
+      poolOptions: { max: Number(process.env.BL_POSTGRES_POOL_MAX || 10) },
+    });
+    return { state, backend: 'postgres' };
+  }
+  if (process.env.BL_STATE_DB) return { state: createSqliteFederationState(process.env.BL_STATE_DB, { budget }), backend: 'sqlite' };
+  return { state: null, backend: 'memory' };
+}
+
+function shutdown(signal) {
+  if (shuttingDown) return;
+  shuttingDown = true;
+  server.close(async () => {
+    try { await durableState?.close?.(); }
+    catch (error) { console.error(`state shutdown failed after ${signal}: ${error.message}`); process.exitCode = 1; }
+    finally { process.exit(); }
+  });
+}
 
 async function loadProviders() { if (process.env.BL_PROVIDERS_JSON) { const parsed = JSON.parse(process.env.BL_PROVIDERS_JSON); if (!Array.isArray(parsed)) throw new Error('BL_PROVIDERS_JSON must be an array'); return parsed; } const file = process.env.BL_PROVIDER_FILE || new URL('./config/providers.example.json', import.meta.url); return JSON.parse(await readFile(file, 'utf8')); }
 function parseJsonEnv(name, fallback) { return process.env[name] ? JSON.parse(process.env[name]) : fallback; }
