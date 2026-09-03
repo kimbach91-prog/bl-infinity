@@ -1,10 +1,10 @@
 {
   "name": "bl-compute-federation",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test test/*.test.mjs",
+    "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "start": "node dev-server.mjs",
     "worker": "node worker/server.mjs",
     "keys": "node scripts/generate-provider-keypair.mjs"
