@@ -21,6 +21,7 @@
         "expiresAt": { "type": "string", "format": "date-time" },
         "revokedAt": { "type": "string", "format": "date-time" },
         "allowedDataClasses": { "type": "array", "items": { "enum": ["public", "internal", "private"] }, "uniqueItems": true },
+        "allowSideEffects": { "type": "boolean", "default": false },
         "maxTaskCostUsd": { "type": "number", "minimum": 0 }
       }
     },
@@ -33,7 +34,13 @@
         "maxExecutionMs": { "type": "integer", "minimum": 1 }
       }
     },
-    "transport": { "type": "object", "properties": { "auth": { "enum": ["none", "hmac-env", "bearer-env", "cloudflare-service-token-env", "gcp-metadata-oidc"] } } },
+    "transport": {
+      "type": "object",
+      "properties": {
+        "auth": { "enum": ["none", "hmac-env", "bearer-env", "cloudflare-service-token-env", "gcp-metadata-oidc"] },
+        "allowPrivateNetwork": { "type": "boolean", "default": false }
+      }
+    },
     "signature": { "type": "object", "required": ["algorithm", "keyId", "value"], "properties": { "algorithm": { "const": "ed25519" }, "keyId": { "type": "string" }, "value": { "type": "string" } } }
   },
   "additionalProperties": true
