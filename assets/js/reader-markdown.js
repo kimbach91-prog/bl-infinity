@@ -1,11 +1,26 @@
 (() => {
   const esc = (s='') => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const inline = (s='') => {
-    let x = esc(s);
+    const links = [];
+    const withTokens = String(s).replace(
+      /\[([^\]]+)\]\(((?:https?:\/\/|\/|\.{1,2}\/)(?:[^()\s]|\([^()\s]*\))+?)\)/g,
+      (match, label, href) => {
+        try {
+          const resolved = new URL(href, window.location.href);
+          if (!['http:', 'https:'].includes(resolved.protocol)) return match;
+          const token = `\u0000BL_LINK_${links.length}\u0000`;
+          links.push(`<a href="${esc(href)}" rel="noreferrer noopener">${esc(label)}</a>`);
+          return token;
+        } catch (_) {
+          return match;
+        }
+      }
+    );
+    let x = esc(withTokens);
     x = x.replace(/`([^`]+)`/g,'<code>$1</code>');
     x = x.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
     x = x.replace(/\*([^*]+)\*/g,'<em>$1</em>');
-    x = x.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)&quot;&lt;&gt;]+|(?:\.\.?\/|\/)[^\s)&quot;&lt;&gt;]+)\)/g,'<a href="$2" rel="noreferrer noopener">$1</a>');
+    x = x.replace(/\u0000BL_LINK_(\d+)\u0000/g, (_, index) => links[Number(index)] || '');
     x = x.replace(/&lt;p class=&quot;aura-beat&quot;&gt;([\s\S]*?)&lt;\/p&gt;/g,'<p class="aura-beat">$1</p>');
     return x;
   };
