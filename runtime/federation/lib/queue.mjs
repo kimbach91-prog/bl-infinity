@@ -2,12 +2,20 @@ import { randomUUID } from 'node:crypto';
 import { sha256Json } from './canonical.mjs';
 import { validateTask } from './policy.mjs';
 
+export function idempotencyScopeKey(task, idempotencyKey = null) {
+  const tenantId = task.tenantId ?? 'default';
+  const explicitKey = idempotencyKey ?? task.idempotencyKey ?? null;
+  const rawKey = explicitKey ?? (task.sideEffect === true
+    ? `task:${task.id}`
+    : sha256Json({ capability: task.capability, payload: task.payload ?? null, dataClass: task.dataClass ?? 'public', schemaVersion: task.schemaVersion ?? 1 }));
+  return `tenant:${tenantId}:${rawKey}`;
+}
+
 export class MemoryLeaseQueue {
   constructor({ defaultLeaseMs = 30_000, maxAttempts = 3 } = {}) { this.defaultLeaseMs = defaultLeaseMs; this.maxAttempts = maxAttempts; this.jobs = new Map(); this.idempotency = new Map(); }
   enqueue(task, { idempotencyKey = null, priority = 0, maxAttempts = this.maxAttempts, now = Date.now() } = {}) {
     validateTask(task);
-    const explicitKey = idempotencyKey ?? task.idempotencyKey ?? null;
-    const key = explicitKey ?? (task.sideEffect === true ? `task:${task.id}` : sha256Json({ tenantId: task.tenantId ?? 'default', capability: task.capability, payload: task.payload ?? null, dataClass: task.dataClass ?? 'public', schemaVersion: task.schemaVersion ?? 1 }));
+    const key = idempotencyScopeKey(task, idempotencyKey);
     const existingId = this.idempotency.get(key);
     if (existingId) return { job: this.get(existingId), deduplicated: true };
     const id = task.id; if (this.jobs.has(id)) throw new Error(`job already exists: ${id}`);
