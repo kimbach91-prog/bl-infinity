@@ -4,7 +4,7 @@ BL Compute Federation stores operational state and security-sensitive authority 
 
 ## CI restore drill
 
-The federation CI now performs a deterministic PostgreSQL 16 logical restore drill after the test suite:
+The federation CI performs a deterministic PostgreSQL 16 logical restore drill after the test suite:
 
 ```text
 seed fixture
@@ -15,6 +15,19 @@ seed fixture
 ```
 
 The restore database is separate from the source database, so the verifier is not merely reading the original state.
+
+The first fully wired v0.8 gate completed successfully in Federation Runtime Tests run #48. The deterministic verifier reported:
+
+```text
+audit records          = 2
+ledger records         = 1
+providers              = 2
+restored revocation    = true
+restored budget USD    = 0.2
+delta cursor continues = true
+```
+
+These values describe the CI fixture, not production workload volume.
 
 ## Restored invariants
 
