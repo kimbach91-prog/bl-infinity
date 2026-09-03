@@ -16,6 +16,11 @@ const GLOBAL_ONLY_SCOPES = new Set([
   'search:read',
   'search:write',
 ]);
+const KNOWN_SCOPES = new Set([
+  'task:submit',
+  ...GLOBAL_ONLY_SCOPES,
+]);
+const PUBLIC_READ_SCOPES = new Set(['provider:read','route:read','search:read']);
 
 export function bearerToken(req) {
   const value = req.headers?.authorization || '';
@@ -51,6 +56,7 @@ export function parseControlPrincipals(raw, env = process.env) {
     if (!scopes.length) throw new Error(`control principal ${id} must have at least one scope`);
     for (const scope of scopes) {
       if (!SCOPE_RE.test(scope)) throw new Error(`control principal ${id} has invalid scope: ${scope}`);
+      if (scope !== '*' && !KNOWN_SCOPES.has(scope)) throw new Error(`control principal ${id} has unknown scope: ${scope}`);
       if ((scope === '*' || GLOBAL_ONLY_SCOPES.has(scope)) && tenantId !== '*') throw new Error(`scope ${scope} requires tenantId=*`);
     }
     if (ids.has(id)) throw new Error(`duplicate control principal id: ${id}`);
@@ -62,6 +68,13 @@ export function parseControlPrincipals(raw, env = process.env) {
     tokenHashes.add(tokenHash);
     return Object.freeze({ id, tenantId, tokenEnv, scopes: Object.freeze(scopes), tokenHash });
   });
+}
+
+export function parsePublicReadScopes(raw) {
+  if (raw == null || String(raw).trim() === '') return new Set();
+  const values = [...new Set(String(raw).split(',').map((value) => value.trim()).filter(Boolean))];
+  for (const scope of values) if (!PUBLIC_READ_SCOPES.has(scope)) throw new Error(`BL_PUBLIC_READ_SCOPES contains unsupported scope: ${scope}`);
+  return new Set(values);
 }
 
 export class ControlAuthenticator {
@@ -119,4 +132,4 @@ export function fingerprintToken(token) {
   return createHash('sha256').update(`bl-cf-control-v1\0${token}`).digest('hex');
 }
 
-export { GLOBAL_ONLY_SCOPES };
+export { GLOBAL_ONLY_SCOPES, KNOWN_SCOPES, PUBLIC_READ_SCOPES };
