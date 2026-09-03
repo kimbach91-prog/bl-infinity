@@ -1,0 +1,21 @@
+{
+  "schema":"bach-lam.living-book.v1",
+  "slug":"ho-chi-minh",
+  "title":"Từ Hai Bàn Tay Trắng Đến Một Nhà Nước",
+  "subtitle":"Hồ Chí Minh và khoa học của một hành trình trong bất đối xứng lịch sử",
+  "author":"Lâm Kim Bách",
+  "pen_name":"Bách Lâm",
+  "status":"PUBLIC_RESEARCH_PREVIEW_NOT_COMPLETE",
+  "version":"0.1.0",
+  "updated_at":"2026-09-04",
+  "language":"vi",
+  "canonical":"https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/",
+  "chapters":[
+    {"id":"loi-mo","title":"Lời mở — Đừng bắt đầu từ huyền thoại","src":"chapters/00-loi-mo.md"},
+    {"id":"bat-doi-xung","title":"Một thiếu niên trước một đế quốc","src":"chapters/01-bat-doi-xung.md"},
+    {"id":"von-ban-dau","title":"Vốn ban đầu: gia đình, trường học, ngôn ngữ","src":"chapters/02-von-ban-dau.md"},
+    {"id":"1911","title":"1911 — Ra đi khi chưa có bản đồ tương lai","src":"chapters/03-1911.md"},
+    {"id":"hoc-the-gioi","title":"1912–1915 — Học thế giới bằng lao động, thư từ và ngôn ngữ","src":"chapters/04-hoc-the-gioi.md"},
+    {"id":"phuong-phap","title":"Ghi chú phương pháp, provenance và giới hạn","src":"chapters/05-phuong-phap.md"}
+  ]
+}
