@@ -1,7 +1,9 @@
 import test, { after, before, beforeEach } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { Pool } from 'pg';
 import { openPostgresFederationState } from '../lib/postgres-state.mjs';
+import { assertPostgresSchema } from '../lib/postgres-readiness.mjs';
 import { verifyAuditChain } from '../lib/audit.mjs';
 import { verifyContributionLedger } from '../lib/ledger.mjs';
 import { createFederationRuntime } from '../lib/runtime.mjs';
@@ -123,9 +125,30 @@ pgtest('postgres cache write starts at zero hits and increments atomically on re
   assert.equal(stats.hits, 2);
 });
 
+pgtest('runtime shared-state policy rejects private data before it reaches Postgres', async () => {
+  const state = await openPostgresFederationState({ pool });
+  const runtime = createFederationRuntime({ providers: [localProvider()], localHandlers: safeDefaultHandlers, state, allowedStateDataClasses: ['public'] });
+  await assert.rejects(
+    () => runtime.orchestrator.submit({ id: 'private-rejected', tenantId: 'tenant', capability: 'compute.echo', payload: { secret: true }, dataClass: 'private' }),
+    (error) => error.code === 'STATE_DATA_CLASS_REJECTED'
+  );
+  assert.equal(await state.queue.get('private-rejected'), null);
+});
+
+pgtest('postgres readiness gate detects a missing required relation', async () => {
+  assert.equal((await assertPostgresSchema(pool)).ok, true);
+  await pool.query('DROP TABLE federation_result_cache');
+  try {
+    await assert.rejects(() => assertPostgresSchema(pool), (error) => error.code === 'POSTGRES_SCHEMA_MISSING');
+  } finally {
+    const schema = await readFile(new URL('../storage/postgres/schema.sql', import.meta.url), 'utf8');
+    await pool.query(schema);
+  }
+});
+
 pgtest('runtime persists queue budget and ledger across separate Postgres pools', async () => {
   const firstState = await openPostgresFederationState({ pool, budget: { totalUsd: 1 } });
-  const runtime = createFederationRuntime({ providers: [localProvider()], localHandlers: safeDefaultHandlers, state: firstState });
+  const runtime = createFederationRuntime({ providers: [localProvider()], localHandlers: safeDefaultHandlers, state: firstState, allowedStateDataClasses: ['public'] });
   await runtime.orchestrator.submit({ id: 'pg-e2e', tenantId: 'tenant', capability: 'compute.echo', payload: { hello: 'postgres' }, dataClass: 'public', estimatedCostUsd: 0.1 });
   const run = await runtime.orchestrator.runOnce({ coordinatorId: 'coordinator-A' });
   assert.equal(run.job.state, 'succeeded');
