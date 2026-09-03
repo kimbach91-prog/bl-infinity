@@ -61,6 +61,16 @@ pgtest('delta row hydration is semantically identical to canonical provider-stor
   assert.deepEqual(snapshot.items[0].provider, canonical);
 });
 
+pgtest('identical bootstrap grant is write-free and does not emit a fake change cursor', async () => {
+  const manifest = provider('idempotent-bootstrap');
+  await store.put(manifest, { source: 'bootstrap', seedTelemetry: true });
+  const before = await pool.query('SELECT change_seq,updated_at FROM federation_providers WHERE id=$1', [manifest.id]);
+  await store.put(manifest, { source: 'bootstrap', seedTelemetry: true });
+  const afterRow = await pool.query('SELECT change_seq,updated_at FROM federation_providers WHERE id=$1', [manifest.id]);
+  assert.equal(Number(afterRow.rows[0].change_seq), Number(before.rows[0].change_seq));
+  assert.equal(new Date(afterRow.rows[0].updated_at).toISOString(), new Date(before.rows[0].updated_at).toISOString());
+});
+
 pgtest('snapshot and delta each use one database query regardless of provider count', async () => {
   for (let i = 0; i < 250; i += 1) await store.put(provider(`bulk-${String(i).padStart(4, '0')}`));
 
