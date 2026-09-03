@@ -34,6 +34,23 @@
         "maxExecutionMs": { "type": "integer", "minimum": 1 }
       }
     },
+    "liveness": {
+      "type": "object",
+      "properties": {
+        "heartbeatRequired": { "type": "boolean" },
+        "heartbeatTtlMs": { "type": "integer", "minimum": 5000, "maximum": 86400000 },
+        "heartbeatAuth": {
+          "type": "object",
+          "required": ["mode", "secretEnv"],
+          "properties": {
+            "mode": { "const": "hmac-env" },
+            "secretEnv": { "type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,127}$" }
+          },
+          "additionalProperties": false
+        }
+      },
+      "additionalProperties": false
+    },
     "transport": {
       "type": "object",
       "properties": {
