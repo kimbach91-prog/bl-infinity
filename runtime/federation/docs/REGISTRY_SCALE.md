@@ -49,7 +49,7 @@ Sequence values are monotonic but may contain gaps. Gaplessness is not an invari
 
 The first candidate implementation selected provider IDs and then called `store.get()` per row. That was an N+1 database pattern and was rejected before default wiring.
 
-v0.8 now reconstructs all providers directly from the rows returned by the snapshot/delta query:
+v0.8 reconstructs all providers directly from the rows returned by the snapshot/delta query:
 
 ```text
 snapshot: one SELECT -> N current provider rows
@@ -88,7 +88,7 @@ Read-only provider/status surfaces may expose partial synchronization diagnostic
 
 Heartbeat expiry and grant expiry are caused by time passing. They may occur even when no provider row changes.
 
-The synchronizer therefore keeps a local min-heap of known expiry deadlines. Every expiry entry carries the provider's `changeSeq`. A stale heap event cannot disable a newer heartbeat/re-grant revision because its sequence no longer matches the latest provider sequence.
+The synchronizer keeps a local min-heap of known expiry deadlines. Every expiry entry carries the provider's `changeSeq`. A stale heap event cannot disable a newer heartbeat/re-grant revision because its sequence no longer matches the latest provider sequence.
 
 ```text
 no database delta != liveness remains valid forever
@@ -104,19 +104,25 @@ Authority changes, signature changes, real telemetry changes, heartbeats, status
 
 ## 10k-provider CI benchmark
 
-The integration suite seeds 10,000 providers into PostgreSQL 16, takes one initial snapshot, modifies 10 providers, then reads the steady-state delta.
+The wired v0.8 gate uses PostgreSQL 16 with 10,000 provider rows, takes one initial snapshot, modifies 10 providers, then reads the steady-state delta.
 
-The benchmark gates structural work rather than unstable wall-clock thresholds:
+Federation Runtime Tests run #48 measured:
 
 ```text
-initial snapshot rows = 10,000
-changed rows          = 10
-snapshot queries      = 1
-delta queries         = 1
-row reduction         >= 1,000x
+provider count  = 10,000
+changed rows    = 10
+snapshot rows   = 10,000
+snapshot query  = 1
+delta rows      = 10
+delta query     = 1
+row reduction   = 1,000x
+snapshot time   ~= 266.56 ms
+delta time      ~= 1.51 ms
 ```
 
-Wall-clock measurements are emitted for observation but do not decide pass/fail because shared CI timing is noisy.
+The 1,000x row-reduction is the gate. Wall-clock values are evidence from one shared CI runner and are not treated as universal latency guarantees.
+
+The complete serialized federation suite in that run passed 56/56 tests before the dump/restore and syntax gates.
 
 ## Schema readiness
 
@@ -169,4 +175,4 @@ The security metric is convergence of authority state, not raw cursor arithmetic
 
 ## Current boundary
 
-v0.8 is tested against PostgreSQL 16 in CI and is wired into the reference control plane. It still does not imply that a live production database or worker fleet exists. Production activation requires controlled schema migration, verified TLS, least-privilege roles, restore testing, monitoring and an explicit rollback plan.
+v0.8 is tested against PostgreSQL 16 in CI and wired into the reference control plane. It still does not imply that a live production database or worker fleet exists. Production activation requires controlled schema migration, verified TLS, least-privilege roles, restore testing, monitoring and an explicit rollback plan.
