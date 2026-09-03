@@ -14,8 +14,10 @@ export class MemoryAuditLog {
   }
 
   async append(type, data) {
-    const prev = this.records.at(-1)?.hash ?? null;
-    const record = makeRecord(this.records.length + 1, type, structuredClone(data), prev);
+    const previous = this.records.at(-1) ?? null;
+    const prev = previous?.hash ?? null;
+    const nextSeq = Number(previous?.seq ?? 0) + 1;
+    const record = makeRecord(nextSeq, type, structuredClone(data), prev);
     this.records.push(record);
     return structuredClone(record);
   }
