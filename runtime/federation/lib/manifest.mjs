@@ -4,6 +4,7 @@ import { canonicalize } from './canonical.mjs';
 export const MANIFEST_VERSION = 'bl-cf-provider/v1';
 const HEARTBEAT_MIN_MS = 5_000;
 const HEARTBEAT_MAX_MS = 24 * 60 * 60_000;
+const ENV_NAME = /^[A-Z][A-Z0-9_]{2,127}$/;
 
 export function providerGrantPayload(manifest) {
   const { signature: _signature, telemetry: _telemetry, runtime: _runtime, status: _status, ...grant } = structuredClone(manifest);
@@ -38,6 +39,12 @@ export function validateProviderGrant(manifest, now = Date.now()) {
       if (!Number.isFinite(ttl) || ttl < HEARTBEAT_MIN_MS || ttl > HEARTBEAT_MAX_MS) throw new Error(`provider.liveness.heartbeatTtlMs must be between ${HEARTBEAT_MIN_MS} and ${HEARTBEAT_MAX_MS}`);
     }
     if (manifest.liveness.heartbeatRequired === true && manifest.liveness.heartbeatTtlMs == null) throw new Error('provider.liveness.heartbeatTtlMs is required when heartbeatRequired=true');
+    if (manifest.liveness.heartbeatAuth != null) {
+      const auth = manifest.liveness.heartbeatAuth;
+      if (!auth || typeof auth !== 'object' || Array.isArray(auth)) throw new Error('provider.liveness.heartbeatAuth must be an object');
+      if (auth.mode !== 'hmac-env') throw new Error('provider.liveness.heartbeatAuth.mode must be hmac-env');
+      if (!ENV_NAME.test(auth.secretEnv ?? '')) throw new Error('provider.liveness.heartbeatAuth.secretEnv must be a valid environment variable name');
+    }
   }
   return true;
 }
