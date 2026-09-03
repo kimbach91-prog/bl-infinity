@@ -110,6 +110,17 @@ CREATE INDEX IF NOT EXISTS federation_providers_status_idx ON federation_provide
 CREATE INDEX IF NOT EXISTS federation_providers_heartbeat_idx ON federation_providers(heartbeat_expires_at) WHERE status='active';
 CREATE INDEX IF NOT EXISTS federation_providers_consent_idx ON federation_providers(consent_ref);
 
+-- Cross-coordinator replay defense for worker self-heartbeats. The HMAC secret never
+-- enters this table; only a provider-scoped nonce and bounded expiry are persisted.
+CREATE TABLE IF NOT EXISTS federation_provider_heartbeat_nonces (
+  provider_id text NOT NULL REFERENCES federation_providers(id) ON DELETE CASCADE,
+  nonce text NOT NULL,
+  seen_at timestamptz NOT NULL DEFAULT now(),
+  expires_at timestamptz NOT NULL,
+  PRIMARY KEY(provider_id, nonce)
+);
+CREATE INDEX IF NOT EXISTS federation_provider_heartbeat_nonce_expiry_idx ON federation_provider_heartbeat_nonces(expires_at);
+
 -- Horizontal invariants:
 -- 1. queue claim: transaction + FOR UPDATE SKIP LOCKED;
 -- 2. budget reserve/actual-cost settlement: transaction-scoped advisory lock before
@@ -121,4 +132,6 @@ CREATE INDEX IF NOT EXISTS federation_providers_consent_idx ON federation_provid
 -- 5. provider-success/accounting-failure is non-retryable until reconciled because
 --    the external side effect may already have happened;
 -- 6. provider heartbeat/status/telemetry never mutate grant_json. Authority changes
---    require an explicit new verified grant revision or an explicit revocation.
+--    require an explicit new verified grant revision or an explicit revocation;
+-- 7. direct worker heartbeat replay is rejected by the provider-scoped nonce primary key
+--    shared by every coordinator using this database.
