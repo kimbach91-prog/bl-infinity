@@ -22,8 +22,6 @@ CREATE TABLE IF NOT EXISTS federation_jobs (
   result jsonb,
   error jsonb
 );
--- v0.4 pre-hardening prototypes may have created a global UNIQUE constraint.
--- Drop that known legacy constraint before enforcing tenant-scoped idempotency.
 ALTER TABLE federation_jobs DROP CONSTRAINT IF EXISTS federation_jobs_idempotency_key_key;
 CREATE UNIQUE INDEX IF NOT EXISTS federation_jobs_tenant_idempotency_idx ON federation_jobs (tenant_id, idempotency_key);
 CREATE INDEX IF NOT EXISTS federation_jobs_claim_idx ON federation_jobs (state, available_at, priority DESC, created_at);
@@ -86,7 +84,33 @@ CREATE TABLE IF NOT EXISTS federation_audit (
   hash text NOT NULL UNIQUE
 );
 
--- Horizontal invariants for the executable adapter:
+-- Signed provider authority is stored separately from mutable runtime state.
+-- grant_json is the exact canonical grant payload (signature/telemetry/status excluded).
+CREATE TABLE IF NOT EXISTS federation_providers (
+  id text PRIMARY KEY,
+  grant_json jsonb NOT NULL,
+  signature_json jsonb,
+  grant_hash text NOT NULL,
+  consent_ref text NOT NULL,
+  key_id text,
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','disabled','revoked')),
+  source text NOT NULL DEFAULT 'operator',
+  revision bigint NOT NULL DEFAULT 1 CHECK (revision >= 1),
+  telemetry_json jsonb NOT NULL DEFAULT '{}'::jsonb,
+  registered_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  grant_expires_at timestamptz,
+  revoked_at timestamptz,
+  revoke_reason text,
+  last_heartbeat_at timestamptz,
+  heartbeat_expires_at timestamptz,
+  heartbeat_seq bigint NOT NULL DEFAULT 0 CHECK (heartbeat_seq >= 0)
+);
+CREATE INDEX IF NOT EXISTS federation_providers_status_idx ON federation_providers(status, grant_expires_at);
+CREATE INDEX IF NOT EXISTS federation_providers_heartbeat_idx ON federation_providers(heartbeat_expires_at) WHERE status='active';
+CREATE INDEX IF NOT EXISTS federation_providers_consent_idx ON federation_providers(consent_ref);
+
+-- Horizontal invariants:
 -- 1. queue claim: transaction + FOR UPDATE SKIP LOCKED;
 -- 2. budget reserve/actual-cost settlement: transaction-scoped advisory lock before
 --    checking aggregate spend/reservations and writing;
@@ -95,4 +119,6 @@ CREATE TABLE IF NOT EXISTS federation_audit (
 -- 4. PostgreSQL sequences may have gaps after transaction rollback. Chain validity
 --    therefore requires strictly increasing seq + valid prev_hash/hash, not gaplessness;
 -- 5. provider-success/accounting-failure is non-retryable until reconciled because
---    the external side effect may already have happened.
+--    the external side effect may already have happened;
+-- 6. provider heartbeat/status/telemetry never mutate grant_json. Authority changes
+--    require an explicit new verified grant revision or an explicit revocation.
