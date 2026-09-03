@@ -1,0 +1,50 @@
+[
+  {
+    "id": "local-dev-01",
+    "kind": "local-worker",
+    "status": "active",
+    "endpoint": "http://127.0.0.1:8788",
+    "capabilities": ["crawl", "embed", "rank", "reason"],
+    "regions": ["asia-southeast1"],
+    "dataLocations": ["local"],
+    "dataPolicy": { "privateDataAllowed": true },
+    "authorization": {
+      "mode": "owner-grant",
+      "consentRef": "owner/local-device",
+      "expiresAt": null
+    },
+    "limits": { "maxConcurrency": 2, "maxCostPerTaskUsd": 0.2 },
+    "telemetry": {
+      "inFlight": 0,
+      "trust": 1,
+      "availability": 0.8,
+      "p95LatencyMs": 250,
+      "costPerUnitUsd": 0,
+      "carbonIntensity": 0
+    }
+  },
+  {
+    "id": "partner-byoc-01",
+    "kind": "partner-byoc",
+    "status": "disabled",
+    "endpoint": "https://partner.example.com/bl-worker",
+    "capabilities": ["crawl", "embed"],
+    "regions": ["asia-southeast1"],
+    "dataLocations": ["partner-a"],
+    "dataPolicy": { "privateDataAllowed": false },
+    "authorization": {
+      "mode": "contract",
+      "consentRef": "contract/REPLACE_ME",
+      "expiresAt": "2027-09-04T00:00:00Z"
+    },
+    "limits": { "maxConcurrency": 4, "maxCostPerTaskUsd": 0.05 },
+    "telemetry": {
+      "inFlight": 0,
+      "trust": 0.8,
+      "availability": 0.9,
+      "p95LatencyMs": 450,
+      "costPerUnitUsd": 0.001,
+      "carbonIntensity": 0
+    }
+  }
+]
