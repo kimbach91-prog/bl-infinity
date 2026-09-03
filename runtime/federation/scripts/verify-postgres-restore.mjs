@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { openPostgresFederationState } from '../lib/postgres-state.mjs';
 import { PostgresProviderStore } from '../lib/provider-store.mjs';
 import { PostgresProviderDeltaView } from '../lib/registry-sync.mjs';
+import { rateLimitScopeKey } from '../lib/rate-limit.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from '../lib/postgres-readiness.mjs';
 import { verifyAuditChain } from '../lib/audit.mjs';
 import { verifyContributionLedger } from '../lib/ledger.mjs';
@@ -44,6 +45,12 @@ try {
   const nonce = await state.pool.query(`SELECT COUNT(*)::int AS n FROM federation_provider_heartbeat_nonces WHERE provider_id='restore-active' AND nonce='restore-nonce-0001'`);
   assert.equal(Number(nonce.rows[0].n), 1);
 
+  const restoreRateKey = rateLimitScopeKey({ principalId: 'restore-principal', routeGroup: 'task-submit' });
+  const restoredRate = await state.pool.query('SELECT tokens,expires_at FROM federation_rate_limit_buckets WHERE scope_key=$1', [restoreRateKey]);
+  assert.equal(restoredRate.rowCount, 1);
+  assert.equal(Number(restoredRate.rows[0].tokens), 3);
+  assert.ok(new Date(restoredRate.rows[0].expires_at).getTime() > Date.now());
+
   const view = new PostgresProviderDeltaView(store);
   const snapshot = await view.snapshot();
   assert.equal(snapshot.items.length, 2);
@@ -63,6 +70,7 @@ try {
     providers: snapshot.items.length,
     restoredRevocation: true,
     restoredBudgetUsd: budget.spent.totalUsd,
+    restoredRateLimitTokens: Number(restoredRate.rows[0].tokens),
     deltaCursorContinues: true,
   }));
 } finally {

@@ -39,6 +39,16 @@ CREATE TABLE IF NOT EXISTS federation_result_cache (
 );
 CREATE INDEX IF NOT EXISTS federation_result_cache_expiry_idx ON federation_result_cache(expires_at);
 
+-- Shared token buckets make request guardrails independent of coordinator count/restart.
+-- scope_key is an application-generated SHA-256 fingerprint, not a raw bearer token/IP.
+CREATE TABLE IF NOT EXISTS federation_rate_limit_buckets (
+  scope_key text PRIMARY KEY,
+  tokens double precision NOT NULL CHECK (tokens >= 0),
+  updated_at timestamptz NOT NULL,
+  expires_at timestamptz NOT NULL
+);
+CREATE INDEX IF NOT EXISTS federation_rate_limit_bucket_expiry_idx ON federation_rate_limit_buckets(expires_at);
+
 CREATE TABLE IF NOT EXISTS federation_budget_reservations (
   id uuid PRIMARY KEY,
   task_id text,
@@ -166,4 +176,6 @@ CREATE INDEX IF NOT EXISTS federation_provider_heartbeat_nonce_expiry_idx ON fed
 -- 7. direct worker heartbeat replay is rejected by the provider-scoped nonce primary key
 --    shared by every coordinator using this database;
 -- 8. every provider row mutation receives a new change_seq so coordinators can consume
---    bounded deltas; time-based expiry remains locally fail-closed even without a row change.
+--    bounded deltas; time-based expiry remains locally fail-closed even without a row change;
+-- 9. rate-limit buckets are row-locked transactionally so parallel coordinators consume
+--    one shared quota instead of multiplying burst capacity by coordinator count.

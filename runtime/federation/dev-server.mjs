@@ -8,8 +8,8 @@ import { validateProviderGrant, verifyProviderManifest } from './lib/manifest.mj
 import { PostgresProviderStore, syncProviderRegistry } from './lib/provider-store.mjs';
 import { PostgresProviderDeltaView, ProviderRegistrySynchronizer } from './lib/registry-sync.mjs';
 import { verifyProviderHeartbeat } from './lib/provider-heartbeat.mjs';
-import { TokenBucketLimiter } from './lib/rate-limit.mjs';
-import { hasControlAccess } from './lib/control-auth.mjs';
+import { TokenBucketLimiter, PostgresTokenBucketLimiter, classifyRateLimitRoute, rateLimitScopeKey } from './lib/rate-limit.mjs';
+import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals, parsePublicReadScopes } from './lib/control-auth.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
 import { openPostgresFederationState } from './lib/postgres-state.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-readiness.mjs';
@@ -18,6 +18,9 @@ const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
 const maxBodyBytes = Number(process.env.BL_CONTROL_MAX_BODY_BYTES || 1_048_576);
 const controlToken = process.env.BL_CONTROL_TOKEN || null;
+const controlPrincipals = parseControlPrincipals(process.env.BL_CONTROL_PRINCIPALS_JSON || null);
+const controlAuth = new ControlAuthenticator({ legacyToken: controlToken, principals: controlPrincipals });
+const publicReadScopes = parsePublicReadScopes(process.env.BL_PUBLIC_READ_SCOPES || '');
 const requireSignedManifests = process.env.BL_REQUIRE_SIGNED_MANIFESTS === 'true';
 const trustStore = parseJsonEnv('BL_TRUST_STORE_JSON', {});
 const bootstrapProviders = await loadProviders();
@@ -45,18 +48,43 @@ if (providerStore) {
   }
 }
 const search = new HybridSearchFabric();
-const limiter = new TokenBucketLimiter({ capacity: Number(process.env.BL_RATE_LIMIT_BURST || 120), refillPerSecond: Number(process.env.BL_RATE_LIMIT_PER_SECOND || 2) });
+const rateCapacity = positiveEnvNumber('BL_RATE_LIMIT_BURST', 120);
+const rateRefill = positiveEnvNumber('BL_RATE_LIMIT_PER_SECOND', 2);
+const rateLimitMode = parseRateLimitMode(process.env.BL_RATE_LIMIT_MODE || (stateBackend === 'postgres' ? 'shared' : 'memory'));
+if (rateLimitMode === 'shared' && stateBackend !== 'postgres') throw new Error('BL_RATE_LIMIT_MODE=shared requires PostgreSQL state');
+const limiter = rateLimitMode === 'shared'
+  ? new PostgresTokenBucketLimiter(durableState.pool, {
+      capacity: rateCapacity,
+      refillPerSecond: rateRefill,
+      cleanupEvery: positiveEnvInt('BL_RATE_LIMIT_CLEANUP_EVERY', 1000, 1_000_000),
+      idleTtlMs: optionalPositiveEnvInt('BL_RATE_LIMIT_IDLE_TTL_MS'),
+    })
+  : new TokenBucketLimiter({ capacity: rateCapacity, refillPerSecond: rateRefill });
+const rateLimitBackend = rateLimitMode === 'shared' ? 'postgres' : 'memory';
+const heartbeatPreAuthLimiter = new TokenBucketLimiter({
+  capacity: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_BURST', 60),
+  refillPerSecond: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_PER_SECOND', 1),
+});
 
 const server = http.createServer(async (req, res) => {
   setCommonHeaders(res);
-  const rate = limiter.take(req.socket.remoteAddress || 'unknown');
-  if (!rate.ok) { res.setHeader('retry-after', String(Math.max(1, Math.ceil(rate.retryAfterMs / 1000)))); return send(res, 429, { error: 'rate limit exceeded' }); }
   try {
+    const selfHeartbeat = req.method === 'POST' && req.url === '/providers/heartbeat/self';
+    const rate = selfHeartbeat
+      ? heartbeatPreAuthLimiter.take(req.socket.remoteAddress || 'unknown')
+      : await takeRequestRate(req);
+    if (!rate.ok) return sendRateLimited(res, rate);
+
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, {
       ok: true,
       service: 'bl-compute-federation',
-      version: '0.8.0',
+      version: '0.9.0',
       stateBackend,
+      rateLimitBackend,
+      rateLimitMode,
+      controlAuthConfigured: controlAuth.configured,
+      scopedControlPrincipals: controlPrincipals.length,
+      publicReadScopes: [...publicReadScopes].sort(),
       sharedProviderRegistry: Boolean(providerStore),
       providerSyncMode,
       providerSync: providerSynchronizer?.status?.() ?? null,
@@ -66,83 +94,102 @@ const server = http.createServer(async (req, res) => {
       search: search.stats(),
       signedManifestsRequired: requireSignedManifests,
     });
+
     if (req.method === 'GET' && req.url === '/providers') {
-      if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' });
+      const access = authorizeRead(req, res, 'provider:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       return send(res, 200, { providers: runtime.registry.list().map(sanitizeProvider), providerSync });
     }
+
     if (req.method === 'POST' && req.url === '/route') {
-      if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' });
+      const access = authorizeRead(req, res, 'route:read'); if (!access) return;
       await refreshSharedProviders();
       return send(res, 200, planRoute(runtime.registry, await readJson(req, maxBodyBytes)));
     }
+
     if (req.method === 'POST' && req.url === '/tasks/submit') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for task submission' });
-      const body = await readJson(req, maxBodyBytes); const task = body.task ?? body; const options = body.options ?? {};
-      return send(res, 202, await runtime.orchestrator.submit(task, options));
+      const access = authorizeRequired(req, res, 'task:submit'); if (!access) return;
+      const body = await readJson(req, maxBodyBytes);
+      const task = bindTaskToPrincipalTenant(body.task ?? body, access.principal);
+      const options = body.options ?? {};
+      const submitted = await runtime.orchestrator.submit(task, options);
+      await runtime.audit.append('control.task-submitted', { taskId: task.id, tenantId: task.tenantId ?? 'default', actor: access.principal.id });
+      return send(res, 202, submitted);
     }
+
     if (req.method === 'POST' && req.url === '/orchestrate/run-once') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for orchestration' });
+      const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
       await refreshSharedProviders();
       const body = await readJson(req, maxBodyBytes);
       const result = await runtime.orchestrator.runOnce(body);
       await persistExecutionTelemetry(result?.execution ?? null);
       return send(res, 200, result);
     }
+
     if (req.method === 'GET' && req.url === '/runtime/status') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for runtime status' });
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
-      return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null });
+      const rateLimit = typeof limiter.stats === 'function' ? await limiter.stats() : { backend: 'memory' };
+      return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
     }
+
     if (req.method === 'GET' && req.url === '/ledger') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for ledger access' });
+      const access = authorizeRequired(req, res, 'ledger:read'); if (!access) return;
       return send(res, 200, { summary: await runtime.orchestrator.ledger.summary() });
     }
+
     if (req.method === 'POST' && req.url === '/execute') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for execution' });
+      const access = authorizeRequired(req, res, 'runtime:execute'); if (!access) return;
       await refreshSharedProviders();
-      const result = await runtime.executor.execute(await readJson(req, maxBodyBytes));
+      const task = await readJson(req, maxBodyBytes);
+      const result = await runtime.executor.execute(task);
       await persistExecutionTelemetry(result);
+      await runtime.audit.append('control.direct-execute', { taskId: task.id, actor: access.principal.id, providerId: result.providerId });
       return send(res, 200, result);
     }
+
     if (req.method === 'POST' && req.url === '/providers/register') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider registration' });
+      const access = authorizeRequired(req, res, 'provider:admin'); if (!access) return;
       const manifest = await readJson(req, maxBodyBytes); validateProviderGrant(manifest);
       if (requireSignedManifests) { const verdict = verifyProviderManifest(manifest, trustStore, { requireSignature: true }); if (!verdict.ok) return send(res, 403, { error: 'manifest rejected', reason: verdict.reason }); }
       const candidate = providerStore ? await providerStore.put(manifest, { source: 'operator', seedTelemetry: false }) : { ...structuredClone(manifest), telemetry: neutralTelemetry() };
       const registered = runtime.registry.register(candidate);
-      await runtime.audit.append('provider.registered', { providerId: registered.id, consentRef: registered.authorization.consentRef, shared: Boolean(providerStore) });
+      await runtime.audit.append('provider.registered', { providerId: registered.id, consentRef: registered.authorization.consentRef, shared: Boolean(providerStore), actor: access.principal.id });
       return send(res, 201, { provider: sanitizeProvider(registered) });
     }
+
     if (req.method === 'POST' && req.url === '/providers/replace') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider replacement' });
+      const access = authorizeRequired(req, res, 'provider:admin'); if (!access) return;
       if (!providerStore) return send(res, 409, { error: 'shared provider store is unavailable' });
       const manifest = await readJson(req, maxBodyBytes); validateProviderGrant(manifest);
       if (requireSignedManifests) { const verdict = verifyProviderManifest(manifest, trustStore, { requireSignature: true }); if (!verdict.ok) return send(res, 403, { error: 'manifest rejected', reason: verdict.reason }); }
       const stored = await providerStore.put(manifest, { replace: true, source: 'operator-regrant', seedTelemetry: false });
       if (stored.status === 'active') runtime.registry.register(stored); else if (runtime.registry.get(stored.id)) runtime.registry.disable(stored.id);
-      await runtime.audit.append('provider.replaced', { providerId: stored.id, consentRef: stored.authorization.consentRef, revision: stored.runtime.revision });
+      await runtime.audit.append('provider.replaced', { providerId: stored.id, consentRef: stored.authorization.consentRef, revision: stored.runtime.revision, actor: access.principal.id });
       return send(res, 200, { provider: sanitizeProvider(stored) });
     }
+
     if (req.method === 'POST' && req.url === '/providers/revoke') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider revocation' });
+      const access = authorizeRequired(req, res, 'provider:admin'); if (!access) return;
       const body = await readJson(req, maxBodyBytes); if (!body.providerId) return send(res, 400, { error: 'providerId is required' });
       let revoked;
       if (providerStore) revoked = await providerStore.revoke(body.providerId, body.reason ?? 'operator-revoked');
       else { if (!runtime.registry.get(body.providerId)) return send(res, 404, { error: 'unknown provider' }); runtime.registry.disable(body.providerId); revoked = runtime.registry.get(body.providerId); }
       if (runtime.registry.get(body.providerId)) runtime.registry.disable(body.providerId);
-      await runtime.audit.append('provider.revoked', { providerId: body.providerId, reason: body.reason ?? 'operator-revoked', shared: Boolean(providerStore) });
+      await runtime.audit.append('provider.revoked', { providerId: body.providerId, reason: body.reason ?? 'operator-revoked', shared: Boolean(providerStore), actor: access.principal.id });
       return send(res, 200, { provider: sanitizeProvider(revoked) });
     }
+
     if (req.method === 'POST' && req.url === '/providers/status') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider status changes' });
+      const access = authorizeRequired(req, res, 'provider:admin'); if (!access) return;
       if (!providerStore) return send(res, 409, { error: 'shared provider store is unavailable' });
       const body = await readJson(req, maxBodyBytes); if (!body.providerId || !body.status) return send(res, 400, { error: 'providerId and status are required' });
       const stored = await providerStore.setStatus(body.providerId, body.status);
       await refreshSharedProviders({ failOnBacklog: false });
-      await runtime.audit.append('provider.status-changed', { providerId: body.providerId, status: body.status });
+      await runtime.audit.append('provider.status-changed', { providerId: body.providerId, status: body.status, actor: access.principal.id });
       return send(res, 200, { provider: sanitizeProvider(stored) });
     }
+
     if (req.method === 'POST' && req.url === '/providers/heartbeat/self') {
       if (!providerStore) return send(res, 409, { error: 'shared provider store is required for worker self-heartbeat' });
       const raw = await readBody(req, Math.min(maxBodyBytes, 4096));
@@ -151,52 +198,88 @@ const server = http.createServer(async (req, res) => {
       if (!body.providerId || body.providerId !== headerProviderId) return send(res, 400, { error: 'providerId must match x-bl-provider-id' });
       const verdict = await verifyProviderHeartbeat(providerStore, req.headers, raw);
       if (!verdict.ok) return send(res, verdict.reason === 'heartbeat-secret-not-configured' ? 503 : 401, { error: 'heartbeat authentication failed', reason: verdict.reason });
+      const sharedRate = await takeSharedProviderHeartbeatRate(verdict.providerId);
+      if (!sharedRate.ok) return sendRateLimited(res, sharedRate);
       const stored = await providerStore.heartbeat(verdict.providerId, { inFlight: body.inFlight });
       await refreshSharedProviders({ failOnBacklog: false });
       await runtime.audit.append('provider.self-heartbeat', { providerId: verdict.providerId, heartbeatSeq: stored.runtime.heartbeatSeq });
       return send(res, 200, { ok: true, providerId: verdict.providerId, heartbeatSeq: stored.runtime.heartbeatSeq, heartbeatExpiresAt: stored.runtime.heartbeatExpiresAt });
     }
+
     if (req.method === 'POST' && req.url === '/providers/heartbeat') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider heartbeat updates' });
+      const access = authorizeRequired(req, res, 'provider:heartbeat'); if (!access) return;
       if (!providerStore) return send(res, 409, { error: 'shared provider store is unavailable' });
       const body = await readJson(req, maxBodyBytes); if (!body.providerId) return send(res, 400, { error: 'providerId is required' });
       const stored = await providerStore.heartbeat(body.providerId, { inFlight: body.inFlight });
       await refreshSharedProviders({ failOnBacklog: false });
-      await runtime.audit.append('provider.heartbeat', { providerId: body.providerId, heartbeatSeq: stored.runtime.heartbeatSeq });
+      await runtime.audit.append('provider.heartbeat', { providerId: body.providerId, heartbeatSeq: stored.runtime.heartbeatSeq, actor: access.principal.id });
       return send(res, 200, { provider: sanitizeProvider(stored) });
     }
+
     if (req.method === 'POST' && req.url === '/search/index') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for indexing' });
+      const access = authorizeRequired(req, res, 'search:write'); if (!access) return;
       const body = await readJson(req, maxBodyBytes), docs = Array.isArray(body.documents) ? body.documents : [body.document ?? body];
       if (docs.length > 1000) return send(res, 413, { error: 'too many documents in one request' });
       const indexed = docs.map((doc) => search.addDocument(doc));
-      await runtime.audit.append('search.indexed', { count: indexed.length, ids: indexed.map((x) => x.id) });
+      await runtime.audit.append('search.indexed', { count: indexed.length, ids: indexed.map((x) => x.id), actor: access.principal.id });
       return send(res, 201, { indexed: indexed.length, stats: search.stats() });
     }
+
     if (req.method === 'POST' && req.url === '/search/query') {
-      if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' });
+      const access = authorizeRead(req, res, 'search:read'); if (!access) return;
       const body = await readJson(req, maxBodyBytes); if (!body.query) return send(res, 400, { error: 'query is required' });
       return send(res, 200, { results: search.search(body.query, body.options ?? {}), stats: search.stats() });
     }
+
     if (req.method === 'GET' && req.url === '/audit/head') {
-      if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for audit access' });
+      const access = authorizeRequired(req, res, 'audit:read'); if (!access) return;
       const records = await runtime.audit.list();
       return send(res, 200, { records: records.length, head: records.at(-1)?.hash ?? null });
     }
+
     return send(res, 404, { error: 'not found' });
   } catch (error) {
-    const status = error.code === 'BODY_TOO_LARGE' ? 413 : error.code === 'PROVIDER_SYNC_BACKLOG' ? 503 : 400;
+    const status = error.code === 'BODY_TOO_LARGE' ? 413
+      : error.code === 'PROVIDER_SYNC_BACKLOG' || error.code === 'RATE_LIMIT_BACKEND_UNAVAILABLE' ? 503
+      : error.code === 'TENANT_SCOPE_VIOLATION' ? 403
+      : 400;
     return send(res, status, { error: error.message, code: error.code ?? null, providerSync: error.providerSync ?? null });
   }
 });
 
 server.listen(port, host, () => {
   console.log(`BL federation control plane listening on http://${host}:${port}`);
-  if (!controlToken) console.warn('BL_CONTROL_TOKEN is not set: execution and mutation endpoints remain disabled.');
+  if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
 });
 let shuttingDown = false;
 for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
 
+async function takeRequestRate(req) {
+  const route = classifyRateLimitRoute(req.method, req.url);
+  const principal = controlAuth.authenticate(req);
+  const key = rateLimitScopeKey({ principalId: principal?.id ?? null, address: req.socket.remoteAddress || 'unknown', routeGroup: route.group });
+  try { return await limiter.take(key, route.cost); }
+  catch (error) { const wrapped = new Error(`rate-limit backend unavailable: ${error.message}`); wrapped.code = 'RATE_LIMIT_BACKEND_UNAVAILABLE'; throw wrapped; }
+}
+async function takeSharedProviderHeartbeatRate(providerId) {
+  const key = rateLimitScopeKey({ principalId: `provider:${providerId}`, routeGroup: 'heartbeat-self' });
+  try { return await limiter.take(key, 1); }
+  catch (error) { const wrapped = new Error(`rate-limit backend unavailable: ${error.message}`); wrapped.code = 'RATE_LIMIT_BACKEND_UNAVAILABLE'; throw wrapped; }
+}
+function sendRateLimited(res, rate) {
+  res.setHeader('retry-after', String(Math.max(1, Math.ceil((rate.retryAfterMs ?? 1000) / 1000))));
+  if (rate.remaining != null) res.setHeader('x-ratelimit-remaining', String(rate.remaining));
+  return send(res, 429, { error: 'rate limit exceeded', retryAfterMs: rate.retryAfterMs ?? null });
+}
+function authorizeRequired(req, res, scope) {
+  const verdict = controlAuth.authorize(req, scope);
+  if (!verdict.ok) { send(res, verdict.status, { error: verdict.reason, requiredScope: scope }); return null; }
+  return verdict;
+}
+function authorizeRead(req, res, scope) {
+  if (publicReadScopes.has(scope)) return { ok: true, principal: controlAuth.authenticate(req), public: true };
+  return authorizeRequired(req, res, scope);
+}
 async function refreshSharedProviders({ failOnBacklog = true } = {}) {
   if (!providerStore) return null;
   const result = providerSynchronizer
@@ -261,14 +344,30 @@ function parseProviderSyncMode(raw) {
   if (!['delta','full'].includes(value)) throw new Error('BL_PROVIDER_SYNC_MODE must be delta or full');
   return value;
 }
+function parseRateLimitMode(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!['shared','memory'].includes(value)) throw new Error('BL_RATE_LIMIT_MODE must be shared or memory');
+  return value;
+}
 function positiveEnvInt(name, fallback, max) {
   const raw = process.env[name];
   const value = raw == null || raw === '' ? fallback : Number(raw);
   if (!Number.isSafeInteger(value) || value < 1 || value > max) throw new Error(`${name} must be an integer between 1 and ${max}`);
   return value;
 }
-function authorizedIfConfigured(req) { return controlToken ? hasControlAccess(req, controlToken) : true; }
-function requireControl(req) { return hasControlAccess(req, controlToken); }
+function optionalPositiveEnvInt(name) {
+  const raw = process.env[name];
+  if (raw == null || raw === '') return null;
+  const value = Number(raw);
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error(`${name} must be a positive integer`);
+  return value;
+}
+function positiveEnvNumber(name, fallback) {
+  const raw = process.env[name];
+  const value = raw == null || raw === '' ? fallback : Number(raw);
+  if (!Number.isFinite(value) || value <= 0) throw new Error(`${name} must be > 0`);
+  return value;
+}
 async function readBody(req, maxBytes) {
   let size = 0; const chunks = [];
   for await (const chunk of req) {
