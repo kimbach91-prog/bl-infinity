@@ -57,7 +57,7 @@ test('orchestrator closes queue-execute-cache-ledger-budget loop', async () => {
   const first = await runtime.orchestrator.runOnce(); assert.equal(first.job.state, 'succeeded'); assert.equal(first.execution.result.hello, 'world');
   await runtime.orchestrator.submit({ id:'job2', capability:'compute.echo', payload:{ hello:'world' }, dataClass:'public', cachePolicy:'public', estimatedCostUsd:0.1, tenantId:'t1', idempotencyKey:'distinct-key' });
   const second = await runtime.orchestrator.runOnce(); assert.equal(second.cacheHit, true);
-  const status = runtime.orchestrator.status(); assert.equal(status.ledger['owner-local'].tasks, 1); assert.equal(status.budget.spent.totalUsd, 0.1);
+  const status = await runtime.orchestrator.status(); assert.equal(status.ledger['owner-local'].tasks, 1); assert.equal(status.budget.spent.totalUsd, 0.1);
 });
 
 test('dedupe and cache boundaries do not collapse tenant-scoped work', async () => {

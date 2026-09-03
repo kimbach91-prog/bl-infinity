@@ -33,8 +33,8 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/route') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); return send(res, 200, planRoute(runtime.registry, await readJson(req, maxBodyBytes))); }
     if (req.method === 'POST' && req.url === '/tasks/submit') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for task submission' }); const body = await readJson(req, maxBodyBytes); const task = body.task ?? body; const options = body.options ?? {}; return send(res, 202, await runtime.orchestrator.submit(task, options)); }
     if (req.method === 'POST' && req.url === '/orchestrate/run-once') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for orchestration' }); const body = await readJson(req, maxBodyBytes); return send(res, 200, await runtime.orchestrator.runOnce(body)); }
-    if (req.method === 'GET' && req.url === '/runtime/status') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for runtime status' }); return send(res, 200, runtime.orchestrator.status()); }
-    if (req.method === 'GET' && req.url === '/ledger') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for ledger access' }); return send(res, 200, { summary: runtime.orchestrator.ledger.summary() }); }
+    if (req.method === 'GET' && req.url === '/runtime/status') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for runtime status' }); return send(res, 200, await runtime.orchestrator.status()); }
+    if (req.method === 'GET' && req.url === '/ledger') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for ledger access' }); return send(res, 200, { summary: await runtime.orchestrator.ledger.summary() }); }
     if (req.method === 'POST' && req.url === '/execute') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for execution' }); return send(res, 200, await runtime.executor.execute(await readJson(req, maxBodyBytes))); }
     if (req.method === 'POST' && req.url === '/providers/register') {
       if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider registration' });
@@ -51,7 +51,7 @@ const server = http.createServer(async (req, res) => {
       const indexed = docs.map((doc) => search.addDocument(doc)); await runtime.audit.append('search.indexed', { count: indexed.length, ids: indexed.map((x) => x.id) }); return send(res, 201, { indexed: indexed.length, stats: search.stats() });
     }
     if (req.method === 'POST' && req.url === '/search/query') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); const body = await readJson(req, maxBodyBytes); if (!body.query) return send(res, 400, { error: 'query is required' }); return send(res, 200, { results: search.search(body.query, body.options ?? {}), stats: search.stats() }); }
-    if (req.method === 'GET' && req.url === '/audit/head') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for audit access' }); const records = runtime.audit.list(); return send(res, 200, { records: records.length, head: records.at(-1)?.hash ?? null }); }
+    if (req.method === 'GET' && req.url === '/audit/head') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for audit access' }); const records = await runtime.audit.list(); return send(res, 200, { records: records.length, head: records.at(-1)?.hash ?? null }); }
     return send(res, 404, { error: 'not found' });
   } catch (error) { return send(res, error.code === 'BODY_TOO_LARGE' ? 413 : 400, { error: error.message }); }
 });

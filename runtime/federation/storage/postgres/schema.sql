@@ -1,9 +1,11 @@
 -- BL Compute Federation horizontal-state contract (PostgreSQL 16+ recommended)
 -- This schema is deployment infrastructure, not evidence that a live Postgres instance exists.
+-- Idempotency is tenant scoped. Applications may store the raw caller key here;
+-- the database uniqueness boundary is (tenant_id, idempotency_key).
 
 CREATE TABLE IF NOT EXISTS federation_jobs (
   id text PRIMARY KEY,
-  idempotency_key text NOT NULL UNIQUE,
+  idempotency_key text NOT NULL,
   tenant_id text NOT NULL DEFAULT 'default',
   capability text NOT NULL,
   task jsonb NOT NULL,
@@ -20,6 +22,7 @@ CREATE TABLE IF NOT EXISTS federation_jobs (
   result jsonb,
   error jsonb
 );
+CREATE UNIQUE INDEX IF NOT EXISTS federation_jobs_tenant_idempotency_idx ON federation_jobs (tenant_id, idempotency_key);
 CREATE INDEX IF NOT EXISTS federation_jobs_claim_idx ON federation_jobs (state, available_at, priority DESC, created_at);
 CREATE INDEX IF NOT EXISTS federation_jobs_lease_idx ON federation_jobs (state, lease_expires_at) WHERE state='running';
 
@@ -31,7 +34,7 @@ CREATE TABLE IF NOT EXISTS federation_result_cache (
   value jsonb NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   expires_at timestamptz NOT NULL,
-  hits bigint NOT NULL DEFAULT 0
+  hits bigint NOT NULL DEFAULT 0 CHECK (hits >= 0)
 );
 CREATE INDEX IF NOT EXISTS federation_result_cache_expiry_idx ON federation_result_cache (expires_at);
 
@@ -45,9 +48,11 @@ CREATE TABLE IF NOT EXISTS federation_budget_reservations (
   state text NOT NULL CHECK (state IN ('reserved','committed','released')),
   created_at timestamptz NOT NULL DEFAULT now(),
   finished_at timestamptz,
-  reason text
+  reason text,
+  CHECK (actual_usd IS NULL OR actual_usd >= 0)
 );
 CREATE INDEX IF NOT EXISTS federation_budget_state_idx ON federation_budget_reservations (state, tenant_id, provider_id);
+CREATE INDEX IF NOT EXISTS federation_budget_provider_idx ON federation_budget_reservations (provider_id, state) WHERE provider_id IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS federation_contribution_ledger (
   seq bigserial PRIMARY KEY,
@@ -78,5 +83,11 @@ CREATE TABLE IF NOT EXISTS federation_audit (
   hash text NOT NULL UNIQUE
 );
 
--- Example atomic claim pattern. Application must substitute worker/capabilities/lease interval.
--- FOR UPDATE SKIP LOCKED lets multiple coordinators claim different rows without a global queue lock.
+-- Horizontal invariants for an executable adapter:
+-- 1. queue claim: transaction + FOR UPDATE SKIP LOCKED;
+-- 2. budget reserve/actual-cost settlement: serialize the relevant budget namespace
+--    (row lock or transaction-scoped advisory lock) before checking sums and writing;
+-- 3. audit/ledger hash heads: serialize appenders so two coordinators cannot create
+--    competing records with the same predecessor;
+-- 4. a provider-success/accounting-failure must be treated as non-retryable until
+--    reconciled, because the external side effect may already have happened.
