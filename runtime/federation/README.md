@@ -1,51 +1,58 @@
-# BL Compute Federation v0.1
+# BL Compute Federation v0.2
 
-A small control plane for aggregating **authorized** compute from many independent providers without pretending they are one machine.
+A consent-aware control plane for combining small amounts of authorized compute across owner devices, cloud quotas, partner grants and BYOC nodes without treating reachable infrastructure as free infrastructure.
 
-## Core rule
+## Core invariant
 
-No node is usable until it carries an explicit authorization/consent reference, scope, limits, and telemetry. The fabric is designed for owner devices, paid/free cloud quotas permitted by provider terms, research/partner grants, and BYOC resources contributed by customers or partners.
+`reachable != authorized`
 
-It is **not** designed to consume third-party CPUs, browsers, bandwidth, credentials, public endpoints, free tiers, or CI runners outside their owner/provider authorization and terms.
+A provider is usable only when its grant, capability, data policy, quota, concurrency and task policy all pass. Private data fails closed unless it remains at the declared data location or the grant explicitly permits private egress.
 
-## Routing model
+## v0.2 runtime
 
-For a task `q`, filter providers by authorization, capability, quota, data class, concurrency and region. Rank eligible nodes using trust, data locality, availability, latency, cost and optional carbon intensity.
+- policy-aware provider routing
+- Ed25519-signed provider grants and trust store
+- HMAC worker protocol with timestamp, nonce and replay protection
+- explicit capability allowlist; no shell/eval/arbitrary-code endpoint
+- fallback executor with telemetry feedback and provenance
+- idempotent lease queue with heartbeat recovery and dead-lettering
+- hash-chained audit log
+- hybrid in-memory search reference: lexical + semantic-lite + relation graph + trust/freshness
+- local and HTTPS-worker adapters
+- auth modes for HMAC env, bearer env, Cloudflare Access service tokens, and GCP metadata OIDC
+- Docker-ready coordinator and worker
 
-`provider* = argmax score(provider, q)`
-
-The goal is useful information or work per unit of latency, compute and money, not raw utilization.
-
-## Included
-
-- provider registry with consent references
-- deterministic eligibility gate
-- cost/concurrency/data-policy gates
-- multi-provider scoring and routing plan
-- Vercel-compatible `/api/health` and `/api/route`
-- local dev server
-- zero-dependency Node tests
-
-## Run locally
+## Run
 
 ```bash
+cd runtime/federation
 npm test
+export BL_CONTROL_TOKEN='replace-with-a-long-random-token'
 npm start
-curl http://localhost:8787/health
-curl -X POST http://localhost:8787/route \
-  -H 'content-type: application/json' \
-  -d '{"id":"demo-1","capability":"embed","dataClass":"public","dataLocation":"local"}'
 ```
 
-## Next adapters
+Worker:
 
-1. Cloudflare Worker adapter for low-cost edge sensors/cache.
-2. GCP Cloud Run adapter using short-lived workload identity/OIDC.
-3. Local worker agent for private/high-value tasks.
-4. Partner/BYOC worker with signed capability manifest and revocable grant.
-5. Shared queue + idempotency keys + telemetry feedback.
-6. Index fabric: lexical + vector + graph, with expensive reasoning only after retrieval narrowing.
+```bash
+export BL_FEDERATION_SHARED_SECRET='replace-with-a-long-random-secret'
+npm run worker
+```
 
-## Resource sovereignty
+The control plane binds to `127.0.0.1` by default. Execution and mutation endpoints remain disabled unless `BL_CONTROL_TOKEN` is set.
 
-Every provider retains sovereignty over its own quota. A grant can expire or be revoked; the router must fail closed. Compute is federated, not seized.
+## Signed provider grants
+
+```bash
+npm run keys -- partner-a
+node scripts/sign-provider-manifest.mjs provider.json partner-a.private.pem partner-a signed-provider.json
+```
+
+Never commit private keys or worker shared secrets.
+
+## Production boundary
+
+The included queue, search index and audit store are reference in-memory/single-process components. Horizontal production deployment must replace them with shared durable backends while retaining the same authorization, data-locality, idempotency and provenance invariants. Vercel routing is stateless and intentionally does not pretend to be a durable queue/search cluster.
+
+The project does not use GitHub Actions, public endpoints, free tiers, browsers, visitor devices or third-party machines as a covert compute farm. A resource becomes a node only through an explicit revocable grant.
+
+See `docs/RESOURCE_SOVEREIGNTY.md`, `docs/PROVIDER_PROTOCOL.md`, and `docs/DEPLOY.md`.

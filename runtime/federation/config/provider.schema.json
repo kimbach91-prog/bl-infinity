@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bl-infinity.local/schemas/provider-v1.json",
+  "title": "BL Compute Federation Provider Grant",
+  "type": "object",
+  "required": ["manifestVersion", "id", "kind", "capabilities", "authorization", "limits"],
+  "properties": {
+    "manifestVersion": { "const": "bl-cf-provider/v1" },
+    "id": { "type": "string", "pattern": "^[a-zA-Z0-9._:-]{2,128}$" },
+    "kind": { "enum": ["local", "http-worker", "cloudflare-worker", "gcp-cloud-run", "vercel-function"] },
+    "status": { "enum": ["enabled", "disabled"] },
+    "endpoint": { "type": "string", "format": "uri" },
+    "capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+    "authorization": {
+      "type": "object",
+      "required": ["consentRef", "grantor", "grantedAt", "allowedDataClasses"],
+      "properties": {
+        "consentRef": { "type": "string", "minLength": 1 },
+        "grantor": { "type": "string", "minLength": 1 },
+        "grantedAt": { "type": "string", "format": "date-time" },
+        "expiresAt": { "type": "string", "format": "date-time" },
+        "revokedAt": { "type": "string", "format": "date-time" },
+        "allowedDataClasses": { "type": "array", "items": { "enum": ["public", "internal", "private"] }, "uniqueItems": true },
+        "maxTaskCostUsd": { "type": "number", "minimum": 0 }
+      }
+    },
+    "limits": {
+      "type": "object",
+      "required": ["maxConcurrency"],
+      "properties": {
+        "maxConcurrency": { "type": "integer", "minimum": 1 },
+        "maxCostPerTaskUsd": { "type": "number", "minimum": 0 },
+        "maxExecutionMs": { "type": "integer", "minimum": 1 }
+      }
+    },
+    "transport": { "type": "object", "properties": { "auth": { "enum": ["none", "hmac-env", "bearer-env", "cloudflare-service-token-env", "gcp-metadata-oidc"] } } },
+    "signature": { "type": "object", "required": ["algorithm", "keyId", "value"], "properties": { "algorithm": { "const": "ed25519" }, "keyId": { "type": "string" }, "value": { "type": "string" } } }
+  },
+  "additionalProperties": true
+}
