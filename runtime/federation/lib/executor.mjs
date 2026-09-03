@@ -31,14 +31,21 @@ export class FederationExecutor {
         result = await adapter.execute(provider, task);
       } catch (error) {
         const latencyMs = performance.now() - started;
-        try { await onProviderFailure?.({ provider, task, guard: guardVerdict, error, latencyMs, executionId }); }
-        catch (settlementError) { const failure = new Error(`provider failure settlement failed: ${settlementError.message}`); failure.executionId = executionId; failure.attempts = [...attempts, { providerId: provider.id, ok: false, latencyMs: Math.round(latencyMs), error: error.message, settlementError: settlementError.message }]; failure.nonRetryable = true; throw failure; }
         this.telemetry.failure(provider.id, { latencyMs }); this.circuit.failure(provider.id); this.registry.updateTelemetry(provider.id, this.telemetry.snapshot(provider.id));
+        try { await onProviderFailure?.({ provider, task, guard: guardVerdict, error, latencyMs, executionId }); }
+        catch (settlementError) {
+          const failure = new Error(`provider failure settlement failed: ${settlementError.message}`);
+          failure.executionId = executionId;
+          failure.attempts = [...attempts, { providerId: provider.id, ok: false, latencyMs: Math.round(latencyMs), error: error.message, settlementError: settlementError.message }];
+          failure.nonRetryable = true;
+          throw failure;
+        }
         attempts.push({ providerId: provider.id, ok: false, latencyMs: Math.round(latencyMs), error: error.message });
         await this.audit?.append('task.failed-attempt', { executionId, taskId: task.id, providerId: provider.id, error: error.message });
         continue;
       }
       const latencyMs = performance.now() - started;
+      this.telemetry.success(provider.id, { latencyMs, costUsd: task.estimatedCostUsd ?? 0 }); this.circuit.success(provider.id); this.registry.updateTelemetry(provider.id, this.telemetry.snapshot(provider.id));
       try { await onProviderSuccess?.({ provider, task, guard: guardVerdict, result, latencyMs, executionId }); }
       catch (settlementError) {
         const failure = new Error(`provider succeeded but settlement failed: ${settlementError.message}`);
@@ -48,7 +55,6 @@ export class FederationExecutor {
         await this.audit?.append('task.settlement-failed', { executionId, taskId: task.id, providerId: provider.id, error: settlementError.message });
         throw failure;
       }
-      this.telemetry.success(provider.id, { latencyMs, costUsd: task.estimatedCostUsd ?? 0 }); this.circuit.success(provider.id); this.registry.updateTelemetry(provider.id, this.telemetry.snapshot(provider.id));
       attempts.push({ providerId: provider.id, ok: true, latencyMs: Math.round(latencyMs), score: Number(score.toFixed(4)) });
       await this.audit?.append('task.completed', { executionId, taskId: task.id, providerId: provider.id, latencyMs: Math.round(latencyMs) });
       return { executionId, taskId: task.id, providerId: provider.id, result, attempts, measuredLatencyMs: latencyMs, provenance: { consentRef: provider.authorization.consentRef, providerKind: provider.kind, executedAt: new Date().toISOString() } };
