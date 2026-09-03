@@ -34,6 +34,7 @@ export function evaluateProvider(provider, task, now = Date.now()) {
   }
   if (dataClass === 'internal' && provider.dataPolicy?.internalDataAllowed === false) reasons.push('internal-data-not-authorized');
   if (task.requiresNoRetention === true && provider.dataPolicy?.retention !== 'none') reasons.push('retention-policy-mismatch');
+  if (task.sideEffect === true && provider.authorization?.allowSideEffects !== true) reasons.push('side-effects-outside-grant');
   if (task.deadlineAt && Date.parse(task.deadlineAt) <= now) reasons.push('task-deadline-expired');
   return { ok: reasons.length === 0, reasons };
 }
