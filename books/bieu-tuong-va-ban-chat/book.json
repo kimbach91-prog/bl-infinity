@@ -1,0 +1,64 @@
+{
+  "schema": "bach-lam.living-book.v1",
+  "slug": "bieu-tuong-va-ban-chat",
+  "title": "Biểu tượng và Bản chất",
+  "subtitle": "Cách con người nhìn thực tại, kiến tạo ý nghĩa và học cách không bị chính ký hiệu của mình cai trị",
+  "author": "Lâm Kim Bách",
+  "pen_name": "Bách Lâm",
+  "lineage": "BACH_LAM",
+  "status": "PUBLIC_LIVING_EDITION",
+  "version": "0.1.0",
+  "updated_at": "2026-09-03",
+  "language": "vi",
+  "canonical": "https://kimbach91-prog.github.io/bl-infinity/books/bieu-tuong-va-ban-chat/",
+  "chapters": [
+    {
+      "id": "loi-mo",
+      "title": "Lời mở — Khi thế giới đi vào mắt người",
+      "file": "chapters/00-loi-mo.md",
+      "src": "chapters/00-loi-mo.md"
+    },
+    {
+      "id": "bieu-tuong-khong-phai-ban-chat",
+      "title": "Biểu tượng không phải bản chất",
+      "file": "chapters/01-bieu-tuong-khong-phai-ban-chat.md",
+      "src": "chapters/01-bieu-tuong-khong-phai-ban-chat.md"
+    },
+    {
+      "id": "khi-bieu-tuong-tao-ra-hanh-dong",
+      "title": "Khi biểu tượng tạo ra hành động",
+      "file": "chapters/02-khi-bieu-tuong-tao-ra-hanh-dong.md",
+      "src": "chapters/02-khi-bieu-tuong-tao-ra-hanh-dong.md"
+    },
+    {
+      "id": "co-the-ky-uc-nghi-thuc",
+      "title": "Cơ thể, ký ức và nghi thức",
+      "file": "chapters/03-co-the-ky-uc-nghi-thuc.md",
+      "src": "chapters/03-co-the-ky-uc-nghi-thuc.md"
+    },
+    {
+      "id": "quyen-luc-cua-nguoi-dat-ten",
+      "title": "Quyền lực của người đặt tên",
+      "file": "chapters/04-quyen-luc-cua-nguoi-dat-ten.md",
+      "src": "chapters/04-quyen-luc-cua-nguoi-dat-ten.md"
+    },
+    {
+      "id": "ai-va-bieu-tuong-khong-co-trai-nghiem",
+      "title": "AI và biểu tượng không có trải nghiệm",
+      "file": "chapters/05-ai-va-bieu-tuong-khong-co-trai-nghiem.md",
+      "src": "chapters/05-ai-va-bieu-tuong-khong-co-trai-nghiem.md"
+    },
+    {
+      "id": "hop-tac-giua-cac-dang-tri-tue",
+      "title": "Hợp tác giữa các dạng trí tuệ",
+      "file": "chapters/06-hop-tac-giua-cac-dang-tri-tue.md",
+      "src": "chapters/06-hop-tac-giua-cac-dang-tri-tue.md"
+    },
+    {
+      "id": "hoc-cach-nhin-xuyen-bieu-tuong",
+      "title": "Kết mở — Học cách nhìn xuyên biểu tượng",
+      "file": "chapters/07-hoc-cach-nhin-xuyen-bieu-tuong.md",
+      "src": "chapters/07-hoc-cach-nhin-xuyen-bieu-tuong.md"
+    }
+  ]
+}
