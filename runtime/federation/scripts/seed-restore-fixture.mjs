@@ -1,5 +1,6 @@
 import { openPostgresFederationState } from '../lib/postgres-state.mjs';
 import { PostgresProviderStore } from '../lib/provider-store.mjs';
+import { PostgresTokenBucketLimiter, rateLimitScopeKey } from '../lib/rate-limit.mjs';
 
 const connectionString = process.env.BL_RESTORE_SOURCE_URL || process.env.BL_TEST_POSTGRES_URL;
 if (!connectionString) throw new Error('BL_RESTORE_SOURCE_URL or BL_TEST_POSTGRES_URL is required');
@@ -13,6 +14,7 @@ try {
       federation_provider_heartbeat_nonces,
       federation_jobs,
       federation_result_cache,
+      federation_rate_limit_buckets,
       federation_budget_reservations,
       federation_contribution_ledger,
       federation_audit,
@@ -61,7 +63,12 @@ try {
     VALUES('restore-active','restore-nonce-0001',now(),now()+interval '1 hour')
   `);
 
-  console.log(JSON.stringify({ ok: true, fixture: 'bl-cf-restore-v1' }));
+  const restoreRateKey = rateLimitScopeKey({ principalId: 'restore-principal', routeGroup: 'task-submit' });
+  const restoreLimiter = new PostgresTokenBucketLimiter(state.pool, { capacity: 5, refillPerSecond: 1, idleTtlMs: 60 * 60_000, cleanupEvery: 10000 });
+  const rate = await restoreLimiter.take(restoreRateKey, 2);
+  if (!rate.ok || rate.remaining !== 3) throw new Error('failed to seed restore rate-limit bucket');
+
+  console.log(JSON.stringify({ ok: true, fixture: 'bl-cf-restore-v1', restoreRateKey }));
 } finally {
   await state.close();
 }
