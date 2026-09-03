@@ -9,7 +9,7 @@ import { PostgresProviderStore, syncProviderRegistry } from './lib/provider-stor
 import { PostgresProviderDeltaView, ProviderRegistrySynchronizer } from './lib/registry-sync.mjs';
 import { verifyProviderHeartbeat } from './lib/provider-heartbeat.mjs';
 import { TokenBucketLimiter, PostgresTokenBucketLimiter, classifyRateLimitRoute, rateLimitScopeKey } from './lib/rate-limit.mjs';
-import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals } from './lib/control-auth.mjs';
+import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals, parsePublicReadScopes } from './lib/control-auth.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
 import { openPostgresFederationState } from './lib/postgres-state.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-readiness.mjs';
@@ -20,6 +20,7 @@ const maxBodyBytes = Number(process.env.BL_CONTROL_MAX_BODY_BYTES || 1_048_576);
 const controlToken = process.env.BL_CONTROL_TOKEN || null;
 const controlPrincipals = parseControlPrincipals(process.env.BL_CONTROL_PRINCIPALS_JSON || null);
 const controlAuth = new ControlAuthenticator({ legacyToken: controlToken, principals: controlPrincipals });
+const publicReadScopes = parsePublicReadScopes(process.env.BL_PUBLIC_READ_SCOPES || '');
 const requireSignedManifests = process.env.BL_REQUIRE_SIGNED_MANIFESTS === 'true';
 const trustStore = parseJsonEnv('BL_TRUST_STORE_JSON', {});
 const bootstrapProviders = await loadProviders();
@@ -49,7 +50,9 @@ if (providerStore) {
 const search = new HybridSearchFabric();
 const rateCapacity = positiveEnvNumber('BL_RATE_LIMIT_BURST', 120);
 const rateRefill = positiveEnvNumber('BL_RATE_LIMIT_PER_SECOND', 2);
-const limiter = stateBackend === 'postgres'
+const rateLimitMode = parseRateLimitMode(process.env.BL_RATE_LIMIT_MODE || (stateBackend === 'postgres' ? 'shared' : 'memory'));
+if (rateLimitMode === 'shared' && stateBackend !== 'postgres') throw new Error('BL_RATE_LIMIT_MODE=shared requires PostgreSQL state');
+const limiter = rateLimitMode === 'shared'
   ? new PostgresTokenBucketLimiter(durableState.pool, {
       capacity: rateCapacity,
       refillPerSecond: rateRefill,
@@ -57,7 +60,7 @@ const limiter = stateBackend === 'postgres'
       idleTtlMs: optionalPositiveEnvInt('BL_RATE_LIMIT_IDLE_TTL_MS'),
     })
   : new TokenBucketLimiter({ capacity: rateCapacity, refillPerSecond: rateRefill });
-const rateLimitBackend = stateBackend === 'postgres' ? 'postgres' : 'memory';
+const rateLimitBackend = rateLimitMode === 'shared' ? 'postgres' : 'memory';
 const heartbeatPreAuthLimiter = new TokenBucketLimiter({
   capacity: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_BURST', 60),
   refillPerSecond: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_PER_SECOND', 1),
@@ -78,8 +81,10 @@ const server = http.createServer(async (req, res) => {
       version: '0.9.0',
       stateBackend,
       rateLimitBackend,
+      rateLimitMode,
       controlAuthConfigured: controlAuth.configured,
       scopedControlPrincipals: controlPrincipals.length,
+      publicReadScopes: [...publicReadScopes].sort(),
       sharedProviderRegistry: Boolean(providerStore),
       providerSyncMode,
       providerSync: providerSynchronizer?.status?.() ?? null,
@@ -91,13 +96,13 @@ const server = http.createServer(async (req, res) => {
     });
 
     if (req.method === 'GET' && req.url === '/providers') {
-      const access = authorizeOptional(req, res, 'provider:read'); if (!access) return;
+      const access = authorizeRead(req, res, 'provider:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       return send(res, 200, { providers: runtime.registry.list().map(sanitizeProvider), providerSync });
     }
 
     if (req.method === 'POST' && req.url === '/route') {
-      const access = authorizeOptional(req, res, 'route:read'); if (!access) return;
+      const access = authorizeRead(req, res, 'route:read'); if (!access) return;
       await refreshSharedProviders();
       return send(res, 200, planRoute(runtime.registry, await readJson(req, maxBodyBytes)));
     }
@@ -125,7 +130,7 @@ const server = http.createServer(async (req, res) => {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       const rateLimit = typeof limiter.stats === 'function' ? await limiter.stats() : { backend: 'memory' };
-      return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimit });
+      return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
     }
 
     if (req.method === 'GET' && req.url === '/ledger') {
@@ -221,7 +226,7 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (req.method === 'POST' && req.url === '/search/query') {
-      const access = authorizeOptional(req, res, 'search:read'); if (!access) return;
+      const access = authorizeRead(req, res, 'search:read'); if (!access) return;
       const body = await readJson(req, maxBodyBytes); if (!body.query) return send(res, 400, { error: 'query is required' });
       return send(res, 200, { results: search.search(body.query, body.options ?? {}), stats: search.stats() });
     }
@@ -244,7 +249,7 @@ const server = http.createServer(async (req, res) => {
 
 server.listen(port, host, () => {
   console.log(`BL federation control plane listening on http://${host}:${port}`);
-  if (!controlAuth.configured) console.warn('Control authentication is not configured: execution and mutation endpoints remain disabled.');
+  if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
 });
 let shuttingDown = false;
 for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
@@ -271,10 +276,9 @@ function authorizeRequired(req, res, scope) {
   if (!verdict.ok) { send(res, verdict.status, { error: verdict.reason, requiredScope: scope }); return null; }
   return verdict;
 }
-function authorizeOptional(req, res, scope) {
-  const verdict = controlAuth.optionalAuthorize(req, scope);
-  if (!verdict.ok) { send(res, verdict.status, { error: verdict.reason, requiredScope: scope }); return null; }
-  return verdict;
+function authorizeRead(req, res, scope) {
+  if (publicReadScopes.has(scope)) return { ok: true, principal: controlAuth.authenticate(req), public: true };
+  return authorizeRequired(req, res, scope);
 }
 async function refreshSharedProviders({ failOnBacklog = true } = {}) {
   if (!providerStore) return null;
@@ -338,6 +342,11 @@ function parseAllowedDataClasses(raw) {
 function parseProviderSyncMode(raw) {
   const value = String(raw || '').trim().toLowerCase();
   if (!['delta','full'].includes(value)) throw new Error('BL_PROVIDER_SYNC_MODE must be delta or full');
+  return value;
+}
+function parseRateLimitMode(raw) {
+  const value = String(raw || '').trim().toLowerCase();
+  if (!['shared','memory'].includes(value)) throw new Error('BL_RATE_LIMIT_MODE must be shared or memory');
   return value;
 }
 function positiveEnvInt(name, fallback, max) {
