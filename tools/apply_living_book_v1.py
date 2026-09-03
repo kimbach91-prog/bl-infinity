@@ -5,6 +5,7 @@ from __future__ import annotations
 import base64
 import hashlib
 import io
+import json
 import zipfile
 from pathlib import Path
 
@@ -50,6 +51,19 @@ def main() -> None:
             target = ROOT / rel
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_bytes(data)
+
+    # The reader schema uses `file`; the publication validator accepts `src`.
+    # Preserve the canonical field and add an explicit compatibility alias.
+    manifest_path = ROOT / "books" / "bieu-tuong-va-ban-chat" / "book.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    for chapter in manifest.get("chapters", []):
+        if "file" not in chapter:
+            raise SystemExit("LIVING_BOOK_CHAPTER_FILE_MISSING")
+        chapter.setdefault("src", chapter["file"])
+    manifest_path.write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
 
     print(f"Applied living book release: {len(FILES)} verified source files")
 
