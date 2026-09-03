@@ -155,12 +155,13 @@ pgtest('shared provider liveness cannot mutate signed authority and revocation p
   const stored = await store.put(signed, { source: 'test-bootstrap' });
   assert.equal(stored.status, 'disabled');
   assert.equal(stored.runtime.heartbeatRequired, true);
+  assert.equal(stored.telemetry.trust, 0.5);
   const grantHash = stored.runtime.grantHash;
 
   const heartbeat = await store.heartbeat('shared-live', { inFlight: 2, trust: 1 });
   assert.equal(heartbeat.status, 'active');
   assert.equal(heartbeat.telemetry.inFlight, 2);
-  assert.equal(heartbeat.telemetry.trust, 0.4);
+  assert.equal(heartbeat.telemetry.trust, 0.5);
   assert.equal(heartbeat.runtime.grantHash, grantHash);
   assert.deepEqual(heartbeat.capabilities, ['compute.echo']);
 
