@@ -1,5 +1,6 @@
 import http from 'node:http';
 import { ReplayGuard, verifyWorkerEnvelope } from '../lib/protocol.mjs';
+import { createProviderHeartbeatClientFromEnv } from './heartbeat.mjs';
 import { safeDefaultHandlers } from './handlers.mjs';
 
 export function createWorkerServer({ handlers = safeDefaultHandlers, sharedSecret = process.env.BL_FEDERATION_SHARED_SECRET, requireAuth = true, maxConcurrency = Number(process.env.BL_WORKER_MAX_CONCURRENCY || 2), maxBodyBytes = Number(process.env.BL_WORKER_MAX_BODY_BYTES || 1_048_576) } = {}) {
@@ -8,7 +9,7 @@ export function createWorkerServer({ handlers = safeDefaultHandlers, sharedSecre
   let inFlight = 0;
   const completed = new Map();
   const maxCompleted = Number(process.env.BL_WORKER_IDEMPOTENCY_ENTRIES || 10000);
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     setJson(res);
     if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, service: 'bl-federation-worker', inFlight, maxConcurrency });
     if (req.method === 'GET' && req.url === '/v1/capabilities') return send(res, 200, { capabilities: [...handlerMap.keys()].sort() });
@@ -33,8 +34,32 @@ export function createWorkerServer({ handlers = safeDefaultHandlers, sharedSecre
     } catch (error) { return send(res, 500, { error: error.message }); }
     finally { inFlight -= 1; }
   });
+  server.getFederationState = () => ({ inFlight, maxConcurrency, capabilities: [...handlerMap.keys()].sort() });
+  return server;
 }
-export function startWorkerFromEnv() { const port = Number(process.env.PORT || 8790), host = process.env.HOST || '127.0.0.1'; const server = createWorkerServer(); server.listen(port, host, () => console.log(`BL federation worker listening on http://${host}:${port}`)); return server; }
+
+export function startWorkerFromEnv() {
+  const port = Number(process.env.PORT || 8790), host = process.env.HOST || '127.0.0.1';
+  const server = createWorkerServer();
+  let heartbeat = null;
+  server.listen(port, host, () => {
+    console.log(`BL federation worker listening on http://${host}:${port}`);
+    try {
+      heartbeat = createProviderHeartbeatClientFromEnv({ getInFlight: () => server.getFederationState().inFlight });
+      if (heartbeat) {
+        heartbeat.start();
+        console.log('BL federation worker heartbeat enabled');
+      }
+    } catch (error) {
+      console.error(`BL federation worker heartbeat configuration failed: ${error.message}`);
+      process.exitCode = 1;
+      server.close();
+    }
+  });
+  server.once('close', () => heartbeat?.stop());
+  return server;
+}
+
 async function readBody(req, maxBytes) { let size = 0; const chunks = []; for await (const chunk of req) { size += chunk.length; if (size > maxBytes) { const error = new Error('request body too large'); error.code = 'BODY_TOO_LARGE'; throw error; } chunks.push(chunk); } return Buffer.concat(chunks).toString('utf8'); }
 function setJson(res) { res.setHeader('content-type', 'application/json; charset=utf-8'); res.setHeader('cache-control', 'no-store'); }
 function send(res, status, body) { res.statusCode = status; res.end(JSON.stringify(body)); }
