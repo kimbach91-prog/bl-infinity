@@ -207,13 +207,17 @@ This logical restore drill is not a claim that production PITR is configured. Pr
 
 Search and the HTTP rate limiter are still process-local in v0.8. They are not yet a distributed search/cache/rate-limit cluster.
 
+## Repository governance gap
+
+The GitHub API currently reports `main` as unprotected, with required status checks off and no repository ruleset. The connected GitHub integration in this session does not expose an administrative write action to enable protection. This is an explicit unresolved infrastructure control, documented in `docs/BRANCH_PROTECTION.md`; CI discipline must not be mistaken for server-side enforcement.
+
 ## Production boundary
 
 CI tests the PostgreSQL adapter against an isolated PostgreSQL 16 service, including concurrent claims, budget contention, audit/ledger appenders, rollback sequence gaps, cross-pool persistence, shared provider liveness/revocation, direct heartbeat HMAC verification, cross-coordinator replay rejection, provider delta convergence, a 10k-provider row-reduction benchmark and a logical dump/restore invariant drill.
 
 This does not mean a live production database or worker fleet has been provisioned.
 
-Production still requires actual infrastructure and credentials, verified TLS, least-privilege database roles, region/data-residency approval, backup/PITR configuration, production-like restore testing, monitoring and ownership. Do not work around TLS certificate failures with permissive certificate verification.
+Production still requires actual infrastructure and credentials, verified TLS, least-privilege database roles, region/data-residency approval, backup/PITR configuration, production-like restore testing, monitoring, repository branch protection and ownership. Do not work around TLS certificate failures with permissive certificate verification.
 
 Vercel routing is stateless and intentionally does not pretend to be a durable queue/search cluster. Do not depend on serverless local filesystem persistence.
 
@@ -221,4 +225,4 @@ Endpoint DNS/IP checks reduce SSRF exposure but are not a substitute for product
 
 The project does not use GitHub Actions, public endpoints, free tiers, browsers, visitor devices or third-party machines as a covert compute farm. A resource becomes a node only through an explicit revocable grant.
 
-See `docs/RESOURCE_SOVEREIGNTY.md`, `docs/PROVIDER_PROTOCOL.md`, `docs/PROVIDER_REGISTRY.md`, `docs/WORKER_HEARTBEAT.md`, `docs/REGISTRY_SCALE.md`, `docs/RESTORE_DRILL.md`, `docs/DEPLOY.md`, `docs/FAILURE_SEMANTICS.md`, `docs/NETWORK_SECURITY.md`, `docs/DURABILITY.md`, and `docs/POSTGRES.md`.
+See `docs/RESOURCE_SOVEREIGNTY.md`, `docs/PROVIDER_PROTOCOL.md`, `docs/PROVIDER_REGISTRY.md`, `docs/WORKER_HEARTBEAT.md`, `docs/REGISTRY_SCALE.md`, `docs/RESTORE_DRILL.md`, `docs/BRANCH_PROTECTION.md`, `docs/DEPLOY.md`, `docs/FAILURE_SEMANTICS.md`, `docs/NETWORK_SECURITY.md`, `docs/DURABILITY.md`, and `docs/POSTGRES.md`.
