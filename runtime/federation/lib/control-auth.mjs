@@ -69,7 +69,7 @@ export class ControlAuthenticator {
     this.entries = new Map();
     this.configured = false;
     if (legacyToken) {
-      if (typeof legacyToken !== 'string' || legacyToken.length < 16) throw new Error('BL_CONTROL_TOKEN must contain at least 16 characters when configured');
+      if (typeof legacyToken !== 'string') throw new Error('BL_CONTROL_TOKEN must be a string when configured');
       this.entries.set(fingerprintToken(legacyToken), Object.freeze({ id: 'legacy-root', tenantId: '*', scopes: Object.freeze(['*']), authType: 'legacy-root' }));
       this.configured = true;
     }
