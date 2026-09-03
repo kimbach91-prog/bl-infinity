@@ -1,0 +1,11 @@
+export class CircuitBreakerBook {
+  constructor({ failureThreshold = 3, cooldownMs = 30_000, halfOpenSuccesses = 1 } = {}) { this.failureThreshold = failureThreshold; this.cooldownMs = cooldownMs; this.halfOpenSuccesses = halfOpenSuccesses; this.map = new Map(); }
+  state(providerId, now = Date.now()) { const c = this.#ensure(providerId); if (c.state === 'open' && now >= c.openUntil) { c.state = 'half-open'; c.halfOpenInFlight = false; c.halfOpenSuccessCount = 0; } return structuredClone(c); }
+  allow(providerId, now = Date.now()) { const c = this.#ensure(providerId); if (c.state === 'open' && now >= c.openUntil) { c.state = 'half-open'; c.halfOpenInFlight = false; c.halfOpenSuccessCount = 0; } if (c.state === 'open') return { ok: false, reason: 'circuit-open', retryAt: c.openUntil }; if (c.state === 'half-open' && c.halfOpenInFlight) return { ok: false, reason: 'circuit-half-open-probe-in-flight' }; if (c.state === 'half-open') c.halfOpenInFlight = true; return { ok: true, state: c.state }; }
+  success(providerId) { const c = this.#ensure(providerId); if (c.state === 'half-open') { c.halfOpenInFlight = false; c.halfOpenSuccessCount += 1; if (c.halfOpenSuccessCount >= this.halfOpenSuccesses) this.#close(c); } else { c.consecutiveFailures = 0; c.lastSuccessAt = Date.now(); } return structuredClone(c); }
+  failure(providerId, now = Date.now()) { const c = this.#ensure(providerId); c.lastFailureAt = now; if (c.state === 'half-open') { c.halfOpenInFlight = false; this.#open(c, now); return structuredClone(c); } c.consecutiveFailures += 1; if (c.consecutiveFailures >= this.failureThreshold) this.#open(c, now); return structuredClone(c); }
+  snapshot() { return Object.fromEntries([...this.map].map(([id,c]) => [id, structuredClone(c)])); }
+  #ensure(id) { if (!this.map.has(id)) this.map.set(id, { state: 'closed', consecutiveFailures: 0, openUntil: 0, halfOpenInFlight: false, halfOpenSuccessCount: 0, lastFailureAt: null, lastSuccessAt: null }); return this.map.get(id); }
+  #open(c, now) { c.state = 'open'; c.openUntil = now + this.cooldownMs; c.halfOpenInFlight = false; c.halfOpenSuccessCount = 0; }
+  #close(c) { c.state = 'closed'; c.consecutiveFailures = 0; c.openUntil = 0; c.halfOpenInFlight = false; c.halfOpenSuccessCount = 0; c.lastSuccessAt = Date.now(); }
+}
