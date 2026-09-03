@@ -46,6 +46,36 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Test memory, SQLite, network and PostgreSQL lanes
         run: npm test
+      - name: Seed deterministic restore fixture
+        run: node scripts/seed-restore-fixture.mjs
+      - name: PostgreSQL 16 logical dump and restore drill
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f restore.dump
+          docker run --rm --network host \
+            -e PGPASSWORD=postgres \
+            -v "$PWD:/work" \
+            postgres:16-alpine \
+            pg_dump -h 127.0.0.1 -U postgres -d blcf_test -Fc -f /work/restore.dump
+          docker run --rm --network host \
+            -e PGPASSWORD=postgres \
+            postgres:16-alpine \
+            psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "DROP DATABASE IF EXISTS blcf_restore WITH (FORCE);"
+          docker run --rm --network host \
+            -e PGPASSWORD=postgres \
+            postgres:16-alpine \
+            psql -h 127.0.0.1 -U postgres -d postgres -v ON_ERROR_STOP=1 \
+            -c "CREATE DATABASE blcf_restore;"
+          docker run --rm --network host \
+            -e PGPASSWORD=postgres \
+            -v "$PWD:/work" \
+            postgres:16-alpine \
+            pg_restore -h 127.0.0.1 -U postgres -d blcf_restore --no-owner --no-privileges /work/restore.dump
+          BL_RESTORE_VERIFY_URL=postgresql://postgres:postgres@127.0.0.1:5432/blcf_restore \
+            node scripts/verify-postgres-restore.mjs
+          rm -f restore.dump
       - name: Syntax check
         run: |
           find . -name '*.mjs' -type f -print0 | xargs -0 -n1 node --check
