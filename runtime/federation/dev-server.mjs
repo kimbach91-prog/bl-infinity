@@ -9,6 +9,7 @@ import { TokenBucketLimiter } from './lib/rate-limit.mjs';
 import { hasControlAccess } from './lib/control-auth.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
 import { openPostgresFederationState } from './lib/postgres-state.mjs';
+import { assertPostgresSchema } from './lib/postgres-readiness.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -64,12 +65,14 @@ for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(s
 async function loadDurableState(budget) {
   if (process.env.BL_POSTGRES_URL) {
     const allowedDataClasses = parseAllowedDataClasses(process.env.BL_POSTGRES_ALLOWED_DATA_CLASSES || 'public');
+    const autoMigrate = process.env.BL_POSTGRES_AUTO_MIGRATE === 'true';
     const state = await openPostgresFederationState({
       connectionString: process.env.BL_POSTGRES_URL,
-      applySchema: process.env.BL_POSTGRES_AUTO_MIGRATE === 'true',
+      applySchema: autoMigrate,
       budget,
       poolOptions: { max: Number(process.env.BL_POSTGRES_POOL_MAX || 10) },
     });
+    if (!autoMigrate) await assertPostgresSchema(state.pool);
     return { state, backend: 'postgres', allowedDataClasses };
   }
   if (process.env.BL_STATE_DB) return { state: createSqliteFederationState(process.env.BL_STATE_DB, { budget }), backend: 'sqlite', allowedDataClasses: null };
