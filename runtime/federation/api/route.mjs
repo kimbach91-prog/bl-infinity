@@ -1,13 +1,19 @@
-import providers from "../config/providers.example.json" with { type: "json" };
-import { ProviderRegistry, planRoute } from "../lib/fabric.mjs";
+import { ProviderRegistry, planRoute } from '../lib/fabric.mjs';
 
-const registry = new ProviderRegistry(providers);
+function providersFromEnv() {
+  const raw = process.env.BL_PROVIDERS_JSON;
+  if (!raw) return [];
+  const parsed = JSON.parse(raw);
+  if (!Array.isArray(parsed)) throw new Error('BL_PROVIDERS_JSON must be an array');
+  return parsed;
+}
 
 export default async function handler(req, res) {
-  if (req.method !== "POST") return res.status(405).json({ error: "POST required" });
+  res.setHeader('cache-control', 'no-store');
+  if (req.method !== 'POST') return res.status(405).json({ error: 'method not allowed' });
   try {
-    const plan = planRoute(registry, req.body ?? {});
-    return res.status(200).json(plan);
+    const registry = new ProviderRegistry(providersFromEnv());
+    return res.status(200).json(planRoute(registry, req.body ?? {}));
   } catch (error) {
     return res.status(400).json({ error: error.message });
   }
