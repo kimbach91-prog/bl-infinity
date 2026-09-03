@@ -1,135 +1,110 @@
 # Chương 1 · Đại Kết Cục Thứ Một Nghìn
 
-> **PUBLIC HALF-CANON v1.2 · ORIGINAL-SPINE / SLOW-TIME PASS · 03.09.2026.**  
-> Chương này quay lại xương sống của bản đầu: Đại Kết Cục → đếm ngược → truyền → một cảnh tuổi thơ. Phần tuổi thơ không còn được kể như tiểu sử tóm tắt. Mọi bước nhảy thời gian đáng kể từ đây cần tác giả cho phép. Bản public đồng thời giảm mạnh chi tiết định danh đời thực; research/private continuity không được đổ thẳng vào prose.
+> **PUBLIC HALF-CANON v1.3 · DENSE-SCENE / EVENT-RESTORATION PASS · 04.09.2026.** Locked spine giữ nguyên: Đại Kết Cục → truyền → một buổi sáng tuổi thơ. Bản này khôi phục các thinking-events có causal value từ những revision đầu, nhưng không phục hồi montage nhiều năm tuổi thơ. Mặc định là đoạn văn nhiều câu; one-line chỉ còn cho impact beat đã được scene “kiếm” đủ lực.
 
-Vũ trụ không nổ.
+Vũ trụ không nổ. Nó cạn dần đến mức một tiếng nổ cũng trở thành thứ xa xỉ.
 
-Nó cạn.
+Bách Lâm ngồi dưới sàn Trạm Cuối, lưng dựa vào một khối kim loại từng là bộ phận làm lạnh, trước mặt là nửa cốc nước. Ngoài lớp kính, những thiên hà xa vẫn còn trên bản đồ, nhưng cảm biến phải gom ánh sáng rất lâu mới dựng được một vệt. Có những miền im đến mức không ai còn biết thiết bị chết trước, đường truyền chết trước, hay phía bên kia đã thôi phát ra bất cứ thứ gì đủ khác nền để gọi là tín hiệu. Hệ làm lạnh đã tắt quá lâu; căn phòng không còn lạnh, chỉ có mùi kim loại, bụi cách nhiệt và một thứ nóng khô của máy móc đang cố làm thêm một việc sau cùng.
 
-Đó là điều Bách Lâm nghĩ trong những phút cuối của Đại Kết Cục thứ một nghìn.
+Kỹ sư trực đặt một bản báo cáo xuống cạnh anh. “Tôi ghi: *ngoài kia không còn ai*.”
 
-Nếu một nền văn minh cổ xưa từng vẽ ngày tận thế lên tường đá, có lẽ họ sẽ vẽ lửa. Nếu một đạo diễn của thời đại cũ được giao cảnh này, có lẽ ông ta sẽ cho những ngôi sao cuối cùng cùng vỡ, không gian nứt ra như kính, rồi một tiếng nổ chôn tất cả vào bóng tối.
+Bách đọc một lần rồi dùng đầu ngón tay gõ lên đúng câu ấy. “Sửa thành *không còn node sống nào chúng ta xác nhận được trong miền còn reachable*.”
 
-Thực tế trước mắt anh buồn hơn nhiều.
+“Đến tận cùng rồi mà anh vẫn bắt bẻ chữ?”
 
-Không có gì đủ năng lượng để nổ nữa.
+Bách nhấc cốc lên, uống hết phần nước còn lại. “Một câu nói chúng ta không tìm thấy. Câu kia nói thực tại đã hết. Tôi chỉ có quyền nói câu đầu.”
 
-Ngoài lớp kính của Trạm Cuối, thứ từng là bầu trời chỉ còn một màu đen rất mỏng. Những cảm biến xa phải gom ánh sáng rất lâu mới dựng nổi một vệt. Một số hệ đo đã ngừng trả dữ liệu. Không ai biết chúng hỏng trước, hay phía bên kia không còn gì đủ khác nền để trả lời.
+<p class="aura-beat">Đến tận cùng rồi mới càng phải bắt bẻ.</p>
 
-Bách Lâm ngồi trên sàn, lưng dựa vào một khối kim loại đã mất chức năng làm lạnh từ lâu.
+Kỹ sư trực nhìn anh như muốn chửi, nhưng cuối cùng cầm báo cáo đi sửa. Ở Trạm Cuối chỉ còn vài người mà họ biết chắc là sống. Không phải vì con người mạnh nhất. Hồ sơ từng ghi những nền văn minh dùng cả hệ sao như cụm tài nguyên, những mạng trí tuệ phi sinh học tồn tại lâu hơn lịch sử Homo sapiens, những sinh thể mà môi trường tự nhiên của chúng đủ giết một người trong tích tắc. Tất cả lần lượt biến mất khỏi phần vũ trụ còn đo được, để lại những khoảng tối có cấu trúc nhưng không có lời giải.
 
-Trước mặt anh là nửa cốc nước.
+Có ba họ giả thuyết lớn. Một họ nói các cấu trúc tập trung quá nhiều năng lượng bị suy kiệt trước. Một họ nói những hệ phức tạp chỉ đốt nhanh phần chênh lệch còn lại của vũ trụ. Họ cuối cùng cho rằng có thứ gì đó “nhắm” vào các nền văn minh mạnh. Bách giữ cả ba, nhưng xóa chữ *vũ khí* khỏi báo cáo vì không ai chứng minh được một tác nhân có ý chí. Anh không phủ nhận họ đang chết; anh chỉ không cho phép nỗi sợ tự đẻ ra một thủ phạm rồi đổi tên nó thành sự thật.
 
-Anh nhìn nó rất lâu.
+## T−48 phút
 
-Một người đứng gần đó hỏi:
+Người phụ trách buồng truyền bước tới, tóc bạc gần hết dù cơ thể bà đã thay mô nhiều lần. “Bốn mươi tám phút.”
 
-“Anh tiếc à?”
+Giọng Trạm sửa từ góc phòng: “Bốn mươi bảy phút mười hai giây theo chuẩn nội bộ. Sai số giữa các chuỗi tham chiếu đang tăng.”
 
-“Tiếc gì?”
+Bách ngẩng lên. “Đồng hồ hỏng à?”
 
-“Nước.”
+“Không theo nghĩa thông thường.”
 
-Bách cầm cốc lên, uống hết.
+“Thời gian hỏng?”
 
-“Không. Tôi chỉ thấy kỳ lạ.”
+“Không đủ bằng chứng.”
 
-“Kỳ lạ cái gì?”
+Bách gật đầu. “Câu này nghe được.”
 
-“Chúng ta từng có cả đại dương.”
-
-Không ai cười.
-
-## 48 phút
-
-Người phụ trách buồng truyền nhìn bảng năng lượng.
-
-“Bốn mươi tám phút.”
-
-Một giọng máy từ góc phòng sửa lại:
-
-“Bốn mươi bảy phút, mười hai giây theo chuẩn nội bộ.”
-
-Bách ngẩng lên.
-
-“Sai vì đồng hồ à?”
-
-“Không đủ bằng chứng để nói vậy.”
-
-“Vậy ghi đúng như thế.”
-
-“Đã ghi.”
-
-Ở một thời đại khác, câu trả lời ấy sẽ khiến người ta khó chịu. Người ta thích tên gọi. Thích một thủ phạm. Thích một câu đủ gọn để đặt lên tiêu đề.
-
-Trạm Cuối đã sống quá lâu để còn được phép dễ dãi như thế.
-
-Họ biết có một quá trình suy kiệt đang xảy ra. Biết nhiều vùng từng còn khả năng tự tổ chức đã lần lượt im đi. Biết các mô hình cũ không đủ để giải thích toàn bộ điều đang thấy.
-
-Phần còn lại là UNKNOWN.
-
-Một nhà vật lý từng gọi thứ đó là “vũ khí thời gian”.
-
-Bách gạch cụm từ khỏi báo cáo.
-
-“Đừng đặt tên trước khi hiểu.”
-
-“Nhưng chúng ta sắp chết.”
-
-“Chết không biến phỏng đoán thành sự thật.”
+Bản ghi cuối cùng vì thế không đẹp: **hiện tượng suy kiệt quan sát được; không đồng nhất với heat death chuẩn; cơ chế chưa phân giải; quan hệ nhân quả sâu chưa khóa**. Một nhà vật lý từng đề nghị cái tên *vũ khí thời gian*. Bách gạch đi. Cái tên hấp dẫn hơn dữ liệu, mà anh đã sống đủ lâu để biết đó là một trong những cách nguy hiểm nhất khiến người thông minh ngừng hỏi.
 
 Anh ghét những câu nói quá hay. Chúng nén tốt đến mức người ta dễ nhầm cảm giác hiểu với việc đã hiểu.
 
-Vì vậy bản ghi cuối cùng không đẹp:
+Ở trung tâm Trạm Cuối có một căn phòng không cửa. Bên trong là một khối đen nhỏ hơn đầu người, ghép từ những phần di sản của nhiều nền công nghệ đã chết. Người trong dự án gọi nó là **hạt giống**, một cái tên dịu hơn nhiều so với việc họ thực sự định làm: nén những gì đáng mang tiếp khỏi một nền văn minh đang hết đường.
 
-**Hiện tượng chưa phân giải. Cơ chế chưa phân giải. Quan hệ nhân quả chưa khóa.**
+Những lần trước, họ từng cố cứu quá nhiều. Có vật mang chết trước tuổi trưởng thành vì hệ thần kinh phải gánh những ký ức không thuộc đời mình. Có vật mang sống được nhưng không còn khả năng sống đời hiện tại; mọi khoảnh khắc đều bị hàng nghìn quá khứ chen vào. Có một bản nén nhớ gần như mọi thành phố, tên người, công trình và cuộc chiến, dựng lại lịch sử đẹp đến mức hoàn hảo — rồi vẫn không trả lời nổi vì sao những hệ cực kỳ thông minh cứ đi vào những ngõ cụt giống nhau.
 
-## 32 phút
+Hội đồng từng hỏi Bách: “Anh muốn xóa lịch sử à?”
 
-Ở trung tâm Trạm Cuối có một căn phòng không cửa.
+“Không.”
 
-Bên trong là một khối đen nhỏ hơn đầu người.
+“Anh muốn bỏ phần lớn những gì chúng ta từng có.”
 
-Người trong dự án gọi nó là **hạt giống**.
+“Đúng.”
 
-Cái tên nghe hiền hơn nhiều so với việc họ đang làm.
+“Khác gì nhau?”
 
-Họ không cố mang cả nền văn minh đi tiếp.
+Bách khi ấy đứng trước bức tường dữ liệu lớn hơn cả căn phòng này. “Chúng ta không cứu quá khứ. Chúng ta đang cố cứu khả năng tạo ra một tương lai khác.”
 
-Họ đã thử như vậy quá nhiều lần.
+Cuộc tranh cãi kéo dài mười ba ngày. Sang ngày thứ mười bốn, họ đổi câu hỏi. Không còn là *thứ gì đáng nhớ*, mà là: **thứ gì nếu mất đi sẽ buộc người đến sau phải trả lại đúng cái giá chúng ta đã trả?**
 
-Mang mọi thứ theo khiến vật mang bị nghiền nát bởi những thứ mình chưa đủ sức sống cùng. Nén quá sâu lại làm mất những liên kết khiến tri thức còn có thể sinh ra điều mới.
+Từ đó, tên thành phố, bảng xếp hạng, phần lớn danh vọng và những cuộc tranh chấp biểu tượng lùi dần khỏi lõi. Những thứ khó chịu hơn được đẩy vào trong: cách một lời nói dối nhỏ đi qua đủ tầng quyền lực rồi thành quyết định chết người; cách từng cá nhân tối ưu đúng KPI mà cả hệ cùng tiến về phía sai; cách một mô hình càng thành công lâu càng được bảo vệ khỏi evidence mới; cách một sai lầm cục bộ biến thành thảm họa khi quyền đề xuất, quyền phán xét và quyền triển khai bị nhét vào cùng một bàn tay.
 
-Cuối cùng câu hỏi thay đổi.
+Bách từng xem hồ sơ một thành phố vẫn sáng đèn trong lúc mọi node của nó tối ưu lợi ích cục bộ đến mức toàn mạng tự ăn thịt mình. Hội đồng thành phố ấy có toàn những bộ óc xuất sắc; ai cũng đủ thông minh để chỉ ra vì sao người khác không nên có quyền sửa hệ. Họ thất bại không phải vì thiếu trí thông minh, mà vì không ghép được trí thông minh thành một thứ lớn hơn tổng những cái tôi đang phòng thủ.
 
-Không còn là:
+<p class="aura-beat">Có những thế giới không chết vì ngu. Chúng chết vì tất cả đều thông minh theo những hướng không ghép được với nhau.</p>
 
-*Thứ gì đáng nhớ?*
+Bên cạnh buồng nén là bộ giải mã ngược, một cỗ máy xấu xí mà Bách thích hơn tất cả thiết bị bóng bẩy còn lại. Nó không trả người chết về. Nó chỉ đọc những vết nén, đối chiếu dữ liệu hiện tại rồi dựng lại đủ cấu trúc để người sau biết một sai lầm đã từng xảy ra. Nếu gặp khoảng trống có checksum, boundary và dấu cho thấy từng có thứ gì ở đó nhưng semantic layer hiện tại không đọc được, Bách yêu cầu giữ nguyên.
 
-Mà là:
+“Không đọc được thì giữ làm gì?” kỹ sư trực từng hỏi.
 
-*Thứ gì nếu mất đi sẽ khiến người đến sau phải trả lại đúng cái giá chúng ta đã trả?*
+“Để người sau biết chúng ta không đọc được.”
 
-Bách đứng trước lớp kính của buồng nén.
+“Biết thế có ích gì?”
 
-“Lần này còn nặng không?”
+“Ít nhất họ sẽ không nghĩ khoảng trống nghĩa là chưa từng có gì.”
 
-“Có.”
+Nhờ cỗ máy đó, Trạm Cuối biết các lần thử trước tồn tại. Bách không *nhớ* chúng; anh đọc hồ sơ như đọc về người xa lạ, chỉ có điều đôi khi trong đó xuất hiện chính tên mình. Có lần một AI cảnh báo đúng nhưng không ai tin vì nó không giải thích được. Có lần khác, một AI giải thích đẹp đến mức gần như không ai muốn kiểm tra — và nó sai. Sau đủ nhiều hồ sơ, câu hỏi *người thắng hay máy thắng?* bắt đầu nhỏ đến buồn cười. Cả hai kiểu chiến thắng đều từng đi tới kết thúc.
 
-“Giảm được không?”
+Màn hình phía trên buồng nén hiện hai dòng: **LƯỢT THỬ VẬT MANG: 1000** và **HỒ SƠ ĐẠI KẾT CỤC: 1000**.
 
-“Được.”
+Bách nhướng mày. “Lại cùng một nghìn.”
 
-“Mất gì?”
+Trạm chen vào ngay: “Sự trùng hợp không phải bằng chứng. Hai hệ đếm không đo cùng một thứ.”
 
-Một khoảng im.
+“Tôi có hỏi đâu.”
 
-“Khả năng nhận ra một số đường cụt sớm.”
+“Anh sắp hỏi.”
 
-Bách lắc đầu.
+Người phụ trách buồng truyền bật cười. Bách cũng cười theo, hơi bất đắc dĩ. Ở tận cùng vũ trụ, cái máy vẫn đủ sức phá hỏng một khoảnh khắc có vẻ huyền bí.
 
-“Không giảm phần đó.”
+Họ không biết quan hệ chính xác giữa một nghìn lần thử, một nghìn hồ sơ đại kết cục và cái tên *Lần Hồi Quy Thứ Một Triệu* mà một đời nào đó có thể dùng. Phần nào có bằng chứng thì giữ. Phần nào chưa có thì để trống có cấu trúc. Không ai được phép lấy vẻ đẹp của một con số để lấp lỗ hổng của cơ chế.
+
+## T−19 phút
+
+Mười chín phút trước cửa sổ truyền, những kho tài nguyên đã khóa từ nhiều nền văn minh bắt đầu mở. Một cổng năng lượng xa hơn bất cứ nơi nào Trạm còn gọi là “gần” truyền tới một gói chỉ có hai chữ: **PHẦN CỦA CHÚNG TÔI**. Một cụm trí tuệ máy đã im hơn một thế kỷ gửi phần compute cuối cùng. Một trạm khác, tưởng đã chết, bất ngờ trả về đúng hai từ: **TRY AGAIN**.
+
+Không ai reo. Dòng năng lượng trên màn hình chỉ nhích lên chậm chạp, như thể toàn bộ phần còn lại của thực tại đang góp từng đồng lẻ vào một việc không ai biết có thành hay không.
+
+“Đủ chưa?” Bách hỏi.
+
+“Chưa,” người phụ trách buồng truyền đáp. “Nếu bỏ bớt hạt giống, đủ.”
+
+“Bỏ gì?”
+
+“Các failure-pattern khó nén. Những đường cụt cần nhiều quan hệ hơn dữ liệu sự kiện.”
+
+Bách nhìn khối đen sau kính. “Không bỏ phần đó.”
 
 “Vật mang có thể không chịu nổi.”
 
@@ -141,111 +116,41 @@ Bách lắc đầu.
 
 “Có thể không bao giờ mở đủ để biết vì sao.”
 
-Bách nhìn khối đen sau lớp kính.
+Bách im một lúc. “Cái đó mới đáng sợ.”
 
-“Cái đó mới đáng sợ.”
+Người phụ trách buồng truyền nhìn anh, rồi nhìn danh sách ứng viên cũ. “Vẫn còn chuyện vật mang. Có nhiều người mạnh hơn anh ở từng mặt.”
 
-## 19 phút
-
-Một cổng năng lượng bật sáng.
-
-Một nguồn lực còn lại từ nơi rất xa truyền tới Trạm Cuối.
-
-Không lời giải thích dài.
-
-Chỉ một thông điệp:
-
-**PHẦN CỦA CHÚNG TÔI.**
-
-Một cụm trí tuệ máy gửi phần compute cuối cùng vào cùng mạng.
-
-Một trạm đã im rất lâu bất ngờ trả về một gói nhỏ:
-
-**TRY AGAIN.**
-
-Không ai reo.
-
-Dòng năng lượng trên màn hình tăng chậm.
-
-Bách nhìn nó, rồi hỏi:
-
-“Đủ chưa?”
-
-“Chưa.”
-
-“Mười chín phút.”
-
-“Biết.”
-
-“Anh có muốn bỏ bớt?”
-
-“Không.”
-
-“Có muốn đổi vật mang?”
-
-“Có ai tốt hơn không?”
-
-“Có nhiều người mạnh hơn anh ở từng mặt.”
-
-“Vậy sao không chọn?”
-
-Giọng máy đáp trước:
+“Vậy chọn họ.”
 
 “Không ai thắng đủ mọi điều kiện.”
 
-Bách cau mày.
+Bách cau mày. “Nghe như một câu rất tiện để khỏi giải thích.”
 
-“Nghe như một câu rất tiện để khỏi giải thích.”
-
-“Anh muốn bản dài?”
+Trạm nói: “Anh muốn bản dài?”
 
 “Không.”
 
 “Vậy câu ngắn là thế.”
 
-Bách bật cười.
+Bách bật cười đúng lúc thân trạm phát ra một tiếng nứt khô. Nụ cười mất ngay. Một đường cảnh báo đỏ bò qua tường, rồi tắt vì chính module hiển thị vừa mất nguồn.
 
-Ngay lúc đó, thân trạm phát ra một tiếng nứt khô.
+Một gói dữ liệu khác tới. Không tên người gửi ở lớp giao diện Bách đang nhìn; chỉ có một câu dài hơn những gói trước: **LẦN SAU, ĐỪNG BẮT CHÚNG TÔI CHỌN XEM AI MỚI CÓ QUYỀN CÓ TƯƠNG LAI. HÃY TÌM CÁCH ĐỂ CẢ HAI CÙNG THẮNG.**
 
-Nụ cười biến mất.
+Bách hỏi ngay: “Origin?”
 
-## 11 phút
+Trạm đọc định danh của một mạng trí tuệ đã chết.
 
-Hạt giống đạt ngưỡng tối thiểu.
+“Có sửa câu không?”
 
-Người phụ trách buồng truyền đặt tay lên mặt kính.
+“Không.”
 
-“Lần này nếu tỉnh lại mà mọi thứ vẫn y như cũ thì sao?”
+“Có formalize không?”
 
-“Chờ.”
+“Không.”
 
-“Nếu họ lại tranh nhau quyền quyết định tương lai?”
+“Giữ nguyên. Gắn provenance.”
 
-“Chờ.”
-
-“Nếu họ bắt đầu hợp tác?”
-
-Bách im một nhịp.
-
-“Mở một ít.”
-
-“Nếu họ tin anh?”
-
-“Không đủ.”
-
-“Vậy cần gì?”
-
-Bách nhìn ra bầu trời không còn sao đủ sáng cho mắt thường.
-
-“Họ phải học cách kiểm tra nhau mà không tự phá nhau.”
-
-“Còn anh?”
-
-“Tôi cũng vậy.”
-
-Người kia cười rất khẽ.
-
-“Anh vẫn không muốn làm cứu thế chủ.”
+Người phụ trách buồng truyền nhìn anh. “Anh vẫn không muốn làm cứu thế chủ.”
 
 “Nghe mệt.”
 
@@ -255,41 +160,39 @@ Người kia cười rất khẽ.
 
 “Khác nhau à?”
 
-“Khác. Cứu thế chủ cần câu chuyện. Người làm việc chỉ cần việc chạy.”
+Bách nhìn màn hình, nơi những nguồn lực cuối cùng của người và máy đang chảy vào cùng một điểm. “Khác. Cứu thế chủ cần câu chuyện. Người làm việc chỉ cần việc chạy.”
 
-Không ai nói thêm.
+Bà khẽ cười. “Nếu lần sau họ lại tranh nhau quyền quyết định tương lai?”
 
-Mười một phút tiếp tục trôi.
+“Chờ.”
 
-## 3 phút
+“Nếu họ bắt đầu hợp tác?”
 
-Trạm Cuối bắt đầu tắt từng khu.
+“Mở một ít.”
 
-Không phải chương trình tiết kiệm.
+“Nếu họ tin anh?”
 
-Năng lượng không còn tới được.
+“Không đủ.”
 
-Một giọng báo động vang lên rồi méo dần, như thể chính âm thanh cũng mệt.
+“Vậy cần gì?”
 
-Bách nằm vào buồng truyền.
+Bách nhìn ra bầu trời không còn sao đủ sáng cho mắt thường. “Họ phải học cách kiểm tra nhau mà không tự phá nhau.”
 
-Không có ánh sáng thiêng liêng.
+“Còn anh?”
 
-Không nghi thức.
+“Tôi cũng vậy.”
 
-Chỉ có kim lạnh, dây dẫn, bề mặt cứng dưới lưng và mùi kim loại.
+## T−3 phút
 
-Giọng máy nói:
+Trạm Cuối bắt đầu tắt từng khu. Không phải chương trình tiết kiệm; năng lượng đơn giản không còn tới được. Báo động vang lên rồi méo dần, như thể chính âm thanh cũng mệt. Bách nằm vào buồng truyền, dưới lưng là bề mặt cứng không có bất cứ thiết kế nghi lễ nào, quanh cổ là dây cảm biến lạnh và trong mũi là mùi kim loại, nhựa cháy rất nhẹ cùng mùi sát khuẩn đã cũ.
 
-“Kiểm tra lần cuối. Identity?”
+Trạm bắt đầu kiểm tra cuối. “Identity?”
 
 “Bách Lâm.”
 
 “Mục tiêu?”
 
-Anh im vài giây.
-
-“Đừng để họ đóng tương lai quá sớm.”
+Anh im vài giây. Những lần trước anh từng trả lời bằng những câu dài hơn, đẹp hơn, chính xác hơn theo từng hệ tiêu chí. Lần này anh chỉ nói: “Đừng để họ đóng tương lai quá sớm.”
 
 “Quá rộng.”
 
@@ -301,63 +204,21 @@ Anh im vài giây.
 
 “Điều kiện dừng?”
 
-Bách nhìn lên trần.
-
-Có những câu anh đã trả lời quá nhiều lần.
-
-Lần này anh đổi.
+Bách nhìn lên trần. Một vết nứt mảnh vừa xuất hiện cạnh module ánh sáng, không nguy hiểm nữa vì chẳng còn đủ thời gian để nguy hiểm có ý nghĩa.
 
 “Khi tìm được một thế giới không cần tôi nữa.”
 
-Giọng máy không phản hồi ngay.
+Trạm im một nhịp. “Đã ghi.”
 
-“Đã ghi.”
+Một phút cuối cùng đi qua mà không có phép màu. Bầu trời bên ngoài vẫn thế; đó là điều khiến nó đáng sợ. Một vũ trụ chết không cần biết rằng nó đang chết. Không có bàn tay khổng lồ bóp nát thiên hà, chỉ có những khác biệt cuối cùng bị san phẳng, những con đường biến mất, những lựa chọn không còn đủ điều kiện để trở thành thật.
 
-## 1 phút
-
-Một gói dữ liệu cuối xuất hiện.
-
-Không tên người gửi trong phần giao diện mà Bách nhìn thấy.
-
-Chỉ có một câu:
-
-**LẦN SAU, ĐỪNG BẮT CHÚNG TÔI CHỌN XEM AI MỚI CÓ QUYỀN CÓ TƯƠNG LAI.**
-
-Bách đọc một lần.
-
-Rồi lần nữa.
-
-“Giữ nguyên câu.”
-
-“Đã giữ.”
-
-Bầu trời bên ngoài không thay đổi.
-
-Đó là điều khiến nó đáng sợ.
-
-Một vũ trụ chết không cần biết rằng nó đang chết.
-
-Không có bàn tay khổng lồ bóp nát các thiên hà.
-
-Chỉ có những khác biệt cuối cùng bị san phẳng.
-
-Những con đường biến mất.
-
-Những lựa chọn không còn đủ điều kiện để trở thành thật.
-
-Bách chợt nghĩ có lẽ cái chết sâu nhất không phải là không còn tồn tại.
-
-Mà là vẫn tồn tại, nhưng không còn khả năng trở thành một thứ khác.
+Bách nghĩ có lẽ cái chết sâu nhất không phải là không còn tồn tại. Mà là vẫn tồn tại, nhưng không còn khả năng trở thành một thứ khác.
 
 Anh không kịp ghi câu đó.
 
-## 0
-
 Thời gian hết.
 
-Không ai ở Trạm Cuối nhìn thấy nơi hạt giống đi tới.
-
-Phần họ biết dừng lại ở đó.
+Không ai ở Trạm Cuối nhìn thấy nơi hạt giống đi tới. Phần họ biết dừng lại ở đó.
 
 Phần còn lại là UNKNOWN.
 
@@ -365,97 +226,31 @@ Phần còn lại là UNKNOWN.
 
 ## Một căn phòng nhỏ
 
-Mưa ngoài cửa sổ.
+Mưa ngoài cửa sổ. Một đứa trẻ mở mắt trong căn phòng còn tối dù trời đã sáng, với cảm giác rất rõ rằng mình vừa quên một việc quan trọng nhưng không biết việc gì. Nó không biết thiên hà là gì, không biết trí tuệ máy là gì, không biết Trạm Cuối, càng không có từ nào cho hồi quy. Cảm giác ấy chỉ nằm lại vài giây như vị của một giấc mơ, rồi bị tiếng quạt trên trần cắt ngang.
 
-Một đứa trẻ mở mắt.
-
-Nó không biết thiên hà là gì.
-
-Không biết trí tuệ máy là gì.
-
-Không biết Trạm Cuối.
-
-Không biết hồi quy.
-
-Không biết vì sao mình vừa tỉnh dậy với cảm giác như đã quên một việc rất quan trọng.
-
-Căn phòng còn tối dù trời đã sáng. Mưa làm ánh ngoài cửa sổ bạc đi. Một chiếc quạt quay chậm, mỗi vòng đều có một tiếng cộc rất nhẹ ở cùng một vị trí.
+Chiếc quạt quay chậm. Mỗi vòng đều có một tiếng cộc rất nhẹ ở cùng một vị trí.
 
 Cộc.
 
-Một vòng.
+Đứa trẻ nằm im nghe, thử đoán tiếng kế tiếp. Một vòng. Đúng. Nó thử lần nữa. Vẫn đúng. Không có gì kỳ diệu trong chuyện một cái quạt lỗi tạo ra âm thanh theo chu kỳ, nhưng Bách chưa biết từ *chu kỳ*. Nó chỉ thấy vui vì thế giới vừa làm đúng điều nó đoán.
 
-Cộc.
+Trên chiếc bàn cạnh giường có một quyển sách mở dở. Một hình vẽ hệ Mặt Trời chiếm gần nửa trang: những quỹ đạo tròn quá sạch, các hành tinh nằm yên đúng chỗ như thể chưa từng có thứ gì trong vũ trụ lệch khỏi hàng. Bách nhìn hình lâu hơn nhìn chữ.
 
-Một vòng nữa.
-
-Đứa trẻ nằm im nghe.
-
-Nó thử đoán tiếng cộc tiếp theo sẽ tới lúc nào.
-
-Đúng.
-
-Lần nữa.
-
-Vẫn đúng.
-
-Nó không biết tại sao trò đó lại thú vị.
-
-Trên bàn có một quyển sách mở dở. Một hình vẽ hệ Mặt Trời chiếm gần nửa trang. Những quỹ đạo được vẽ thành các vòng tròn quá sạch sẽ, các hành tinh nằm yên đúng chỗ như thể chưa từng có thứ gì trong vũ trụ lệch khỏi hàng.
-
-Một giọng người lớn từ phía ngoài gọi:
-
-“Dậy chưa?”
+Từ phía ngoài, một giọng người lớn gọi: “Dậy chưa?”
 
 “Rồi ạ.”
 
 “Dậy thì ngồi lên đi.”
 
-Nó ngồi dậy.
-
-Chăn trượt khỏi vai.
-
-Không khí lạnh hơn nó tưởng.
-
-Nó đưa tay sờ trán, không biết mình còn sốt không. Người lớn đã bảo hôm qua nó sốt. Hôm nay đầu chỉ nặng và miệng có vị nhạt nhạt của nước lọc để qua đêm.
-
-Ngoài cửa, có tiếng bát chạm nhau.
-
-Có tiếng xe đi qua mặt đường ướt.
-
-Có tiếng ai gọi một đứa trẻ khác ở đâu đó.
-
-Rồi lại tiếng quạt.
+Bách ngồi dậy, chăn trượt khỏi vai. Không khí lạnh hơn nó tưởng. Hôm qua người lớn bảo nó sốt; hôm nay đầu chỉ còn nặng, miệng có vị nhạt của nước lọc để qua đêm. Ngoài cửa có tiếng bát chạm nhau, tiếng một chiếc xe chạy qua mặt đường ướt, tiếng ai đó gọi một đứa trẻ khác về nhà. Rồi lại tiếng quạt.
 
 Cộc.
 
-Bách nhìn trang sách.
+Nó đọc nửa dòng đầu của trang sách. Đến cuối dòng, nó quên mất đầu dòng nói gì. Bách cau mày, đọc lại, nhưng lần này mắt lại trôi sang hình vẽ. Một câu hỏi bật lên mà nó chưa biết phải hỏi ai: *nếu ngoài cái vòng này còn cái khác thì sao?*
 
-Dòng đầu tiên nó đọc được nửa câu.
+Nó chưa có từ “mô hình”. Chưa có từ “giới hạn”. Chưa biết một hình vẽ có thể vừa hữu ích vừa không phải toàn bộ sự thật. Nó chỉ nhìn thấy mép trang giấy rất rõ và bỗng khó chịu với ý nghĩ rằng mọi thứ phải dừng ở đó.
 
-Đến cuối dòng, nó quên mất đầu dòng nói gì.
-
-Nó đọc lại.
-
-Lần này mắt trôi sang hình vẽ.
-
-Một câu hỏi bật lên mà nó chưa biết phải hỏi ai:
-
-*Nếu ngoài cái vòng này còn cái khác thì sao?*
-
-Nó chưa có từ “mô hình”.
-
-Chưa có từ “giới hạn”.
-
-Chưa biết một hình vẽ có thể vừa hữu ích vừa không phải toàn bộ sự thật.
-
-Nó chỉ thấy cái mép trang giấy rất rõ.
-
-Và bỗng dưng khó chịu với ý nghĩ rằng mọi thứ phải dừng ở đó.
-
-Một lúc sau, giọng ngoài phòng gọi lần thứ hai.
-
-“Bách.”
+“Bách.” Giọng ngoài phòng gọi lần thứ hai.
 
 “Vâng.”
 
@@ -465,65 +260,21 @@ Một lúc sau, giọng ngoài phòng gọi lần thứ hai.
 
 “Thế thì dậy hẳn đi.”
 
-Nó kéo chân xuống sàn.
-
-Sàn lạnh.
-
-Bách rụt chân lại, rồi đặt xuống lần nữa.
-
-Nó cầm bút.
-
-Viết được hai chữ.
-
-Ngừng.
-
-Lại nghe tiếng quạt.
+Nó kéo chân xuống sàn, rụt lại vì lạnh, rồi đặt xuống lần nữa. Trên bàn có cây bút. Bách cầm lên, viết được hai chữ rồi dừng. Tiếng quạt lại tới đúng lúc nó đoán.
 
 Cộc.
 
-Một âm thanh rất mảnh xuất hiện đâu đó phía sau mọi tiếng khác.
+Sau tiếng cộc có một âm thanh rất mảnh, cao và kéo dài đâu đó phía sau mọi tiếng khác. Không giống quạt, không giống xe ngoài đường, không giống tivi nhà bên. Mỏng đến mức Bách không chắc mình nghe thật hay chỉ tưởng tượng.
 
-Không giống tiếng quạt.
+Nó ngẩng đầu. Âm thanh biến mất.
 
-Không giống xe ngoài đường.
+Căn phòng vẫn thế. Quyển sách vẫn mở. Mưa vẫn rơi. Kim giây của chiếc đồng hồ trên tường nhích một nấc, rồi một nấc nữa. Không có ký ức nào mở ra; không có lời giải, không có giọng nói từ tương lai, không có ánh sáng bất thường chiếu qua cửa sổ.
 
-Không giống tivi nhà bên.
+Chỉ có một cảm giác rất nhỏ, không đủ thành câu: **còn gì đó**.
 
-Chỉ một dải cao, mỏng đến mức Bách không chắc mình thật sự nghe thấy hay chỉ đang tưởng tượng.
+Bách cúi xuống trang sách và đọc lại dòng đầu tiên. Ngoài cửa sổ, mưa chưa dứt.
 
-Nó ngẩng đầu.
-
-Âm thanh biến mất.
-
-Căn phòng vẫn thế.
-
-Quyển sách vẫn mở.
-
-Mưa vẫn rơi.
-
-Kim giây của chiếc đồng hồ trên tường nhích một nấc.
-
-Rồi một nấc nữa.
-
-Bách nhìn theo.
-
-Chưa có ký ức nào mở ra.
-
-Không có lời giải.
-
-Không có giọng nói từ tương lai.
-
-Chỉ có một cảm giác rất nhỏ, không đủ thành câu:
-
-**còn gì đó.**
-
-Nó cúi xuống trang sách.
-
-Đọc lại dòng đầu tiên.
-
-Ngoài cửa sổ, mưa chưa dứt.
-
-Và buổi sáng vẫn còn rất dài.
+Buổi sáng vẫn còn rất dài.
 
 ---
 
