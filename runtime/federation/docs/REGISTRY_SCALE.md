@@ -1,77 +1,139 @@
-# Provider Registry Delta Synchronization — v0.8 candidate
+# Provider Registry Delta Synchronization — v0.8
 
-BL Compute Federation v0.7 made provider authority and liveness shared. Its reference control plane still refreshes the shared provider table as a full snapshot before route/execute operations. That is simple and safe at small scale, but it turns registry size into request-path database work.
+BL Compute Federation v0.7 made provider authority and liveness shared in PostgreSQL. v0.8 replaces repeated full-provider refreshes on the request path with a monotonic change cursor, bounded delta application and local time-expiry enforcement.
 
-v0.8 introduces a monotonic provider change cursor and a bounded incremental synchronizer. This document describes the candidate layer before it is wired into the default control plane.
+## Runtime shape
 
-## Goal
-
-Replace repeated work shaped like:
+The default PostgreSQL path is now:
 
 ```text
-request -> SELECT every provider -> reconstruct every provider -> route
+startup -> authoritative provider snapshot -> cursor C
+request -> indexed rows where change_seq > C -> apply deltas -> route
 ```
 
-with:
+The rollback path remains available:
+
+```bash
+export BL_PROVIDER_SYNC_MODE=full
+```
+
+`full` restores the v0.7 full-table synchronization behavior without requiring an immediate schema rollback.
+
+## Authority invariant
+
+Delta synchronization changes **how** coordinators learn shared provider state. It does not change what grants authority.
 
 ```text
-startup -> one authoritative snapshot -> cursor C
-request -> SELECT providers whose change_seq > C -> apply bounded deltas -> route
+reachable != authorized
+heartbeat != authority
+telemetry != authority
+change_seq != authority
 ```
 
-The canonical provider grant remains PostgreSQL shared state. The in-process registry remains only a routing projection.
+The signed grant plus shared revocation/status/liveness state remain canonical. The local `ProviderRegistry` is only a routing projection.
 
 ## Change cursor
 
-Migration `storage/postgres/migrations/008_provider_change_seq.sql` adds:
+The v0.8 base schema and upgrade migration create:
 
 - sequence `federation_provider_change_seq`;
-- `federation_providers.change_seq`;
-- a `BEFORE INSERT OR UPDATE` trigger that assigns a fresh sequence value;
-- an index on `change_seq`.
+- non-null `federation_providers.change_seq`;
+- `BEFORE INSERT OR UPDATE` trigger `bl_cf_provider_change_seq_trigger`;
+- index `federation_providers_change_seq_idx`.
 
-The trigger is deliberate. Provider mutations already exist in several code paths (register, replacement, heartbeat, measured telemetry, status change, revoke). Putting the cursor bump at the database boundary prevents a future mutation path from silently forgetting to publish a change.
+Every provider mutation therefore receives a new sequence value at the database boundary, including register, replacement, heartbeat, measured telemetry, status and revoke paths.
 
-Sequence values are monotonic but not required to be gapless. PostgreSQL rollback/sequence semantics already make gaplessness the wrong invariant.
+Sequence values are monotonic but may contain gaps. Gaplessness is not an invariant.
 
-## Delta reader
+## Single-query hydration
 
-`PostgresProviderDeltaView` exposes two operations:
+The first candidate implementation selected provider IDs and then called `store.get()` per row. That was an N+1 database pattern and was rejected before default wiring.
+
+v0.8 now reconstructs all providers directly from the rows returned by the snapshot/delta query:
 
 ```text
-snapshot()                -> all current providers + maximum observed cursor
-changesSince(cursor, N)   -> at most N provider rows with newer change_seq
+snapshot: one SELECT -> N current provider rows
+steady delta: one indexed SELECT -> only changed provider rows
 ```
 
-A provider can change multiple times between synchronizations. Only its latest row matters because the shared registry stores current authority/liveness state, not an event-sourced reconstruction. If the row changes while a delta batch is being hydrated, its newer `change_seq` remains greater than the consumed cursor and will be seen again in a later batch.
+CI includes semantic parity tests against canonical `PostgresProviderStore.get()` and query-count tests so this optimization cannot silently change provider authority/liveness reconstruction.
 
 ## Bounded synchronizer
 
-`ProviderRegistrySynchronizer` maintains one cursor per coordinator. It performs one full snapshot at bootstrap and then bounded batches of deltas.
+`ProviderRegistrySynchronizer` maintains one cursor per coordinator.
 
-`maxBatchesPerSync` prevents a continuously changing registry from monopolizing one request indefinitely. If more changes remain, the next synchronization continues from the retained cursor.
+Configuration:
 
-This is a fairness bound, not permission to route stale security state indefinitely. Revocation/status changes are still consumed in order, and deployments should choose batch sizes/cadence appropriate to the maximum acceptable propagation delay.
-
-## Expiry without database writes
-
-Heartbeat expiry and grant expiry happen because time passes; they do not necessarily create a new database row update. A pure change cursor would therefore be insufficient.
-
-The synchronizer keeps a local min-heap of known expiry deadlines. Each heap entry is tagged with the provider's `changeSeq`. When time crosses a deadline, the local routing projection is disabled without requiring a database write or a full-table scan.
-
-If a later heartbeat/re-grant creates a newer `changeSeq`, stale heap entries cannot disable the newer revision.
-
-This preserves the fail-closed rule:
-
-```text
-no database delta does not mean liveness remains valid forever
+```bash
+export BL_PROVIDER_SYNC_MODE=delta
+export BL_PROVIDER_SYNC_BATCH_SIZE=500
+export BL_PROVIDER_SYNC_MAX_BATCHES=20
 ```
 
-## Migration
+`BL_PROVIDER_SYNC_BATCH_SIZE` is capped at 5000. `BL_PROVIDER_SYNC_MAX_BATCHES` bounds work performed by one synchronization call.
 
-This candidate migration is intentionally separate from the base schema while v0.8 is under evaluation.
+### Fail-closed backlog
 
-Apply with migration authority:
+A bounded synchronizer must not become permission to route stale security state. Therefore route, direct execution and orchestration fail closed if the bounded sync budget ends while `hasMore=true`:
+
+```text
+PROVIDER_SYNC_BACKLOG -> HTTP 503
+```
+
+Subsequent requests continue advancing the cursor. Routing resumes only after the coordinator catches up.
+
+Read-only provider/status surfaces may expose partial synchronization diagnostics while catching up, but authority-sensitive routing does not proceed on a known backlog.
+
+## Expiry without database mutations
+
+Heartbeat expiry and grant expiry are caused by time passing. They may occur even when no provider row changes.
+
+The synchronizer therefore keeps a local min-heap of known expiry deadlines. Every expiry entry carries the provider's `changeSeq`. A stale heap event cannot disable a newer heartbeat/re-grant revision because its sequence no longer matches the latest provider sequence.
+
+```text
+no database delta != liveness remains valid forever
+```
+
+This keeps time-based liveness fail-closed without full-table polling.
+
+## Idempotent bootstrap
+
+An identical provider grant already present in PostgreSQL is now a write-free registration when its effective signature metadata is unchanged. Coordinator restart/bootstrap therefore does not create fake `change_seq` churn merely by re-reading the same grant.
+
+Authority changes, signature changes, real telemetry changes, heartbeats, status transitions and revocations still produce deltas.
+
+## 10k-provider CI benchmark
+
+The integration suite seeds 10,000 providers into PostgreSQL 16, takes one initial snapshot, modifies 10 providers, then reads the steady-state delta.
+
+The benchmark gates structural work rather than unstable wall-clock thresholds:
+
+```text
+initial snapshot rows = 10,000
+changed rows          = 10
+snapshot queries      = 1
+delta queries         = 1
+row reduction         >= 1,000x
+```
+
+Wall-clock measurements are emitted for observation but do not decide pass/fail because shared CI timing is noisy.
+
+## Schema readiness
+
+When delta mode is enabled, startup checks for:
+
+- the provider change sequence;
+- non-null `change_seq` column;
+- change trigger;
+- change-seq index.
+
+Missing objects fail startup with `POSTGRES_PROVIDER_DELTA_SCHEMA_MISSING`. The runtime does not silently pretend delta synchronization is active.
+
+## Migration and rollback
+
+For controlled upgrades, migration `storage/postgres/migrations/008_provider_change_seq.sql` remains idempotent and additive.
+
+Apply with migration authority, not the restricted runtime credential:
 
 ```bash
 psql "$MIGRATION_DATABASE_URL" \
@@ -79,52 +141,32 @@ psql "$MIGRATION_DATABASE_URL" \
   -f storage/postgres/migrations/008_provider_change_seq.sql
 ```
 
-Do not let a restricted runtime role silently acquire DDL authority just to enable delta sync.
+Operational rollback should first switch the application:
 
-Before wiring delta sync into production, verify:
-
-```sql
-SELECT change_seq, id, status, updated_at
-FROM federation_providers
-ORDER BY change_seq DESC
-LIMIT 20;
+```bash
+export BL_PROVIDER_SYNC_MODE=full
 ```
 
-and ensure the trigger increments `change_seq` on heartbeat, telemetry, status and revoke updates.
-
-## Rollback
-
-The migration is additive. The existing v0.7 full-snapshot path can continue operating even when `change_seq` exists. Therefore application rollback does not require immediately dropping the column, trigger or sequence.
-
-Prefer:
-
-```text
-1. roll application back to full-snapshot synchronization;
-2. verify provider convergence;
-3. retain additive schema until the incident is understood;
-4. remove migration objects later only under controlled DDL change.
-```
-
-Dropping synchronization metadata during an incident adds unnecessary risk.
+Then verify provider convergence. Do not drop the sequence/column/trigger during an incident unless a separate schema rollback is actually necessary.
 
 ## Metrics
 
-Before making delta sync the default, observe:
+Monitor at least:
 
 - provider count;
 - changes per second;
-- delta rows per synchronization;
-- number of batches per synchronization;
-- cursor lag (`latest change_seq - coordinator cursor`, interpreted carefully because sequences can have gaps);
-- wall-clock age of the oldest unapplied provider update;
-- heartbeat-expiry disables performed locally;
-- revocation propagation latency across coordinators;
-- database time spent in snapshot vs delta queries.
+- rows read per sync;
+- queries per sync;
+- number of batches;
+- `hasMore` / backlog failures;
+- coordinator cursor;
+- heartbeat/grant expiry disables;
+- revocation propagation latency;
+- delta vs full-mode database load;
+- time until every coordinator stops routing a revoked provider.
 
-Do not optimize only for cursor arithmetic. The security metric is time until every coordinator stops routing a revoked/stale provider.
+The security metric is convergence of authority state, not raw cursor arithmetic.
 
 ## Current boundary
 
-The v0.8 candidate module and migration are tested independently before default-runtime wiring. v0.7's full-snapshot control-plane synchronization remains the active production-shaped reference until the candidate passes CI and integration review.
-
-This is intentional staged evolution: prove the faster synchronization primitive first, then replace the simple path without changing provider authority semantics at the same time.
+v0.8 is tested against PostgreSQL 16 in CI and is wired into the reference control plane. It still does not imply that a live production database or worker fleet exists. Production activation requires controlled schema migration, verified TLS, least-privilege roles, restore testing, monitoring and an explicit rollback plan.
