@@ -1,11 +1,13 @@
 {
   "name": "bl-compute-federation",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test",
-    "start": "node dev-server.mjs"
+    "test": "node --test test/*.test.mjs",
+    "start": "node dev-server.mjs",
+    "worker": "node worker/server.mjs",
+    "keys": "node scripts/generate-provider-keypair.mjs"
   },
-  "engines": { "node": ">=20" }
+  "engines": { "node": ">=22" }
 }
