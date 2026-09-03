@@ -43,11 +43,19 @@ export class PostgresProviderStore {
       if (row.status === 'revoked' && !replace) throw taggedError('PROVIDER_REVOKED', `provider is revoked: ${manifest.id}`);
       if (row.grant_hash !== grantHash && !replace) throw taggedError('PROVIDER_GRANT_CONFLICT', `provider grant differs for id: ${manifest.id}`);
       if (row.grant_hash === grantHash) {
+        const effectiveSignature = signature ?? row.signature_json ?? null;
+        const effectiveKeyId = signature?.keyId ?? row.key_id ?? null;
+        const signatureUnchanged = canonicalize(row.signature_json ?? null) === canonicalize(effectiveSignature);
+        const keyUnchanged = (row.key_id ?? null) === effectiveKeyId;
+        if (signatureUnchanged && keyUnchanged) {
+          await client.query('COMMIT');
+          return rowToProvider(row, now);
+        }
         const updated = await client.query(`
           UPDATE federation_providers
-          SET signature_json=COALESCE($1::jsonb,signature_json), key_id=COALESCE($2,key_id), updated_at=$3
+          SET signature_json=$1::jsonb, key_id=$2, updated_at=$3
           WHERE id=$4 RETURNING *
-        `, [signature ? JSON.stringify(signature) : null, signature?.keyId ?? null, new Date(now), manifest.id]);
+        `, [effectiveSignature ? JSON.stringify(effectiveSignature) : null, effectiveKeyId, new Date(now), manifest.id]);
         await client.query('COMMIT');
         return rowToProvider(updated.rows[0], now);
       }
