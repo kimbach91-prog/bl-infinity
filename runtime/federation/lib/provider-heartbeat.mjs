@@ -34,6 +34,7 @@ export async function verifyProviderHeartbeat(store, headers, body, {
   const provider = await store.get(providerId, { now });
   if (!provider) return { ok: false, reason: 'unknown-provider' };
   if (provider.authorization?.revokedAt) return { ok: false, reason: 'provider-revoked' };
+  if (provider.authorization?.expiresAt && Date.parse(provider.authorization.expiresAt) <= now) return { ok: false, reason: 'provider-grant-expired' };
   const auth = provider.liveness?.heartbeatAuth;
   if (!auth || auth.mode !== 'hmac-env' || !auth.secretEnv) return { ok: false, reason: 'heartbeat-auth-not-granted' };
   const secret = env[auth.secretEnv];
