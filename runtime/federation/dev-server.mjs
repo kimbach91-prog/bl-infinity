@@ -6,6 +6,7 @@ import { HybridSearchFabric } from './lib/search.mjs';
 import { safeDefaultHandlers } from './worker/handlers.mjs';
 import { validateProviderGrant, verifyProviderManifest } from './lib/manifest.mjs';
 import { PostgresProviderStore, syncProviderRegistry } from './lib/provider-store.mjs';
+import { verifyProviderHeartbeat } from './lib/provider-heartbeat.mjs';
 import { TokenBucketLimiter } from './lib/rate-limit.mjs';
 import { hasControlAccess } from './lib/control-auth.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
@@ -36,7 +37,7 @@ const server = http.createServer(async (req, res) => {
   const rate = limiter.take(req.socket.remoteAddress || 'unknown');
   if (!rate.ok) { res.setHeader('retry-after', String(Math.max(1, Math.ceil(rate.retryAfterMs / 1000)))); return send(res, 429, { error: 'rate limit exceeded' }); }
   try {
-    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, service: 'bl-compute-federation', version: '0.6.0', stateBackend, sharedProviderRegistry: Boolean(providerStore), stateAllowedDataClasses: allowedStateDataClasses, providers: runtime.registry.list().length, search: search.stats(), signedManifestsRequired: requireSignedManifests });
+    if (req.method === 'GET' && req.url === '/health') return send(res, 200, { ok: true, service: 'bl-compute-federation', version: '0.7.0', stateBackend, sharedProviderRegistry: Boolean(providerStore), directWorkerHeartbeat: Boolean(providerStore), stateAllowedDataClasses: allowedStateDataClasses, providers: runtime.registry.list().length, search: search.stats(), signedManifestsRequired: requireSignedManifests });
     if (req.method === 'GET' && req.url === '/providers') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); await refreshSharedProviders(); return send(res, 200, { providers: runtime.registry.list().map(sanitizeProvider) }); }
     if (req.method === 'POST' && req.url === '/route') { if (!authorizedIfConfigured(req)) return send(res, 401, { error: 'unauthorized' }); await refreshSharedProviders(); return send(res, 200, planRoute(runtime.registry, await readJson(req, maxBodyBytes))); }
     if (req.method === 'POST' && req.url === '/tasks/submit') { if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for task submission' }); const body = await readJson(req, maxBodyBytes); const task = body.task ?? body; const options = body.options ?? {}; return send(res, 202, await runtime.orchestrator.submit(task, options)); }
@@ -61,9 +62,7 @@ const server = http.createServer(async (req, res) => {
       if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider registration' });
       const manifest = await readJson(req, maxBodyBytes); validateProviderGrant(manifest);
       if (requireSignedManifests) { const verdict = verifyProviderManifest(manifest, trustStore, { requireSignature: true }); if (!verdict.ok) return send(res, 403, { error: 'manifest rejected', reason: verdict.reason }); }
-      const candidate = providerStore
-        ? await providerStore.put(manifest, { source: 'operator', seedTelemetry: false })
-        : { ...structuredClone(manifest), telemetry: neutralTelemetry() };
+      const candidate = providerStore ? await providerStore.put(manifest, { source: 'operator', seedTelemetry: false }) : { ...structuredClone(manifest), telemetry: neutralTelemetry() };
       const registered = runtime.registry.register(candidate);
       await runtime.audit.append('provider.registered', { providerId: registered.id, consentRef: registered.authorization.consentRef, shared: Boolean(providerStore) });
       return send(res, 201, { provider: sanitizeProvider(registered) });
@@ -97,6 +96,19 @@ const server = http.createServer(async (req, res) => {
       await runtime.audit.append('provider.status-changed', { providerId: body.providerId, status: body.status });
       return send(res, 200, { provider: sanitizeProvider(stored) });
     }
+    if (req.method === 'POST' && req.url === '/providers/heartbeat/self') {
+      if (!providerStore) return send(res, 409, { error: 'shared provider store is required for worker self-heartbeat' });
+      const raw = await readBody(req, Math.min(maxBodyBytes, 4096));
+      let body; try { body = JSON.parse(raw || '{}'); } catch { return send(res, 400, { error: 'invalid JSON' }); }
+      const headerProviderId = header(req.headers, 'x-bl-provider-id');
+      if (!body.providerId || body.providerId !== headerProviderId) return send(res, 400, { error: 'providerId must match x-bl-provider-id' });
+      const verdict = await verifyProviderHeartbeat(providerStore, req.headers, raw);
+      if (!verdict.ok) return send(res, verdict.reason === 'heartbeat-secret-not-configured' ? 503 : 401, { error: 'heartbeat authentication failed', reason: verdict.reason });
+      const stored = await providerStore.heartbeat(verdict.providerId, { inFlight: body.inFlight });
+      await syncProviderRegistry(runtime.registry, providerStore);
+      await runtime.audit.append('provider.self-heartbeat', { providerId: verdict.providerId, heartbeatSeq: stored.runtime.heartbeatSeq });
+      return send(res, 200, { ok: true, providerId: verdict.providerId, heartbeatSeq: stored.runtime.heartbeatSeq, heartbeatExpiresAt: stored.runtime.heartbeatExpiresAt });
+    }
     if (req.method === 'POST' && req.url === '/providers/heartbeat') {
       if (!requireControl(req)) return send(res, 401, { error: 'BL_CONTROL_TOKEN is required for provider heartbeat updates' });
       if (!providerStore) return send(res, 409, { error: 'shared provider store is unavailable' });
@@ -122,10 +134,7 @@ server.listen(port, host, () => { console.log(`BL federation control plane liste
 let shuttingDown = false;
 for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
 
-async function refreshSharedProviders() {
-  if (!providerStore) return null;
-  return syncProviderRegistry(runtime.registry, providerStore);
-}
+async function refreshSharedProviders() { if (!providerStore) return null; return syncProviderRegistry(runtime.registry, providerStore); }
 async function persistExecutionTelemetry(execution) {
   const providerId = execution?.providerId;
   if (!providerStore || !providerId) return;
@@ -145,17 +154,16 @@ async function loadDurableState(budget) {
   if (process.env.BL_STATE_DB) return { state: createSqliteFederationState(process.env.BL_STATE_DB, { budget }), backend: 'sqlite', allowedDataClasses: null };
   return { state: null, backend: 'memory', allowedDataClasses: null };
 }
-function shutdown(signal) {
-  if (shuttingDown) return; shuttingDown = true;
-  server.close(async () => { try { await durableState?.close?.(); } catch (error) { console.error(`state shutdown failed after ${signal}: ${error.message}`); process.exitCode = 1; } finally { process.exit(); } });
-}
+function shutdown(signal) { if (shuttingDown) return; shuttingDown = true; server.close(async () => { try { await durableState?.close?.(); } catch (error) { console.error(`state shutdown failed after ${signal}: ${error.message}`); process.exitCode = 1; } finally { process.exit(); } }); }
 async function loadProviders() { if (process.env.BL_PROVIDERS_JSON) { const parsed = JSON.parse(process.env.BL_PROVIDERS_JSON); if (!Array.isArray(parsed)) throw new Error('BL_PROVIDERS_JSON must be an array'); return parsed; } const file = process.env.BL_PROVIDER_FILE || new URL('./config/providers.example.json', import.meta.url); return JSON.parse(await readFile(file, 'utf8')); }
 function neutralTelemetry() { return { inFlight: 0, trust: 0.5, availability: 0.5, p95LatencyMs: 1000, costPerUnitUsd: 0 }; }
 function parseJsonEnv(name, fallback) { return process.env[name] ? JSON.parse(process.env[name]) : fallback; }
 function parseAllowedDataClasses(raw) { const allowed = new Set(['public','internal','private']); const values = [...new Set(String(raw).split(',').map((x) => x.trim()).filter(Boolean))]; if (!values.length) throw new Error('BL_POSTGRES_ALLOWED_DATA_CLASSES must contain at least one class'); for (const value of values) if (!allowed.has(value)) throw new Error(`invalid Postgres data class: ${value}`); return values; }
 function authorizedIfConfigured(req) { return controlToken ? hasControlAccess(req, controlToken) : true; }
 function requireControl(req) { return hasControlAccess(req, controlToken); }
-async function readJson(req, maxBytes) { let size = 0; const chunks = []; for await (const chunk of req) { size += chunk.length; if (size > maxBytes) { const e = new Error('request body too large'); e.code = 'BODY_TOO_LARGE'; throw e; } chunks.push(chunk); } return JSON.parse(Buffer.concat(chunks).toString('utf8') || '{}'); }
+async function readBody(req, maxBytes) { let size = 0; const chunks = []; for await (const chunk of req) { size += chunk.length; if (size > maxBytes) { const e = new Error('request body too large'); e.code = 'BODY_TOO_LARGE'; throw e; } chunks.push(chunk); } return Buffer.concat(chunks).toString('utf8'); }
+async function readJson(req, maxBytes) { return JSON.parse((await readBody(req, maxBytes)) || '{}'); }
+function header(headers, name) { if (!headers) return null; if (typeof headers.get === 'function') return headers.get(name); return headers[name] ?? headers[name.toLowerCase()] ?? null; }
 function sanitizeProvider(provider) { const p = structuredClone(provider); if (p.transport) { delete p.transport.secret; delete p.transport.token; } if (p.signature) p.signature = { algorithm: p.signature.algorithm, keyId: p.signature.keyId, present: true }; return p; }
 function setCommonHeaders(res) { res.setHeader('content-type', 'application/json; charset=utf-8'); res.setHeader('cache-control', 'no-store'); res.setHeader('x-content-type-options', 'nosniff'); }
 function send(res, status, body) { res.statusCode = status; res.end(JSON.stringify(body)); }

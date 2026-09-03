@@ -5,6 +5,7 @@ const REQUIRED_RELATIONS = [
   'federation_contribution_ledger',
   'federation_audit',
   'federation_providers',
+  'federation_provider_heartbeat_nonces',
 ];
 
 export async function assertPostgresSchema(pool) {
