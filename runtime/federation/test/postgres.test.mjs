@@ -6,6 +6,7 @@ import { Pool } from 'pg';
 import { openPostgresFederationState } from '../lib/postgres-state.mjs';
 import { assertPostgresSchema } from '../lib/postgres-readiness.mjs';
 import { PostgresProviderStore, syncProviderRegistry } from '../lib/provider-store.mjs';
+import { createHeartbeatNonce, signProviderHeartbeat, verifyProviderHeartbeat } from '../lib/provider-heartbeat.mjs';
 import { ProviderRegistry } from '../lib/fabric.mjs';
 import { signProviderManifest, verifyProviderManifest } from '../lib/manifest.mjs';
 import { verifyAuditChain } from '../lib/audit.mjs';
@@ -20,6 +21,8 @@ const privateKeyPem = testKeys.privateKey.export({ type: 'pkcs8', format: 'pem' 
 const publicKeyPem = testKeys.publicKey.export({ type: 'spki', format: 'pem' });
 const trustStore = { 'test-provider-key': publicKeyPem };
 const manifestVerifier = (manifest) => verifyProviderManifest(manifest, trustStore, { requireSignature: true });
+const heartbeatSecretEnv = 'BL_TEST_PROVIDER_HEARTBEAT_SECRET';
+const heartbeatSecret = 'test-heartbeat-secret-not-for-production';
 
 if (connectionString) {
   before(async () => {
@@ -54,7 +57,7 @@ function localProvider(id = 'pg-local', overrides = {}) {
 function signedHeartbeatProvider(id = 'shared-provider', overrides = {}) {
   const manifest = localProvider(id, {
     telemetry: { trust: 0.4, availability: 0.5, p95LatencyMs: 40, costPerUnitUsd: 0.01, inFlight: 0 },
-    liveness: { heartbeatRequired: true, heartbeatTtlMs: 60_000 },
+    liveness: { heartbeatRequired: true, heartbeatTtlMs: 60_000, heartbeatAuth: { mode: 'hmac-env', secretEnv: heartbeatSecretEnv } },
     ...overrides,
   });
   return signProviderManifest(manifest, privateKeyPem, 'test-provider-key');
@@ -178,6 +181,47 @@ pgtest('shared provider liveness cannot mutate signed authority and revocation p
   await assert.rejects(() => store.put(signed), (error) => error.code === 'PROVIDER_REVOKED');
 });
 
+pgtest('provider self-heartbeat HMAC rejects replay across coordinators', async () => {
+  const storeA = new PostgresProviderStore(pool, { manifestVerifier });
+  const storeB = new PostgresProviderStore(pool, { manifestVerifier });
+  await storeA.put(signedHeartbeatProvider('self-heartbeat'));
+  const now = Date.now();
+  const body = JSON.stringify({ providerId: 'self-heartbeat', inFlight: 1 });
+  const nonce = createHeartbeatNonce();
+  const signature = signProviderHeartbeat(heartbeatSecret, { providerId: 'self-heartbeat', timestamp: now, nonce, body });
+  const headers = {
+    'x-bl-provider-id': 'self-heartbeat',
+    'x-bl-timestamp': String(now),
+    'x-bl-nonce': nonce,
+    'x-bl-heartbeat-signature': signature,
+  };
+  const first = await verifyProviderHeartbeat(storeA, headers, body, { env: { [heartbeatSecretEnv]: heartbeatSecret }, now });
+  assert.equal(first.ok, true);
+  const second = await verifyProviderHeartbeat(storeB, headers, body, { env: { [heartbeatSecretEnv]: heartbeatSecret }, now });
+  assert.deepEqual(second, { ok: false, reason: 'replay' });
+  const row = await pool.query('SELECT COUNT(*)::int n FROM federation_provider_heartbeat_nonces WHERE provider_id=$1', ['self-heartbeat']);
+  assert.equal(row.rows[0].n, 1);
+});
+
+pgtest('bad self-heartbeat signature does not consume its nonce', async () => {
+  const store = new PostgresProviderStore(pool, { manifestVerifier });
+  await store.put(signedHeartbeatProvider('self-signature'));
+  const now = Date.now();
+  const body = JSON.stringify({ providerId: 'self-signature', inFlight: 0 });
+  const nonce = createHeartbeatNonce();
+  const badHeaders = {
+    'x-bl-provider-id': 'self-signature',
+    'x-bl-timestamp': String(now),
+    'x-bl-nonce': nonce,
+    'x-bl-heartbeat-signature': 'bad-signature-value',
+  };
+  const bad = await verifyProviderHeartbeat(store, badHeaders, body, { env: { [heartbeatSecretEnv]: heartbeatSecret }, now });
+  assert.deepEqual(bad, { ok: false, reason: 'bad-signature' });
+  const goodHeaders = { ...badHeaders, 'x-bl-heartbeat-signature': signProviderHeartbeat(heartbeatSecret, { providerId: 'self-signature', timestamp: now, nonce, body }) };
+  const good = await verifyProviderHeartbeat(store, goodHeaders, body, { env: { [heartbeatSecretEnv]: heartbeatSecret }, now });
+  assert.equal(good.ok, true);
+});
+
 pgtest('explicit new signed grant revision is required to replace revoked authority', async () => {
   const store = new PostgresProviderStore(pool, { manifestVerifier });
   const first = signedHeartbeatProvider('shared-revision');
@@ -202,6 +246,7 @@ async function resetDatabase(targetPool) {
       federation_budget_reservations,
       federation_contribution_ledger,
       federation_audit,
+      federation_provider_heartbeat_nonces,
       federation_providers
     RESTART IDENTITY
   `);
