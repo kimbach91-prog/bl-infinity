@@ -1,6 +1,7 @@
 const REQUIRED_RELATIONS = [
   'federation_jobs',
   'federation_result_cache',
+  'federation_rate_limit_buckets',
   'federation_budget_reservations',
   'federation_contribution_ledger',
   'federation_audit',
