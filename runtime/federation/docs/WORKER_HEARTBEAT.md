@@ -136,6 +136,10 @@ Monitor at least:
 
 Do not automatically turn repeated heartbeat failures into broader permissions or looser authentication. A stale node should fail closed.
 
+## Verification
+
+The v0.7 CI lane validates both sides of the protocol: worker envelope construction and HTTPS policy in unit tests, plus provider-scoped nonce consumption and replay rejection across separate coordinator-facing provider-store instances against PostgreSQL 16. This verifies the code path in an isolated test environment; it is not evidence of a live production worker fleet.
+
 ## Current boundary
 
 v0.7 authenticates direct worker heartbeat with provider-scoped HMAC and PostgreSQL replay protection. It does not establish mutual TLS, hardware attestation or a public anonymous volunteer-compute network. Those would require separate threat models and explicit authorization.
