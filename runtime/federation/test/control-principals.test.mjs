@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals } from '../lib/control-auth.mjs';
+import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals, parsePublicReadScopes } from '../lib/control-auth.mjs';
 
 function req(token = null) {
   return { headers: token ? { authorization: `Bearer ${token}` } : {} };
@@ -27,6 +27,20 @@ test('tenant principal cannot be granted global-only provider/runtime scopes', (
   assert.throws(() => parseControlPrincipals([
     { id: 'tenant-a', tenantId: 'tenant-a', tokenEnv: 'TENANT_A_TOKEN', scopes: ['*'] },
   ], env), /requires tenantId=\*/);
+});
+
+test('unknown control scope is rejected instead of becoming a silent typo', () => {
+  const env = { OPS_TOKEN: 'operator-root-token-0123456789abcdef' };
+  assert.throws(() => parseControlPrincipals([
+    { id:'ops', tenantId:'*', tokenEnv:'OPS_TOKEN', scopes:['provider:admn'] },
+  ], env), /unknown scope/);
+});
+
+test('public read scopes are explicit and limited to read-only surfaces', () => {
+  assert.deepEqual([...parsePublicReadScopes('search:read,route:read')].sort(), ['route:read','search:read']);
+  assert.equal(parsePublicReadScopes('').size, 0);
+  assert.throws(() => parsePublicReadScopes('provider:admin'), /unsupported scope/);
+  assert.throws(() => parsePublicReadScopes('task:submit'), /unsupported scope/);
 });
 
 test('scoped auth distinguishes unauthenticated, forbidden and allowed', () => {
@@ -67,7 +81,7 @@ test('tenant binding assigns missing tenant and rejects cross-tenant task submis
   );
 });
 
-test('no auth configuration keeps optional reads open but mutations fail closed', () => {
+test('authenticator exposes explicit optional mode but required mutations fail closed when unconfigured', () => {
   const auth = new ControlAuthenticator();
   assert.equal(auth.optionalAuthorize(req(), 'provider:read').ok, true);
   const required = auth.authorize(req(), 'task:submit');
