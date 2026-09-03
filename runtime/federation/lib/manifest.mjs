@@ -2,6 +2,8 @@ import { sign, verify, createPublicKey } from 'node:crypto';
 import { canonicalize } from './canonical.mjs';
 
 export const MANIFEST_VERSION = 'bl-cf-provider/v1';
+const HEARTBEAT_MIN_MS = 5_000;
+const HEARTBEAT_MAX_MS = 24 * 60 * 60_000;
 
 export function providerGrantPayload(manifest) {
   const { signature: _signature, telemetry: _telemetry, runtime: _runtime, status: _status, ...grant } = structuredClone(manifest);
@@ -27,6 +29,15 @@ export function validateProviderGrant(manifest, now = Date.now()) {
   if (manifest.endpoint) {
     const url = new URL(manifest.endpoint);
     if (!['https:', 'http:'].includes(url.protocol)) throw new Error('provider.endpoint must be http(s)');
+  }
+  if (manifest.liveness != null) {
+    if (typeof manifest.liveness !== 'object' || Array.isArray(manifest.liveness)) throw new Error('provider.liveness must be an object');
+    if (manifest.liveness.heartbeatRequired != null && typeof manifest.liveness.heartbeatRequired !== 'boolean') throw new Error('provider.liveness.heartbeatRequired must be boolean');
+    if (manifest.liveness.heartbeatTtlMs != null) {
+      const ttl = Number(manifest.liveness.heartbeatTtlMs);
+      if (!Number.isFinite(ttl) || ttl < HEARTBEAT_MIN_MS || ttl > HEARTBEAT_MAX_MS) throw new Error(`provider.liveness.heartbeatTtlMs must be between ${HEARTBEAT_MIN_MS} and ${HEARTBEAT_MAX_MS}`);
+    }
+    if (manifest.liveness.heartbeatRequired === true && manifest.liveness.heartbeatTtlMs == null) throw new Error('provider.liveness.heartbeatTtlMs is required when heartbeatRequired=true');
   }
   return true;
 }

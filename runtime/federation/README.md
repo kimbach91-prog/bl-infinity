@@ -1,4 +1,4 @@
-# BL Compute Federation v0.5
+# BL Compute Federation v0.6
 
 A consent-aware control plane for combining small amounts of authorized compute across owner devices, cloud quotas, partner grants and BYOC nodes without treating reachable infrastructure as free infrastructure.
 
@@ -6,9 +6,9 @@ A consent-aware control plane for combining small amounts of authorized compute 
 
 `reachable != authorized`
 
-A provider is usable only when its grant, capability, data policy, quota, concurrency and task policy all pass. Private data fails closed unless it remains at the declared data location or the grant explicitly permits private egress.
+A provider is usable only when its grant, capability, data policy, quota, concurrency, liveness and task policy all pass. Private data fails closed unless it remains at the declared data location or the grant explicitly permits private egress.
 
-## v0.5 runtime
+## v0.6 runtime
 
 - policy-aware provider routing
 - queue-to-executor orchestration with global, tenant and provider budget reservations
@@ -19,6 +19,10 @@ A provider is usable only when its grant, capability, data policy, quota, concur
 - side-effect retry gate and provider side-effect authorization
 - constant-time control token checks and bounded in-memory rate limiting
 - Ed25519-signed provider grants and trust store
+- shared PostgreSQL provider registry with grant hash, revision, status, revocation and heartbeat state
+- signed liveness policy with bounded heartbeat TTL
+- mutable telemetry separated from immutable signed authority
+- neutral trust/latency defaults for dynamically registered providers; self-reported telemetry cannot raise routing trust
 - HMAC worker protocol with timestamp, nonce and replay protection
 - explicit capability allowlist; no shell/eval/arbitrary-code endpoint
 - idempotent worker result replay for safe retries
@@ -30,7 +34,7 @@ A provider is usable only when its grant, capability, data policy, quota, concur
 - auth modes for HMAC env, bearer env, Cloudflare Access service tokens, and GCP metadata OIDC
 - Docker-ready coordinator and worker
 - optional SQLite WAL durable state for a single coordinator host
-- executable PostgreSQL shared state for queue/cache/budget/ledger/audit
+- executable PostgreSQL shared state for queue/cache/budget/ledger/audit/provider registry
 - concurrent PostgreSQL claims through `FOR UPDATE SKIP LOCKED`
 - transaction-scoped serialization for budget and hash-chain heads
 - PostgreSQL schema readiness gate
@@ -75,6 +79,37 @@ npm run worker
 
 The control plane binds to `127.0.0.1` by default. Execution and mutation endpoints remain disabled unless `BL_CONTROL_TOKEN` is set.
 
+## Provider authority and liveness
+
+Provider authority is carried by the signed grant. Runtime state such as telemetry, stored status and heartbeat timestamps is deliberately outside the signature so coordinators can update observations without rewriting the grant.
+
+A provider may opt into signed heartbeat enforcement:
+
+```json
+{
+  "liveness": {
+    "heartbeatRequired": true,
+    "heartbeatTtlMs": 60000
+  }
+}
+```
+
+When `heartbeatRequired=true`, the provider remains unusable until a fresh heartbeat exists and becomes unusable again after the signed TTL expires. A heartbeat proves only liveness. It cannot add capabilities, widen allowed data classes, raise cost/concurrency ceilings or change the signed grant.
+
+Dynamically registered providers begin with neutral routing telemetry. Values such as trust or latency supplied outside the signed authority are not allowed to self-promote the node. Trusted coordinator measurements may update runtime telemetry after real executions.
+
+Shared provider state supports these authenticated control-plane transitions:
+
+- `POST /providers/register`: add a grant; conflicting authority for the same ID is rejected.
+- `POST /providers/replace`: explicitly install a new verified grant revision.
+- `POST /providers/revoke`: terminally revoke the current grant revision.
+- `POST /providers/status`: operator disable/enable for non-revoked grants.
+- `POST /providers/heartbeat`: trusted liveness update; currently accepts only provider ID and bounded runtime occupancy (`inFlight`).
+
+A revoked grant cannot be revived by heartbeat or by re-submitting the same grant. Re-granting requires an explicit replacement with a newly verified authority revision.
+
+In v0.6, heartbeat mutation goes through the authenticated control plane/trusted coordinator path. Workers are **not** given `BL_CONTROL_TOKEN`, and direct worker self-heartbeat authentication is intentionally not claimed yet.
+
 ## Orchestration API
 
 With the control token configured: `POST /tasks/submit` enqueues work, `POST /orchestrate/run-once` performs one bounded orchestration step, `GET /runtime/status` exposes queue/budget/cache/circuit state, and `GET /ledger` exposes aggregate contribution accounting. `POST /execute` remains available for direct controlled execution.
@@ -102,21 +137,21 @@ npm run keys -- partner-a
 node scripts/sign-provider-manifest.mjs provider.json partner-a.private.pem partner-a signed-provider.json
 ```
 
-Never commit private keys, database credentials or worker shared secrets.
+Never commit private keys, database credentials, control tokens or worker shared secrets.
 
 ## Durability and horizontal coordination
 
-Without `BL_STATE_DB` or `BL_POSTGRES_URL`, queue, search index, cache, rate limiter, ledger and audit remain reference in-memory/single-process components.
+Without `BL_STATE_DB` or `BL_POSTGRES_URL`, queue, search index, cache, rate limiter, ledger, audit and provider registry remain reference in-memory/single-process components.
 
-With `BL_STATE_DB`, queue/cache/budget/ledger/audit use SQLite WAL. SQLite is for one coordinator host and restart survival; it is not a horizontal cluster.
+With `BL_STATE_DB`, queue/cache/budget/ledger/audit use SQLite WAL. SQLite is for one coordinator host and restart survival; it is not a horizontal cluster. The shared provider registry is a PostgreSQL lane in v0.6.
 
-With `BL_POSTGRES_URL`, queue/cache/budget/ledger/audit use the transactional PostgreSQL backend. Multiple coordinators can share pending work. Queue claims use `FOR UPDATE SKIP LOCKED`; budgets and hash-chain heads use transaction-scoped advisory locks. PostgreSQL sequence gaps after rollback are valid, so ledger/audit verification checks strictly increasing sequence numbers plus the hash chain rather than requiring gapless integers.
+With `BL_POSTGRES_URL`, queue/cache/budget/ledger/audit/provider authority use the transactional PostgreSQL backend. Multiple coordinators can share pending work and converge on the same provider grants/revocations/liveness. Queue claims use `FOR UPDATE SKIP LOCKED`; budgets and hash-chain heads use transaction-scoped advisory locks. PostgreSQL sequence gaps after rollback are valid, so ledger/audit verification checks strictly increasing sequence numbers plus the hash chain rather than requiring gapless integers.
 
-Search and the HTTP rate limiter are still process-local in v0.5. They are not yet a distributed search/cache cluster.
+Search and the HTTP rate limiter are still process-local in v0.6. They are not yet a distributed search/cache cluster.
 
 ## Production boundary
 
-CI tests the PostgreSQL adapter against an isolated PostgreSQL 16 service, including concurrent claims, concurrent budget contention, concurrent audit/ledger appenders, rollback sequence gaps and cross-pool persistence. This does not mean a live production database has been provisioned.
+CI tests the PostgreSQL adapter against an isolated PostgreSQL 16 service, including concurrent claims, budget contention, audit/ledger appenders, rollback sequence gaps, cross-pool persistence, shared provider liveness and revocation propagation. This does not mean a live production database has been provisioned.
 
 Production still requires actual infrastructure and credentials, verified TLS, least-privilege database roles, region/data-residency approval, backups/PITR, restore testing, monitoring and ownership. Do not work around TLS certificate failures with permissive certificate verification.
 
@@ -126,4 +161,4 @@ Endpoint DNS/IP checks reduce SSRF exposure but are not a substitute for product
 
 The project does not use GitHub Actions, public endpoints, free tiers, browsers, visitor devices or third-party machines as a covert compute farm. A resource becomes a node only through an explicit revocable grant.
 
-See `docs/RESOURCE_SOVEREIGNTY.md`, `docs/PROVIDER_PROTOCOL.md`, `docs/DEPLOY.md`, `docs/FAILURE_SEMANTICS.md`, `docs/NETWORK_SECURITY.md`, `docs/DURABILITY.md`, and `docs/POSTGRES.md`.
+See `docs/RESOURCE_SOVEREIGNTY.md`, `docs/PROVIDER_PROTOCOL.md`, `docs/PROVIDER_REGISTRY.md`, `docs/DEPLOY.md`, `docs/FAILURE_SEMANTICS.md`, `docs/NETWORK_SECURITY.md`, `docs/DURABILITY.md`, and `docs/POSTGRES.md`.
