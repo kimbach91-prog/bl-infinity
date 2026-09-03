@@ -1,4 +1,4 @@
-# Phương pháp — Kính ngưỡng, chứng cứ và Trường Độ Khó Lịch Sử
+# Phương pháp: Kính ngưỡng, chứng cứ và Trường Độ Khó Lịch Sử
 
 Đây là **PUBLIC RESEARCH PREVIEW**, chưa phải ấn bản hoàn tất và không phải tài liệu được bất kỳ cơ quan nhà nước, nhà xuất bản hay tổ chức học thuật nào phê duyệt hoặc bảo trợ.
 
@@ -7,6 +7,36 @@ Bản thảo đầy đủ được xây trên một master ledger riêng gồm S
 Phương pháp của cuốn sách bắt đầu từ một cam kết không giấu vị thế người viết: tôi là một người Việt Nam đời sau, kính ngưỡng Chủ tịch Hồ Chí Minh, muốn học từ hành trình của Người và muốn chuyển điều học được thành năng lực xây dựng đất nước. Tôi không giả một sự lạnh lùng không tồn tại. Nhưng cảm xúc không có quyền thay thế evidence.
 
 Sự kính ngưỡng là lý do làm việc sâu hơn. Chứng cứ là điều kiện để từng câu được ở lại.
+
+## Bản chất khoa học ứng dụng liên ngành
+
+Công trình kết hợp bốn họ phương pháp. Họ thứ nhất là lịch sử thực chứng: phê bình lưu trữ, đối chiếu nguồn, tái dựng thời gian, phân bổ tác nhân và kiểm tra sai niên đại. Họ thứ hai là khoa học xã hội thực chứng: kinh tế học, khoa học chính trị, nghiên cứu năng lực nhà nước, xã hội học, khoa học mạng lưới, khoa học truyền thông và học tập tổ chức. Họ thứ ba là khoa học về con người và học tập: tâm lý học nhận thức, nghiên cứu chuyên gia, siêu nhận thức, học ngôn ngữ và khoa học quyết định. Họ thứ tư là khoa học đo lường: thống kê, data quality, lớp tham chiếu, phân tích độ nhạy, kiểm tra dữ liệu thiếu và khả năng tái lập.
+
+Không ép mọi câu hỏi vào cùng một loại bằng chứng. Một mốc ngày cần record gần sự kiện. Một claim về năng lực nhà nước cần dữ liệu thiết kế, tổ chức, thực thi và kết quả. Một claim về học tập cần phân biệt tự thuật, hành vi quan sát được và kết quả năng lực. Một claim về mạng lưới cần chứng minh cạnh quan hệ đã truyền thông tin, niềm tin, nguồn lực hoặc phối hợp, không chỉ chứng minh hai người từng ở cùng một nơi.
+
+Với câu hỏi không thể làm thí nghiệm ngẫu nhiên, project không mượn chữ “thực nghiệm” để tạo uy tín giả. Thay vào đó, nó sử dụng bằng chứng quan sát, thiết kế bán thực nghiệm khi phù hợp, so sánh lịch sử, truy vết quá trình, bằng chứng âm có giới hạn, biến thiên tự nhiên và phản thực nhân quả với giả định được ghi rõ.
+
+Một kết luận khoa học đủ mạnh không phải kết luận không thể bị phản bác. Nó là kết luận có provenance, phương pháp, phạm vi, phản chứng và điều kiện sửa sai rõ đến mức người phản bác phải đối thoại với chính bằng chứng.
+
+## Hợp đồng cảm xúc và lập luận
+
+Giọng văn không được biến thành một đường thẳng vô cảm. Cảm xúc là một phần của trải nghiệm lịch sử, nhưng mỗi trạng thái cảm xúc phải có chức năng nhận thức và không được lấn quyền của chứng cứ.
+
+**Kính ngưỡng** được thể hiện bằng độ chính xác, danh xưng đúng, khả năng chịu khó đọc nguồn và sự công bằng với đóng góp tập thể. **Xúc động** chỉ xuất hiện sau khi dữ kiện đã cho thấy con người, cái giá và hệ quả. **Nghi ngờ** phải phát ra câu hỏi kiểm tra được: nguồn ở đâu, lineage nào, có bản gốc không, còn cách giải thích nào khác. **Đau xót** ghi nhận tổn thất con người nhưng không dùng tổn thất như bằng chứng rằng mọi quyết định liên quan đều đúng. **Hy vọng** mở ra bài học cho tương lai nhưng không biến mong muốn thành dự báo chắc chắn.
+
+Khi **khẳng định**, prose phải đi theo chuỗi: `mệnh đề cụ thể → chứng cứ mạnh nhất → đối chứng độc lập → phạm vi đúng → phần còn bất định → kết luận`. Từ ngữ mạnh chỉ được dùng khi nguồn hội tụ và phạm vi đã khóa.
+
+Khi **bác bỏ**, prose phải đi theo chuỗi: `mệnh đề chính xác → phiên bản mạnh nhất của lập luận đối diện → kiểm tra nguồn → điểm mâu thuẫn hoặc lỗi nhân quả → giải thích thay thế → kết luận còn đứng vững`. Không bác bằng giễu cợt, nhãn chính trị, suy đoán động cơ hoặc việc chọn một đối thủ yếu để thắng dễ.
+
+Khi nguồn xung đột, giọng văn phải cho người đọc cảm nhận được sự chần lại của nhận thức. Sách nói rõ rằng ở đây ta có một dấu vết, ở kia có một phản chứng, hai mốc chưa hòa được, và vì thế kết luận phải hạ xuống. Sự thận trọng không làm câu văn yếu. Nó cho thấy người viết đủ tự tin để không mượn độ chắc chắn mà chứng cứ chưa cấp.
+
+Nhịp văn có thể trang nghiêm, tha thiết, hoài nghi, đau xót, cứng rắn hoặc hy vọng tùy vật liệu. Tuy nhiên, cảm xúc phải nảy từ cảnh, vật chứng, lựa chọn, cái giá và hệ quả. Không dùng xuống dòng liên tục, tính từ lớn hoặc câu tuyên ngôn để giả độ sâu.
+
+## Luật dấu câu và tiếng Việt
+
+Văn bản công khai của công trình không dùng em dash. Khi cần chuyển ý, sách chọn dấu chấm, dấu phẩy, dấu hai chấm, dấu chấm phẩy hoặc ngoặc theo quan hệ logic thực sự của câu. Dấu câu không được dùng để tạo kịch tính giả.
+
+Hệ chữ ưu tiên đầy đủ dấu tiếng Việt, phân biệt rõ chữ hoa, chữ nghiêng, dấu thanh và các cụm phụ âm ở cỡ nhỏ. Trình đọc dùng Noto Serif cho văn bản dài, Noto Sans cho giao diện và Noto Sans Mono cho công thức, kèm fallback rộng. Độ sít chữ âm quá mạnh bị loại bỏ để tránh làm dấu tiếng Việt chạm nhau hoặc mất cân bằng thị giác.
 
 ## Luật kính ngữ, tên lịch sử và chức danh
 
@@ -26,14 +56,14 @@ Thứ tự ưu tiên là nguồn sơ cấp và lưu trữ; sau đó là nghiên 
 
 Hệ tier hiện hành:
 
-- `S1` — primary/archival: thư, điện, biên bản, công báo, hồ sơ hành chính, bản thảo, hiện vật hoặc record đương thời có provenance.
-- `S2` — nghiên cứu peer-reviewed hoặc academic monograph có phương pháp và nguồn rõ.
-- `S3` — công bố chính thức của cơ quan lưu trữ, bảo tàng, nhà nước hoặc tổ chức lịch sử.
-- `S4` — hồi ký, oral testimony, ký ức nhân chứng.
-- `S5` — báo chí chất lượng hoặc popular history có biên tập.
-- `S6` — polemic, sensationalism, nguồn vô danh hoặc provenance yếu.
+- `S1`: primary/archival: thư, điện, biên bản, công báo, hồ sơ hành chính, bản thảo, hiện vật hoặc record đương thời có provenance.
+- `S2`: nghiên cứu peer-reviewed hoặc academic monograph có phương pháp và nguồn rõ.
+- `S3`: công bố chính thức của cơ quan lưu trữ, bảo tàng, nhà nước hoặc tổ chức lịch sử.
+- `S4`: hồi ký, oral testimony, ký ức nhân chứng.
+- `S5`: báo chí chất lượng hoặc popular history có biên tập.
+- `S6`: polemic, sensationalism, nguồn vô danh hoặc provenance yếu.
 
-Chiều chính trị không quyết định tier. Một nguồn thuận lợi cho hình ảnh Chủ tịch Hồ Chí Minh không được nâng hạng vì thuận lợi. Một nguồn phê phán không bị hạ hạng vì phê phán. Hồ sơ của đối phương không tự động đúng; self-report cũng không tự động đúng. Chất lượng nằm ở provenance, khoảng cách tới sự kiện, mục đích tạo lập, phương pháp, tính độc lập, khả năng đối chiếu và điều kiện phản chứng.
+Chiều chính trị không quyết định tier. Một nguồn thuận lợi cho hình ảnh Chủ tịch Hồ Chí Minh không được nâng hạng vì thuận lợi. Một nguồn phê phán không bị hạ hạng vì phê phán. Hồ sơ của đối phương không tự động đúng; tự thuật cũng không tự động đúng. Chất lượng nằm ở provenance, khoảng cách tới sự kiện, mục đích tạo lập, phương pháp, tính độc lập, khả năng đối chiếu và điều kiện phản chứng.
 
 Một source card phải trả lời tối thiểu: ai tạo; khi nào; để làm gì; đối tượng nào; bản ta đọc là gốc, facsimile, transcription, translation hay tổng thuật; phần nào của claim được nguồn nâng đỡ; phần nào vẫn là inference; và điều gì có thể làm claim đổi trạng thái.
 
@@ -63,16 +93,16 @@ Chất lượng một quyết định ở thời điểm `t` phải được đ�
 
 Kết quả năm 1945 không chứng minh Nguyễn Tất Thành năm 1911 đã biết chắc mình sẽ đi tới năm 1945. Một chiến thắng về sau không biến mọi bước trước đó thành tối ưu. Một thất bại cục bộ cũng không tự chứng minh toàn bộ chiến lược sai.
 
-Counterfactual được dùng để kiểm tra độ bền của lập luận — còn phương án nào khác, chi phí gì, thông tin nào thiếu — nhưng không được viết thành historical fact. Hindsight, outcome bias, survivorship bias và presentism phải được audit riêng.
+Counterfactual được dùng để kiểm tra độ bền của lập luận, gồm câu hỏi còn phương án nào khác, chi phí gì và thông tin nào thiếu, nhưng không được viết thành historical fact. Hindsight, outcome bias, survivorship bias và presentism phải được audit riêng.
 
 ## Trường Độ Khó Lịch Sử
 
-Cụm “gần như bất khả thi” không được phép đứng một mình như lời tung hô. Project dùng **Historical Difficulty Field — HDF** để phân rã độ khó thành các chiều có thể truy nguồn.
+Cụm “gần như bất khả thi” không được phép đứng một mình như lời tung hô. Project dùng **Historical Difficulty Field, HDF** để phân rã độ khó thành các chiều có thể truy nguồn.
 
 Tại mỗi thời điểm `t`, xây hai vector:
 
-- `R_VN(t)` — nguồn lực của chủ thể Việt Nam hoặc hệ thống Việt Nam đang xét;
-- `R_OPP(t)` — nguồn lực của cấu trúc đối diện hoặc môi trường quyền lực.
+- `R_VN(t)`: nguồn lực của chủ thể Việt Nam hoặc hệ thống Việt Nam đang xét;
+- `R_OPP(t)`: nguồn lực của cấu trúc đối diện hoặc môi trường quyền lực.
 
 Các chiều tối thiểu gồm `Money/Capital, Armed Force, State Power, Network, Recognition, Language/Cultural Capital, Information, Mobility, Organization, Legitimacy, External Support, Human Risk`.
 
@@ -88,10 +118,10 @@ Trường độ khó tại thời điểm `t`:
 
 Trong đó:
 
-- `U(t)` — bất định thông tin;
-- `T(t)` — áp lực thời gian;
-- `C(t)` — chi phí phối hợp;
-- `A(t)` — adaptive leverage từ học tập, mạng lưới, tổ chức, chính danh, liên minh, option value và năng lực sửa sai.
+- `U(t)`: bất định thông tin;
+- `T(t)`: áp lực thời gian;
+- `C(t)`: chi phí phối hợp;
+- `A(t)`: adaptive leverage từ học tập, mạng lưới, tổ chức, chính danh, liên minh, option value và năng lực sửa sai.
 
 Trọng số `w_i` và các hệ số chỉ được dùng trong sensitivity analysis. Chúng không phải hằng số tự nhiên, không được chọn để ép lịch sử khớp một kết luận đã có.
 
@@ -127,7 +157,7 @@ Tồn tại chính sách không tự chứng minh thực thi. Thực thi không 
 
 Chương **NHÀ NƯỚC VỮNG MẠNH VÌ LỢI ÍCH TOÀN DÂN** về sau phải trả lời bằng chứng lịch sử: chiến thắng cách mạng được chuyển thành an ninh, lương thực, giáo dục, y tế, luật pháp, hành chính, ngoại giao, đoàn kết và khả năng tái thiết ra sao; phần nào thành công, phần nào gây tổn thất, phần nào được sửa và phần nào vẫn còn tranh luận.
 
-## Honest admiration — kính ngưỡng có trách nhiệm
+## Kính ngưỡng có trách nhiệm
 
 Điểm nhìn của tác giả không phải trung lập cảm xúc. Tôi kính ngưỡng Chủ tịch Hồ Chí Minh và trân trọng dự án lịch sử giành độc lập, xây dựng chủ quyền và nâng năng lực của dân tộc Việt Nam.
 

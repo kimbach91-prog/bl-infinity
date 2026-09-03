@@ -23,8 +23,8 @@
     document.documentElement.style.setProperty('--reader-font-size', `${prefs.size}px`);
     document.documentElement.style.setProperty('--reader-line-height', String(prefs.lineHeight));
     document.documentElement.style.setProperty('--reader-font-family', prefs.font === 'system'
-      ? 'system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif'
-      : '"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,"Times New Roman",serif');
+      ? 'var(--reader-font-system)'
+      : 'var(--reader-font-literary)');
   };
   apply();
 

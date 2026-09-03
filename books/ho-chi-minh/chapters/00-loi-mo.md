@@ -1,4 +1,4 @@
-# Lời mở — Kính ngưỡng không miễn trừ kiểm chứng
+# Lời mở: Kính ngưỡng không miễn trừ kiểm chứng
 
 Tôi viết cuốn sách này từ vị thế một người Việt Nam đời sau.
 
@@ -9,6 +9,20 @@ Tôi kính ngưỡng Chủ tịch Hồ Chí Minh.
 Nhưng chính vì kính ngưỡng, tôi không muốn dùng một lời khen dễ dàng để thay cho một chứng cứ khó tìm. Tôi không muốn làm Người lớn lên bằng cách làm lịch sử nhỏ đi. Tôi muốn đặt hành trình ấy trước toàn bộ sức nặng của thực tại: một đất nước mất chủ quyền; một trật tự thuộc địa có tiền, quân lực, luật pháp, hành chính, trường học, đường biển, điện báo và vị thế quốc tế; một thế giới bị chia bởi đế quốc, chiến tranh và ý thức hệ; một người Việt Nam ban đầu chưa có nhà nước của riêng mình để điều động, chưa có quân đội, chưa có ghế ngoại giao, chưa có một tổ chức đủ mạnh để biến ý chí thành năng lực.
 
 Nếu thành tựu vẫn đứng vững sau khi toàn bộ độ khó ấy được phục dựng, lòng kính phục không còn cần được bảo vệ bằng khẩu hiệu. Nó đã được thực tại bảo vệ.
+
+## Đây là một công trình nghiên cứu khoa học ứng dụng liên ngành
+
+Cuốn sách không phải một bản tiểu sử minh họa, cũng không phải một bài ca dùng cảm xúc để đi vòng qua câu hỏi khó. Đây là một công trình nghiên cứu khoa học ứng dụng liên ngành. Nó kết hợp lịch sử thực chứng và phê bình lưu trữ với khoa học quyết định, khoa học nhà nước, kinh tế học, xã hội học, khoa học mạng lưới, nghiên cứu tổ chức, khoa học học tập, tâm lý học nhận thức, khoa học truyền thông, thống kê, khoa học dữ liệu và phân tích pháp lý, biên tập.
+
+Không phải câu hỏi lịch sử nào cũng có thể đưa vào phòng thí nghiệm. Vì thế, chữ **thực nghiệm** trong công trình này được dùng đúng phạm vi. Khi có dữ liệu quan sát, đo lường, so sánh, khảo sát, thí nghiệm hoặc thiết kế bán thực nghiệm đáng tin, chúng được sử dụng. Khi đối tượng là một sự kiện đã qua và không thể lặp lại, sách dùng hồ sơ đương thời, đối chiếu nhiều nguồn, mã hóa sự kiện, so sánh lịch sử, suy luận nhân quả với giả định công khai, phản thực có giới hạn và kiểm tra độ nhạy. Không phương pháp nào được phép giả vờ biết nhiều hơn dữ liệu.
+
+Mỗi khẳng định quan trọng phải trả lời được sáu câu hỏi: nguồn nào nâng đỡ nó; nguồn ấy được tạo ra để làm gì; có bằng chứng độc lập nào xác nhận hoặc làm yếu nó; phần nhân quả thuộc về ai; phần nào là dữ kiện và phần nào là diễn giải; điều gì có thể khiến kết luận phải đổi.
+
+Mục tiêu giáo dục không phải dạy thanh niên thuộc một kết luận. Mục tiêu là giúp người trẻ nhận ra đâu là điều đã được ghi nhận, đâu là diễn giải học thuật, đâu là ký ức chính thức, đâu là mệnh đề còn tranh cãi và đâu là điều chưa biết. Từ đó, người đọc có thể biết điều gì đáng học, điều gì không nên bắt chước, việc gì có thể làm ngay để xây dựng đất nước và mình nên đứng ở vị thế nào.
+
+Vị thế ấy không phải sùng bái để khỏi phải suy nghĩ, cũng không phải hoài nghi phản xạ để có vẻ thông minh. Đó là vị thế của một công dân biết kính trọng lịch sử, kiểm tra chứng cứ, nhìn được nhiều chiều, chịu sửa mình khi Reality Veto xuất hiện và chuyển lòng yêu nước thành năng lực tạo ra lợi ích công.
+
+Không có mệnh đề lịch sử nào được cấm phản biện. Mục tiêu của cuốn sách không phải tạo ra câu chữ mà “không ai được cãi”, mà tạo ra một kiến trúc chứng cứ đủ rõ để mọi sự phản bác nghiêm túc phải chỉ ra chính xác nguồn nào sai, dữ liệu nào thiếu, phép suy luận nào yếu hoặc phần nhân quả nào bị đặt nhầm. Khẩu hiệu không còn đủ để phủ định một mệnh đề đã được dựng đúng cách.
 
 ## Kính ngưỡng và khoa học không đối lập
 

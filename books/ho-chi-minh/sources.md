@@ -1,21 +1,28 @@
-# Đường dẫn nguồn công khai — Public Source Path
+# Đường dẫn nguồn công khai: Public Source Path
 
 Trang này là bản chỉ mục rút gọn cho **research preview 0.2**, không thay thế MASTER SOURCE ATLAS. Mục tiêu là để độc giả có thể kiểm tra ngay các source lineages đang nâng đỡ phần public prose, đồng thời nhìn thấy giới hạn của từng nguồn.
 
 Một liên kết ở đây không có nghĩa toàn bộ nội dung trên trang nguồn đã được cuốn sách chấp nhận. Project chỉ dùng phần claim mà source card, provenance và phương pháp cho phép.
 
+
+## Nguồn phục vụ một kiến trúc khoa học ứng dụng
+
+Source Path không chỉ liệt kê tài liệu. Mỗi nguồn được dùng theo loại câu hỏi mà nó có thể trả lời. Hồ sơ đương thời khóa mốc và hành vi; nghiên cứu học thuật giúp kiểm tra cơ chế; dữ liệu định lượng cần denominator và sensitivity; testimony cần đối chiếu; nguồn phê phán hay thuận chiều đều phải chịu cùng luật provenance.
+
+Mục tiêu không phải gom thật nhiều liên kết, mà tạo một chuỗi có thể kiểm tra từ nguồn tới claim, từ claim tới lập luận, từ lập luận tới bài học.
+
 ## Cách đọc trọng lượng nguồn
 
-- `S1` — văn bản/hồ sơ/hiện vật sơ cấp hoặc archival object có provenance.
-- `S2` — nghiên cứu peer-reviewed hoặc academic monograph có phương pháp rõ.
-- `S3` — công bố chính thức của cơ quan lưu trữ, bảo tàng hoặc tổ chức lịch sử; có thể chứa S1 nhưng phần bình luận vẫn phải tách khỏi hiện vật.
-- `S4` — hồi ký, oral testimony hoặc ký ức nhân chứng.
-- `S5` — báo chí chất lượng hoặc popular history có biên tập.
-- `S6` — polemic, sensationalism, nguồn vô danh hoặc provenance yếu; chỉ dùng trong adversarial corpus nếu chưa được corroborate.
+- `S1`: văn bản/hồ sơ/hiện vật sơ cấp hoặc archival object có provenance.
+- `S2`: nghiên cứu peer-reviewed hoặc academic monograph có phương pháp rõ.
+- `S3`: công bố chính thức của cơ quan lưu trữ, bảo tàng hoặc tổ chức lịch sử; có thể chứa S1 nhưng phần bình luận vẫn phải tách khỏi hiện vật.
+- `S4`: hồi ký, oral testimony hoặc ký ức nhân chứng.
+- `S5`: báo chí chất lượng hoặc popular history có biên tập.
+- `S6`: polemic, sensationalism, nguồn vô danh hoặc provenance yếu; chỉ dùng trong adversarial corpus nếu chưa được corroborate.
 
 Chiều chính trị không quyết định tier. Nguồn thuận chiều không tự động đúng; nguồn phê phán không tự động mạnh. Một hồ sơ mật vụ chứng minh cơ quan đã ghi gì, không tự bảo đảm cơ quan nhận đúng người.
 
-## 1908 — Trường học, Huế và giới hạn của suy luận
+## 1908: Trường học, Huế và giới hạn của suy luận
 
 **HCM-SRC-00001 · Hồ sơ Chouquet về Nguyễn Sinh Côn, tháng 8-1908.** Bản công bố chính thức có facsimile/transcription và dẫn provenance CAOM/ANOM `GGI-RSA R.1`. Nguồn hỗ trợ admission status; không tự chứng minh động cơ hoặc vai trò trong phong trào 1908.  
 [Đọc bản công bố của Bộ Tư lệnh Bảo vệ Lăng Chủ tịch Hồ Chí Minh](https://btllang.mod.gov.vn/tin-tuc/tin-tong-hop/3623-tim-duoc-tu-lieu-thanh-van-dau-tien-ve-chu-tich-ho-chi-minh.html)
@@ -37,7 +44,7 @@ Chiều chính trị không quyết định tier. Nguồn thuận chiều không
 **HCM-SRC-00010 · Chantal Descours-Gatin về chương trình Doumer và Régie de l’opium.** Nghiên cứu lưu trữ hỗ trợ việc phục dựng chương trình trung ương hóa–tài chính–hạ tầng; intention không tự bằng implementation.  
 [Mở bài tại Persée](https://www.persee.fr/doc/etudo_1241-3496_1991_num_3_1_966)
 
-**HCM-SRC-00011 · _Mission Pavie — Indo-Chine, Atlas: Notices et Cartes_ (1903).** Tư liệu đương thời về dân số ước lượng, hàng hải, điện báo, cáp và đường sắt. Presence of infrastructure không đồng nghĩa equal access.  
+**HCM-SRC-00011 · _Mission Pavie: Indo-Chine, Atlas: Notices et Cartes_ (1903).** Tư liệu đương thời về dân số ước lượng, hàng hải, điện báo, cáp và đường sắt. Presence of infrastructure không đồng nghĩa equal access.
 [Mở bản scan](https://www.luangprabangculture.com/uploads/1/8/3/0/18306261/mission_pavie_notices_and_maps.pdf)
 
 **HCM-SRC-00013 · Claudius Madrolle, _De Marseille à Canton_ (1902).** Period witness cho mô tả phòng thủ, đồn trú và tuyến hàng hải; không phải total-force register, có textual/OCR discrepancy ở một tổng dân số nên project không dùng con số ấy như exact fact.  
@@ -54,7 +61,7 @@ Chiều chính trị không quyết định tier. Nguồn thuận chiều không
 **HCM-SRC-00020 · Pierre Brocheux, _Ho Chi Minh: A Biography_.** Academic monograph dùng làm counterweight cho cả literal-zero poverty myth và automatic wealthy-mandarin-heir assumption.  
 [Mở Cambridge excerpt](https://assets.cambridge.org/97805218/50629/excerpt/9780521850629_excerpt.pdf)
 
-## 1911 — École Coloniale, lao động và option bị đóng
+## 1911: École Coloniale, lao động và option bị đóng
 
 **HCM-SRC-00021 · ANOM notice, archival reference `FR ANOM ECOL 27`.** Xác nhận đơn ngày 15-9-1911, tình trạng làm cho Chargeurs Réunis và gate phải qua Toàn quyền Đông Dương. Nguồn không chứng minh total motive.  
 [Mở notice của Archives nationales d’outre-mer](https://archives-nationales-outre-mer.culture.gouv.fr/ar/node/153)
@@ -68,7 +75,7 @@ Chiều chính trị không quyết định tier. Nguồn thuận chiều không
 **HCM-SRC-00025 · Con tàu Amiral Latouche-Tréville và các artifact lineages 1911.** Dùng cho payroll/remittance chronology, không dùng phần hồi tưởng để suy total motive.  
 [Đọc tại Bảo tàng Hồ Chí Minh](https://baotanghochiminh.vn/hanh-trinh-cua-con-tau-amiral-latouche-treville-dua-nguyen-tat-thanh-ra-di-tim-duong-cuu-nuoc.htm)
 
-## 1912–1915 — Thư từ, học tập và world-model
+## 1912–1915: Thư từ, học tập và world-model
 
 **HCM-SRC-00026 · Thư New York ngày 15-12-1912.** Documentary anchor mạnh cho New York presence và liên lạc gia đình; không tự xác nhận toàn bộ itinerary hoặc political network tại Hoa Kỳ.  
 [Đọc event page](https://baotanghochiminh.vn/nguyen-tat-thanh-gui-thu-cho-kham-su-trung-ky.htm)
@@ -88,7 +95,7 @@ Chiều chính trị không quyết định tier. Nguồn thuận chiều không
 **HCM-SRC-00032 · Thư ngày 16-4-1915 gửi qua kênh lãnh sự để tìm cha.** Bounded family-correspondence event; use of a channel không đồng nghĩa political consent.  
 [Đọc tại Bảo tàng Hồ Chí Minh](https://baotanghochiminh.vn/nguyen-tat-thanh-viet-thu-cho-toan-quyen-dong-duong.htm)
 
-**HCM-SRC-00033 · _Hồ Chí Minh — Biên niên tiểu sử_, tập 1.** Hữu ích cho archival pointers và June-1919 Paris anchors; chính chronology nói nguồn khác nhau về mốc trở lại Pháp, nên late-1917 vẫn provisional.  
+**HCM-SRC-00033 · _Hồ Chí Minh: Biên niên tiểu sử_, tập 1.** Hữu ích cho archival pointers và June-1919 Paris anchors; chính chronology nói nguồn khác nhau về mốc trở lại Pháp, nên late-1917 vẫn provisional.
 [Mở bản công bố chính thức](https://tulieuvankien.dangcongsan.vn/c-mac-angghen-lenin-ho-chi-minh/book/ho-chi-minh/tieu-su-cuoc-doi-va-su-nghiep/ho-chi-minh-bien-nien-tieu-su-tap-1-1951890-1929-21?categoryId=3000384)
 
 **HCM-SRC-00034 · Nguyễn Ái Quốc qua hồ sơ mật vụ Pháp.** Dùng cho identity firewall: surveillance capacity không bảo đảm person-resolution đúng.  

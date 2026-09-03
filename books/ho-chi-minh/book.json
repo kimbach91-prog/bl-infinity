@@ -6,7 +6,7 @@
   "author": "Lâm Kim Bách",
   "pen_name": "Bách Lâm",
   "status": "PUBLIC_RESEARCH_PREVIEW_NOT_COMPLETE",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "updated_at": "2026-09-04",
   "language": "vi",
   "authorial_position": "LATER_GENERATION_VIETNAMESE_REVERENCE_WITH_REALITY_VETO",
@@ -15,7 +15,7 @@
   "chapters": [
     {
       "id": "loi-mo",
-      "title": "Lời mở — Kính ngưỡng không miễn trừ kiểm chứng",
+      "title": "Lời mở: Kính ngưỡng không miễn trừ kiểm chứng",
       "src": "chapters/00-loi-mo.md"
     },
     {
@@ -30,18 +30,21 @@
     },
     {
       "id": "1911",
-      "title": "1911 — Ra đi khi chưa có bản đồ tương lai",
+      "title": "1911: Ra đi khi chưa có bản đồ tương lai",
       "src": "chapters/03-1911.md"
     },
     {
       "id": "hoc-the-gioi",
-      "title": "1912–1915 — Học thế giới bằng lao động, thư từ và ngôn ngữ",
+      "title": "1912–1915: Học thế giới bằng lao động, thư từ và ngôn ngữ",
       "src": "chapters/04-hoc-the-gioi.md"
     },
     {
       "id": "phuong-phap",
-      "title": "Phương pháp — Kính ngưỡng, chứng cứ và Trường Độ Khó Lịch Sử",
+      "title": "Phương pháp: Kính ngưỡng, chứng cứ và Trường Độ Khó Lịch Sử",
       "src": "chapters/05-phuong-phap.md"
     }
-  ]
+  ],
+  "scientific_identity": "APPLIED_INTERDISCIPLINARY_EVIDENCE_ARCHITECTURE",
+  "typography": "VIETNAMESE_FIRST_NOTO_SERIF_SANS_MONO",
+  "prose_contract": "EMOTION_EXPLICIT_EVIDENCE_BOUND_NO_EM_DASH"
 }

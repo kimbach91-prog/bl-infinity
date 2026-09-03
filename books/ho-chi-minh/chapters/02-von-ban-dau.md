@@ -1,6 +1,6 @@
 # Vốn ban đầu: gia đình, trường học và năng lực tự học
 
-Một câu chuyện anh hùng thường thích bắt đầu từ số 0, vì số 0 làm mọi bước tiến về sau trông giống phép màu. Hồ sơ về thời niên thiếu của Nguyễn Tất Thành không cho phép sự tiện lợi ấy — và tôi cho rằng sự thật còn đáng kính hơn huyền thoại.
+Một câu chuyện anh hùng thường thích bắt đầu từ số 0, vì số 0 làm mọi bước tiến về sau trông giống phép màu. Hồ sơ về thời niên thiếu của Nguyễn Tất Thành không cho phép sự tiện lợi ấy. Tôi cho rằng sự thật còn đáng kính hơn huyền thoại.
 
 Trước khi trở thành Chủ tịch Hồ Chí Minh, Người không phải một thiên tài toàn tri sinh ra đã biết sẵn con đường của mình. Nguyễn Tất Thành có một số nguồn lực ban đầu có thật: gia đình có truyền thống học tập và khoa bảng; từng sống trong những không gian xã hội khác nhau; đi qua các thiết chế giáo dục của trật tự thuộc địa–triều đình; có cơ hội tiếp xúc với tiếng Pháp, chữ Hán, đời sống đô thị và bộ máy hành chính. Đồng thời, gia đình chịu mất mát, phân tán và giới hạn vật chất; còn chính Nguyễn Tất Thành không sở hữu quân lực, nhà nước, tài sản lớn, mạng lưới quốc tế hay quyền quyết định của những thiết chế mà mình từng tiếp xúc.
 

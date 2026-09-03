@@ -1,4 +1,4 @@
-# 1912–1915 — Học thế giới bằng lao động, thư từ và ngôn ngữ
+# 1912–1915: Học thế giới bằng lao động, thư từ và ngôn ngữ
 
 Những năm đầu ở nước ngoài rất dễ bị nén thành một montage đẹp: Nguyễn Tất Thành đi nhiều nơi, học nhiều thứ, gặp nhiều người, rồi gần như tự nhiên trở thành một nhà hoạt động quốc tế. Cách kể ấy có tốc độ, nhưng làm mất phần đáng học nhất. Học tập thật không diễn ra trong khoảng trống. Nó diễn ra giữa sinh kế, mỏi mệt, thiếu thời gian, ngôn ngữ chưa đủ, thư từ có thể thất lạc, thông tin không hoàn chỉnh và những quan hệ cụ thể phải được giữ bằng nỗ lực.
 
@@ -20,7 +20,7 @@ Việc Nguyễn Tất Thành hỏi Phan Châu Trinh không chứng minh Phan là
 
 Khoảng giữa năm 1913, từ Anh, Nguyễn Tất Thành viết rằng đã tìm được nơi học ngôn ngữ, nhưng những tháng trước phần lớn phải làm việc, dùng tiếng Pháp và lo sinh kế nên việc học còn ít. Nguyễn Tất Thành đặt mục tiêu cải thiện khả năng hiểu–nói tiếng Anh và xin Phan Châu Trinh gửi tiếp các hồi của *Giai nhân kỳ ngộ*. [HCM-SRC-00030; HCM-CLM-00036; HCM-CLM-00037; HCM-CLM-00040]
 
-Chỉ vài dòng thư đã làm sụp một hình ảnh rất hấp dẫn nhưng kém giá trị giáo dục: “thiên tài đa ngữ tự học trong chớp mắt”. Tư liệu cho thấy điều khó hơn và đáng kính hơn — Nguyễn Tất Thành biết mình chưa đủ; nhận ra thời gian và sinh kế đang cản trở việc học; vẫn đặt mục tiêu cụ thể; vẫn duy trì một dòng sách và thư từ từ mạng quan hệ cũ.
+Chỉ vài dòng thư đã làm sụp một hình ảnh rất hấp dẫn nhưng kém giá trị giáo dục: “thiên tài đa ngữ tự học trong chớp mắt”. Tư liệu cho thấy điều khó hơn và đáng kính hơn. Nguyễn Tất Thành biết mình chưa đủ; nhận ra thời gian và sinh kế đang cản trở việc học; vẫn đặt mục tiêu cụ thể; vẫn duy trì một dòng sách và thư từ từ mạng quan hệ cũ.
 
 Đó là metacognition ở mức hành vi: biết khoảng cách giữa năng lực hiện có và năng lực cần có. Người không biết mình thiếu gì thường không thể thiết kế việc học. Người chỉ biết mình thiếu mà không hành động sẽ biến tự nhận thức thành mặc cảm. Ở đây, khoảng thiếu được nối với một hành động: tìm nơi học, đặt mục tiêu, xin thêm tài liệu, tiếp tục thực hành trong môi trường lao động.
 
@@ -92,7 +92,7 @@ Một công việc chưa đúng ước mơ vẫn có thể dạy kỷ luật, qu
 
 Yêu nước trong thời bình không cần một kẻ thù để tồn tại. Nó có thể mang hình thức một phòng thí nghiệm làm việc trung thực, một lớp học không bỏ lại học sinh yếu, một doanh nghiệp cạnh tranh được mà không bóc lột, một cơ quan biết nhận lỗi, một kỹ sư làm hệ thống an toàn hơn, một người học ngoại ngữ để đưa tri thức về Việt Nam, hoặc một nhóm người khác biệt biết ghép năng lực thay vì tranh xem ai có quyền độc chiếm tương lai.
 
-Không biến thiếu thốn thành bản sắc. Không biến khó khăn thành cái cớ. Không biến kiến thức thành kiêu ngạo. Hãy biến mỗi môi trường mình buộc phải sống trong thành một nơi học có chủ đích — rồi biến điều đã học thành năng lực có ích cho người khác.
+Không biến thiếu thốn thành bản sắc. Không biến khó khăn thành cái cớ. Không biến kiến thức thành kiêu ngạo. Hãy biến mỗi môi trường mình buộc phải sống trong thành một nơi học có chủ đích, rồi biến điều đã học thành năng lực có ích cho người khác.
 
 Đó là cách một hành trình cá nhân bắt đầu chạm vào năng lực của một đất nước.
 

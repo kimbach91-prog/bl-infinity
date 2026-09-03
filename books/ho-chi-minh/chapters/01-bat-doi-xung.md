@@ -62,7 +62,7 @@ Có một nền tảng gia đình và học vấn nhất định. Có tiếp xú
 
 Không phải: *Người vĩ đại vì cuối cùng Người thắng.*
 
-Mà là: **trong mỗi thời điểm chưa biết kết cục, nguồn lực nào đã được nhìn thấy, chuyển hóa, chia sẻ và nhân lên — và bằng cách nào một dân tộc bị đặt ở phía yếu đã dần giành lại quyền lựa chọn tương lai của mình?**
+Mà là: **trong mỗi thời điểm chưa biết kết cục, nguồn lực nào đã được nhìn thấy, chuyển hóa, chia sẻ và nhân lên, và bằng cách nào một dân tộc bị đặt ở phía yếu đã dần giành lại quyền lựa chọn tương lai của mình?**
 
 Đối với thanh niên Việt Nam hôm nay, bài học đầu tiên không phải tự ví mình với một đế quốc hay tìm một kẻ thù để chống. Bài học là biết đo đúng tương quan, không tự ti trước khoảng cách, không say sưa với lòng tự hào trống, và kiên trì biến những gì đang có thành năng lực mới: học vấn, ngoại ngữ, khoa học, công nghệ, sức khỏe, kỷ luật, mạng lưới tin cậy, tổ chức biết hợp tác và công việc có ích cho đất nước.
 
