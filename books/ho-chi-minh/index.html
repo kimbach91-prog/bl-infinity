@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Từ Hai Bàn Tay Trắng Đến Một Nhà Nước — Hồ Chí Minh</title>
+<meta name="description" content="Bản nghiên cứu sống của Lâm Kim Bách về Hồ Chí Minh: hành trình học tập, bất đối xứng lịch sử, xây tổ chức và năng lực nhà nước, với provenance và Reality Veto.">
+<meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/">
+<meta property="og:type" content="book"><meta property="og:title" content="Từ Hai Bàn Tay Trắng Đến Một Nhà Nước"><meta property="og:description" content="Hồ Chí Minh và khoa học của một hành trình trong bất đối xứng lịch sử — public research preview."><meta property="og:url" content="https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/">
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Book","name":"Từ Hai Bàn Tay Trắng Đến Một Nhà Nước","subtitle":"Hồ Chí Minh và khoa học của một hành trình trong bất đối xứng lịch sử","author":{"@type":"Person","name":"Lâm Kim Bách","alternateName":"Bách Lâm"},"inLanguage":"vi","bookEdition":"Public research preview 0.1.0","url":"https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/","isAccessibleForFree":true}</script>
+<link rel="stylesheet" href="../../assets/css/reader.css">
+<style>
+:root{--reader-accent:#8a2f2c}.book-meta{max-width:var(--reader-measure);margin:0 auto 28px;padding:15px 17px;border-left:3px solid var(--reader-accent);background:color-mix(in srgb,var(--reader-surface) 88%,transparent);color:var(--reader-muted);font:500 .84rem/1.64 system-ui,-apple-system,sans-serif}.chapter-label{max-width:var(--reader-measure);margin:0 auto 8px;color:var(--reader-muted);font:800 .72rem/1.3 system-ui,-apple-system,sans-serif;letter-spacing:.12em;text-transform:uppercase}.chapter-title{max-width:var(--reader-measure);margin:0 auto 28px;font:750 clamp(2rem,5vw,3.45rem)/1.02 var(--reader-font-family);letter-spacing:-.035em;text-wrap:balance}.load-error{padding:18px;border-left:3px solid #a33;background:color-mix(in srgb,#a33 7%,transparent);font-family:system-ui,sans-serif}
+</style>
+</head>
+<body>
+<div class="reader-shell">
+<nav class="reader-nav reader-chrome"><a href="../">← Thư viện sách</a><a href="../../novel/">Web novel</a><a href="../../">BL∞</a></nav>
+<header class="reader-hero"><p class="reader-kicker">LIVING HISTORY · PUBLIC RESEARCH PREVIEW · PROVENANCE FIRST</p><h1>Từ Hai Bàn Tay Trắng Đến Một Nhà Nước</h1><p class="reader-lead">Hồ Chí Minh và khoa học của một hành trình trong bất đối xứng lịch sử — viết từ lòng kính trọng, nhưng mọi factual claim phải chịu nguồn, phản chứng, uncertainty và Reality Veto.</p></header>
+<div id="bookMeta" class="book-meta reader-chrome"><strong>Chưa đạt Completion Gate.</strong> Bản web chỉ mở các phần đã đủ evidence cho bounded public prose; không phải ấn bản chính thức, không có endorsement của cơ quan nhà nước.</div>
+<details class="reader-toc reader-chrome" open><summary>Mục lục bản preview</summary><nav id="tocList" class="reader-toc-list" aria-label="Mục lục sách"></nav></details>
+<p id="chapterLabel" class="chapter-label">Đang tải</p><h2 id="chapterTitle" class="chapter-title">Từ Hai Bàn Tay Trắng Đến Một Nhà Nước</h2>
+<article id="reader" class="reader-prose prose" data-reader-surface><p>Đang tải chương…</p></article>
+<nav class="reader-bottom-nav reader-chrome"><button id="prev" type="button">← Chương trước</button><button id="next" type="button">Chương sau →</button></nav>
+<footer class="reader-nav reader-chrome">© 2026 Lâm Kim Bách · Bách Lâm / Optimizer · Independent research preview</footer>
+</div>
+<script src="../../assets/js/reader-markdown.js"></script>
+<script>
+let book=null,current=0;const $=s=>document.querySelector(s);
+async function loadBook(){const r=await fetch('book.json',{cache:'no-store'});if(!r.ok)throw new Error('book');book=await r.json();$('#bookMeta').innerHTML=`<strong>${BLReaderMarkdown.esc(book.status.replaceAll('_',' '))}</strong> · v${BLReaderMarkdown.esc(book.version)} · cập nhật ${BLReaderMarkdown.esc(book.updated_at)}. Preferences của trình đọc được chia sẻ với web novel và các sách BL∞ khác.`;$('#tocList').innerHTML=book.chapters.map((c,i)=>`<button type="button" data-index="${i}">${String(i).padStart(2,'0')} · ${BLReaderMarkdown.esc(c.title)}</button>`).join('');$('#tocList').addEventListener('click',e=>{const b=e.target.closest('[data-index]');if(b)loadChapter(Number(b.dataset.index));});const hash=location.hash.replace('#','');const idx=book.chapters.findIndex(c=>c.id===hash);await loadChapter(idx>=0?idx:0)}
+async function loadChapter(index){current=Math.max(0,Math.min(index,book.chapters.length-1));const c=book.chapters[current];$('#chapterLabel').textContent=`Phần ${String(current+1).padStart(2,'0')} / ${String(book.chapters.length).padStart(2,'0')}`;$('#chapterTitle').textContent=c.title;const r=await fetch(c.src,{cache:'no-store'});if(!r.ok)throw new Error('chapter');const md=await r.text();$('#reader').innerHTML=BLReaderMarkdown.render(md,{skipH1:true}).html;$('#tocList').querySelectorAll('[data-index]').forEach(b=>b.setAttribute('aria-current',String(Number(b.dataset.index)===current)));$('#prev').disabled=current===0;$('#next').disabled=current===book.chapters.length-1;history.replaceState(null,'',`#${c.id}`);window.scrollTo({top:$('#chapterLabel').getBoundingClientRect().top+window.scrollY-28,behavior:'smooth'});window.dispatchEvent(new Event('bl-reader-content-updated'))}
+$('#prev').addEventListener('click',()=>loadChapter(current-1));$('#next').addEventListener('click',()=>loadChapter(current+1));loadBook().catch(()=>{$('#reader').innerHTML='<p class="load-error">Không tải được bản nghiên cứu. Vui lòng tải lại trang.</p>';window.dispatchEvent(new Event('bl-reader-content-updated'));});
+</script>
+<script src="../../assets/js/reader.js"></script>
+</body></html>
