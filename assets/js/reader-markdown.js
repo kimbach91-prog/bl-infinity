@@ -5,6 +5,7 @@
     x = x.replace(/`([^`]+)`/g,'<code>$1</code>');
     x = x.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');
     x = x.replace(/\*([^*]+)\*/g,'<em>$1</em>');
+    x = x.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)&quot;&lt;&gt;]+|(?:\.\.?\/|\/)[^\s)&quot;&lt;&gt;]+)\)/g,'<a href="$2" rel="noreferrer noopener">$1</a>');
     x = x.replace(/&lt;p class=&quot;aura-beat&quot;&gt;([\s\S]*?)&lt;\/p&gt;/g,'<p class="aura-beat">$1</p>');
     return x;
   };
