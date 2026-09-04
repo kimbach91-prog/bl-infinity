@@ -33,4 +33,4 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
       - name: Compile-check core-free native shell
         working-directory: apps/deus-desktop/src-tauri
-        run: cargo check --locked=false
+        run: cargo check
