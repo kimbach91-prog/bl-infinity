@@ -66,7 +66,7 @@ All other ideas go to backlog unless they unblock A–C.
 - Revoked/expired grant => reject.
 - Unknown epistemic status => do not label as fact.
 - External relay unavailable => sovereign mode must remain possible where local prerequisites exist.
-- PUBLIC artifact must not contain DEUS protected prompts, raw private reasoning, secrets, private topology or routing-core internals.
+- PUBLIC artifacts MUST respect the project Core-Isolation disclosure boundary; protected-core material is never part of HCS conformance data.
 
 ## Progress metric
 Primary metric: number of v1.0 gates with evidence-backed PASS.
