@@ -1,0 +1,12 @@
+{
+  "relay_id": "AUTHORIZED_DEVICE_ID",
+  "provider": "GEMINI",
+  "task_id": "TASK-EXAMPLE-001",
+  "direction": "FROM_PROVIDER",
+  "data_class": "GREY",
+  "payload_digest": "SHA256_OF_PAYLOAD_HELD_OUTSIDE_PUBLIC_REPO",
+  "authorization_ref": "CONSENT_OR_SERVICE_AUTH_REFERENCE",
+  "expiry": "UNIX_EPOCH_SECONDS",
+  "result_ref": "OPAQUE_PRIVATE_REFERENCE",
+  "canonical_write": "DENIED"
+}
