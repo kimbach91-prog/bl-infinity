@@ -10,6 +10,11 @@
     "messageId": {"type":"string","minLength":8,"maxLength":256},
     "issuedAt": {"type":"string","format":"date-time"},
     "expiresAt": {"type":"string","format":"date-time"},
+    "requiredProfiles": {
+      "type":"array",
+      "items":{"type":"string","minLength":1},
+      "uniqueItems":true
+    },
     "actor": {
       "type":"object","additionalProperties":false,
       "required":["subjectId","identityRef"],
@@ -25,7 +30,7 @@
       "required":["basis","scope","revocationRef"],
       "properties": {
         "basis":{"type":"string","minLength":1},
-        "scope":{"type":"array","items":{"type":"string"},"minItems":1},
+        "scope":{"type":"array","items":{"type":"string"},"minItems":1,"uniqueItems":true},
         "purpose":{"type":["string","null"]},
         "grantRef":{"type":["string","null"]},
         "revocationRef":{"type":"string","minLength":1}
@@ -73,14 +78,23 @@
       "type":["object","array","string","number","boolean","null"]
     },
     "payloadRef":{"type":["string","null"]},
-    "evidenceRefs":{"type":"array","items":{"type":"string"}},
+    "evidenceRefs":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "extensions": {
+      "type":"object",
+      "propertyNames":{"pattern":"^(https://|urn:)[^\\s]+$"},
+      "additionalProperties":true
+    },
     "integrity": {
       "type":"object","additionalProperties":false,
-      "required":["mechanism","evidenceRef"],
+      "required":["mechanism","evidenceRef","canonicalization","digestAlgorithm","digestValue"],
       "properties": {
         "mechanism":{"type":"string","minLength":1},
         "evidenceRef":{"type":"string","minLength":1},
-        "canonicalization":{"type":["string","null"]}
+        "canonicalization":{"const":"urn:hcs:canonicalization:rfc8785-jcs"},
+        "digestAlgorithm":{"enum":["sha-256"]},
+        "digestValue":{"type":"string","pattern":"^[a-f0-9]{64}$"},
+        "proofMethod":{"type":["string","null"]},
+        "proofRef":{"type":["string","null"]}
       }
     }
   },
