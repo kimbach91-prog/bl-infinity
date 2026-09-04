@@ -1,7 +1,8 @@
 name: BL-SCA — Voluntary Compute Provider Discovery
-about: Đề nghị khám phá việc cấp compute tự nguyện, có giới hạn và có quyền rút lại.
+description: Đề nghị khám phá việc cấp compute tự nguyện, có giới hạn và có quyền rút lại.
 title: "[BL-SCA Provider Discovery] "
 labels: []
+assignees: []
 body:
   - type: markdown
     attributes:
