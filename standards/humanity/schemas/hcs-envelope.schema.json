@@ -1,0 +1,93 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deusagi.ai/standards/hcs/0.1/hcs-envelope.schema.json",
+  "title": "HCS Common Interaction Envelope",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["hcsVersion","messageId","issuedAt","actor","action","epistemic","authority","provenance","integrity"],
+  "properties": {
+    "hcsVersion": {"const": "0.1"},
+    "messageId": {"type":"string","minLength":8,"maxLength":256},
+    "issuedAt": {"type":"string","format":"date-time"},
+    "expiresAt": {"type":"string","format":"date-time"},
+    "actor": {
+      "type":"object","additionalProperties":false,
+      "required":["subjectId","identityRef"],
+      "properties": {
+        "subjectId":{"type":"string","minLength":1},
+        "identityRef":{"type":"string","minLength":1},
+        "credentialRef":{"type":["string","null"]},
+        "attestationRef":{"type":["string","null"]}
+      }
+    },
+    "authority": {
+      "type":"object","additionalProperties":false,
+      "required":["basis","scope","revocationRef"],
+      "properties": {
+        "basis":{"type":"string","minLength":1},
+        "scope":{"type":"array","items":{"type":"string"},"minItems":1},
+        "purpose":{"type":["string","null"]},
+        "grantRef":{"type":["string","null"]},
+        "revocationRef":{"type":"string","minLength":1}
+      }
+    },
+    "action": {
+      "type":"object","additionalProperties":false,
+      "required":["type","state"],
+      "properties": {
+        "type":{"type":"string","minLength":1},
+        "state":{"enum":["PROPOSED","AUTHORIZED","ATTEMPTED","OBSERVED_COMPLETE","INFERRED_OUTCOME","FAILED","REVOKED"]},
+        "targetRef":{"type":["string","null"]},
+        "resourceRef":{"type":["string","null"]},
+        "rollbackRef":{"type":["string","null"]}
+      }
+    },
+    "epistemic": {
+      "type":"object","additionalProperties":false,
+      "required":["class"],
+      "properties": {
+        "class":{"enum":["OBSERVED","REPORTED","INFERRED","ASSUMED","PREDICTED","UNKNOWN","DISPUTED"]},
+        "confidence":{"type":["number","null"],"minimum":0,"maximum":1},
+        "disputeRef":{"type":["string","null"]}
+      }
+    },
+    "provenance": {
+      "type":"object","additionalProperties":false,
+      "required":["sourceRefs"],
+      "properties": {
+        "sourceRefs":{"type":"array","items":{"type":"string"},"minItems":1},
+        "derivedFrom":{"type":"array","items":{"type":"string"}},
+        "methodRef":{"type":["string","null"]}
+      }
+    },
+    "dataPolicy": {
+      "type":["object","null"],"additionalProperties":false,
+      "properties": {
+        "dataClass":{"type":"string"},
+        "locality":{"type":"string"},
+        "retention":{"type":"string"},
+        "disclosureClass":{"type":"string"}
+      }
+    },
+    "payload": {
+      "type":["object","array","string","number","boolean","null"]
+    },
+    "payloadRef":{"type":["string","null"]},
+    "evidenceRefs":{"type":"array","items":{"type":"string"}},
+    "integrity": {
+      "type":"object","additionalProperties":false,
+      "required":["mechanism","evidenceRef"],
+      "properties": {
+        "mechanism":{"type":"string","minLength":1},
+        "evidenceRef":{"type":"string","minLength":1},
+        "canonicalization":{"type":["string","null"]}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties":{"action":{"properties":{"state":{"const":"OBSERVED_COMPLETE"}}}}},
+      "then": {"required":["evidenceRefs"],"properties":{"evidenceRefs":{"minItems":1}}}
+    }
+  ]
+}
