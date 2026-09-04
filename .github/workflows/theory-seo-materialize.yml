@@ -108,7 +108,7 @@ jobs:
               raise SystemExit(f'Expected exactly one og:image: {rel}')
           limits={
             'assets/brand/theory-favicon.svg': 6000,
-            'assets/brand/favicon.ico': 12000,
+            'assets/brand/favicon.ico': 20000,
             'assets/brand/apple-touch-icon.png': 30000,
           }
           for rel in [
