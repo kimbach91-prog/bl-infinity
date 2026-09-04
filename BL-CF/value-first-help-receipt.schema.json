@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bl-sca.local/schema/value-first-help-receipt/v0.1",
+  "title": "BL-SCA Value-First Help Receipt v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "receiptId",
+    "requestRef",
+    "helpClass",
+    "authorityBasis",
+    "scope",
+    "deliverables",
+    "verification",
+    "unknowns",
+    "federationState",
+    "helpCreatesComputeAuthority"
+  ],
+  "properties": {
+    "schema": { "const": "bl-sca-value-first-help/v0.1" },
+    "receiptId": { "type": "string", "minLength": 8 },
+    "requestRef": { "type": "string", "minLength": 1 },
+    "helpClass": {
+      "enum": [
+        "VH-CI",
+        "VH-SEC",
+        "VH-PERF",
+        "VH-RECOVERY",
+        "VH-DATA-PUBLIC",
+        "VH-OSS",
+        "VH-COMPUTE-READINESS",
+        "OTHER_BOUNDED"
+      ]
+    },
+    "constitutionalWorkloadClass": {
+      "type": ["string", "null"],
+      "enum": ["H0", "H1", "H2", "H3", "S", "PGB", "PFR", null]
+    },
+    "authorityBasis": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["declaredByRequester", "sourceUseDeclared"],
+      "properties": {
+        "declaredByRequester": { "type": "boolean", "const": true },
+        "sourceUseDeclared": { "type": "boolean", "const": true },
+        "reference": { "type": ["string", "null"] }
+      }
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["summary", "bounded", "externalSideEffectsAuthorized"],
+      "properties": {
+        "summary": { "type": "string", "minLength": 1, "maxLength": 4000 },
+        "bounded": { "type": "boolean", "const": true },
+        "externalSideEffectsAuthorized": { "type": "boolean" },
+        "resourceCeiling": { "type": ["string", "null"], "maxLength": 1000 }
+      }
+    },
+    "beforeEvidence": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "deliverables": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "minItems": 1
+    },
+    "afterEvidence": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state"],
+      "properties": {
+        "state": { "enum": ["UNVERIFIED", "SELF_CHECKED", "CI_VERIFIED", "INDEPENDENTLY_VERIFIED", "PARTIAL"] },
+        "refs": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "unknowns": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "federationInvitationMade": { "type": "boolean", "default": false },
+    "federationState": {
+      "enum": ["NO_FEDERATION", "LEARN_MORE", "PROFILE_ONLY", "PILOT_GRANT", "PROVIDER_DISCOVERY", "NOT_ASKED"]
+    },
+    "helpCreatesComputeAuthority": { "type": "boolean", "const": false },
+    "separateComputeGrantRef": { "type": ["string", "null"] },
+    "completedAt": { "type": ["string", "null"], "format": "date-time" },
+    "notes": { "type": ["string", "null"], "maxLength": 4000 }
+  }
+}
