@@ -1,35 +1,75 @@
 import crypto from 'node:crypto';
 
-function normalizeScalar(value) {
-  if (typeof value === 'string') return value.normalize('NFC');
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) throw new Error('HCS_CANONICAL_NON_FINITE_NUMBER');
-    return Object.is(value, -0) ? 0 : value;
+function assertValidUnicodeString(value) {
+  for (let i = 0; i < value.length; i += 1) {
+    const code = value.charCodeAt(i);
+    if (code >= 0xd800 && code <= 0xdbff) {
+      const next = value.charCodeAt(i + 1);
+      if (!(next >= 0xdc00 && next <= 0xdfff)) throw new Error('HCS_JCS_INVALID_UNICODE');
+      i += 1;
+    } else if (code >= 0xdc00 && code <= 0xdfff) {
+      throw new Error('HCS_JCS_INVALID_UNICODE');
+    }
   }
-  if (value === null || typeof value === 'boolean') return value;
-  if (value === undefined) throw new Error('HCS_CANONICAL_UNDEFINED_FORBIDDEN');
   return value;
 }
 
+function assertPrimitive(value) {
+  if (typeof value === 'string') return assertValidUnicodeString(value);
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) throw new Error('HCS_JCS_NON_FINITE_NUMBER');
+    return value;
+  }
+  if (value === null || typeof value === 'boolean') return value;
+  if (value === undefined) throw new Error('HCS_JCS_UNDEFINED_FORBIDDEN');
+  if (typeof value === 'bigint') throw new Error('HCS_JCS_BIGINT_FORBIDDEN_USE_STRING');
+  return value;
+}
+
+// RFC 8785 JCS reference implementation for already-parsed I-JSON values.
+// Duplicate property names MUST be rejected by the JSON parser before this function;
+// a JavaScript object cannot retain duplicate keys after parsing.
 export function canonicalizeHcs(value) {
-  const walk = (v) => {
-    v = normalizeScalar(v);
-    if (Array.isArray(v)) return v.map(walk);
-    if (v && typeof v === 'object') {
-      const normalizedEntries = Object.entries(v).map(([k,val]) => [k.normalize('NFC'), val]);
-      const seen = new Set();
-      for (const [k] of normalizedEntries) {
-        if (seen.has(k)) throw new Error(`HCS_CANONICAL_DUPLICATE_KEY_AFTER_NFC:${k}`);
-        seen.add(k);
-      }
-      normalizedEntries.sort(([a],[b]) => a < b ? -1 : a > b ? 1 : 0);
-      const out = {};
-      for (const [k,val] of normalizedEntries) out[k] = walk(val);
-      return out;
+  let output = '';
+
+  const serialize = (input) => {
+    const v = assertPrimitive(input);
+
+    if (v === null || typeof v === 'boolean' || typeof v === 'number' || typeof v === 'string') {
+      output += JSON.stringify(v);
+      return;
     }
-    return v;
+
+    if (Array.isArray(v)) {
+      output += '[';
+      for (let i = 0; i < v.length; i += 1) {
+        if (i) output += ',';
+        serialize(v[i]);
+      }
+      output += ']';
+      return;
+    }
+
+    if (v && typeof v === 'object') {
+      output += '{';
+      const keys = Object.keys(v);
+      for (const key of keys) assertValidUnicodeString(key);
+      keys.sort(); // RFC 8785 sorting follows UTF-16 code unit order used by ECMAScript.
+      keys.forEach((key, index) => {
+        if (index) output += ',';
+        output += JSON.stringify(key);
+        output += ':';
+        serialize(v[key]);
+      });
+      output += '}';
+      return;
+    }
+
+    throw new Error(`HCS_JCS_UNSUPPORTED_TYPE:${typeof v}`);
   };
-  return JSON.stringify(walk(value));
+
+  serialize(value);
+  return output;
 }
 
 export function canonicalBytesHcs(value) {
@@ -39,3 +79,5 @@ export function canonicalBytesHcs(value) {
 export function sha256Hcs(value) {
   return crypto.createHash('sha256').update(canonicalBytesHcs(value)).digest('hex');
 }
+
+export const HCS_CANONICALIZATION_PROFILE = 'urn:hcs:canonicalization:rfc8785-jcs';
