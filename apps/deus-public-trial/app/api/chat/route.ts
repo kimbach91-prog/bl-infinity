@@ -113,8 +113,7 @@ export async function POST(request: Request) {
           content: `USER PROMPT:\n${prompt}\n\nLOCAL-FIRST PUBLIC METADATA:\n${JSON.stringify(localSummary).slice(0, 1500)}`,
         },
       ],
-      max_tokens: 700,
-      temperature: 0.4,
+      max_completion_tokens: 700,
     }),
     cache: 'no-store',
   });
