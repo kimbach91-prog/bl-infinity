@@ -58,6 +58,26 @@ test('protected fields are stripped before projection storage', () => {
   assert.equal(stored.value.core, undefined);
 });
 
+test('stored projection state cannot be mutated through the put receipt', () => {
+  const store = new TenantProjectionStore();
+  const stored = store.put(record('tenant-a', {
+    status: 'ready',
+    workspace: { title: 'original' },
+    results: [{ answer: 42 }],
+  }), NOW);
+
+  assert.equal(Object.isFrozen(stored.value), true);
+  assert.equal(Object.isFrozen(stored.value.workspace), true);
+  assert.equal(Object.isFrozen(stored.value.results), true);
+  assert.equal(Object.isFrozen(stored.value.results[0]), true);
+  assert.throws(() => { stored.value.workspace.title = 'tampered'; }, TypeError);
+  assert.throws(() => { stored.value.results[0].answer = 999; }, TypeError);
+
+  const reread = store.get({ tenantId: 'tenant-a', projectionId: 'task-42', now: NOW });
+  assert.equal(reread.value.workspace.title, 'original');
+  assert.equal(reread.value.results[0].answer, 42);
+});
+
 test('unknown projection schema versions fail closed', () => {
   const store = new TenantProjectionStore();
   assert.throws(
