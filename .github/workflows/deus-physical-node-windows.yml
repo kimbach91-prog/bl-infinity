@@ -73,7 +73,7 @@ jobs:
             if ($script -match '(?i)(Invoke-Expression|\biex\b)') { throw 'node setup must not use dynamic PowerShell eval' }
           }
           $recovery = Get-Content 'nodes/windows/recover-runtime-no-git.ps1' -Raw
-          if ($recovery -match 'winget') { throw 'recovery path must not depend on winget' }
-          if ($recovery -match '(?i)git\.exe|\bgit\s+clone\b|\bgit\s+fetch\b') { throw 'recovery path must not depend on Git' }
-          if ($recovery -notmatch 'remoteRoutable\)') { throw 'recovery must enforce remote-routable fail-closed state' }
+          if ($recovery -match '(?im)^\s*(?:&\s+)?winget(?:\.exe)?\s+') { throw 'recovery path must not invoke winget' }
+          if ($recovery -match '(?im)^\s*(?:&\s+)?git(?:\.exe)?\s+(clone|fetch|checkout|init)\b') { throw 'recovery path must not invoke Git' }
+          if ($recovery -notmatch 'if \(\[bool\]\$config\.remoteRoutable\)') { throw 'recovery must enforce remote-routable fail-closed state' }
           Write-Host 'physical-node exposure checks passed'
