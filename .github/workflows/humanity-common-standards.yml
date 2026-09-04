@@ -1,0 +1,43 @@
+name: Humanity Common Standards
+
+on:
+  push:
+    branches: ['deus/sovereign-fabric-v1']
+    paths:
+      - 'standards/humanity/**'
+      - '.github/workflows/humanity-common-standards.yml'
+  pull_request:
+    paths:
+      - 'standards/humanity/**'
+      - '.github/workflows/humanity-common-standards.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  hcs-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate HCS JSON syntax
+        run: |
+          node -e "JSON.parse(require('fs').readFileSync('standards/humanity/HCS-REGISTRY-v0.1.json','utf8')); JSON.parse(require('fs').readFileSync('standards/humanity/schemas/hcs-envelope.schema.json','utf8')); console.log('HCS JSON syntax ok')"
+      - name: Check HCS invariants
+        run: node standards/humanity/runtime/check-hcs.mjs
+      - name: Reject secrets and core leakage markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RInE "BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}" standards/humanity
+          ! grep -RInE "protected prompt contents|raw private reasoning|private topology dump|routing secret" standards/humanity
+      - name: Require language and vendor neutrality statements
+        shell: bash
+        run: |
+          grep -q "language-neutral" standards/humanity/HCS-v0.1.md
+          grep -q "vendor-neutral" standards/humanity/HCS-v0.1.md
+          grep -q '"languageNeutral": true' standards/humanity/HCS-REGISTRY-v0.1.json
+          grep -q '"vendorNeutral": true' standards/humanity/HCS-REGISTRY-v0.1.json
