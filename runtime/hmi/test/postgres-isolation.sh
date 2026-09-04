@@ -11,14 +11,14 @@ export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 psql -v ON_ERROR_STOP=1 -f "$ROOT/storage/postgres-projection.sql"
+
+if [[ "$(psql -Atqc "SELECT count(*) FROM pg_roles WHERE rolname='deus_hmi_runtime_test';")" != "0" ]]; then
+  psql -v ON_ERROR_STOP=1 -c "DROP OWNED BY deus_hmi_runtime_test;"
+  psql -v ON_ERROR_STOP=1 -c "DROP ROLE deus_hmi_runtime_test;"
+fi
+
 psql -v ON_ERROR_STOP=1 <<'SQL'
-DO $$
-BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'deus_hmi_runtime_test') THEN
-    CREATE ROLE deus_hmi_runtime_test LOGIN PASSWORD 'synthetic-test-password' NOSUPERUSER NOBYPASSRLS;
-  END IF;
-END
-$$;
+CREATE ROLE deus_hmi_runtime_test LOGIN PASSWORD 'synthetic-test-password' NOSUPERUSER NOBYPASSRLS;
 GRANT SELECT, INSERT, UPDATE, DELETE ON deus_hmi_projection TO deus_hmi_runtime_test;
 TRUNCATE TABLE deus_hmi_projection;
 SQL
@@ -47,7 +47,7 @@ SQL
 
 a_count="$(runtime_psql -Atqc "SET deus.tenant_id='tenant-a'; SELECT count(*) FROM deus_hmi_projection;")"
 b_count="$(runtime_psql -Atqc "SET deus.tenant_id='tenant-b'; SELECT count(*) FROM deus_hmi_projection;")"
-missing_count="$(runtime_psql -Atqc "RESET deus.tenant_id; SELECT count(*) FROM deus_hmi_projection;")"
+missing_count="$(runtime_psql -Atqc "SELECT count(*) FROM deus_hmi_projection;")"
 a_value="$(runtime_psql -Atqc "SET deus.tenant_id='tenant-a'; SELECT projection_value->>'status' FROM deus_hmi_projection WHERE projection_id='same-id';")"
 b_value="$(runtime_psql -Atqc "SET deus.tenant_id='tenant-b'; SELECT projection_value->>'status' FROM deus_hmi_projection WHERE projection_id='same-id';")"
 
