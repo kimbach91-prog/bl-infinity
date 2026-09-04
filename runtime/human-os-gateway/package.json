@@ -1,0 +1,14 @@
+{
+  "name": "deus-human-os-gateway",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@simplewebauthn/server": "^13.2.2",
+    "pg": "8.23.0"
+  },
+  "engines": { "node": ">=22" }
+}
