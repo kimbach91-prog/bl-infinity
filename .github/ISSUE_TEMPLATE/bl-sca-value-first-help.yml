@@ -1,0 +1,89 @@
+name: BL-SCA — Value-First Help Request
+about: Yêu cầu hỗ trợ kỹ thuật có giới hạn trước khi có bất kỳ đề nghị cấp compute nào.
+title: "[BL-SCA Help] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        BL-SCA có thể hỗ trợ một tác vụ kỹ thuật có giới hạn theo nguyên tắc **Trao giá trị trước. Chủ quyền luôn thuộc người sở hữu.**
+
+        Nhận hỗ trợ **không tạo nghĩa vụ** tham gia liên minh hoặc cấp CPU/GPU/cloud. Không đăng mật khẩu, token, private key, dữ liệu khách hàng hay topology nội bộ nhạy cảm trong issue công khai.
+  - type: dropdown
+    id: help_class
+    attributes:
+      label: Loại hỗ trợ
+      options:
+        - VH-CI — Build/test/CI diagnosis
+        - VH-SEC — Defensive security baseline
+        - VH-PERF — Performance/cost/thermal profiling
+        - VH-RECOVERY — Backup/restore/continuity
+        - VH-DATA-PUBLIC — Public/open-data processing
+        - VH-OSS — Open-source maintenance/docs/tests/fix
+        - VH-COMPUTE-READINESS — Safe compute capability profiling
+        - OTHER_BOUNDED — Tác vụ kỹ thuật khác có giới hạn
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Bài toán cần giúp
+      description: Mô tả lỗi/vấn đề, kết quả mong muốn và vì sao nó hữu ích. Chỉ dùng thông tin có thể công khai.
+    validations:
+      required: true
+  - type: input
+    id: artifact
+    attributes:
+      label: Artifact / repo / public reference
+      description: URL công khai hoặc mô tả artifact. Nếu không thể công khai, ghi “PRIVATE_POINTER_REQUIRED” và không dán dữ liệu nhạy cảm.
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Phạm vi và giới hạn
+      description: Nêu rõ phần nào được phép sửa/đánh giá, phần nào không được phép chạm tới, và giới hạn thời gian/tài nguyên nếu có.
+    validations:
+      required: true
+  - type: dropdown
+    id: data_class
+    attributes:
+      label: Lớp dữ liệu
+      options:
+        - public
+        - open-source
+        - synthetic
+        - private — chỉ mô tả sanitized, không đăng dữ liệu
+        - chưa rõ — cần gate trước khi xử lý
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Cách kiểm chứng kết quả
+      description: Test, CI, benchmark, checksum, before/after metric hoặc tiêu chí chấp nhận khác.
+    validations:
+      required: true
+  - type: dropdown
+    id: federation_interest
+    attributes:
+      label: Sau khi nhận kết quả, bạn có muốn tìm hiểu BL-SCA/BL-CF không?
+      description: Câu trả lời này không ảnh hưởng việc triage hỗ trợ và không tạo Compute Grant.
+      options:
+        - NOT_ASKED — Chỉ cần hỗ trợ, không bàn compute
+        - LEARN_MORE — Có thể gửi thông tin sau khi hoàn tất
+        - PROFILE_ONLY — Có thể xem capability profile local-safe
+        - PROVIDER_DISCOVERY — Có thể trao đổi về provider/BYOC/cloud credits
+  - type: checkboxes
+    id: rights
+    attributes:
+      label: Ranh giới quyền và an toàn
+      options:
+        - label: Tôi có quyền yêu cầu hỗ trợ đối với artifact/hệ thống được nêu.
+          required: true
+        - label: Tôi không đăng credential, private key, token, recovery code hoặc dữ liệu nhạy cảm không cần thiết.
+          required: true
+        - label: Tôi hiểu hỗ trợ này không cho BL-SCA quyền sử dụng máy/cloud/tài nguyên của tôi.
+          required: true
+        - label: Mọi thay đổi có side effect ngoài sandbox phải được tôi cấp quyền riêng trước khi thực hiện.
+          required: true
