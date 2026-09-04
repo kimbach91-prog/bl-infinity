@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: pages
@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   publish:
-    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]')
+    if: github.actor == 'kimbach91-prog' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))
     permissions:
       contents: write
       pages: write
