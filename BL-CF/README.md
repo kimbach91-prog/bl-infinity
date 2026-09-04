@@ -65,6 +65,8 @@ Reference prudential rule:
 
 with DCC minting limited by verified cash and/or contracted compute backing net of reserved liabilities.
 
+A durable PostgreSQL DCT/DCC layer is now present for backing records, DCC accounts, idempotent hash-chained mint/transfer/burn events, backing-ratio enforcement, expiry/revocation reconciliation and automatic undercollateralization freeze. This is accounting/runtime infrastructure, not a claim that external public issuance or payment rails are live.
+
 ## Value-first positive-margin routing
 
 BL-SCA should attempt to create a three-way win:
@@ -172,10 +174,13 @@ See [SECURITY-THREAT-MODEL.md](./SECURITY-THREAT-MODEL.md).
 Official participation uses versioned/hash-addressed agreements and auditable acceptance receipts, including:
 
 - Node Contribution Agreement;
+- Resource Offer & Acquisition Agreement;
 - Workload Submitter Agreement;
 - Research Admission Record;
 - Commercial Compute Addendum;
-- Federation Return / Shared-Benefit Contract;
+- Federation Return Contract;
+- Knowledge Value / Performance Addendum;
+- DCC Service Credit Terms;
 - Data Processing Addendum;
 - Settlement Schedule;
 - DEUS Mandate Schedule.
@@ -212,15 +217,16 @@ Already present in the repository/runtime family:
 - routing and provider policy checks;
 - queue/lease/idempotency;
 - budgets, audit and contribution ledgers;
-- durable PostgreSQL lane;
+- durable PostgreSQL federation state;
 - value-policy admission;
 - strategic-reinvestment compatibility aliases;
 - 10% commercial settlement helper;
 - DEUS Compute Treasury reference implementation;
-- DCC backing/mint/burn reference implementation;
+- durable PostgreSQL DCT/DCC backing/account/event ledger;
+- DCC backing/mint/transfer/burn/reconciliation/freeze enforcement;
 - damage-grounded knowledge valuation;
 - supercompounding-learning projection model;
 - lawful resource-acquisition reference engine;
-- tests for these economic invariants.
+- deterministic and PostgreSQL integration tests for these economic invariants.
 
-Not yet truthfully complete: production DCC settlement ledger, durable rolling 30-day multi-resource reinvestment enforcement, production node sandbox/attestation, automatic external marketplace connectors, live payment rails, government IP filings, trademark registration, external penetration test and public-scale production launch.
+Not yet truthfully complete: automatic external resource-marketplace connectors, production provider-node sandbox/attestation, durable rolling 30-day multi-resource reinvestment meter on every node, live external payment rails, externally contracted DCC issuance/redemption, government IP filings, trademark registration, independent penetration test and public-scale production launch.
