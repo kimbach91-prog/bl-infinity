@@ -1,0 +1,160 @@
+name: THEORY SEO Materializer
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/scripts/materialize_theory_seo.py"
+      - ".github/scripts/patch_pages_for_theory_seo.py"
+      - ".github/workflows/theory-seo-materialize.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: theory-seo-materialize
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: github.actor == 'kimbach91-prog'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current public source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Generate THEORY vector sources and SEO metadata
+        run: |
+          set -euo pipefail
+          python .github/scripts/materialize_theory_seo.py
+          python .github/scripts/patch_pages_for_theory_seo.py
+
+      - name: Render crawler-safe social images and platform icons
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p assets/brand/og
+
+          if command -v rsvg-convert >/dev/null 2>&1; then
+            RSVG=rsvg-convert
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq librsvg2-bin
+            RSVG=rsvg-convert
+          fi
+
+          if command -v magick >/dev/null 2>&1; then
+            IM=magick
+          elif command -v convert >/dev/null 2>&1; then
+            IM=convert
+          else
+            sudo apt-get update -qq
+            sudo apt-get install -y -qq imagemagick
+            IM=convert
+          fi
+
+          for src in assets/brand/og-src/*.svg; do
+            name="$(basename "$src" .svg)"
+            tmp="/tmp/${name}.png"
+            "$RSVG" -w 1200 -h 630 "$src" > "$tmp"
+            "$IM" "$tmp" -strip -sampling-factor 4:2:0 -quality 86 -interlace Plane "assets/brand/og/${name}.jpg"
+            rm -f "$tmp"
+          done
+
+          "$RSVG" -w 180 -h 180 assets/brand/theory-favicon.svg > assets/brand/apple-touch-icon.png
+          "$RSVG" -w 256 -h 256 assets/brand/theory-favicon.svg > /tmp/theory-favicon-256.png
+          "$IM" /tmp/theory-favicon-256.png -define icon:auto-resize=16,32,48 assets/brand/favicon.ico
+          rm -f /tmp/theory-favicon-256.png
+
+      - name: Audit dimensions, weights and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path('.')
+          pages = {
+            'research/human-development/index.html': 'cover-human-development.jpg',
+            'research/human-development/kevin-nt/index.html': 'cover-kevin-research-studio.jpg',
+            'research/human-development/kevin-nt/studio/index.html': 'cover-kevin-research-studio.jpg',
+            'research/human-development/kevin-nt/tien-hoa-luong-cuc.html': 'cover-dual-pole.jpg',
+            'research/human-development/kevin-nt/attribution-benchmark.html': 'cover-real-application-value.jpg',
+            'books/kevin-intellectual-map/index.html': 'cover-100-works.jpg',
+          }
+          for rel, cover in pages.items():
+            text=(root/rel).read_text(encoding='utf-8')
+            checks=[
+              'rel="icon" type="image/svg+xml"',
+              'rel="apple-touch-icon"',
+              'property="og:locale" content="vi_VN"',
+              'property="og:image"',
+              'property="og:image:type" content="image/jpeg"',
+              'property="og:image:width" content="1200"',
+              'property="og:image:height" content="630"',
+              'property="og:image:alt"',
+              'name="twitter:card" content="summary_large_image"',
+              'name="twitter:image"',
+              cover,
+            ]
+            for marker in checks:
+              if marker not in text:
+                raise SystemExit(f'Missing SEO marker {marker}: {rel}')
+            if len(re.findall(r'<meta\s+property="og:image"', text, re.I)) != 1:
+              raise SystemExit(f'Expected exactly one og:image: {rel}')
+          limits={
+            'assets/brand/theory-favicon.svg': 6000,
+            'assets/brand/favicon.ico': 12000,
+            'assets/brand/apple-touch-icon.png': 30000,
+          }
+          for rel in [
+            'assets/brand/og/cover-human-development.jpg',
+            'assets/brand/og/cover-kevin-research-studio.jpg',
+            'assets/brand/og/cover-dual-pole.jpg',
+            'assets/brand/og/cover-100-works.jpg',
+            'assets/brand/og/cover-real-application-value.jpg',
+          ]:
+            limits[rel]=180000
+          for rel, lim in limits.items():
+            p=root/rel
+            size=p.stat().st_size if p.exists() else -1
+            if size <= 0 or size > lim:
+              raise SystemExit(f'Asset weight failed {rel}: {size} > {lim}')
+          robots=(root/'robots.txt').read_text(encoding='utf-8')
+          if 'sitemap-images.xml' not in robots:
+            raise SystemExit('Image sitemap not registered in robots.txt')
+          print('THEORY metadata and asset weight audit: PASS')
+          PY
+
+          if command -v identify >/dev/null 2>&1; then
+            for img in assets/brand/og/*.jpg; do
+              test "$(identify -format '%wx%h' "$img")" = "1200x630"
+            done
+            test "$(identify -format '%wx%h' assets/brand/apple-touch-icon.png)" = "180x180"
+          fi
+          git diff --check
+
+      - name: Commit materialized SEO source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "kimbach91-prog"
+          git config user.email "kimbach91@gmail.com"
+          git add assets/brand sitemap-images.xml robots.txt \
+            research/human-development/index.html \
+            research/human-development/kevin-nt/index.html \
+            research/human-development/kevin-nt/studio/index.html \
+            research/human-development/kevin-nt/tien-hoa-luong-cuc.html \
+            research/human-development/kevin-nt/attribution-benchmark.html \
+            books/kevin-intellectual-map/index.html \
+            .github/workflows/pages.yml
+          if git diff --cached --quiet; then
+            echo "THEORY SEO source already materialized"
+          else
+            git commit -m "[OWNER-PUBLISH] Materialize THEORY favicon social covers and SEO metadata"
+            git push origin HEAD:main
+          fi
