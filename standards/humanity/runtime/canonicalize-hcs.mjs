@@ -80,4 +80,24 @@ export function sha256Hcs(value) {
   return crypto.createHash('sha256').update(canonicalBytesHcs(value)).digest('hex');
 }
 
+export function integrityTargetHcs(envelope) {
+  if (!envelope || typeof envelope !== 'object' || Array.isArray(envelope)) {
+    throw new Error('HCS_INTEGRITY_TARGET_ENVELOPE_OBJECT_REQUIRED');
+  }
+  const target = structuredClone(envelope);
+  delete target.integrity;
+  return target;
+}
+
+export function integrityDigestHcs(envelope) {
+  return sha256Hcs(integrityTargetHcs(envelope));
+}
+
+export function verifyIntegrityDigestHcs(envelope) {
+  const declared = envelope?.integrity?.digestValue;
+  if (typeof declared !== 'string') return false;
+  return integrityDigestHcs(envelope) === declared.toLowerCase();
+}
+
 export const HCS_CANONICALIZATION_PROFILE = 'urn:hcs:canonicalization:rfc8785-jcs';
+export const HCS_INTEGRITY_TARGET_PROFILE = 'urn:hcs:integrity-target:envelope-without-integrity-v1';
