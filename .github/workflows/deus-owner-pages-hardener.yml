@@ -1,0 +1,63 @@
+name: DEUS Owner Pages Hardener
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.deus/hardening/pages-owner-gate-20260904.request'
+
+permissions:
+  contents: write
+
+jobs:
+  harden:
+    if: github.actor == 'kimbach91-prog'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: true
+          fetch-depth: 2
+
+      - name: Apply bounded Pages permission hardening and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          pages = Path('.github/workflows/pages.yml')
+          text = pages.read_text(encoding='utf-8')
+
+          old_top = "permissions:\n  contents: write\n"
+          new_top = "permissions:\n  contents: read\n"
+          if old_top not in text:
+              raise SystemExit('Expected top-level contents: write block not found; refusing unbounded edit')
+          text = text.replace(old_top, new_top, 1)
+
+          old_if = "    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]')"
+          new_if = "    if: github.actor == 'kimbach91-prog' && (github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[OWNER-PUBLISH]'))"
+          if old_if not in text:
+              raise SystemExit('Expected publish gate not found; refusing unbounded edit')
+          text = text.replace(old_if, new_if, 1)
+
+          pages.write_text(text, encoding='utf-8')
+
+          Path('.github/workflows/deus-owner-pages-hardener.yml').unlink()
+          request = Path('.deus/hardening/pages-owner-gate-20260904.request')
+          if request.exists():
+              request.unlink()
+          PY
+
+          git diff --check
+          grep -F "permissions:" .github/workflows/pages.yml >/dev/null
+          grep -F "github.actor == 'kimbach91-prog'" .github/workflows/pages.yml >/dev/null
+
+          git config user.name 'DEUS Owner Hardener'
+          git config user.email 'kimbach91@gmail.com'
+          git add -A
+          git commit -m 'security: narrow Pages permission scope and enforce owner publish gate'
+          git push origin HEAD:main
