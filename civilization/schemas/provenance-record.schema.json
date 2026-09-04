@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://deusagi.ai/schema/viet-civilization/provenance-record/v0.1",
+  "title": "Việt Văn Minh Provenance Record v0.1",
+  "type": "object",
+  "required": ["id","platform","kind","title","epistemicClass","disclosureClass","sources","createdAt","contentHash"],
+  "properties": {
+    "id": {"type":"string","minLength":3},
+    "platform": {"enum":["VNG","VKT","VC","VQ","VHOC","VKY","VKHOA","VKINH","VVAN"]},
+    "kind": {"type":"string","minLength":1},
+    "title": {"type":"string","minLength":1},
+    "conceptIds": {"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "epistemicClass": {"enum":["OBS","INFER","ASSUME","NORM","HYPOTHESIS","UNSOURCED"]},
+    "disclosureClass": {"enum":["PUBLIC","COMMON","RESTRICTED","BLACK_CORE"]},
+    "languageRegister": {"enum":["vi-modern","han-viet","vi-historical","mixed","formal-vttn"]},
+    "period": {"type":["string","null"]},
+    "region": {"type":["string","null"]},
+    "community": {"type":["string","null"]},
+    "claims": {"type":"array","items":{"type":"object","required":["text","status"],"properties":{"text":{"type":"string"},"status":{"enum":["supported","contested","unknown","normative","hypothesis"]},"evidenceRefs":{"type":"array","items":{"type":"string"}}}}},
+    "sources": {"type":"array","items":{"type":"object","required":["sourceId","type"],"properties":{"sourceId":{"type":"string"},"type":{"enum":["primary","secondary","oral","archival","legal","experimental","computed","editorial"]},"citation":{"type":["string","null"]},"uri":{"type":["string","null"]},"contentHash":{"type":["string","null"]},"license":{"type":["string","null"]},"notes":{"type":["string","null"]}}}},
+    "derivedFrom": {"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "createdAt": {"type":"string","format":"date-time"},
+    "validFrom": {"type":["string","null"],"format":"date-time"},
+    "validUntil": {"type":["string","null"],"format":"date-time"},
+    "contentHash": {"type":"string","pattern":"^(sha256:)?[a-fA-F0-9]{64}$"},
+    "license": {"type":["string","null"]},
+    "signature": {"type":["object","null"]},
+    "notes": {"type":["string","null"]}
+  },
+  "allOf": [
+    {
+      "if": {"properties":{"epistemicClass":{"const":"OBS"}}},
+      "then": {"properties":{"sources":{"minItems":1}}}
+    },
+    {
+      "if": {"properties":{"disclosureClass":{"const":"BLACK_CORE"}}},
+      "then": {"properties":{"license":{"const":null}}}
+    }
+  ],
+  "additionalProperties": false
+}
