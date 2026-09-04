@@ -30,6 +30,8 @@ jobs:
           node-version: '22'
       - name: Install
         run: npm install --no-audit --no-fund
+      - name: Test identity and workspace boundary
+        run: npm test
       - name: Build fail-closed console
         env:
           NEXT_TELEMETRY_DISABLED: '1'

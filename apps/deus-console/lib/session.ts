@@ -1,41 +1,50 @@
 import 'server-only';
 import { cookies } from 'next/headers';
+import {
+  canAccessSurface,
+  validateIdentityAdapterCandidate,
+  type VerifiedAccessContext,
+  type VerifiedSessionCandidate,
+  type VerifiedTenantCandidate,
+} from './session-policy.mjs';
 
-export type VerifiedSession = {
-  identityId: string;
-  tenantId: string;
-  tenantKind: 'enterprise' | 'government';
-  displayName?: string;
-  roles: string[];
-  scopes: string[];
-  clearance: 'public' | 'internal' | 'confidential' | 'restricted' | 'sovereign';
-  authMethods: string[];
-  expiresAt: string;
-};
+export type VerifiedSession = VerifiedSessionCandidate;
+export type VerifiedTenant = VerifiedTenantCandidate;
+export type { VerifiedAccessContext };
 
 const SESSION_COOKIE = '__Host-deus_session';
 
 /**
- * Server-only session adapter boundary.
+ * Server-only identity boundary.
  *
  * Browser state contains only an opaque, HttpOnly session handle. Tenant,
- * roles, scopes, authentication strength and clearance are resolved by a
- * trusted identity adapter and are never accepted from client-controlled
- * headers, localStorage or request JSON.
+ * roles, scopes, authentication strength, policy version and clearance are
+ * resolved by a trusted identity adapter and are never accepted from
+ * client-controlled headers, localStorage or request JSON.
  *
- * Until a production identity adapter and opaque session are configured, this
- * function fails closed.
+ * The adapter response must bind an active enterprise/government tenant to the
+ * authenticated session. Weak auth, guest/self-service entry, tenant mismatch,
+ * expired sessions and missing role/scope policy all fail closed here before a
+ * workspace surface can render.
  */
-export async function loadVerifiedSession(): Promise<VerifiedSession | null> {
+export async function loadVerifiedAccessContext(): Promise<VerifiedAccessContext | null> {
   const endpoint = process.env.DEUS_IDENTITY_SESSION_ENDPOINT;
   const identityAdapterCredential = process.env.DEUS_IDENTITY_ADAPTER_TOKEN;
   if (!endpoint || !identityAdapterCredential) return null;
+
+  let parsedEndpoint: URL;
+  try {
+    parsedEndpoint = new URL(endpoint);
+  } catch {
+    return null;
+  }
+  if (parsedEndpoint.protocol !== 'https:') return null;
 
   const cookieStore = await cookies();
   const handle = cookieStore.get(SESSION_COOKIE)?.value;
   if (!handle || handle.length < 32 || handle.length > 512) return null;
 
-  const response = await fetch(endpoint, {
+  const response = await fetch(parsedEndpoint, {
     method: 'POST',
     headers: {
       authorization: `Bearer ${identityAdapterCredential}`,
@@ -46,17 +55,21 @@ export async function loadVerifiedSession(): Promise<VerifiedSession | null> {
   });
   if (!response.ok) return null;
 
-  const candidate = await response.json();
-  if (!candidate || candidate.verified !== true || !candidate.session) return null;
+  let candidate: unknown;
+  try {
+    candidate = await response.json();
+  } catch {
+    return null;
+  }
 
-  const session = candidate.session as VerifiedSession;
-  if (!session.identityId || !session.tenantId) return null;
-  if (!['enterprise', 'government'].includes(session.tenantKind)) return null;
-  if (!Array.isArray(session.roles) || session.roles.length === 0) return null;
-  if (!Array.isArray(session.scopes) || !Array.isArray(session.authMethods)) return null;
-  if (!session.expiresAt || Date.parse(session.expiresAt) <= Date.now()) return null;
-
-  return session;
+  const verdict = validateIdentityAdapterCandidate(candidate);
+  return verdict.ok ? verdict : null;
 }
 
+export async function loadVerifiedSession(): Promise<VerifiedSession | null> {
+  const context = await loadVerifiedAccessContext();
+  return context?.session ?? null;
+}
+
+export { canAccessSurface };
 export const sessionCookieName = SESSION_COOKIE;

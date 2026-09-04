@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { loadVerifiedSession } from '../../lib/session';
+import { canAccessSurface, loadVerifiedAccessContext } from '../../lib/session';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,8 +12,10 @@ const surfaces = [
 ];
 
 export default async function WorkspacePage() {
-  const session = await loadVerifiedSession();
-  if (!session) redirect('/login');
+  const context = await loadVerifiedAccessContext();
+  if (!context || !canAccessSurface(context, 'hmi:workspace:read')) redirect('/login');
+
+  const { session } = context;
 
   return (
     <main className="workspace-shell">
