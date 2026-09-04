@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="THEORY infinity emblem">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111a45"/><stop offset="1" stop-color="#6c28ff"/></linearGradient></defs>
+<rect width="256" height="256" fill="none"/>
+<rect x="48" y="31" width="160" height="25" rx="3" fill="#10183d"/>
+<rect x="115" y="48" width="27" height="110" rx="3" fill="#10183d"/>
+<path d="M35 161 C65 106 106 103 128 149 C150 195 191 196 221 141 C190 89 150 92 128 149 C106 204 65 205 35 161" fill="none" stroke="url(#g)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

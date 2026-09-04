@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="THEORY ∞ — KEVIN RESEARCH STUDIO">
+<defs><linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111a45"/><stop offset="1" stop-color="#6c28ff"/></linearGradient></defs>
+<rect width="1200" height="630" fill="#f8f4ec"/>
+<g transform="translate(70 58) scale(.34)">
+  <rect x="0" y="0" width="160" height="24" rx="3" fill="#111a3b"/>
+  <rect x="66" y="18" width="28" height="98" rx="3" fill="#111a3b"/>
+  <path d="M-10 118 C22 68 58 70 80 113 C102 156 138 158 170 108 C138 63 102 66 80 113 C58 160 22 164 -10 118" fill="none" stroke="url(#brand)" stroke-width="22" stroke-linecap="round"/>
+</g>
+<line x1="139" y1="58" x2="139" y2="135" stroke="#9b968f" stroke-width="1"/>
+<text x="170" y="112" font-family="DejaVu Sans, Arial, sans-serif" font-size="39" letter-spacing="12" fill="#111a33">THEORY</text>
+<text x="390" y="111" font-family="DejaVu Sans, Arial, sans-serif" font-size="40" fill="#5b2ad1">∞</text>
+<g opacity=".20" fill="none" stroke="#6c42d4" stroke-width="1.4">
+  <path d="M675 340 C765 185 890 185 990 340 C1090 495 1215 495 1305 340"/>
+  <path d="M675 327 C765 172 890 172 990 327 C1090 482 1215 482 1305 327"/>
+  <path d="M675 353 C765 198 890 198 990 353 C1090 508 1215 508 1305 353"/>
+  <path d="M700 340 C790 205 890 205 990 340 C1090 475 1190 475 1280 340"/>
+  <path d="M650 340 C750 165 890 165 990 340 C1090 515 1230 515 1330 340"/>
+</g>
+<text x="70" y="300" font-family="DejaVu Serif, Georgia, serif" font-size="78" font-weight="700" fill="#111a33">KEVIN</text>
+<text x="70" y="395" font-family="DejaVu Serif, Georgia, serif" font-size="78" font-weight="700" fill="#111a33">RESEARCH</text>
+<text x="70" y="490" font-family="DejaVu Serif, Georgia, serif" font-size="78" font-weight="700" fill="#111a33">STUDIO</text>
+</svg>

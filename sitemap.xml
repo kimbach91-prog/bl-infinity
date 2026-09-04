@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/studio/</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/tien-hoa-luong-cuc.html</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/attribution-benchmark.html</loc><lastmod>2026-09-04</lastmod></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-human-development.jpg</image:loc><image:title>NGHIÊN CỨU PHÁT TRIỂN CON NGƯỜI</image:title></image:image></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/studio/</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-kevin-research-studio.jpg</image:loc><image:title>KEVIN RESEARCH STUDIO</image:title></image:image></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-kevin-research-studio.jpg</image:loc><image:title>KEVIN RESEARCH STUDIO</image:title></image:image></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/tien-hoa-luong-cuc.html</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-dual-pole.jpg</image:loc><image:title>TIẾN HÓA LƯỠNG CỰC</image:title></image:image></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/research/human-development/kevin-nt/attribution-benchmark.html</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-real-application-value.jpg</image:loc><image:title>GIÁ TRỊ ỨNG DỤNG THẬT</image:title></image:image></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/</loc><lastmod>2026-09-04</lastmod></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/bieu-tuong-va-ban-chat/</loc><lastmod>2026-09-04</lastmod></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/</loc><lastmod>2026-09-04</lastmod></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/ho-chi-minh/sources.html</loc><lastmod>2026-09-04</lastmod></url>
-  <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/kevin-intellectual-map/</loc><lastmod>2026-09-04</lastmod></url>
+  <url><loc>https://kimbach91-prog.github.io/bl-infinity/books/kevin-intellectual-map/</loc><lastmod>2026-09-04</lastmod><image:image><image:loc>https://kimbach91-prog.github.io/bl-infinity/books/theory-assets/og/cover-100-works.jpg</image:loc><image:title>BẢN ĐỒ 100 CÔNG TRÌNH GIAO THOA</image:title></image:image></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/novel/</loc><lastmod>2026-09-04</lastmod></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html</loc><lastmod>2026-09-04</lastmod></url>
   <url><loc>https://kimbach91-prog.github.io/bl-infinity/academic-freedom.html</loc><lastmod>2026-09-04</lastmod></url>
