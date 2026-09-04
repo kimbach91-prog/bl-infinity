@@ -1,0 +1,19 @@
+{
+  "version": "R2",
+  "principle": "CODE_PRESENT != CONTROL_ACTIVE",
+  "controls": {
+    "webauthn_passkey": { "code": "implemented", "live": "pending_external_infra", "verified": false },
+    "mfa_totp_kms_encrypted": { "code": "implemented", "live": "pending_kms_and_db", "verified": false },
+    "http_only_secure_same_site_session": { "code": "implemented", "live": "pending_gateway_deployment", "verified": false },
+    "server_signed_constitution_receipts": { "code": "implemented", "live": "pending_hsm_kms", "verified": false },
+    "postgresql_durable_security_state": { "schema": "implemented", "live": "pending_managed_database", "verified": false },
+    "append_only_hash_chain_audit": { "code": "implemented", "live": "pending_managed_database", "verified": false },
+    "managed_waf_bot_ddos": { "code": "not_a_code_control", "live": "pending_edge_account_configuration", "verified": false },
+    "device_enrollment_tpm": { "code": "implemented", "live": "pending_founder_device_ceremony", "verified": false },
+    "secret_manager_hsm_kms": { "integration": "implemented", "live": "pending_external_kms_binding", "verified": false },
+    "mtls_node_ingress": { "code": "implemented", "live": "pending_ca_and_private_network", "verified": false },
+    "codeql": { "workflow": "implemented", "live": "running_on_hardening_branch", "verified": false },
+    "independent_penetration_test": { "scope": "defined", "live": "requires_independent_vendor", "verified": false },
+    "server_side_branch_protection": { "repository_state": "currently_unprotected", "live": "requires_repo_admin_configuration", "verified": false }
+  }
+}
