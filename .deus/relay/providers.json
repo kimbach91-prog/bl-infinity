@@ -1,0 +1,14 @@
+{
+  "version": "0.1",
+  "defaultCanonicalWrite": "DENIED",
+  "publicRepoAllowedDataClasses": ["PUBLIC", "GREY"],
+  "providers": [
+    {"id": "OPENAI", "mode": "API_OR_AUTHORIZED_UI", "status": "CREDENTIAL_REQUIRED", "role": "REASONING_REVIEW"},
+    {"id": "ANTHROPIC", "mode": "API_OR_AUTHORIZED_UI", "status": "CREDENTIAL_REQUIRED", "role": "REASONING_REVIEW"},
+    {"id": "GEMINI", "mode": "API_OR_AUTHORIZED_UI", "status": "MANUAL_E2E_VERIFIED", "role": "INDEPENDENT_REASONING"},
+    {"id": "XAI", "mode": "API_OR_AUTHORIZED_UI", "status": "MANUAL_TASK_CAPABLE_PROTOCOL_REJECTED", "role": "EXTERNAL_CRITIC"},
+    {"id": "COPILOT", "mode": "GITHUB_ISSUE_PR", "status": "ISSUE_PROBE_READY", "role": "AUTHORIZED_CODE_WORKER"},
+    {"id": "DEEPSEEK_LOCAL", "mode": "LOCAL_SELF_HOST", "status": "DEVICE_AND_RUNTIME_REQUIRED", "role": "AUXILIARY_COMPUTE"},
+    {"id": "DEEPSEEK_CLOUD", "mode": "API", "status": "CREDENTIAL_REQUIRED_PUBLIC_GREY_ONLY", "role": "AUXILIARY_COMPUTE"}
+  ]
+}
