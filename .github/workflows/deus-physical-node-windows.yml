@@ -1,0 +1,106 @@
+name: DEUS Windows Physical Node Security
+
+on:
+  pull_request:
+    paths:
+      - 'nodes/windows/**'
+      - 'runtime/federation/worker/**'
+      - 'runtime/federation/lib/protocol.mjs'
+      - 'runtime/federation/lib/provider-heartbeat.mjs'
+      - '.github/workflows/deus-physical-node-windows.yml'
+  push:
+    branches:
+      - 'deus/physical-node-windows-r1'
+    paths:
+      - 'nodes/windows/**'
+      - 'runtime/federation/worker/**'
+      - 'runtime/federation/lib/protocol.mjs'
+      - 'runtime/federation/lib/provider-heartbeat.mjs'
+      - '.github/workflows/deus-physical-node-windows.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  physical-node-security:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Parse PowerShell 5.1 node scripts
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'nodes/windows/bootstrap.ps1',
+            'nodes/windows/recover-runtime-no-git.ps1',
+            'nodes/windows/recover-runtime-raw-minimal.ps1',
+            'nodes/windows/audit.ps1',
+            'nodes/windows/rollback.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | ForEach-Object { Write-Error "$file :: $($_.Message) at $($_.Extent.StartLineNumber):$($_.Extent.StartColumnNumber)" }
+              exit 1
+            }
+          }
+
+      - name: Execute audit under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $output = & powershell.exe -NoProfile -ExecutionPolicy Bypass -File 'nodes/windows/audit.ps1' 2>&1
+          $exitCode = $LASTEXITCODE
+          $text = ($output | Out-String)
+          Write-Host $text
+          if ($exitCode -notin @(0,1,2)) { throw "audit returned unexpected exit code $exitCode" }
+          if ($text -match 'Argument types do not match') { throw 'audit hit PowerShell 5.1 runtime collection incompatibility' }
+          if ($text -notmatch 'DEUS physical-node verdict:') { throw 'audit did not reach a verdict' }
+          exit 0
+
+      - name: Test physical-node isolation and worker authentication
+        shell: pwsh
+        run: node --test nodes/windows/test/physical-node.test.mjs
+
+      - name: Reject dangerous physical-node exposure primitives
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $scripts = @(
+            (Get-Content 'nodes/windows/bootstrap.ps1' -Raw),
+            (Get-Content 'nodes/windows/recover-runtime-no-git.ps1' -Raw),
+            (Get-Content 'nodes/windows/recover-runtime-raw-minimal.ps1' -Raw)
+          )
+          foreach ($script in $scripts) {
+            if ($script -match '0\.0\.0\.0') { throw 'worker must not bind 0.0.0.0' }
+            if ($script -match '\$env:BL_CONTROL_TOKEN\s*=') { throw 'worker must never receive BL_CONTROL_TOKEN' }
+            if ($script -match 'New-NetFirewallRule[^\r\n]+8790') { throw 'node setup must not expose the worker port' }
+            if ($script -match '(?i)(Invoke-Expression|\biex\b)') { throw 'node setup must not use dynamic PowerShell eval' }
+          }
+
+          $recovery = Get-Content 'nodes/windows/recover-runtime-no-git.ps1' -Raw
+          if ($recovery -match '(?im)^\s*(?:&\s+)?winget(?:\.exe)?\s+') { throw 'no-git recovery path must not invoke winget' }
+          if ($recovery -match '(?im)^\s*(?:&\s+)?git(?:\.exe)?\s+(clone|fetch|checkout|init)\b') { throw 'no-git recovery path must not invoke Git' }
+          if ($recovery -notmatch 'if \(\[bool\]\$config\.remoteRoutable\)') { throw 'no-git recovery must enforce remote-routable fail-closed state' }
+
+          $raw = Get-Content 'nodes/windows/recover-runtime-raw-minimal.ps1' -Raw
+          if ($raw -match '(?i)codeload\.github\.com') { throw 'raw recovery must not use codeload' }
+          if ($raw -match '(?im)^\s*(?:&\s+)?winget(?:\.exe)?\s+') { throw 'raw recovery must not invoke winget' }
+          if ($raw -match '(?im)^\s*(?:&\s+)?git(?:\.exe)?\s+(clone|fetch|checkout|init)\b') { throw 'raw recovery must not invoke Git' }
+          if ($raw -match '(?im)^\s*(?:&\s+)?npm(?:\.cmd|\.exe)?\s+') { throw 'raw recovery must not invoke npm' }
+          if ($raw -notmatch 'raw\.githubusercontent\.com') { throw 'raw recovery must use the already-working raw GitHub transport' }
+          if ($raw -notmatch 'Get-GitBlobSha1') { throw 'raw recovery must verify Git blob integrity' }
+          if ($raw -notmatch 'if \(\[bool\]\$config\.remoteRoutable\)') { throw 'raw recovery must enforce remote-routable fail-closed state' }
+          Write-Host 'physical-node exposure checks passed'
