@@ -1,0 +1,77 @@
+name: DEUS Dual-Account Backup Policy
+
+on:
+  pull_request:
+    paths:
+      - 'nodes/windows/backup-dual-drive.ps1'
+      - 'nodes/windows/DUAL_ACCOUNT_BACKUP.md'
+      - 'nodes/windows/test/dual-account-backup.test.mjs'
+      - '.github/workflows/deus-dual-account-backup-policy.yml'
+  push:
+    branches:
+      - 'deus/dual-account-backup-r1'
+    paths:
+      - 'nodes/windows/backup-dual-drive.ps1'
+      - 'nodes/windows/DUAL_ACCOUNT_BACKUP.md'
+      - 'nodes/windows/test/dual-account-backup.test.mjs'
+      - '.github/workflows/deus-dual-account-backup-policy.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  backup-policy:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+
+      - name: Parse backup script under Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $tokens = $null
+          $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile(
+            (Resolve-Path 'nodes/windows/backup-dual-drive.ps1'),
+            [ref]$tokens,
+            [ref]$parseErrors
+          ) | Out-Null
+          if ($parseErrors.Count -gt 0) {
+            $parseErrors | ForEach-Object { Write-Error "$($_.Message) at $($_.Extent.StartLineNumber):$($_.Extent.StartColumnNumber)" }
+            exit 1
+          }
+
+      - name: Enforce copy-only backup policy
+        shell: pwsh
+        run: node --test nodes/windows/test/dual-account-backup.test.mjs
+
+      - name: Reject credential material and destructive remote verbs
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $paths = @(
+            'nodes/windows/backup-dual-drive.ps1',
+            'nodes/windows/DUAL_ACCOUNT_BACKUP.md'
+          )
+          $text = ($paths | ForEach-Object { Get-Content $_ -Raw }) -join "`n"
+
+          if ($text -match '(?i)(github_pat_[A-Za-z0-9_]{20,}|ghp_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{20,}|BEGIN [A-Z ]*PRIVATE KEY)') {
+            throw 'credential-like material found in backup package'
+          }
+
+          $script = Get-Content 'nodes/windows/backup-dual-drive.ps1' -Raw
+          foreach ($verb in @('sync','move','delete','deletefile','purge','rmdir','cleanup')) {
+            if ($script -match "(?i)['\"]$verb['\"]|\brclone\s+$verb\b") {
+              throw "destructive remote verb found: $verb"
+            }
+          }
+
+          if ($script -notmatch '--immutable') { throw 'destination upload must be immutable' }
+          if ($script -notmatch '--download') { throw 'backup verification must read destination content back' }
+          if ($script -match '--drive-import-formats') { throw 'destination must not re-import archival files into Google-native objects' }
+          Write-Host 'dual-account backup policy checks passed'
