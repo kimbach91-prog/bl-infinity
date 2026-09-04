@@ -1,9 +1,18 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canonicalizeHcs, sha256Hcs, HCS_CANONICALIZATION_PROFILE } from './canonicalize-hcs.mjs';
+import {
+  canonicalizeHcs,
+  sha256Hcs,
+  integrityTargetHcs,
+  integrityDigestHcs,
+  verifyIntegrityDigestHcs,
+  HCS_CANONICALIZATION_PROFILE,
+  HCS_INTEGRITY_TARGET_PROFILE
+} from './canonicalize-hcs.mjs';
 
-test('declares the RFC 8785 HCS profile', () => {
+test('declares RFC 8785 and detached integrity profiles', () => {
   assert.equal(HCS_CANONICALIZATION_PROFILE, 'urn:hcs:canonicalization:rfc8785-jcs');
+  assert.equal(HCS_INTEGRITY_TARGET_PROFILE, 'urn:hcs:integrity-target:envelope-without-integrity-v1');
 });
 
 test('object key order does not change canonical bytes', () => {
@@ -49,4 +58,32 @@ test('RFC 8785 sample-compatible ordering and number serialization', () => {
   assert.ok(out.includes('333333333.3333333'));
   assert.ok(out.includes('1e+30'));
   assert.ok(out.includes('0.002'));
+});
+
+test('integrity target excludes only top-level integrity', () => {
+  const envelope = {
+    hcsVersion: '0.1',
+    payload: { integrity: 'payload-field-must-remain' },
+    integrity: { digestValue: 'placeholder' }
+  };
+  assert.deepEqual(integrityTargetHcs(envelope), {
+    hcsVersion: '0.1',
+    payload: { integrity: 'payload-field-must-remain' }
+  });
+});
+
+test('detached digest is independent of integrity carrier but binds content', () => {
+  const envelope = {
+    hcsVersion: '0.1',
+    messageId: 'message-0001',
+    payload: { value: 1 },
+    integrity: { digestValue: '' }
+  };
+  const digest = integrityDigestHcs(envelope);
+  envelope.integrity.digestValue = digest;
+  assert.equal(verifyIntegrityDigestHcs(envelope), true);
+  envelope.integrity.proofRef = 'urn:proof:changed-carrier';
+  assert.equal(verifyIntegrityDigestHcs(envelope), true);
+  envelope.payload.value = 2;
+  assert.equal(verifyIntegrityDigestHcs(envelope), false);
 });
