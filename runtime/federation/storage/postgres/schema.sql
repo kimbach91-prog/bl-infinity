@@ -39,8 +39,6 @@ CREATE TABLE IF NOT EXISTS federation_result_cache (
 );
 CREATE INDEX IF NOT EXISTS federation_result_cache_expiry_idx ON federation_result_cache(expires_at);
 
--- Shared token buckets make request guardrails independent of coordinator count/restart.
--- scope_key is an application-generated SHA-256 fingerprint, not a raw bearer token/IP.
 CREATE TABLE IF NOT EXISTS federation_rate_limit_buckets (
   scope_key text PRIMARY KEY,
   tokens double precision NOT NULL CHECK (tokens >= 0),
@@ -48,6 +46,45 @@ CREATE TABLE IF NOT EXISTS federation_rate_limit_buckets (
   expires_at timestamptz NOT NULL
 );
 CREATE INDEX IF NOT EXISTS federation_rate_limit_bucket_expiry_idx ON federation_rate_limit_buckets(expires_at);
+
+-- Shared canonical search corpus. Local HybridSearchFabric instances are materialized
+-- projections fed by this table's monotonic change cursor and deletion tombstones.
+CREATE SEQUENCE IF NOT EXISTS federation_search_change_seq AS bigint;
+CREATE TABLE IF NOT EXISTS federation_search_documents (
+  id text PRIMARY KEY,
+  document jsonb NOT NULL,
+  content_hash text NOT NULL,
+  tenant_id text NOT NULL DEFAULT 'default',
+  data_class text NOT NULL DEFAULT 'public' CHECK (data_class IN ('public','internal','private')),
+  status text NOT NULL DEFAULT 'active' CHECK (status IN ('active','deleted')),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  deleted_at timestamptz,
+  change_seq bigint
+);
+ALTER TABLE federation_search_documents ADD COLUMN IF NOT EXISTS change_seq bigint;
+UPDATE federation_search_documents
+SET change_seq = nextval('federation_search_change_seq')
+WHERE change_seq IS NULL;
+CREATE OR REPLACE FUNCTION bl_cf_bump_search_change_seq()
+RETURNS trigger
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  NEW.change_seq := nextval('federation_search_change_seq');
+  RETURN NEW;
+END;
+$$;
+DROP TRIGGER IF EXISTS bl_cf_search_change_seq_trigger ON federation_search_documents;
+CREATE TRIGGER bl_cf_search_change_seq_trigger
+BEFORE INSERT OR UPDATE ON federation_search_documents
+FOR EACH ROW
+EXECUTE FUNCTION bl_cf_bump_search_change_seq();
+ALTER TABLE federation_search_documents ALTER COLUMN change_seq SET NOT NULL;
+CREATE INDEX IF NOT EXISTS federation_search_documents_change_seq_idx ON federation_search_documents(change_seq);
+CREATE INDEX IF NOT EXISTS federation_search_documents_status_idx ON federation_search_documents(status, change_seq);
+CREATE INDEX IF NOT EXISTS federation_search_documents_tenant_idx ON federation_search_documents(tenant_id, status, change_seq);
+CREATE INDEX IF NOT EXISTS federation_search_documents_data_class_idx ON federation_search_documents(data_class, status, change_seq);
 
 CREATE TABLE IF NOT EXISTS federation_budget_reservations (
   id uuid PRIMARY KEY,
@@ -94,12 +131,7 @@ CREATE TABLE IF NOT EXISTS federation_audit (
   hash text NOT NULL UNIQUE
 );
 
--- v0.8 uses a monotonic provider change cursor for bounded incremental registry sync.
--- PostgreSQL sequences are allowed to have gaps; only monotonicity is required.
 CREATE SEQUENCE IF NOT EXISTS federation_provider_change_seq AS bigint;
-
--- Signed provider authority is stored separately from mutable runtime state.
--- grant_json is the exact canonical grant payload (signature/telemetry/status excluded).
 CREATE TABLE IF NOT EXISTS federation_providers (
   id text PRIMARY KEY,
   grant_json jsonb NOT NULL,
@@ -122,12 +154,9 @@ CREATE TABLE IF NOT EXISTS federation_providers (
   change_seq bigint
 );
 ALTER TABLE federation_providers ADD COLUMN IF NOT EXISTS change_seq bigint;
-
--- Existing rows receive a cursor once. The trigger below covers all later INSERT/UPDATE paths.
 UPDATE federation_providers
 SET change_seq = nextval('federation_provider_change_seq')
 WHERE change_seq IS NULL;
-
 CREATE OR REPLACE FUNCTION bl_cf_bump_provider_change_seq()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -137,21 +166,17 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
 DROP TRIGGER IF EXISTS bl_cf_provider_change_seq_trigger ON federation_providers;
 CREATE TRIGGER bl_cf_provider_change_seq_trigger
 BEFORE INSERT OR UPDATE ON federation_providers
 FOR EACH ROW
 EXECUTE FUNCTION bl_cf_bump_provider_change_seq();
-
 ALTER TABLE federation_providers ALTER COLUMN change_seq SET NOT NULL;
 CREATE INDEX IF NOT EXISTS federation_providers_change_seq_idx ON federation_providers(change_seq);
 CREATE INDEX IF NOT EXISTS federation_providers_status_idx ON federation_providers(status, grant_expires_at);
 CREATE INDEX IF NOT EXISTS federation_providers_heartbeat_idx ON federation_providers(heartbeat_expires_at) WHERE status='active';
 CREATE INDEX IF NOT EXISTS federation_providers_consent_idx ON federation_providers(consent_ref);
 
--- Cross-coordinator replay defense for worker self-heartbeats. The HMAC secret never
--- enters this table; only a provider-scoped nonce and bounded expiry are persisted.
 CREATE TABLE IF NOT EXISTS federation_provider_heartbeat_nonces (
   provider_id text NOT NULL REFERENCES federation_providers(id) ON DELETE CASCADE,
   nonce text NOT NULL,
@@ -163,19 +188,12 @@ CREATE INDEX IF NOT EXISTS federation_provider_heartbeat_nonce_expiry_idx ON fed
 
 -- Horizontal invariants:
 -- 1. queue claim: transaction + FOR UPDATE SKIP LOCKED;
--- 2. budget reserve/actual-cost settlement: transaction-scoped advisory lock before
---    checking aggregate spend/reservations and writing;
--- 3. audit/ledger hash heads: transaction-scoped advisory lock so two coordinators
---    cannot append competing records with the same predecessor;
--- 4. PostgreSQL sequences may have gaps after transaction rollback. Chain validity
---    therefore requires strictly increasing seq + valid prev_hash/hash, not gaplessness;
--- 5. provider-success/accounting-failure is non-retryable until reconciled because
---    the external side effect may already have happened;
--- 6. provider heartbeat/status/telemetry never mutate grant_json. Authority changes
---    require an explicit new verified grant revision or an explicit revocation;
--- 7. direct worker heartbeat replay is rejected by the provider-scoped nonce primary key
---    shared by every coordinator using this database;
--- 8. every provider row mutation receives a new change_seq so coordinators can consume
---    bounded deltas; time-based expiry remains locally fail-closed even without a row change;
--- 9. rate-limit buckets are row-locked transactionally so parallel coordinators consume
---    one shared quota instead of multiplying burst capacity by coordinator count.
+-- 2. budget reserve/actual-cost settlement: transaction-scoped advisory lock;
+-- 3. audit/ledger hash heads: transaction-scoped advisory lock;
+-- 4. PostgreSQL sequences may have gaps after rollback; monotonicity is enough;
+-- 5. provider-success/accounting-failure remains non-retryable until reconciled;
+-- 6. provider heartbeat/status/telemetry never mutate grant authority;
+-- 7. worker heartbeat replay is rejected by shared provider-scoped nonce uniqueness;
+-- 8. every provider row mutation publishes a provider change_seq;
+-- 9. rate-limit buckets are row-locked so coordinator count cannot multiply quota;
+-- 10. search writes/deletes publish a search change_seq and deletion remains a durable tombstone.
