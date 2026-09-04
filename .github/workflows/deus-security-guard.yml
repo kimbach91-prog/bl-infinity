@@ -2,41 +2,29 @@ name: DEUS Security Guard
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types:
+      - opened
+      - synchronize
+      - reopened
   workflow_dispatch:
-    inputs:
-      drill:
-        description: 'Create a synthetic P0 security packet'
-        required: false
-        default: 'false'
-        type: choice
-        options:
-          - 'false'
-          - 'true'
 
 permissions:
   contents: read
   issues: write
   pull-requests: read
-  actions: read
-
-concurrency:
-  group: deus-security-${{ github.event_name }}-${{ github.run_id }}
-  cancel-in-progress: false
 
 jobs:
   detect-and-escalate:
-    if: ${{ !(github.event_name == 'push' && contains(github.event.head_commit.message, '[DEUS-SECURITY-BOOTSTRAP]')) }}
     runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       GH_TOKEN: ${{ github.token }}
       REPO: ${{ github.repository }}
     steps:
-      - name: Inspect event without executing untrusted repository code
-        id: inspect
+      - name: Detect high-risk repository changes and emit DEUS P0 packet
         shell: bash
         run: |
           set -euo pipefail
@@ -47,7 +35,7 @@ jobs:
           patchfile="$(mktemp)"
           reasons="$(mktemp)"
           score=0
-          event_key=""
+          event_key="manual-${GITHUB_RUN_ID}"
           sha="${GITHUB_SHA}"
           ref="${GITHUB_REF}"
 
@@ -56,6 +44,12 @@ jobs:
           }
 
           if [[ "$event" == "push" ]]; then
+            message="$(jq -r '.head_commit.message // ""' "$GITHUB_EVENT_PATH")"
+            if [[ "$message" == *"[DEUS-SECURITY-BOOTSTRAP]"* ]]; then
+              echo "Trusted bootstrap/update commit; guard self-change is not escalated."
+              exit 0
+            fi
+
             before="$(jq -r '.before // empty' "$GITHUB_EVENT_PATH")"
             after="$(jq -r '.after // empty' "$GITHUB_EVENT_PATH")"
             sha="$after"
@@ -75,16 +69,10 @@ jobs:
             gh api --paginate "repos/$REPO/pulls/$pr/files?per_page=100" | jq -s '{files:[.[][]]}' > "$payload"
           else
             printf '%s\n' '{"files":[]}' > "$payload"
-            event_key="manual-${GITHUB_RUN_ID}"
           fi
 
           jq -r '.files[]? | "FILE\t\(.filename)\tSTATUS\t\(.status)\n\(.patch // "")\n"' "$payload" > "$patchfile"
           added_lines="$(awk '/^\+[^+]/ {print substr($0,2)}' "$patchfile" || true)"
-
-          if [[ "$event" == "workflow_dispatch" && "${{ inputs.drill }}" == "true" ]]; then
-            score=$((score + 100))
-            add_reason "SYNTHETIC_SECURITY_DRILL"
-          fi
 
           if jq -e '[.files[]? | select(.filename == ".github/workflows/deus-security-guard.yml" and (.status == "modified" or .status == "removed"))] | length > 0' "$payload" >/dev/null; then
             score=$((score + 100))
@@ -101,7 +89,7 @@ jobs:
             add_reason "SECRET_LIKE_MATERIAL_ADDED_REDACTED"
           fi
 
-          if printf '%s\n' "$added_lines" | grep -Eiq '(password|passwd|secret|token|api[_-]?key|client[_-]?secret)[[:space:]]*[:=][[:space:]]*["'"']?[A-Za-z0-9_./+=-]{16,}'; then
+          if printf '%s\n' "$added_lines" | grep -Eiq '(password|passwd|secret|token|api[_-]?key|client[_-]?secret)[[:space:]]*[:=][[:space:]]*[A-Za-z0-9_./+=-]{16,}'; then
             score=$((score + 80))
             add_reason "HARDCODED_CREDENTIAL_PATTERN_ADDED_REDACTED"
           fi
@@ -128,38 +116,15 @@ jobs:
             add_reason "BULK_CHANGE_${changed_count}_FILES"
           fi
 
-          printf 'score=%s\n' "$score" >> "$GITHUB_OUTPUT"
-          printf 'event_key=%s\n' "$event_key" >> "$GITHUB_OUTPUT"
-          printf 'sha=%s\n' "$sha" >> "$GITHUB_OUTPUT"
-          printf 'ref=%s\n' "$ref" >> "$GITHUB_OUTPUT"
-          printf 'actor=%s\n' "$actor" >> "$GITHUB_OUTPUT"
-          printf 'changed_count=%s\n' "$changed_count" >> "$GITHUB_OUTPUT"
-          printf 'total_deletions=%s\n' "$total_deletions" >> "$GITHUB_OUTPUT"
+          echo "DEUS security score: $score"
+          if [[ "$score" -lt 60 ]]; then
+            echo "No P0 threshold reached."
+            exit 0
+          fi
 
-          {
-            echo 'reasons<<EOF'
-            if [[ -s "$reasons" ]]; then cat "$reasons"; else echo 'NONE'; fi
-            echo 'EOF'
-          } >> "$GITHUB_OUTPUT"
-
-      - name: Emit urgent DEUS P0 incident packet
-        if: ${{ fromJSON(steps.inspect.outputs.score) >= 60 }}
-        shell: bash
-        env:
-          SCORE: ${{ steps.inspect.outputs.score }}
-          EVENT_KEY: ${{ steps.inspect.outputs.event_key }}
-          EVENT_SHA: ${{ steps.inspect.outputs.sha }}
-          EVENT_REF: ${{ steps.inspect.outputs.ref }}
-          EVENT_ACTOR: ${{ steps.inspect.outputs.actor }}
-          REASONS: ${{ steps.inspect.outputs.reasons }}
-          CHANGED_COUNT: ${{ steps.inspect.outputs.changed_count }}
-          TOTAL_DELETIONS: ${{ steps.inspect.outputs.total_deletions }}
-        run: |
-          set -euo pipefail
-
-          existing="$(gh api -X GET search/issues -f q="repo:$REPO is:issue is:open \"DEUS-SECURITY-EVENT:$EVENT_KEY\"" --jq '.total_count' 2>/dev/null || echo 0)"
+          existing="$(gh api -X GET search/issues -f q="repo:$REPO is:issue is:open \"DEUS-SECURITY-EVENT:$event_key\"" --jq '.total_count' 2>/dev/null || echo 0)"
           if [[ "$existing" != "0" ]]; then
-            echo "P0 packet already exists for $EVENT_KEY; refusing duplicate."
+            echo "P0 packet already exists for $event_key; refusing duplicate."
             exit 0
           fi
 
@@ -171,39 +136,40 @@ jobs:
 
           observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           run_url="https://github.com/$REPO/actions/runs/$GITHUB_RUN_ID"
-          title="[P0 SECURITY][DEUS] ${GITHUB_EVENT_NAME} anomaly — ${EVENT_KEY}"
+          title="[P0 SECURITY][DEUS] ${event} anomaly — ${event_key}"
+          reason_text="$(cat "$reasons" 2>/dev/null || true)"
 
           body="$(cat <<EOF
 DEUS_SECURITY_PACKET v1
 
-DEUS-SECURITY-EVENT:$EVENT_KEY
+DEUS-SECURITY-EVENT:$event_key
 priority: P0
 state: TRIAGE_REQUIRED
 classification: AUTOMATED_HEURISTIC_ALERT
 repository: $REPO
-event: $GITHUB_EVENT_NAME
-actor: $EVENT_ACTOR
-ref: $EVENT_REF
-sha: $EVENT_SHA
+event: $event
+actor: $actor
+ref: $ref
+sha: $sha
 observed_at_utc: $observed_at
-risk_score: $SCORE
-changed_files: $CHANGED_COUNT
-total_deletions: $TOTAL_DELETIONS
+risk_score: $score
+changed_files: $changed_count
+total_deletions: $total_deletions
 source_run: $run_url
 
 reasons:
-$REASONS
+$reason_text
 
 SAFETY / PROVENANCE RULES
-- This packet is an alert, not proof of an attacker or attribution to any person/AI.
+- This packet is an alert, not proof of an attacker or attribution to any person or AI.
 - Suspected secret values are intentionally not copied into this issue.
 - Preserve evidence before destructive remediation.
 - Do not rotate credentials from a potentially compromised endpoint.
-- Treat account/session/OAuth changes as UNKNOWN until independently verified.
+- Treat account, session and OAuth changes as UNKNOWN until independently verified.
 
 DEUS IMMEDIATE TRIAGE
-1. Freeze nonessential deploy/admin changes affecting this repo.
-2. Inspect the triggering commit/PR and GitHub audit/security activity.
+1. Freeze nonessential deploy and admin changes affecting this repo.
+2. Inspect the triggering commit or PR and GitHub audit/security activity.
 3. If credentials may be exposed, rotate them from a known-clean device and revoke sessions/tokens.
 4. Check GitHub Actions permissions, recent collaborators, OAuth/GitHub Apps, branch protection and deploy keys.
 5. Record OBS / INFER / DECISION separately; never promote this alert directly to canonical attribution.
@@ -218,4 +184,4 @@ EOF
             -f 'labels[]=DEUS-P0' \
             >/dev/null
 
-          echo "DEUS P0 packet emitted for $EVENT_KEY"
+          echo "DEUS P0 packet emitted for $event_key"
