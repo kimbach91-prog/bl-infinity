@@ -131,52 +131,50 @@ jobs:
           gh api -X POST "repos/$REPO/labels" \
             -f name='DEUS-P0' \
             -f color='B60205' \
-            -f description='Urgent DEUS security incident — evidence-first, fail-closed' \
+            -f description='Urgent DEUS security incident - evidence-first, fail-closed' \
             >/dev/null 2>&1 || true
 
           observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
           run_url="https://github.com/$REPO/actions/runs/$GITHUB_RUN_ID"
-          title="[P0 SECURITY][DEUS] ${event} anomaly — ${event_key}"
+          title="[P0 SECURITY][DEUS] ${event} anomaly - ${event_key}"
           reason_text="$(cat "$reasons" 2>/dev/null || true)"
 
-          body="$(cat <<EOF
-DEUS_SECURITY_PACKET v1
-
-DEUS-SECURITY-EVENT:$event_key
-priority: P0
-state: TRIAGE_REQUIRED
-classification: AUTOMATED_HEURISTIC_ALERT
-repository: $REPO
-event: $event
-actor: $actor
-ref: $ref
-sha: $sha
-observed_at_utc: $observed_at
-risk_score: $score
-changed_files: $changed_count
-total_deletions: $total_deletions
-source_run: $run_url
-
-reasons:
-$reason_text
-
-SAFETY / PROVENANCE RULES
-- This packet is an alert, not proof of an attacker or attribution to any person or AI.
-- Suspected secret values are intentionally not copied into this issue.
-- Preserve evidence before destructive remediation.
-- Do not rotate credentials from a potentially compromised endpoint.
-- Treat account, session and OAuth changes as UNKNOWN until independently verified.
-
-DEUS IMMEDIATE TRIAGE
-1. Freeze nonessential deploy and admin changes affecting this repo.
-2. Inspect the triggering commit or PR and GitHub audit/security activity.
-3. If credentials may be exposed, rotate them from a known-clean device and revoke sessions/tokens.
-4. Check GitHub Actions permissions, recent collaborators, OAuth/GitHub Apps, branch protection and deploy keys.
-5. Record OBS / INFER / DECISION separately; never promote this alert directly to canonical attribution.
-
-ACK target: DEUS_SECURITY_TRIAGE_REQUIRED
-EOF
-)"
+          body="$(printf '%s\n' \
+            'DEUS_SECURITY_PACKET v1' \
+            '' \
+            "DEUS-SECURITY-EVENT:$event_key" \
+            'priority: P0' \
+            'state: TRIAGE_REQUIRED' \
+            'classification: AUTOMATED_HEURISTIC_ALERT' \
+            "repository: $REPO" \
+            "event: $event" \
+            "actor: $actor" \
+            "ref: $ref" \
+            "sha: $sha" \
+            "observed_at_utc: $observed_at" \
+            "risk_score: $score" \
+            "changed_files: $changed_count" \
+            "total_deletions: $total_deletions" \
+            "source_run: $run_url" \
+            '' \
+            'reasons:' \
+            "$reason_text" \
+            '' \
+            'SAFETY / PROVENANCE RULES' \
+            '- This packet is an alert, not proof of an attacker or attribution to any person or AI.' \
+            '- Suspected secret values are intentionally not copied into this issue.' \
+            '- Preserve evidence before destructive remediation.' \
+            '- Do not rotate credentials from a potentially compromised endpoint.' \
+            '- Treat account, session and OAuth changes as UNKNOWN until independently verified.' \
+            '' \
+            'DEUS IMMEDIATE TRIAGE' \
+            '1. Freeze nonessential deploy and admin changes affecting this repo.' \
+            '2. Inspect the triggering commit or PR and GitHub audit/security activity.' \
+            '3. If credentials may be exposed, rotate them from a known-clean device and revoke sessions/tokens.' \
+            '4. Check GitHub Actions permissions, recent collaborators, OAuth/GitHub Apps, branch protection and deploy keys.' \
+            '5. Record OBS / INFER / DECISION separately; never promote this alert directly to canonical attribution.' \
+            '' \
+            'ACK target: DEUS_SECURITY_TRIAGE_REQUIRED')"
 
           gh api -X POST "repos/$REPO/issues" \
             -f title="$title" \
