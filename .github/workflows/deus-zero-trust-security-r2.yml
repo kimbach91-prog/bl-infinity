@@ -12,6 +12,10 @@ on:
   push:
     branches: ['deus/security-zero-trust-r2']
 
+concurrency:
+  group: deus-zero-trust-r2-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
