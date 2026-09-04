@@ -1,7 +1,8 @@
 name: BL-SCA — Value-First Help Request
-about: Yêu cầu hỗ trợ kỹ thuật có giới hạn trước khi có bất kỳ đề nghị cấp compute nào.
+description: Yêu cầu hỗ trợ kỹ thuật có giới hạn trước khi có bất kỳ đề nghị cấp compute nào.
 title: "[BL-SCA Help] "
 labels: []
+assignees: []
 body:
   - type: markdown
     attributes:
