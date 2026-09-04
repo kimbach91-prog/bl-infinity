@@ -30,16 +30,34 @@ A language or application profile MAY normalize text *before* constructing an HC
 
 For example, a VTTN implementation may define normalization rules for concept resolution, while the HCS envelope still canonicalizes the resulting JSON according to RFC 8785 without altering its strings.
 
+## Detached integrity projection
+To avoid a self-referential digest, HCS does **not** hash an envelope including its own `integrity` object.
+
+For an envelope `E`, define the integrity target projection `T(E)` as a deep copy of `E` with the top-level `integrity` member removed entirely. No other field is removed or rewritten.
+
+The baseline digest is then:
+
+`digestValue = SHA-256( JCS( T(E) ) )`
+
+This projection binds the actor, authority, action state, epistemic class, provenance, policy, payload or payload reference, evidence references, required profiles, timestamps and extensions while keeping the digest/proof carrier detached from the content it authenticates.
+
+A receiver MUST recompute the digest over the same projection before accepting a proof. An implementation MUST NOT silently choose a different projection.
+
+HCS profile identifier for the draft projection is:
+
+`urn:hcs:integrity-target:envelope-without-integrity-v1`
+
 ## Integrity binding
 An integrity record MUST identify:
+- integrity target profile;
 - canonicalization profile/version;
 - digest algorithm;
 - digest value;
 - signature/proof method when present.
 
-A receiver MUST NOT verify a signature against a different canonicalization profile than the sender declared.
+A receiver MUST NOT verify a signature against a different integrity-target or canonicalization profile than the sender declared.
 
-HCS v0.1 RECOMMENDS `sha-256` as the baseline digest identifier for conformance vectors. This recommendation does not make SHA-256 the only future digest supported by HCS.
+HCS v0.1 uses `sha-256` as the baseline digest identifier for conformance vectors. Future major/minor profiles may register additional reviewed algorithms without changing historical vectors.
 
 ## Version negotiation
 Every HCS envelope MUST declare `hcsVersion`.
@@ -47,23 +65,24 @@ Every HCS envelope MUST declare `hcsVersion`.
 A receiver MUST:
 - accept an explicitly supported compatible version;
 - reject an unsupported major version;
-- ignore unknown extension fields only when the negotiated profile explicitly permits forward-compatible extensions;
+- ignore unknown extension fields only inside the explicit `extensions` container and only when the negotiated profile permits it;
 - never silently reinterpret a known field with changed semantics.
 
 ## Extension namespaces
 Extensions MUST use an owner-controlled namespace identifier. Extensions MUST NOT redefine the semantics of normative HCS fields.
 
 ## Downgrade resistance
-If a sender requires a capability or security property unavailable in the receiver's profile, the exchange MUST fail rather than silently downgrade.
+If a sender declares a `requiredProfiles` capability or security property unavailable in the receiver's profile, the exchange MUST fail rather than silently downgrade.
 
 ## Test invariant
 For any HCS envelope E whose input is valid under RFC 8785, and conformant implementations A and B:
 
-`canonical(A,E) == canonical(B,E)`
+`JCS_A(T(E)) == JCS_B(T(E))`
 
 and therefore, for the same digest algorithm:
 
-`digest(A,E) == digest(B,E)`.
+`digest_A(T(E)) == digest_B(T(E))`.
 
-## Reference
-Normative canonicalization reference for this profile: RFC 8785, JSON Canonicalization Scheme (JCS).
+## References
+- RFC 8785 — JSON Canonicalization Scheme (JCS).
+- RFC 7493 — I-JSON constraints referenced by JCS.
