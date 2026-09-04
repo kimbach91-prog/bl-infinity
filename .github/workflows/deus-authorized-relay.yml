@@ -1,0 +1,130 @@
+name: DEUS Authorized Relay
+
+on:
+  repository_dispatch:
+    types: [deus_relay_v1]
+  workflow_dispatch:
+    inputs:
+      relay_id:
+        required: true
+        type: string
+      provider:
+        required: true
+        type: choice
+        options: [OPENAI, ANTHROPIC, GEMINI, XAI, COPILOT, DEEPSEEK_LOCAL, DEEPSEEK_CLOUD]
+      task_id:
+        required: true
+        type: string
+      direction:
+        required: true
+        type: choice
+        options: [TO_PROVIDER, FROM_PROVIDER]
+      data_class:
+        required: true
+        type: choice
+        options: [PUBLIC, GREY]
+      payload_digest:
+        required: true
+        type: string
+      authorization_ref:
+        required: true
+        type: string
+      result_ref:
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  relay:
+    if: github.actor == 'kimbach91-prog'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Normalize and validate envelope
+        id: env
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          DISPATCH_RELAY_ID: ${{ github.event.client_payload.relay_id }}
+          DISPATCH_PROVIDER: ${{ github.event.client_payload.provider }}
+          DISPATCH_TASK_ID: ${{ github.event.client_payload.task_id }}
+          DISPATCH_DIRECTION: ${{ github.event.client_payload.direction }}
+          DISPATCH_DATA_CLASS: ${{ github.event.client_payload.data_class }}
+          DISPATCH_DIGEST: ${{ github.event.client_payload.payload_digest }}
+          DISPATCH_AUTH_REF: ${{ github.event.client_payload.authorization_ref }}
+          DISPATCH_RESULT_REF: ${{ github.event.client_payload.result_ref }}
+          INPUT_RELAY_ID: ${{ inputs.relay_id }}
+          INPUT_PROVIDER: ${{ inputs.provider }}
+          INPUT_TASK_ID: ${{ inputs.task_id }}
+          INPUT_DIRECTION: ${{ inputs.direction }}
+          INPUT_DATA_CLASS: ${{ inputs.data_class }}
+          INPUT_DIGEST: ${{ inputs.payload_digest }}
+          INPUT_AUTH_REF: ${{ inputs.authorization_ref }}
+          INPUT_RESULT_REF: ${{ inputs.result_ref }}
+        run: |
+          set -euo pipefail
+          if [[ "$EVENT_NAME" == "repository_dispatch" ]]; then
+            relay_id="$DISPATCH_RELAY_ID"; provider="$DISPATCH_PROVIDER"; task_id="$DISPATCH_TASK_ID"
+            direction="$DISPATCH_DIRECTION"; data_class="$DISPATCH_DATA_CLASS"; digest="$DISPATCH_DIGEST"
+            auth_ref="$DISPATCH_AUTH_REF"; result_ref="$DISPATCH_RESULT_REF"
+          else
+            relay_id="$INPUT_RELAY_ID"; provider="$INPUT_PROVIDER"; task_id="$INPUT_TASK_ID"
+            direction="$INPUT_DIRECTION"; data_class="$INPUT_DATA_CLASS"; digest="$INPUT_DIGEST"
+            auth_ref="$INPUT_AUTH_REF"; result_ref="$INPUT_RESULT_REF"
+          fi
+
+          [[ "$relay_id" =~ ^[A-Za-z0-9._:-]{3,80}$ ]]
+          [[ "$task_id" =~ ^[A-Za-z0-9._:-]{3,100}$ ]]
+          [[ "$provider" =~ ^(OPENAI|ANTHROPIC|GEMINI|XAI|COPILOT|DEEPSEEK_LOCAL|DEEPSEEK_CLOUD)$ ]]
+          [[ "$direction" =~ ^(TO_PROVIDER|FROM_PROVIDER)$ ]]
+          [[ "$data_class" =~ ^(PUBLIC|GREY)$ ]]
+          [[ "$digest" =~ ^[A-Fa-f0-9]{64}$ ]]
+          [[ "$auth_ref" =~ ^[A-Za-z0-9._:-]{3,120}$ ]]
+          [[ -z "$result_ref" || "$result_ref" =~ ^[A-Za-z0-9._:-]{1,160}$ ]]
+
+          {
+            echo "relay_id=$relay_id"
+            echo "provider=$provider"
+            echo "task_id=$task_id"
+            echo "direction=$direction"
+            echo "data_class=$data_class"
+            echo "digest=$digest"
+            echo "auth_ref=$auth_ref"
+            echo "result_ref=$result_ref"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Write durable audit receipt
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          RELAY_ID: ${{ steps.env.outputs.relay_id }}
+          PROVIDER: ${{ steps.env.outputs.provider }}
+          TASK_ID: ${{ steps.env.outputs.task_id }}
+          DIRECTION: ${{ steps.env.outputs.direction }}
+          DATA_CLASS: ${{ steps.env.outputs.data_class }}
+          DIGEST: ${{ steps.env.outputs.digest }}
+          AUTH_REF: ${{ steps.env.outputs.auth_ref }}
+          RESULT_REF: ${{ steps.env.outputs.result_ref }}
+        run: |
+          set -euo pipefail
+          cat > /tmp/relay.md <<EOF
+          RELAY_STATUS: ACCEPTED_METADATA_ENVELOPE
+          TASK_ID: $TASK_ID
+          PROVIDER: $PROVIDER
+          DIRECTION: $DIRECTION
+          RELAY_ID: $RELAY_ID
+          DATA_CLASS: $DATA_CLASS
+          PAYLOAD_SHA256: $DIGEST
+          AUTHORIZATION_REF: $AUTH_REF
+          RESULT_REF: $RESULT_REF
+          ACTOR: $GITHUB_ACTOR
+          RUN_ID: $GITHUB_RUN_ID
+          CANONICAL_WRITE: DENIED
+          PROVIDER_EXECUTION: NOT_CLAIMED
+          SECRET_VALUES_EMITTED: NO
+          EOF
+          gh issue create --repo "$REPO" --title "[DEUS-RELAY][$PROVIDER][$DIRECTION] $TASK_ID" --body-file /tmp/relay.md
