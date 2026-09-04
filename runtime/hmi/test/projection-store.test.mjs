@@ -35,6 +35,13 @@ test('unknown tenant has no global or neighboring fallback', () => {
   assert.equal(store.get({ tenantId: 'tenant-b', projectionId: 'task-42', now: NOW }), null);
 });
 
+test('projection identifiers reject delimiter/control injection that could alias tenant keys', () => {
+  const store = new TenantProjectionStore();
+  assert.throws(() => store.put(record('tenant-a\u0000shadow', { status: 'bad' }), NOW), /unsupported characters/);
+  assert.throws(() => store.put(record('tenant-a', { status: 'bad' }, { projectionId: 'task-42\u0000shadow' }), NOW), /unsupported characters/);
+  assert.throws(() => store.get({ tenantId: 'tenant-a\u0000shadow', projectionId: 'task-42', now: NOW }), /unsupported characters/);
+});
+
 test('protected fields are stripped before projection storage', () => {
   const store = new TenantProjectionStore();
   store.put(record('tenant-a', {
@@ -49,6 +56,46 @@ test('protected fields are stripped before projection storage', () => {
   assert.equal(stored.value.workspace.systemPrompt, undefined);
   assert.equal(stored.value.workspace.routerPolicy, undefined);
   assert.equal(stored.value.core, undefined);
+});
+
+test('unknown projection schema versions fail closed', () => {
+  const store = new TenantProjectionStore();
+  assert.throws(
+    () => store.put(record('tenant-a', {}, { schemaVersion: 'hmi-projection/v0' }), NOW),
+    /unsupported schemaVersion/,
+  );
+});
+
+test('stale replay cannot replace a fresher projection', () => {
+  const store = new TenantProjectionStore();
+  store.put(record('tenant-a', { status: 'fresh' }, { createdAt: NOW, expiresAt: NOW + 120_000 }), NOW);
+
+  assert.throws(
+    () => store.put(record('tenant-a', { status: 'stale' }, { createdAt: NOW - 1_000, expiresAt: NOW + 120_000 }), NOW),
+    /stale projection replay rejected/,
+  );
+  assert.equal(store.get({ tenantId: 'tenant-a', projectionId: 'task-42', now: NOW }).value.status, 'fresh');
+});
+
+test('same-version retries are idempotent but conflicting same-version writes fail closed', () => {
+  const store = new TenantProjectionStore();
+  const candidate = record('tenant-a', { status: 'same' });
+  const first = store.put(candidate, NOW);
+  const retry = store.put(candidate, NOW);
+  assert.deepEqual(retry, first);
+
+  assert.throws(
+    () => store.put(record('tenant-a', { status: 'conflict' }), NOW),
+    /projection version conflict/,
+  );
+});
+
+test('implausible future creation timestamps fail closed', () => {
+  const store = new TenantProjectionStore({ maxFutureSkewMs: 30_000 });
+  assert.throws(
+    () => store.put(record('tenant-a', {}, { createdAt: NOW + 30_001, expiresAt: NOW + 90_000 }), NOW),
+    /createdAt exceeds allowed clock skew/,
+  );
 });
 
 test('expired projections fail closed and are purged', () => {
@@ -67,8 +114,10 @@ test('tenant purge cannot remove another tenant records', () => {
   assert.equal(store.get({ tenantId: 'tenant-b', projectionId: 'task-42', now: NOW }).value.status, 'B');
 });
 
-test('invalid classification and non-future expiry are rejected', () => {
+test('invalid classification and invalid temporal bounds are rejected', () => {
   const store = new TenantProjectionStore();
   assert.throws(() => store.put(record('tenant-a', {}, { dataClass: 'unknown' }), NOW));
   assert.throws(() => store.put(record('tenant-a', {}, { expiresAt: NOW }), NOW));
+  assert.throws(() => store.put(record('tenant-a', {}, { createdAt: undefined }), NOW));
+  assert.throws(() => store.put(record('tenant-a', {}, { createdAt: NOW + 1_000, expiresAt: NOW + 500 }), NOW));
 });
