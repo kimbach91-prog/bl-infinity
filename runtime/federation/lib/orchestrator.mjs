@@ -2,11 +2,12 @@ import { MemoryLeaseQueue } from './queue.mjs';
 import { BudgetGovernor } from './budget.mjs';
 import { MemoryResultCache } from './cache.mjs';
 import { ContributionLedger } from './ledger.mjs';
+import { ValuePolicyGovernor } from './value-policy.mjs';
 
 export class FederationOrchestrator {
-  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null, allowedStateDataClasses = null } = {}) {
+  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null, allowedStateDataClasses = null, valuePolicy = new ValuePolicyGovernor() } = {}) {
     if (!registry || !executor) throw new Error('registry and executor are required');
-    this.registry = registry; this.executor = executor; this.queue = queue; this.budget = budget; this.cache = cache; this.ledger = ledger; this.audit = audit;
+    this.registry = registry; this.executor = executor; this.queue = queue; this.budget = budget; this.cache = cache; this.ledger = ledger; this.audit = audit; this.valuePolicy = valuePolicy;
     this.allowedStateDataClasses = allowedStateDataClasses ? new Set(allowedStateDataClasses) : null;
   }
   async submit(task, options = {}) {
@@ -16,11 +17,31 @@ export class FederationOrchestrator {
       error.code = 'STATE_DATA_CLASS_REJECTED';
       throw error;
     }
+
+    const admission = this.valuePolicy?.admit?.(task) ?? { ok: true, legacy: true, priority: 0 };
+    if (!admission.ok) {
+      const error = new Error(`value policy rejected task: ${admission.reason ?? 'unknown'}`);
+      error.code = 'VALUE_POLICY_REJECTED';
+      error.nonRetryable = true;
+      error.admission = admission;
+      await this.audit?.append('task.admission-rejected', { taskId: task.id, reason: admission.reason ?? 'unknown' });
+      throw error;
+    }
+
     const effective = { ...options };
+    // Value-aware tasks get server-derived priority so submitters cannot self-assign a higher queue class.
+    if (!admission.legacy) effective.priority = admission.priority;
     if (task.sideEffect === true && !(task.idempotencyKey && task.retrySafe === true)) effective.maxAttempts = 1;
     const enqueued = await this.queue.enqueue(task, effective);
-    await this.audit?.append(enqueued.deduplicated ? 'queue.deduplicated' : 'queue.enqueued', { taskId: enqueued.job.id, idempotencyKey: enqueued.job.idempotencyKey });
-    return enqueued;
+    await this.audit?.append(enqueued.deduplicated ? 'queue.deduplicated' : 'queue.enqueued', {
+      taskId: enqueued.job.id,
+      idempotencyKey: enqueued.job.idempotencyKey,
+      workloadClass: admission.workloadClass ?? null,
+      utility: admission.utility ?? null,
+      commonBenefitRequested: admission.commonBenefitRequested ?? false,
+      derivedPriority: admission.legacy ? null : admission.priority,
+    });
+    return { ...enqueued, admission };
   }
   async runOnce({ coordinatorId = 'coordinator', leaseMs = 60_000, retryDelayMs = 1000 } = {}) {
     const capabilities = [...new Set(this.registry.list().flatMap((p) => p.capabilities ?? []))];
@@ -59,7 +80,7 @@ export class FederationOrchestrator {
       this.queue.list({ state: 'pending' }), this.queue.list({ state: 'running' }), this.queue.list({ state: 'succeeded' }), this.queue.list({ state: 'deadletter' }),
       this.budget.snapshot(), this.cache.stats(), this.ledger.summary(),
     ]);
-    return { queue: { pending: pending.length, running: running.length, succeeded: succeeded.length, deadletter: deadletter.length }, budget, cache, ledger, circuits: this.executor.circuit?.snapshot?.() ?? {}, allowedStateDataClasses: this.allowedStateDataClasses ? [...this.allowedStateDataClasses] : null };
+    return { queue: { pending: pending.length, running: running.length, succeeded: succeeded.length, deadletter: deadletter.length }, budget, cache, ledger, circuits: this.executor.circuit?.snapshot?.() ?? {}, allowedStateDataClasses: this.allowedStateDataClasses ? [...this.allowedStateDataClasses] : null, valuePolicy: this.valuePolicy ? { enabled: true } : { enabled: false } };
   }
 }
 function byteSize(value) { return Buffer.byteLength(typeof value === 'string' ? value : JSON.stringify(value ?? null)); }
