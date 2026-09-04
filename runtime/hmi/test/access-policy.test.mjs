@@ -91,6 +91,50 @@ test('protected core paths are denied even to a maximally scoped administrator',
   }
 });
 
+test('canonicalization prevents encoded or dot-segment traversal into protected core namespaces', () => {
+  const admin = session({
+    roles: ['root-admin'],
+    clearance: 'sovereign',
+    scopes: ['*', 'hmi:workspace:read', 'hmi:tasks:read', 'hmi:evidence:read', 'hmi:results:read', 'hmi:actions:invoke', 'hmi:audit:read'],
+  });
+
+  const attempts = [
+    '/workspace/../core',
+    '/workspace/%2e%2e/core',
+    '/workspace/%252e%252e/core',
+    '/workspace/%2E%2E/%63ore',
+    '/workspace/%2e%2e%2fcore',
+    '/workspace/%2e%2e/%70rompts/system',
+    '/workspace/%2e%2e/%65volution/state',
+    '/workspace/%2e%2e/%72outer/policy',
+    '/workspace/%2e%2e/%63anonical/raw',
+  ];
+
+  for (const path of attempts) {
+    assert.equal(authorize({ path, session: admin }).code, 'CORE_ISOLATION', path);
+  }
+});
+
+test('ambiguous encoded separators, malformed escapes and control characters fail closed', () => {
+  const invalid = [
+    '/workspace/%5ccore',
+    '/workspace\\..\\core',
+    '/workspace/%E0%A4%A',
+    '/workspace/%00core',
+    '/workspace/%2500core',
+  ];
+
+  for (const path of invalid) {
+    assert.equal(authorize({ path }).code, 'INVALID_SURFACE', path);
+  }
+});
+
+test('benign canonical HMI paths remain usable after normalization', () => {
+  assert.equal(authorize({ path: '/workspace/' }).ok, true);
+  assert.equal(authorize({ path: '/workspace//mission' }).ok, true);
+  assert.equal(authorize({ path: '/workspace/./mission?view=summary#top' }).ok, true);
+});
+
 test('unregistered surfaces fail closed', () => {
   assert.equal(authorize({ path: '/debug' }).code, 'SURFACE_NOT_EXPOSED');
   assert.equal(authorize({ path: '/api/raw-state' }).code, 'SURFACE_NOT_EXPOSED');
