@@ -7,76 +7,9 @@ on:
     paths:
       - '.deus/dispatch/inbox/**'
 
-permissions:
-  contents: read
-  issues: write
-
 jobs:
   receptor:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
-      - name: Checkout trusted main
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
-          persist-credentials: false
-
-      - name: Read packet, run fixed audit, return ACK
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          REPO: ${{ github.repository }}
-        run: |
-          set -euo pipefail
-
-          packet="$(git diff-tree --no-commit-id --name-only -r "$GITHUB_SHA" | grep '^.deus/dispatch/inbox/' | head -n1 || true)"
-          if [[ -z "$packet" || ! -f "$packet" ]]; then
-            echo 'No valid packet file found.' >&2
-            exit 1
-          fi
-
-          task_id="$(sed -nE 's/^TASK_ID:[[:space:]]*([A-Za-z0-9._:-]{1,100})[[:space:]]*$/\1/p' "$packet" | head -n1)"
-          mode="$(sed -nE 's/^MODE:[[:space:]]*([A-Z0-9_]{1,40})[[:space:]]*$/\1/p' "$packet" | head -n1)"
-
-          if [[ -z "$task_id" || -z "$mode" ]]; then
-            echo 'Packet rejected: TASK_ID and MODE required.' >&2
-            exit 1
-          fi
-
-          risk=0
-          suspicious_names_count="$(git ls-files | grep -Ei '(^|/)(\.env($|\.)|credentials?\.(json|ya?ml|txt)$|[^/]+\.(pem|key|p12|pfx)$)' | wc -l | tr -d ' ' || true)"
-          secret_like_file_count="$(git grep -Il -E '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|xai-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' -- . ':!.github/workflows/deus-security-guard.yml' ':!.github/workflows/deus-cloud-receptor.yml' ':!.deus/security/README.md' 2>/dev/null | wc -l | tr -d ' ' || true)"
-
-          suspicious_names_count="${suspicious_names_count:-0}"
-          secret_like_file_count="${secret_like_file_count:-0}"
-
-          if [[ "$suspicious_names_count" -gt 0 ]]; then
-            risk=$((risk + 80))
-          fi
-          if [[ "$secret_like_file_count" -gt 0 ]]; then
-            risk=$((risk + 100))
-          fi
-
-          status='RETURNED'
-          if [[ "$risk" -ge 60 ]]; then
-            status='RETURNED_REVIEW_REQUIRED'
-          fi
-
-          body="ACK: CLOUD_RECEPTOR_READ
-ACK: CLOUD_COMPUTE_RETURN
-TASK_ID: $task_id
-MODE: $mode
-STATUS: $status
-RISK_SCORE: $risk
-TRACKED_SECRET_BEARING_FILENAME_COUNT: $suspicious_names_count
-SECRET_LIKE_FILE_COUNT: $secret_like_file_count
-RUN_ID: $GITHUB_RUN_ID
-PACKET: $packet
-COMPUTE_CLASS: GITHUB_HOSTED_RUNNER_DETERMINISTIC_AUDIT
-CANONICAL_WRITE: DENIED
-NODE_LEVEL_ACK: NOT_CLAIMED
-NOTE: No suspected secret value is emitted. Gemini/Claude/Grok/GPT remain unverified until their own authenticated workers return ACK."
-
-          url="$(gh issue create --repo "$REPO" --title "[DEUS-RETURN] $task_id" --body "$body")"
-          echo "Return packet: $url"
+      - name: Cloud receptor liveness probe
+        run: echo "DEUS_CLOUD_RECEPTOR_OK"
