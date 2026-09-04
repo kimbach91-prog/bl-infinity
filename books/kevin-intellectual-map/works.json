@@ -1,0 +1,1002 @@
+[
+  {
+    "rank": 1,
+    "title": "Steps to an Ecology of Mind",
+    "author": "Gregory Bateson",
+    "year": "1972",
+    "score": 96,
+    "band": "Cực gần",
+    "tags": ["epistemology", "systems", "frame"],
+    "similarity": "Khác biệt, logical levels, feedback, learning-to-learn và observer/communication tạo một láng giềng rất gần với tư duy frame + mechanism."
+  },
+  {
+    "rank": 2,
+    "title": "Frame Reflection",
+    "author": "Donald Schön & Martin Rein",
+    "year": "1994",
+    "score": 95,
+    "band": "Cực gần",
+    "tags": ["frame", "epistemology", "policy"],
+    "similarity": "Vấn đề khó có thể đổi bản chất khi đổi frame định nghĩa vấn đề; gần trực tiếp với thao tác reframing."
+  },
+  {
+    "rank": 3,
+    "title": "Destruction and Creation",
+    "author": "John R. Boyd",
+    "year": "1976",
+    "score": 94,
+    "band": "Cực gần",
+    "tags": ["mechanism", "frame", "systems"],
+    "similarity": "Phá mô hình cũ, phân rã rồi tái tổ hợp để tạo orientation mới thích ứng với thực tại."
+  },
+  {
+    "rank": 4,
+    "title": "Science and Sanity",
+    "author": "Alfred Korzybski",
+    "year": "1933",
+    "score": 93,
+    "band": "Cực gần",
+    "tags": ["epistemology", "frame", "language"],
+    "similarity": "Map không phải territory; abstraction và level-confusion rất gần Reference Frame Gap."
+  },
+  {
+    "rank": 5,
+    "title": "A Data/Frame Theory of Sensemaking",
+    "author": "Gary Klein, Brian Moon & Robert R. Hoffman tradition",
+    "year": "2006",
+    "score": 92,
+    "band": "Cực gần",
+    "tags": ["frame", "sensemaking", "mechanism"],
+    "similarity": "Dữ liệu được hiểu qua frame; dữ kiện mới có thể elaborate, question hoặc replace frame."
+  },
+  {
+    "rank": 6,
+    "title": "The Structure of Scientific Revolutions",
+    "author": "Thomas S. Kuhn",
+    "year": "1962",
+    "score": 91,
+    "band": "Cực gần",
+    "tags": ["epistemology", "frame", "science"],
+    "similarity": "Paradigm quy định câu hỏi, anomaly và khả năng nhìn thấy; đổi paradigm là đổi không gian hiểu."
+  },
+  {
+    "rank": 7,
+    "title": "Frame Analysis",
+    "author": "Erving Goffman",
+    "year": "1974",
+    "score": 90,
+    "band": "Cực gần",
+    "tags": ["frame", "social", "epistemology"],
+    "similarity": "Phân tích schema diễn giải để trả lời 'chuyện gì đang xảy ra ở đây?' và cách reality được tổ chức qua frame."
+  },
+  {
+    "rank": 8,
+    "title": "A Framework for Representing Knowledge",
+    "author": "Marvin Minsky",
+    "year": "1974",
+    "score": 89,
+    "band": "Cực gần",
+    "tags": ["ai", "frame", "knowledge"],
+    "similarity": "Frame như cấu trúc tri thức có slots, expectations và khả năng chuyển sang frame thay thế."
+  },
+  {
+    "rank": 9,
+    "title": "Ways of Worldmaking",
+    "author": "Nelson Goodman",
+    "year": "1978",
+    "score": 88,
+    "band": "Cực gần",
+    "tags": ["epistemology", "frame", "decomposition"],
+    "similarity": "Composition, decomposition, weighting, ordering, deletion, supplementation và deformation như thao tác tạo thế giới mô tả."
+  },
+  {
+    "rank": 10,
+    "title": "The Reflective Practitioner",
+    "author": "Donald Schön",
+    "year": "1983",
+    "score": 87,
+    "band": "Cực gần",
+    "tags": ["frame", "reflection", "practice"],
+    "similarity": "Problem setting, naming, framing và frame experiments rất gần cách biến hiện tượng mơ hồ thành cơ chế có thể thao tác."
+  },
+  {
+    "rank": 11,
+    "title": "Metaphors We Live By",
+    "author": "George Lakoff & Mark Johnson",
+    "year": "1980",
+    "score": 86,
+    "band": "Gần",
+    "tags": ["frame", "analogy", "language"],
+    "similarity": "Mapping cấu trúc từ source domain sang target domain làm thay đổi suy luận và cách nhìn."
+  },
+  {
+    "rank": 12,
+    "title": "Structure-Mapping: A Theoretical Framework for Analogy",
+    "author": "Dedre Gentner",
+    "year": "1983",
+    "score": 86,
+    "band": "Gần",
+    "tags": ["analogy", "mechanism", "frame"],
+    "similarity": "Giữ quan hệ cấu trúc qua hai miền thay vì chỉ so bề mặt; nền tảng rất mạnh cho cross-frame transfer."
+  },
+  {
+    "rank": 13,
+    "title": "Observing Systems",
+    "author": "Heinz von Foerster",
+    "year": "1981",
+    "score": 85,
+    "band": "Gần",
+    "tags": ["cybernetics", "observer", "epistemology"],
+    "similarity": "Second-order cybernetics đưa người quan sát vào chính hệ được mô hình hóa."
+  },
+  {
+    "rank": 14,
+    "title": "Genetic Epistemology",
+    "author": "Jean Piaget",
+    "year": "1970",
+    "score": 85,
+    "band": "Gần",
+    "tags": ["epistemology", "learning", "structure"],
+    "similarity": "Cấu trúc nhận thức biến đổi bằng assimilation và accommodation thay vì chỉ tích lũy dữ kiện."
+  },
+  {
+    "rank": 15,
+    "title": "Vision",
+    "author": "David Marr",
+    "year": "1982",
+    "score": 84,
+    "band": "Gần",
+    "tags": ["levels", "mechanism", "cognition"],
+    "similarity": "Ba tầng computational, algorithmic, implementation buộc người nghiên cứu đổi level trước khi nói cùng một cơ chế."
+  },
+  {
+    "rank": 16,
+    "title": "Design for a Brain",
+    "author": "W. Ross Ashby",
+    "year": "1952",
+    "score": 84,
+    "band": "Gần",
+    "tags": ["cybernetics", "adaptation", "systems"],
+    "similarity": "Constraint, state space, stability và adaptive regulation gần với bounded-system reasoning."
+  },
+  {
+    "rank": 17,
+    "title": "Sensemaking in Organizations",
+    "author": "Karl E. Weick",
+    "year": "1995",
+    "score": 83,
+    "band": "Gần",
+    "tags": ["sensemaking", "frame", "systems"],
+    "similarity": "Cue + frame + enactment: chủ thể vừa diễn giải vừa tham gia tạo môi trường mình đang hiểu."
+  },
+  {
+    "rank": 18,
+    "title": "Organizational Learning II / Double-Loop Learning",
+    "author": "Chris Argyris & Donald Schön",
+    "year": "1996",
+    "score": 83,
+    "band": "Gần",
+    "tags": ["learning", "epistemology", "frame"],
+    "similarity": "Không chỉ sửa hành động mà sửa governing assumptions ở tầng trên."
+  },
+  {
+    "rank": 19,
+    "title": "The Sciences of the Artificial",
+    "author": "Herbert A. Simon",
+    "year": "1969",
+    "score": 82,
+    "band": "Gần",
+    "tags": ["design", "bounded-rationality", "decomposition"],
+    "similarity": "Bounded rationality, hierarchy, near-decomposability, problem space và design science giao thoa mạnh với Kevin."
+  },
+  {
+    "rank": 20,
+    "title": "The Tacit Dimension",
+    "author": "Michael Polanyi",
+    "year": "1966",
+    "score": 82,
+    "band": "Gần",
+    "tags": ["epistemology", "tacit", "knowledge"],
+    "similarity": "Phân biệt focal và subsidiary awareness; tri thức vận hành vượt quá phần có thể nói tường minh."
+  },
+  {
+    "rank": 21,
+    "title": "Chain-of-Thought Prompting Elicits Reasoning in Large Language Models",
+    "author": "Jason Wei et al.",
+    "year": "2022",
+    "score": 81,
+    "band": "Gần",
+    "tags": ["ai", "reasoning", "context"],
+    "similarity": "Intermediate text làm thay đổi trajectory suy luận; nền so sánh bắt buộc cho context-steering claims."
+  },
+  {
+    "rank": 22,
+    "title": "Least-to-Most Prompting Enables Complex Reasoning in Large Language Models",
+    "author": "Denny Zhou et al.",
+    "year": "2022",
+    "score": 81,
+    "band": "Gần",
+    "tags": ["ai", "reasoning", "decomposition"],
+    "similarity": "Phân rã bài toán rồi giải tuần tự, rất gần mechanism decomposition + staged context."
+  },
+  {
+    "rank": 23,
+    "title": "ReAct: Synergizing Reasoning and Acting in Language Models",
+    "author": "Shunyu Yao et al.",
+    "year": "2023",
+    "score": 80,
+    "band": "Gần",
+    "tags": ["ai", "reasoning", "feedback"],
+    "similarity": "Reasoning ↔ action ↔ observation loop cho thấy context được cập nhật qua tương tác."
+  },
+  {
+    "rank": 24,
+    "title": "Tree of Thoughts",
+    "author": "Shunyu Yao et al.",
+    "year": "2023",
+    "score": 80,
+    "band": "Gần",
+    "tags": ["ai", "reasoning", "search"],
+    "similarity": "Branching reasoning, evaluation và backtracking tạo không gian frame/trajectory thay vì một chuỗi duy nhất."
+  },
+  {
+    "rank": 25,
+    "title": "Self-Consistency Improves Chain of Thought Reasoning in Language Models",
+    "author": "Xuezhi Wang et al.",
+    "year": "2023",
+    "score": 79,
+    "band": "Gần",
+    "tags": ["ai", "reasoning", "selection"],
+    "similarity": "Sampling nhiều trajectory rồi chọn kết quả nhất quán là baseline cho các claim về cấu trúc suy luận."
+  },
+  {
+    "rank": 26,
+    "title": "Reflexion: Language Agents with Verbal Reinforcement Learning",
+    "author": "Noah Shinn et al.",
+    "year": "2023",
+    "score": 78,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "self-correction", "memory"],
+    "similarity": "Phản hồi được lưu thành verbal memory để thay đổi lần giải sau; gần CRIO ở vòng sửa nhưng khác cơ chế."
+  },
+  {
+    "rank": 27,
+    "title": "Self-Refine: Iterative Refinement with Self-Feedback",
+    "author": "Aman Madaan et al.",
+    "year": "2023",
+    "score": 78,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "self-correction", "reasoning"],
+    "similarity": "Generate → critique → refine là baseline trực tiếp cho recovery/self-correction."
+  },
+  {
+    "rank": 28,
+    "title": "STaR: Bootstrapping Reasoning With Reasoning",
+    "author": "Eric Zelikman et al.",
+    "year": "2022",
+    "score": 77,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "reasoning", "learning"],
+    "similarity": "Reasoning traces dùng để cải thiện chính khả năng reasoning của model."
+  },
+  {
+    "rank": 29,
+    "title": "Let's Verify Step by Step",
+    "author": "Hunter Lightman et al.",
+    "year": "2023",
+    "score": 77,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "verification", "reasoning"],
+    "similarity": "Process supervision đánh giá bước trung gian thay vì chỉ outcome; rất đáng đặt cạnh CRIO."
+  },
+  {
+    "rank": 30,
+    "title": "MemGPT: Towards LLMs as Operating Systems",
+    "author": "Charles Packer et al.",
+    "year": "2023",
+    "score": 76,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "memory", "systems"],
+    "similarity": "Quản trị hierarchy của context và external memory như một OS, giao thoa Memory-Gravity."
+  },
+  {
+    "rank": 31,
+    "title": "Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks",
+    "author": "Patrick Lewis et al.",
+    "year": "2020",
+    "score": 76,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "memory", "retrieval"],
+    "similarity": "External retrieval làm thay đổi context inference; baseline nền cho knowledge/memory maps."
+  },
+  {
+    "rank": 32,
+    "title": "Improving Language Models by Retrieving from Trillions of Tokens (RETRO)",
+    "author": "Sebastian Borgeaud et al.",
+    "year": "2022",
+    "score": 75,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "memory", "retrieval"],
+    "similarity": "Retrieval-conditioned generation ở quy mô lớn cho thấy memory outside weights."
+  },
+  {
+    "rank": 33,
+    "title": "Transformer-XL: Attentive Language Models Beyond a Fixed-Length Context",
+    "author": "Zihang Dai et al.",
+    "year": "2019",
+    "score": 75,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "memory", "context"],
+    "similarity": "Segment recurrence và long context là nền kỹ thuật cho persistent context."
+  },
+  {
+    "rank": 34,
+    "title": "Generative Agents: Interactive Simulacra of Human Behavior",
+    "author": "Joon Sung Park et al.",
+    "year": "2023",
+    "score": 74,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "memory", "reflection"],
+    "similarity": "Memory stream, reflection và planning tạo một architecture rõ để so long-horizon cognition."
+  },
+  {
+    "rank": 35,
+    "title": "A Path Towards Autonomous Machine Intelligence",
+    "author": "Yann LeCun",
+    "year": "2022",
+    "score": 74,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "world-model", "planning"],
+    "similarity": "World models, latent state và planning mở một hướng khác cho cognition architecture."
+  },
+  {
+    "rank": 36,
+    "title": "Building Machines That Learn and Think Like People",
+    "author": "Brenden Lake et al.",
+    "year": "2017",
+    "score": 73,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "cognition", "compositionality"],
+    "similarity": "Compositionality, causality, intuitive physics/psychology và learning efficiency."
+  },
+  {
+    "rank": 37,
+    "title": "The Free-Energy Principle: A Unified Brain Theory?",
+    "author": "Karl Friston",
+    "year": "2010",
+    "score": 73,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "prediction", "systems"],
+    "similarity": "Internal model, prediction error và active regulation là một cực đối chiếu lớn cho cognition-as-inference."
+  },
+  {
+    "rank": 38,
+    "title": "Surfing Uncertainty",
+    "author": "Andy Clark",
+    "year": "2016",
+    "score": 72,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "prediction", "epistemology"],
+    "similarity": "Predictive processing như kiến trúc nhận thức nhiều tầng dựa trên prediction-error."
+  },
+  {
+    "rank": 39,
+    "title": "Predictive Coding in the Visual Cortex",
+    "author": "Rajesh Rao & Dana Ballard",
+    "year": "1999",
+    "score": 72,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "prediction", "mechanism"],
+    "similarity": "Top-down prediction và bottom-up error tạo loop model-update rõ ràng."
+  },
+  {
+    "rank": 40,
+    "title": "Active Inference",
+    "author": "Thomas Parr, Giovanni Pezzulo & Karl Friston",
+    "year": "2022",
+    "score": 71,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "action", "inference"],
+    "similarity": "Perception và action cùng nằm trong inference loop, rất hữu ích để kiểm tra observer-action coupling."
+  },
+  {
+    "rank": 41,
+    "title": "Causality",
+    "author": "Judea Pearl",
+    "year": "2000",
+    "score": 71,
+    "band": "Giao thoa mạnh",
+    "tags": ["causality", "mechanism", "epistemology"],
+    "similarity": "Intervention và counterfactual buộc 'mechanism' phải vượt khỏi tương quan và narrative."
+  },
+  {
+    "rank": 42,
+    "title": "Probabilistic Reasoning in Intelligent Systems",
+    "author": "Judea Pearl",
+    "year": "1988",
+    "score": 70,
+    "band": "Giao thoa mạnh",
+    "tags": ["ai", "causality", "belief"],
+    "similarity": "Structured uncertainty và graphical model là chuẩn để formalize belief dependencies."
+  },
+  {
+    "rank": 43,
+    "title": "Causation, Prediction, and Search",
+    "author": "Peter Spirtes, Clark Glymour & Richard Scheines",
+    "year": "1993",
+    "score": 70,
+    "band": "Giao thoa mạnh",
+    "tags": ["causality", "discovery", "mechanism"],
+    "similarity": "Causal discovery từ constraints cung cấp đối chiếu cho claim 'tìm cơ chế mới'."
+  },
+  {
+    "rank": 44,
+    "title": "Human Problem Solving",
+    "author": "Allen Newell & Herbert Simon",
+    "year": "1972",
+    "score": 69,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "search", "problem-space"],
+    "similarity": "Problem spaces, operators và search là tiền thân quan trọng của formal reasoning architectures."
+  },
+  {
+    "rank": 45,
+    "title": "Unified Theories of Cognition",
+    "author": "Allen Newell",
+    "year": "1990",
+    "score": 69,
+    "band": "Giao thoa mạnh",
+    "tags": ["cognition", "architecture", "levels"],
+    "similarity": "Một kiến trúc chung nối nhiều nhiệm vụ nhận thức; đáng so với tham vọng cross-domain architecture."
+  },
+  {
+    "rank": 46,
+    "title": "Surfaces and Essences",
+    "author": "Douglas Hofstadter & Emmanuel Sander",
+    "year": "2013",
+    "score": 68,
+    "band": "Giao thoa mạnh",
+    "tags": ["analogy", "cognition", "frame"],
+    "similarity": "Analogy được xem như lõi của categorization và concept formation."
+  },
+  {
+    "rank": 47,
+    "title": "Fluid Concepts and Creative Analogies",
+    "author": "Douglas Hofstadter et al.",
+    "year": "1995",
+    "score": 68,
+    "band": "Giao thoa mạnh",
+    "tags": ["analogy", "representation", "creativity"],
+    "similarity": "Representation linh hoạt, slippage và analogy là mô hình mạnh cho frame movement."
+  },
+  {
+    "rank": 48,
+    "title": "Proofs and Refutations",
+    "author": "Imre Lakatos",
+    "year": "1976",
+    "score": 67,
+    "band": "Giao thoa mạnh",
+    "tags": ["epistemology", "mathematics", "revision"],
+    "similarity": "Conjecture → counterexample → concept repair; rất hợp với falsification-oriented Kevin."
+  },
+  {
+    "rank": 49,
+    "title": "Patterns of Discovery",
+    "author": "Norwood Russell Hanson",
+    "year": "1958",
+    "score": 67,
+    "band": "Giao thoa mạnh",
+    "tags": ["epistemology", "observation", "frame"],
+    "similarity": "Observation is theory-laden: cái được thấy phụ thuộc cấu trúc khái niệm."
+  },
+  {
+    "rank": 50,
+    "title": "The Logic of Scientific Discovery",
+    "author": "Karl Popper",
+    "year": "1959",
+    "score": 66,
+    "band": "Giao thoa mạnh",
+    "tags": ["epistemology", "falsification", "science"],
+    "similarity": "Falsifier và testability là chuẩn giúp Kevin chuyển broad claim thành scientific claim."
+  },
+  {
+    "rank": 51,
+    "title": "Against Method",
+    "author": "Paul Feyerabend",
+    "year": "1975",
+    "score": 65,
+    "band": "Giao thoa nền tảng",
+    "tags": ["epistemology", "method", "pluralism"],
+    "similarity": "Phê phán method cố định; hữu ích như đối trọng với framework hóa quá cứng."
+  },
+  {
+    "rank": 52,
+    "title": "Two Dogmas of Empiricism",
+    "author": "W. V. O. Quine",
+    "year": "1951",
+    "score": 65,
+    "band": "Giao thoa nền tảng",
+    "tags": ["epistemology", "holism", "belief"],
+    "similarity": "Web of belief cho thấy một claim hiếm khi đứng độc lập khỏi mạng assumption."
+  },
+  {
+    "rank": 53,
+    "title": "On the Very Idea of a Conceptual Scheme",
+    "author": "Donald Davidson",
+    "year": "1974",
+    "score": 64,
+    "band": "Giao thoa nền tảng",
+    "tags": ["epistemology", "frame", "language"],
+    "similarity": "Phê phán scheme/content dualism; là counterargument quan trọng cho mọi lý thuyết frame."
+  },
+  {
+    "rank": 54,
+    "title": "Philosophical Investigations",
+    "author": "Ludwig Wittgenstein",
+    "year": "1953",
+    "score": 64,
+    "band": "Giao thoa nền tảng",
+    "tags": ["language", "meaning", "frame"],
+    "similarity": "Language games và use-context đặt boundary lên tham vọng formalize meaning."
+  },
+  {
+    "rank": 55,
+    "title": "Human Understanding",
+    "author": "Stephen Toulmin",
+    "year": "1972",
+    "score": 63,
+    "band": "Giao thoa nền tảng",
+    "tags": ["epistemology", "conceptual-change", "science"],
+    "similarity": "Conceptual populations tiến hóa qua selection trong cộng đồng tri thức."
+  },
+  {
+    "rank": 56,
+    "title": "The Psychology of Personal Constructs",
+    "author": "George Kelly",
+    "year": "1955",
+    "score": 63,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "constructs", "frame"],
+    "similarity": "Con người dùng construct systems và có thể tái cấu trúc để dự đoán tốt hơn."
+  },
+  {
+    "rank": 57,
+    "title": "Cybernetics",
+    "author": "Norbert Wiener",
+    "year": "1948",
+    "score": 62,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cybernetics", "feedback", "systems"],
+    "similarity": "Feedback, control và communication là nền hệ thống học bắt buộc."
+  },
+  {
+    "rank": 58,
+    "title": "Brain of the Firm",
+    "author": "Stafford Beer",
+    "year": "1972",
+    "score": 62,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cybernetics", "organization", "viability"],
+    "similarity": "Recursive viable systems và regulatory variety mở góc nhìn organization-as-cognition."
+  },
+  {
+    "rank": 59,
+    "title": "Autopoiesis and Cognition",
+    "author": "Humberto Maturana & Francisco Varela",
+    "year": "1980",
+    "score": 61,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "systems", "self-reference"],
+    "similarity": "Cognition gắn với tự tổ chức và boundary của living system."
+  },
+  {
+    "rank": 60,
+    "title": "Systems Thinking, Systems Practice",
+    "author": "Peter Checkland",
+    "year": "1981",
+    "score": 61,
+    "band": "Giao thoa nền tảng",
+    "tags": ["systems", "frame", "method"],
+    "similarity": "Soft Systems Methodology làm explicit nhiều worldview trong problem situation."
+  },
+  {
+    "rank": 61,
+    "title": "The Systems Approach",
+    "author": "C. West Churchman",
+    "year": "1968",
+    "score": 60,
+    "band": "Giao thoa nền tảng",
+    "tags": ["systems", "boundary", "ethics"],
+    "similarity": "Boundary của problem definition và stakeholder effects là phần rất gần frame ethics."
+  },
+  {
+    "rank": 62,
+    "title": "Thinking in Systems",
+    "author": "Donella Meadows",
+    "year": "2008",
+    "score": 60,
+    "band": "Giao thoa nền tảng",
+    "tags": ["systems", "feedback", "leverage"],
+    "similarity": "Stocks, flows, feedback và leverage points giúp chuyển decomposition thành intervention map."
+  },
+  {
+    "rank": 63,
+    "title": "The Fifth Discipline",
+    "author": "Peter Senge",
+    "year": "1990",
+    "score": 59,
+    "band": "Giao thoa nền tảng",
+    "tags": ["systems", "learning", "mental-models"],
+    "similarity": "Mental models và learning organization nối systems với frame reflection."
+  },
+  {
+    "rank": 64,
+    "title": "Hidden Order",
+    "author": "John H. Holland",
+    "year": "1995",
+    "score": 59,
+    "band": "Giao thoa nền tảng",
+    "tags": ["complexity", "adaptation", "systems"],
+    "similarity": "Complex adaptive systems, rules và emergence."
+  },
+  {
+    "rank": 65,
+    "title": "The Origins of Order",
+    "author": "Stuart Kauffman",
+    "year": "1993",
+    "score": 58,
+    "band": "Giao thoa nền tảng",
+    "tags": ["complexity", "self-organization", "evolution"],
+    "similarity": "Self-organization và adaptive landscapes mở nền cho emergence without central design."
+  },
+  {
+    "rank": 66,
+    "title": "Order Out of Chaos",
+    "author": "Ilya Prigogine & Isabelle Stengers",
+    "year": "1984",
+    "score": 58,
+    "band": "Giao thoa nền tảng",
+    "tags": ["complexity", "thermodynamics", "emergence"],
+    "similarity": "Far-from-equilibrium structure formation là counterpoint vật lý cho system-order metaphors."
+  },
+  {
+    "rank": 67,
+    "title": "Dynamics of Complex Systems",
+    "author": "Yaneer Bar-Yam",
+    "year": "1997",
+    "score": 57,
+    "band": "Giao thoa nền tảng",
+    "tags": ["complexity", "multiscale", "systems"],
+    "similarity": "Multiscale organization và complexity profiles rất phù hợp với cross-level analysis."
+  },
+  {
+    "rank": 68,
+    "title": "Social Systems",
+    "author": "Niklas Luhmann",
+    "year": "1995",
+    "score": 57,
+    "band": "Giao thoa nền tảng",
+    "tags": ["systems", "self-reference", "communication"],
+    "similarity": "Communication systems tự tham chiếu, operational closure và observation."
+  },
+  {
+    "rank": 69,
+    "title": "Behavior, Purpose and Teleology",
+    "author": "Arturo Rosenblueth, Norbert Wiener & Julian Bigelow",
+    "year": "1943",
+    "score": 56,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cybernetics", "goal", "mechanism"],
+    "similarity": "Goal-directed behavior được tái mô tả cơ giới bằng feedback."
+  },
+  {
+    "rank": 70,
+    "title": "The Embodied Mind",
+    "author": "Francisco Varela, Evan Thompson & Eleanor Rosch",
+    "year": "1991",
+    "score": 56,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "embodiment", "enaction"],
+    "similarity": "Cognition không chỉ representation nội bộ mà là enacted relation với world."
+  },
+  {
+    "rank": 71,
+    "title": "Cognition in the Wild",
+    "author": "Edwin Hutchins",
+    "year": "1995",
+    "score": 55,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "distributed", "systems"],
+    "similarity": "Cognition được phân phối qua người, artifact và môi trường."
+  },
+  {
+    "rank": 72,
+    "title": "Things That Make Us Smart",
+    "author": "Donald Norman",
+    "year": "1993",
+    "score": 55,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "artifacts", "design"],
+    "similarity": "External representations và cognitive artifacts thay đổi khả năng suy nghĩ."
+  },
+  {
+    "rank": 73,
+    "title": "The Extended Mind",
+    "author": "Andy Clark & David Chalmers",
+    "year": "1998",
+    "score": 54,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "extended", "memory"],
+    "similarity": "Boundary của cognitive system có thể đi ra ngoài hộp sọ."
+  },
+  {
+    "rank": 74,
+    "title": "Perceptual Symbol Systems",
+    "author": "Lawrence Barsalou",
+    "year": "1999",
+    "score": 54,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "representation", "grounding"],
+    "similarity": "Representation grounded trong perceptual systems là đối trọng với purely symbolic geometry."
+  },
+  {
+    "rank": 75,
+    "title": "Acts of Meaning",
+    "author": "Jerome Bruner",
+    "year": "1990",
+    "score": 53,
+    "band": "Giao thoa nền tảng",
+    "tags": ["cognition", "meaning", "culture"],
+    "similarity": "Meaning-making đặt cognition vào narrative và culture."
+  },
+  {
+    "rank": 76,
+    "title": "The Framing of Decisions and the Psychology of Choice",
+    "author": "Amos Tversky & Daniel Kahneman",
+    "year": "1981",
+    "score": 52,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["decision", "frame", "cognition"],
+    "similarity": "Cùng outcome structure nhưng khác frame có thể đổi quyết định."
+  },
+  {
+    "rank": 77,
+    "title": "Thinking, Fast and Slow",
+    "author": "Daniel Kahneman",
+    "year": "2011",
+    "score": 52,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["cognition", "bias", "decision"],
+    "similarity": "Hai mode heuristic/deliberative và bias tạo lớp practical epistemology."
+  },
+  {
+    "rank": 78,
+    "title": "Adaptive Thinking",
+    "author": "Gerd Gigerenzer",
+    "year": "2000",
+    "score": 51,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["cognition", "heuristics", "bounded-rationality"],
+    "similarity": "Ecological rationality: heuristic tốt hay xấu phụ thuộc environment."
+  },
+  {
+    "rank": 79,
+    "title": "Sources of Power",
+    "author": "Gary Klein",
+    "year": "1998",
+    "score": 51,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["decision", "sensemaking", "expertise"],
+    "similarity": "Recognition-primed decision và naturalistic expertise giúp nối frame với hành động."
+  },
+  {
+    "rank": 80,
+    "title": "A Leader's Framework for Decision Making / Cynefin",
+    "author": "David Snowden & Mary Boone",
+    "year": "2007",
+    "score": 50,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["decision", "systems", "complexity"],
+    "similarity": "Loại context khác nhau cần mode reasoning khác nhau; không dùng một method cho mọi miền."
+  },
+  {
+    "rank": 81,
+    "title": "The Knowledge-Creating Company",
+    "author": "Ikujiro Nonaka & Hirotaka Takeuchi",
+    "year": "1995",
+    "score": 50,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["knowledge", "tacit", "organization"],
+    "similarity": "SECI cycle formalize tacit ↔ explicit knowledge transformation."
+  },
+  {
+    "rank": 82,
+    "title": "The Archaeology of Knowledge",
+    "author": "Michel Foucault",
+    "year": "1972",
+    "score": 49,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["epistemology", "discourse", "boundary"],
+    "similarity": "Các quy tắc lịch sử định nghĩa điều gì có thể được nói và coi là knowledge."
+  },
+  {
+    "rank": 83,
+    "title": "The Order of Things",
+    "author": "Michel Foucault",
+    "year": "1970",
+    "score": 49,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["epistemology", "history", "frame"],
+    "similarity": "Episteme lịch sử thay đổi cấu trúc khả tri của một thời đại."
+  },
+  {
+    "rank": 84,
+    "title": "Of Grammatology",
+    "author": "Jacques Derrida",
+    "year": "1976",
+    "score": 48,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["deconstruction", "language", "meaning"],
+    "similarity": "Giải cấu binary/hierarchy và instability của signification; gần ở thao tác nhưng khác mục tiêu formalization."
+  },
+  {
+    "rank": 85,
+    "title": "Truth and Method",
+    "author": "Hans-Georg Gadamer",
+    "year": "1975",
+    "score": 48,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["hermeneutics", "horizon", "interpretation"],
+    "similarity": "Fusion of horizons cho thấy hiểu là tương tác giữa lịch sử người đọc và đối tượng."
+  },
+  {
+    "rank": 86,
+    "title": "Interpretation Theory",
+    "author": "Paul Ricoeur",
+    "year": "1976",
+    "score": 47,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["hermeneutics", "meaning", "interpretation"],
+    "similarity": "Khoảng cách giữa text, author, reader và world mở nhiều tầng interpretation."
+  },
+  {
+    "rank": 87,
+    "title": "Being and Time",
+    "author": "Martin Heidegger",
+    "year": "1927",
+    "score": 47,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["ontology", "disclosure", "time"],
+    "similarity": "Mode of disclosure và being-in-the-world là nền ontology sâu nhưng xa hơn hướng computational."
+  },
+  {
+    "rank": 88,
+    "title": "Process and Reality",
+    "author": "Alfred North Whitehead",
+    "year": "1929",
+    "score": 46,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["ontology", "process", "relation"],
+    "similarity": "Reality như process/relations thay vì vật thể tĩnh; hữu ích cho dynamic ontology."
+  },
+  {
+    "rank": 89,
+    "title": "A Thousand Plateaus",
+    "author": "Gilles Deleuze & Félix Guattari",
+    "year": "1987",
+    "score": 46,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["ontology", "network", "assemblage"],
+    "similarity": "Rhizome, assemblage và multiplicity là alternative map-form không cây."
+  },
+  {
+    "rank": 90,
+    "title": "The Philosophy of Information",
+    "author": "Luciano Floridi",
+    "year": "2011",
+    "score": 45,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["information", "ontology", "epistemology"],
+    "similarity": "Information ontology và infosphere gần với các tham vọng system-level ontology."
+  },
+  {
+    "rank": 91,
+    "title": "Minds, Brains, and Programs",
+    "author": "John Searle",
+    "year": "1980",
+    "score": 45,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["ai", "understanding", "semantics"],
+    "similarity": "Phê phán việc đồng nhất symbol manipulation với understanding; đối trọng cho AI cognition claims."
+  },
+  {
+    "rank": 92,
+    "title": "The Phenomenology of Internal Time-Consciousness",
+    "author": "Edmund Husserl",
+    "year": "1928",
+    "score": 44,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["time", "phenomenology", "cognition"],
+    "similarity": "Retention-protention và cấu trúc thời gian chủ quan; xa hơn nhưng hữu ích cho temporal cognition."
+  },
+  {
+    "rank": 93,
+    "title": "Time and Free Will",
+    "author": "Henri Bergson",
+    "year": "1889",
+    "score": 44,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["time", "phenomenology", "ontology"],
+    "similarity": "Duration sống khác metric time; đối trọng cho mọi formal cycle/time model."
+  },
+  {
+    "rank": 94,
+    "title": "I Ching / Zhouyi",
+    "author": "Truyền thống Trung Hoa",
+    "year": "cổ đại",
+    "score": 43,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["cycles", "change", "worldview"],
+    "similarity": "Trạng thái, biến đổi, polarity và cycle; phù hợp với worldview nhưng nên tách khỏi empirical science."
+  },
+  {
+    "rank": 95,
+    "title": "Mūlamadhyamakakārikā",
+    "author": "Nāgārjuna",
+    "year": "thế kỷ II–III",
+    "score": 43,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["ontology", "relation", "deconstruction"],
+    "similarity": "Phá substantialism bằng dependent origination; gần ở dissolution of fixed ontology nhưng rất khác science program."
+  },
+  {
+    "rank": 96,
+    "title": "Zhuangzi",
+    "author": "Truyền thống Trang Tử",
+    "year": "cổ đại",
+    "score": 42,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["perspective", "relativity", "frame"],
+    "similarity": "Perspective switching và giới hạn phân biệt cố định."
+  },
+  {
+    "rank": 97,
+    "title": "Muqaddimah",
+    "author": "Ibn Khaldun",
+    "year": "1377",
+    "score": 42,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["history", "systems", "cycles"],
+    "similarity": "Macro-causal analysis và historical cycles của group solidarity, state formation và decline."
+  },
+  {
+    "rank": 98,
+    "title": "Social and Cultural Dynamics",
+    "author": "Pitirim Sorokin",
+    "year": "1937–1941",
+    "score": 41,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["history", "cycles", "culture"],
+    "similarity": "Large-scale cultural phase transitions; hữu ích như precedent cho cyclical worldview."
+  },
+  {
+    "rank": 99,
+    "title": "Secular Cycles",
+    "author": "Peter Turchin & Sergey Nefedov",
+    "year": "2009",
+    "score": 41,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["history", "cycles", "modeling"],
+    "similarity": "Demographic-structural cycles được formalize và so dữ liệu; benchmark tốt nếu muốn biến cycle intuition thành science."
+  },
+  {
+    "rank": 100,
+    "title": "The Decline of the West",
+    "author": "Oswald Spengler",
+    "year": "1918–1922",
+    "score": 40,
+    "band": "Xa hơn nhưng hữu ích",
+    "tags": ["history", "cycles", "worldview"],
+    "similarity": "Macro-cyclical morphology: tương đồng worldview nhưng xa nhất về chuẩn thực nghiệm cần cho Kevin hiện nay."
+  }
+]
