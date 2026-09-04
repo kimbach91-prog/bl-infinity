@@ -6,7 +6,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        Kênh này dành cho Kevin T.N hoặc người có bằng chứng trực tiếp liên quan đến một claim trong công trình. Không đăng credential, dữ liệu sức khỏe, thông tin riêng tư hoặc dữ liệu nhạy cảm vào issue công khai.
+        Kênh này dành cho Kevin T.N hoặc người có bằng chứng trực tiếp liên quan đến một claim trong công trình. Đây cũng là kênh của Tiến hóa Lưỡng Cực: Kevin có thể yêu cầu Bách Lâm sửa fact, attribution, model hoặc phương pháp khi evidence tốt hơn. Không đăng credential, dữ liệu sức khỏe, thông tin riêng tư hoặc dữ liệu nhạy cảm vào issue công khai.
   - type: input
     id: claim
     attributes:
@@ -26,6 +26,10 @@ body:
         - Scope reduction
         - Add missing context
         - Model revision
+        - Bách Lâm model / method correction
+        - Mutual model revision
+        - Public dispute source lock
+        - Dual-pole experiment proposal
         - Co-development proposal
         - Opt-out / consent boundary clarification
         - Other
@@ -42,6 +46,7 @@ body:
     id: revision
     attributes:
       label: Cách sửa đề xuất
+      description: Nếu yêu cầu sửa model của Bách Lâm, hãy nêu rõ phần nào nên hạ confidence, đổi source class, đổi scope hoặc thiết kế test mới.
   - type: checkboxes
     id: boundary
     attributes:
@@ -50,4 +55,6 @@ body:
         - label: Tôi không đưa credential hoặc dữ liệu nhạy cảm vào issue công khai này.
           required: true
         - label: Tôi hiểu phản biện có thể được lưu trong lịch sử revision để bảo toàn provenance.
+          required: true
+        - label: Tôi hiểu quyền phản biện là đối xứng nhưng trọng lượng bằng chứng được đánh giá theo source, không chia đều mặc định.
           required: true
