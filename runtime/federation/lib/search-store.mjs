@@ -3,6 +3,7 @@ import { validateSearchDocument } from './search.mjs';
 
 const DEFAULT_BATCH_SIZE = 500;
 const MAX_BATCH_SIZE = 5000;
+const MAX_WRITE_BATCH = 1000;
 
 export class PostgresSearchDocumentStore {
   constructor(pool, { allowedDataClasses = ['public'] } = {}) {
@@ -13,9 +14,7 @@ export class PostgresSearchDocumentStore {
   }
 
   async put(input, { now = Date.now() } = {}) {
-    const doc = normalizeDocument(input);
-    validateSearchDocument(doc);
-    this.#assertDataClass(doc.dataClass);
+    const doc = this.#prepare(input);
     const stateHash = sha256Json(doc);
     const client = await this.pool.connect();
     try {
@@ -58,6 +57,51 @@ export class PostgresSearchDocumentStore {
     }
   }
 
+  async putMany(inputs, { now = Date.now() } = {}) {
+    if (!Array.isArray(inputs) || inputs.length < 1) throw new Error('search documents must be a non-empty array');
+    if (inputs.length > MAX_WRITE_BATCH) throw new Error(`search write batch must contain <= ${MAX_WRITE_BATCH} documents`);
+    const docs = inputs.map((input) => this.#prepare(input));
+    const ids = new Set();
+    for (const doc of docs) {
+      if (ids.has(doc.id)) throw new Error(`duplicate document id in search write batch: ${doc.id}`);
+      ids.add(doc.id);
+    }
+    const incoming = docs.map((doc) => ({
+      id: doc.id,
+      document: doc,
+      content_hash: sha256Json(doc),
+      tenant_id: doc.tenantId,
+      data_class: doc.dataClass,
+    }));
+    const result = await this.pool.query(`
+      WITH incoming AS (
+        SELECT *
+        FROM jsonb_to_recordset($1::jsonb)
+          AS x(id text, document jsonb, content_hash text, tenant_id text, data_class text)
+      )
+      INSERT INTO federation_search_documents(
+        id,document,content_hash,tenant_id,data_class,status,created_at,updated_at,deleted_at
+      )
+      SELECT id,document,content_hash,tenant_id,data_class,'active',$2,$2,NULL
+      FROM incoming
+      ON CONFLICT(id) DO UPDATE SET
+        document=EXCLUDED.document,
+        content_hash=EXCLUDED.content_hash,
+        tenant_id=EXCLUDED.tenant_id,
+        data_class=EXCLUDED.data_class,
+        status='active',
+        updated_at=$2,
+        deleted_at=NULL
+      WHERE federation_search_documents.status <> 'active'
+         OR federation_search_documents.content_hash IS DISTINCT FROM EXCLUDED.content_hash
+         OR federation_search_documents.document IS DISTINCT FROM EXCLUDED.document
+         OR federation_search_documents.tenant_id IS DISTINCT FROM EXCLUDED.tenant_id
+         OR federation_search_documents.data_class IS DISTINCT FROM EXCLUDED.data_class
+      RETURNING *
+    `, [JSON.stringify(incoming), new Date(now)]);
+    return { total: docs.length, changed: result.rowCount, entries: result.rows.map(mapSearchRow) };
+  }
+
   async delete(id, { now = Date.now() } = {}) {
     const safeId = normalizeId(id);
     const client = await this.pool.connect();
@@ -87,6 +131,19 @@ export class PostgresSearchDocumentStore {
     } finally {
       client.release();
     }
+  }
+
+  async deleteMany(ids, { now = Date.now() } = {}) {
+    if (!Array.isArray(ids) || ids.length < 1) throw new Error('search delete ids must be a non-empty array');
+    if (ids.length > MAX_WRITE_BATCH) throw new Error(`search delete batch must contain <= ${MAX_WRITE_BATCH} ids`);
+    const safeIds = [...new Set(ids.map(normalizeId))];
+    const result = await this.pool.query(`
+      UPDATE federation_search_documents
+      SET status='deleted',deleted_at=$1,updated_at=$1
+      WHERE id = ANY($2::text[]) AND status <> 'deleted'
+      RETURNING *
+    `, [new Date(now), safeIds]);
+    return { total:safeIds.length, changed:result.rowCount, entries:result.rows.map(mapSearchRow) };
   }
 
   async get(id) {
@@ -135,6 +192,13 @@ export class PostgresSearchDocumentStore {
       byDataClass: { public: Number(row.public), internal: Number(row.internal), private: Number(row.private) },
       cursor: Number(row.cursor),
     };
+  }
+
+  #prepare(input) {
+    const doc = normalizeDocument(input);
+    validateSearchDocument(doc);
+    this.#assertDataClass(doc.dataClass);
+    return doc;
   }
 
   #assertDataClass(dataClass) {
@@ -218,7 +282,11 @@ function normalizeDocument(input) {
   doc.id = normalizeId(doc.id);
   doc.tenantId = String(doc.tenantId ?? 'default');
   doc.dataClass = String(doc.dataClass ?? 'public');
-  if (doc.relations) doc.relations = doc.relations.map((rel) => ({ ...rel, target:String(rel.target), weight:Number(rel.weight ?? 1) }));
+  if (doc.relations) {
+    doc.relations = doc.relations
+      .map((rel) => ({ ...rel, target:String(rel.target), weight:Number(rel.weight ?? 1) }))
+      .sort((a, b) => a.target.localeCompare(b.target) || a.weight - b.weight);
+  }
   return doc;
 }
 function normalizeId(id) {
