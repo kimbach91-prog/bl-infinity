@@ -74,9 +74,7 @@
         "disclosureClass":{"type":"string"}
       }
     },
-    "payload": {
-      "type":["object","array","string","number","boolean","null"]
-    },
+    "payload": {"type":["object","array","string","number","boolean","null"]},
     "payloadRef":{"type":["string","null"]},
     "evidenceRefs":{"type":"array","items":{"type":"string"},"uniqueItems":true},
     "extensions": {
@@ -86,10 +84,11 @@
     },
     "integrity": {
       "type":"object","additionalProperties":false,
-      "required":["mechanism","evidenceRef","canonicalization","digestAlgorithm","digestValue"],
+      "required":["mechanism","evidenceRef","targetProfile","canonicalization","digestAlgorithm","digestValue"],
       "properties": {
         "mechanism":{"type":"string","minLength":1},
         "evidenceRef":{"type":"string","minLength":1},
+        "targetProfile":{"const":"urn:hcs:integrity-target:envelope-without-integrity-v1"},
         "canonicalization":{"const":"urn:hcs:canonicalization:rfc8785-jcs"},
         "digestAlgorithm":{"enum":["sha-256"]},
         "digestValue":{"type":"string","pattern":"^[a-f0-9]{64}$"},
