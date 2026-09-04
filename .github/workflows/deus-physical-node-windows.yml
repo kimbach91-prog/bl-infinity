@@ -1,0 +1,70 @@
+name: DEUS Windows Physical Node Security
+
+on:
+  pull_request:
+    paths:
+      - 'nodes/windows/**'
+      - 'runtime/federation/worker/**'
+      - 'runtime/federation/lib/protocol.mjs'
+      - '.github/workflows/deus-physical-node-windows.yml'
+  push:
+    branches:
+      - 'deus/physical-node-windows-r1'
+    paths:
+      - 'nodes/windows/**'
+      - 'runtime/federation/worker/**'
+      - 'runtime/federation/lib/protocol.mjs'
+      - '.github/workflows/deus-physical-node-windows.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  physical-node-security:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: false
+
+      - name: Parse PowerShell 5.1 node scripts
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $files = @(
+            'nodes/windows/bootstrap.ps1',
+            'nodes/windows/audit.ps1',
+            'nodes/windows/rollback.ps1'
+          )
+          foreach ($file in $files) {
+            $tokens = $null
+            $parseErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile(
+              (Resolve-Path $file),
+              [ref]$tokens,
+              [ref]$parseErrors
+            ) | Out-Null
+            if ($parseErrors.Count -gt 0) {
+              $parseErrors | ForEach-Object { Write-Error "$file :: $($_.Message) at $($_.Extent.StartLineNumber):$($_.Extent.StartColumnNumber)" }
+              exit 1
+            }
+          }
+
+      - name: Test physical-node isolation and worker authentication
+        shell: pwsh
+        run: node --test nodes/windows/test/physical-node.test.mjs
+
+      - name: Reject dangerous physical-node exposure primitives
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $bootstrap = Get-Content 'nodes/windows/bootstrap.ps1' -Raw
+          if ($bootstrap -match '0\.0\.0\.0') { throw 'worker must not bind 0.0.0.0' }
+          if ($bootstrap -match '\$env:BL_CONTROL_TOKEN\s*=') { throw 'worker must never receive BL_CONTROL_TOKEN' }
+          if ($bootstrap -match 'New-NetFirewallRule[^\r\n]+8790') { throw 'bootstrap must not expose the worker port' }
+          if ($bootstrap -match '(?i)(Invoke-Expression|\biex\b)') { throw 'bootstrap must not use dynamic PowerShell eval' }
+          Write-Host 'physical-node exposure checks passed'
