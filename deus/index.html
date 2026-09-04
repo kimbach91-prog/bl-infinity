@@ -7,7 +7,7 @@
 <meta name="robots" content="noindex,nofollow,noarchive">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
 <title>DEUS Human OS · Work-Chat</title>
-<meta name="description" content="DEUS Human OS bootstrap Work-Chat and BL Compute Federation node interface.">
+<meta name="description" content="DEUS Human OS bootstrap Work-Chat and BL Compute Federation customer-first node interface.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -19,7 +19,7 @@
   <div class="status-row">
     <span class="chip"><span class="dot ok"></span>UI ONLINE</span>
     <span class="chip" id="controlPlaneChip"><span class="dot warn"></span>CONTROL PLANE OFFLINE</span>
-    <span class="chip"><span class="dot"></span>BOOTSTRAP v0.1</span>
+    <span class="chip"><span class="dot"></span>RESOURCE LAW v0.2</span>
   </div>
 </header>
 
@@ -28,7 +28,7 @@
     <p class="eyebrow">DEUS ENTERPRISE / GOVERNMENT ACCESS</p>
     <h1>Work-Chat.</h1>
     <p class="lead">Giao diện làm việc của DEUS. Lõi điều phối, chính sách routing, dữ liệu bảo mật và reasoning nội bộ không được công bố qua giao diện này.</p>
-    <div class="warning"><strong>Trạng thái bootstrap:</strong> giao diện đang chạy thật trên web, nhưng chưa có control plane xác thực/AI production gắn vào. Chế độ Founder Preview chỉ lưu trạng thái trong trình duyệt và không giả lập kết quả DEUS.</div>
+    <div class="warning"><strong>Trạng thái bootstrap:</strong> giao diện đang chạy thật trên web, nhưng chưa có control plane production hoàn chỉnh gắn vào. Founder Preview chỉ lưu trạng thái cục bộ và không giả lập kết quả DEUS.</div>
 
     <div class="grid-2">
       <div class="field">
@@ -49,52 +49,53 @@
       <button id="signInBtn" class="btn primary">Đăng nhập</button>
       <button id="founderPreviewBtn" class="btn ghost">Vào Founder Preview</button>
     </div>
-    <p class="note">Không nhập mật khẩu tài khoản Google, GitHub, cloud provider hoặc API key vào ô này. Production login sẽ dùng identity service riêng của DEUS.</p>
+    <p class="note">Không nhập mật khẩu Google, GitHub, cloud provider hoặc API key vào đây. Production Zero-Trust R2 sẽ dùng identity service riêng, Passkey/MFA và same-origin secure session.</p>
   </section>
 
   <section id="constitutionView" class="gate-card" hidden>
     <p class="eyebrow">CONSTITUTION GATE · REQUIRED</p>
-    <h2>Chấp nhận điều kiện trước khi DEUS nhận việc.</h2>
-    <p class="lead">Bootstrap membership dùng Hiến pháp BL-CF v0.4 cùng DEUS Human OS Membership & Settlement Schedule v0.1.</p>
+    <h2>Luật tài nguyên 10 / 10 / 10.</h2>
+    <p class="lead">Membership dùng Hiến pháp BL-CF v0.4 cùng DEUS Human OS Bootstrap Membership & Resource Schedule v0.2. Receipt v0.1 không thay thế acceptance v0.2.</p>
 
     <div class="metric-strip">
-      <div class="metric"><b>10%</b><span>Official Protocol Commercial Share trên ECSV đủ điều kiện.</span></div>
-      <div class="metric"><b>10%</b><span>DEUS Performance Share trên giá trị gia tăng đã xác minh khi có baseline đo được.</span></div>
-      <div class="metric"><b>≤10%</b><span>Eligible Idle Compute Grant. Chỉ compute rảnh đủ điều kiện, không phải chiếm cố định 10% máy.</span></div>
+      <div class="metric"><b>10%</b><span>Commercialization Capacity: tài nguyên đủ điều kiện dành cho thương mại hóa.</span></div>
+      <div class="metric"><b>10%</b><span>Infrastructure Development Capacity: bảo mật, runtime, routing, đánh giá và hạ tầng.</span></div>
+      <div class="metric"><b>10%</b><span>Cross-Session Mutual Compute: chỉ dùng khi máy thực sự rảnh và không tranh foreground work.</span></div>
     </div>
 
-    <div class="success"><strong>Node-first:</strong> compute của node ưu tiên giải quyết workload hợp lệ của chính node. DEUS chỉ lấy phần rảnh đã được cấp quyền và có thể bổ sung compute dư thừa từ federation nếu vượt đủ gate quyền, dữ liệu, chi phí, rủi ro và giá trị.</div>
+    <div class="success"><strong>Customer-first:</strong> khi chính khách hàng có tác vụ, DEUS được dùng toàn bộ phần tài nguyên local tạm thời còn lại mà node đã cho phép và hệ đánh giá là an toàn, hợp lý. Nếu cần, DEUS có thể bổ sung compute rảnh hợp pháp từ federation để phục vụ lợi ích của khách hàng.</div>
 
     <div class="term-list">
-      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi có thẩm quyền.</strong><span>Tôi có quyền hợp pháp để chấp nhận điều khoản cho tài khoản/tổ chức/node mà tôi đang kích hoạt.</span></span></label>
-      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Commercial Share.</strong><span>Áp dụng theo ECSV và Settlement Schedule của workload thương mại đủ điều kiện.</span></span></label>
-      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Performance Share khi đo được.</strong><span>Chỉ trên giá trị gia tăng đã xác minh, có baseline và không tính trùng cùng một đơn vị giá trị.</span></span></label>
-      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi cấp tối đa 10% eligible idle compute.</strong><span>Chỉ phần rảnh đủ điều kiện. Node-local work được ưu tiên. Grant có thể bị suspend/revoke và không tạo quyền remote shell tùy ý.</span></span></label>
-      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi hiểu ranh giới lõi DEUS.</strong><span>Giao diện cung cấp output, trạng thái, meter và audit phù hợp, không cung cấp protected prompts, raw private reasoning, secrets, private topology hoặc routing core.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi có thẩm quyền.</strong><span>Tôi có quyền hợp pháp để chấp nhận điều khoản cho tài khoản, tổ chức và node đang kích hoạt.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Commercialization Capacity.</strong><span>Đây là mục tiêu phân bổ trên compute đủ điều kiện, không phải quyền sở hữu 10% máy và không buộc phải sử dụng liên tục.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Infrastructure Development Capacity.</strong><span>Cho bảo mật, reliability, routing, model/runtime, evaluation, recovery và các lớp hạ tầng có giá trị dài hạn.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi cấp tối đa 10% Cross-Session Mutual Compute khi idle.</strong><span>Chỉ phần thật sự rảnh. Khi local work xuất hiện, công việc liên phiên phải yield hoặc preempt ở checkpoint an toàn.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận Customer-First Active Work.</strong><span>Tác vụ của chính tôi có ưu tiên. DEUS có thể dùng toàn bộ local headroom tạm thời còn lại được cấp phép và an toàn để xử lý tác vụ của tôi.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi hiểu tính tương hỗ và ranh giới lõi.</strong><span>Đổi lại tôi có thể dùng DEUS và compute rảnh hợp pháp của federation khi có sẵn; việc tham gia không làm lộ protected core, secrets hoặc private routing mechanics.</span></span></label>
     </div>
 
     <div class="term-links">
       <a href="../BL-CF/CONSTITUTION.md" target="_blank" rel="noopener noreferrer">Đọc Founding Constitution v0.4</a>
-      <a href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Đọc Membership Schedule v0.1</a>
+      <a href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Đọc Resource Schedule v0.2</a>
     </div>
     <div id="constitutionError" class="error" hidden></div>
     <div class="actions">
-      <button id="acceptConstitutionBtn" class="btn primary" disabled>Chấp nhận và tạo receipt</button>
+      <button id="acceptConstitutionBtn" class="btn primary" disabled>Chấp nhận và tạo receipt v0.2</button>
       <button id="backToLoginBtn" class="btn ghost">Quay lại</button>
     </div>
-    <p class="note">Receipt chỉ lưu trong trình duyệt khi ở Preview. Production phải có receipt phía server và identity đã xác thực.</p>
+    <p class="note">Receipt chỉ lưu trong trình duyệt khi ở Preview. Production phải có authenticated identity và server-side tamper-evident receipt.</p>
   </section>
 
   <section id="nodeView" class="gate-card" hidden>
     <p class="eyebrow">NODE ACTIVATION · SOVEREIGN GRANT</p>
     <h2>Khai báo node làm việc.</h2>
-    <p class="lead">DEUS chỉ được phép điều phối những tài nguyên đã được grant. Hệ thống không mặc định có quyền điều khiển máy, tài khoản cloud hay dữ liệu của node.</p>
+    <p class="lead">DEUS chỉ điều phối những tài nguyên đã được grant. Resource permission và data permission là hai quyền tách biệt.</p>
 
     <div class="node-detect">
       <div class="detect-card"><b id="cpuDetected">Unknown</b><span>Logical CPU threads trình duyệt báo</span></div>
       <div class="detect-card"><b id="memoryDetected">Unknown</b><span>Device memory trình duyệt báo</span></div>
-      <div class="detect-card"><b>10%</b><span>Ordinary idle compute cap</span></div>
-      <div class="detect-card"><b>LOCAL FIRST</b><span>Workload priority policy</span></div>
+      <div class="detect-card"><b>10/10/10</b><span>Idle federation allocation law</span></div>
+      <div class="detect-card"><b>ALL SAFE LOCAL</b><span>Customer active-work ceiling</span></div>
     </div>
 
     <div class="grid-2">
@@ -105,9 +106,9 @@
       <div class="field"><label for="gpuLabel">GPU / accelerator</label><input id="gpuLabel" type="text" placeholder="Không rõ / CPU only / RTX ..."></div>
       <div class="field"><label for="dataPolicy">Data locality</label><select id="dataPolicy"><option value="local">Local only / compute-to-data</option><option value="trusted">Trusted federation</option><option value="public">Public non-sensitive</option></select></div>
     </div>
-    <div class="field"><label for="nodeNotes">Giới hạn bổ sung</label><textarea id="nodeNotes" placeholder="Ví dụ: không dùng khi pin thấp, không dùng bandwidth metered, không xử lý dữ liệu khách hàng ngoài máy..."></textarea></div>
+    <div class="field"><label for="nodeNotes">Giới hạn bổ sung</label><textarea id="nodeNotes" placeholder="Ví dụ: không dùng khi pin thấp, bandwidth metered, nhiệt độ cao hoặc có foreground app nhạy latency..."></textarea></div>
 
-    <div class="warning">Trang web không thể tự biến thiết bị thành production compute node. Node agent riêng phải được cài đặt và xác thực để thực thi workload thật. Bước này chỉ tạo hồ sơ/grant UX bootstrap.</div>
+    <div class="warning">Web không tự biến thiết bị thành production compute node. Production node agent phải được cài, TPM/mTLS enrolled và authenticated. Bước này chỉ tạo hồ sơ/grant UX bootstrap.</div>
     <div class="actions">
       <button id="activateNodeBtn" class="btn primary">Kích hoạt hồ sơ node</button>
       <button id="skipNodeBtn" class="btn ghost">Vào Work-Chat không kích hoạt agent</button>
@@ -128,7 +129,7 @@
       <button class="nav-btn" id="openGatewayBtn">Control Plane</button>
       <div class="nav-label">Policy</div>
       <a class="nav-btn" href="../BL-CF/CONSTITUTION.md" target="_blank" rel="noopener noreferrer">Constitution</a>
-      <a class="nav-btn" href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Membership Schedule</a>
+      <a class="nav-btn" href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Resource Schedule</a>
       <div class="sep"></div>
       <button id="leaveBtn" class="nav-btn">Thoát phiên</button>
     </div>
@@ -141,8 +142,8 @@
     </header>
 
     <div id="messages" class="messages" aria-live="polite">
-      <div class="msg system"><div class="msg-meta">SYSTEM · TRUTHFULNESS GATE</div>Human OS đã mở. Hiện chưa có DEUS control plane production gắn vào trang này. Tin nhắn trong Preview sẽ được lưu cục bộ như task draft và không được tuyên bố là đã xử lý bởi DEUS.</div>
-      <div class="msg deus"><div class="msg-meta">DEUS INTERFACE · BOOTSTRAP</div>Gửi bài toán công việc tại đây. Khi control plane được cấu hình, giao diện sẽ chuyển task thành request có identity, constitution receipt, node grant và workload metadata để DEUS định tuyến.</div>
+      <div class="msg system"><div class="msg-meta">SYSTEM · TRUTHFULNESS GATE</div>Human OS đã mở. Nếu chưa có control plane production, tin nhắn chỉ được lưu thành task draft và không được tuyên bố là đã xử lý.</div>
+      <div class="msg deus"><div class="msg-meta">DEUS INTERFACE · RESOURCE LAW v0.2</div>Customer-first đang là luật: tác vụ của node được ưu tiên dùng local headroom an toàn; federation surplus chỉ bổ sung khi có quyền và có sẵn. Cross-session compute chỉ được chạy trên phần idle đủ điều kiện.</div>
     </div>
 
     <div class="composer">
@@ -165,15 +166,18 @@
       <div class="nav-label">Federation state</div>
       <div class="panel-card">
         <div class="kv"><span>Node</span><span id="nodeState">Not active</span></div>
-        <div class="kv"><span>Local priority</span><span>ON</span></div>
-        <div class="kv"><span>Idle compute cap</span><span>10%</span></div>
+        <div class="kv"><span>Customer priority</span><span>FIRST</span></div>
+        <div class="kv"><span>Commercialization</span><span>10%</span></div>
+        <div class="kv"><span>Infrastructure</span><span>10%</span></div>
+        <div class="kv"><span>Cross-session idle</span><span>≤10%</span></div>
+        <div class="kv"><span>Own active task</span><span>ALL SAFE LOCAL</span></div>
         <div class="kv"><span>External surplus</span><span id="surplusState">Unavailable</span></div>
       </div>
-      <div class="nav-label">Economics</div>
+      <div class="nav-label">Reciprocal benefit</div>
       <div class="panel-card">
-        <div class="kv"><span>Protocol share</span><span>10%</span></div>
-        <div class="kv"><span>Performance share</span><span>10% verified</span></div>
-        <div class="kv"><span>Unverified value</span><span>0 payable</span></div>
+        <div class="kv"><span>DEUS capability</span><span>MEMBER</span></div>
+        <div class="kv"><span>Federation idle compute</span><span>POLICY-GATED</span></div>
+        <div class="kv"><span>Guaranteed external quota</span><span>NO</span></div>
       </div>
       <div class="nav-label">Current task</div>
       <div class="panel-card">
@@ -191,16 +195,16 @@
 <div id="settingsDrawer" class="drawer" hidden>
   <section class="drawer-card">
     <div class="drawer-head"><div><p class="eyebrow">CONTROL PLANE</p><h3>Kết nối gateway</h3></div><button id="closeDrawerBtn" class="icon-btn" aria-label="Đóng">×</button></div>
-    <div class="warning">Chỉ nhập endpoint chính thức do bố/đơn vị vận hành kiểm soát. Bearer token chỉ giữ trong sessionStorage của tab này và không được ghi vào repository hay localStorage.</div>
+    <div class="warning">Đây là bootstrap/preview connector. Production Zero-Trust R2 phải dùng same-origin Passkey/MFA và HttpOnly secure session; không dùng bearer token nhập tay làm boundary chính.</div>
     <div class="field"><label for="gatewayEndpoint">Gateway URL</label><input id="gatewayEndpoint" type="url" placeholder="https://deus.example.com/api"></div>
-    <div class="field"><label for="gatewayToken">Session bearer token</label><input id="gatewayToken" type="password" autocomplete="off" placeholder="Session-scoped token"></div>
+    <div class="field"><label for="gatewayToken">Preview session bearer token</label><input id="gatewayToken" type="password" autocomplete="off" placeholder="Preview only"></div>
     <div class="actions"><button id="saveGatewayBtn" class="btn primary">Lưu cho phiên này</button><button id="clearGatewayBtn" class="btn ghost">Ngắt gateway</button></div>
     <div id="gatewayResult" class="note"></div>
     <div class="sep"></div>
-    <p class="small">Expected bootstrap API: <span class="code">POST /auth/session</span>, <span class="code">POST /constitution/acceptances</span>, <span class="code">POST /nodes/grants</span>, <span class="code">POST /nodes/revoke</span>, <span class="code">POST /chat</span>.</p>
+    <p class="small">Production gateway phải ghi receipt v0.2, node grant 10/10/10, customer-first priority và execution records thật.</p>
   </section>
 </div>
 
-<script src="app.js" defer></script>
+<script src="app-v02.js" defer></script>
 </body>
 </html>
