@@ -1,0 +1,65 @@
+name: Kevin T.N — Tiến hóa Lưỡng Cực / Mutual Correction
+about: Gửi correction, source lock hoặc đề xuất sửa model giữa Kevin T.N và Bách Lâm.
+title: "[Dual-Pole Correction] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Tiến hóa Lưỡng Cực = hai cực chủ thể độc lập phản biện qua lại. Kevin có quyền làm model Bách Lâm sửa và chiều ngược lại cũng vậy. Quyền phản biện đối xứng; evidential weight không bị chia đều mặc định. Không đăng dữ liệu nhạy cảm hoặc credential.
+  - type: input
+    id: target
+    attributes:
+      label: Claim / model cần sửa
+      description: Nêu URL, mục, câu hoặc artifact đủ chính xác.
+    validations:
+      required: true
+  - type: dropdown
+    id: direction
+    attributes:
+      label: Hướng correction
+      options:
+        - Kevin → Bách Lâm
+        - Bách Lâm → Kevin
+        - Hai bên cùng phải sửa
+        - Chưa xác định — cần Reality Veto / test
+    validations:
+      required: true
+  - type: dropdown
+    id: correction_type
+    attributes:
+      label: Loại correction
+      options:
+        - Fact correction
+        - Source / attribution correction
+        - OBS → INFER reclassification
+        - Chronology / lineage correction
+        - Counterexample
+        - Scope reduction
+        - Public dispute source lock
+        - Mutual model revision
+        - Dual-pole experiment proposal
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence / counterevidence
+      description: Ưu tiên public URL, commit, paper, artifact, timestamp và falsifier.
+    validations:
+      required: true
+  - type: textarea
+    id: proposed_revision
+    attributes:
+      label: Revision đề xuất
+      description: Nêu model nào phải hạ confidence, đổi scope, sửa attribution hoặc test lại.
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Ranh giới
+      options:
+        - label: Tôi không đưa credential hoặc dữ liệu nhạy cảm vào issue công khai.
+          required: true
+        - label: Tôi chấp nhận rằng unresolved dispute có thể được giữ là CONTESTED / UNKNOWN thay vì ép kết luận.
+          required: true
