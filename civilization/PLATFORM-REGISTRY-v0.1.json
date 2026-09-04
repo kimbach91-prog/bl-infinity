@@ -1,0 +1,34 @@
+{
+  "schema": "viet-civilization-platform-registry/v0.1",
+  "language": "vi",
+  "semanticLanguage": "VTTN",
+  "transport": "DSFP",
+  "platforms": [
+    {"id":"VNG","name":"Việt Ngữ","purpose":"concept lexicon, historical/modern Vietnamese semantics, VTTN compilation","publicDefault":true},
+    {"id":"VKT","name":"Việt Tri Thức","purpose":"provenance-first knowledge graph","publicDefault":true},
+    {"id":"VC","name":"Việt Chứng","purpose":"proof and evidence ledger","publicDefault":true},
+    {"id":"VQ","name":"Việt Quyền","purpose":"rights, consent, capability, delegation, revocation","publicDefault":false},
+    {"id":"VHOC","name":"Việt Học","purpose":"curriculum and competency graph","publicDefault":true},
+    {"id":"VKY","name":"Việt Ký","purpose":"durable cultural and documentary archive","publicDefault":true},
+    {"id":"VKHOA","name":"Việt Khoa","purpose":"research lineage, experiments, evaluations, reproducibility","publicDefault":true},
+    {"id":"VKINH","name":"Việt Kinh","purpose":"contribution, cost, compute and settlement provenance","publicDefault":false},
+    {"id":"VVAN","name":"Việt Văn","purpose":"cultural heritage and creative lineage","publicDefault":true}
+  ],
+  "sharedServices": [
+    "concept-registry",
+    "provenance-ledger",
+    "evidence-ledger",
+    "disclosure-boundary",
+    "snapshot-export",
+    "offline-verifier"
+  ],
+  "disclosureClasses": ["PUBLIC","COMMON","RESTRICTED","BLACK_CORE"],
+  "epistemicClasses": ["OBS","INFER","ASSUME","NORM","HYPOTHESIS","UNSOURCED"],
+  "invariants": [
+    "PUBLIC does not imply authority over BLACK_CORE",
+    "DNS/provider reachability is not identity or authority",
+    "historical/cultural claims require provenance or explicit UNSOURCED status",
+    "offline snapshots must be hash-verifiable",
+    "provider adapters are replaceable"
+  ]
+}
