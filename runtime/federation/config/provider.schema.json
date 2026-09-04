@@ -29,10 +29,26 @@
       "type": "object",
       "properties": {
         "allowCommercialWorkloads": { "type": "boolean", "default": false },
-        "allowCommonBenefit": { "type": "boolean", "default": false },
-        "maxCommonBenefitShare": { "type": "number", "minimum": 0, "maximum": 0.10 },
-        "allowPrivateSharedBenefit": { "type": "boolean", "default": false },
+        "allowStrategicReinvestment": { "type": "boolean", "default": false },
+        "maxStrategicReinvestmentShare": { "type": "number", "minimum": 0, "maximum": 0.10 },
+        "allowPrivateFederationReturn": { "type": "boolean", "default": false },
+        "allowCommonBenefit": { "type": "boolean", "default": false, "description": "v0.3 compatibility alias for allowStrategicReinvestment" },
+        "maxCommonBenefitShare": { "type": "number", "minimum": 0, "maximum": 0.10, "description": "v0.3 compatibility alias for maxStrategicReinvestmentShare" },
+        "allowPrivateSharedBenefit": { "type": "boolean", "default": false, "description": "v0.3 compatibility alias for allowPrivateFederationReturn" },
         "emergencyOverrideMaxShare": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "settlementPreferences": {
+      "type": "object",
+      "properties": {
+        "acceptedModes": {
+          "type": "array",
+          "items": { "enum": ["cash", "dcc", "reciprocal-compute", "hybrid"] },
+          "uniqueItems": true
+        },
+        "minimumProviderSettlementValue": { "type": "number", "minimum": 0 },
+        "allowDcc": { "type": "boolean", "default": false }
       },
       "additionalProperties": false
     },
