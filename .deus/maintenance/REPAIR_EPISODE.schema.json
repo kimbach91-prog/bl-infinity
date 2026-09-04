@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DEUS Repair Episode v0.1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episodeId",
+    "deviceClass",
+    "symptoms",
+    "evidenceState",
+    "diagnosis",
+    "intervention",
+    "outcome",
+    "privacy",
+    "nextTest"
+  ],
+  "properties": {
+    "episodeId": {"type": "string", "maxLength": 120},
+    "deviceClass": {"type": "string", "maxLength": 160},
+    "compatibilityTags": {"type": "array", "items": {"type": "string", "maxLength": 80}, "maxItems": 30},
+    "symptoms": {"type": "array", "items": {"type": "string", "maxLength": 500}, "minItems": 1, "maxItems": 30},
+    "telemetrySummary": {
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean", "null"]}
+    },
+    "evidenceState": {
+      "type": "object",
+      "required": ["observed", "inferred", "unknown"],
+      "properties": {
+        "observed": {"type": "array", "items": {"type": "string"}},
+        "inferred": {"type": "array", "items": {"type": "string"}},
+        "unknown": {"type": "array", "items": {"type": "string"}},
+        "contradictions": {"type": "array", "items": {"type": "string"}},
+        "falsifier": {"type": ["string", "null"]}
+      }
+    },
+    "diagnosis": {"type": "string", "maxLength": 3000},
+    "intervention": {
+      "type": "object",
+      "required": ["description", "riskClass", "reversible"],
+      "properties": {
+        "description": {"type": "string", "maxLength": 3000},
+        "riskClass": {"enum": ["LOW", "MEDIUM", "HIGH", "UNKNOWN"]},
+        "reversible": {"type": "boolean"},
+        "rollbackRef": {"type": ["string", "null"]},
+        "ownerApprovalRef": {"type": ["string", "null"]}
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {"enum": ["IMPROVED", "NO_CHANGE", "WORSE", "ROLLED_BACK", "UNKNOWN"]},
+        "performanceDeltaPercent": {"type": ["number", "null"]},
+        "energyDeltaPercent": {"type": ["number", "null"]},
+        "thermalDeltaC": {"type": ["number", "null"]},
+        "errorRateDelta": {"type": ["number", "null"]},
+        "scar": {"type": ["string", "null"]}
+      }
+    },
+    "transferCandidates": {"type": "array", "items": {"type": "string"}, "maxItems": 30},
+    "confidence": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "privacy": {
+      "type": "object",
+      "required": ["deidentified", "containsCredentials", "containsPersonalContent"],
+      "properties": {
+        "deidentified": {"const": true},
+        "containsCredentials": {"const": false},
+        "containsPersonalContent": {"const": false},
+        "localRawEvidenceRef": {"type": ["string", "null"]}
+      }
+    },
+    "nextTest": {"type": "string", "maxLength": 3000}
+  }
+}
