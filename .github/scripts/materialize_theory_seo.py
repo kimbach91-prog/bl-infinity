@@ -14,13 +14,38 @@ BRAND = ROOT / PUBLIC_ASSET_PATH
 OG_SRC = BRAND / "og-src"
 OG = BRAND / "og"
 
+# rel: slug, cover title, cover lines, SEO title, SEO description
 PAGES = {
-    "research/human-development/index.html": ("cover-human-development", "NGHIÊN CỨU PHÁT TRIỂN CON NGƯỜI", ["NGHIÊN CỨU", "PHÁT TRIỂN", "CON NGƯỜI"]),
-    "research/human-development/kevin-nt/index.html": ("cover-kevin-research-studio", "KEVIN RESEARCH STUDIO", ["KEVIN", "RESEARCH", "STUDIO"]),
-    "research/human-development/kevin-nt/studio/index.html": ("cover-kevin-research-studio", "KEVIN RESEARCH STUDIO", ["KEVIN", "RESEARCH", "STUDIO"]),
-    "research/human-development/kevin-nt/tien-hoa-luong-cuc.html": ("cover-dual-pole", "TIẾN HÓA LƯỠNG CỰC", ["TIẾN HÓA", "LƯỠNG CỰC"]),
-    "research/human-development/kevin-nt/attribution-benchmark.html": ("cover-real-application-value", "GIÁ TRỊ ỨNG DỤNG THẬT", ["GIÁ TRỊ", "ỨNG DỤNG", "THẬT"]),
-    "books/kevin-intellectual-map/index.html": ("cover-100-works", "BẢN ĐỒ 100 CÔNG TRÌNH GIAO THOA", ["BẢN ĐỒ", "100 CÔNG TRÌNH", "GIAO THOA"]),
+    "research/human-development/index.html": (
+        "cover-human-development", "NGHIÊN CỨU PHÁT TRIỂN CON NGƯỜI", ["NGHIÊN CỨU", "PHÁT TRIỂN", "CON NGƯỜI"],
+        "Nghiên cứu phát triển con người | Bách Lâm ∞",
+        "Công trình nghiên cứu phát triển con người của Bách Lâm: quan sát, phản biện hai chiều, thử nghiệm và tăng năng lực bằng bằng chứng."
+    ),
+    "research/human-development/kevin-nt/index.html": (
+        "cover-kevin-research-studio", "KEVIN RESEARCH STUDIO", ["KEVIN", "RESEARCH", "STUDIO"],
+        "Kevin T.N: nghiên cứu phát triển con người | Bách Lâm",
+        "Case study Kevin T.N trong chương trình phát triển con người của Bách Lâm: năng lực, phản biện, thử nghiệm, Reality Veto và đồng phát triển."
+    ),
+    "research/human-development/kevin-nt/studio/index.html": (
+        "cover-kevin-research-studio", "KEVIN RESEARCH STUDIO", ["KEVIN", "RESEARCH", "STUDIO"],
+        "Kevin Research Studio | Bách Lâm ↔ Kevin T.N",
+        "Giao diện nghiên cứu hai chiều giữa Bách Lâm và Kevin T.N: đọc nghiên cứu, phản biện claim, xem benchmark và cùng sửa mô hình bằng nguồn."
+    ),
+    "research/human-development/kevin-nt/tien-hoa-luong-cuc.html": (
+        "cover-dual-pole", "TIẾN HÓA LƯỠNG CỰC", ["TIẾN HÓA", "LƯỠNG CỰC"],
+        "Tiến hóa Lưỡng Cực | Bách Lâm ↔ Kevin T.N",
+        "Hồ sơ nguồn về Tiến hóa Lưỡng Cực giữa Bách Lâm và Kevin T.N: tranh luận hai chiều, attribution, phép thử và cơ chế cùng sửa mô hình."
+    ),
+    "research/human-development/kevin-nt/attribution-benchmark.html": (
+        "cover-real-application-value", "GIÁ TRỊ ỨNG DỤNG THẬT", ["GIÁ TRỊ", "ỨNG DỤNG", "THẬT"],
+        "Giá trị ứng dụng thật | Bách Lâm ↔ Kevin T.N",
+        "Quy tắc phân loại nguồn gốc và benchmark giá trị ứng dụng thật giữa Bách Lâm và Kevin T.N, giữ hệ gốc Kevin độc lập và attribution rõ."
+    ),
+    "books/kevin-intellectual-map/index.html": (
+        "cover-100-works", "BẢN ĐỒ 100 CÔNG TRÌNH GIAO THOA", ["BẢN ĐỒ", "100 CÔNG TRÌNH", "GIAO THOA"],
+        "Kevin T.N: Bản đồ 100 công trình giao thoa",
+        "Bản đồ 100 công trình giao thoa dành cho Kevin T.N: prior art, candidate novel delta, lộ trình phát triển và trình đọc dài bằng tiếng Việt."
+    ),
 }
 
 SEO_BEGIN = "<!-- THEORY-SEO:BEGIN -->"
@@ -104,23 +129,32 @@ def managed_tags(slug: str, alt: str) -> str:
 {SEO_END}'''
 
 
+def set_meta_content(text: str, key_type: str, key: str, value: str) -> str:
+    pat = re.compile(r'<meta\s+' + re.escape(key_type) + r'=["\']' + re.escape(key) + r'["\'][^>]*content=["\'][^"\']*["\'][^>]*>', re.I)
+    replacement = f'<meta {key_type}="{key}" content="{html.escape(value, quote=True)}">'
+    return pat.sub(replacement, text, count=1) if pat.search(text) else text
+
+
 def ensure_large_image_robot(text: str) -> str:
     m = re.search(r'<meta\s+name=["\']robots["\']\s+content=["\']([^"\']*)["\'][^>]*>', text, re.I)
     if not m:
         return text
-    content = m.group(1)
-    directives = [x.strip() for x in content.split(',') if x.strip()]
+    directives = [x.strip() for x in m.group(1).split(',') if x.strip()]
     if not any(x.lower().startswith('max-image-preview:') for x in directives):
         directives.append('max-image-preview:large')
     replacement = f'<meta name="robots" content="{html.escape(",".join(directives), quote=True)}">'
     return text[:m.start()] + replacement + text[m.end():]
 
 
-def update_html(path: Path, slug: str, alt: str) -> None:
+def update_html(path: Path, slug: str, alt: str, seo_title: str, seo_desc: str) -> None:
     text = path.read_text(encoding="utf-8")
     text = re.sub(re.escape(SEO_BEGIN) + r'.*?' + re.escape(SEO_END), '', text, flags=re.S)
     for pat in REMOVE_PATTERNS:
         text = re.sub(pat, '', text, flags=re.I)
+    text = re.sub(r'<title>.*?</title>', f'<title>{html.escape(seo_title)}</title>', text, count=1, flags=re.I | re.S)
+    text = set_meta_content(text, 'name', 'description', seo_desc)
+    text = set_meta_content(text, 'property', 'og:title', seo_title)
+    text = set_meta_content(text, 'property', 'og:description', seo_desc)
     text = ensure_large_image_robot(text)
     block = managed_tags(slug, alt)
     if "</head>" not in text.lower():
@@ -142,7 +176,7 @@ def update_sitemap() -> None:
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
         )
-    for rel, (slug, alt, _) in PAGES.items():
+    for rel, (slug, alt, _, _, _) in PAGES.items():
         page = canonical_page(rel)
         img = f"{ASSET_BASE}/og/{slug}.jpg"
         block = f'<image:image><image:loc>{escape(img)}</image:loc><image:title>{escape(alt)}</image:title></image:image>'
@@ -161,12 +195,16 @@ def main() -> None:
     OG_SRC.mkdir(parents=True, exist_ok=True)
     OG.mkdir(parents=True, exist_ok=True)
     (BRAND / "theory-favicon.svg").write_text(emblem_svg(), encoding="utf-8")
-    for rel, (slug, alt, lines) in PAGES.items():
+    for rel, (slug, alt, lines, seo_title, seo_desc) in PAGES.items():
         path = ROOT / rel
         if not path.exists():
             raise SystemExit(f"Missing public page: {rel}")
+        if len(seo_title) > 60:
+            raise SystemExit(f"SEO title too long ({len(seo_title)}): {rel}")
+        if len(seo_desc) > 160:
+            raise SystemExit(f"SEO description too long ({len(seo_desc)}): {rel}")
         (OG_SRC / f"{slug}.svg").write_text(cover_svg(lines, alt), encoding="utf-8")
-        update_html(path, slug, alt)
+        update_html(path, slug, alt, seo_title, seo_desc)
     update_sitemap()
     print("THEORY SEO source/materialization metadata: PASS")
 
