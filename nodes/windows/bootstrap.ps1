@@ -94,7 +94,7 @@ function Invoke-BestEffort([string]$Label, [scriptblock]$Action, [ref]$Warnings)
     & $Action
   }
   catch {
-    $Warnings.Value += "$Label: $($_.Exception.Message)"
+    $Warnings.Value += "${Label}: $($_.Exception.Message)"
     Write-Warn "$Label could not be enforced: $($_.Exception.Message)"
   }
 }
