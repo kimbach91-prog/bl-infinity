@@ -1,0 +1,79 @@
+{
+  "policy_id": "BL-KNT-CAB-v0.1",
+  "title": "BL-KNT Collision Attribution & Real Application Benchmark Gate",
+  "effective_date": "2026-09-04",
+  "owner_directive": "Do not absorb Kevin T.N original systems. Only reverse-direction critique or multi-angle input may be accepted into BL after Bách Lâm explicitly concludes it is useful. Collision-derived products are research objects that require classification, benchmark and audit.",
+  "hard_invariants": [
+    "KNT_ORIGINAL_SYSTEM != BL_ABSORBED_SYSTEM",
+    "SOURCE_SIMILARITY != DERIVATION",
+    "COLLISION_PROVENANCE != WHOLE_PRODUCT_AUTHORSHIP",
+    "ACCEPTED_CRITIQUE != SYSTEM_ABSORPTION",
+    "PERSON != CORPUS != MODEL",
+    "REALITY_VETO > BOTH_MODELS"
+  ],
+  "collision_classes": {
+    "C0": {"name":"KNT_ORIGINAL_SYSTEM","absorbable":false,"description":"Kevin-authored/source-bound original system, paper, repository or formulation. External reference and benchmark target only."},
+    "C1": {"name":"KNT_REVERSE_CRITIQUE","absorbable":true,"absorption_scope":"critique_only_after_Bach_acceptance","description":"Kevin critique directed at Bách/BL. May be retained as dissent/correction input without importing Kevin's system."},
+    "C2": {"name":"KNT_MULTIANGLE_INPUT","absorbable":true,"absorption_scope":"viewpoint_only_after_Bach_acceptance","description":"Additional perspective that broadens Bách/BL framing. Source attribution stays Kevin."},
+    "C3": {"name":"CONVERGENT_INTERSECTION","absorbable":false,"description":"Independent or unresolved overlap. Requires Intersection Index and prior-art state; similarity alone proves no lineage."},
+    "C4": {"name":"HYBRID_COLLISION_RESEARCH","absorbable":false,"description":"Hybrid or whole-system research produced through debate/collision. It may sit inside overall BL research with claim-level contribution mapping and audit."},
+    "C5": {"name":"DISTINCT_COLLISION_DISCOVERY","absorbable":false,"description":"Separate product discovered through collision and materially distinct from Kevin's original system. Becomes BL research only after explicit Bách acceptance and audit."},
+    "C6": {"name":"BL_INDEPENDENT_POST_COLLISION","absorbable":false,"description":"BL derivation after contact with Kevin but claimed independent only when a separate causal path/antecedent is evidenced."},
+    "C7": {"name":"CONTESTED_OR_UNKNOWN","absorbable":false,"description":"Insufficient evidence to classify origin/derivation. Preserve contradiction and UNKNOWN."}
+  },
+  "required_fields": [
+    "origin_class",
+    "intersection_index",
+    "real_application_value",
+    "application_maturity",
+    "attribution_confidence",
+    "BL_acceptance_state",
+    "source_refs",
+    "application_receipts",
+    "falsifier"
+  ],
+  "acceptance_states": [
+    "UNREVIEWED",
+    "ACCEPTED_CRITIQUE",
+    "ACCEPTED_VIEWPOINT",
+    "ACCEPTED_RESEARCH",
+    "AUDIT_ONLY",
+    "REJECTED",
+    "CONTESTED"
+  ],
+  "intersection_index": {
+    "range": [0,100],
+    "dimensions": ["primitive_overlap","mechanism_overlap","implementation_overlap","dependency_overlap"],
+    "warning": "Intersection Index is not authorship or derivation probability."
+  },
+  "real_application_value": {
+    "range": [0,100],
+    "weights": {
+      "problem_utility": 20,
+      "executability": 15,
+      "reproducibility": 15,
+      "baseline_advantage": 15,
+      "independent_external_evidence": 15,
+      "transferability": 10,
+      "sustainability": 5,
+      "provenance_auditability": 5
+    },
+    "evidence_ceilings": {
+      "M0_CONCEPT": 20,
+      "M1_SELF_RUN_PROTOTYPE": 40,
+      "M2_REPRODUCIBLE_BENCHMARK": 60,
+      "M3_INDEPENDENT_USE_OR_REPLICATION": 80,
+      "M4_SUSTAINED_REAL_WORLD_VALUE": 100
+    },
+    "rule": "No artifact may score above the ceiling supported by its strongest verified application evidence."
+  },
+  "promotion_rules": {
+    "C0": "never promote into BL as absorbed system",
+    "C1_C2": "may be retained only after explicit Bách conclusion, with Kevin source attribution",
+    "C3": "retain as convergence/intersection, no genealogy rewrite",
+    "C4": "research and audit inside BL overall program; contribution map mandatory",
+    "C5": "requires explicit Bách ACCEPTED_RESEARCH plus prior art, falsifier, RAV and audit",
+    "C6": "requires independent causal-lineage evidence",
+    "C7": "hold as contested/unknown"
+  }
+}
