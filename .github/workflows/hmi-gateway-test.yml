@@ -1,0 +1,36 @@
+name: DEUS HMI Access Gateway Tests
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/hmi/**'
+      - '.github/workflows/hmi-gateway-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/hmi/**'
+      - '.github/workflows/hmi-gateway-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  policy-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: runtime/hmi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: false
+      - name: Run HMI isolation tests
+        run: npm test
+      - name: Syntax check
+        run: |
+          find . -name '*.mjs' -type f -print0 | xargs -0 -n1 node --check
