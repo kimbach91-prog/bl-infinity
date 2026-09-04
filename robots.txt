@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /deus/
+Disallow: /BL-CF/
 
 Sitemap: https://kimbach91-prog.github.io/bl-infinity/sitemap.xml
