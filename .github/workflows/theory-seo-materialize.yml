@@ -5,6 +5,7 @@ on:
     branches: ["main"]
     paths:
       - ".github/scripts/materialize_theory_seo.py"
+      - ".github/scripts/patch_kevin_intel_case.py"
       - ".github/workflows/theory-seo-materialize.yml"
   workflow_dispatch:
 
@@ -26,10 +27,11 @@ jobs:
           persist-credentials: true
           fetch-depth: 1
 
-      - name: Generate THEORY vector sources and SEO metadata
+      - name: Generate THEORY vector sources, SEO metadata and Kevin method case
         run: |
           set -euo pipefail
           python .github/scripts/materialize_theory_seo.py
+          python .github/scripts/patch_kevin_intel_case.py
 
       - name: Render crawler-safe social images and platform icons
         shell: bash
@@ -68,7 +70,7 @@ jobs:
           "$IM" /tmp/theory-favicon-256.png -define icon:auto-resize=16,32,48 books/theory-assets/favicon.ico
           rm -f /tmp/theory-favicon-256.png
 
-      - name: Audit dimensions, weights, metadata and image sitemap
+      - name: Audit dimensions, weights, metadata, image sitemap and Kevin method case
         shell: bash
         run: |
           set -euo pipefail
@@ -104,6 +106,18 @@ jobs:
                 raise SystemExit(f'Missing SEO marker {marker}: {rel}')
             if len(re.findall(r'<meta\s+property="og:image"', text, re.I)) != 1:
               raise SystemExit(f'Expected exactly one og:image: {rel}')
+
+          studio=(root/'research/human-development/kevin-nt/studio/index.html').read_text(encoding='utf-8')
+          for marker in (
+            'id="case-method"',
+            'Case study phương pháp · BL∞ Whole-System Intelligence',
+            'Benchmark độc lập sẽ công bố sau',
+            'LLM Agent biên tập long-form',
+            '13. Những nguồn công khai chính đang được dùng',
+          ):
+            if marker not in studio:
+              raise SystemExit(f'Kevin BL∞ intelligence case marker missing: {marker}')
+
           limits={
             'books/theory-assets/theory-favicon.svg': 6000,
             'books/theory-assets/favicon.ico': 20000,
@@ -128,7 +142,7 @@ jobs:
           for cover in set(pages.values()):
             if cover not in sitemap:
               raise SystemExit(f'Cover missing from sitemap.xml: {cover}')
-          print('THEORY metadata, image sitemap and asset weight audit: PASS')
+          print('THEORY metadata + Kevin BL∞ intelligence case + image sitemap + asset weight audit: PASS')
           PY
 
           if command -v identify >/dev/null 2>&1; then
@@ -139,7 +153,7 @@ jobs:
           fi
           git diff --check
 
-      - name: Commit materialized SEO source
+      - name: Commit materialized SEO and Kevin method source
         shell: bash
         run: |
           set -euo pipefail
@@ -153,8 +167,8 @@ jobs:
             research/human-development/kevin-nt/attribution-benchmark.html \
             books/kevin-intellectual-map/index.html
           if git diff --cached --quiet; then
-            echo "THEORY SEO source already materialized"
+            echo "THEORY SEO and Kevin method source already materialized"
           else
-            git commit -m "[OWNER-PUBLISH] Materialize THEORY favicon social covers and SEO metadata"
+            git commit -m "[OWNER-PUBLISH] Add BL∞ OSINT and LLM-agent Kevin case study"
             git push origin HEAD:main
           fi
