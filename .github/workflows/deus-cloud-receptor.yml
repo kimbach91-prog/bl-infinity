@@ -22,7 +22,7 @@ jobs:
           fetch-depth: 2
           persist-credentials: false
 
-      - name: Read packet and emit durable ACK
+      - name: Read packet, audit, and return durable evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -36,15 +36,66 @@ jobs:
           mode="$(sed -nE 's/^MODE:[[:space:]]*([A-Z0-9_]{1,40})[[:space:]]*$/\1/p' "$packet" | head -n1)"
           [[ -n "$task_id" && -n "$mode" ]] || { echo 'Invalid packet schema' >&2; exit 1; }
 
-          cat > /tmp/deus-return.md <<EOF
+          cat > /tmp/deus-ack.md <<EOF
           ACK: CLOUD_RECEPTOR_READ
           TASK_ID: $task_id
           MODE: $mode
-          STATUS: ACKED
+          STATUS: ACKED_FOR_FIXED_DEFENSIVE_AUDIT
           RUN_ID: $GITHUB_RUN_ID
           PACKET: $packet
           CANONICAL_WRITE: DENIED
           NODE_LEVEL_ACK: NOT_CLAIMED
           EOF
 
-          gh issue create --repo "$REPO" --title "[DEUS-RETURN][ACK] $task_id" --body-file /tmp/deus-return.md
+          url="$(gh issue create --repo "$REPO" --title "[DEUS-RETURN][AUDIT] $task_id" --body-file /tmp/deus-ack.md)"
+          issue="${url##*/}"
+
+          risk=0
+          sensitive_names="$(git ls-files | grep -Ei '(^|/)(\.env($|\.)|credentials?\.(json|ya?ml|txt)$|[^/]+\.(pem|key|p12|pfx)$)' || true)"
+          sensitive_count="$(printf '%s\n' "$sensitive_names" | sed '/^$/d' | wc -l | tr -d ' ')"
+          [[ "$sensitive_count" -eq 0 ]] || risk=$((risk + 80))
+
+          secret_files="$(git grep -Il -E '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|xai-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' -- . ':!.github/workflows/deus-security-guard.yml' ':!.github/workflows/deus-cloud-receptor.yml' ':!.deus/security/README.md' 2>/dev/null || true)"
+          secret_count="$(printf '%s\n' "$secret_files" | sed '/^$/d' | wc -l | tr -d ' ')"
+          [[ "$secret_count" -eq 0 ]] || risk=$((risk + 100))
+
+          permission_files="$(git grep -Il -E '(permissions:[[:space:]]*write-all|contents:[[:space:]]*write|actions:[[:space:]]*write|id-token:[[:space:]]*write)' -- '.github/workflows/*.yml' '.github/workflows/*.yaml' 2>/dev/null || true)"
+          permission_count="$(printf '%s\n' "$permission_files" | sed '/^$/d' | wc -l | tr -d ' ')"
+          [[ "$permission_count" -eq 0 ]] || risk=$((risk + 60))
+
+          missing=0
+          for required in '.github/workflows/deus-security-guard.yml' '.deus/security/README.md' 'PUBLIC_DISCLOSURE_STATE.md'; do
+            [[ -f "$required" ]] || missing=$((missing + 1))
+          done
+          [[ "$missing" -eq 0 ]] || risk=$((risk + 40))
+
+          status='RETURNED'
+          [[ "$risk" -lt 60 ]] || status='RETURNED_REVIEW_REQUIRED'
+
+          cat > /tmp/deus-audit.md <<EOF
+          ACK: CLOUD_COMPUTE_RETURN
+          TASK_ID: $task_id
+          STATUS: $status
+          RISK_SCORE: $risk
+          TRACKED_SECRET_BEARING_FILENAME_COUNT: $sensitive_count
+          SECRET_LIKE_FILE_COUNT: $secret_count
+          WORKFLOW_WRITE_PERMISSION_REVIEW_COUNT: $permission_count
+          MISSING_GUARDRAIL_COUNT: $missing
+          COMPUTE_CLASS: GITHUB_HOSTED_RUNNER_DETERMINISTIC_AUDIT
+          SECRET_VALUES_EMITTED: NO
+          CANONICAL_WRITE: DENIED
+          NODE_LEVEL_ACK: NOT_CLAIMED
+          EOF
+
+          if [[ "$sensitive_count" -gt 0 ]]; then
+            printf '\nTRACKED_SECRET_BEARING_FILENAMES:\n%s\n' "$sensitive_names" >> /tmp/deus-audit.md
+          fi
+          if [[ "$secret_count" -gt 0 ]]; then
+            printf '\nSECRET_LIKE_FILES_ONLY:\n%s\n' "$secret_files" >> /tmp/deus-audit.md
+          fi
+          if [[ "$permission_count" -gt 0 ]]; then
+            printf '\nWORKFLOW_PERMISSION_REVIEW_FILES:\n%s\n' "$permission_files" >> /tmp/deus-audit.md
+          fi
+
+          gh issue comment "$issue" --repo "$REPO" --body-file /tmp/deus-audit.md
+          echo "DEUS audit return: $url risk=$risk"
