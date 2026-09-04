@@ -53,8 +53,49 @@ test('allowlisted task create produces tenant-bound bounded command', () => {
 });
 
 test('unexpected payload fields are rejected', () => {
-  const verdict = authorize({ id: 'task.create', payload: { title: 'x', rawCoreQuery: 'SELECT *' } });
+  const verdict = authorize({ id: 'task.create', payload: { title: 'x', objective: 'y', rawCoreQuery: 'SELECT *' } });
   assert.equal(verdict.code, 'ACTION_FIELD_NOT_ALLOWED');
+});
+
+test('action fields are semantically constrained instead of passed through as arbitrary strings', () => {
+  for (const payload of [
+    { taskRef: '../core', reason: 'cancel' },
+    { taskRef: 'task-1', reason: 'cancel\u0000now' },
+  ]) {
+    assert.equal(authorize({ id: 'task.cancel', confirmed: true, payload }).code, 'ACTION_FIELD_VALUE_INVALID');
+  }
+
+  assert.equal(authorize({
+    id: 'result.export',
+    confirmed: true,
+    payload: { resultRef: 'result-1', format: '../../bin/sh' },
+  }).code, 'ACTION_FIELD_VALUE_INVALID');
+
+  assert.equal(authorize({
+    id: 'workflow.approve',
+    confirmed: true,
+    payload: { workflowRef: 'workflow-1', decision: 'force-admin' },
+  }).code, 'ACTION_FIELD_VALUE_INVALID');
+});
+
+test('opaque reference lists are bounded and traversal separators are rejected', () => {
+  assert.equal(authorize({
+    id: 'task.create',
+    payload: { title: 'Audit', objective: 'Verify', evidenceRefs: ['safe-ref', 'bad/ref'] },
+  }).code, 'ACTION_FIELD_VALUE_INVALID');
+
+  assert.equal(authorize({
+    id: 'task.create',
+    payload: { title: 'Audit', objective: 'Verify', evidenceRefs: Array.from({ length: 33 }, (_, i) => `e-${i}`) },
+  }).code, 'ACTION_FIELD_VALUE_INVALID');
+});
+
+test('non-record and non-serializable payloads fail closed without crashing authorization', () => {
+  assert.equal(authorize({ id: 'task.create', payload: new Date() }).code, 'INVALID_ACTION_PAYLOAD');
+
+  const circular = { title: 'Audit', objective: 'Verify' };
+  circular.self = circular;
+  assert.equal(authorize({ id: 'task.create', payload: circular }).code, 'ACTION_PAYLOAD_TOO_LARGE');
 });
 
 test('material actions require explicit confirmation and recent step-up', () => {
@@ -67,7 +108,7 @@ test('cross-tenant action cannot be authorized', () => {
   const verdict = authorizeHmiAction({
     session: session(),
     tenant,
-    action: { id: 'task.create', tenantId: 'org-b', payload: { title: 'x' } },
+    action: { id: 'task.create', tenantId: 'org-b', payload: { title: 'x', objective: 'y' } },
     now: NOW,
   });
   assert.equal(verdict.code, 'CROSS_TENANT_ACCESS');
