@@ -1,0 +1,109 @@
+name: BL-SCA — Voluntary Compute Provider Discovery
+about: Đề nghị khám phá việc cấp compute tự nguyện, có giới hạn và có quyền rút lại.
+title: "[BL-SCA Provider Discovery] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Form này chỉ mở **provider discovery**, chưa tạo Compute Grant và không cấp quyền truy cập máy/cloud.
+
+        Không đăng credential, IP nội bộ nhạy cảm, access token, private key hoặc dữ liệu khách hàng. BL-SCA chỉ được sử dụng tài nguyên sau một grant riêng, có `consentRef`, expiry/revocation và giới hạn tài nguyên/dữ liệu rõ ràng.
+  - type: dropdown
+    id: provider_type
+    attributes:
+      label: Loại provider
+      options:
+        - Cá nhân / workstation owner
+        - Team / lab
+        - Doanh nghiệp
+        - Data center / infrastructure operator
+        - Cloud credits / BYOC owner
+        - Community / volunteer pool
+        - Khác
+    validations:
+      required: true
+  - type: textarea
+    id: authority
+    attributes:
+      label: Cơ sở quyền cấp tài nguyên
+      description: Chỉ mô tả ở mức công khai, ví dụ “owner máy”, “admin được công ty ủy quyền”, “cloud account owner”. Không đăng giấy tờ nhạy cảm.
+    validations:
+      required: true
+  - type: textarea
+    id: capability
+    attributes:
+      label: Capability công khai sơ bộ
+      description: CPU/GPU/RAM/region/OS hoặc cloud service ở mức đủ để triage. Không cần serial/device ID hay topology nội bộ.
+      placeholder: "Ví dụ: 1x RTX 4090 24GB, 64GB RAM, VN, Windows/Linux, tối đa 4 giờ/đêm"
+    validations:
+      required: true
+  - type: textarea
+    id: limits
+    attributes:
+      label: Giới hạn chủ quyền
+      description: Nêu thời gian, thermal/power, network, cost, concurrency và các giới hạn tuyệt đối khác.
+    validations:
+      required: true
+  - type: dropdown
+    id: data_policy
+    attributes:
+      label: Dữ liệu chấp nhận
+      options:
+        - public only
+        - public + synthetic
+        - compute-to-data / data stays local
+        - private theo hợp đồng riêng, mặc định deny
+        - chưa quyết định
+    validations:
+      required: true
+  - type: textarea
+    id: workloads
+    attributes:
+      label: Workload muốn nhận / không muốn nhận
+      description: Ví dụ benchmark, render, batch CPU, inference, open science, public-benefit; đồng thời ghi rõ các class cấm.
+    validations:
+      required: true
+  - type: dropdown
+    id: settlement
+    attributes:
+      label: Hình thức giá trị quan tâm
+      options:
+        - Chưa quyết định — chỉ discovery
+        - Reciprocal compute / mutual aid
+        - Cash/provider payout nếu có
+        - DCC khi/ nếu được triển khai hợp lệ
+        - Strategic Compute Reinvestment opt-in có cap
+        - Public-benefit contribution tự nguyện
+        - Kết hợp theo hợp đồng riêng
+    validations:
+      required: true
+  - type: input
+    id: expiry
+    attributes:
+      label: Thời hạn pilot mong muốn
+      description: Ví dụ 7 ngày, 30 ngày, hoặc một job. Grant thật sẽ có expiry riêng.
+    validations:
+      required: true
+  - type: textarea
+    id: revocation
+    attributes:
+      label: Yêu cầu dừng / thu hồi
+      description: Nêu kỳ vọng về revoke, stop-at-checkpoint, thông báo hoặc hard stop.
+    validations:
+      required: true
+  - type: checkboxes
+    id: sovereignty
+    attributes:
+      label: Xác nhận chủ quyền
+      options:
+        - label: Tôi có quyền hợp pháp để đề xuất cấp phần tài nguyên được mô tả.
+          required: true
+        - label: Tôi hiểu issue này chưa cấp BL-SCA quyền chạy workload hay truy cập máy/cloud của tôi.
+          required: true
+        - label: Tôi giữ quyền rút/revoke grant theo điều khoản đã chấp thuận.
+          required: true
+        - label: Tôi không đăng credential, token, private key hoặc topology nội bộ nhạy cảm trong issue này.
+          required: true
+        - label: Mọi workload vẫn phải qua hard gates AUTHORIZED/LAWFUL/BOUNDED/REVOCABLE/VERIFIABLE/SOVEREIGN.
+          required: true
