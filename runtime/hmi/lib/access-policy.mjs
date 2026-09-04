@@ -60,10 +60,50 @@ function deny(code) {
   return { ok: false, code };
 }
 
+function decodePathLayers(value) {
+  let current = value;
+  for (let i = 0; i < 4; i += 1) {
+    let decoded;
+    try {
+      decoded = decodeURIComponent(current);
+    } catch {
+      return null;
+    }
+    if (decoded === current) return current;
+    current = decoded;
+  }
+  return /%[0-9a-f]{2}/i.test(current) ? null : current;
+}
+
+/**
+ * Canonicalize the authorization path before any namespace or scope decision.
+ *
+ * The HMI boundary must not depend on how an upstream proxy/router chooses to
+ * decode percent-encoding or resolve dot segments. Ambiguous separators are
+ * rejected rather than interpreted differently by two layers.
+ */
 function normalizePath(value) {
   if (typeof value !== 'string' || !value.startsWith('/')) return null;
-  const path = value.split('?')[0].replace(/\/+$/, '') || '/';
-  return path;
+
+  const rawPath = value.split(/[?#]/, 1)[0];
+  const decoded = decodePathLayers(rawPath);
+  if (decoded === null) return null;
+
+  const normalizedUnicode = decoded.normalize('NFKC');
+  if (/\\/.test(normalizedUnicode) || /[\u0000-\u001f\u007f]/.test(normalizedUnicode)) return null;
+
+  const segments = [];
+  for (const segment of normalizedUnicode.split('/')) {
+    if (!segment || segment === '.') continue;
+    if (segment === '..') {
+      if (segments.length === 0) return null;
+      segments.pop();
+      continue;
+    }
+    segments.push(segment);
+  }
+
+  return `/${segments.join('/')}`;
 }
 
 function under(path, prefix) {
