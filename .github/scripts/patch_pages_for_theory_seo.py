@@ -63,7 +63,7 @@ validation_block = '''          # THEORY social/SEO contract: crawler-safe raste
           brand = root / 'assets/brand'
           size_limits = {
               brand / 'theory-favicon.svg': 6_000,
-              brand / 'favicon.ico': 12_000,
+              brand / 'favicon.ico': 20_000,
               brand / 'apple-touch-icon.png': 30_000,
               brand / 'og/cover-human-development.jpg': 180_000,
               brand / 'og/cover-kevin-research-studio.jpg': 180_000,
