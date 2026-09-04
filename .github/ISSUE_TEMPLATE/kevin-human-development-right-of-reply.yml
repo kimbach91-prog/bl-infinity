@@ -1,0 +1,53 @@
+name: Kevin T.N — Right of Reply / Correction
+about: Phản biện hoặc yêu cầu sửa một claim trong công trình nghiên cứu phát triển con người Kevin T.N.
+title: "[Kevin Right of Reply] "
+labels: []
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Kênh này dành cho Kevin T.N hoặc người có bằng chứng trực tiếp liên quan đến một claim trong công trình. Không đăng credential, dữ liệu sức khỏe, thông tin riêng tư hoặc dữ liệu nhạy cảm vào issue công khai.
+  - type: input
+    id: claim
+    attributes:
+      label: Claim / đoạn cần phản biện
+      description: Nêu mục, câu hoặc mô tả đủ chính xác để xác định claim.
+    validations:
+      required: true
+  - type: dropdown
+    id: action
+    attributes:
+      label: Loại yêu cầu
+      options:
+        - Fact correction
+        - OBS → INFER reclassification
+        - Source / attribution correction
+        - Counterexample
+        - Scope reduction
+        - Add missing context
+        - Model revision
+        - Co-development proposal
+        - Opt-out / consent boundary clarification
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Bằng chứng hoặc lập luận
+      description: Ưu tiên URL nguồn công khai, commit, paper hoặc artifact có thể kiểm tra. Nếu nguồn riêng tư, chỉ nêu rằng có nguồn riêng và đề nghị kênh xác minh phù hợp.
+    validations:
+      required: true
+  - type: textarea
+    id: revision
+    attributes:
+      label: Cách sửa đề xuất
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Ranh giới công khai
+      options:
+        - label: Tôi không đưa credential hoặc dữ liệu nhạy cảm vào issue công khai này.
+          required: true
+        - label: Tôi hiểu phản biện có thể được lưu trong lịch sử revision để bảo toàn provenance.
+          required: true
