@@ -147,8 +147,6 @@ export class HybridSearchFabric {
         id: doc.id,
         title: doc.title ?? null,
         source: doc.source ?? null,
-        tenantId: doc.tenantId ?? 'default',
-        dataClass: doc.dataClass ?? 'public',
         score: Number((total * freshness).toFixed(6)),
         trust,
         updatedAt: doc.updatedAt ?? null,
@@ -164,15 +162,16 @@ export class HybridSearchFabric {
     return results.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).slice(0, Math.max(1, limit));
   }
 
-  stats() {
-    const byDataClass = { public: 0, internal: 0, private: 0 };
-    for (const doc of this.docs.values()) byDataClass[doc.dataClass ?? 'public'] += 1;
-    return {
+  stats({ includeDataClasses = false } = {}) {
+    const base = {
       documents: this.docs.size,
       vocabulary: this.df.size,
       relations: [...this.graph.values()].reduce((n, m) => n + m.size, 0),
-      byDataClass,
     };
+    if (!includeDataClasses) return base;
+    const byDataClass = { public: 0, internal: 0, private: 0 };
+    for (const doc of this.docs.values()) byDataClass[doc.dataClass ?? 'public'] += 1;
+    return { ...base, byDataClass };
   }
 
   #graphBoost(seedIds) {
