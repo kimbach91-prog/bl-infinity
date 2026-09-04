@@ -1,0 +1,69 @@
+name: Fix Kevin global map link
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/fix-kevin-global-map-link.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor == 'kimbach91-prog'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: true
+          fetch-depth: 1
+
+      - name: Fix over-deep relative link and audit siblings
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+          studio = root / 'research/human-development/kevin-nt/studio/index.html'
+          text = studio.read_text(encoding='utf-8')
+          bad = '../../../../../books/kevin-intellectual-map/'
+          good = '../../../../books/kevin-intellectual-map/'
+          count = text.count(bad)
+          if count != 1:
+              raise SystemExit(f'Expected exactly one broken global-map link, found {count}')
+          text = text.replace(bad, good)
+          studio.write_text(text, encoding='utf-8')
+
+          # Audit all public references to the Kevin global comparison map.
+          allowed = {
+              'research/human-development/kevin-nt/index.html': '../../../books/kevin-intellectual-map/',
+              'research/human-development/kevin-nt/tien-hoa-luong-cuc.html': '../../../books/kevin-intellectual-map/',
+              'research/human-development/kevin-nt/studio/index.html': '../../../../books/kevin-intellectual-map/',
+          }
+          for rel, expected in allowed.items():
+              body = (root / rel).read_text(encoding='utf-8')
+              if expected not in body:
+                  raise SystemExit(f'Expected route missing in {rel}: {expected}')
+          if bad in studio.read_text(encoding='utf-8'):
+              raise SystemExit('Broken route still present after fix')
+          print('Kevin global comparison route audit: PASS')
+          PY
+          git diff --check
+
+      - name: Commit fix
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "kimbach91-prog"
+          git config user.email "kimbach91@gmail.com"
+          git add research/human-development/kevin-nt/studio/index.html
+          if git diff --cached --quiet; then
+            echo "Link already fixed"
+          else
+            git commit -m "[OWNER-PUBLISH] Fix Kevin global comparison route"
+            git push origin HEAD:main
+          fi
