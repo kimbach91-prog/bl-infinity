@@ -1,0 +1,43 @@
+{
+  "manifestVersion": "0.1",
+  "relayId": "replace-with-pseudonymous-relay-id",
+  "consentRef": "replace-with-owner-authorization-reference",
+  "ownerRef": "private-owner-reference-not-email",
+  "deviceClass": "example-linux-small-form-factor",
+  "capabilityManifest": {
+    "cpuClass": "generic",
+    "gpuClass": "none-or-generic",
+    "memoryClass": "coarse-band",
+    "storageClass": "coarse-band",
+    "supportedWorkloads": ["relay", "bounded-cpu-task"]
+  },
+  "allowedWorkloads": ["relay"],
+  "resourceLimits": {
+    "maxConcurrency": 1,
+    "maxDutyCyclePercent": 20,
+    "maxMemoryPercentForDeus": 15,
+    "batteryFloorPercent": 50,
+    "foregroundYield": true
+  },
+  "thermalPolicy": {
+    "mode": "OWNER_DEFINED",
+    "pauseOptionalWorkOnPressure": true
+  },
+  "energyPolicy": {
+    "preferIdle": true,
+    "preferChargingWhenBatteryPowered": true,
+    "allowOwnerCostBudget": false
+  },
+  "dataLocalityPolicy": {
+    "rawTelemetry": "LOCAL_ONLY",
+    "personalContent": "DENIED",
+    "credentials": "DENIED",
+    "exportableRepairEpisodes": "DEIDENTIFIED_ONLY"
+  },
+  "actionMode": "ADVISORY_ONLY",
+  "safeActionAllowlist": [],
+  "credentialScopeRef": "private-reference-only",
+  "authorizationExpiry": "REPLACE_WITH_ISO8601_EXPIRY",
+  "revocationPath": "owner-visible-revocation-method",
+  "notes": "A reachable device is not an authorized device. Replace every placeholder before enrollment."
+}
