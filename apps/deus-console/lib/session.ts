@@ -28,8 +28,8 @@ const SESSION_COOKIE = '__Host-deus_session';
  */
 export async function loadVerifiedSession(): Promise<VerifiedSession | null> {
   const endpoint = process.env.DEUS_IDENTITY_SESSION_ENDPOINT;
-  const adapterToken = process.env.DEUS_IDENTITY_ADAPTER_TOKEN;
-  if (!endpoint || !adapterToken) return null;
+  const identityAdapterCredential = process.env.DEUS_IDENTITY_ADAPTER_TOKEN;
+  if (!endpoint || !identityAdapterCredential) return null;
 
   const cookieStore = await cookies();
   const handle = cookieStore.get(SESSION_COOKIE)?.value;
@@ -38,7 +38,7 @@ export async function loadVerifiedSession(): Promise<VerifiedSession | null> {
   const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
-      authorization: `Bearer ${adapterToken}`,
+      authorization: `Bearer ${identityAdapterCredential}`,
       'content-type': 'application/json',
     },
     body: JSON.stringify({ sessionHandle: handle }),
