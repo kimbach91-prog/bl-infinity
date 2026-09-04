@@ -83,5 +83,8 @@ validation_block = '''          # THEORY social/SEO contract: crawler-safe raste
 if 'THEORY social/SEO contract' not in text:
     text = text.replace(validation_needle, validation_block)
 
+# Older materialized workflow may already contain the block with the stricter first-pass cap.
+text = text.replace("brand / 'favicon.ico': 12_000", "brand / 'favicon.ico': 20_000")
+
 p.write_text(text, encoding='utf-8')
 print('Patched curated Pages workflow for THEORY SEO assets: PASS')
