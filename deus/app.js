@@ -1,30 +1,18 @@
 (() => {
   'use strict';
 
-  const IDS = {
-    gate: 'gate', loginView: 'loginView', constitutionView: 'constitutionView', nodeView: 'nodeView', appView: 'appView',
-    signInBtn: 'signInBtn', founderPreviewBtn: 'founderPreviewBtn', loginEmail: 'loginEmail', loginOrg: 'loginOrg', accessCode: 'accessCode', loginError: 'loginError',
-    acceptConstitutionBtn: 'acceptConstitutionBtn', backToLoginBtn: 'backToLoginBtn', constitutionError: 'constitutionError',
-    activateNodeBtn: 'activateNodeBtn', skipNodeBtn: 'skipNodeBtn', cpuDetected: 'cpuDetected', memoryDetected: 'memoryDetected', nodeName: 'nodeName', nodeRegion: 'nodeRegion', gpuLabel: 'gpuLabel', dataPolicy: 'dataPolicy', nodeNotes: 'nodeNotes',
-    actorName: 'actorName', actorOrg: 'actorOrg', workspaceSubtitle: 'workspaceSubtitle', modeChip: 'modeChip', controlPlaneChip: 'controlPlaneChip',
-    nodeState: 'nodeState', surplusState: 'surplusState', receiptId: 'receiptId', taskState: 'taskState', executionState: 'executionState', taskProgress: 'taskProgress', taskDetail: 'taskDetail',
-    composerInput: 'composerInput', workloadClass: 'workloadClass', executionPreference: 'executionPreference', sendBtn: 'sendBtn', messages: 'messages',
-    settingsDrawer: 'settingsDrawer', openGatewayBtn: 'openGatewayBtn', openNodeSettingsBtn: 'openNodeSettingsBtn', mobileSettingsBtn: 'mobileSettingsBtn', closeDrawerBtn: 'closeDrawerBtn',
-    gatewayEndpoint: 'gatewayEndpoint', gatewayToken: 'gatewayToken', saveGatewayBtn: 'saveGatewayBtn', clearGatewayBtn: 'clearGatewayBtn', gatewayResult: 'gatewayResult', leaveBtn: 'leaveBtn'
-  };
-
-  const el = Object.fromEntries(Object.entries(IDS).map(([k, id]) => [k, document.getElementById(id)]));
-  const constitutionChecks = [...document.querySelectorAll('.constitutionCheck')];
+  const $ = (id) => document.getElementById(id);
+  const checks = [...document.querySelectorAll('.constitutionCheck')];
 
   const STORAGE = {
-    receipt: 'deus_hos_receipt_v01',
-    node: 'deus_hos_node_v01',
-    drafts: 'deus_hos_task_drafts_v01',
+    receipt: 'deus_hos_receipt_v02',
+    node: 'deus_hos_node_v02',
+    drafts: 'deus_hos_task_drafts_v02',
     endpoint: 'deus_hos_gateway_endpoint',
     token: 'deus_hos_gateway_token',
-    actor: 'deus_hos_actor',
-    auth: 'deus_hos_authenticated',
-    preview: 'deus_hos_preview'
+    actor: 'deus_hos_actor_v02',
+    auth: 'deus_hos_authenticated_v02',
+    preview: 'deus_hos_preview_v02'
   };
 
   const state = {
@@ -37,57 +25,73 @@
     token: null
   };
 
-  function safeJsonParse(value, fallback = null) {
-    try { return value ? JSON.parse(value) : fallback; } catch { return fallback; }
-  }
-
-  function getSession(key) { return sessionStorage.getItem(key); }
-  function setSession(key, value) { sessionStorage.setItem(key, value); }
-  function clearSession(key) { sessionStorage.removeItem(key); }
+  const safeJson = (v, fallback = null) => {
+    try { return v ? JSON.parse(v) : fallback; } catch { return fallback; }
+  };
 
   function normalizeGateway(value) {
-    const raw = (value || '').trim();
+    const raw = String(value || '').trim();
     if (!raw) return null;
     try {
-      const url = new URL(raw);
-      if (url.protocol !== 'https:' && url.hostname !== 'localhost' && url.hostname !== '127.0.0.1') return null;
-      return url.toString().replace(/\/$/, '');
-    } catch {
-      return null;
+      const u = new URL(raw);
+      if (u.protocol !== 'https:' && !['localhost', '127.0.0.1'].includes(u.hostname)) return null;
+      return u.toString().replace(/\/$/, '');
+    } catch { return null; }
+  }
+
+  async function sha256(text) {
+    const bytes = new TextEncoder().encode(text);
+    const hash = await crypto.subtle.digest('SHA-256', bytes);
+    return [...new Uint8Array(hash)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  }
+
+  function showOnly(view) {
+    [$('loginView'), $('constitutionView'), $('nodeView')].forEach((v) => { v.hidden = v !== view; });
+    $('gate').hidden = false;
+    $('appView').hidden = true;
+  }
+
+  function showError(target, text) {
+    target.textContent = text;
+    target.hidden = false;
+  }
+
+  function clearError(target) {
+    target.textContent = '';
+    target.hidden = true;
+  }
+
+  function updateControlState() {
+    const production = Boolean(state.gateway && state.authenticated && state.token && !state.preview);
+    if (production) {
+      $('controlPlaneChip').innerHTML = '<span class="dot ok"></span>CONTROL PLANE ATTACHED';
+      $('modeChip').innerHTML = '<span class="dot ok"></span>PRODUCTION SESSION';
+      $('workspaceSubtitle').textContent = 'Authenticated control plane attached';
+      $('surplusState').textContent = 'Policy-gated';
+    } else if (state.gateway) {
+      $('controlPlaneChip').innerHTML = '<span class="dot warn"></span>GATEWAY CONFIGURED';
+      $('modeChip').innerHTML = '<span class="dot warn"></span>PREVIEW';
+      $('workspaceSubtitle').textContent = 'Gateway configured; production identity not established';
+      $('surplusState').textContent = 'Unavailable';
+    } else {
+      $('controlPlaneChip').innerHTML = '<span class="dot warn"></span>CONTROL PLANE OFFLINE';
+      $('modeChip').innerHTML = '<span class="dot warn"></span>PREVIEW';
+      $('workspaceSubtitle').textContent = 'Founder Bootstrap · No production control plane attached';
+      $('surplusState').textContent = 'Unavailable';
     }
   }
 
   function hydrateGateway() {
-    const urlParam = new URLSearchParams(location.search).get('gateway');
-    if (urlParam) {
-      const normalized = normalizeGateway(urlParam);
-      if (normalized) setSession(STORAGE.endpoint, normalized);
+    const queryGateway = new URLSearchParams(location.search).get('gateway');
+    if (queryGateway) {
+      const normalized = normalizeGateway(queryGateway);
+      if (normalized) sessionStorage.setItem(STORAGE.endpoint, normalized);
     }
-    state.gateway = normalizeGateway(getSession(STORAGE.endpoint));
-    state.token = getSession(STORAGE.token) || null;
-    el.gatewayEndpoint.value = state.gateway || '';
-    el.gatewayToken.value = state.token || '';
-    updateControlPlaneStatus();
-  }
-
-  function updateControlPlaneStatus() {
-    const online = Boolean(state.gateway && state.authenticated && state.token && !state.preview);
-    if (online) {
-      el.controlPlaneChip.innerHTML = '<span class="dot ok"></span>CONTROL PLANE ATTACHED';
-      el.modeChip.innerHTML = '<span class="dot ok"></span>PRODUCTION SESSION';
-      el.workspaceSubtitle.textContent = 'Authenticated control plane attached';
-      el.surplusState.textContent = 'Policy-gated';
-    } else if (state.gateway) {
-      el.controlPlaneChip.innerHTML = '<span class="dot warn"></span>GATEWAY CONFIGURED';
-      el.modeChip.innerHTML = '<span class="dot warn"></span>PREVIEW';
-      el.workspaceSubtitle.textContent = 'Gateway configured, but no authenticated production session';
-      el.surplusState.textContent = 'Unavailable';
-    } else {
-      el.controlPlaneChip.innerHTML = '<span class="dot warn"></span>CONTROL PLANE OFFLINE';
-      el.modeChip.innerHTML = '<span class="dot warn"></span>PREVIEW';
-      el.workspaceSubtitle.textContent = 'Founder Bootstrap · No production control plane attached';
-      el.surplusState.textContent = 'Unavailable';
-    }
+    state.gateway = normalizeGateway(sessionStorage.getItem(STORAGE.endpoint));
+    state.token = sessionStorage.getItem(STORAGE.token) || null;
+    $('gatewayEndpoint').value = state.gateway || '';
+    $('gatewayToken').value = state.token || '';
+    updateControlState();
   }
 
   async function api(path, options = {}) {
@@ -95,162 +99,150 @@
     const headers = new Headers(options.headers || {});
     headers.set('Content-Type', 'application/json');
     if (state.token) headers.set('Authorization', `Bearer ${state.token}`);
-    const res = await fetch(`${state.gateway}${path}`, { ...options, headers, mode: 'cors', cache: 'no-store' });
-    const text = await res.text();
-    let body = null;
+    const response = await fetch(`${state.gateway}${path}`, {
+      ...options,
+      headers,
+      cache: 'no-store',
+      mode: 'cors'
+    });
+    const text = await response.text();
+    let body;
     try { body = text ? JSON.parse(text) : {}; } catch { body = { message: text }; }
-    if (!res.ok) throw new Error(body?.error || body?.message || `HTTP ${res.status}`);
+    if (!response.ok) throw new Error(body?.error || body?.message || `HTTP ${response.status}`);
     return body || {};
   }
 
-  function showOnly(view) {
-    [el.loginView, el.constitutionView, el.nodeView].forEach(v => { v.hidden = v !== view; });
-    el.gate.hidden = false;
-    el.appView.hidden = true;
-  }
-
-  function showError(target, message) {
-    target.textContent = message;
-    target.hidden = false;
-  }
-
-  function clearError(target) {
-    target.hidden = true;
-    target.textContent = '';
-  }
-
   function detectHardware() {
-    const cores = navigator.hardwareConcurrency || null;
-    const memory = navigator.deviceMemory || null;
-    el.cpuDetected.textContent = cores ? `${cores} threads` : 'Unknown';
-    el.memoryDetected.textContent = memory ? `${memory} GB` : 'Unknown';
+    $('cpuDetected').textContent = navigator.hardwareConcurrency ? `${navigator.hardwareConcurrency} threads` : 'Unknown';
+    $('memoryDetected').textContent = navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'Unknown';
   }
 
-  async function sha256(text) {
-    const bytes = new TextEncoder().encode(text);
-    const hash = await crypto.subtle.digest('SHA-256', bytes);
-    return [...new Uint8Array(hash)].map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  async function startProductionLogin() {
-    clearError(el.loginError);
-    const email = el.loginEmail.value.trim();
-    const org = el.loginOrg.value.trim();
-    const code = el.accessCode.value;
-
+  async function productionLogin() {
+    clearError($('loginError'));
+    const email = $('loginEmail').value.trim();
+    const organization = $('loginOrg').value.trim();
+    const accessCode = $('accessCode').value;
     if (!state.gateway) {
-      showError(el.loginError, 'Chưa có gateway production. Hiện có thể dùng Founder Preview hoặc mở URL với ?gateway=https://... để bootstrap identity service.');
+      showError($('loginError'), 'Production identity gateway chưa được gắn. Dùng Founder Preview chỉ để kiểm tra giao diện; không phải production authentication.');
       return;
     }
-    if (!email || !org || !code) {
-      showError(el.loginError, 'Cần email, tổ chức và mã truy cập để đăng nhập production.');
+    if (!email || !organization || !accessCode) {
+      showError($('loginError'), 'Cần email, tổ chức và thông tin xác thực của gateway.');
       return;
     }
-
-    el.signInBtn.disabled = true;
-    el.signInBtn.textContent = 'Đang xác thực...';
+    $('signInBtn').disabled = true;
     try {
       const result = await api('/auth/session', {
         method: 'POST',
-        body: JSON.stringify({ email, organization: org, accessCode: code, surface: 'deus-human-os', version: '0.1' })
+        body: JSON.stringify({ email, organization, accessCode, surface: 'deus-human-os', version: '0.2' })
       });
       if (!result.sessionToken) throw new Error('Gateway không trả sessionToken.');
+      state.actor = result.actor || { name: email, email, organization };
       state.token = result.sessionToken;
-      state.actor = result.actor || { name: email, organization: org, email };
       state.authenticated = true;
       state.preview = false;
-      setSession(STORAGE.token, state.token);
-      setSession(STORAGE.actor, JSON.stringify(state.actor));
-      setSession(STORAGE.auth, '1');
-      clearSession(STORAGE.preview);
-      el.accessCode.value = '';
-      updateControlPlaneStatus();
-      showOnly(el.constitutionView);
+      sessionStorage.setItem(STORAGE.actor, JSON.stringify(state.actor));
+      sessionStorage.setItem(STORAGE.token, state.token);
+      sessionStorage.setItem(STORAGE.auth, '1');
+      sessionStorage.removeItem(STORAGE.preview);
+      $('accessCode').value = '';
+      updateControlState();
+      showOnly($('constitutionView'));
     } catch (err) {
-      showError(el.loginError, `Đăng nhập thất bại: ${err.message}`);
+      showError($('loginError'), `Đăng nhập thất bại: ${err.message}`);
     } finally {
-      el.signInBtn.disabled = false;
-      el.signInBtn.textContent = 'Đăng nhập';
+      $('signInBtn').disabled = false;
     }
   }
 
-  function startFounderPreview() {
+  function founderPreview() {
     state.actor = { name: 'Founding Steward', organization: 'BL / DEUS Bootstrap', role: 'founder' };
     state.authenticated = false;
     state.preview = true;
-    setSession(STORAGE.actor, JSON.stringify(state.actor));
-    setSession(STORAGE.preview, '1');
-    clearSession(STORAGE.auth);
-    updateControlPlaneStatus();
-    showOnly(el.constitutionView);
+    sessionStorage.setItem(STORAGE.actor, JSON.stringify(state.actor));
+    sessionStorage.setItem(STORAGE.preview, '1');
+    sessionStorage.removeItem(STORAGE.auth);
+    updateControlState();
+    showOnly($('constitutionView'));
   }
 
   function updateAcceptButton() {
-    el.acceptConstitutionBtn.disabled = !constitutionChecks.every(c => c.checked);
+    $('acceptConstitutionBtn').disabled = !checks.every((c) => c.checked);
   }
 
   async function acceptConstitution() {
-    clearError(el.constitutionError);
-    if (!constitutionChecks.every(c => c.checked)) return;
+    clearError($('constitutionError'));
+    if (!checks.every((c) => c.checked)) return;
 
     const receiptBody = {
       surface: 'DEUS Human OS',
-      surfaceVersion: '0.1',
+      surfaceVersion: '0.2',
       constitution: 'BL-CF Founding Constitution v0.4',
-      schedule: 'DEUS Human OS Membership & Settlement Schedule v0.1',
+      schedule: 'DEUS Human OS Bootstrap Membership & Resource Schedule v0.2',
       actor: state.actor,
       acceptedAt: new Date().toISOString(),
       terms: {
         authorityAttested: true,
-        officialProtocolCommercialShare: 0.10,
-        deusPerformanceShareVerifiedIncrementalValue: 0.10,
-        eligibleIdleComputeCap: 0.10,
-        localWorkloadPriority: true,
+        commercializationCapacityTarget: 0.10,
+        infrastructureDevelopmentCapacityTarget: 0.10,
+        crossSessionMutualComputeIdleCap: 0.10,
+        crossSessionIdleOnly: true,
+        customerForegroundPriority: true,
+        customerOwnWorkMayUseAllReasonablyAvailablePermittedLocalCapacity: true,
+        federationSupplementationForCustomer: true,
         revocableGrant: true,
         coreIsolationAcknowledged: true
       },
       receiptMode: state.preview ? 'browser-preview' : 'server-required'
     };
+
     const digest = await sha256(JSON.stringify(receiptBody));
     const localReceipt = { ...receiptBody, localReceiptId: `local-sha256:${digest}` };
+    $('acceptConstitutionBtn').disabled = true;
+    $('acceptConstitutionBtn').textContent = 'Đang tạo receipt...';
 
-    el.acceptConstitutionBtn.disabled = true;
-    el.acceptConstitutionBtn.textContent = 'Đang tạo receipt...';
     try {
       if (state.authenticated && state.gateway && !state.preview) {
-        const result = await api('/constitution/acceptances', { method: 'POST', body: JSON.stringify(localReceipt) });
+        const result = await api('/constitution/acceptances', {
+          method: 'POST',
+          body: JSON.stringify(localReceipt)
+        });
         if (!result.receiptId) throw new Error('Control plane không trả receiptId production.');
         state.receipt = { ...localReceipt, serverReceiptId: result.receiptId, serverProof: result.proof || null };
       } else {
         state.receipt = localReceipt;
       }
       localStorage.setItem(STORAGE.receipt, JSON.stringify(state.receipt));
-      el.receiptId.textContent = state.receipt.serverReceiptId || state.receipt.localReceiptId;
+      $('receiptId').textContent = state.receipt.serverReceiptId || state.receipt.localReceiptId;
       detectHardware();
-      showOnly(el.nodeView);
+      showOnly($('nodeView'));
     } catch (err) {
-      showError(el.constitutionError, `Không thể hoàn tất acceptance: ${err.message}`);
+      showError($('constitutionError'), `Không thể hoàn tất acceptance: ${err.message}`);
     } finally {
-      el.acceptConstitutionBtn.textContent = 'Chấp nhận và tạo receipt';
+      $('acceptConstitutionBtn').textContent = 'Chấp nhận và tạo receipt v0.2';
       updateAcceptButton();
     }
   }
 
   function currentNodeProfile() {
     return {
-      nodeName: el.nodeName.value.trim() || 'Unnamed Node',
-      region: el.nodeRegion.value.trim() || 'UNSPECIFIED',
-      gpuLabel: el.gpuLabel.value.trim() || null,
-      dataPolicy: el.dataPolicy.value,
-      notes: el.nodeNotes.value.trim() || null,
+      nodeName: $('nodeName').value.trim() || 'Unnamed Node',
+      region: $('nodeRegion').value.trim() || 'UNSPECIFIED',
+      gpuLabel: $('gpuLabel').value.trim() || null,
+      dataPolicy: $('dataPolicy').value,
+      notes: $('nodeNotes').value.trim() || null,
       browserReported: {
         logicalCpuThreads: navigator.hardwareConcurrency || null,
         deviceMemoryGB: navigator.deviceMemory || null,
-        userAgentClass: navigator.userAgentData?.platform || navigator.platform || 'unknown'
+        platform: navigator.userAgentData?.platform || navigator.platform || 'unknown'
       },
       grant: {
-        eligibleIdleComputeCap: 0.10,
-        localWorkloadPriority: true,
+        commercializationCapacityTarget: 0.10,
+        infrastructureDevelopmentCapacityTarget: 0.10,
+        crossSessionMutualComputeIdleCap: 0.10,
+        crossSessionIdleOnly: true,
+        customerForegroundPriority: true,
+        customerOwnWorkMayUseAllReasonablyAvailablePermittedLocalCapacity: true,
         arbitraryInboundShell: false,
         revocable: true,
         productionAgentAttached: false
@@ -260,8 +252,8 @@
 
   async function activateNode() {
     const profile = currentNodeProfile();
-    el.activateNodeBtn.disabled = true;
-    el.activateNodeBtn.textContent = 'Đang ghi grant...';
+    $('activateNodeBtn').disabled = true;
+    $('activateNodeBtn').textContent = 'Đang ghi grant...';
     try {
       if (state.authenticated && state.gateway && !state.preview) {
         const result = await api('/nodes/grants', {
@@ -279,34 +271,25 @@
     } catch (err) {
       alert(`Không thể kích hoạt node: ${err.message}`);
     } finally {
-      el.activateNodeBtn.disabled = false;
-      el.activateNodeBtn.textContent = 'Kích hoạt hồ sơ node';
+      $('activateNodeBtn').disabled = false;
+      $('activateNodeBtn').textContent = 'Kích hoạt hồ sơ node';
     }
   }
 
-  function skipNode() {
-    state.node = null;
-    enterApp();
-  }
-
-  function updateAppIdentity() {
+  function updateIdentity() {
     const actor = state.actor || { name: 'Unknown actor', organization: 'Unknown' };
-    el.actorName.textContent = actor.name || actor.email || 'Authenticated actor';
-    el.actorOrg.textContent = actor.organization || actor.org || 'No organization';
-    el.receiptId.textContent = state.receipt?.serverReceiptId || state.receipt?.localReceiptId || 'Not accepted';
-    if (state.node) {
-      el.nodeState.textContent = state.node.productionAgentAttached ? 'Agent attached' : 'Profile active';
-    } else {
-      el.nodeState.textContent = 'Not active';
-    }
-    updateControlPlaneStatus();
+    $('actorName').textContent = actor.name || actor.email || 'Authenticated actor';
+    $('actorOrg').textContent = actor.organization || actor.org || 'No organization';
+    $('receiptId').textContent = state.receipt?.serverReceiptId || state.receipt?.localReceiptId || 'Not accepted';
+    $('nodeState').textContent = state.node ? (state.node.productionAgentAttached ? 'Agent attached' : 'Profile active') : 'Not active';
+    updateControlState();
   }
 
   function enterApp() {
-    el.gate.hidden = true;
-    el.appView.hidden = false;
-    updateAppIdentity();
-    el.composerInput.focus();
+    $('gate').hidden = true;
+    $('appView').hidden = false;
+    updateIdentity();
+    $('composerInput').focus();
   }
 
   function appendMessage(kind, meta, text) {
@@ -315,110 +298,109 @@
     const m = document.createElement('div');
     m.className = 'msg-meta';
     m.textContent = meta;
-    const body = document.createElement('div');
-    body.textContent = text;
-    box.append(m, body);
-    el.messages.appendChild(box);
-    el.messages.scrollTop = el.messages.scrollHeight;
+    const b = document.createElement('div');
+    b.textContent = text;
+    box.append(m, b);
+    $('messages').appendChild(box);
+    $('messages').scrollTop = $('messages').scrollHeight;
   }
 
-  function setTaskStatus(stateText, executionText, detail, progress = 0) {
-    el.taskState.textContent = stateText;
-    el.executionState.textContent = executionText;
-    el.taskDetail.textContent = detail;
-    el.taskProgress.style.width = `${Math.max(0, Math.min(100, progress))}%`;
+  function setTaskStatus(stateText, execution, detail, progress = 0) {
+    $('taskState').textContent = stateText;
+    $('executionState').textContent = execution;
+    $('taskDetail').textContent = detail;
+    $('taskProgress').style.width = `${Math.max(0, Math.min(100, progress))}%`;
   }
 
   function storeDraft(task) {
-    const drafts = safeJsonParse(localStorage.getItem(STORAGE.drafts), []) || [];
+    const drafts = safeJson(localStorage.getItem(STORAGE.drafts), []) || [];
     drafts.push(task);
     while (drafts.length > 50) drafts.shift();
     localStorage.setItem(STORAGE.drafts, JSON.stringify(drafts));
   }
 
   async function sendTask() {
-    const text = el.composerInput.value.trim();
+    const text = $('composerInput').value.trim();
     if (!text) return;
     const task = {
       clientTaskId: crypto.randomUUID ? crypto.randomUUID() : `task-${Date.now()}-${Math.random().toString(16).slice(2)}`,
       message: text,
-      workloadClass: el.workloadClass.value,
-      executionPreference: el.executionPreference.value,
+      workloadClass: $('workloadClass').value,
+      executionPreference: $('executionPreference').value,
       receiptId: state.receipt?.serverReceiptId || state.receipt?.localReceiptId || null,
       nodeGrantId: state.node?.grantId || null,
+      resourcePolicy: {
+        customerForegroundPriority: true,
+        localCapacityMode: 'all-reasonably-available-permitted',
+        federationSupplementation: true
+      },
       createdAt: new Date().toISOString()
     };
 
     appendMessage('user', `YOU · ${task.workloadClass}`, text);
-    el.composerInput.value = '';
-    el.sendBtn.disabled = true;
+    $('composerInput').value = '';
+    $('sendBtn').disabled = true;
 
     if (!(state.authenticated && state.gateway && state.token && !state.preview)) {
       storeDraft(task);
       setTaskStatus('Drafted', 'None', 'Task đã lưu cục bộ. Chưa có production execution record.', 0);
-      appendMessage('system', 'SYSTEM · NOT EXECUTED', `Task ${task.clientTaskId} đã được lưu cục bộ. Không có control plane production nên DEUS chưa xử lý task này.`);
-      el.sendBtn.disabled = false;
+      appendMessage('system', 'SYSTEM · NOT EXECUTED', `Task ${task.clientTaskId} đã lưu cục bộ. Không có control plane production nên DEUS chưa xử lý task này.`);
+      $('sendBtn').disabled = false;
       return;
     }
 
     try {
-      setTaskStatus('Queued', 'Routing', 'Đang gửi task đến control plane...', 18);
-      const result = await api('/chat', {
-        method: 'POST',
-        body: JSON.stringify(task)
-      });
+      setTaskStatus('Queued', 'Routing', 'Đang gửi task đến control plane với customer-first policy...', 18);
+      const result = await api('/chat', { method: 'POST', body: JSON.stringify(task) });
       const taskId = result.taskId || task.clientTaskId;
-      const status = result.status || 'accepted';
       const execution = result.execution || result.route || 'Control plane';
-      setTaskStatus(status, execution, `Execution record: ${taskId}`, result.progress ?? (result.reply ? 100 : 40));
-      if (result.reply) {
-        appendMessage('deus', `DEUS · ${execution}`, result.reply);
-      } else {
-        appendMessage('system', 'SYSTEM · ACCEPTED', `Control plane đã nhận task ${taskId}. Chưa có final reply trong response này.`);
-      }
+      setTaskStatus(result.status || 'accepted', execution, `Execution record: ${taskId}`, result.progress ?? (result.reply ? 100 : 40));
+      if (result.reply) appendMessage('deus', `DEUS · ${execution}`, result.reply);
+      else appendMessage('system', 'SYSTEM · ACCEPTED', `Control plane đã nhận task ${taskId}. Chưa có final reply trong response này.`);
     } catch (err) {
       setTaskStatus('Error', 'None', err.message, 0);
       appendMessage('system', 'SYSTEM · EXECUTION ERROR', `Không có bằng chứng task đã hoàn tất. Gateway báo lỗi: ${err.message}`);
     } finally {
-      el.sendBtn.disabled = false;
-      el.composerInput.focus();
+      $('sendBtn').disabled = false;
+      $('composerInput').focus();
     }
   }
 
   function openDrawer() {
-    el.settingsDrawer.hidden = false;
-    el.gatewayEndpoint.value = state.gateway || '';
-    el.gatewayToken.value = state.token || '';
+    $('settingsDrawer').hidden = false;
+    $('gatewayEndpoint').value = state.gateway || '';
+    $('gatewayToken').value = state.token || '';
   }
 
-  function closeDrawer() { el.settingsDrawer.hidden = true; }
+  function closeDrawer() { $('settingsDrawer').hidden = true; }
 
   function saveGateway() {
-    const endpoint = normalizeGateway(el.gatewayEndpoint.value);
-    const token = el.gatewayToken.value.trim();
+    const endpoint = normalizeGateway($('gatewayEndpoint').value);
+    const token = $('gatewayToken').value.trim();
     if (!endpoint) {
-      el.gatewayResult.textContent = 'Gateway phải là HTTPS hợp lệ. Localhost chỉ dành cho development.';
+      $('gatewayResult').textContent = 'Gateway phải là HTTPS hợp lệ. Localhost chỉ dành cho development.';
       return;
     }
     state.gateway = endpoint;
     state.token = token || null;
-    setSession(STORAGE.endpoint, endpoint);
-    if (state.token) setSession(STORAGE.token, state.token); else clearSession(STORAGE.token);
-    el.gatewayResult.textContent = state.preview
-      ? 'Gateway đã lưu cho tab này. Founder Preview vẫn không được coi là production auth; hãy thoát và đăng nhập qua identity service để thực thi thật.'
+    sessionStorage.setItem(STORAGE.endpoint, endpoint);
+    if (state.token) sessionStorage.setItem(STORAGE.token, state.token);
+    else sessionStorage.removeItem(STORAGE.token);
+    $('gatewayResult').textContent = state.preview
+      ? 'Đã lưu gateway cho tab preview. Production Zero-Trust R2 phải dùng same-origin Passkey/MFA; preview này không được coi là production auth.'
       : 'Gateway đã lưu cho phiên hiện tại.';
-    updateControlPlaneStatus();
+    updateControlState();
   }
 
   function clearGateway() {
     state.gateway = null;
     state.token = null;
-    clearSession(STORAGE.endpoint);
-    clearSession(STORAGE.token);
-    el.gatewayEndpoint.value = '';
-    el.gatewayToken.value = '';
-    el.gatewayResult.textContent = 'Đã ngắt gateway khỏi phiên trình duyệt.';
-    updateControlPlaneStatus();
+    sessionStorage.removeItem(STORAGE.endpoint);
+    sessionStorage.removeItem(STORAGE.token);
+    $('gatewayEndpoint').value = '';
+    $('gatewayToken').value = '';
+    $('gatewayResult').textContent = 'Đã ngắt gateway khỏi phiên trình duyệt.';
+    updateControlState();
   }
 
   function leaveSession() {
@@ -426,51 +408,41 @@
     state.authenticated = false;
     state.preview = false;
     state.token = null;
-    clearSession(STORAGE.actor);
-    clearSession(STORAGE.auth);
-    clearSession(STORAGE.preview);
-    clearSession(STORAGE.token);
-    closeDrawer();
-    constitutionChecks.forEach(c => { c.checked = false; });
+    [STORAGE.actor, STORAGE.auth, STORAGE.preview, STORAGE.token].forEach((k) => sessionStorage.removeItem(k));
+    checks.forEach((c) => { c.checked = false; });
     updateAcceptButton();
-    showOnly(el.loginView);
-    updateControlPlaneStatus();
+    closeDrawer();
+    showOnly($('loginView'));
+    updateControlState();
   }
 
   function restoreSession() {
-    state.actor = safeJsonParse(getSession(STORAGE.actor), null);
-    state.authenticated = getSession(STORAGE.auth) === '1';
-    state.preview = getSession(STORAGE.preview) === '1';
-    state.receipt = safeJsonParse(localStorage.getItem(STORAGE.receipt), null);
-    state.node = safeJsonParse(localStorage.getItem(STORAGE.node), null);
-
-    if (state.actor && state.receipt && (state.authenticated || state.preview)) {
-      enterApp();
-    } else {
-      showOnly(el.loginView);
-    }
+    state.actor = safeJson(sessionStorage.getItem(STORAGE.actor), null);
+    state.authenticated = sessionStorage.getItem(STORAGE.auth) === '1';
+    state.preview = sessionStorage.getItem(STORAGE.preview) === '1';
+    state.receipt = safeJson(localStorage.getItem(STORAGE.receipt), null);
+    state.node = safeJson(localStorage.getItem(STORAGE.node), null);
+    if (state.actor && state.receipt && (state.authenticated || state.preview)) enterApp();
+    else showOnly($('loginView'));
   }
 
-  constitutionChecks.forEach(c => c.addEventListener('change', updateAcceptButton));
-  el.signInBtn.addEventListener('click', startProductionLogin);
-  el.founderPreviewBtn.addEventListener('click', startFounderPreview);
-  el.backToLoginBtn.addEventListener('click', () => showOnly(el.loginView));
-  el.acceptConstitutionBtn.addEventListener('click', acceptConstitution);
-  el.activateNodeBtn.addEventListener('click', activateNode);
-  el.skipNodeBtn.addEventListener('click', skipNode);
-  el.sendBtn.addEventListener('click', sendTask);
-  el.composerInput.addEventListener('keydown', e => {
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
-      e.preventDefault();
-      sendTask();
-    }
+  checks.forEach((c) => c.addEventListener('change', updateAcceptButton));
+  $('signInBtn').addEventListener('click', productionLogin);
+  $('founderPreviewBtn').addEventListener('click', founderPreview);
+  $('backToLoginBtn').addEventListener('click', () => showOnly($('loginView')));
+  $('acceptConstitutionBtn').addEventListener('click', acceptConstitution);
+  $('activateNodeBtn').addEventListener('click', activateNode);
+  $('skipNodeBtn').addEventListener('click', () => { state.node = null; enterApp(); });
+  $('sendBtn').addEventListener('click', sendTask);
+  $('composerInput').addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); sendTask(); }
   });
-  [el.openGatewayBtn, el.openNodeSettingsBtn, el.mobileSettingsBtn].forEach(btn => btn.addEventListener('click', openDrawer));
-  el.closeDrawerBtn.addEventListener('click', closeDrawer);
-  el.settingsDrawer.addEventListener('click', e => { if (e.target === el.settingsDrawer) closeDrawer(); });
-  el.saveGatewayBtn.addEventListener('click', saveGateway);
-  el.clearGatewayBtn.addEventListener('click', clearGateway);
-  el.leaveBtn.addEventListener('click', leaveSession);
+  [$('openGatewayBtn'), $('openNodeSettingsBtn'), $('mobileSettingsBtn')].forEach((btn) => btn.addEventListener('click', openDrawer));
+  $('closeDrawerBtn').addEventListener('click', closeDrawer);
+  $('settingsDrawer').addEventListener('click', (e) => { if (e.target === $('settingsDrawer')) closeDrawer(); });
+  $('saveGatewayBtn').addEventListener('click', saveGateway);
+  $('clearGatewayBtn').addEventListener('click', clearGateway);
+  $('leaveBtn').addEventListener('click', leaveSession);
 
   hydrateGateway();
   detectHardware();
