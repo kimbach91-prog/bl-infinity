@@ -29,11 +29,13 @@ jobs:
           node-version: '22'
       - name: Validate HCS JSON syntax
         run: |
-          node -e "for (const p of ['standards/HCS-GATES-v1.0.json','standards/humanity/HCS-REGISTRY-v0.1.json','standards/humanity/schemas/hcs-envelope.schema.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('HCS JSON syntax ok')"
+          node -e "for (const p of ['standards/HCS-GATES-v1.0.json','standards/humanity/HCS-REGISTRY-v0.1.json','standards/humanity/schemas/hcs-envelope.schema.json','standards/humanity/conformance/vectors/core-v0.1.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('HCS JSON syntax ok')"
       - name: Check HCS invariants
         run: node standards/humanity/runtime/check-hcs.mjs
       - name: Test HCS canonicalization
         run: node --test standards/humanity/runtime/canonicalize-hcs.test.mjs
+      - name: Run HCS core conformance vectors
+        run: node standards/humanity/conformance/run-core-vectors.mjs
       - name: Reject secrets and core leakage markers
         shell: bash
         run: |
@@ -52,3 +54,8 @@ jobs:
         run: |
           grep -q "CODE_PRESENT != CONTROL_ACTIVE != CONFORMANCE_PROVEN != ADOPTION" standards/HCS-ENDSTATE-v1.0.md
           grep -q '"truthfulnessInvariant": "NO_EVIDENCE_NO_PASS"' standards/HCS-GATES-v1.0.json
+      - name: Require reviewed canonicalization profile
+        shell: bash
+        run: |
+          grep -q "RFC 8785" standards/humanity/HCS-CANONICALIZATION-v0.1.md
+          grep -q "urn:hcs:integrity-target:envelope-without-integrity-v1" standards/humanity/schemas/hcs-envelope.schema.json
