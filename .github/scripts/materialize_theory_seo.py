@@ -8,7 +8,9 @@ import re
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "https://kimbach91-prog.github.io/bl-infinity"
-BRAND = ROOT / "assets" / "brand"
+PUBLIC_ASSET_PATH = "books/theory-assets"
+ASSET_BASE = f"{BASE}/{PUBLIC_ASSET_PATH}"
+BRAND = ROOT / PUBLIC_ASSET_PATH
 OG_SRC = BRAND / "og-src"
 OG = BRAND / "og"
 
@@ -27,8 +29,9 @@ SEO_END = "<!-- THEORY-SEO:END -->"
 REMOVE_PATTERNS = [
     r'<link\s+rel=["\'](?:icon|shortcut icon|apple-touch-icon)["\'][^>]*>\s*',
     r'<meta\s+property=["\']og:image(?::[^"\']+)?["\'][^>]*>\s*',
-    r'<meta\s+name=["\']twitter:(?:card|image|image:alt)["\'][^>]*>\s*',
     r'<meta\s+property=["\']og:locale["\'][^>]*>\s*',
+    r'<meta\s+property=["\']og:site_name["\'][^>]*>\s*',
+    r'<meta\s+name=["\']twitter:(?:card|image|image:alt)["\'][^>]*>\s*',
     r'<meta\s+name=["\']theme-color["\'][^>]*>\s*',
 ]
 
@@ -44,8 +47,7 @@ def emblem_svg() -> str:
 
 
 def cover_svg(lines: list[str], title: str) -> str:
-    n = len(lines)
-    if n == 2:
+    if len(lines) == 2:
         fs, ys = 92, [330, 448]
     else:
         longest = max(len(x) for x in lines)
@@ -56,9 +58,7 @@ def cover_svg(lines: list[str], title: str) -> str:
         for line, y in zip(lines, ys)
     )
     return f'''<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="THEORY ∞ — {escape(title)}">
-<defs>
-  <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111a45"/><stop offset="1" stop-color="#6c28ff"/></linearGradient>
-</defs>
+<defs><linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#111a45"/><stop offset="1" stop-color="#6c28ff"/></linearGradient></defs>
 <rect width="1200" height="630" fill="#f8f4ec"/>
 <g transform="translate(70 58) scale(.34)">
   <rect x="0" y="0" width="160" height="24" rx="3" fill="#111a3b"/>
@@ -80,10 +80,10 @@ def cover_svg(lines: list[str], title: str) -> str:
 
 
 def managed_tags(slug: str, alt: str) -> str:
-    img = f"{BASE}/assets/brand/og/{slug}.jpg"
-    fav = f"{BASE}/assets/brand/theory-favicon.svg"
-    ico = f"{BASE}/assets/brand/favicon.ico"
-    apple = f"{BASE}/assets/brand/apple-touch-icon.png"
+    img = f"{ASSET_BASE}/og/{slug}.jpg"
+    fav = f"{ASSET_BASE}/theory-favicon.svg"
+    ico = f"{ASSET_BASE}/favicon.ico"
+    apple = f"{ASSET_BASE}/apple-touch-icon.png"
     safe_alt = html.escape(f"THEORY ∞ — {alt}", quote=True)
     return f'''{SEO_BEGIN}
 <link rel="icon" type="image/svg+xml" href="{fav}">
@@ -91,6 +91,7 @@ def managed_tags(slug: str, alt: str) -> str:
 <link rel="apple-touch-icon" sizes="180x180" href="{apple}">
 <meta name="theme-color" content="#f8f4ec">
 <meta property="og:locale" content="vi_VN">
+<meta property="og:site_name" content="THEORY ∞">
 <meta property="og:image" content="{img}">
 <meta property="og:image:secure_url" content="{img}">
 <meta property="og:image:type" content="image/jpeg">
@@ -103,11 +104,24 @@ def managed_tags(slug: str, alt: str) -> str:
 {SEO_END}'''
 
 
+def ensure_large_image_robot(text: str) -> str:
+    m = re.search(r'<meta\s+name=["\']robots["\']\s+content=["\']([^"\']*)["\'][^>]*>', text, re.I)
+    if not m:
+        return text
+    content = m.group(1)
+    directives = [x.strip() for x in content.split(',') if x.strip()]
+    if not any(x.lower().startswith('max-image-preview:') for x in directives):
+        directives.append('max-image-preview:large')
+    replacement = f'<meta name="robots" content="{html.escape(",".join(directives), quote=True)}">'
+    return text[:m.start()] + replacement + text[m.end():]
+
+
 def update_html(path: Path, slug: str, alt: str) -> None:
     text = path.read_text(encoding="utf-8")
     text = re.sub(re.escape(SEO_BEGIN) + r'.*?' + re.escape(SEO_END), '', text, flags=re.S)
     for pat in REMOVE_PATTERNS:
         text = re.sub(pat, '', text, flags=re.I)
+    text = ensure_large_image_robot(text)
     block = managed_tags(slug, alt)
     if "</head>" not in text.lower():
         raise SystemExit(f"Missing </head>: {path.relative_to(ROOT)}")
@@ -115,26 +129,30 @@ def update_html(path: Path, slug: str, alt: str) -> None:
     path.write_text(text, encoding="utf-8")
 
 
-def write_image_sitemap() -> None:
-    rows = []
+def canonical_page(rel: str) -> str:
+    url = f"{BASE}/{rel}"
+    return url[:-10] if url.endswith("index.html") else url
+
+
+def update_sitemap() -> None:
+    p = ROOT / "sitemap.xml"
+    text = p.read_text(encoding="utf-8")
+    if 'xmlns:image=' not in text:
+        text = text.replace(
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">'
+        )
     for rel, (slug, alt, _) in PAGES.items():
-        page = f"{BASE}/{rel}"
-        if page.endswith("index.html"):
-            page = page[:-10]
-        img = f"{BASE}/assets/brand/og/{slug}.jpg"
-        rows.append(f'''  <url><loc>{escape(page)}</loc><image:image><image:loc>{escape(img)}</image:loc><image:title>{escape(alt)}</image:title></image:image></url>''')
-    xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">\n' + '\n'.join(rows) + '\n</urlset>\n'
-    (ROOT / "sitemap-images.xml").write_text(xml, encoding="utf-8")
-
-
-def update_robots() -> None:
-    p = ROOT / "robots.txt"
-    text = p.read_text(encoding="utf-8") if p.exists() else "User-agent: *\nAllow: /\n"
-    line = f"Sitemap: {BASE}/sitemap-images.xml"
-    if line not in text:
-        if not text.endswith("\n"):
-            text += "\n"
-        text += line + "\n"
+        page = canonical_page(rel)
+        img = f"{ASSET_BASE}/og/{slug}.jpg"
+        block = f'<image:image><image:loc>{escape(img)}</image:loc><image:title>{escape(alt)}</image:title></image:image>'
+        pattern = re.compile(r'(<url><loc>' + re.escape(page) + r'</loc>)(.*?)(</url>)', re.S)
+        m = pattern.search(text)
+        if not m:
+            raise SystemExit(f"Page missing from sitemap.xml: {page}")
+        body = re.sub(r'<image:image>.*?</image:image>', '', m.group(2), flags=re.S)
+        replacement = m.group(1) + body + block + m.group(3)
+        text = text[:m.start()] + replacement + text[m.end():]
     p.write_text(text, encoding="utf-8")
 
 
@@ -149,8 +167,7 @@ def main() -> None:
             raise SystemExit(f"Missing public page: {rel}")
         (OG_SRC / f"{slug}.svg").write_text(cover_svg(lines, alt), encoding="utf-8")
         update_html(path, slug, alt)
-    write_image_sitemap()
-    update_robots()
+    update_sitemap()
     print("THEORY SEO source/materialization metadata: PASS")
 
 if __name__ == "__main__":
