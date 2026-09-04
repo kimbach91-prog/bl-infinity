@@ -133,7 +133,7 @@ export function classifyRateLimitRoute(method = 'GET', url = '/') {
   if (pathname.startsWith('/orchestrate') || pathname === '/execute') return { group: 'execution', cost: 5 };
   if (pathname.startsWith('/providers/') && method !== 'GET') return { group: 'provider-admin', cost: 4 };
   if (pathname === '/tasks/submit') return { group: 'task-submit', cost: 2 };
-  if (pathname === '/search/index') return { group: 'search-write', cost: 3 };
+  if (pathname === '/search/index' || pathname === '/search/delete') return { group: 'search-write', cost: 3 };
   if (pathname === '/search/query') return { group: 'search-read', cost: 1 };
   return { group: 'read', cost: 1 };
 }
