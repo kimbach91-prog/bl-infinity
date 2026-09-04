@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://bl-infinity.local/schemas/task-v1.json",
+  "title": "BL Compute Federation Task",
+  "type": "object",
+  "required": ["id", "capability"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "tenantId": { "type": "string", "minLength": 1 },
+    "capability": { "type": "string", "minLength": 1 },
+    "dataClass": { "enum": ["public", "internal", "private", "regulated", "sealed"] },
+    "valuePolicy": {
+      "type": "object",
+      "required": ["workloadClass", "scope", "hardGates"],
+      "properties": {
+        "workloadClass": { "enum": ["S", "H0", "H1", "H2", "H3", "H4", "PGB"] },
+        "scope": { "enum": ["public", "trusted", "private", "private-shared-benefit"] },
+        "commonBenefitRequested": { "type": "boolean" },
+        "founderSponsored": { "type": "boolean" },
+        "fairnessDebt": { "type": "number", "minimum": 0, "maximum": 1 },
+        "hardGates": {
+          "type": "object",
+          "required": ["authorized", "lawful", "useful", "bounded", "revocable", "verifiable", "nonDeceptive", "sovereign"],
+          "properties": {
+            "authorized": { "const": true },
+            "lawful": { "const": true },
+            "useful": { "const": true },
+            "bounded": { "const": true },
+            "revocable": { "const": true },
+            "verifiable": { "const": true },
+            "nonDeceptive": { "const": true },
+            "sovereign": { "const": true }
+          },
+          "additionalProperties": false
+        },
+        "dimensions": {
+          "type": "object",
+          "properties": {
+            "humanValue": { "$ref": "#/$defs/unit" },
+            "researchValue": { "$ref": "#/$defs/unit" },
+            "federationValue": { "$ref": "#/$defs/unit" },
+            "informationGain": { "$ref": "#/$defs/unit" },
+            "urgency": { "$ref": "#/$defs/unit" },
+            "fit": { "$ref": "#/$defs/unit" },
+            "successProbability": { "$ref": "#/$defs/unit" },
+            "cost": { "$ref": "#/$defs/unit" },
+            "securityRisk": { "$ref": "#/$defs/unit" },
+            "privacyRisk": { "$ref": "#/$defs/unit" },
+            "energyCarbon": { "$ref": "#/$defs/unit" },
+            "opportunityCost": { "$ref": "#/$defs/unit" }
+          },
+          "additionalProperties": false
+        },
+        "sharedBenefit": {
+          "type": "object",
+          "required": ["returnCommitment", "verificationMethod"],
+          "properties": {
+            "returnCommitment": { "type": "string", "minLength": 1 },
+            "verificationMethod": { "type": "string", "minLength": 1 },
+            "humanValue": { "$ref": "#/$defs/unit" },
+            "researchValue": { "$ref": "#/$defs/unit" },
+            "federationValue": { "$ref": "#/$defs/unit" },
+            "reusableValue": { "$ref": "#/$defs/unit" },
+            "verifiability": { "$ref": "#/$defs/unit" },
+            "privacyRisk": { "$ref": "#/$defs/unit" },
+            "securityRisk": { "$ref": "#/$defs/unit" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "unit": { "type": "number", "minimum": 0, "maximum": 1 }
+  },
+  "additionalProperties": true
+}
