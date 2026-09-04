@@ -32,6 +32,8 @@ jobs:
           node -e "for (const p of ['civilization/PLATFORM-REGISTRY-v0.1.json','civilization/schemas/provenance-record.schema.json','civilization/schemas/concept-record.schema.json','civilization/schemas/evidence-record.schema.json','civilization/schemas/snapshot-manifest.schema.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('json syntax ok')"
       - name: Check civilization invariants
         run: node civilization/runtime/check-foundation.mjs
+      - name: Test VTTN parser and concept resolver
+        run: node --test language/vttn/test/*.test.mjs
       - name: Reject accidental core leakage markers
         shell: bash
         run: |
