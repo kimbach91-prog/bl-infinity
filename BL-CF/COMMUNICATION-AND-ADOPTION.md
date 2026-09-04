@@ -1,188 +1,233 @@
-# BL-CF — Communication, Trust & Adoption v1
+# BL-SCA / BL-CF — Communication, Trust & Adoption v0.4
 
 Status: LAUNCH BLUEPRINT
 
-BL-CF succeeds only if participants understand exactly what they give, what they keep, what useful work means, and how benefits are distributed.
+## 1. Name and public promise
 
-## 1. Core public promise
+Public alliance: **BL Sovereign Compute Alliance (BL-SCA)** — **Liên minh Tính toán Chủ quyền BL**.
 
-> Your machine stays yours. You grant only bounded compute you explicitly authorize. Useful work only. No hidden mining. No spam. No coin required. Commercial protocol share and common-benefit allocation are disclosed and auditable.
+Technical protocol/runtime: **BL Compute Federation (BL-CF)**.
 
-This promise should appear consistently across the website, node installer, agreements, repository and press material.
+Core message:
 
-## 2. What BL-CF must never claim
+> **Trao giá trị trước. Chủ quyền luôn thuộc người sở hữu.**
+>
+> Your machine stays yours. You grant only bounded compute you explicitly authorize. BL-SCA uses DEUS to turn fragmented idle capacity into higher-value computation and settles the resulting value under transparent rules.
 
-Do not claim:
+## 2. What BL-SCA is not
 
-- that BL-CF owns contributor machines;
-- that idle compute is automatically ours;
-- that all work is charitable;
-- that every benchmark is valuable;
-- that open source means Founder IP ownership disappeared;
-- that the system is unhackable;
-- that DEUS can override contracts/provider consent;
-- that registrations, audits or certifications exist before completion.
+Do not market the alliance as:
 
-## 3. Audience narratives
+- a free cloud;
+- a charity-first distributed-compute project;
+- a cryptocurrency scheme;
+- a promise of passive income;
+- a right to use any idle device automatically;
+- an unhackable or trustless system;
+- proof that all DEUS knowledge has monetary value.
 
-### Individual contributors
+## 3. Economic message
+
+Explain four independent concepts clearly:
+
+1. **Provider sovereignty** — hardware, accounts, data and ungranted capacity stay with the owner.
+2. **10% Official Protocol Commercial Share** — default protocol/steward participation in eligible commercial settlement.
+3. **5–10% Strategic Compute Reinvestment Envelope** — provider-opted capacity used to grow federation earning power, compute capital, knowledge, security and reliability; it is not charity.
+4. **DCC** — proposed backed internal compute-service credit, not a public speculative token.
+
+## 4. Value-first acquisition
+
+The adoption story for providers should begin with value, not demands for access.
+
+Possible first interactions:
+
+- estimate idle capacity;
+- profile performance;
+- identify cost/energy/thermal optimization;
+- estimate potential payout or compute credit;
+- show which workload classes would fit;
+- explain exact caps/revocation controls.
+
+Then ask for explicit opt-in.
 
 Message:
 
-- choose resource/time limits;
-- see current job and purpose;
-- stop/revoke at any time;
-- choose donate / research credit / paid / hybrid when supported;
-- see verified impact rather than opaque point farming.
+> “We first show what your resource can do and what value it may receive. You decide whether and how much to connect.”
 
-### Researchers / universities
+## 5. Audience narratives
 
-Message:
+### Individuals / small workstation owners
 
-- reproducible compute grants;
-- auditable research admission;
-- benchmark registry;
-- provenance, result verification and source-bound datasets;
-- ability to contribute idle lab capacity without transferring ownership.
+- choose resource/time/thermal limits;
+- opt into or out of commercial and strategic-reinvestment use separately;
+- choose accepted settlement modes where supported;
+- stop/revoke;
+- see current job and resource usage.
 
 ### Enterprises / data centers
 
-Message:
+- monetize idle capacity without transferring infrastructure ownership;
+- BYOC/compute-to-data options;
+- data/locality restrictions;
+- explicit SLA/workload classes;
+- auditable settlements;
+- DCC only if contractually accepted.
 
-- monetize or donate bounded idle capacity;
-- explicit commercial opt-in;
-- data-locality and workload-class restrictions;
-- provider-defined caps;
-- transparent settlement;
-- no general shell access;
-- security and compliance evidence grows over time.
+### Researchers / universities
 
-### Cloud / infrastructure sponsors
+Research compute is not assumed free. Options include:
 
-Message:
+- sponsored jobs;
+- research credits;
+- reciprocal compute;
+- strategic Federation Return contracts;
+- paid provider participation;
+- Founder-funded pilots.
 
-- sponsor auditable compute rather than vague cash;
-- choose research/humanitarian domain;
-- receive impact receipts and utilization evidence;
-- no exclusivity over the federation mission from sponsorship alone.
+### Cloud / infrastructure partners
+
+- contractually add lawful capacity/credits;
+- use narrow source-use classes where provider terms require them;
+- receive settlement/utilization evidence;
+- no conversion of CI/admin-only entitlements into a general compute market without permission.
 
 ### Open-source community
 
-Message:
+- covered code remains governed by its actual license;
+- official service access is separate from OSS rights;
+- protected marks/canonical identity are separate from fork rights;
+- compatible independent implementations are welcome when status is described truthfully.
 
-- protocol and covered software are inspectable/forkable according to their actual licenses;
-- service AUP is separate from OSS license;
-- official trademarks, canonical registry and signing identity remain protected;
-- independent compatible implementations are welcomed when truthful about status.
+## 6. DCC communication
 
-## 4. Transparency dashboard
+DCC should initially be described as:
 
-Public aggregate dashboard should eventually show:
+> **an internal backed compute-service credit used to buy eligible computation through BL-CF.**
 
-- active/available nodes by broad class and region without exposing personal locations;
-- verified compute delivered by CPU/GPU class;
-- common-benefit target/current percentage;
-- number and class of admitted/rejected jobs;
-- commercial provider payout total;
-- Official Protocol Commercial Share total;
-- research/humanitarian subsidy total;
-- delivered shared-benefit commitments;
-- benchmark/research outcomes;
-- service reliability and validation failure rates;
-- material security incident summaries;
-- energy/carbon estimates when methodology is credible.
+Do not describe DCC as:
 
-Avoid vanity metrics such as raw installed-node count without active/verified contribution context.
+- an investment;
+- guaranteed money;
+- a guaranteed cash claim;
+- a cryptocurrency unless a later architecture explicitly makes it one;
+- backed by projected DEUS knowledge.
 
-## 5. Trust labels
+The public/participant dashboard should show the backing policy and the distinction between realized treasury value and projected option value.
 
-A workload page should show simple labels:
+## 7. Knowledge-value communication
 
-- `PUBLIC BENEFIT`;
-- `OPEN RESEARCH`;
-- `VERIFIED BENCHMARK`;
-- `PRIVATE + SHARED BENEFIT`;
+DEUS knowledge is priced from measured outcomes.
+
+Preferred language:
+
+> “We charge for verified value created or loss avoided, not for the number of words or hours of reasoning.”
+
+Where a performance fee is used, disclose:
+
+- baseline;
+- measurement method;
+- value channels counted;
+- double-counting exclusions;
+- fee rate/cap;
+- evidence/confidence;
+- measurement window.
+
+Projected supercompounding value must always be labeled forecast/projection.
+
+## 8. Transparency dashboard
+
+Useful aggregate metrics:
+
+- active/available verified compute by resource class;
+- acquired capacity and source-use class;
+- provider payout by settlement mode;
+- Official Protocol Commercial Share;
+- realized gross margin;
+- verified intelligence surplus;
+- realized knowledge profit;
+- DCC outstanding/backing ratio;
+- Strategic Compute Reinvestment target/current share;
+- Federation Return obligations delivered/undelivered;
+- queue reliability and validation failure rate;
+- provider revocation/renewal rate;
+- material security incidents;
+- projected option value shown separately from realized value.
+
+Avoid vanity metrics such as raw install count without active verified capacity.
+
+## 9. Trust labels
+
+Suggested workload labels:
+
 - `COMMERCIAL`;
-- `FEDERATION SECURITY`.
+- `STRATEGIC REINVESTMENT`;
+- `PRIVATE + FEDERATION RETURN`;
+- `RESEARCH — SPONSORED/PAID/RECIPROCAL`;
+- `FEDERATION SECURITY`;
+- `FOUNDER FIRST-PARTY`.
 
-It should also show:
+Legacy labels may remain for historical receipts.
 
-- why admitted;
-- data class;
-- network requirement;
+Each job should expose to the provider:
+
+- reason admitted;
+- workload class;
+- data/network requirements;
 - resource ceiling;
+- settlement mode;
+- whether strategic-reinvestment quota is used;
 - validation method;
-- whether provider is paid/credited/donating;
-- whether common-benefit envelope is used.
+- grant expiry/revoke control.
 
-## 6. Launch sequence
+## 10. Launch sequence
 
-### Phase 0 — credible specification
+### Phase 0 — canonical specification
 
-Publish Constitution, architecture, security model, protocol, economics and legal/registration roadmap. Keep claims bounded.
+Publish Constitution, economics, treasury/DCC design, security model, resource-acquisition protocol, knowledge-value model and legal status truthfully.
 
-### Phase 1 — founder + trusted friends/lab nodes
+### Phase 1 — Founder first-party pilot
 
-Run only deterministic, public, low-risk jobs. Demonstrate revocation, validation and receipts.
+Use a resource the Founder clearly controls. Prove profile -> grant -> job -> validation -> meter -> settlement -> revoke.
 
-### Phase 2 — research pilot
+### Phase 2 — trusted provider pilot
 
-Partner with a small university/research group. Publish a useful benchmark or scientific workload result.
+Add a small number of explicit providers. Test cash/DCC/reciprocal settlement in sandbox/accounting mode.
 
-### Phase 3 — volunteer beta
+### Phase 3 — first commercial value-first pilot
 
-Make node installer simple and transparent. Cap workloads and disable sensitive data.
+Establish a defensible baseline, beat it, keep customer savings and positive federation margin, and publish a redacted verification receipt.
 
-### Phase 4 — commercial pilot
+### Phase 4 — knowledge-value pilot
 
-Use explicit paid Node/Submitter agreements and the 10% protocol share. Keep commercial nodes separate from donation-only pools.
+Price one DEUS knowledge/optimization result from measured economic outcome rather than hours.
 
-### Phase 5 — multi-region federation
+### Phase 5 — broader federation
 
-Add independent operators/partners and compute-to-data nodes without centralizing ownership.
+Add multiple operators/providers only after durable metering, backing/reconciliation, node sandboxing and security review.
 
-## 7. Founder communications
+## 11. Founder communications
 
-Founder positioning should emphasize responsibility, not entitlement:
+Founder positioning:
 
-- originated the protocol and initial technology;
-- supplies/owns first-party IP where legally established;
-- has final interpretation of the official federation;
-- commits to transparent percentage rules;
-- accepts that contributor property remains contributor property;
-- negotiates when high consensus indicates a constitutional problem;
-- invests Founder compute and protocol revenue back into stronger coordination/security when economically appropriate.
+- originated the alliance/protocol and initial technology;
+- retains first-party IP/canonical stewardship where legally established;
+- does not claim ownership of contributor hardware;
+- commits to disclosed economic percentages and provider caps;
+- uses protocol/knowledge profit to grow compute capital and system capability;
+- treats high consensus as a reason to negotiate, without surrendering canonical Founder ratification.
 
-## 8. Crisis communication
+## 12. Crisis communication
 
 For a material incident:
 
-1. acknowledge confirmed incident early;
-2. state what systems are affected and what is UNKNOWN;
-3. explain containment/revocation steps;
-4. protect victim/private information;
-5. publish updated facts rather than speculation;
-6. issue technical postmortem and corrective actions after validation.
+1. confirm what is known;
+2. state affected systems and UNKNOWN;
+3. freeze/revoke privileged actions where needed;
+4. remove revoked/expired backing from DCC solvency calculations immediately;
+5. protect private provider/customer information;
+6. reconcile settlement/accounting impact;
+7. publish validated postmortem and remediation.
 
-Never optimize communication for 'nothing happened' before evidence exists.
+## 13. Differentiating message
 
-## 9. Research credibility
-
-High-value benchmarks need:
-
-- clear research question;
-- methodology;
-- baseline;
-- reproducible or independently verifiable result;
-- limitations/UNKNOWN;
-- no benchmark spam merely to justify consumption of free resources.
-
-Compute spent producing a high-quality negative result may still be useful if it reduces uncertainty and is methodologically sound.
-
-## 10. The differentiating message
-
-BL-CF should not market itself as 'free cloud'.
-
-The differentiator is:
-
-> A sovereign compute federation where resources remain owned by contributors, workloads are admitted for declared useful purposes, DEUS intelligently allocates bounded grants, results are validated, economics are transparent, and the official protocol continuously improves security and global resource efficiency.
+> **BL-SCA is a sovereign compute alliance where owners keep their resources, DEUS intelligently buys/routes/sells authorized compute, the protocol captures transparent commercial and intelligence value, and realized profit is reinvested into more computation and better knowledge.**

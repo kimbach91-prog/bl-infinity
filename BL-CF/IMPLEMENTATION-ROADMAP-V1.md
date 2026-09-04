@@ -1,71 +1,148 @@
-# BL-CF — Implementation Roadmap v1
+# BL-SCA / BL-CF — Implementation Roadmap v0.4
 
 Status: EXECUTION PLAN
 
-The roadmap deliberately separates what can be implemented immediately from what requires legal, security, infrastructure or external-partner evidence.
+This roadmap separates what is implemented as a reference/runtime invariant from what still requires durable infrastructure, real counterparties, security evidence, legal review or production deployment.
 
-## Stage A — Constitutional and policy baseline
+## Stage A — Canonical identity and economic baseline
 
 Deliverables:
 
-- Founding Constitution v0.3;
-- Economics/Common-Benefit policy;
-- Security Threat Model;
-- Federation Protocol v1;
-- End-to-End Architecture;
-- Digital Contract Stack;
-- registration/IP roadmap;
-- Communication/Adoption doctrine.
+- BL Sovereign Compute Alliance (BL-SCA) public identity;
+- BL Compute Federation (BL-CF) technical identity;
+- DEUS Compute Treasury (DCT) model;
+- DEUS Compute Credit (DCC) model;
+- Founding Constitution v0.4;
+- 10% Official Protocol Commercial Share;
+- 5–10% Strategic Compute Reinvestment policy;
+- lawful resource-acquisition doctrine;
+- damage-grounded knowledge valuation;
+- supercompounding-learning model;
+- security/protocol/legal/communication docs.
 
-Gate: no percentage, ownership or workload-policy ambiguity remains in the public bootstrap docs.
+Gate: public materials distinguish ownership, compute grants, protocol revenue, reinvestment capacity, DCC liabilities and projected knowledge value without ambiguity.
 
-## Stage B — Runtime value/admission enforcement
+## Stage B — Runtime value and provider-policy enforcement
 
-Implement in `runtime/federation`:
+Implemented/reference targets in `runtime/federation`:
 
-- task value-policy schema;
-- common-benefit admission class;
-- private/shared-benefit contract reference;
-- provider common-benefit/commercial opt-ins;
-- 5% target / 10% default ceiling policy object;
-- 10% commercial settlement calculation helper;
-- queue priority derived from admitted value policy;
-- backward compatibility for existing legacy test tasks;
-- unit tests.
+- value-policy hard gates;
+- H4 commercial and PFR Federation Return classes;
+- strategic-reinvestment target 5% / ceiling 10%;
+- v0.3 common-benefit compatibility aliases;
+- provider commercial/reinvestment/private-return opt-ins;
+- provider-specific reinvestment cap;
+- server-derived queue priority;
+- 10% commercial settlement helper;
+- deterministic unit tests.
 
-Gate: deterministic tests prove commercial jobs cannot silently use common-benefit capacity and private jobs require a qualifying benefit contract.
+Gate: tests prove a workload cannot use strategic-reinvestment capacity without provider permission and private/commercial reinvestment work requires a verifiable Federation Return where policy requires it.
 
-## Stage C — Resource-class accounting
+## Stage C — DEUS Compute Treasury reference layer
 
-Implement durable ledgers for:
+Implemented/reference targets:
 
-- CPU-seconds;
-- GPU-seconds by accelerator class;
+- cash backing;
+- committed compute backing;
+- reserved liabilities;
+- DCC outstanding/liability;
+- 1.20 minimum DCC backing-ratio policy;
+- protocol revenue ledger categories;
+- verified efficiency-profit category;
+- verified knowledge-profit category;
+- value-first quote helper;
+- heterogeneous resource-value price vector.
+
+Gate: unit tests reject DCC issuance that would breach backing and keep protocol, efficiency and knowledge revenue categories separate.
+
+## Stage D — Durable treasury and DCC ledger
+
+Implement production-grade persistent state for:
+
+- backing assets by source, expiry and revocation state;
+- DCC issuance/burn/redemption receipts;
+- double-spend/replay protection;
+- reserved liabilities;
+- settlement holds/disputes;
+- backing-ratio snapshots;
+- reconciliation and accounting periods;
+- emergency freeze;
+- role/authority controls for M3 actions.
+
+Gate: every DCC unit has a traceable issuance receipt and expired/revoked compute backing is removed before further issuance.
+
+## Stage E — Durable resource-class accounting
+
+Implement ledgers for:
+
+- CPU core-seconds;
+- normalized GPU-seconds plus accelerator identity/class;
 - memory GiB-seconds;
-- material network/storage;
-- common-benefit usage per provider/resource class;
-- rolling 30-day target/ceiling;
+- storage GiB-hours;
+- egress/network units;
+- request/transaction units where material;
+- provider/resource-class strategic-reinvestment usage;
+- rolling accounting windows;
 - provider-specific lower caps.
 
-Gate: control plane and node can independently determine whether a common-benefit lease would exceed allowed share.
+Gate: control plane and node independently determine whether a proposed lease exceeds a provider's current grant or reinvestment cap.
 
-## Stage D — Node agent hardening
+## Stage F — Lawful resource-acquisition engine
+
+Reference engine exists; production work must add:
+
+- signed Resource Offer objects;
+- source-use-class enforcement;
+- ToS/contract entitlement metadata;
+- value-first provider preview;
+- bid/ask and unit-economics evaluation;
+- explicit/pre-authorized enrollment state;
+- compensation preference: cash/DCC/reciprocal/hybrid;
+- offer expiry/revocation;
+- provider renewal/retention signals;
+- trusted marketplace/provider connectors.
+
+Gate: `ci-only`, `interactive-admin-only`, `research-only` and other restricted entitlements cannot be promoted to `general-compute` by routing logic alone.
+
+## Stage G — Founder first-party acquisition pilot
+
+Use only a resource clearly controlled/authorized by the Founding Steward.
+
+Prove:
+
+1. capability/value profile;
+2. offer object;
+3. economic baseline/quote;
+4. explicit grant;
+5. provider registration;
+6. one bounded workload;
+7. result validation;
+8. exact resource meter;
+9. settlement receipt;
+10. revoke test;
+11. realized-margin report.
+
+Gate: end-to-end lifecycle works without manual hidden state or ownership ambiguity.
+
+## Stage H — Node agent hardening
 
 Build/reference node client with:
 
 - outbound-only enrollment/pull;
-- signed identity and short-lived credential support;
+- signed node identity and short-lived credentials;
 - local enforcement of provider limits;
+- source-use-class enforcement;
+- local reinvestment-cap accounting;
 - immutable artifact digest verification;
 - network default deny;
 - sandbox adapters;
-- local revoke/pause control;
-- human-readable current-job view;
-- metering/result receipts.
+- local pause/revoke;
+- human-readable current-job/settlement view;
+- resource-meter/result receipts.
 
-Gate: compromise of the central scheduler cannot make an honest node exceed its locally signed grant.
+Gate: compromise of central scheduler cannot make an honest node exceed its signed grant.
 
-## Stage E — Supply-chain security
+## Stage I — Supply-chain and root-of-trust security
 
 Add:
 
@@ -73,154 +150,203 @@ Add:
 - SBOM;
 - provenance attestations;
 - dependency scanning;
-- immutable image publishing;
-- secure update/release metadata;
-- release-key separation and offline recovery procedure.
+- immutable images/WASM modules where appropriate;
+- secure update metadata;
+- release-key separation;
+- offline/hardware-backed recovery keys;
+- source mirror and independent archive;
+- recovery/freeze drills.
 
-Gate: production node accepts only artifacts meeting the configured trust policy.
+Gate: production nodes accept only artifacts satisfying configured trust policy, and loss of one hosting account cannot redefine canonical BL-SCA/BL-CF.
 
-## Stage F — Digital agreement service
+## Stage J — Digital agreement service
 
-Implement:
+Implement version/hash registry for:
 
-- versioned NCA, WSA, RAR, CCA, DPA, Shared-Benefit Contract, Settlement Schedule and DEUS Mandate registry;
-- agreement hashes;
-- affirmative acceptance receipts;
-- revoke/expiry state;
+- NCA;
+- Resource Offer & Acquisition Agreement;
+- WSA;
+- RAR;
+- CCA;
+- Federation Return Contract;
+- Knowledge Value / Performance Addendum;
+- DCC Service Credit Terms;
+- DPA;
+- Settlement Schedule;
+- DEUS Mandate.
+
+Also implement:
+
+- affirmative acceptance/e-sign receipts;
+- grant expiry/revocation;
 - provider sovereignty API;
-- appropriate stronger e-sign flow for material contracts.
+- treasury transparency API;
+- stronger signature flow for material agreements.
 
-Gate: every production lease can be traced to an active resource grant and workload agreement.
+Gate: every production lease and every DCC/settlement action resolves to active, retrievable agreement versions and authority.
 
-## Stage G — Validation and anti-fraud
+## Stage K — Validation and anti-fraud
 
 Implement:
 
-- replicated quorum for deterministic tasks;
-- hidden/gold-test validator;
+- deterministic replicated quorum where appropriate;
+- hidden/gold-test validation;
 - stochastic validation interface;
-- reputation with decay;
+- provider reputation with decay;
+- resource attestation where economically justified;
+- meter anomaly detection;
+- Sybil/collusion controls;
 - result replay/double-settlement prevention;
-- payout hold/canary limits for new providers;
-- Shared-Benefit delivery verification.
+- payout/DCC holds for new providers;
+- reference-price oracle hardening;
+- Federation Return delivery verification.
 
-Gate: rewarded compute is validated, not self-reported.
+Gate: neither provider self-report nor DEUS self-assessment alone can create rewarded value or DCC backing.
 
-## Stage H — Founder/trusted pilot
+## Stage L — Commercial value-first pilot
 
-Nodes:
+Use one customer/workload with a defensible baseline.
 
-- Founder local machines;
-- explicit BYOC cloud resources;
-- trusted partner test nodes.
+Prove:
 
-Workloads:
+- same or better output/SLA than baseline;
+- customer receives measurable value/savings;
+- provider is settled correctly;
+- BL-CF retains configured positive margin;
+- 10% protocol share calculation reconciles;
+- any intelligence/performance fee is based on non-overlapping verified surplus.
 
-- SHA/hash/deterministic tasks;
-- useful benchmark slices;
-- build/research workloads with public data.
+Gate: first commercial settlement reconciles exactly from signed validation/meter receipts.
 
-Gate: demonstrate full Grant -> Job -> Lease -> Result -> Validate -> Meter -> Receipt -> Revoke lifecycle.
+## Stage M — DCC closed-loop pilot
 
-## Stage I — Public research pilot
+Run DCC only as a restricted service credit among Founder/trusted counterparties.
 
-Find one credible research/academic workload with clear methodology and expected value.
+Prove:
 
-Publish:
+- verified backing deposit/compute commitment;
+- mint under 1.20 minimum backing ratio;
+- DCC transfer/award under contract;
+- redemption for eligible compute;
+- burn/reduction of liability;
+- expiry/revocation of backing updates solvency;
+- no public speculative trading.
 
-- admission record;
-- compute consumed;
-- validation method;
-- result/limitations;
-- common-benefit accounting;
-- impact report.
+Gate: full issuance-to-redemption reconciliation has zero unexplained liability gap.
 
-Gate: one externally understandable useful outcome, not a synthetic demo only.
+## Stage N — Knowledge-value pilot
 
-## Stage J — IP/open-source formalization
+Pick one DEUS optimization/knowledge artifact with measurable economic effect.
 
-Before broad public distribution:
+Record:
 
-- complete contributor/rightsholder audit;
-- decide which currently MIT-covered code remains MIT;
-- do not retroactively relicense third-party code without rights;
-- define separate future AGPL-covered scope if desired;
-- add SPDX/license metadata;
-- copyright-deposit major Founder-owned software snapshot;
-- trademark clearance/filing;
-- patent-vs-trade-secret review before further disclosure.
+- baseline and counterfactual;
+- causal mechanism;
+- realized value channels;
+- expected option-value channels;
+- overlap adjustment;
+- implementation/verification/maintenance cost;
+- evidence multiplier;
+- realized net value;
+- fee calculation where contracted;
+- falsifier/limitations.
 
-Gate: public claims match actual legal status.
+Gate: an independent reviewer can reproduce the economic calculation without accepting DEUS's own value claim on faith.
 
-## Stage K — Commercial pilot
+## Stage O — Supercompounding-learning experiment
 
-Use paid nodes/workloads with explicit opt-in.
+Measure whether one learning delta improves future productive capacity.
 
-Implement:
+Track at least:
 
-- ECSV settlement object;
-- default 10% protocol share;
-- provider payout calculation;
-- invoice/tax integration appropriate to Operator jurisdiction;
-- dispute/reconciliation flow;
-- no common-benefit subsidy unless separately admitted.
+- reuse count;
+- cost/result before vs after;
+- future failure-rate change;
+- future learning/evaluation cost change;
+- compute profit reinvested;
+- extra experiments enabled by reinvestment;
+- additional verified value generated.
 
-Gate: first commercial settlement reconciles exactly from signed meter and validation receipts.
+Gate: projected compounding curves are compared against realized cohort outcomes. Forecast error is published internally and used to recalibrate the model.
 
-## Stage L — Public volunteer beta
+## Stage P — Trusted multi-provider pilot
+
+Add explicit third-party providers only after Stages G–K pass.
 
 Requirements:
 
-- simple installer;
-- clear limits/revocation;
-- only public/non-sensitive workload classes by default;
-- common-benefit default opt-in choice is explicit rather than hidden;
-- no commercial work unless separately opted in;
-- public impact dashboard;
-- public SECURITY policy.
+- verified owner/authority;
+- source-use class;
+- revocation;
+- settlement preference;
+- no sensitive data on unsuitable nodes;
+- value-first preview;
+- realized provider retention/renewal data.
 
-Gate: no contributor needs to trust a hidden background process to understand resource use.
+Gate: no participant needs to trust an opaque background process to know what is being used and paid.
 
-## Stage M — Multi-operator federation
+## Stage Q — IP/open-source formalization
+
+Before broad commercialization/public-scale onboarding:
+
+- contributor/rightsholder audit;
+- preserve existing MIT obligations;
+- define any future AGPL-covered scope explicitly if desired;
+- SPDX/license metadata;
+- copyright registration/deposit for selected Founder-owned snapshots;
+- trademark clearance/filing for BL-SCA, BL-CF, DEUS/DCC marks as appropriate;
+- patent-vs-trade-secret review before unnecessary disclosure;
+- Founder-IP -> Operator licensing terms.
+
+Gate: public claims exactly match actual ownership/registration/license evidence.
+
+## Stage R — Multi-operator / multi-region federation
 
 Add:
 
-- regional operator identity;
-- cross-operator trust and settlement;
+- operator identity;
+- cross-operator trust/settlement;
 - portable provider grants;
-- compute-to-data sovereign nodes;
-- independent mirror and disaster recovery;
+- sovereign compute-to-data nodes;
+- multi-region treasury reconciliation;
+- independent mirrors/disaster recovery;
 - Operator replacement runbook.
 
-Gate: loss of one Operator/cloud account does not erase canonical federation or contributor rights.
+Gate: failure/capture of one Operator or cloud account does not erase canonical identity, provider rights or DCC liability records.
 
-## Stage N — Independent assurance
+## Stage S — Independent assurance
 
-Before strong security/enterprise claims:
+Before strong enterprise/financial/security claims:
 
 - independent penetration test;
 - contract/legal review;
-- privacy/security impact review;
+- privacy/security impact assessment;
 - supply-chain audit;
+- treasury/DCC solvency review;
+- economic/fraud/Sybil simulation;
 - disaster-recovery exercise;
-- economic/fraud simulation;
-- public post-test remediation summary.
+- remediation evidence.
 
 ## Metrics that matter
 
-Track:
+Track separately:
 
-- verified useful compute / eligible compute;
-- completion/validation success;
-- cost per verified result;
-- latency and deadline reliability;
-- common-benefit share actual vs 5–10% policy;
-- provider retention and revocation rate;
-- commercial provider payout;
-- protocol share and reinvestment;
-- verified shared-benefit delivery rate;
-- security incident and recovery metrics;
-- research/public outcomes;
-- amount of compute added through lawful grants.
+- verified compute acquired and sold by resource class;
+- gross margin / contribution margin;
+- provider acquisition cost and retention;
+- customer savings/value delivered;
+- Official Protocol Commercial Share;
+- verified intelligence surplus;
+- realized knowledge profit;
+- projected knowledge option value (never mixed with realized profit);
+- DCC outstanding/backing ratio/redemption rate;
+- Strategic Compute Reinvestment actual vs provider caps;
+- Federation Return delivery rate;
+- cost per validated result;
+- latency/deadline reliability;
+- fraud/validation failure/dispute rates;
+- security incidents and recovery time;
+- compute added through lawful grants;
+- forecast error of supercompounding-learning estimates.
 
-Do not optimize node count, raw CPU-hours, or utilization in isolation.
+Do not optimize raw node count, utilization, projected knowledge value or DCC issuance in isolation.
