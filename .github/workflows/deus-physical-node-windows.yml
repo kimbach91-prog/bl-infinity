@@ -36,6 +36,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $files = @(
             'nodes/windows/bootstrap.ps1',
+            'nodes/windows/recover-runtime-no-git.ps1',
             'nodes/windows/audit.ps1',
             'nodes/windows/rollback.ps1'
           )
@@ -61,9 +62,18 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $bootstrap = Get-Content 'nodes/windows/bootstrap.ps1' -Raw
-          if ($bootstrap -match '0\.0\.0\.0') { throw 'worker must not bind 0.0.0.0' }
-          if ($bootstrap -match '\$env:BL_CONTROL_TOKEN\s*=') { throw 'worker must never receive BL_CONTROL_TOKEN' }
-          if ($bootstrap -match 'New-NetFirewallRule[^\r\n]+8790') { throw 'bootstrap must not expose the worker port' }
-          if ($bootstrap -match '(?i)(Invoke-Expression|\biex\b)') { throw 'bootstrap must not use dynamic PowerShell eval' }
+          $scripts = @(
+            (Get-Content 'nodes/windows/bootstrap.ps1' -Raw),
+            (Get-Content 'nodes/windows/recover-runtime-no-git.ps1' -Raw)
+          )
+          foreach ($script in $scripts) {
+            if ($script -match '0\.0\.0\.0') { throw 'worker must not bind 0.0.0.0' }
+            if ($script -match '\$env:BL_CONTROL_TOKEN\s*=') { throw 'worker must never receive BL_CONTROL_TOKEN' }
+            if ($script -match 'New-NetFirewallRule[^\r\n]+8790') { throw 'node setup must not expose the worker port' }
+            if ($script -match '(?i)(Invoke-Expression|\biex\b)') { throw 'node setup must not use dynamic PowerShell eval' }
+          }
+          $recovery = Get-Content 'nodes/windows/recover-runtime-no-git.ps1' -Raw
+          if ($recovery -match 'winget') { throw 'recovery path must not depend on winget' }
+          if ($recovery -match '(?i)git\.exe|\bgit\s+clone\b|\bgit\s+fetch\b') { throw 'recovery path must not depend on Git' }
+          if ($recovery -notmatch 'remoteRoutable\)') { throw 'recovery must enforce remote-routable fail-closed state' }
           Write-Host 'physical-node exposure checks passed'
