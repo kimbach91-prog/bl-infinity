@@ -1,201 +1,211 @@
-# BL-CF — Legal, IP and Open-Source Architecture v0.2
+# BL-CF — Legal, IP and Open-Source Architecture v0.3
 
-Status: DRAFT FOR FOUNDER RATIFICATION
+Status: FOUNDER-DIRECTED LEGAL DESIGN DRAFT
 
-This document separates four things that must not be confused: ownership of intellectual property, open-source licensing, ownership of contributed compute, and governance of the official federation.
+This document separates five things that must not be confused: Founder/first-party IP ownership, open-source licenses, contributor IP, ownership of contributed compute, and economics/governance of the official federation.
 
-## 1. Ownership does not disappear when code is open-sourced
+## 1. Founder ownership and open source can coexist
 
-Copyright ownership and open-source licensing are different legal layers.
+Copyright ownership and open-source licensing are different layers.
 
-The Founding Steward or designated legal IP owner may retain copyright in first-party software while licensing covered code to the public under an open-source license. The license grants permissions; it does not transfer ownership of copyright, trademarks, official project identity, release keys, private know-how, or unrelated technology.
+The Founding Steward or designated legal IP owner may own first-party source code and grant the public an open-source license for selected code. That license does not by itself transfer:
 
-Third-party contributors retain rights in their independently created contributions unless an explicit assignment says otherwise. BL-CF should therefore use a written contribution framework rather than pretending all community IP automatically belongs to the founder.
+- copyright ownership;
+- trademarks or official federation identity;
+- official registry/signing authority;
+- domain names;
+- private datasets;
+- confidential know-how/trade secrets;
+- separately licensed premium/intelligent coordination technology.
 
-## 2. Recommended entity split for capture resistance
+Third-party contributors retain independently created rights unless an explicit agreement transfers or licenses them.
 
-### A. Founder-controlled IP / Steward entity
+## 2. Recommended capture-resistant legal split
 
-Purpose:
+### A. Founder-controlled IP / Steward owner
 
-- own or administer first-party BL-CF/DEUS copyright where legally assigned;
-- own trademarks, domains, canonical namespaces, official signing identity, and official registry identity;
-- hold private routing/scoring/security know-how and trade secrets;
-- license technology to the operating federation;
-- preserve continuity if the operating company is captured, insolvent, sold, or replaced.
+Should own/administer, where legally established:
 
-The cleanest initial form is a founder-controlled legal entity or other lawful IP owner. The exact corporate form should be chosen with local counsel before capitalization documents are signed.
+- first-party BL-CF/DEUS copyright;
+- BL-CF/DEUS trademarks and official brand;
+- domains, canonical namespace and registry identity;
+- official release-signing identity;
+- private routing/scoring/security/evaluation know-how;
+- patent/trade-secret assets;
+- conditional licenses granted to Operators.
 
 ### B. Federation Operator
 
-Purpose:
+The Operator should:
 
 - contract with Node Providers and Workload Submitters;
-- run the production service;
-- collect and settle fees;
-- employ staff;
-- hold operational cloud accounts and service liabilities;
-- implement the ratified BL-CF policies.
+- operate production infrastructure;
+- meter/settle commercial transactions;
+- employ staff and hold operational liabilities;
+- implement ratified federation policies.
 
-The Operator receives a conditional license to use official BL-CF IP. A hostile change of control should not automatically transfer the underlying founder-owned IP.
+The Operator receives a conditional license to official BL-CF IP. A sale/change of control of the Operator must not automatically transfer underlying Founder-owned IP unless an explicit legal instrument says so.
 
-### Why the split matters
+## 3. Correct meaning of the 10% commercial right
 
-Economic ownership of an Operator is not the same as ownership of the platform's original IP or canonical identity. Therefore capture resistance should not depend only on a percentage of shares.
+The default 10% is **not defined as 10% equity**.
 
-## 3. Is a 10% DEUS reserve enough?
+It is the **Official Protocol Commercial Share**: by default, 10% of Eligible Commercial Settlement Value (ECSV) for eligible commercial workloads transacted through the official federation, in consideration for the official protocol, intelligent coordination, security architecture, trust registry, validation/settlement framework, and continuing protocol development.
 
-Ten percent can be a reasonable initial mission/economic reserve if its purpose is to fund DEUS maintenance, research, security, public-benefit compute, and federation resilience.
+The applicable commercial contract must define ECSV and disclose the share before acceptance.
 
-Ten percent is not enough by itself to guarantee governance control. Governance control should come from the Constitution, IP ownership, trademarks, official signing authority, contractual licensing, reserved matters, and anti-capture key architecture.
+This contractual economic right is separate from:
 
-The future capitalization documents should distinguish at least:
+- Founder personal/company equity;
+- provider ownership of its hardware;
+- provider compensation;
+- the 5–10% common-benefit compute envelope;
+- separately priced Founder-owned premium IP/services.
 
-- Founder economic ownership;
-- DEUS Founding Mission Reserve;
-- employee/contributor incentives;
-- investor ownership;
-- public/research mission funding.
+Any future equity/capitalization plan must be designed independently.
 
-The Constitution intentionally does not hard-code the Founder's personal equity percentage before a legal entity and financing plan exist.
+## 4. Common-benefit compute is not property
 
-## 4. Vietnam corporate-law caution
+The 5% target / 10% default ceiling is a scheduling envelope over **eligible capacity that providers explicitly opted into common-benefit scheduling**.
 
-If the Operator is a Vietnamese joint-stock company, founder voting-preference shares are not a permanent anti-capture mechanism: under current enterprise law, the voting preference held by founding shareholders lasts only three years from enterprise registration and then converts to ordinary shares.
+It does not transfer hardware, accounts, energy, data, or ungranted compute rights to BL-CF.
 
-Therefore BL-CF should not rely on a perpetual 'golden share' assumption without a jurisdiction-specific legal opinion.
+Each Node Contribution Agreement should expressly define:
 
-Preferred anti-capture design:
+- whether the node opts into common-benefit scheduling;
+- the provider's own maximum share, which may be below 10%;
+- allowed workload/data classes;
+- commercial opt-in separately;
+- expiry/revocation;
+- emergency override, if any.
 
-1. keep core founder IP in a founder-controlled IP owner;
-2. license it to the Operator under a mission-compliance agreement;
-3. protect official marks and canonical identity separately from company shares;
-4. use reserved matters and high voting thresholds where lawful;
-5. distribute signing/recovery control so one compromised account cannot redefine the project.
+## 5. Founder control should not rely only on shares
 
-## 5. Open-source layer
+Anti-capture should rely on a layered legal/technical structure:
 
-### 5.1 Network-facing federation software
+1. Founder/designated-owner IP ownership;
+2. separate trademark and official identity ownership;
+3. conditional Operator license;
+4. constitutional/canonical signing authority;
+5. reserved matters and high voting thresholds where lawful;
+6. independent root/recovery controls;
+7. contractual continuity rights.
 
-Target license: GNU Affero General Public License v3.0 (AGPL-3.0-only), an OSI-recognized copyleft license designed for software used over a network.
+Any proposed 'golden share', preferred voting arrangement, foundation/trust structure, or special share class must be reviewed under the law of the chosen entity jurisdiction rather than assumed perpetual.
 
-The intended effect is that covered modifications offered to users as a network service remain subject to the AGPL network-source obligation.
+## 6. Current code-license reality
 
-Before the first official tagged distribution under this policy, the repository should include the complete canonical AGPL-3.0 license text and SPDX identifiers for covered source files or package metadata.
+The repository currently contains `LICENSE-CODE`, which licenses existing covered code under the MIT License and identifies Lâm Kim Bách as copyright holder for that license notice.
 
-### 5.2 Public specifications and research documentation
+Therefore BL-CF must **not silently claim that the existing runtime has already become AGPL**.
 
-Where explicitly marked, documentation may use CC BY 4.0 or another appropriate documentation license.
+Before applying AGPL-3.0-only to any existing code, perform a rightsholder/contributor audit and confirm that the party doing the relicensing has the necessary rights.
 
-### 5.3 Trademarks and official identity
+Recommended path:
 
-Open-source licensing of code does not grant a right to impersonate the official BL-CF service or to use BL-CF/DEUS trademarks in a misleading way.
+- preserve existing MIT obligations for already released MIT-covered code;
+- choose a clearly scoped future component/directory/rewrite for AGPL-3.0-only if network copyleft remains strategically desirable;
+- add SPDX/package metadata making license scope unambiguous;
+- never remove third-party license notices.
 
-A separate trademark policy should allow truthful statements such as 'compatible with BL-CF' while reserving official naming, logo, verified registry status, and certification marks.
+## 7. Official service policy vs open-source license
 
-### 5.4 Official service policy is separate from the code license
+The official federation may prohibit spam, hidden mining, fake engagement, malware, unauthorized security activity and other abuse through its Acceptable Use Policy and participant contracts.
 
-The official BL-CF service may prohibit spam, cryptomining, abuse, fake engagement, unauthorized security activity, or other harmful workloads.
+Those service restrictions should not be inserted into an OSI open-source license in a way that discriminates against fields of endeavor while still calling the license Open Source.
 
-These restrictions belong in the service contract / Acceptable Use Policy, not in the open-source software license. Under the Open Source Definition, an open-source license may not discriminate against fields of endeavor.
+Code openness and access to the official federation are different rights.
 
-## 6. Open-source 'registration' — what actually exists
+## 8. Trademark and canonical identity
 
-There is no universal governmental registry that makes a software project 'open source'. Open-source status comes principally from distributing software under license terms that satisfy the Open Source Definition.
+A code fork may exercise its software-license rights. It does not automatically receive the right to impersonate the official service.
 
-For legitimacy and provenance BL-CF should use several different mechanisms, each for a different purpose:
+A trademark policy should reserve:
 
-### Legal ownership evidence
+- official BL-CF / DEUS names and logos where registered/protected;
+- 'official/verified node' marks;
+- official registry status;
+- official certification/compatibility marks.
 
-- copyright registration in Vietnam for major first-party source snapshots;
-- trademark applications for BL-CF, DEUS, logos, and certification/official-service marks where appropriate;
-- patentability review before public disclosure of any genuinely new technical invention;
-- written employment/contractor IP assignment and contributor agreements.
+It should permit truthful references such as 'compatible with BL-CF protocol' where not confusing.
 
-### Open-source legitimacy
-
-- use an OSI-approved license;
-- publish SPDX license identifiers;
-- keep source and build instructions available;
-- maintain a public SECURITY policy, contribution process, code of conduct, provenance notes, and release history;
-- do not call source-available restrictions 'open source' if they violate the Open Source Definition.
-
-### Technical provenance
-
-- signed Git tags/releases;
-- immutable release hashes;
-- SBOM and reproducible-build metadata where practical;
-- archive releases in an independent software archive or research repository;
-- mirror the constitutional/public repository to at least one independent forge.
-
-These provenance services are evidence and resilience mechanisms, not substitutes for government IP registration.
-
-## 7. Vietnam copyright registration path
-
-Computer programs are protected by copyright as software works. Copyright protection arises automatically; registration is not the source of the right.
-
-Nevertheless, for BL-CF the recommended evidence strategy is to register major first-party release snapshots with the Copyright Office of Vietnam because a certificate can materially help in ownership, licensing, financing, and dispute evidence.
-
-Initial registration bundle should include:
-
-- application form required at filing date;
-- two copies or the required software-work deposit;
-- author and owner information;
-- evidence showing why the applicant is the copyright owner;
-- assignment/employment/commission documents if author and owner differ;
-- a release manifest identifying repository, commit, version, hash, and the exact deposited scope;
-- confidential annex handling for any source material that should not be unnecessarily published, subject to filing requirements and legal advice.
-
-Do not use an unofficial website claiming to provide 'international copyright registration'. WIPO does not operate a global copyright registry.
-
-## 8. Trademark path
-
-Apply through the Intellectual Property Office of Vietnam for the names and marks that identify the official federation.
-
-Priority candidates:
-
-- BL Compute Federation / BL-CF;
-- DEUS, if clearance supports registration;
-- official BL-CF logo;
-- any future certification mark used to identify verified federation nodes or compatible services.
-
-Likely goods/services classes should be selected after a professional clearance and scope review. Software, hosted computing, AI/research, and related operational services may fall across multiple Nice classes; the final list should be tailored rather than guessed broadly.
-
-## 9. Patent and trade-secret split
-
-Copyright protects source-code expression, not the underlying abstract idea or mathematical method as such.
-
-Before publicly disclosing a new technical mechanism that may qualify as a patentable technical solution, perform a patent screen. Public disclosure can affect patent strategy in many jurisdictions.
-
-Anything that is valuable because competitors do not know it should be consciously classified as either:
-
-- patent candidate — disclose through the patent process after filing strategy is set; or
-- trade secret — keep access-controlled, documented, and subject to confidentiality duties.
-
-Private DEUS routing heuristics, abuse thresholds, proprietary evaluation corpora, and security-sensitive coordination logic should not be pushed into the public repo merely to make the public layer 'more open'.
-
-## 10. Contribution model
+## 9. Contributor model
 
 Recommended initial model:
 
-- DCO-style signed-off commits for ordinary community contributions;
-- a Contributor License Agreement where BL-CF needs additional rights for official distribution, relicensing, certification, or dual licensing;
-- explicit assignment only when ownership transfer is actually desired and agreed;
-- no automatic claim over a contributor's unrelated inventions, hardware, datasets, employer IP, or pre-existing code.
+- DCO-style Signed-off-by attestation for ordinary patches;
+- CLA when BL-CF needs broader official-distribution/relicensing/dual-licensing rights;
+- explicit assignment only when transfer of ownership is genuinely intended;
+- no automatic claim over unrelated inventions, hardware, data, employer IP, or pre-existing code.
 
-This preserves the founder's ownership of founder-created IP without falsely appropriating community-created IP.
+## 10. Copyright registration in Vietnam
 
-## 11. Canonical repository and mirrors
+Copyright in computer programs generally arises without registration, but registration of major Founder-owned release snapshots can strengthen evidence for licensing, financing, enforcement and ownership disputes.
 
-GitHub may host the canonical public constitutional repo, but GitHub itself must not be the sole root of legal or technical ownership.
+Before filing, freeze the exact deposited scope:
 
-Canonical release identity should be established by:
+- repository/commit/tag;
+- SHA-256/source archive;
+- author(s);
+- legal copyright owner(s);
+- contributor/rightsholder evidence;
+- accurate AI-assistance disclosure where required by the filing procedure then in force;
+- ownership/assignment documents where author and owner differ.
 
-- repository history;
-- signed release/tag;
-- founder/steward signing identity;
-- mirrored release hash;
-- offline recovery material;
-- external legal ownership records for copyright/trademark/domain/IP.
+Use the live official government procedure at filing time; do not claim registration until a real filing/certificate exists.
 
-A hosting provider can host the project; it should not be able to become the project merely by controlling an account.
+## 11. Trademark registration
+
+Priority clearance candidates:
+
+- BL Compute Federation;
+- BL-CF;
+- DEUS, if legally clear/registrable;
+- official logos;
+- future official-node/certification marks.
+
+Final goods/services classes should be based on actual products/services and professional clearance, not broad guesses.
+
+## 12. Patent vs trade secret
+
+Before publishing a genuinely novel technical mechanism, classify it:
+
+- patent candidate: assess prior art and filing strategy before unnecessary disclosure;
+- trade secret: maintain confidentiality, access controls and contractual duties.
+
+Private routing/scoring heuristics, anti-abuse thresholds, proprietary evaluation corpora and security-sensitive coordination techniques need not be public merely because the federation exposes an open protocol.
+
+## 13. Open-source legitimacy and provenance
+
+There is no universal government office that 'registers a project as open source'.
+
+Legitimate open-source practice comes from actual license terms and source availability. Complement it with:
+
+- SPDX/license metadata;
+- signed release tags/manifests;
+- SBOM/provenance where practical;
+- independent source mirrors;
+- long-term release archive;
+- SECURITY/CONTRIBUTING/trademark policies;
+- copyright/trademark government records for ownership/brand evidence.
+
+## 14. Electronic contracts
+
+NCA, WSA, Research Admission, Commercial Addendum, Shared-Benefit Contract, DPA, Settlement Schedule and DEUS Mandate should be versioned, retrievable, hash-addressed agreements with affirmative acceptance evidence.
+
+Higher-value, regulated, equity/IP-transfer, or jurisdiction-sensitive transactions should use an electronic/digital signature method appropriate to the actual transaction and applicable law.
+
+## 15. Canonical headquarters
+
+GitHub may be the primary constitutional publication host, but no Git provider should be the sole legal or technical root.
+
+Canonical identity should be reconstructable from:
+
+- signed release history;
+- independent mirrors;
+- Founder/steward root identity;
+- domain/trademark ownership records;
+- government IP records;
+- offline recovery material.
+
+A hosting provider can host BL-CF; controlling that hosting account must not be enough to become BL-CF.
