@@ -4,10 +4,14 @@ on:
   push:
     branches: ['deus/sovereign-fabric-v1']
     paths:
+      - 'standards/HCS-*.md'
+      - 'standards/HCS-*.json'
       - 'standards/humanity/**'
       - '.github/workflows/humanity-common-standards.yml'
   pull_request:
     paths:
+      - 'standards/HCS-*.md'
+      - 'standards/HCS-*.json'
       - 'standards/humanity/**'
       - '.github/workflows/humanity-common-standards.yml'
 
@@ -25,15 +29,17 @@ jobs:
           node-version: '22'
       - name: Validate HCS JSON syntax
         run: |
-          node -e "JSON.parse(require('fs').readFileSync('standards/humanity/HCS-REGISTRY-v0.1.json','utf8')); JSON.parse(require('fs').readFileSync('standards/humanity/schemas/hcs-envelope.schema.json','utf8')); console.log('HCS JSON syntax ok')"
+          node -e "for (const p of ['standards/HCS-GATES-v1.0.json','standards/humanity/HCS-REGISTRY-v0.1.json','standards/humanity/schemas/hcs-envelope.schema.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('HCS JSON syntax ok')"
       - name: Check HCS invariants
         run: node standards/humanity/runtime/check-hcs.mjs
+      - name: Test HCS canonicalization
+        run: node --test standards/humanity/runtime/canonicalize-hcs.test.mjs
       - name: Reject secrets and core leakage markers
         shell: bash
         run: |
           set -euo pipefail
-          ! grep -RInE "BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}" standards/humanity
-          ! grep -RInE "protected prompt contents|raw private reasoning|private topology dump|routing secret" standards/humanity
+          ! grep -RInE "BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}" standards/HCS-* standards/humanity
+          ! grep -RInE "protected prompt contents|raw private reasoning|private topology dump|routing secret" standards/HCS-* standards/humanity
       - name: Require language and vendor neutrality statements
         shell: bash
         run: |
@@ -41,3 +47,8 @@ jobs:
           grep -q "vendor-neutral" standards/humanity/HCS-v0.1.md
           grep -q '"languageNeutral": true' standards/humanity/HCS-REGISTRY-v0.1.json
           grep -q '"vendorNeutral": true' standards/humanity/HCS-REGISTRY-v0.1.json
+      - name: Require v1.0 end-state truthfulness invariants
+        shell: bash
+        run: |
+          grep -q "CODE_PRESENT != CONTROL_ACTIVE != CONFORMANCE_PROVEN != ADOPTION" standards/HCS-ENDSTATE-v1.0.md
+          grep -q '"truthfulnessInvariant": "NO_EVIDENCE_NO_PASS"' standards/HCS-GATES-v1.0.json
