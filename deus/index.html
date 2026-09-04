@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; connect-src 'self' https:; img-src 'self' data:; style-src 'self'; script-src 'self'; object-src 'none'; base-uri 'none'; form-action 'self'; upgrade-insecure-requests">
+<title>DEUS Human OS · Work-Chat</title>
+<meta name="description" content="DEUS Human OS bootstrap Work-Chat and BL Compute Federation node interface.">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <div class="brand-mark">∞</div>
+    <div>DEUS <small>Human OS · Sovereign Work Interface</small></div>
+  </div>
+  <div class="status-row">
+    <span class="chip"><span class="dot ok"></span>UI ONLINE</span>
+    <span class="chip" id="controlPlaneChip"><span class="dot warn"></span>CONTROL PLANE OFFLINE</span>
+    <span class="chip"><span class="dot"></span>BOOTSTRAP v0.1</span>
+  </div>
+</header>
+
+<main id="gate" class="gate-wrap">
+  <section id="loginView" class="gate-card">
+    <p class="eyebrow">DEUS ENTERPRISE / GOVERNMENT ACCESS</p>
+    <h1>Work-Chat.</h1>
+    <p class="lead">Giao diện làm việc của DEUS. Lõi điều phối, chính sách routing, dữ liệu bảo mật và reasoning nội bộ không được công bố qua giao diện này.</p>
+    <div class="warning"><strong>Trạng thái bootstrap:</strong> giao diện đang chạy thật trên web, nhưng chưa có control plane xác thực/AI production gắn vào. Chế độ Founder Preview chỉ lưu trạng thái trong trình duyệt và không giả lập kết quả DEUS.</div>
+
+    <div class="grid-2">
+      <div class="field">
+        <label for="loginEmail">Email công việc</label>
+        <input id="loginEmail" type="email" autocomplete="email" placeholder="name@organization.tld">
+      </div>
+      <div class="field">
+        <label for="loginOrg">Tổ chức</label>
+        <input id="loginOrg" type="text" autocomplete="organization" placeholder="Organization / Agency">
+      </div>
+    </div>
+    <div class="field">
+      <label for="accessCode">Mã truy cập</label>
+      <input id="accessCode" type="password" autocomplete="current-password" placeholder="Được xác thực bởi control plane">
+    </div>
+    <div id="loginError" class="error" hidden></div>
+    <div class="actions">
+      <button id="signInBtn" class="btn primary">Đăng nhập</button>
+      <button id="founderPreviewBtn" class="btn ghost">Vào Founder Preview</button>
+    </div>
+    <p class="note">Không nhập mật khẩu tài khoản Google, GitHub, cloud provider hoặc API key vào ô này. Production login sẽ dùng identity service riêng của DEUS.</p>
+  </section>
+
+  <section id="constitutionView" class="gate-card" hidden>
+    <p class="eyebrow">CONSTITUTION GATE · REQUIRED</p>
+    <h2>Chấp nhận điều kiện trước khi DEUS nhận việc.</h2>
+    <p class="lead">Bootstrap membership dùng Hiến pháp BL-CF v0.4 cùng DEUS Human OS Membership & Settlement Schedule v0.1.</p>
+
+    <div class="metric-strip">
+      <div class="metric"><b>10%</b><span>Official Protocol Commercial Share trên ECSV đủ điều kiện.</span></div>
+      <div class="metric"><b>10%</b><span>DEUS Performance Share trên giá trị gia tăng đã xác minh khi có baseline đo được.</span></div>
+      <div class="metric"><b>≤10%</b><span>Eligible Idle Compute Grant. Chỉ compute rảnh đủ điều kiện, không phải chiếm cố định 10% máy.</span></div>
+    </div>
+
+    <div class="success"><strong>Node-first:</strong> compute của node ưu tiên giải quyết workload hợp lệ của chính node. DEUS chỉ lấy phần rảnh đã được cấp quyền và có thể bổ sung compute dư thừa từ federation nếu vượt đủ gate quyền, dữ liệu, chi phí, rủi ro và giá trị.</div>
+
+    <div class="term-list">
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi có thẩm quyền.</strong><span>Tôi có quyền hợp pháp để chấp nhận điều khoản cho tài khoản/tổ chức/node mà tôi đang kích hoạt.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Commercial Share.</strong><span>Áp dụng theo ECSV và Settlement Schedule của workload thương mại đủ điều kiện.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi chấp nhận 10% Performance Share khi đo được.</strong><span>Chỉ trên giá trị gia tăng đã xác minh, có baseline và không tính trùng cùng một đơn vị giá trị.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi cấp tối đa 10% eligible idle compute.</strong><span>Chỉ phần rảnh đủ điều kiện. Node-local work được ưu tiên. Grant có thể bị suspend/revoke và không tạo quyền remote shell tùy ý.</span></span></label>
+      <label class="term"><input class="constitutionCheck" type="checkbox"><span><strong>Tôi hiểu ranh giới lõi DEUS.</strong><span>Giao diện cung cấp output, trạng thái, meter và audit phù hợp, không cung cấp protected prompts, raw private reasoning, secrets, private topology hoặc routing core.</span></span></label>
+    </div>
+
+    <div class="term-links">
+      <a href="../BL-CF/CONSTITUTION.md" target="_blank" rel="noopener noreferrer">Đọc Founding Constitution v0.4</a>
+      <a href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Đọc Membership Schedule v0.1</a>
+    </div>
+    <div id="constitutionError" class="error" hidden></div>
+    <div class="actions">
+      <button id="acceptConstitutionBtn" class="btn primary" disabled>Chấp nhận và tạo receipt</button>
+      <button id="backToLoginBtn" class="btn ghost">Quay lại</button>
+    </div>
+    <p class="note">Receipt chỉ lưu trong trình duyệt khi ở Preview. Production phải có receipt phía server và identity đã xác thực.</p>
+  </section>
+
+  <section id="nodeView" class="gate-card" hidden>
+    <p class="eyebrow">NODE ACTIVATION · SOVEREIGN GRANT</p>
+    <h2>Khai báo node làm việc.</h2>
+    <p class="lead">DEUS chỉ được phép điều phối những tài nguyên đã được grant. Hệ thống không mặc định có quyền điều khiển máy, tài khoản cloud hay dữ liệu của node.</p>
+
+    <div class="node-detect">
+      <div class="detect-card"><b id="cpuDetected">Unknown</b><span>Logical CPU threads trình duyệt báo</span></div>
+      <div class="detect-card"><b id="memoryDetected">Unknown</b><span>Device memory trình duyệt báo</span></div>
+      <div class="detect-card"><b>10%</b><span>Ordinary idle compute cap</span></div>
+      <div class="detect-card"><b>LOCAL FIRST</b><span>Workload priority policy</span></div>
+    </div>
+
+    <div class="grid-2">
+      <div class="field"><label for="nodeName">Tên node</label><input id="nodeName" type="text" value="Founder Node 01"></div>
+      <div class="field"><label for="nodeRegion">Khu vực</label><input id="nodeRegion" type="text" value="VN" placeholder="VN / SG / EU / on-prem"></div>
+    </div>
+    <div class="grid-2">
+      <div class="field"><label for="gpuLabel">GPU / accelerator</label><input id="gpuLabel" type="text" placeholder="Không rõ / CPU only / RTX ..."></div>
+      <div class="field"><label for="dataPolicy">Data locality</label><select id="dataPolicy"><option value="local">Local only / compute-to-data</option><option value="trusted">Trusted federation</option><option value="public">Public non-sensitive</option></select></div>
+    </div>
+    <div class="field"><label for="nodeNotes">Giới hạn bổ sung</label><textarea id="nodeNotes" placeholder="Ví dụ: không dùng khi pin thấp, không dùng bandwidth metered, không xử lý dữ liệu khách hàng ngoài máy..."></textarea></div>
+
+    <div class="warning">Trang web không thể tự biến thiết bị thành production compute node. Node agent riêng phải được cài đặt và xác thực để thực thi workload thật. Bước này chỉ tạo hồ sơ/grant UX bootstrap.</div>
+    <div class="actions">
+      <button id="activateNodeBtn" class="btn primary">Kích hoạt hồ sơ node</button>
+      <button id="skipNodeBtn" class="btn ghost">Vào Work-Chat không kích hoạt agent</button>
+    </div>
+  </section>
+</main>
+
+<section id="appView" class="app-shell" hidden>
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+      <div class="identity-card">
+        <strong id="actorName">Founder Preview</strong>
+        <span id="actorOrg">BL / Bootstrap</span>
+      </div>
+      <div class="nav-label">Work</div>
+      <button class="nav-btn active">Work-Chat</button>
+      <button class="nav-btn" id="openNodeSettingsBtn">Node & Federation</button>
+      <button class="nav-btn" id="openGatewayBtn">Control Plane</button>
+      <div class="nav-label">Policy</div>
+      <a class="nav-btn" href="../BL-CF/CONSTITUTION.md" target="_blank" rel="noopener noreferrer">Constitution</a>
+      <a class="nav-btn" href="../BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md" target="_blank" rel="noopener noreferrer">Membership Schedule</a>
+      <div class="sep"></div>
+      <button id="leaveBtn" class="nav-btn">Thoát phiên</button>
+    </div>
+  </aside>
+
+  <section class="workspace">
+    <header class="workspace-head">
+      <div class="workspace-title"><strong>DEUS Work-Chat</strong><span id="workspaceSubtitle">Founder Bootstrap · No production control plane attached</span></div>
+      <div class="inline"><span class="chip" id="modeChip"><span class="dot warn"></span>PREVIEW</span><button id="mobileSettingsBtn" class="icon-btn" aria-label="Mở cài đặt">⋯</button></div>
+    </header>
+
+    <div id="messages" class="messages" aria-live="polite">
+      <div class="msg system"><div class="msg-meta">SYSTEM · TRUTHFULNESS GATE</div>Human OS đã mở. Hiện chưa có DEUS control plane production gắn vào trang này. Tin nhắn trong Preview sẽ được lưu cục bộ như task draft và không được tuyên bố là đã xử lý bởi DEUS.</div>
+      <div class="msg deus"><div class="msg-meta">DEUS INTERFACE · BOOTSTRAP</div>Gửi bài toán công việc tại đây. Khi control plane được cấu hình, giao diện sẽ chuyển task thành request có identity, constitution receipt, node grant và workload metadata để DEUS định tuyến.</div>
+    </div>
+
+    <div class="composer">
+      <div class="composer-box">
+        <textarea id="composerInput" placeholder="Giao việc cho DEUS..." aria-label="Nội dung công việc"></textarea>
+        <div class="composer-row">
+          <div class="composer-tools">
+            <select id="workloadClass" class="mini-select" aria-label="Workload class"><option value="PFR">PFR · Private federation return</option><option value="H4">H4 · Commercial</option><option value="H2">H2 · Evaluation / research</option><option value="S">S · Security / integrity</option></select>
+            <select id="executionPreference" class="mini-select" aria-label="Execution preference"><option value="auto">Auto route</option><option value="local-first">Local first</option><option value="sovereign">Sovereign / local only</option></select>
+          </div>
+          <button id="sendBtn" class="send">Gửi</button>
+        </div>
+      </div>
+      <p class="small">Không gửi secrets/credentials trong Preview. Production core isolation và data policy vẫn áp dụng sau khi gateway được xác thực.</p>
+    </div>
+  </section>
+
+  <aside class="inspector">
+    <div class="inspector-inner">
+      <div class="nav-label">Federation state</div>
+      <div class="panel-card">
+        <div class="kv"><span>Node</span><span id="nodeState">Not active</span></div>
+        <div class="kv"><span>Local priority</span><span>ON</span></div>
+        <div class="kv"><span>Idle compute cap</span><span>10%</span></div>
+        <div class="kv"><span>External surplus</span><span id="surplusState">Unavailable</span></div>
+      </div>
+      <div class="nav-label">Economics</div>
+      <div class="panel-card">
+        <div class="kv"><span>Protocol share</span><span>10%</span></div>
+        <div class="kv"><span>Performance share</span><span>10% verified</span></div>
+        <div class="kv"><span>Unverified value</span><span>0 payable</span></div>
+      </div>
+      <div class="nav-label">Current task</div>
+      <div class="panel-card">
+        <div class="kv"><span>State</span><span id="taskState">Idle</span></div>
+        <div class="kv"><span>Execution</span><span id="executionState">None</span></div>
+        <div class="progress"><span id="taskProgress"></span></div>
+        <p class="small" id="taskDetail">Không có task đang chạy.</p>
+      </div>
+      <div class="nav-label">Receipt</div>
+      <div class="panel-card"><div id="receiptId" class="code">Not accepted</div></div>
+    </div>
+  </aside>
+</section>
+
+<div id="settingsDrawer" class="drawer" hidden>
+  <section class="drawer-card">
+    <div class="drawer-head"><div><p class="eyebrow">CONTROL PLANE</p><h3>Kết nối gateway</h3></div><button id="closeDrawerBtn" class="icon-btn" aria-label="Đóng">×</button></div>
+    <div class="warning">Chỉ nhập endpoint chính thức do bố/đơn vị vận hành kiểm soát. Bearer token chỉ giữ trong sessionStorage của tab này và không được ghi vào repository hay localStorage.</div>
+    <div class="field"><label for="gatewayEndpoint">Gateway URL</label><input id="gatewayEndpoint" type="url" placeholder="https://deus.example.com/api"></div>
+    <div class="field"><label for="gatewayToken">Session bearer token</label><input id="gatewayToken" type="password" autocomplete="off" placeholder="Session-scoped token"></div>
+    <div class="actions"><button id="saveGatewayBtn" class="btn primary">Lưu cho phiên này</button><button id="clearGatewayBtn" class="btn ghost">Ngắt gateway</button></div>
+    <div id="gatewayResult" class="note"></div>
+    <div class="sep"></div>
+    <p class="small">Expected bootstrap API: <span class="code">POST /auth/session</span>, <span class="code">POST /constitution/acceptances</span>, <span class="code">POST /nodes/grants</span>, <span class="code">POST /nodes/revoke</span>, <span class="code">POST /chat</span>.</p>
+  </section>
+</div>
+
+<script src="app.js" defer></script>
+</body>
+</html>
