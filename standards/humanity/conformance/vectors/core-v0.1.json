@@ -1,0 +1,125 @@
+{
+  "suite": "HCS core conformance vectors",
+  "version": "0.1",
+  "referenceTime": "2026-09-05T01:00:00Z",
+  "supportedProfiles": ["urn:hcs:profile:basic-0.1"],
+  "revokedRefs": ["urn:revocation:revoked"],
+  "cases": [
+    {
+      "id": "valid-basic",
+      "expectedValid": true,
+      "expectedDigest": "124208fbee9b1006cb71eff77e26f29f163985403bdadde082582fb56c379a94",
+      "envelope": {
+        "hcsVersion": "0.1",
+        "messageId": "msg-00000001",
+        "issuedAt": "2026-09-05T00:00:00Z",
+        "actor": {"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority": {"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action": {"type":"example.read","state":"AUTHORIZED"},
+        "epistemic": {"class":"REPORTED","confidence":1},
+        "provenance": {"sourceRefs":["urn:source:test-vector"]},
+        "payload": {"value":"hello"},
+        "integrity": {
+          "mechanism":"digest-only",
+          "evidenceRef":"urn:evidence:test-vector",
+          "targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1",
+          "canonicalization":"urn:hcs:canonicalization:rfc8785-jcs",
+          "digestAlgorithm":"sha-256",
+          "digestValue":"124208fbee9b1006cb71eff77e26f29f163985403bdadde082582fb56c379a94"
+        }
+      }
+    },
+    {
+      "id":"invalid-observed-without-evidence",
+      "expectedValid":false,
+      "expectedErrors":["OBSERVED_COMPLETE_REQUIRES_EVIDENCE"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000002","issuedAt":"2026-09-05T00:00:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["write:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.write","state":"OBSERVED_COMPLETE"},
+        "epistemic":{"class":"OBSERVED","confidence":1},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-unsupported-version",
+      "expectedValid":false,
+      "expectedErrors":["UNSUPPORTED_HCS_VERSION"],
+      "envelope": {
+        "hcsVersion":"1.0","messageId":"msg-00000003","issuedAt":"2026-09-05T00:00:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED"},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-extension-namespace",
+      "expectedValid":false,
+      "expectedErrors":["INVALID_EXTENSION_NAMESPACE"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000004","issuedAt":"2026-09-05T00:00:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED"},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},"extensions":{"not-owned-namespace":{"x":1}},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-required-profile-downgrade",
+      "expectedValid":false,
+      "expectedErrors":["REQUIRED_PROFILE_UNSUPPORTED"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000005","issuedAt":"2026-09-05T00:00:00Z","requiredProfiles":["urn:hcs:profile:unavailable"],
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED"},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-revoked-authority",
+      "expectedValid":false,
+      "expectedErrors":["AUTHORITY_REVOKED"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000006","issuedAt":"2026-09-05T00:00:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:revoked"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED"},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-expired",
+      "expectedValid":false,
+      "expectedErrors":["ENVELOPE_EXPIRED"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000007","issuedAt":"2026-09-04T22:00:00Z","expiresAt":"2026-09-05T00:30:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED"},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"0000000000000000000000000000000000000000000000000000000000000000"}
+      }
+    },
+    {
+      "id":"invalid-tampered-digest",
+      "expectedValid":false,
+      "expectedErrors":["INTEGRITY_DIGEST_MISMATCH"],
+      "envelope": {
+        "hcsVersion":"0.1","messageId":"msg-00000001","issuedAt":"2026-09-05T00:00:00Z",
+        "actor":{"subjectId":"did:example:alice","identityRef":"urn:identity:alice"},
+        "authority":{"basis":"explicit-grant","scope":["read:example"],"revocationRef":"urn:revocation:none"},
+        "action":{"type":"example.read","state":"AUTHORIZED"},"epistemic":{"class":"REPORTED","confidence":1},
+        "provenance":{"sourceRefs":["urn:source:test-vector"]},"payload":{"value":"tampered"},
+        "integrity":{"mechanism":"digest-only","evidenceRef":"urn:evidence:test-vector","targetProfile":"urn:hcs:integrity-target:envelope-without-integrity-v1","canonicalization":"urn:hcs:canonicalization:rfc8785-jcs","digestAlgorithm":"sha-256","digestValue":"124208fbee9b1006cb71eff77e26f29f163985403bdadde082582fb56c379a94"}
+      }
+    }
+  ]
+}
