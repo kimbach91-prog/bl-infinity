@@ -1,0 +1,127 @@
+name: DEUS P1-4 Auxiliary Security Audit
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deus-p1-4-security-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  domain-audit:
+    name: audit-${{ matrix.domain }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - domain: drive-sharing
+            observed: ANONYMOUS_WRITER
+            required: NO_ANONYMOUS_WRITER
+            severity: 100
+          - domain: supabase-data-boundary
+            observed: RLS_DISABLED_AND_SENSITIVE_COLUMNS_EXPOSED
+            required: RLS_AND_EXPLICIT_DATA_POLICY
+            severity: 95
+          - domain: apps-script-trigger
+            observed: AUTHORIZATION_REQUIRED
+            required: AUTHORIZED_EXECUTION_AND_ZERO_FAILED_TESTS
+            severity: 80
+          - domain: summon-consumer
+            observed: DISPATCH_PRESENT_RETURN_ABSENT
+            required: AUTHORIZED_ACK_RETURN_WITH_PROVENANCE
+            severity: 75
+    steps:
+      - name: Evaluate bounded security domain
+        shell: bash
+        env:
+          DOMAIN: ${{ matrix.domain }}
+          OBSERVED: ${{ matrix.observed }}
+          REQUIRED: ${{ matrix.required }}
+          SEVERITY: ${{ matrix.severity }}
+        run: |
+          set -euo pipefail
+          # Sanitized control-plane facts only. No file IDs, emails, secrets, credentials,
+          # private DEUS context, or provider tokens are passed to the runner.
+          status="OPEN"
+          containment="REQUIRED"
+          if [[ "$DOMAIN" == "drive-sharing" ]]; then
+            action="quarantine_legacy_and_use_private_v2"
+          elif [[ "$DOMAIN" == "supabase-data-boundary" ]]; then
+            action="enable_rls_restrict_sensitive_columns_rerun_advisor"
+          elif [[ "$DOMAIN" == "apps-script-trigger" ]]; then
+            action="reauthorize_owner_trigger_test_and_remove_stale_duplicates"
+          elif [[ "$DOMAIN" == "summon-consumer" ]]; then
+            action="provision_authorized_consumer_identity_and_require_receipt"
+          else
+            echo "unknown domain" >&2; exit 2
+          fi
+
+          jq -n \
+            --arg domain "$DOMAIN" \
+            --arg observed "$OBSERVED" \
+            --arg required "$REQUIRED" \
+            --arg status "$status" \
+            --arg containment "$containment" \
+            --arg action "$action" \
+            --argjson severity "$SEVERITY" \
+            '{domain:$domain,observed:$observed,required:$required,severity:$severity,status:$status,containment:$containment,next_action:$action}' \
+            > "audit-${DOMAIN}.json"
+          cat "audit-${DOMAIN}.json"
+
+      - name: Publish domain evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: p1-4-${{ matrix.domain }}
+          path: audit-${{ matrix.domain }}.json
+          retention-days: 7
+          if-no-files-found: error
+
+  aggregate:
+    name: aggregate-remediation-gate
+    needs: domain-audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: p1-4-*
+          path: results
+          merge-multiple: true
+
+      - name: Build remediation gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import glob, json
+          rows=[json.load(open(p,encoding='utf-8')) for p in sorted(glob.glob('results/audit-*.json'))]
+          if len(rows)!=4:
+              raise SystemExit(f'expected 4 domains, got {len(rows)}')
+          rows.sort(key=lambda r: (-r['severity'], r['domain']))
+          blocking=[r for r in rows if r['status']!='CLOSED']
+          result={
+              'audit_id':'DEUS-P1-4-20260904',
+              'status':'BLOCKED' if blocking else 'PASS',
+              'open_domains':len(blocking),
+              'priority_order':[r['domain'] for r in rows],
+              'actions':[{'domain':r['domain'],'severity':r['severity'],'next_action':r['next_action']} for r in rows],
+              'security_note':'Sanitized control-plane facts only; no secrets or private DEUS context used.'
+          }
+          with open('p1-4-aggregate.json','w',encoding='utf-8') as f:
+              json.dump(result,f,ensure_ascii=False,indent=2)
+          print(json.dumps(result,ensure_ascii=False,indent=2))
+          # BLOCKED here is an audit state, not a CI failure: the artifact must be produced
+          # so the control plane can consume the remediation order.
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p1-4-aggregate
+          path: p1-4-aggregate.json
+          retention-days: 7
+          if-no-files-found: error
