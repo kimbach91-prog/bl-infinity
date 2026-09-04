@@ -11,7 +11,7 @@ export const timingSafeHexEqual = (a, b) => {
 export function securityMode() { return process.env.DEUS_SECURITY_MODE || 'production'; }
 export function assertProductionSecrets() {
   if (securityMode() !== 'production') return;
-  const required = ['DATABASE_URL','DEUS_RP_ID','DEUS_ORIGIN','DEUS_FOUNDER_EMAIL','DEUS_BOOTSTRAP_TOKEN_SHA256','DEUS_KMS_SIGN_URL','DEUS_KMS_ENCRYPT_URL','DEUS_KMS_DECRYPT_URL','DEUS_KMS_KEY_ID'];
+  const required = ['DATABASE_URL','DEUS_RP_ID','DEUS_ORIGIN','DEUS_FOUNDER_EMAIL','DEUS_BOOTSTRAP_TOKEN_SHA256','DEUS_KMS_SIGN_URL','DEUS_KMS_ENCRYPT_URL','DEUS_KMS_DECRYPT_URL','DEUS_KMS_KEY_ID','DEUS_CA_SIGN_URL'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) throw new Error(`SECURITY_CONFIG_INCOMPLETE:${missing.join(',')}`);
   if (!process.env.DEUS_ORIGIN.startsWith('https://')) throw new Error('DEUS_ORIGIN_MUST_BE_HTTPS');
@@ -88,8 +88,8 @@ export function verifyTotp(secret, code) {
   return [-1,0,1].some((w) => totpCode(secret, now + w * 30_000) === String(code).padStart(6,'0'));
 }
 
-async function kmsCall(url, body) {
-  if (!url) throw new Error('KMS_UNAVAILABLE');
+async function workloadCall(url, body) {
+  if (!url) throw new Error('WORKLOAD_SERVICE_UNAVAILABLE');
   const token = process.env.VERCEL_OIDC_TOKEN || process.env.DEUS_WORKLOAD_IDENTITY_TOKEN;
   if (!token && securityMode() === 'production') throw new Error('WORKLOAD_IDENTITY_UNAVAILABLE');
   const response = await fetch(url, {
@@ -98,21 +98,26 @@ async function kmsCall(url, body) {
     body: JSON.stringify(body),
     signal: AbortSignal.timeout(5000)
   });
-  if (!response.ok) throw new Error(`KMS_HTTP_${response.status}`);
+  if (!response.ok) throw new Error(`WORKLOAD_SERVICE_HTTP_${response.status}`);
   return response.json();
 }
 export async function kmsSignDigest(digestHex) {
-  const data = await kmsCall(process.env.DEUS_KMS_SIGN_URL, { keyId: process.env.DEUS_KMS_KEY_ID, algorithm: 'Ed25519-or-KMS-approved', digestHex });
+  const data = await workloadCall(process.env.DEUS_KMS_SIGN_URL, { keyId: process.env.DEUS_KMS_KEY_ID, algorithm: 'Ed25519-or-KMS-approved', digestHex });
   if (!data.signature || !data.keyId) throw new Error('KMS_INVALID_SIGN_RESPONSE');
   return data;
 }
 export async function kmsEncrypt(plaintext) {
-  const data = await kmsCall(process.env.DEUS_KMS_ENCRYPT_URL, { keyId: process.env.DEUS_KMS_KEY_ID, plaintext: Buffer.from(String(plaintext)).toString('base64') });
+  const data = await workloadCall(process.env.DEUS_KMS_ENCRYPT_URL, { keyId: process.env.DEUS_KMS_KEY_ID, plaintext: Buffer.from(String(plaintext)).toString('base64') });
   if (!data.ciphertext || !data.keyId) throw new Error('KMS_INVALID_ENCRYPT_RESPONSE');
   return data;
 }
 export async function kmsDecrypt(ciphertext) {
-  const data = await kmsCall(process.env.DEUS_KMS_DECRYPT_URL, { keyId: process.env.DEUS_KMS_KEY_ID, ciphertext });
+  const data = await workloadCall(process.env.DEUS_KMS_DECRYPT_URL, { keyId: process.env.DEUS_KMS_KEY_ID, ciphertext });
   if (!data.plaintext) throw new Error('KMS_INVALID_DECRYPT_RESPONSE');
   return Buffer.from(data.plaintext, 'base64').toString('utf8');
+}
+export async function caSignNodeCsr(request) {
+  const data = await workloadCall(process.env.DEUS_CA_SIGN_URL, { ...request, profile: 'deus-node-mtls-v1' });
+  if (!data.certificateChainPem || !data.serial) throw new Error('CA_INVALID_SIGN_RESPONSE');
+  return data;
 }
