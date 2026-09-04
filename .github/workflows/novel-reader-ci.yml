@@ -1,0 +1,128 @@
+name: Novel Reader Projection CI
+
+on:
+  pull_request:
+    paths:
+      - 'novel/**'
+      - 'assets/css/reader.css'
+      - 'assets/js/reader*.js'
+      - 'sitemap.xml'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/novel-reader-ci.yml'
+  push:
+    branches: ['main']
+    paths:
+      - 'novel/**'
+      - 'assets/css/reader.css'
+      - 'assets/js/reader*.js'
+      - 'sitemap.xml'
+      - '.github/workflows/pages.yml'
+      - '.github/workflows/novel-reader-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  reader-projection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          fetch-depth: 1
+
+      - name: Validate public/backstage boundary and narrative continuity
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          root = Path('.')
+          public = [
+              root/'novel/index.html',
+              root/'novel/chapter-001.html',
+              root/'novel/chapter-001.md',
+          ]
+          for path in public:
+              if not path.exists() or path.stat().st_size < 500:
+                  raise SystemExit(f'Missing/too small: {path}')
+
+          banned = (
+              'PUBLIC HALF-CANON','DENSE-SCENE','EVENT-RESTORATION PASS','TIME-SKIP LOCK',
+              'scene density','state-change','causal flow','failure-pattern','reader surface',
+              'node sống','reachable','KPI','evidence mới','checksum','semantic layer','formalize','provenance',
+          )
+          for path in public:
+              text = path.read_text(encoding='utf-8')
+              for token in banned:
+                  if token.lower() in text.lower():
+                      raise SystemExit(f'Backstage/mechanical token leaked: {token!r} in {path}')
+
+          novel = (root/'novel/chapter-001.md').read_text(encoding='utf-8')
+          required = (
+              'Có những thế giới không chết vì ngu',
+              'Phần còn lại là UNKNOWN.',
+              '## Một căn phòng nhỏ',
+              'Buổi sáng vẫn còn rất dài.',
+              'Khi tìm được một thế giới không cần tôi nữa.',
+          )
+          for marker in required:
+              if marker not in novel:
+                  raise SystemExit(f'Missing continuity marker: {marker}')
+
+          if 'Lần Hồi Quy Thứ Một Triệu' in novel.split('\n',1)[1]:
+              raise SystemExit('Meta title leak remains inside Chapter 1 prose')
+
+          backstage = (
+              root/'novel/PACING_CANON.md',
+              root/'novel/era-language-style-atlas.html',
+              root/'novel/world-chapter-001.html',
+          )
+          for path in backstage:
+              if path.exists():
+                  raise SystemExit(f'Backstage file remains in current public tree: {path}')
+
+          index = (root/'novel/index.html').read_text(encoding='utf-8')
+          chapter = (root/'novel/chapter-001.html').read_text(encoding='utf-8')
+          for path,text in [(root/'novel/index.html',index),(root/'novel/chapter-001.html',chapter)]:
+              if len(re.findall(r'<h1\b',text,re.I)) != 1:
+                  raise SystemExit(f'Expected exactly one h1 in {path}')
+              if not re.search(r'<meta\s+name="description"\s+content="[^"]+"',text,re.I):
+                  raise SystemExit(f'Missing description in {path}')
+
+          for marker in ('reader-atmosphere','data-story-stage','prefers-reduced-motion'):
+              if marker not in chapter:
+                  raise SystemExit(f'Missing immersive/accessibility marker: {marker}')
+
+          sitemap=(root/'sitemap.xml').read_text(encoding='utf-8')
+          for dead_route in ('world-chapter-001.html','era-language-style-atlas.html'):
+              if dead_route in sitemap:
+                  raise SystemExit(f'Removed backstage route still in sitemap: {dead_route}')
+
+          pages=(root/'.github/workflows/pages.yml').read_text(encoding='utf-8')
+          stage_line='cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/'
+          if stage_line not in pages:
+              raise SystemExit('Pages novel allowlist is not the expected minimal projection')
+
+          print('Novel reader projection static validation: PASS')
+          PY
+          git diff --check
+
+      - name: Smoke-test static reader routes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m http.server 8765 >/tmp/bl-reader-http.log 2>&1 &
+          pid=$!
+          trap 'kill $pid 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8765/novel/ >/dev/null; then break; fi
+            sleep .2
+          done
+          curl -fsS http://127.0.0.1:8765/novel/ | grep -q 'Lần Hồi Quy Thứ Một Triệu'
+          curl -fsS http://127.0.0.1:8765/novel/chapter-001.html | grep -q 'Đại Kết Cục Thứ Một Nghìn'
+          curl -fsS http://127.0.0.1:8765/novel/chapter-001.md | grep -q 'Buổi sáng vẫn còn rất dài.'
+          curl -fsS http://127.0.0.1:8765/assets/css/reader.css >/dev/null
+          curl -fsS http://127.0.0.1:8765/assets/js/reader.js >/dev/null

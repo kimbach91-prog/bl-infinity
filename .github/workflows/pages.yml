@@ -155,11 +155,43 @@ jobs:
                       raise SystemExit(f'Shared reader marker {marker} missing: {path.relative_to(root)}')
 
           novel = (root / 'novel/chapter-001.md').read_text(encoding='utf-8')
-          for marker in ('DENSE-SCENE / EVENT-RESTORATION PASS', 'TIME-SKIP LOCK', 'Có những thế giới không chết vì ngu'):
+          required_novel_markers = (
+              'Có những thế giới không chết vì ngu',
+              'Phần còn lại là UNKNOWN.',
+              '## Một căn phòng nhỏ',
+              'Buổi sáng vẫn còn rất dài.',
+          )
+          for marker in required_novel_markers:
               if marker not in novel:
-                  raise SystemExit(f'Novel event/prose contract missing: {marker}')
+                  raise SystemExit(f'Novel continuity marker missing: {marker}')
 
-          print('Shared reader + Vietnamese typography + HCM applied-science validation: PASS')
+          banned_public_novel_tokens = (
+              'PUBLIC HALF-CANON', 'DENSE-SCENE', 'EVENT-RESTORATION PASS', 'TIME-SKIP LOCK',
+              'scene density', 'state-change', 'causal flow', 'failure-pattern', 'reader surface',
+              'node sống', 'reachable', 'KPI', 'evidence mới', 'checksum', 'semantic layer', 'formalize', 'provenance',
+          )
+          public_novel_surfaces = [root / 'novel/index.html', root / 'novel/chapter-001.html', root / 'novel/chapter-001.md']
+          for path in public_novel_surfaces:
+              text = path.read_text(encoding='utf-8')
+              for token in banned_public_novel_tokens:
+                  if token.lower() in text.lower():
+                      raise SystemExit(f'Backstage/mechanical token leaked to public novel surface: {token} in {path.relative_to(root)}')
+
+          backstage_paths = [
+              root / 'novel/PACING_CANON.md',
+              root / 'novel/era-language-style-atlas.html',
+              root / 'novel/world-chapter-001.html',
+          ]
+          for path in backstage_paths:
+              if path.exists():
+                  raise SystemExit(f'Literary backstage must not remain in current public tree: {path.relative_to(root)}')
+
+          chapter_html = (root / 'novel/chapter-001.html').read_text(encoding='utf-8')
+          for marker in ('reader-atmosphere', 'data-story-stage', 'prefers-reduced-motion'):
+              if marker not in chapter_html:
+                  raise SystemExit(f'Immersive-reader accessibility/staging marker missing: {marker}')
+
+          print('Shared reader + Vietnamese typography + HCM science + clean novel projection validation: PASS')
           PY
           git diff --check
 
@@ -187,7 +219,7 @@ jobs:
           rm -rf _site
           mkdir -p _site/novel _site/assets/css _site/assets/js _site/books
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
-          cp novel/index.html novel/chapter-001.html novel/chapter-001.md novel/world-chapter-001.html novel/era-language-style-atlas.html _site/novel/
+          cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
           cp assets/css/main.css assets/css/reader.css _site/assets/css/
           cp assets/js/site.js assets/js/reader.js assets/js/reader-markdown.js _site/assets/js/
           cp -R books/. _site/books/
@@ -211,6 +243,9 @@ jobs:
           test -f _site/books/ho-chi-minh/chapters/00-loi-mo.md
           test -f _site/books/ho-chi-minh/chapters/05-phuong-phap.md
           test -f _site/novel/chapter-001.md
+          test ! -e _site/novel/PACING_CANON.md
+          test ! -e _site/novel/era-language-style-atlas.html
+          test ! -e _site/novel/world-chapter-001.html
           test ! -d _site/tools
           test ! -e _site/system.html
           test ! -e _site/machine.html

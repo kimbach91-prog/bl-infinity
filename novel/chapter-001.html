@@ -1,32 +1,68 @@
 <!doctype html>
 <html lang="vi">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Chương 1 — Đại Kết Cục Thứ Một Nghìn</title>
-<meta name="description" content="Chương 1 của Bách Lâm: Lần Hồi Quy Thứ Một Triệu — public HALF-CANON, scene-first, slow-time, trình đọc chung BL∞.">
-<meta name="robots" content="index,follow,max-snippet:-1"><link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html">
+<meta name="description" content="Chương 1 của Bách Lâm: Lần Hồi Quy Thứ Một Triệu. Ở Trạm Cuối, một lần truyền cuối cùng sắp bắt đầu.">
+<meta name="robots" content="index,follow,max-snippet:-1">
+<link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/novel/chapter-001.html">
 <link rel="stylesheet" href="../assets/css/reader.css">
 <style>
-:root{--reader-accent:#69439a}body{margin:0}.chapter-status{max-width:var(--reader-measure);margin:38px auto 0;padding:15px 17px;border-left:3px solid var(--reader-accent);background:color-mix(in srgb,var(--reader-surface) 88%,transparent);color:var(--reader-muted);font:500 .86rem/1.62 system-ui,-apple-system,sans-serif}.load-error{padding:18px;border-left:3px solid #a33;background:color-mix(in srgb,#a33 7%,transparent);font-family:system-ui,sans-serif}
+:root{--reader-accent:#69439a}
+body{margin:0;isolation:isolate}
+.reader-shell{position:relative;z-index:1}
+.reader-atmosphere{position:fixed;z-index:0;inset:0;pointer-events:none;opacity:.1;transition:opacity 1.2s ease,background 1.8s ease;background:radial-gradient(circle at 50% 18%,rgba(101,73,134,.22),transparent 34rem)}
+body[data-story-stage="terminal"] .reader-atmosphere{opacity:.14;background:radial-gradient(circle at 48% 12%,rgba(88,62,124,.28),transparent 31rem),linear-gradient(180deg,rgba(24,18,31,.06),transparent 58%)}
+body[data-story-stage="transfer"] .reader-atmosphere{opacity:.18;background:radial-gradient(circle at 50% 42%,rgba(123,94,160,.26),transparent 25rem),radial-gradient(circle at 50% 8%,rgba(50,68,104,.15),transparent 38rem)}
+body[data-story-stage="childhood"] .reader-atmosphere{opacity:.15;background:radial-gradient(circle at 72% 8%,rgba(136,154,174,.2),transparent 28rem),linear-gradient(180deg,rgba(130,145,158,.06),transparent 48%)}
+body[data-reader-theme="night"] .reader-atmosphere{opacity:.22}
+.reader-hero .reader-lead{max-width:42em}.load-error{padding:18px;border-left:3px solid #a33;background:color-mix(in srgb,#a33 7%,transparent);font-family:var(--reader-font-system)}
+.reader-bottom-link{max-width:var(--reader-measure);margin:48px auto 0;padding-top:22px;border-top:1px solid var(--reader-line);font:650 .86rem/1.5 var(--reader-font-system)}
+.reader-bottom-link a{color:var(--reader-muted);text-underline-offset:.25em}.reader-bottom-link a:hover{color:var(--reader-ink)}
+@media(prefers-reduced-motion:reduce){.reader-atmosphere{transition:none}}
 </style>
 </head>
-<body>
+<body data-story-stage="terminal">
+<div class="reader-atmosphere" aria-hidden="true"></div>
 <div class="reader-shell">
-<nav class="reader-nav reader-chrome"><a href="./">← Mục lục tiểu thuyết</a><a href="../books/">Sách</a><a href="../">BL∞</a></nav>
-<header class="reader-hero"><p class="reader-kicker">PUBLIC FICTION · HALF-CANON · DENSE-SCENE EDITION</p><h1>Đại Kết Cục Thứ Một Nghìn</h1><p class="reader-lead">Cùng một trình đọc với thư viện sách BL∞. Văn xuôi là bề mặt chính; ghi chú nghiên cứu và private continuity ở lớp khác.</p></header>
-<details class="reader-toc reader-chrome"><summary>Mục lục chương</summary><nav id="toc-links" class="reader-toc-list" aria-label="Mục lục chương"></nav></details>
+<nav class="reader-nav reader-chrome"><a href="./">← Mục lục</a><a href="../books/">Sách</a><a href="../">BL∞</a></nav>
+<header class="reader-hero">
+<p class="reader-kicker">Chương 1</p>
+<h1>Đại Kết Cục Thứ Một Nghìn</h1>
+<p class="reader-lead">Ở tận cùng của những gì còn liên lạc được, một lần truyền cuối cùng sắp bắt đầu.</p>
+</header>
+<details class="reader-toc reader-chrome"><summary>Những mốc trong chương</summary><nav id="toc-links" class="reader-toc-list" aria-label="Mục lục chương"></nav></details>
 <article id="reader" class="reader-prose prose" data-reader-surface><p>Đang tải văn bản…</p></article>
-<section class="chapter-status reader-chrome"><strong>Time-skip lock:</strong> Chương 1 chỉ đi Đại Kết Cục → truyền → một cảnh tuổi thơ. Các formative events bị mất được phục hồi ở chính scene Đại Kết Cục; không dùng chúng làm cớ tua nhanh nhiều năm tuổi thơ.</section>
+<div class="reader-bottom-link reader-chrome"><a href="./">← Trở về mục lục tiểu thuyết</a></div>
 <footer class="reader-nav reader-chrome">© 2026 Lâm Kim Bách · Bách Lâm / Optimizer</footer>
 </div>
 <script src="../assets/js/reader-markdown.js"></script>
 <script>
+function stageChapter(){
+ const headings=[...document.querySelectorAll('#reader h2')];
+ if(!('IntersectionObserver' in window)||!headings.length)return;
+ const classify=(text)=>{
+   const t=text.toLowerCase();
+   if(t.includes('căn phòng nhỏ'))return 'childhood';
+   if(t.includes('t−3')||t.includes('t-3'))return 'transfer';
+   if(t.includes('t−19')||t.includes('t-19'))return 'transfer';
+   return 'terminal';
+ };
+ const observer=new IntersectionObserver(entries=>{
+   const visible=entries.filter(e=>e.isIntersecting).sort((a,b)=>a.boundingClientRect.top-b.boundingClientRect.top)[0];
+   if(visible)document.body.dataset.storyStage=classify(visible.target.textContent||'');
+ },{rootMargin:'-12% 0px -68% 0px',threshold:0});
+ headings.forEach(h=>observer.observe(h));
+}
 fetch('chapter-001.md',{cache:'no-store'}).then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.text()}).then(md=>{
  const out=BLReaderMarkdown.render(md,{skipH1:true});
  document.getElementById('reader').innerHTML=out.html;
  document.getElementById('toc-links').innerHTML=out.headings.filter(h=>h.level===2).map(h=>`<a href="#${h.id}">${BLReaderMarkdown.esc(h.text)}</a>`).join('');
+ stageChapter();
  window.dispatchEvent(new Event('bl-reader-content-updated'));
-}).catch(()=>{document.getElementById('reader').innerHTML='<p class="load-error">Không tải được văn bản. Vui lòng mở lại trang hoặc đọc bản Markdown trong repository.</p>';window.dispatchEvent(new Event('bl-reader-content-updated'));});
+}).catch(()=>{document.getElementById('reader').innerHTML='<p class="load-error">Không tải được văn bản. Vui lòng mở lại trang.</p>';window.dispatchEvent(new Event('bl-reader-content-updated'));});
 </script>
 <script src="../assets/js/reader.js"></script>
-</body></html>
+</body>
+</html>
