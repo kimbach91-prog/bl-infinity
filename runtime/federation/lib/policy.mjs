@@ -1,5 +1,5 @@
 const DATA_CLASSES = new Set(['public', 'internal', 'private', 'regulated', 'sealed']);
-const VALUE_CLASSES = new Set(['S', 'H0', 'H1', 'H2', 'H3', 'H4', 'PGB']);
+const VALUE_CLASSES = new Set(['S', 'H0', 'H1', 'H2', 'H3', 'H4', 'PGB', 'PFR']);
 
 export function validateTask(task) {
   if (!task?.id) throw new Error('task.id is required');
@@ -49,17 +49,29 @@ export function evaluateProvider(provider, task, now = Date.now()) {
   if (valuePolicy) {
     const allocation = provider.allocationPolicy ?? {};
     const workloadClass = valuePolicy.workloadClass ?? task.workloadClass;
-    const commonBenefitRequested = valuePolicy.commonBenefitRequested === true || workloadClass === 'PGB';
-    const privateSharedBenefit = valuePolicy.scope === 'private-shared-benefit' || workloadClass === 'PGB';
+    const strategicReinvestmentRequested =
+      valuePolicy.strategicReinvestmentRequested === true ||
+      valuePolicy.commonBenefitRequested === true ||
+      workloadClass === 'PGB' ||
+      workloadClass === 'PFR';
+    const privateFederationReturn =
+      valuePolicy.scope === 'private-federation-return' ||
+      valuePolicy.scope === 'private-shared-benefit' ||
+      workloadClass === 'PGB' ||
+      workloadClass === 'PFR';
+
+    const allowStrategicReinvestment = allocation.allowStrategicReinvestment ?? allocation.allowCommonBenefit ?? false;
+    const maxStrategicReinvestmentShare = Number(allocation.maxStrategicReinvestmentShare ?? allocation.maxCommonBenefitShare ?? 0);
+    const allowPrivateFederationReturn = allocation.allowPrivateFederationReturn ?? allocation.allowPrivateSharedBenefit ?? false;
 
     if (workloadClass === 'H4' && allocation.allowCommercialWorkloads !== true) reasons.push('commercial-workload-not-opted-in');
-    if (commonBenefitRequested && allocation.allowCommonBenefit !== true) reasons.push('common-benefit-not-opted-in');
-    if (privateSharedBenefit && allocation.allowPrivateSharedBenefit !== true) reasons.push('private-shared-benefit-not-opted-in');
+    if (strategicReinvestmentRequested && allowStrategicReinvestment !== true) reasons.push('common-benefit-not-opted-in');
+    if (privateFederationReturn && allowPrivateFederationReturn !== true) reasons.push('private-shared-benefit-not-opted-in');
 
-    if (commonBenefitRequested) {
-      const cap = Number(allocation.maxCommonBenefitShare ?? 0);
-      if (!Number.isFinite(cap) || cap <= 0) reasons.push('common-benefit-cap-zero');
-      if (Number.isFinite(task.commonBenefitProjectedShare) && Number(task.commonBenefitProjectedShare) > cap) reasons.push('common-benefit-provider-cap-exceeded');
+    if (strategicReinvestmentRequested) {
+      if (!Number.isFinite(maxStrategicReinvestmentShare) || maxStrategicReinvestmentShare <= 0) reasons.push('common-benefit-cap-zero');
+      const projectedShare = Number(task.strategicReinvestmentProjectedShare ?? task.commonBenefitProjectedShare);
+      if (Number.isFinite(projectedShare) && projectedShare > maxStrategicReinvestmentShare) reasons.push('common-benefit-provider-cap-exceeded');
     }
   }
 
