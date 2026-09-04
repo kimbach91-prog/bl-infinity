@@ -1,0 +1,36 @@
+name: DEUS Console Build
+
+on:
+  pull_request:
+    paths:
+      - 'apps/deus-console/**'
+      - '.github/workflows/deus-console-build.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/deus-console/**'
+      - '.github/workflows/deus-console-build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    defaults:
+      run:
+        working-directory: apps/deus-console
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Build fail-closed console
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        run: npm run build
