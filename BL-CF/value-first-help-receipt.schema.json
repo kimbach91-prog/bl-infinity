@@ -15,7 +15,7 @@
     "verification",
     "unknowns",
     "federationState",
-    "computeGrantCreated"
+    "helpCreatesComputeAuthority"
   ],
   "properties": {
     "schema": { "const": "bl-sca-value-first-help/v0.1" },
@@ -90,8 +90,8 @@
     "federationState": {
       "enum": ["NO_FEDERATION", "LEARN_MORE", "PROFILE_ONLY", "PILOT_GRANT", "PROVIDER_DISCOVERY", "NOT_ASKED"]
     },
-    "computeGrantCreated": { "type": "boolean", "const": false },
-    "computeGrantRef": { "type": ["string", "null"], "const": null },
+    "helpCreatesComputeAuthority": { "type": "boolean", "const": false },
+    "separateComputeGrantRef": { "type": ["string", "null"] },
     "completedAt": { "type": ["string", "null"], "format": "date-time" },
     "notes": { "type": ["string", "null"], "maxLength": 4000 }
   }
