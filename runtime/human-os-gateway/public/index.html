@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="referrer" content="no-referrer">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>DEUS Human OS · Secure Gateway</title>
+<meta name="description" content="Cổng DEUS Human OS bảo mật bằng passkey, MFA, phiên máy chủ và zero-trust node enrollment.">
+<link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+<header><strong>DEUS ∞</strong><span>HUMAN OS · ZERO-TRUST GATEWAY R2</span><span id="health">Đang kiểm tra…</span></header>
+<main>
+<section class="hero"><p class="eyebrow">ENTERPRISE / GOVERNMENT SECURITY GATE</p><h1>Đăng nhập bằng Passkey + MFA.</h1><p>Không dùng mật khẩu Google, GitHub, cloud hoặc API key. Phiên production dùng credential WebAuthn có user verification, TOTP bước hai và cookie máy chủ HttpOnly.</p></section>
+<section class="grid">
+<article class="card" id="loginCard">
+<p class="eyebrow">NORMAL LOGIN</p><h2>Đăng nhập</h2>
+<label>Email</label><input id="loginEmail" type="email" autocomplete="username webauthn" placeholder="founder@example.com">
+<button id="passkeyLogin">Xác thực Passkey</button>
+<div id="mfaLogin" hidden><label>Mã MFA 6 số</label><input id="loginTotp" inputmode="numeric" autocomplete="one-time-code" maxlength="6"><button id="verifyLoginMfa">Xác nhận MFA</button></div>
+<p id="loginStatus" class="status"></p>
+</article>
+<article class="card" id="bootstrapCard">
+<p class="eyebrow">ONE-TIME FOUNDER BOOTSTRAP</p><h2>Khởi tạo Founder Passkey</h2>
+<p>Chỉ hoạt động khi cơ sở dữ liệu chưa có user nào. Sau khi hoàn tất, bootstrap verifier phải bị xóa khỏi secret manager.</p>
+<label>Founder email</label><input id="bootstrapEmail" type="email" autocomplete="username">
+<label>One-time bootstrap secret</label><input id="bootstrapToken" type="password" autocomplete="off">
+<button id="bootstrapPasskey">Tạo Founder Passkey</button>
+<div id="mfaBootstrap" hidden><p>Lưu TOTP vào authenticator bằng URI/secret hiển thị một lần.</p><textarea id="otpUri" readonly></textarea><label>Mã MFA đầu tiên</label><input id="bootstrapTotp" inputmode="numeric" maxlength="6"><button id="verifyBootstrapMfa">Hoàn tất bootstrap</button></div>
+<p id="bootstrapStatus" class="status"></p>
+</article>
+</section>
+<section class="card session" id="sessionCard" hidden><p class="eyebrow">AUTHENTICATED SESSION</p><h2>Security session active</h2><pre id="sessionData"></pre><button id="logout">Đăng xuất</button></section>
+<section class="truth"><strong>Truthfulness:</strong> `CODE_PRESENT ≠ CONTROL_ACTIVE`. Trang này chỉ báo “production ready” khi health check xác nhận database, KMS, CA và cấu hình bắt buộc đã sống.</section>
+</main>
+<script src="/app.js" defer></script>
+</body>
+</html>

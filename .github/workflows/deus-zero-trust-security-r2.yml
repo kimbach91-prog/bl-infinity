@@ -1,0 +1,95 @@
+name: DEUS Zero-Trust Security R2
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/human-os-gateway/**'
+      - 'runtime/federation/mtls-node-ingress.mjs'
+      - 'runtime/federation/package.json'
+      - 'nodes/windows/prepare-mtls-enrollment.ps1'
+      - 'security/**'
+      - '.github/workflows/deus-zero-trust-security-r2.yml'
+  push:
+    branches: ['deus/security-zero-trust-r2']
+
+concurrency:
+  group: deus-zero-trust-r2-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  gateway-security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: deus_security_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: runtime/human-os-gateway/package.json
+      - name: Install gateway dependencies
+        working-directory: runtime/human-os-gateway
+        run: npm install --no-fund --no-audit --ignore-scripts
+      - name: Syntax check security runtime
+        run: |
+          node --check runtime/human-os-gateway/api/index.mjs
+          node --check runtime/human-os-gateway/lib/security.mjs
+          node --check runtime/human-os-gateway/lib/db.mjs
+          node --check runtime/federation/mtls-node-ingress.mjs
+      - name: Apply production security schema
+        env:
+          PGPASSWORD: postgres
+        run: psql -h 127.0.0.1 -U postgres -d deus_security_test -v ON_ERROR_STOP=1 -f runtime/human-os-gateway/schema.sql
+      - name: Run gateway unit tests
+        working-directory: runtime/human-os-gateway
+        run: npm test
+      - name: Dependency vulnerability gate
+        working-directory: runtime/human-os-gateway
+        run: npm audit --audit-level=high
+      - name: Reject insecure gateway patterns
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RInE "Access-Control-Allow-Origin[^\n]*\*|SameSite=None|rejectUnauthorized[[:space:]]*:[[:space:]]*false|localStorage.*(token|secret|password)|sessionStorage.*(password|secret)" runtime/human-os-gateway
+          ! grep -RInE "BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|AKIA[0-9A-Z]{16}|ghp_[A-Za-z0-9]{30,}" runtime/human-os-gateway nodes/windows security
+          grep -q "HttpOnly; Secure; SameSite=Strict" runtime/human-os-gateway/lib/security.mjs
+          grep -q "userVerification: 'required'" runtime/human-os-gateway/api/index.mjs
+          grep -q "WORKLOAD_IDENTITY_UNAVAILABLE" runtime/human-os-gateway/lib/security.mjs
+          grep -q "rejectUnauthorized: true" runtime/federation/mtls-node-ingress.mjs
+          grep -q "minVersion: 'TLSv1.3'" runtime/federation/mtls-node-ingress.mjs
+
+  windows-enrollment:
+    runs-on: windows-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - name: Parse enrollment script
+        shell: powershell
+        run: |
+          $tokens=$null; $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path 'nodes/windows/prepare-mtls-enrollment.ps1'),[ref]$tokens,[ref]$errors) | Out-Null
+          if ($errors.Count -gt 0) { $errors | ForEach-Object { Write-Error $_.Message }; exit 1 }
+      - name: Enforce TPM and non-exportable-key policy
+        shell: powershell
+        run: |
+          $s = Get-Content 'nodes/windows/prepare-mtls-enrollment.ps1' -Raw
+          if ($s -notmatch 'Microsoft Platform Crypto Provider') { throw 'TPM platform provider missing' }
+          if ($s -notmatch 'Exportable = FALSE') { throw 'non-exportable key requirement missing' }
+          if ($s -notmatch 'KeyAttestation = required') { throw 'key attestation requirement missing' }
+          if ($s -match '0\.0\.0\.0|Invoke-Expression|\biex\b') { throw 'dangerous exposure/eval primitive detected' }
