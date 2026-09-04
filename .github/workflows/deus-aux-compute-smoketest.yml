@@ -1,0 +1,142 @@
+name: DEUS Auxiliary Compute Smoke Test
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - .github/workflows/deus-aux-compute-smoketest.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shard:
+    name: shard-${{ matrix.check }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    strategy:
+      fail-fast: false
+      matrix:
+        check:
+          - packet-hash
+          - schema
+          - dedupe
+          - policy
+    steps:
+      - name: Run bounded independent probe
+        shell: bash
+        env:
+          CHECK: ${{ matrix.check }}
+        run: |
+          set -euo pipefail
+          payload='{"task_id":"AUX-COMPUTE-SMOKE-20260904","target":"SYNTHETIC","priority":"P1","mode":"TEST","disclosure_class":"LOW","allowed_output":"STATUS_ONLY","dedupe_key":"AUX-COMPUTE-SMOKE-20260904"}'
+          result="result-${CHECK}.json"
+
+          case "$CHECK" in
+            packet-hash)
+              digest="$(printf '%s' "$payload" | sha256sum | awk '{print $1}')"
+              [[ ${#digest} -eq 64 ]]
+              detail="sha256:${digest}"
+              ;;
+            schema)
+              printf '%s' "$payload" | jq -e '
+                has("task_id") and has("target") and has("priority") and
+                has("mode") and has("disclosure_class") and
+                has("allowed_output") and has("dedupe_key")
+              ' >/dev/null
+              detail="required_fields_present"
+              ;;
+            dedupe)
+              task_id="$(printf '%s' "$payload" | jq -r '.task_id')"
+              dedupe_key="$(printf '%s' "$payload" | jq -r '.dedupe_key')"
+              [[ "$task_id" == "$dedupe_key" ]]
+              detail="dedupe_key_matches_task_id"
+              ;;
+            policy)
+              disclosure="$(printf '%s' "$payload" | jq -r '.disclosure_class')"
+              allowed="$(printf '%s' "$payload" | jq -r '.allowed_output')"
+              [[ "$disclosure" == "LOW" ]]
+              [[ "$allowed" == "STATUS_ONLY" ]]
+              detail="low_disclosure_status_only"
+              ;;
+            *)
+              echo "Unknown check" >&2
+              exit 2
+              ;;
+          esac
+
+          jq -n \
+            --arg worker "$CHECK" \
+            --arg status "PASS" \
+            --arg detail "$detail" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg runner "$RUNNER_NAME" \
+            '{worker:$worker,status:$status,detail:$detail,run_id:$run_id,runner:$runner}' \
+            > "$result"
+          cat "$result"
+
+      - name: Publish shard evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-aux-${{ matrix.check }}
+          path: result-${{ matrix.check }}.json
+          if-no-files-found: error
+          retention-days: 7
+
+  aggregate:
+    name: aggregate-evidence
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Download all shard evidence
+        uses: actions/download-artifact@v4
+        with:
+          pattern: deus-aux-*
+          path: results
+          merge-multiple: true
+
+      - name: Verify consensus
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import glob, json, sys
+          paths = sorted(glob.glob('results/result-*.json'))
+          if len(paths) != 4:
+              raise SystemExit(f'expected 4 shard results, got {len(paths)}')
+          rows = [json.load(open(p, encoding='utf-8')) for p in paths]
+          if any(r.get('status') != 'PASS' for r in rows):
+              raise SystemExit('at least one shard did not PASS')
+          workers = {r['worker'] for r in rows}
+          expected = {'packet-hash','schema','dedupe','policy'}
+          if workers != expected:
+              raise SystemExit(f'worker set mismatch: {workers}')
+          aggregate = {
+              'test_id': 'AUX-COMPUTE-SMOKE-20260904',
+              'status': 'PASS',
+              'independent_shards': 4,
+              'workers': sorted(workers),
+              'note': 'Synthetic payload only; no secrets or private DEUS context exposed.'
+          }
+          with open('aggregate-result.json','w',encoding='utf-8') as f:
+              json.dump(aggregate,f,ensure_ascii=False,indent=2)
+          print(json.dumps(aggregate,ensure_ascii=False,indent=2))
+          PY
+          {
+            echo '## DEUS Auxiliary Compute Smoke Test'
+            echo ''
+            echo '- Expected independent shards: 4'
+            echo '- Result: PASS only if all shard artifacts validate'
+            echo '- Payload class: SYNTHETIC / LOW disclosure / STATUS_ONLY'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish aggregate evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-aux-aggregate
+          path: aggregate-result.json
+          if-no-files-found: error
+          retention-days: 7
