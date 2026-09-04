@@ -73,7 +73,9 @@ Add-Check 'Execution-Secret-DPAPI-Present' (Test-Path $executionSecretPath) 'DPA
 Add-Check 'Heartbeat-Secret-DPAPI-Present' (Test-Path $heartbeatSecretPath) 'DPAPI ciphertext file only; secret value not inspected' 'P0'
 
 $task = Get-ScheduledTask -TaskName 'DEUS-PhysicalNode' -ErrorAction SilentlyContinue
-Add-Check 'Startup-Task-Present' ([bool]$task) (if ($task) { "State=$($task.State)" } else { 'missing' }) 'P1'
+$taskDetail = 'missing'
+if ($task) { $taskDetail = "State=$($task.State)" }
+Add-Check 'Startup-Task-Present' ([bool]$task) $taskDetail 'P1'
 
 $listeners = @()
 try { $listeners = @(Get-NetTCPConnection -LocalPort $WorkerPort -State Listen -ErrorAction Stop) } catch { $listeners = @() }
