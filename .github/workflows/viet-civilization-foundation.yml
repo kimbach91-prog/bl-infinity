@@ -1,0 +1,40 @@
+name: Viet Civilization Foundation
+
+on:
+  push:
+    branches: ['deus/sovereign-fabric-v1']
+    paths:
+      - 'civilization/**'
+      - 'language/vttn/**'
+      - 'protocol/DSFP-VTTN-PROFILE-v0.1.md'
+      - '.github/workflows/viet-civilization-foundation.yml'
+  pull_request:
+    paths:
+      - 'civilization/**'
+      - 'language/vttn/**'
+      - 'protocol/DSFP-VTTN-PROFILE-v0.1.md'
+      - '.github/workflows/viet-civilization-foundation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  foundation-integrity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Validate JSON syntax
+        run: |
+          node -e "for (const p of ['civilization/PLATFORM-REGISTRY-v0.1.json','civilization/schemas/provenance-record.schema.json','civilization/schemas/concept-record.schema.json','civilization/schemas/evidence-record.schema.json','civilization/schemas/snapshot-manifest.schema.json']) JSON.parse(require('fs').readFileSync(p,'utf8')); console.log('json syntax ok')"
+      - name: Check civilization invariants
+        run: node civilization/runtime/check-foundation.mjs
+      - name: Reject accidental core leakage markers
+        shell: bash
+        run: |
+          set -euo pipefail
+          ! grep -RInE "BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY|ghp_[A-Za-z0-9]{30,}|AKIA[0-9A-Z]{16}" civilization language/vttn protocol/DSFP-VTTN-PROFILE-v0.1.md
+          ! grep -RInE "raw private reasoning|protected prompt contents|routing secret|private topology dump" civilization language/vttn protocol/DSFP-VTTN-PROFILE-v0.1.md
