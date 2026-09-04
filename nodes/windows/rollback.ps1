@@ -15,7 +15,7 @@ $errors = @()
 
 function Try-Restore([string]$Label, [scriptblock]$Action) {
   try { & $Action; Write-Host "[ROLLBACK] restored $Label" -ForegroundColor Green }
-  catch { $script:errors += "$Label: $($_.Exception.Message)"; Write-Warning "[ROLLBACK] $Label: $($_.Exception.Message)" }
+  catch { $script:errors += "${Label}: $($_.Exception.Message)"; Write-Warning "[ROLLBACK] ${Label}: $($_.Exception.Message)" }
 }
 
 function Restore-RegistryValue($State) {
