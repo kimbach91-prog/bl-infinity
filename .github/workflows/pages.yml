@@ -207,7 +207,23 @@ jobs:
               if not re.search(r'<meta\s+name="description"\s+content="[^"]+"', text, re.I):
                   raise SystemExit(f'Missing description on Kevin public research surface: {path.relative_to(root)}')
 
-          print('Shared reader + Vietnamese typography + HCM science + clean novel + Kevin Research Studio validation: PASS')
+          deus_public = [
+              root / 'deus/index.html',
+              root / 'deus/styles.css',
+              root / 'deus/app.js',
+              root / 'BL-CF/CONSTITUTION.md',
+              root / 'BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md',
+          ]
+          for path in deus_public:
+              if not path.exists() or path.stat().st_size < 500:
+                  raise SystemExit(f'DEUS Human OS public bootstrap asset missing/too small: {path.relative_to(root)}')
+          deus_html = (root / 'deus/index.html').read_text(encoding='utf-8')
+          if 'CONTROL PLANE OFFLINE' not in deus_html or 'noindex,nofollow,noarchive' not in deus_html:
+              raise SystemExit('DEUS bootstrap truthfulness/noindex markers missing')
+          if len(re.findall(r'<h1\b', deus_html, re.I)) != 1:
+              raise SystemExit('Expected exactly one h1 on DEUS Human OS bootstrap surface')
+
+          print('Shared reader + Vietnamese typography + HCM science + clean novel + Kevin Research Studio + DEUS Human OS validation: PASS')
           PY
           git diff --check
 
@@ -235,6 +251,7 @@ jobs:
           rm -rf _site
           mkdir -p _site/novel _site/assets/css _site/assets/js _site/books
           mkdir -p _site/research/human-development/kevin-nt/studio
+          mkdir -p _site/deus _site/BL-CF
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
           cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
           cp assets/css/main.css assets/css/reader.css _site/assets/css/
@@ -245,6 +262,8 @@ jobs:
           cp research/human-development/kevin-nt/tien-hoa-luong-cuc.html _site/research/human-development/kevin-nt/
           cp research/human-development/kevin-nt/attribution-benchmark.html _site/research/human-development/kevin-nt/
           cp research/human-development/kevin-nt/studio/index.html _site/research/human-development/kevin-nt/studio/
+          cp deus/index.html deus/styles.css deus/app.js _site/deus/
+          cp BL-CF/CONSTITUTION.md BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md _site/BL-CF/
 
       - name: Assert public books, research studio and protected-core boundary
         shell: bash
@@ -270,12 +289,20 @@ jobs:
           test -f _site/research/human-development/kevin-nt/tien-hoa-luong-cuc.html
           test -f _site/research/human-development/kevin-nt/attribution-benchmark.html
           test -f _site/research/human-development/kevin-nt/studio/index.html
+          test -f _site/deus/index.html
+          test -f _site/deus/styles.css
+          test -f _site/deus/app.js
+          test -f _site/BL-CF/CONSTITUTION.md
+          test -f _site/BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md
+          test "$(find _site/BL-CF -maxdepth 1 -type f | wc -l)" -eq 2
           test ! -e _site/research/human-development/kevin-nt/CURRENT.md
           test ! -e _site/research/human-development/kevin-nt/collision-benchmark-policy.json
           test ! -e _site/novel/PACING_CANON.md
           test ! -e _site/novel/era-language-style-atlas.html
           test ! -e _site/novel/world-chapter-001.html
           test ! -d _site/tools
+          test ! -d _site/runtime
+          test ! -d _site/.deus
           test ! -e _site/system.html
           test ! -e _site/machine.html
           test ! -e _site/bl-adn.html
