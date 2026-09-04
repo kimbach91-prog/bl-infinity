@@ -5,7 +5,6 @@ on:
     branches: ["main"]
     paths:
       - ".github/scripts/materialize_theory_seo.py"
-      - ".github/scripts/patch_pages_for_theory_seo.py"
       - ".github/workflows/theory-seo-materialize.yml"
   workflow_dispatch:
 
@@ -31,13 +30,12 @@ jobs:
         run: |
           set -euo pipefail
           python .github/scripts/materialize_theory_seo.py
-          python .github/scripts/patch_pages_for_theory_seo.py
 
       - name: Render crawler-safe social images and platform icons
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p assets/brand/og
+          mkdir -p books/theory-assets/og
 
           if command -v rsvg-convert >/dev/null 2>&1; then
             RSVG=rsvg-convert
@@ -57,20 +55,20 @@ jobs:
             IM=convert
           fi
 
-          for src in assets/brand/og-src/*.svg; do
+          for src in books/theory-assets/og-src/*.svg; do
             name="$(basename "$src" .svg)"
             tmp="/tmp/${name}.png"
             "$RSVG" -w 1200 -h 630 "$src" > "$tmp"
-            "$IM" "$tmp" -strip -sampling-factor 4:2:0 -quality 86 -interlace Plane "assets/brand/og/${name}.jpg"
+            "$IM" "$tmp" -strip -sampling-factor 4:2:0 -quality 86 -interlace Plane "books/theory-assets/og/${name}.jpg"
             rm -f "$tmp"
           done
 
-          "$RSVG" -w 180 -h 180 assets/brand/theory-favicon.svg > assets/brand/apple-touch-icon.png
-          "$RSVG" -w 256 -h 256 assets/brand/theory-favicon.svg > /tmp/theory-favicon-256.png
-          "$IM" /tmp/theory-favicon-256.png -define icon:auto-resize=16,32,48 assets/brand/favicon.ico
+          "$RSVG" -w 180 -h 180 books/theory-assets/theory-favicon.svg > books/theory-assets/apple-touch-icon.png
+          "$RSVG" -w 256 -h 256 books/theory-assets/theory-favicon.svg > /tmp/theory-favicon-256.png
+          "$IM" /tmp/theory-favicon-256.png -define icon:auto-resize=16,32,48 books/theory-assets/favicon.ico
           rm -f /tmp/theory-favicon-256.png
 
-      - name: Audit dimensions, weights and metadata
+      - name: Audit dimensions, weights, metadata and image sitemap
         shell: bash
         run: |
           set -euo pipefail
@@ -99,7 +97,7 @@ jobs:
               'property="og:image:alt"',
               'name="twitter:card" content="summary_large_image"',
               'name="twitter:image"',
-              cover,
+              '/books/theory-assets/og/' + cover,
             ]
             for marker in checks:
               if marker not in text:
@@ -107,16 +105,16 @@ jobs:
             if len(re.findall(r'<meta\s+property="og:image"', text, re.I)) != 1:
               raise SystemExit(f'Expected exactly one og:image: {rel}')
           limits={
-            'assets/brand/theory-favicon.svg': 6000,
-            'assets/brand/favicon.ico': 20000,
-            'assets/brand/apple-touch-icon.png': 30000,
+            'books/theory-assets/theory-favicon.svg': 6000,
+            'books/theory-assets/favicon.ico': 20000,
+            'books/theory-assets/apple-touch-icon.png': 30000,
           }
           for rel in [
-            'assets/brand/og/cover-human-development.jpg',
-            'assets/brand/og/cover-kevin-research-studio.jpg',
-            'assets/brand/og/cover-dual-pole.jpg',
-            'assets/brand/og/cover-100-works.jpg',
-            'assets/brand/og/cover-real-application-value.jpg',
+            'books/theory-assets/og/cover-human-development.jpg',
+            'books/theory-assets/og/cover-kevin-research-studio.jpg',
+            'books/theory-assets/og/cover-dual-pole.jpg',
+            'books/theory-assets/og/cover-100-works.jpg',
+            'books/theory-assets/og/cover-real-application-value.jpg',
           ]:
             limits[rel]=180000
           for rel, lim in limits.items():
@@ -124,17 +122,20 @@ jobs:
             size=p.stat().st_size if p.exists() else -1
             if size <= 0 or size > lim:
               raise SystemExit(f'Asset weight failed {rel}: {size} > {lim}')
-          robots=(root/'robots.txt').read_text(encoding='utf-8')
-          if 'sitemap-images.xml' not in robots:
-            raise SystemExit('Image sitemap not registered in robots.txt')
-          print('THEORY metadata and asset weight audit: PASS')
+          sitemap=(root/'sitemap.xml').read_text(encoding='utf-8')
+          if 'xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"' not in sitemap:
+            raise SystemExit('Image namespace missing from sitemap.xml')
+          for cover in set(pages.values()):
+            if cover not in sitemap:
+              raise SystemExit(f'Cover missing from sitemap.xml: {cover}')
+          print('THEORY metadata, image sitemap and asset weight audit: PASS')
           PY
 
           if command -v identify >/dev/null 2>&1; then
-            for img in assets/brand/og/*.jpg; do
+            for img in books/theory-assets/og/*.jpg; do
               test "$(identify -format '%wx%h' "$img")" = "1200x630"
             done
-            test "$(identify -format '%wx%h' assets/brand/apple-touch-icon.png)" = "180x180"
+            test "$(identify -format '%wx%h' books/theory-assets/apple-touch-icon.png)" = "180x180"
           fi
           git diff --check
 
@@ -144,14 +145,13 @@ jobs:
           set -euo pipefail
           git config user.name "kimbach91-prog"
           git config user.email "kimbach91@gmail.com"
-          git add assets/brand sitemap-images.xml robots.txt \
+          git add books/theory-assets sitemap.xml \
             research/human-development/index.html \
             research/human-development/kevin-nt/index.html \
             research/human-development/kevin-nt/studio/index.html \
             research/human-development/kevin-nt/tien-hoa-luong-cuc.html \
             research/human-development/kevin-nt/attribution-benchmark.html \
-            books/kevin-intellectual-map/index.html \
-            .github/workflows/pages.yml
+            books/kevin-intellectual-map/index.html
           if git diff --cached --quiet; then
             echo "THEORY SEO source already materialized"
           else
