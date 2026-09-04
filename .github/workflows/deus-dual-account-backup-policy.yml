@@ -66,7 +66,10 @@ jobs:
 
           $script = Get-Content 'nodes/windows/backup-dual-drive.ps1' -Raw
           foreach ($verb in @('sync','move','delete','deletefile','purge','rmdir','cleanup')) {
-            if ($script -match "(?i)['\"]$verb['\"]|\brclone\s+$verb\b") {
+            $singleQuoted = "'$verb'"
+            $doubleQuoted = '"' + $verb + '"'
+            $directInvocation = '(?i)\brclone\s+' + [regex]::Escape($verb) + '\b'
+            if ($script.Contains($singleQuoted) -or $script.Contains($doubleQuoted) -or $script -match $directInvocation) {
               throw "destructive remote verb found: $verb"
             }
           }
