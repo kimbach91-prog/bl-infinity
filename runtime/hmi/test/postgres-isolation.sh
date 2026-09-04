@@ -9,6 +9,7 @@ set -euo pipefail
 export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+runtime_credential="$(openssl rand -hex 24)"
 
 psql -v ON_ERROR_STOP=1 -f "$ROOT/storage/postgres-projection.sql"
 
@@ -17,14 +18,14 @@ if [[ "$(psql -Atqc "SELECT count(*) FROM pg_roles WHERE rolname='deus_hmi_runti
   psql -v ON_ERROR_STOP=1 -c "DROP ROLE deus_hmi_runtime_test;"
 fi
 
-psql -v ON_ERROR_STOP=1 <<'SQL'
-CREATE ROLE deus_hmi_runtime_test LOGIN PASSWORD 'synthetic-test-password' NOSUPERUSER NOBYPASSRLS;
+psql -v ON_ERROR_STOP=1 -v runtime_credential="$runtime_credential" <<'SQL'
+CREATE ROLE deus_hmi_runtime_test LOGIN PASSWORD :'runtime_credential' NOSUPERUSER NOBYPASSRLS;
 GRANT SELECT, INSERT, UPDATE, DELETE ON deus_hmi_projection TO deus_hmi_runtime_test;
 TRUNCATE TABLE deus_hmi_projection;
 SQL
 
 runtime_psql() {
-  PGPASSWORD='synthetic-test-password' psql -v ON_ERROR_STOP=1 -U deus_hmi_runtime_test "$@"
+  PGPASSWORD="$runtime_credential" psql -v ON_ERROR_STOP=1 -U deus_hmi_runtime_test "$@"
 }
 
 runtime_psql <<'SQL'
