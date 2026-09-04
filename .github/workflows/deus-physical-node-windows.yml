@@ -29,7 +29,6 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: false
 
       - name: Parse PowerShell 5.1 node scripts
         shell: powershell
