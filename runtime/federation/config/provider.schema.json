@@ -20,10 +20,21 @@
         "grantedAt": { "type": "string", "format": "date-time" },
         "expiresAt": { "type": "string", "format": "date-time" },
         "revokedAt": { "type": "string", "format": "date-time" },
-        "allowedDataClasses": { "type": "array", "items": { "enum": ["public", "internal", "private"] }, "uniqueItems": true },
+        "allowedDataClasses": { "type": "array", "items": { "enum": ["public", "internal", "private", "regulated", "sealed"] }, "uniqueItems": true },
         "allowSideEffects": { "type": "boolean", "default": false },
         "maxTaskCostUsd": { "type": "number", "minimum": 0 }
       }
+    },
+    "allocationPolicy": {
+      "type": "object",
+      "properties": {
+        "allowCommercialWorkloads": { "type": "boolean", "default": false },
+        "allowCommonBenefit": { "type": "boolean", "default": false },
+        "maxCommonBenefitShare": { "type": "number", "minimum": 0, "maximum": 0.10 },
+        "allowPrivateSharedBenefit": { "type": "boolean", "default": false },
+        "emergencyOverrideMaxShare": { "type": "number", "minimum": 0, "maximum": 1 }
+      },
+      "additionalProperties": false
     },
     "limits": {
       "type": "object",
