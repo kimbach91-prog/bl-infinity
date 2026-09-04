@@ -1,0 +1,139 @@
+name: DEUS Cloud Receptor
+
+on:
+  issues:
+    types: [opened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  receptor:
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.event.issue.title, '[DEUS-DISPATCH]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout trusted main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Parse and acknowledge packet
+        id: packet
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            echo "task_id=MANUAL-${GITHUB_RUN_ID}" >> "$GITHUB_OUTPUT"
+            echo "mode=SECURITY_AUDIT" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          body="$(jq -r '.issue.body // ""' "$GITHUB_EVENT_PATH")"
+          issue="$(jq -r '.issue.number' "$GITHUB_EVENT_PATH")"
+          task_id="$(printf '%s\n' "$body" | sed -nE 's/^TASK_ID:[[:space:]]*([A-Za-z0-9._:-]{1,100})[[:space:]]*$/\1/p' | head -n1)"
+          mode="$(printf '%s\n' "$body" | sed -nE 's/^MODE:[[:space:]]*([A-Z0-9_]{1,40})[[:space:]]*$/\1/p' | head -n1)"
+
+          if [[ -z "$task_id" || -z "$mode" ]]; then
+            gh issue comment "$issue" --repo "$REPO" --body $'ACK: CLOUD_PACKET_REJECTED\nSTATUS: INVALID_SCHEMA\nREQUIRED: TASK_ID + MODE'
+            exit 1
+          fi
+
+          echo "task_id=$task_id" >> "$GITHUB_OUTPUT"
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          gh issue comment "$issue" --repo "$REPO" --body "ACK: CLOUD_RECEPTOR_READ
+TASK_ID: $task_id
+MODE: $mode
+RUN_ID: $GITHUB_RUN_ID
+STATUS: ACCEPTED_FOR_FIXED_AUDIT"
+
+      - name: Run defensive repository audit on auxiliary compute
+        id: audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          task_id='${{ steps.packet.outputs.task_id }}'
+          mode='${{ steps.packet.outputs.mode }}'
+
+          if [[ "$mode" != "SECURITY_AUDIT" && "$mode" != "INFRA_HARDENING" ]]; then
+            echo "risk=0" >> "$GITHUB_OUTPUT"
+            echo "summary=Unsupported mode; no arbitrary commands executed." >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          risk=0
+          findings="$(mktemp)"
+
+          # 1) Tracked secret-bearing filenames. Report filenames only, never values.
+          suspicious_names="$(git ls-files | grep -Ei '(^|/)(\.env($|\.)|credentials?\.(json|ya?ml|txt)$|[^/]+\.(pem|key|p12|pfx)$)' || true)"
+          if [[ -n "$suspicious_names" ]]; then
+            risk=$((risk + 80))
+            printf 'TRACKED_SECRET_BEARING_FILENAME\n%s\n' "$suspicious_names" >> "$findings"
+          fi
+
+          # 2) Secret-like material in tracked text files, excluding the detector itself and security docs.
+          secret_files="$(git grep -Il -E '(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9_-]{20,}|xai-[A-Za-z0-9_-]{20,}|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----)' -- . ':!.github/workflows/deus-security-guard.yml' ':!.github/workflows/deus-cloud-receptor.yml' ':!.deus/security/README.md' 2>/dev/null || true)"
+          if [[ -n "$secret_files" ]]; then
+            risk=$((risk + 100))
+            printf 'SECRET_LIKE_MATERIAL_FILE_ONLY\n%s\n' "$secret_files" >> "$findings"
+          fi
+
+          # 3) Dangerous workflow permissions. Again, filenames only.
+          permission_files="$(git grep -Il -E '(permissions:[[:space:]]*write-all|contents:[[:space:]]*write|actions:[[:space:]]*write|id-token:[[:space:]]*write)' -- '.github/workflows/*.yml' '.github/workflows/*.yaml' 2>/dev/null || true)"
+          if [[ -n "$permission_files" ]]; then
+            risk=$((risk + 60))
+            printf 'WORKFLOW_WRITE_PERMISSION_REVIEW\n%s\n' "$permission_files" >> "$findings"
+          fi
+
+          # 4) Public repository guardrails expected for DEUS public surface.
+          for required in '.github/workflows/deus-security-guard.yml' '.deus/security/README.md' 'PUBLIC_DISCLOSURE_STATE.md'; do
+            if [[ ! -f "$required" ]]; then
+              risk=$((risk + 40))
+              printf 'MISSING_GUARDRAIL %s\n' "$required" >> "$findings"
+            fi
+          done
+
+          if [[ ! -s "$findings" ]]; then
+            printf 'NO_HIGH_RISK_STATIC_FINDINGS\n' > "$findings"
+          fi
+
+          # Sanitize output to a single compact line for step output.
+          summary="$(tr '\n' ';' < "$findings" | sed 's/;/; /g' | head -c 3000)"
+          echo "risk=$risk" >> "$GITHUB_OUTPUT"
+          printf 'summary=%s\n' "$summary" >> "$GITHUB_OUTPUT"
+          echo "DEUS auxiliary audit risk=$risk"
+
+      - name: Return result to durable bus
+        if: github.event_name == 'issues'
+        shell: bash
+        run: |
+          set -euo pipefail
+          issue="$(jq -r '.issue.number' "$GITHUB_EVENT_PATH")"
+          risk='${{ steps.audit.outputs.risk }}'
+          summary='${{ steps.audit.outputs.summary }}'
+          task_id='${{ steps.packet.outputs.task_id }}'
+
+          status='RETURNED'
+          if [[ "$risk" -ge 60 ]]; then
+            status='RETURNED_REVIEW_REQUIRED'
+          fi
+
+          gh issue comment "$issue" --repo "$REPO" --body "ACK: CLOUD_COMPUTE_RETURN
+TASK_ID: $task_id
+STATUS: $status
+RISK_SCORE: $risk
+FINDINGS_FILE_ONLY: $summary
+CANONICAL_WRITE: DENIED
+NOTE: This is deterministic auxiliary compute, not an independent LLM node."
+
+          if [[ "$risk" -ge 60 ]]; then
+            gh label create 'DEUS-P0' --repo "$REPO" --color B60205 --description 'Urgent DEUS security incident - evidence-first' 2>/dev/null || true
+            gh issue edit "$issue" --repo "$REPO" --add-label 'DEUS-P0' >/dev/null
+          fi
