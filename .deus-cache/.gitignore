@@ -1,0 +1,3 @@
+# Raw third-party source caches must never be committed into DEUS core.
+*
+!.gitignore
