@@ -19,6 +19,12 @@
     "multimodal": {"category": "modality", "patterns": ["vision[- ]language", "multimodal", "DeepSeek[- ]VL", "Janus"]},
     "ocr": {"category": "modality", "patterns": ["DeepSeek[- ]OCR", "optical character recognition", "OCR"]},
     "formal_proving": {"category": "reasoning", "patterns": ["DeepSeek[- ]Prover", "theorem proving", "Lean 4", "formal proof"]},
-    "distributed_storage": {"category": "systems", "patterns": ["\\b3FS\\b", "Fire-Flyer File System", "distributed file system"]}
+    "distributed_storage": {"category": "systems", "patterns": ["\\b3FS\\b", "Fire-Flyer File System", "distributed file system"]},
+    "conditional_memory_engram": {"category": "memory", "patterns": ["\\bEngram\\b", "conditional memory", "N[- ]gram embeddings?", "deterministic addressing"]},
+    "speculative_decoding": {"category": "inference", "patterns": ["speculative decoding", "draft model", "\\bDSpark\\b", "\\bDFlash\\b", "\\bEagle3\\b"]},
+    "manifold_hyperconnection": {"category": "architecture", "patterns": ["Manifold HyperConnection", "\\bmHC\\b", "Hyper[- ]connection", "Sinkhorn normalization"]},
+    "lp_expert_balancing": {"category": "systems", "patterns": ["\\bLPLB\\b", "linear[- ]programming[- ]based load balancer", "Interior Point Method", "dynamic load balancing"]},
+    "low_precision_quantization": {"category": "numeric", "patterns": ["\\bFP4\\b", "E5M6", "per[- ]token.*quant", "per[- ]block.*quant", "per[- ]channel.*quant"]},
+    "visual_causal_flow": {"category": "modality", "patterns": ["Visual Causal Flow", "visual causal", "contexts optical compression"]}
   }
 }
