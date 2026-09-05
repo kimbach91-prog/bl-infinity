@@ -1,0 +1,1 @@
+Sustained mode is intentionally conservative and designed for long-lived provider-facing workloads.
