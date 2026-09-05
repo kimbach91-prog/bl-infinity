@@ -1,0 +1,106 @@
+{
+  "schemaVersion": "deusagi-domain-fabric/v1",
+  "canonicalDomain": "deusagi.ai",
+  "legacyOrigin": "https://kimbach91-prog.github.io/bl-infinity/",
+  "cutoverPolicy": {
+    "strategy": "verify-then-retire",
+    "keepLegacyReachableUntil": [
+      "dns_green",
+      "https_green",
+      "canonical_green",
+      "public_route_smoke_green"
+    ],
+    "neverExposeProtectedCore": true
+  },
+  "surfaces": [
+    {
+      "host": "deusagi.ai",
+      "role": "public-root",
+      "visibility": "public",
+      "initialOrigin": "github-pages:bl-infinity",
+      "state": "cutover-in-progress"
+    },
+    {
+      "host": "www.deusagi.ai",
+      "role": "public-alias",
+      "visibility": "public",
+      "redirectTo": "https://deusagi.ai/",
+      "state": "reserved"
+    },
+    {
+      "host": "app.deusagi.ai",
+      "role": "deus-human-os",
+      "visibility": "authenticated",
+      "origin": "gcp-cloud-run:deus-cloud-sandbox",
+      "auth": "iap-or-cloudflare-access",
+      "state": "reserved-for-protected-ingress"
+    },
+    {
+      "host": "api.deusagi.ai",
+      "role": "federation-api",
+      "visibility": "authenticated",
+      "origin": "runtime/federation",
+      "auth": "service-identity",
+      "state": "reserved"
+    },
+    {
+      "host": "alliance.deusagi.ai",
+      "role": "membership-and-federation",
+      "visibility": "authenticated",
+      "state": "reserved"
+    },
+    {
+      "host": "node.deusagi.ai",
+      "role": "compute-node-enrollment",
+      "visibility": "authenticated",
+      "auth": "attested-node-identity",
+      "state": "reserved"
+    },
+    {
+      "host": "docs.deusagi.ai",
+      "role": "public-docs",
+      "visibility": "public",
+      "state": "reserved"
+    },
+    {
+      "host": "status.deusagi.ai",
+      "role": "public-status",
+      "visibility": "public-read-only",
+      "state": "reserved"
+    },
+    {
+      "host": "auth.deusagi.ai",
+      "role": "identity-ingress",
+      "visibility": "authenticated",
+      "state": "reserved"
+    },
+    {
+      "host": "control.deusagi.ai",
+      "role": "control-plane",
+      "visibility": "private",
+      "publicDns": false,
+      "state": "forbidden-public"
+    },
+    {
+      "host": "runtime.deusagi.ai",
+      "role": "runtime-plane",
+      "visibility": "private",
+      "publicDns": false,
+      "state": "forbidden-public"
+    },
+    {
+      "host": "broker.deusagi.ai",
+      "role": "internal-broker",
+      "visibility": "private",
+      "publicDns": false,
+      "state": "forbidden-public"
+    },
+    {
+      "host": "admin.deusagi.ai",
+      "role": "administration",
+      "visibility": "private",
+      "publicDns": false,
+      "state": "forbidden-public"
+    }
+  ]
+}
