@@ -14,6 +14,7 @@
   "rules": [
     "honor_retry_after",
     "never_retry_tight_loop",
+    "avoid_nested_retry_amplification",
     "checkpoint_before_long_batch",
     "resume_from_checkpoint",
     "delta_scan_before_deep_scan",
