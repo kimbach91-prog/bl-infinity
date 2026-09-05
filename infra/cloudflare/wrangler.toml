@@ -1,0 +1,12 @@
+name = "deusagi-edge"
+main = "deusagi-edge-worker.mjs"
+compatibility_date = "2026-09-05"
+workers_dev = false
+
+[[routes]]
+pattern = "deusagi.ai"
+custom_domain = true
+
+[[routes]]
+pattern = "www.deusagi.ai"
+custom_domain = true
