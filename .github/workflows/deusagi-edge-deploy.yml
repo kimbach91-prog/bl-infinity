@@ -1,0 +1,95 @@
+name: Deploy DEUSAGI.AI edge fabric
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - "infra/cloudflare/**"
+      - "infra/domain/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deusagi-edge-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+
+      - name: Setup Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "22"
+
+      - name: Verify edge policy
+        run: node infra/cloudflare/deusagi-edge-worker.test.mjs
+
+      - name: Preflight Cloudflare capability
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CLOUDFLARE_API_TOKEN:-}" ]; then
+            echo "::error::CLOUDFLARE_API_TOKEN is not present in GitHub Actions secrets."
+            {
+              echo "## DEUSAGI.AI cutover blocked closed"
+              echo "Cloudflare credential was not exposed or guessed."
+              echo "Required secret name: CLOUDFLARE_API_TOKEN"
+              echo "Least privilege: Account/Workers Scripts Edit; Zone/Workers Routes Edit; Zone Read for deusagi.ai."
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
+
+      - name: Resolve active zone and account without logging credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          ZONE_JSON="$(curl -fsS \
+            -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+            -H "Content-Type: application/json" \
+            'https://api.cloudflare.com/client/v4/zones?name=deusagi.ai&status=active')"
+          ACCOUNT_ID="$(python -c 'import json,sys; d=json.load(sys.stdin); r=d.get("result") or []; assert d.get("success") and len(r)==1, "active deusagi.ai zone not uniquely resolved"; print(r[0]["account"]["id"])' <<<"$ZONE_JSON")"
+          ZONE_ID="$(python -c 'import json,sys; d=json.load(sys.stdin); r=d.get("result") or []; print(r[0]["id"])' <<<"$ZONE_JSON")"
+          echo "CLOUDFLARE_ACCOUNT_ID=$ACCOUNT_ID" >> "$GITHUB_ENV"
+          echo "DEUSAGI_ZONE_ID=$ZONE_ID" >> "$GITHUB_ENV"
+          echo "Resolved active deusagi.ai zone; identifiers retained only in job environment."
+
+      - name: Deploy Cloudflare Worker custom domains
+        shell: bash
+        run: |
+          set -euo pipefail
+          npx --yes wrangler@4 deploy --config infra/cloudflare/wrangler.toml
+
+      - name: Verify HTTPS cutover
+        shell: bash
+        run: |
+          set -euo pipefail
+          ok=0
+          for i in $(seq 1 18); do
+            if curl -fsS --max-time 10 'https://deusagi.ai/__deusagi/status' > /tmp/deusagi-status.json; then
+              python - <<'PY'
+          import json
+          with open('/tmp/deusagi-status.json', encoding='utf-8') as f:
+              d=json.load(f)
+          assert d.get('canonical') == 'https://deusagi.ai'
+          assert d.get('protectedCoreExposed') is False
+          print('DEUSAGI status contract: PASS')
+          PY
+              ok=1
+              break
+            fi
+            sleep 10
+          done
+          test "$ok" = 1
+          curl -fsS --max-time 10 'https://deusagi.ai/' >/dev/null
+          curl -fsS --max-time 10 'https://deusagi.ai/robots.txt' | grep -F 'deusagi.ai/sitemap.xml' >/dev/null
+          curl -fsS --max-time 10 'https://deusagi.ai/sitemap.xml' | grep -F 'https://deusagi.ai/' >/dev/null
+          echo "DEUSAGI.AI root + robots + sitemap: GREEN" >> "$GITHUB_STEP_SUMMARY"
