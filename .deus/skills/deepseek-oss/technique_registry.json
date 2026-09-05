@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "techniques": {
+    "moe_fine_grained": {"category": "architecture", "patterns": ["DeepSeekMoE", "fine[- ]grained expert", "shared experts?", "n_routed_experts", "n_activated_experts"]},
+    "mla": {"category": "attention", "patterns": ["Multi[- ]head Latent Attention", "\\bMLA\\b", "kv_lora_rank", "qk_rope_head_dim"]},
+    "fp8": {"category": "numeric", "patterns": ["\\bFP8\\b", "fp8_gemm", "act_quant", "weight_dequant"]},
+    "multi_token_prediction": {"category": "training", "patterns": ["multi[- ]token prediction", "\\bMTP\\b"]},
+    "aux_loss_free_balancing": {"category": "training", "patterns": ["auxiliary[- ]loss[- ]free", "bias.*load balancing", "route_scale"]},
+    "grpo_rl": {"category": "reasoning", "patterns": ["\\bGRPO\\b", "Group Relative Policy Optimization", "reinforcement learning", "R1[- ]Zero"]},
+    "distillation": {"category": "reasoning", "patterns": ["distill(?:ed|ation|ing)?", "teacher model", "student model"]},
+    "self_verification": {"category": "reasoning", "patterns": ["self[- ]verif", "verifier", "reward model", "proof generator"]},
+    "sparse_attention": {"category": "attention", "patterns": ["DeepSeek Sparse Attention", "sparse attention", "index_topk", "class Indexer"]},
+    "dualpipe": {"category": "systems", "patterns": ["DualPipe", "pipeline parallel", "bidirectional pipeline"]},
+    "expert_parallel_comm": {"category": "systems", "patterns": ["DeepEP", "expert parallel", "all[- ]to[- ]all", "NVLink", "RDMA"]},
+    "deepgemm": {"category": "systems", "patterns": ["DeepGEMM", "grouped GEMM", "GEMM kernel"]},
+    "flashmla": {"category": "systems", "patterns": ["FlashMLA", "paged MLA", "MLA kernel"]},
+    "agent_plugin_runtime": {"category": "agent_runtime", "patterns": ["everything[- ]is[- ]a[- ]plugin", "Cordis", "plugin tree", "agent loop", "session log"]},
+    "durable_session_projection": {"category": "agent_runtime", "patterns": ["SessionEvent", "append[- ]only", "deriveMessages", "sessionProjections", "durable session"]},
+    "multimodal": {"category": "modality", "patterns": ["vision[- ]language", "multimodal", "DeepSeek[- ]VL", "Janus"]},
+    "ocr": {"category": "modality", "patterns": ["DeepSeek[- ]OCR", "optical character recognition", "OCR"]},
+    "formal_proving": {"category": "reasoning", "patterns": ["DeepSeek[- ]Prover", "theorem proving", "Lean 4", "formal proof"]},
+    "distributed_storage": {"category": "systems", "patterns": ["\\b3FS\\b", "Fire-Flyer File System", "distributed file system"]},
+    "conditional_memory_engram": {"category": "memory", "patterns": ["\\bEngram\\b", "conditional memory", "N[- ]gram embeddings?", "deterministic addressing"]},
+    "speculative_decoding": {"category": "inference", "patterns": ["speculative decoding", "draft model", "\\bDSpark\\b", "\\bDFlash\\b", "\\bEagle3\\b"]},
+    "manifold_hyperconnection": {"category": "architecture", "patterns": ["Manifold HyperConnection", "\\bmHC\\b", "Hyper[- ]connection", "Sinkhorn normalization"]},
+    "lp_expert_balancing": {"category": "systems", "patterns": ["\\bLPLB\\b", "linear[- ]programming[- ]based load balancer", "Interior Point Method", "dynamic load balancing"]},
+    "low_precision_quantization": {"category": "numeric", "patterns": ["\\bFP4\\b", "E5M6", "per[- ]token.*quant", "per[- ]block.*quant", "per[- ]channel.*quant"]},
+    "visual_causal_flow": {"category": "modality", "patterns": ["Visual Causal Flow", "visual causal", "contexts optical compression"]}
+  }
+}

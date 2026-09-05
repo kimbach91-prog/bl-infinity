@@ -1,0 +1,41 @@
+name: DeepSeek OSS Skillpack Gate
+
+on:
+  push:
+    branches:
+      - 'deus/deepseek-oss-skillpack-r1'
+    paths:
+      - '.deus/skills/deepseek-oss/**'
+      - '.deus/runtime/session_lifetime.py'
+      - '.deus/runtime/SESSION_LIFETIME_POLICY.md'
+      - '.deus/runtime/SUSTAINED_MODE.md'
+      - '.deus/runtime/tests/test_session_lifetime.py'
+      - '.deus/dispatch/inbox/DEUS-DEEPSEEK-OSS-SKILLPACK-*.md'
+  pull_request:
+    paths:
+      - '.deus/skills/deepseek-oss/**'
+      - '.deus/runtime/session_lifetime.py'
+      - '.deus/runtime/SESSION_LIFETIME_POLICY.md'
+      - '.deus/runtime/SUSTAINED_MODE.md'
+      - '.deus/runtime/tests/test_session_lifetime.py'
+      - '.deus/dispatch/inbox/DEUS-DEEPSEEK-OSS-SKILLPACK-*.md'
+
+permissions:
+  contents: read
+
+jobs:
+  unit-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile modules
+        run: |
+          python -m py_compile .deus/skills/deepseek-oss/deepseek_skillpack.py
+          python -m py_compile .deus/runtime/session_lifetime.py
+      - name: Run DeepSeek skill tests
+        run: python -m unittest discover -s .deus/skills/deepseek-oss/tests -v
+      - name: Run session lifetime tests
+        run: python .deus/runtime/tests/test_session_lifetime.py -v

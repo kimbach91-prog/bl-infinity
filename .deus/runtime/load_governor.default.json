@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "mode": "sustained",
+  "policy": "stability_over_peak_throughput",
+  "min_spacing_s": 0.75,
+  "max_concurrency": 2,
+  "max_retries": 5,
+  "max_retry_elapsed_s": 120,
+  "base_backoff_s": 1.0,
+  "max_backoff_s": 30.0,
+  "jitter_ratio": 0.25,
+  "circuit_breaker_throttles": 4,
+  "circuit_breaker_cooldown_s": 60,
+  "rules": [
+    "honor_retry_after",
+    "never_retry_tight_loop",
+    "avoid_nested_retry_amplification",
+    "checkpoint_before_long_batch",
+    "resume_from_checkpoint",
+    "delta_scan_before_deep_scan",
+    "bound_prompt_and_output_tokens",
+    "do_not_bypass_provider_limits"
+  ]
+}
