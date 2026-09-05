@@ -1,11 +1,13 @@
 import importlib.util
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parents[1]
-spec = importlib.util.spec_from_file_location("sl", HERE / "session_lifetime.py")
+spec = importlib.util.spec_from_file_location("deus_session_lifetime", HERE / "session_lifetime.py")
 sl = importlib.util.module_from_spec(spec)
+sys.modules[spec.name] = sl
 spec.loader.exec_module(sl)
 
 
