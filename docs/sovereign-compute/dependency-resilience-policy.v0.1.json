@@ -1,0 +1,77 @@
+{
+  "schema": "BLI_DEPENDENCY_RESILIENCE_POLICY/0.1",
+  "status": "PROPOSAL_NONCANONICAL",
+  "purpose": "prevent single-actor or correlated-failure-domain coercion from disabling critical services",
+  "critical_domains": [
+    "compute",
+    "model_provider",
+    "data_hosting",
+    "identity",
+    "dns_domain",
+    "source_control",
+    "payments",
+    "banking",
+    "energy",
+    "connectivity",
+    "hardware_supply",
+    "funding",
+    "revenue"
+  ],
+  "thresholds": {
+    "max_single_provider_share": 0.40,
+    "max_single_jurisdiction_share": 0.50,
+    "max_single_control_group_share": 0.50,
+    "minimum_independent_substitutes": 2,
+    "minimum_tested_external_fallbacks": 1,
+    "critical_recovery_drill_days": 90
+  },
+  "hard_rules": [
+    "unknown_dependency_is_not_independent",
+    "shared_upstream_counts_as_correlated",
+    "documented_fallback_is_not_tested_fallback",
+    "sanctions_or_export_control_prohibition_is_not_bypassable",
+    "no_hidden_backdoor_for_continuity",
+    "no_single_external_root_identity_for_sovereign_minimum",
+    "no_single_external_state_of_record_for_sovereign_minimum",
+    "no_retaliatory_offensive_cyber_or_violence"
+  ],
+  "failure_domain_dimensions": [
+    "provider_id",
+    "control_group",
+    "jurisdiction",
+    "upstream_cloud",
+    "upstream_bank",
+    "upstream_model_provider",
+    "upstream_registry",
+    "root_credential_authority",
+    "energy_source_group",
+    "network_carrier_group"
+  ],
+  "coercion_response": [
+    "C0_signal",
+    "C1_verify",
+    "C2_contain",
+    "C3_migrate",
+    "C4_degrade_gracefully",
+    "C5_institutional_lawful_response",
+    "C6_recover_and_learn"
+  ],
+  "sovereign_minimum": {
+    "must_preserve": [
+      "identity_root",
+      "canonical_state",
+      "audit_provenance",
+      "routing_policy",
+      "backup_restore",
+      "operator_communications",
+      "critical_public_interest_services"
+    ],
+    "must_not_require": [
+      "frontier_model_api",
+      "single_hyperscaler",
+      "single_payment_processor",
+      "single_code_host",
+      "single_external_sso"
+    ]
+  }
+}
