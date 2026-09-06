@@ -218,12 +218,13 @@ export class FederationOrchestrator {
 
 function estimateResources(task, provider) {
   const workUnits = Number(task.estimatedWorkUnits ?? 0);
-  const providerEnergyPerUnit = Number(provider.telemetry?.energyPerUnitJoules);
-  const derivedEnergy = Number.isFinite(workUnits) && workUnits > 0 && Number.isFinite(providerEnergyPerUnit) && providerEnergyPerUnit >= 0
+  const rawProviderEnergy = provider.telemetry?.energyPerUnitJoules;
+  const providerEnergyPerUnit = rawProviderEnergy == null || rawProviderEnergy === '' ? null : Number(rawProviderEnergy);
+  const derivedEnergy = Number.isFinite(workUnits) && workUnits > 0 && providerEnergyPerUnit != null && Number.isFinite(providerEnergyPerUnit) && providerEnergyPerUnit >= 0
     ? workUnits * providerEnergyPerUnit
     : 0;
   return {
-    energyJoules: Number(task.estimatedEnergyJoules ?? derivedEnergy ?? 0),
+    energyJoules: Number(task.estimatedEnergyJoules ?? derivedEnergy),
     costUsd: Number(task.estimatedCostUsd ?? 0),
     acceleratorSeconds: Number(task.estimatedAcceleratorSeconds ?? 0),
     tokens: Number(task.estimatedTokens ?? 0),
