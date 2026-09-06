@@ -34,7 +34,12 @@ export function evaluateProvider(provider, task, now = Date.now()) {
 
   const energyPerUnitJoules = Number(provider.telemetry?.energyPerUnitJoules);
   const hasEnergyTelemetry = Number.isFinite(energyPerUnitJoules) && energyPerUnitJoules >= 0;
-  if (task.requiresEnergyTelemetry === true && !hasEnergyTelemetry) reasons.push('energy-telemetry-required');
+  const envelopeEnergyLimit = Number(task.computeEnvelope?.limits?.energyJoules);
+  const envelopeDerivesProviderEnergy = Number.isFinite(envelopeEnergyLimit)
+    && task.estimatedEnergyJoules == null
+    && Number.isFinite(Number(task.estimatedWorkUnits))
+    && Number(task.estimatedWorkUnits) > 0;
+  if ((task.requiresEnergyTelemetry === true || envelopeDerivesProviderEnergy) && !hasEnergyTelemetry) reasons.push('energy-telemetry-required');
   if (task.maxEnergyPerUnitJoules != null) {
     if (!hasEnergyTelemetry) reasons.push('energy-telemetry-required');
     else if (energyPerUnitJoules > Number(task.maxEnergyPerUnitJoules)) reasons.push('provider-energy-over-task-limit');
