@@ -32,8 +32,9 @@ export function evaluateProvider(provider, task, now = Date.now()) {
   if (task.deniedProviders?.includes(provider.id)) reasons.push('provider-denied-by-task');
   for (const tag of task.requiredTags ?? []) if (!provider.tags?.includes(tag)) reasons.push(`missing-tag:${tag}`);
 
-  const energyPerUnitJoules = Number(provider.telemetry?.energyPerUnitJoules);
-  const hasEnergyTelemetry = Number.isFinite(energyPerUnitJoules) && energyPerUnitJoules >= 0;
+  const rawEnergyPerUnit = provider.telemetry?.energyPerUnitJoules;
+  const energyPerUnitJoules = rawEnergyPerUnit == null || rawEnergyPerUnit === '' ? null : Number(rawEnergyPerUnit);
+  const hasEnergyTelemetry = energyPerUnitJoules != null && Number.isFinite(energyPerUnitJoules) && energyPerUnitJoules >= 0;
   const envelopeEnergyLimit = Number(task.computeEnvelope?.limits?.energyJoules);
   const envelopeDerivesProviderEnergy = Number.isFinite(envelopeEnergyLimit)
     && task.estimatedEnergyJoules == null
