@@ -31,8 +31,9 @@ export function score(provider, task, weights = {}) {
   const latencyPenalty = Math.log10(10 + Math.max(0, provider.telemetry.p95LatencyMs ?? 1000));
   const costPenalty = Math.log10(1 + 100 * Math.max(0, provider.telemetry.costPerUnitUsd ?? 0));
   const carbonPenalty = Math.log10(1 + Math.max(0, provider.telemetry.carbonIntensity ?? 0));
-  const measuredEnergy = Number(provider.telemetry.energyPerUnitJoules);
-  const energyPenalty = energyAware && Number.isFinite(measuredEnergy) && measuredEnergy >= 0 ? Math.log10(1 + measuredEnergy) : 0;
+  const rawEnergy = provider.telemetry?.energyPerUnitJoules;
+  const measuredEnergy = rawEnergy == null || rawEnergy === '' ? null : Number(rawEnergy);
+  const energyPenalty = energyAware && measuredEnergy != null && Number.isFinite(measuredEnergy) && measuredEnergy >= 0 ? Math.log10(1 + measuredEnergy) : 0;
   return w.trust * trust + w.locality * locality + w.availability * availability - w.latency * latencyPenalty - w.cost * costPenalty - w.carbon * carbonPenalty - w.energy * energyPenalty;
 }
 export function rankCandidates(registry, task, options = {}) {
