@@ -216,7 +216,7 @@ function rowToProvider(row, now = Date.now()) {
 }
 
 function neutralTelemetry() {
-  return { inFlight: 0, trust: 0.5, availability: 0.5, p95LatencyMs: 1000, costPerUnitUsd: 0 };
+  return { inFlight: 0, trust: 0.5, availability: 0.5, p95LatencyMs: 1000, costPerUnitUsd: 0, energyPerUnitJoules: null };
 }
 function sanitizeMeasuredTelemetry(input) {
   const out = {};
@@ -226,6 +226,7 @@ function sanitizeMeasuredTelemetry(input) {
   if (input.p95LatencyMs != null) out.p95LatencyMs = nonNegativeNumber(input.p95LatencyMs, 'p95LatencyMs');
   if (input.costPerUnitUsd != null) out.costPerUnitUsd = nonNegativeNumber(input.costPerUnitUsd, 'costPerUnitUsd');
   if (input.carbonIntensity != null) out.carbonIntensity = nonNegativeNumber(input.carbonIntensity, 'carbonIntensity');
+  if (input.energyPerUnitJoules != null) out.energyPerUnitJoules = nonNegativeNumber(input.energyPerUnitJoules, 'energyPerUnitJoules');
   return out;
 }
 function clampHeartbeatTtl(value) { const ttl = Number(value); if (!Number.isFinite(ttl) || ttl < HEARTBEAT_MIN_MS || ttl > HEARTBEAT_MAX_MS) throw new Error(`heartbeatTtlMs must be between ${HEARTBEAT_MIN_MS} and ${HEARTBEAT_MAX_MS}`); return ttl; }
