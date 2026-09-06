@@ -1,6 +1,10 @@
 function clamp01(x) { return Math.max(0, Math.min(1, Number(x))); }
 function ewma(oldValue, sample, alpha) { return oldValue == null || !Number.isFinite(oldValue) ? sample : alpha * sample + (1 - alpha) * oldValue; }
-function nonNegativeFiniteOrNull(value) { const n = Number(value); return Number.isFinite(n) && n >= 0 ? n : null; }
+function nonNegativeFiniteOrNull(value) {
+  if (value == null || value === '') return null;
+  const n = Number(value);
+  return Number.isFinite(n) && n >= 0 ? n : null;
+}
 
 export class TelemetryBook {
   constructor({ alpha = 0.2, latencyWindow = 64 } = {}) { this.alpha = alpha; this.latencyWindow = latencyWindow; this.map = new Map(); }
