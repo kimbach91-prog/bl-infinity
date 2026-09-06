@@ -8,6 +8,10 @@ export function validateTask(task) {
   if (!DATA_CLASSES.has(dataClass)) throw new Error('task.dataClass must be public, internal, private, regulated, or sealed');
   if (task.deadlineAt && Number.isNaN(Date.parse(task.deadlineAt))) throw new Error('task.deadlineAt must be an ISO date');
   if (task.estimatedCostUsd != null && Number(task.estimatedCostUsd) < 0) throw new Error('task.estimatedCostUsd must be >= 0');
+  if (task.maxEnergyPerUnitJoules != null) {
+    const maxEnergy = Number(task.maxEnergyPerUnitJoules);
+    if (!Number.isFinite(maxEnergy) || maxEnergy < 0) throw new Error('task.maxEnergyPerUnitJoules must be a non-negative finite number');
+  }
   const workloadClass = task.valuePolicy?.workloadClass ?? task.workloadClass ?? null;
   if (workloadClass != null && !VALUE_CLASSES.has(workloadClass)) throw new Error('invalid workload class');
   return true;
@@ -27,6 +31,14 @@ export function evaluateProvider(provider, task, now = Date.now()) {
   if (task.region && provider.regions?.length && !provider.regions.includes(task.region)) reasons.push('region-mismatch');
   if (task.deniedProviders?.includes(provider.id)) reasons.push('provider-denied-by-task');
   for (const tag of task.requiredTags ?? []) if (!provider.tags?.includes(tag)) reasons.push(`missing-tag:${tag}`);
+
+  const energyPerUnitJoules = Number(provider.telemetry?.energyPerUnitJoules);
+  const hasEnergyTelemetry = Number.isFinite(energyPerUnitJoules) && energyPerUnitJoules >= 0;
+  if (task.requiresEnergyTelemetry === true && !hasEnergyTelemetry) reasons.push('energy-telemetry-required');
+  if (task.maxEnergyPerUnitJoules != null) {
+    if (!hasEnergyTelemetry) reasons.push('energy-telemetry-required');
+    else if (energyPerUnitJoules > Number(task.maxEnergyPerUnitJoules)) reasons.push('provider-energy-over-task-limit');
+  }
 
   const allowedDataClasses = provider.authorization?.allowedDataClasses ?? ['public'];
   const dataClass = task.dataClass ?? 'public';
