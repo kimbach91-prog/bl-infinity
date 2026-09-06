@@ -90,7 +90,7 @@ export class FederationOrchestrator {
             resourceReservation = resourceVerdict.reservation;
           }
 
-          const budgetVerdict = this.budget.reserve({ amountUsd: estimated, tenantId, providerId: provider.id, taskId: task.id });
+          const budgetVerdict = await this.budget.reserve({ amountUsd: estimated, tenantId, providerId: provider.id, taskId: task.id });
           if (!budgetVerdict.ok) {
             if (resourceReservation?.id) this.resourceEnvelope.release(resourceReservation.id, 'usd-budget-rejected');
             return budgetVerdict;
