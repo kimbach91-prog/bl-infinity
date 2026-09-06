@@ -20,10 +20,15 @@ function validateProvider(p) {
 }
 export function eligible(provider, task) { return evaluateProvider(provider, task).ok; }
 export function score(provider, task, weights = {}) {
-  const w = { trust: 2, locality: 1.5, availability: 1.2, latency: 1, cost: 1, carbon: 0.15, ...weights };
+  const energyAware = task.requiresEnergyTelemetry === true || task.maxEnergyPerUnitJoules != null;
+  const w = { trust: 2, locality: 1.5, availability: 1.2, latency: 1, cost: 1, carbon: 0.15, energy: energyAware ? 0.5 : 0, ...weights };
   const trust = clamp01(provider.telemetry.trust ?? 0.5), availability = clamp01(provider.telemetry.availability ?? 0.5), locality = task.dataLocation && provider.dataLocations?.includes(task.dataLocation) ? 1 : 0.4;
-  const latencyPenalty = Math.log10(10 + Math.max(0, provider.telemetry.p95LatencyMs ?? 1000)), costPenalty = Math.log10(1 + 100 * Math.max(0, provider.telemetry.costPerUnitUsd ?? 0)), carbonPenalty = Math.log10(1 + Math.max(0, provider.telemetry.carbonIntensity ?? 0));
-  return w.trust * trust + w.locality * locality + w.availability * availability - w.latency * latencyPenalty - w.cost * costPenalty - w.carbon * carbonPenalty;
+  const latencyPenalty = Math.log10(10 + Math.max(0, provider.telemetry.p95LatencyMs ?? 1000));
+  const costPenalty = Math.log10(1 + 100 * Math.max(0, provider.telemetry.costPerUnitUsd ?? 0));
+  const carbonPenalty = Math.log10(1 + Math.max(0, provider.telemetry.carbonIntensity ?? 0));
+  const measuredEnergy = Number(provider.telemetry.energyPerUnitJoules);
+  const energyPenalty = energyAware && Number.isFinite(measuredEnergy) && measuredEnergy >= 0 ? Math.log10(1 + measuredEnergy) : 0;
+  return w.trust * trust + w.locality * locality + w.availability * availability - w.latency * latencyPenalty - w.cost * costPenalty - w.carbon * carbonPenalty - w.energy * energyPenalty;
 }
 export function rankCandidates(registry, task, options = {}) {
   validateTask(task);
@@ -31,6 +36,6 @@ export function rankCandidates(registry, task, options = {}) {
 }
 export function planRoute(registry, task, options = {}) {
   const candidates = rankCandidates(registry, task, options), selected = candidates.slice(0, Math.max(1, options.replicas ?? 1));
-  return { taskId: task.id, generatedAt: new Date().toISOString(), selected: selected.map(({ provider, score: candidateScore }) => ({ providerId: provider.id, kind: provider.kind, endpoint: provider.endpoint ?? null, score: Number(candidateScore.toFixed(4)), consentRef: provider.authorization.consentRef })), rejectedCount: registry.list().length - candidates.length, policy: { authorizationRequired: true, noUnauthorizedCompute: true, dataClass: task.dataClass ?? 'public' } };
+  return { taskId: task.id, generatedAt: new Date().toISOString(), selected: selected.map(({ provider, score: candidateScore }) => ({ providerId: provider.id, kind: provider.kind, endpoint: provider.endpoint ?? null, score: Number(candidateScore.toFixed(4)), consentRef: provider.authorization.consentRef })), rejectedCount: registry.list().length - candidates.length, policy: { authorizationRequired: true, noUnauthorizedCompute: true, dataClass: task.dataClass ?? 'public', energyAware: task.requiresEnergyTelemetry === true || task.maxEnergyPerUnitJoules != null } };
 }
 function clamp01(x) { return Math.max(0, Math.min(1, Number(x))); }
