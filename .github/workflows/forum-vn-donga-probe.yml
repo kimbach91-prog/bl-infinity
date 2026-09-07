@@ -1,0 +1,33 @@
+name: Probe Vietnamese forum public API
+
+on:
+  push:
+    paths:
+      - '.github/workflows/forum-vn-donga-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Inspect public forum API only
+        run: |
+          python - <<'PY'
+          import json, requests
+          base='https://diendan.dongadigital.vn'
+          s=requests.Session()
+          s.headers.update({'User-Agent':'BL-Infinity-forum-compatibility-probe/1.0'})
+          for path in ['/', '/api', '/api/tags', '/api/discussions?page[limit]=3']:
+              try:
+                  r=s.get(base+path, timeout=25, allow_redirects=True)
+                  print('\nPATH', path, 'STATUS', r.status_code, 'FINAL', r.url)
+                  print('SERVER', r.headers.get('server'), 'CTYPE', r.headers.get('content-type'))
+                  text=r.text.replace('\r','')
+                  print(text[:5000])
+              except Exception as e:
+                  print('ERROR', path, type(e).__name__, str(e)[:300])
+          PY
