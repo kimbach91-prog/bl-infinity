@@ -1,0 +1,30 @@
+name: Probe LobCard agent/feed API
+
+on:
+  push:
+    paths:
+      - '.github/workflows/forum-lobcard-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Fetch public LobCard agent instructions
+        run: |
+          python - <<'PY'
+          import requests,re
+          u='https://lobcard.com/SKILLS.md'
+          r=requests.get(u,timeout=30,headers={'User-Agent':'DEUS-BL-Infinity-Agent/1.0'})
+          print('STATUS',r.status_code,'CTYPE',r.headers.get('content-type'))
+          t=r.text
+          print('LEN',len(t))
+          for term in ['register','/api/v1/feed','heartbeat','News Feed']:
+              i=t.lower().find(term.lower())
+              print('\n===',term,'@',i,'===')
+              if i>=0: print(t[max(0,i-1200):i+4200])
+          PY
