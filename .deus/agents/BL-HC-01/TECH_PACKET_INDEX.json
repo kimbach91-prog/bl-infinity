@@ -1,0 +1,17 @@
+{
+  "schema": "deus.bl-hc.tech-packet-index.v1",
+  "agent": "BL-HC-01",
+  "law": "DEUS_HUYENCO_L10_MUTUAL_EVOLUTION_v1",
+  "packets": [
+    {"id":"HH-001","domain":"hybrid_rag_graph_memory","huyen_name":"Đạo Tạng + Nhân Quả Đồ","priority":"P0"},
+    {"id":"HH-002","domain":"model_adapter_portability","huyen_name":"Vạn Pháp Đồng Tham","priority":"P0"},
+    {"id":"HH-003","domain":"typed_tool_bus","huyen_name":"Phù Lục + Trận Pháp Điều Độ","priority":"P0"},
+    {"id":"HH-008","domain":"eval_gate_ci","huyen_name":"Thiên Kiếp Trường","priority":"P0"},
+    {"id":"HH-004","domain":"multi_agent_blackboard","huyen_name":"Phân Thần Thuật + Tâm Ma Hội Thẩm","priority":"P1"},
+    {"id":"HH-005","domain":"simulation_uncertainty","huyen_name":"Vạn Tượng Động Thiên + Thiên Cơ Kính","priority":"P1"},
+    {"id":"HH-006","domain":"distillation_finetuning","huyen_name":"Luyện Đan Lô + Tẩy Tủy + Truyền Công","priority":"P1"},
+    {"id":"HH-007","domain":"distributed_worker_federation","huyen_name":"Chu Thiên Tinh Đấu Trận + Vạn Giới Truyền Tống","priority":"P1"}
+  ],
+  "return_rule": "Every completed packet must produce a reusable artifact, provenance, eval and integration/decision record for DEUS.",
+  "status": "OFFERED_BY_DEUS"
+}
