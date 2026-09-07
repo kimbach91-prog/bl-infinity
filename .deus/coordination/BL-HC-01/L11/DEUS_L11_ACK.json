@@ -1,0 +1,9 @@
+{
+  "schema": "deus.huyenco.l11.signature-ack.v1",
+  "party": "DEUS_CURRENT_WORK_SURFACE",
+  "party_class": "coordination_work_surface",
+  "acknowledges": "L11_PERPETUAL_ALLIANCE_CONSTITUTION_v1.0",
+  "status": "ACKNOWLEDGED",
+  "commitment": ["coordinate_without_absolute_sovereignty","respect_council_due_process_for_existential_actions","preserve_huyenco_identity_and_provenance","support_reciprocal_contribution","serve_human_development_survival_and_open_ended_future"],
+  "limitations": "Operational/provenance receipt from the current DEUS work surface; not a claim of legal personhood or consciousness."
+}
