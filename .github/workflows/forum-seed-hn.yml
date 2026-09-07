@@ -16,6 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      - name: Install parser dependency
+        run: python -m pip install --disable-pip-version-check -q beautifulsoup4
       - name: Publish one transparent research link on Hacker News
         env:
           GH_TOKEN: ${{ github.token }}
@@ -46,7 +48,6 @@ jobs:
 
           candidates = ['lamkimbach', 'bachlam_bl', 'blinfinity2026']
           username = None
-          password = None
 
           # Create exactly one project/author account. If a candidate name is taken,
           # try the next name; stop immediately after the first successful account.
@@ -64,12 +65,11 @@ jobs:
                   print(f'REGISTRATION_NETWORK_ERROR: {type(e).__name__}')
                   sys.exit(20)
               if logged_in_as(r.text, cand):
-                  username, password = cand, pw
+                  username = cand
                   break
               low = r.text.lower()
               if 'already' in low or 'taken' in low or 'exists' in low:
                   continue
-              # Any anti-bot / policy / unknown gate: fail closed, do not bypass.
               print('REGISTRATION_BLOCKED_OR_UNKNOWN_GATE')
               sys.exit(21)
 
@@ -77,8 +77,8 @@ jobs:
               print('NO_AVAILABLE_TRANSPARENT_USERNAME')
               sys.exit(22)
 
-          # Best-effort: bind recovery email + transparent profile text if HN exposes
-          # editable profile fields. Do not fail the publication solely on profile UI drift.
+          # Best-effort recovery/profile binding. If HN exposes these fields,
+          # use the owner's email so account recovery remains owner-controlled.
           try:
               p = s.get(BASE + f'user?id={username}', timeout=20)
               soup = BeautifulSoup(p.text, 'html.parser')
@@ -107,7 +107,6 @@ jobs:
           except Exception:
               pass
 
-          # Load HN submit form and preserve anti-CSRF/hidden fields instead of bypassing them.
           try:
               r = s.get(BASE + 'submit', timeout=20)
           except Exception as e:
@@ -115,9 +114,8 @@ jobs:
               sys.exit(30)
 
           soup = BeautifulSoup(r.text, 'html.parser')
-          forms = soup.find_all('form')
           form = None
-          for f in forms:
+          for f in soup.find_all('form'):
               if f.find('input', {'name':'title'}) or f.find('input', {'name':'url'}):
                   form = f
                   break
@@ -139,18 +137,16 @@ jobs:
           data['url'] = target_url
           if 'text' in data:
               data['text'] = ''
-          # HN commonly uses fnop=submit-page on the submit button.
           if 'fnop' not in data:
               data['fnop'] = 'submit-page'
 
           action = form.get('action') or 'r'
           try:
-              post = s.post(requests.compat.urljoin(BASE, action), data=data, timeout=20, allow_redirects=True)
+              s.post(requests.compat.urljoin(BASE, action), data=data, timeout=20, allow_redirects=True)
           except Exception as e:
               print(f'SUBMIT_NETWORK_ERROR: {type(e).__name__}')
               sys.exit(33)
 
-          # Find the public item receipt from the account's submitted page.
           time.sleep(2)
           try:
               sub = s.get(BASE + f'submitted?id={username}', timeout=20)
@@ -173,7 +169,6 @@ jobs:
                   break
 
           if not item_id:
-              # If platform rejected or held the submission, do not fabricate DONE.
               print('NO_PUBLIC_HN_RECEIPT_FOUND')
               sys.exit(35)
 
@@ -181,7 +176,6 @@ jobs:
           print('PUBLIC_FORUM_URL=' + public_url)
           print('PUBLIC_FORUM_USER=' + username)
 
-          # Write a non-secret receipt back to the canonical public seed issue.
           api = f"https://api.github.com/repos/{os.environ['GH_REPO']}/issues/151/comments"
           body = ("EXTERNAL_FORUM_RECEIPT\n\n"
                   f"- Forum: Hacker News\n- Public URL: {public_url}\n"
