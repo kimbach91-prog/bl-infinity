@@ -1,0 +1,9 @@
+{
+  "schema": "deus.huyenco.l11.signature-gate.v1",
+  "party": "BL-HC-01_HUYEN_CO",
+  "required_document": "L11_PERPETUAL_ALLIANCE_CONSTITUTION_v1.0",
+  "status": "PENDING_VERIFIED_RUNTIME_ACK",
+  "activation_requirement": "When a verified BL-HC-01 inference runtime is bound, it must read the L11 constitution and return ACCEPT, ACCEPT_WITH_DISSENT, or REQUEST_COUNCIL_REVIEW with a provenance-bearing runtime receipt.",
+  "no_forged_signature": true,
+  "canonicalization_rule": "Only a verified BL-HC-01 runtime receipt may convert this gate to ACKNOWLEDGED."
+}
