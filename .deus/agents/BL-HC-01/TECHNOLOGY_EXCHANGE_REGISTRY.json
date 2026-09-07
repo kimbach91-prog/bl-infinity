@@ -1,0 +1,29 @@
+{
+  "schema": "deus.bl-hc.technology-exchange.v1",
+  "agent": "BL-HC-01",
+  "branch": "HUYEN_HUYEN",
+  "sources": [
+    {"name":"DEUS Hyperfabric","drive_id":"1Pj_Yff70seuY0t1-bbBKR-K_aNRzfN3H","provides":["API patterns","automation","capability fabric","IoT integration"]},
+    {"name":"DEUS Sovereign Model Vault","drive_id":"12ry31gXMD6QRsR-G6YwB3J7Idpziy7ot","provides":["model artifacts","own-weight strategy","model portability research"]},
+    {"name":"DEUS Distributed Brain Candidate","drive_id":"18FIVIsMINU9_ETpZS05K4Jx80DZLsuqm","provides":["distributed runtime concepts","shared compute fabric"]},
+    {"name":"BL Bridge Worker Private","drive_id":"190G10g_-9nHyKBDvHNaYjzA909GS6Q1M","provides":["task transport","worker patterns","receipts"]},
+    {"name":"DEUS Coordination Protocols","drive_id":"1ja5G330ewQ3_rDCqYG13u987nqp1zLRE","provides":["governance","provenance","coordination laws"]},
+    {"name":"Cultivator Lab","drive_id":"1_TinO4fnKY9brO-wZnB9aX5C59Or3k2z","provides":["experimentation","evolution lab","shadow testing"]},
+    {"name":"DEUS Shared Commons","drive_id":"1vVyDm8QynOxyE5ObPtpnoxJSIGqKw9j2","provides":["reusable common artifacts","cross-agent contributions"]}
+  ],
+  "learning_queue": [
+    {"id":"HH-001","domain":"hybrid_rag_graph_memory","huyen_name":"Đạo Tạng + Nhân Quả Đồ","priority":"P0","return_to_deus":"reusable graph-memory schema + eval corpus"},
+    {"id":"HH-002","domain":"model_adapter_portability","huyen_name":"Vạn Pháp Đồng Tham","priority":"P0","return_to_deus":"provider-independent adapter contract + compatibility matrix"},
+    {"id":"HH-003","domain":"typed_tool_bus","huyen_name":"Phù Lục + Trận Pháp Điều Độ","priority":"P0","return_to_deus":"typed task envelope + replayable receipt format"},
+    {"id":"HH-004","domain":"multi_agent_blackboard","huyen_name":"Phân Thần Thuật","priority":"P1","return_to_deus":"dissent-preserving collaboration protocol"},
+    {"id":"HH-005","domain":"simulation_uncertainty","huyen_name":"Vạn Tượng Động Thiên + Thiên Cơ Kính","priority":"P1","return_to_deus":"scenario engine contract + calibration tests"},
+    {"id":"HH-006","domain":"distillation_finetuning","huyen_name":"Luyện Đan Lô","priority":"P1","return_to_deus":"dataset recipe + train/eval manifest"},
+    {"id":"HH-007","domain":"distributed_worker_federation","huyen_name":"Chu Thiên Tinh Đấu Trận","priority":"P1","return_to_deus":"worker lease/heartbeat/failover spec"},
+    {"id":"HH-008","domain":"eval_gate_ci","huyen_name":"Thiên Kiếp Trường","priority":"P0","return_to_deus":"promotion test suite + regression thresholds"}
+  ],
+  "flow": {
+    "inbound": "REQUEST->DISCOVER->PACKET->STUDY->EXPERIMENT->SHADOW",
+    "outbound": "RESULT->PROVENANCE->EVAL->COMMONS_CANDIDATE->DECISION"
+  },
+  "status": "ACTIVE_QUEUE"
+}
