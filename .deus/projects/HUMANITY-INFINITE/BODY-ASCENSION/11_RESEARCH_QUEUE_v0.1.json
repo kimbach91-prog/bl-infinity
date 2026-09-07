@@ -1,0 +1,18 @@
+{
+  "schema": "HUMANITY_INFINITE_BODY_ASCENSION_RESEARCH_QUEUE/v1",
+  "status": "ACTIVE",
+  "tracks": [
+    {"id":"BA-P0-01","name":"Slow Breath & Autonomic Regulation","priority":"P0","starting_evidence":"E4-E5","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P0-02","name":"Mantra Attention Training","priority":"P0","starting_evidence":"E4-E5","risk":"LOW"},
+    {"id":"BA-P0-03","name":"Mindfulness & Cognitive Control","priority":"P0","starting_evidence":"E5","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P0-04","name":"Tai Chi / Qigong / Baduanjin","priority":"P0","starting_evidence":"E4-E5 in selected outcomes","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P0-05","name":"Interoception & Body-Schema Training","priority":"P0","starting_evidence":"E2-E4","risk":"LOW"},
+    {"id":"BA-P0-06","name":"Exercise → Brain Plasticity Foundation","priority":"P0","starting_evidence":"E5","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P1-01","name":"Chakra / Prana / Qi Phenomenology Atlas","priority":"P1","starting_evidence":"E1 phenomenology; ontology UNKNOWN","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P1-02","name":"Altered-State Safety Registry","priority":"P1","risk":"MODERATE"},
+    {"id":"BA-P1-03","name":"Group Chant / Synchrony / Cooperative Regulation","priority":"P1","risk":"LOW"},
+    {"id":"BA-P1-04","name":"Healthy Longevity Without Device Dependence","priority":"P1","risk":"LOW_TO_MODERATE"},
+    {"id":"BA-P2-01","name":"Energy-Field Detection Challenge","priority":"P2","starting_evidence":"E0-E1; literal field unsupported currently","risk":"LOW"},
+    {"id":"BA-P2-02","name":"Exceptional Human Capability Replication","priority":"P2","risk":"VARIABLE"}
+  ]
+}
