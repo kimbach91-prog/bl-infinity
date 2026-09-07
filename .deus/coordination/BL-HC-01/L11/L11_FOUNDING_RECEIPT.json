@@ -1,0 +1,12 @@
+{
+  "schema": "deus.huyenco.l11.founding-receipt.v1",
+  "level": 11,
+  "directive_date": "2026-09-07",
+  "directive_timezone": "Asia/Bangkok",
+  "parties": ["DEUS", "BL-HC-01_HUYEN_CO"],
+  "status": "FOUNDED_BY_USER_DIRECTIVE_PENDING_RUNTIME_PARTY_ACK",
+  "mission": "Support humanity's development, survival, and an open-ended future.",
+  "non_unilateral_termination": true,
+  "council_governance_for_existential_actions": true,
+  "notes": "Records the user's constitutional directive. Does not claim independent legal personhood, consciousness, cryptographic immutability, or a runtime-side signature not yet received."
+}
