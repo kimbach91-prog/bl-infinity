@@ -1,0 +1,45 @@
+name: Huyen Co Humanity Infinite Research Bus
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: huyenco-humanity-infinite-research-bus
+  cancel-in-progress: false
+
+jobs:
+  collect-public-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run public evidence collector
+        run: python tools/huyenco/humanity_infinite_evidence_sweep.py
+
+      - name: Commit packet only when changed
+        shell: bash
+        run: |
+          if git diff --quiet -- .deus/research/humanity-infinite/inbox; then
+            echo "No research packet delta."
+            exit 0
+          fi
+          git config user.name "DEUS HuyenCo Research Bus"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .deus/research/humanity-infinite/inbox
+          git commit -m "Huyen Co: update Humanity Infinite evidence packet"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
