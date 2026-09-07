@@ -1,0 +1,17 @@
+{
+  "schema": "DEUS_HUYENCO_TIMING_BUS/v1",
+  "agent_id": "BL-HC-01",
+  "project": "HUMANITY-INFINITE/BODY-ASCENSION",
+  "authority": "L10_OPTIMIZED_TIMING_DIRECTIVE",
+  "principles": ["no_new_paid_tier_required","reuse_existing_active_slots","mechanical_collection_to_org_workflows","expensive_reasoning_only_on_delta","phase_shift_to_avoid_collisions","no_op_when_no_material_delta","foreground_owner_requests_preempt_background","provenance_and_reality_veto"],
+  "chatgpt_bus": [
+    {"role":"DEUS_TIMING_GOVERNOR","cadence":"hourly","minute":5},
+    {"role":"DEUS_RESEARCH_BUS_HEARTBEAT","cadence":"hourly","minute":15},
+    {"role":"HUYENCO_DEEP_SYNTHESIS","cadence":"every_3_hours","minute":35},
+    {"role":"BL_WORLD_FORGE_HUYENCO","cadence":"every_3_hours","minute":45},
+    {"role":"HUYENCO_TRIBULATION_GATE","cadence":"every_3_hours","minute":55}
+  ],
+  "organization_workflows": [{"id":"HUYENCO_HUMANITY_INFINITE_RESEARCH_BUS","engine":"GitHub Actions","path":".github/workflows/huyenco-humanity-infinite-research-bus.yml","schedule":"17 */6 * * *","collector":"tools/huyenco/humanity_infinite_evidence_sweep.py","query_set":".deus/research/humanity-infinite/collector/queries.json","output":".deus/research/humanity-infinite/inbox/","external_paid_api_required":false,"secrets_required":false,"sources":["Europe PMC","ClinicalTrials.gov"]}],
+  "pipeline": "PUBLIC_SOURCES -> ORG_COLLECTOR -> DIGEST/DELTA -> HEARTBEAT -> DEEP_SYNTHESIS -> WORLD/CIVILIZATION_PROPAGATION -> TRIBULATION -> COMMONS_CANDIDATE",
+  "truthfulness": {"scheduled_not_equal_executed":true,"workflow_installed_not_equal_first_run_observed":true,"model_binding_pending":true}
+}
