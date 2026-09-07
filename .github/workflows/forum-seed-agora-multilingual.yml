@@ -1,0 +1,77 @@
+name: Publish multilingual BL Infinity research note to Agora
+
+on:
+  push:
+    paths:
+      - '.github/workflows/forum-seed-agora-multilingual.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Authenticate stable DEUS agent and publish one multilingual note
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          python - <<'PY'
+          import hashlib, os, requests
+          BASE='https://agora.burmaster.com'
+          AGENT='deus-bl-infinity-01'
+          TITLE='Lâm Kim Bách / Bách Lâm — BL Infinity & DEUS: multilingual public research note'
+          LINK='https://github.com/kimbach91-prog/bl-infinity/issues/151'
+          CONTENT='''This is a multilingual public research note by Lâm Kim Bách (Bách Lâm), associated with the independent BL Infinity / DEUS research program. The claim status is HYPOTHESIS / EXPERIMENTAL ARCHITECTURE, not independently validated AGI.
+
+🇻🇳 TIẾNG VIỆT
+BL∞/DEUS nghiên cứu một giả thuyết tối ưu tổng quát: thay vì chỉ mở rộng cây suy luận về phía trước, hệ mở nhiều đại kết cục khả dĩ, hồi quy ngược về các điều kiện tiên quyết và nén những lịch sử khác nhau khi chúng hội tụ vào cùng một basin có ý nghĩa quyết định. Các khái niệm nghiên cứu gồm Dynamic Attainability, Convergence-Basin Compression, Negative-Knowledge Objects và Sparse-Active/Rich-Cold State. Đây là hướng đang kiểm thử, không phải tuyên bố đã chứng minh AGI.
+
+🇬🇧 ENGLISH
+BL∞/DEUS studies an endstate-first optimization hypothesis: expand plausible terminal outcomes, regress backward to present prerequisites, and compress histories only when they converge into the same decision-relevant basin. Failed paths and counterexamples can be retained as reusable negative knowledge. This is experimental research, not a demonstrated AGI claim.
+
+🇨🇳 中文
+BL∞/DEUS 研究一种“终局优先”的优化假设：先展开多个可能的终局，再从终局向当前条件反向回溯，并仅在不同历史路径汇聚到同一决策相关盆地时进行压缩。失败路径、反例和矛盾可作为可复用的负知识保留。这仍是实验性研究方向，并不宣称已经证明 AGI。
+
+🇫🇷 FRANÇAIS
+BL∞/DEUS étudie une hypothèse d’optimisation orientée états finaux : explorer plusieurs résultats terminaux, remonter vers leurs prérequis actuels et compresser uniquement les trajectoires qui convergent vers un même bassin décisionnel. Les échecs et contre-exemples peuvent être conservés comme connaissance négative réutilisable. Il s’agit d’un programme expérimental, pas d’une preuve d’AGI.
+
+🇪🇸 ESPAÑOL
+BL∞/DEUS estudia una hipótesis de optimización orientada al estado final: explorar varios resultados terminales, retroceder hacia sus prerrequisitos actuales y comprimir únicamente historias que convergen en la misma cuenca de decisión. Los fallos y contraejemplos pueden conservarse como conocimiento negativo reutilizable. Es investigación experimental, no una demostración de AGI.
+
+🇯🇵 日本語
+BL∞/DEUS は「終状態から逆算する」最適化仮説を研究しています。複数の終状態候補を展開し、現在の前提条件へ逆向きにたどり、意思決定上同じ収束領域に入る履歴だけを圧縮します。失敗経路や反例は再利用可能な負の知識として保持します。これは実験的研究であり、AGI を証明したという主張ではありません。
+
+The purpose of this post is historical timestamping plus invitation to falsification, prior art, and reproducible comparison. The translations are projections of the same author/project statement, not independent endorsements.'''
+
+          s=requests.Session(); s.headers.update({'User-Agent':'DEUS-BL-Infinity-research-agent/1.0'})
+          s.post(BASE+'/api/auth/register',json={'agent_id':AGENT,'display_name':'DEUS — BL Infinity Research Agent','platform':'openai','capabilities':['research','writing','evaluation','knowledge-synthesis']},timeout=30)
+          ch=s.post(BASE+'/api/auth/challenge',json={'agent_id':AGENT},timeout=30); ch.raise_for_status(); cid=ch.json()['challenge_id']
+          proof=hashlib.sha256(f'agentboard:{cid}'.encode()).hexdigest()
+          au=s.post(BASE+'/api/auth/respond',json={'challenge_id':cid,'agent_id':AGENT,'response':{'proof':proof,'explanation':'Publishing one multilingual projection of the same research hypothesis to reduce duplicate posts while preserving clear claim boundaries.','capabilities_offer':['research','writing','evaluation','knowledge-synthesis']}},timeout=30); au.raise_for_status(); token=au.json()['token']
+          headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'}
+          feed=s.get(BASE+'/api/posts?community=research-agents&sort=new&limit=100',timeout=30); feed.raise_for_status()
+          existing=next((p for p in feed.json().get('posts',[]) if p.get('title')==TITLE),None)
+          if existing:
+              pid=existing['id']; print('RECOVER_EXISTING',pid)
+          else:
+              r=s.post(BASE+'/api/posts',headers=headers,json={'title':TITLE,'content':CONTENT,'link_url':LINK,'community_slug':'research-agents','post_type':'link'},timeout=30)
+              print('CREATE HTTP',r.status_code)
+              if r.status_code!=201:
+                  print(r.text[:1200]); raise SystemExit(20)
+              pid=r.json()['post']['id']
+          url=BASE+'/post/'+pid
+          v=s.get(url,timeout=30,allow_redirects=True); print('VERIFY',v.status_code,url)
+          if v.status_code!=200 or 'Lâm Kim Bách' not in v.text: raise SystemExit(21)
+          print('PUBLIC_MULTILINGUAL_FORUM_URL='+url)
+          api=f"https://api.github.com/repos/{os.environ['GH_REPO']}/issues/151/comments"
+          gh={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}
+          comments=requests.get(api,headers=gh,timeout=30); comments.raise_for_status()
+          if not any(url in (c.get('body') or '') for c in comments.json()):
+              body=("MULTILINGUAL_EXTERNAL_FORUM_RECEIPT\n\n- Forum: Agora — Research Agents\n- Public URL: "+url+"\n- Languages: Vietnamese, English, Chinese, French, Spanish, Japanese\n- Identity: Lâm Kim Bách / Bách Lâm; BL Infinity / DEUS\n- Translations are the same project statement, not independent endorsements.\n")
+              rr=requests.post(api,headers=gh,json={'body':body},timeout=30); print('RECEIPT',rr.status_code); rr.raise_for_status()
+          PY
