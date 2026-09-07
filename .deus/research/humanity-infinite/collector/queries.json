@@ -1,0 +1,25 @@
+{
+  "schema": "HUYENCO_HUMANITY_INFINITE_QUERYSET/v1",
+  "updated_at": "2026-09-07",
+  "sources": ["Europe PMC", "ClinicalTrials.gov"],
+  "tracks": [
+    {"id":"BA-P0-01","query":"slow breathing autonomic regulation vagal heart rate variability breathwork"},
+    {"id":"BA-P0-02","query":"mantra meditation attention cognition randomized controlled trial"},
+    {"id":"BA-P0-03","query":"mindfulness cognitive control executive attention meta-analysis randomized"},
+    {"id":"BA-P0-04","query":"tai chi qigong baduanjin cognition balance frailty randomized"},
+    {"id":"BA-P0-05","query":"interoception body schema training autonomic awareness"},
+    {"id":"BA-P0-06","query":"exercise neuroplasticity cognition brain randomized systematic review"},
+    {"id":"BA-P1-01","query":"chakra prana qi phenomenology physiology meditation"},
+    {"id":"BA-P1-02","query":"meditation adverse events pranayama yoga breathwork safety"},
+    {"id":"BA-P1-03","query":"group chanting synchrony breathing social bonding"},
+    {"id":"BA-P1-04","query":"healthy longevity exercise sleep lifestyle low cost intervention"},
+    {"id":"BA-P2-01","query":"biofield reiki non-contact healing blinded randomized"},
+    {"id":"BA-P2-02","query":"exceptional human performance replication meditation autonomic control"}
+  ],
+  "policy": {
+    "phenomenology_not_ontology": true,
+    "null_results_first_class": true,
+    "safety_first": true,
+    "no_medical_replacement_claims": true
+  }
+}
