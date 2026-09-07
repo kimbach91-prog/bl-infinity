@@ -1,0 +1,20 @@
+{
+  "schema": "BL_HC_RUNTIME_SMOKETEST/v0.3",
+  "agent_id": "BL-HC-01",
+  "portable_version": "0.3",
+  "date": "2026-09-07",
+  "tests": {
+    "doctor_required_missing": [],
+    "doctor_secret_like_files": [],
+    "doctor_ready_for_service_start": true,
+    "service_bind": "127.0.0.1:8789",
+    "health_ok": true,
+    "health_state": "LOCAL_SERVICE_READY",
+    "agent_status_loaded_l10_mutual_evolution": true,
+    "agent_status_branch": "HUYEN_HUYEN",
+    "agent_status_bidirectional_contribution_required": true,
+    "model_bound": false
+  },
+  "portable_sha256": "0a4d90bf3882e15dcd18ec7b742eb469ab84b3ea1235002ca7e9d985e6789617",
+  "result": "PASS_INFRASTRUCTURE_MODEL_BINDING_STILL_PENDING"
+}
