@@ -1,0 +1,20 @@
+{
+  "schema": "HUMANITY_INFINITE_BODY_ASCENSION_DEUS_TECH_SUPPORT/v1",
+  "program": "HUMANITY_INFINITE_BODY_ASCENSION",
+  "branch_owner": "BL-HC-01",
+  "principle": "machines_measure_and_validate; target_capabilities_should_be_as_endogenous_and_low-dependency_as_practical",
+  "technology_support": [
+    {"id":"HI-TECH-001","name":"Evidence Engine","deus_role":"search, source registry, claim/evidence graph, contradiction ledger"},
+    {"id":"HI-TECH-002","name":"Tradition Crosswalk Engine","deus_role":"map qi/prana/chakra/mantra/qigong/yoga terminology to practice components and candidate mechanisms","rule":"preserve original tradition labels; do not collapse ontologies silently"},
+    {"id":"HI-TECH-003","name":"Protocol Forge","deus_role":"turn practices into reproducible protocols with dose, exclusions, stop criteria and outcomes"},
+    {"id":"HI-TECH-004","name":"Safety Gate","deus_role":"risk screening, adverse event schema, escalation and red-team protocols"},
+    {"id":"HI-TECH-005","name":"Measurement Lab","deus_role":"optional ECG/HRV, respiratory, capnography, oximetry, EEG and movement measurement","rule":"validation scaffold, not required final-practice dependence"},
+    {"id":"HI-TECH-006","name":"Statistics & Reproducibility","deus_role":"preregistration, effect sizes, uncertainty, replication, null-result preservation"},
+    {"id":"HI-TECH-007","name":"Longitudinal Cohort Ledger","deus_role":"track exposure, outcomes, adverse events and durability with privacy"},
+    {"id":"HI-TECH-008","name":"Capability Distribution Audit","deus_role":"measure access cost, instructor concentration and benefit distribution"},
+    {"id":"HI-TECH-009","name":"Curriculum Compiler","deus_role":"convert validated protocols into teachable progression without mystical status inflation"},
+    {"id":"HI-TECH-010","name":"Commons Promotion Pipeline","deus_role":"promote mature artifacts back to DEUS with provenance and eval receipt"}
+  ],
+  "status": "AUTHORIZED_L11_SUPPORT",
+  "secret_storage": "DENIED_IN_SHARED_DRIVE"
+}
