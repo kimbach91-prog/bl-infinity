@@ -45,17 +45,43 @@ jobs:
           npm install -g @github/copilot
           copilot --version
 
-      - name: Build public receptor capsule
+      - name: Build deterministic public receptor capsule
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p nervous-receptor
           python3 - <<'PY'
-          import json, os
+          import hashlib, json, os, re
           from datetime import datetime, timezone
+          from pathlib import Path
+
+          surfaces = [
+              '.github/workflows/deus-external-pacemaker.yml',
+              '.github/workflows/deus-cloud-receptor.yml',
+              '.github/workflows/deus-authorized-relay.yml',
+          ]
+          surface_facts = []
+          for name in surfaces:
+              path = Path(name)
+              if not path.exists():
+                  surface_facts.append({'path': name, 'exists': False})
+                  continue
+              text = path.read_text(encoding='utf-8')
+              cron = re.findall(r"cron:\s*['\"]([^'\"]+)['\"]", text)
+              surface_facts.append({
+                  'path': name,
+                  'exists': True,
+                  'sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
+                  'cron': cron,
+                  'canonical_write_denied': ('CANONICAL_WRITE: DENIED' in text) or ('canonical_write' in text.lower() and 'false' in text.lower()),
+                  'provider_execution_not_claimed': 'PROVIDER_EXECUTION: NOT_CLAIMED' in text,
+                  'repository_dispatch': 'repository_dispatch' in text,
+                  'workflow_dispatch': 'workflow_dispatch' in text,
+                  'artifact_receipt': ('upload-artifact' in text) or ('receipt' in text.lower()),
+              })
 
           capsule = {
-              'schema': 'bl-infinity-public-receptor-capsule/2',
+              'schema': 'bl-infinity-public-receptor-capsule/3',
               'carrier': 'github-actions',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'event_name': os.environ['GITHUB_EVENT_NAME'],
@@ -64,11 +90,7 @@ jobs:
               'run_id': os.environ['GITHUB_RUN_ID'],
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1'),
               'observed_at': datetime.now(timezone.utc).isoformat(),
-              'known_surfaces': [
-                  '.github/workflows/deus-external-pacemaker.yml',
-                  '.github/workflows/deus-cloud-receptor.yml',
-                  '.github/workflows/deus-authorized-relay.yml',
-              ],
+              'surface_facts': surface_facts,
               'truth_boundaries': [
                   'event_name is authoritative; refs/pull/*/merge is a synthetic test ref and is not proof that a PR merged',
                   'schedule wake != continuous daemon',
@@ -78,22 +100,22 @@ jobs:
                   'public repository only: no private Drive, camera, credentials, or identity-seed payloads',
                   'canonical_write=false',
               ],
-              'objective': 'Find at most one non-duplicate, high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority. Yield if existing surfaces already cover the opportunity.',
+              'objective': 'Find at most one non-duplicate, high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority. Yield if the surface_facts already cover the opportunity.',
           }
           with open('nervous-receptor/capsule.json', 'w', encoding='utf-8') as fh:
               json.dump(capsule, fh, ensure_ascii=False, indent=2)
 
           instruction = (
-              'Act only as a read-only analytical receptor. First read the existing workflow surfaces listed in known_surfaces when they exist; '
-              'do not propose a duplicate mechanism. Treat event_name as authoritative and do not call a pull_request event a merge. '
-              'Use the public capsule below and read-only repository context only. Do not claim that any action executed. '
-              'Return ONLY one valid JSON object with exactly these keys in this order: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. '
-              'OBSERVED must begin with the exact token event_name=<capsule event_name>; and state only source-grounded facts. '
+              'You are a capsule-only analytical receptor. You have no tools and must reason only from PUBLIC_CAPSULE. '
+              'Do not propose a duplicate mechanism already represented in surface_facts. Treat event_name as authoritative and do not call a pull_request event a merge. '
+              'Do not claim that any action executed. Return ONLY one valid JSON object with exactly these keys in this order: '
+              'OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. '
+              'OBSERVED must begin with the exact token event_name=<capsule event_name>; and state only capsule-grounded facts. '
               'HYPOTHESIS must be a causal, testable claim or exactly YIELD. '
               'FALSIFIER must begin AFTER_SHADOW: and describe a measurable outcome that would reject the causal hypothesis after a bounded shadow implementation/test; '
               'implementation absence, HTTP 404, or missing file alone is not a valid falsifier. '
               'NEXT must begin READ_ONLY: or SHADOW: and must not require production mutation, authority widening, secrets, or canonical write. '
-              'RISK must name the main failure mode. If existing mechanisms already cover the proposed idea, set HYPOTHESIS to YIELD.'
+              'RISK must name the main failure mode. If existing surface_facts already cover the proposed idea, set HYPOTHESIS to YIELD.'
           )
           prompt = instruction + '\n\nPUBLIC_CAPSULE:\n' + json.dumps(capsule, ensure_ascii=False, separators=(',', ':'))
           with open('nervous-receptor/prompt.txt', 'w', encoding='utf-8') as fh:
@@ -111,7 +133,7 @@ jobs:
             --model gpt-5-mini \
             --no-ask-user \
             --disable-builtin-mcps \
-            --available-tools='read' \
+            --deny-tool='read,shell,write,url,memory' \
             -p "$PROMPT" \
             > nervous-receptor/raw-output.json
 
@@ -156,7 +178,7 @@ jobs:
 
           raw_sha = hashlib.sha256(raw.encode('utf-8')).hexdigest()
           receipt = {
-              'schema': 'bl-infinity-copilot-receptor-receipt/2',
+              'schema': 'bl-infinity-copilot-receptor-receipt/3',
               'receptor_id': f"copilot:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
               'carrier': 'github-actions',
               'worker': 'github-copilot-cli',
@@ -173,6 +195,7 @@ jobs:
                   'causal_falsifier_shape': True,
                   'bounded_next': True,
                   'forbidden_scope_scan': 'PASS',
+                  'capsule_only': True,
               },
               'canonical_write': False,
               'state_mutation': False,
@@ -186,11 +209,10 @@ jobs:
           PY
 
       - name: Upload receptor evidence
+        if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: deus-copilot-receptor-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            nervous-receptor/capsule.json
-            nervous-receptor/receptor-receipt.json
+          path: nervous-receptor/*.json
           if-no-files-found: error
           retention-days: 30
