@@ -31,30 +31,118 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Run public evidence collector
-        run: python tools/huyenco/humanity_infinite_evidence_sweep.py
-
-      - name: Commit packet only when changed
+      - name: Capture prior material fingerprint
+        id: prior
         shell: bash
         run: |
           set -euo pipefail
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import hashlib, json, subprocess
+          path = '.deus/research/humanity-infinite/inbox/latest.json'
+          try:
+              raw = subprocess.check_output(['git', 'show', f'HEAD:{path}'], text=True)
+              data = json.loads(raw)
+              material = {
+                  'digest_sha256': data.get('digest_sha256'),
+                  'errors': data.get('errors') or [],
+              }
+              canonical = json.dumps(material, sort_keys=True, separators=(',', ':')).encode()
+              print('fingerprint=' + hashlib.sha256(canonical).hexdigest())
+          except Exception:
+              print('fingerprint=')
+          PY
+
+      - name: Run public evidence collector
+        id: collect
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tools/huyenco/humanity_infinite_evidence_sweep.py
+          python3 - <<'PY' >> "$GITHUB_OUTPUT"
+          import hashlib, json
+          path = '.deus/research/humanity-infinite/inbox/latest.json'
+          data = json.load(open(path, encoding='utf-8'))
+          material = {
+              'digest_sha256': data.get('digest_sha256'),
+              'errors': data.get('errors') or [],
+          }
+          canonical = json.dumps(material, sort_keys=True, separators=(',', ':')).encode()
+          print('digest=' + str(data.get('digest_sha256') or ''))
+          print('fingerprint=' + hashlib.sha256(canonical).hexdigest())
+          print('generated_at=' + str(data.get('generated_at_utc') or ''))
+          print('record_count=' + str(data.get('record_count') or 0))
+          PY
+
+      - name: Commit material packet delta
+        id: commit
+        shell: bash
+        env:
+          PRIOR_FP: ${{ steps.prior.outputs.fingerprint }}
+          CURRENT_FP: ${{ steps.collect.outputs.fingerprint }}
+        run: |
+          set -euo pipefail
           inbox='.deus/research/humanity-infinite/inbox'
-          if [[ -z "$(git status --porcelain -- "$inbox")" ]]; then
-            echo "No research packet delta."
+
+          if [[ -n "$PRIOR_FP" && "$PRIOR_FP" == "$CURRENT_FP" ]]; then
+            echo "No material research delta; generated timestamp churn is not committed."
+            echo "material_delta=false" >> "$GITHUB_OUTPUT"
+            echo "source_commit=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
             exit 0
           fi
 
           git config user.name "DEUS HuyenCo Research Bus"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add "$inbox"
-
-          # `git diff --quiet` alone misses untracked files. After staging, this
-          # cached diff is the authoritative material-delta check.
           if git diff --cached --quiet -- "$inbox"; then
-            echo "No staged research packet delta."
-            exit 0
+            echo "No staged packet delta despite fingerprint change."
+            exit 1
           fi
-
           git commit -m "Huyen Co: update Humanity Infinite evidence packet"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
+          echo "material_delta=true" >> "$GITHUB_OUTPUT"
+          echo "source_commit=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Emit explicit research synapse signal
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATERIAL_DELTA: ${{ steps.commit.outputs.material_delta }}
+          SOURCE_COMMIT: ${{ steps.commit.outputs.source_commit }}
+          DIGEST: ${{ steps.collect.outputs.digest }}
+          MATERIAL_FP: ${{ steps.collect.outputs.fingerprint }}
+          GENERATED_AT: ${{ steps.collect.outputs.generated_at }}
+          RECORD_COUNT: ${{ steps.collect.outputs.record_count }}
+        run: |
+          set -euo pipefail
+
+          if [[ "$MATERIAL_DELTA" == "true" ]]; then
+            kind='MATERIAL_DELTA'
+          elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            kind='CANARY_NO_DELTA'
+          else
+            echo "No material delta; no research signal emitted."
+            exit 0
+          fi
+
+          export kind
+          python3 - <<'PY' > /tmp/huyenco-dispatch.json
+          import json, os
+          payload = {
+              'event_type': 'huyenco_research_delta_v1',
+              'client_payload': {
+                  'source': 'BL-HC-01',
+                  'kind': os.environ['kind'],
+                  'source_commit': os.environ.get('SOURCE_COMMIT') or os.environ['GITHUB_SHA'],
+                  'packet_path': '.deus/research/humanity-infinite/inbox/latest.json',
+                  'digest_sha256': os.environ['DIGEST'],
+                  'material_fingerprint': os.environ['MATERIAL_FP'],
+                  'generated_at_utc': os.environ['GENERATED_AT'],
+                  'record_count': os.environ['RECORD_COUNT'],
+              }
+          }
+          print(json.dumps(payload, separators=(',', ':')))
+          PY
+
+          gh api --method POST "repos/${GITHUB_REPOSITORY}/dispatches" --input /tmp/huyenco-dispatch.json
+          echo "research_synapse_dispatch=PASS kind=$kind"
