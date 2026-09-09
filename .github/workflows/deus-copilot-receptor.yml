@@ -1,0 +1,149 @@
+name: DEUS Copilot Receptor
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-copilot-receptor.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-copilot-receptor.yml'
+  schedule:
+    - cron: '4,19,34,49 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+concurrency:
+  group: deus-copilot-receptor
+  cancel-in-progress: false
+
+jobs:
+  receptor:
+    name: bounded-public-llm-receptor
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout public BL∞ surface
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install current Copilot CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @github/copilot
+          copilot --version
+
+      - name: Build public receptor capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p nervous-receptor
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          capsule = {
+              'schema': 'bl-infinity-public-receptor-capsule/1',
+              'carrier': 'github-actions',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'event_name': os.environ['GITHUB_EVENT_NAME'],
+              'ref': os.environ.get('GITHUB_REF'),
+              'sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1'),
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+              'truth_boundaries': [
+                  'schedule wake != continuous daemon',
+                  'configured route != executed transport',
+                  'model output != empirical fact',
+                  'public repository only: no private Drive, camera, credentials, or identity-seed payloads',
+                  'canonical_write=false',
+              ],
+              'objective': 'Find at most one high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority.',
+          }
+          with open('nervous-receptor/capsule.json', 'w', encoding='utf-8') as fh:
+              json.dump(capsule, fh, ensure_ascii=False, indent=2)
+          PY
+
+      - name: Run bounded Copilot receptor
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          copilot -s \
+            --model gpt-5-mini \
+            --no-ask-user \
+            --disable-builtin-mcps \
+            --available-tools='read' \
+            --attachment nervous-receptor/capsule.json \
+            -p 'Act only as a read-only analytical receptor. Use the attached public capsule and, only if needed, read-only repository context. Do not claim that any action executed. Return ONLY one valid JSON object with exactly these keys: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. Each value must be a short string. HYPOTHESIS must be testable; FALSIFIER must state what evidence would reject it; NEXT must be a bounded read-only or shadow-test next step; RISK must name the main failure mode. If there is no material hypothesis, set HYPOTHESIS to YIELD and explain why in OBSERVED.' \
+            > nervous-receptor/raw-output.json
+
+      - name: Validate and seal receptor receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+
+          raw_path = 'nervous-receptor/raw-output.json'
+          raw = open(raw_path, encoding='utf-8').read().strip()
+          try:
+              result = json.loads(raw)
+          except Exception as exc:
+              raise SystemExit(f'COPILOT_OUTPUT_NOT_JSON: {exc}')
+
+          required = ['OBSERVED', 'HYPOTHESIS', 'FALSIFIER', 'NEXT', 'RISK']
+          if list(result.keys()) != required:
+              raise SystemExit(f'COPILOT_OUTPUT_SCHEMA_MISMATCH: {list(result.keys())}')
+          if not all(isinstance(result[key], str) and result[key].strip() for key in required):
+              raise SystemExit('COPILOT_OUTPUT_EMPTY_FIELD')
+
+          raw_sha = hashlib.sha256(raw.encode('utf-8')).hexdigest()
+          receipt = {
+              'schema': 'bl-infinity-copilot-receptor-receipt/1',
+              'receptor_id': f"copilot:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
+              'carrier': 'github-actions',
+              'worker': 'github-copilot-cli',
+              'model_request': 'gpt-5-mini',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'event_name': os.environ['GITHUB_EVENT_NAME'],
+              'sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'output_sha256': raw_sha,
+              'result': result,
+              'canonical_write': False,
+              'state_mutation': False,
+              'authority_widening': False,
+              'truth_state': 'MODEL_CANDIDATE_ONLY',
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+          }
+          with open('nervous-receptor/receptor-receipt.json', 'w', encoding='utf-8') as fh:
+              json.dump(receipt, fh, ensure_ascii=False, indent=2)
+          print(json.dumps(receipt, ensure_ascii=False))
+          PY
+
+      - name: Upload receptor evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-copilot-receptor-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            nervous-receptor/capsule.json
+            nervous-receptor/receptor-receipt.json
+          if-no-files-found: error
+          retention-days: 30
