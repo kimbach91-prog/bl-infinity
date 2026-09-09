@@ -75,6 +75,17 @@ jobs:
           }
           with open('nervous-receptor/capsule.json', 'w', encoding='utf-8') as fh:
               json.dump(capsule, fh, ensure_ascii=False, indent=2)
+
+          instruction = (
+              'Act only as a read-only analytical receptor. Use the public capsule below and, only if needed, read-only repository context. '
+              'Do not claim that any action executed. Return ONLY one valid JSON object with exactly these keys in this order: '
+              'OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. Each value must be a short string. HYPOTHESIS must be testable; '
+              'FALSIFIER must state what evidence would reject it; NEXT must be a bounded read-only or shadow-test next step; '
+              'RISK must name the main failure mode. If there is no material hypothesis, set HYPOTHESIS to YIELD and explain why in OBSERVED.'
+          )
+          prompt = instruction + '\n\nPUBLIC_CAPSULE:\n' + json.dumps(capsule, ensure_ascii=False, separators=(',', ':'))
+          with open('nervous-receptor/prompt.txt', 'w', encoding='utf-8') as fh:
+              fh.write(prompt)
           PY
 
       - name: Run bounded Copilot receptor
@@ -83,13 +94,13 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          PROMPT="$(cat nervous-receptor/prompt.txt)"
           copilot -s \
             --model gpt-5-mini \
             --no-ask-user \
             --disable-builtin-mcps \
             --available-tools='read' \
-            --attachment nervous-receptor/capsule.json \
-            -p 'Act only as a read-only analytical receptor. Use the attached public capsule and, only if needed, read-only repository context. Do not claim that any action executed. Return ONLY one valid JSON object with exactly these keys: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. Each value must be a short string. HYPOTHESIS must be testable; FALSIFIER must state what evidence would reject it; NEXT must be a bounded read-only or shadow-test next step; RISK must name the main failure mode. If there is no material hypothesis, set HYPOTHESIS to YIELD and explain why in OBSERVED.' \
+            -p "$PROMPT" \
             > nervous-receptor/raw-output.json
 
       - name: Validate and seal receptor receipt
