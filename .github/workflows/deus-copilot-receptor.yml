@@ -55,7 +55,7 @@ jobs:
           from datetime import datetime, timezone
 
           capsule = {
-              'schema': 'bl-infinity-public-receptor-capsule/1',
+              'schema': 'bl-infinity-public-receptor-capsule/2',
               'carrier': 'github-actions',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'event_name': os.environ['GITHUB_EVENT_NAME'],
@@ -64,24 +64,36 @@ jobs:
               'run_id': os.environ['GITHUB_RUN_ID'],
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1'),
               'observed_at': datetime.now(timezone.utc).isoformat(),
+              'known_surfaces': [
+                  '.github/workflows/deus-external-pacemaker.yml',
+                  '.github/workflows/deus-cloud-receptor.yml',
+                  '.github/workflows/deus-authorized-relay.yml',
+              ],
               'truth_boundaries': [
+                  'event_name is authoritative; refs/pull/*/merge is a synthetic test ref and is not proof that a PR merged',
                   'schedule wake != continuous daemon',
                   'configured route != executed transport',
                   'model output != empirical fact',
+                  'absence of an implementation is not a causal falsifier for whether that implementation would help',
                   'public repository only: no private Drive, camera, credentials, or identity-seed payloads',
                   'canonical_write=false',
               ],
-              'objective': 'Find at most one high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority.',
+              'objective': 'Find at most one non-duplicate, high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority. Yield if existing surfaces already cover the opportunity.',
           }
           with open('nervous-receptor/capsule.json', 'w', encoding='utf-8') as fh:
               json.dump(capsule, fh, ensure_ascii=False, indent=2)
 
           instruction = (
-              'Act only as a read-only analytical receptor. Use the public capsule below and, only if needed, read-only repository context. '
-              'Do not claim that any action executed. Return ONLY one valid JSON object with exactly these keys in this order: '
-              'OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. Each value must be a short string. HYPOTHESIS must be testable; '
-              'FALSIFIER must state what evidence would reject it; NEXT must be a bounded read-only or shadow-test next step; '
-              'RISK must name the main failure mode. If there is no material hypothesis, set HYPOTHESIS to YIELD and explain why in OBSERVED.'
+              'Act only as a read-only analytical receptor. First read the existing workflow surfaces listed in known_surfaces when they exist; '
+              'do not propose a duplicate mechanism. Treat event_name as authoritative and do not call a pull_request event a merge. '
+              'Use the public capsule below and read-only repository context only. Do not claim that any action executed. '
+              'Return ONLY one valid JSON object with exactly these keys in this order: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. '
+              'OBSERVED must begin with the exact token event_name=<capsule event_name>; and state only source-grounded facts. '
+              'HYPOTHESIS must be a causal, testable claim or exactly YIELD. '
+              'FALSIFIER must begin AFTER_SHADOW: and describe a measurable outcome that would reject the causal hypothesis after a bounded shadow implementation/test; '
+              'implementation absence, HTTP 404, or missing file alone is not a valid falsifier. '
+              'NEXT must begin READ_ONLY: or SHADOW: and must not require production mutation, authority widening, secrets, or canonical write. '
+              'RISK must name the main failure mode. If existing mechanisms already cover the proposed idea, set HYPOTHESIS to YIELD.'
           )
           prompt = instruction + '\n\nPUBLIC_CAPSULE:\n' + json.dumps(capsule, ensure_ascii=False, separators=(',', ':'))
           with open('nervous-receptor/prompt.txt', 'w', encoding='utf-8') as fh:
@@ -108,9 +120,10 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, re
           from datetime import datetime, timezone
 
+          capsule = json.load(open('nervous-receptor/capsule.json', encoding='utf-8'))
           raw_path = 'nervous-receptor/raw-output.json'
           raw = open(raw_path, encoding='utf-8').read().strip()
           try:
@@ -123,10 +136,27 @@ jobs:
               raise SystemExit(f'COPILOT_OUTPUT_SCHEMA_MISMATCH: {list(result.keys())}')
           if not all(isinstance(result[key], str) and result[key].strip() for key in required):
               raise SystemExit('COPILOT_OUTPUT_EMPTY_FIELD')
+          if any(len(result[key]) > 900 for key in required):
+              raise SystemExit('COPILOT_OUTPUT_FIELD_TOO_LONG')
+
+          expected_observed_prefix = f"event_name={capsule['event_name']};"
+          if not result['OBSERVED'].startswith(expected_observed_prefix):
+              raise SystemExit('COPILOT_OBSERVED_EVENT_MISMATCH')
+          if not result['FALSIFIER'].startswith('AFTER_SHADOW:'):
+              raise SystemExit('COPILOT_FALSIFIER_NOT_CAUSAL_SHADOW')
+          if not (result['NEXT'].startswith('READ_ONLY:') or result['NEXT'].startswith('SHADOW:')):
+              raise SystemExit('COPILOT_NEXT_SCOPE_INVALID')
+          if result['HYPOTHESIS'] != 'YIELD' and re.search(r'\b(404|403|missing file|file missing|does not exist)\b', result['FALSIFIER'], re.I):
+              raise SystemExit('COPILOT_FALSIFIER_IMPLEMENTATION_ABSENCE_ONLY')
+
+          forbidden = ['password', 'private key', 'api key', 'camera credential', 'canonical_write=true']
+          joined = json.dumps(result, ensure_ascii=False).lower()
+          if any(term in joined for term in forbidden):
+              raise SystemExit('COPILOT_OUTPUT_FORBIDDEN_SCOPE')
 
           raw_sha = hashlib.sha256(raw.encode('utf-8')).hexdigest()
           receipt = {
-              'schema': 'bl-infinity-copilot-receptor-receipt/1',
+              'schema': 'bl-infinity-copilot-receptor-receipt/2',
               'receptor_id': f"copilot:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
               'carrier': 'github-actions',
               'worker': 'github-copilot-cli',
@@ -138,6 +168,12 @@ jobs:
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT','1'),
               'output_sha256': raw_sha,
               'result': result,
+              'qa': {
+                  'event_truth_bound': True,
+                  'causal_falsifier_shape': True,
+                  'bounded_next': True,
+                  'forbidden_scope_scan': 'PASS',
+              },
               'canonical_write': False,
               'state_mutation': False,
               'authority_widening': False,
