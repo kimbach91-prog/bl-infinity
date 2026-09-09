@@ -1,0 +1,50 @@
+{
+  "schema": "DEUS_NODE_MANIFEST/v0.1",
+  "node_id": "DEV-MOBILE-IPHONE13_1-OWNER-001",
+  "binding_id": "BIND-OWNER-IPHONE13_1-SESSION-001",
+  "target": {
+    "model_identifier": "iPhone13,1",
+    "family": "iPhone 12 mini",
+    "minimum_os": "iOS 17.0"
+  },
+  "authority": {
+    "source": "OWNER_DIRECT_2026-09-09",
+    "scope": "owner-authorized on-device telemetry, bounded own-process compute canary, receipt generation, and future explicitly admitted local inference",
+    "revocable": true
+  },
+  "capabilities": [
+    "DEVICE_IDENTITY_READ",
+    "PROCESSINFO_CPU_COUNT",
+    "PROCESSINFO_PHYSICAL_MEMORY",
+    "THERMAL_STATE",
+    "LOW_POWER_MODE",
+    "BATTERY_STATE",
+    "BOUNDED_OWN_PROCESS_COMPUTE",
+    "LOCAL_RECEIPT_WRITE"
+  ],
+  "not_claimed": [
+    "JAILBREAK",
+    "ROOT",
+    "KERNEL_CONTROL",
+    "RAW_GPU_COUNTERS",
+    "OTHER_PROCESS_CONTROL",
+    "PERSISTENT_BACKGROUND_DAEMON",
+    "LOCAL_LLM_PRESENT"
+  ],
+  "scheduler": {
+    "normal_percent": 1.0,
+    "charging_nominal_percent": 2.0,
+    "fair_thermal_percent": 0.5,
+    "serious_thermal_percent": 0.25,
+    "critical_thermal_percent": 0.0,
+    "interpretation": "cooperative application duty-cycle budget, not a hard CPU reservation"
+  },
+  "promotion_gates": [
+    "CI_BUILD_PASS",
+    "SIGNED_INSTALL_ON_OWNER_DEVICE",
+    "ON_DEVICE_MODEL_IDENTIFIER_EQUALS_iPhone13,1",
+    "ON_DEVICE_CANARY_RECEIPT",
+    "THERMAL_AND_BATTERY_FAILSAFE_PASS"
+  ],
+  "state": "SOURCE_DEPLOYED_TO_REPO / DEVICE_INSTALL_PENDING"
+}
