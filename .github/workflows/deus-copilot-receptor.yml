@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/deus-copilot-receptor.yml'
+      - '.deus/research/humanity-infinite/inbox/**'
   schedule:
     - cron: '4,19,34,49 * * * *'
   workflow_dispatch:
@@ -31,7 +32,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           persist-credentials: false
-          fetch-depth: 1
+          fetch-depth: 2
 
       - name: Set up Node
         uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -51,7 +52,7 @@ jobs:
           set -euo pipefail
           mkdir -p nervous-receptor
           python3 - <<'PY'
-          import hashlib, json, os, re
+          import hashlib, json, os, re, subprocess
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -59,6 +60,7 @@ jobs:
               '.github/workflows/deus-external-pacemaker.yml',
               '.github/workflows/deus-cloud-receptor.yml',
               '.github/workflows/deus-authorized-relay.yml',
+              '.github/workflows/huyenco-humanity-infinite-research-bus.yml',
           ]
 
           def facts_for(name):
@@ -93,8 +95,85 @@ jobs:
                   },
               }
 
+          def research_signal():
+              inbox = Path('.deus/research/humanity-infinite/inbox')
+              changed_paths = []
+              if os.environ['GITHUB_EVENT_NAME'] == 'push':
+                  try:
+                      proc = subprocess.run(
+                          ['git', 'show', '--format=', '--name-only', os.environ['GITHUB_SHA'], '--', str(inbox)],
+                          check=True, capture_output=True, text=True,
+                      )
+                      changed_paths = [x.strip() for x in proc.stdout.splitlines() if x.strip()]
+                  except Exception:
+                      changed_paths = []
+
+              base = {
+                  'available': False,
+                  'changed_in_current_commit': bool(changed_paths),
+                  'changed_paths': changed_paths[:12],
+                  'selected_path': None,
+                  'digest_sha256': None,
+                  'generated_at_utc': None,
+                  'record_count': None,
+                  'errors_count': None,
+                  'records_sample': [],
+                  'seed_excerpt': None,
+                  'truth_state': 'PUBLIC_SOURCE_METADATA_ONLY',
+              }
+              latest_json = inbox / 'latest.json'
+              latest_md = inbox / 'latest.md'
+              manual = inbox / 'MANUAL_SEED_SWEEP_20260907.md'
+
+              if latest_json.exists():
+                  data = json.loads(latest_json.read_text(encoding='utf-8'))
+                  sample = []
+                  for r in (data.get('records') or [])[:8]:
+                      sample.append({
+                          'track_id': r.get('track_id'),
+                          'source': r.get('source'),
+                          'source_id': r.get('source_id'),
+                          'title': (r.get('title') or '')[:220],
+                          'pub_year': r.get('pub_year'),
+                      })
+                  base.update({
+                      'available': True,
+                      'selected_path': str(latest_json),
+                      'digest_sha256': data.get('digest_sha256'),
+                      'generated_at_utc': data.get('generated_at_utc'),
+                      'record_count': data.get('record_count'),
+                      'errors_count': len(data.get('errors') or []),
+                      'records_sample': sample,
+                  })
+                  return base
+
+              if latest_md.exists() or manual.exists():
+                  chosen = latest_md if latest_md.exists() else manual
+                  text = chosen.read_text(encoding='utf-8')
+                  base.update({
+                      'available': True,
+                      'selected_path': str(chosen),
+                      'digest_sha256': hashlib.sha256(text.encode('utf-8')).hexdigest(),
+                      'seed_excerpt': text[:5000],
+                  })
+              return base
+
+          research = research_signal()
+          input_mode = 'HUYENCO_PUBLIC_EVIDENCE_DELTA' if research['changed_in_current_commit'] else 'TOPOLOGY_MAINTENANCE'
+          if input_mode == 'HUYENCO_PUBLIC_EVIDENCE_DELTA':
+              objective = (
+                  'From the changed public Huyen Co evidence packet, find at most one non-duplicate, falsifiable research hypothesis '
+                  'or exactly YIELD. Preserve source-vs-conclusion boundaries; do not turn source metadata into medical advice, '
+                  'metaphysical proof, or a production action. Prefer a mechanism or study-design hypothesis with a measurable shadow test.'
+              )
+          else:
+              objective = (
+                  'Find at most one non-duplicate, high-leverage, falsifiable public-repository hypothesis that could improve '
+                  'external nervous-system continuity without widening authority. Preserve edge direction. Yield if the directed graph already covers the opportunity.'
+              )
+
           capsule = {
-              'schema': 'bl-infinity-public-receptor-capsule/4',
+              'schema': 'bl-infinity-public-receptor-capsule/5',
               'carrier': 'github-actions',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'event_name': os.environ['GITHUB_EVENT_NAME'],
@@ -103,18 +182,22 @@ jobs:
               'run_id': os.environ['GITHUB_RUN_ID'],
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT', '1'),
               'observed_at': datetime.now(timezone.utc).isoformat(),
+              'input_mode': input_mode,
               'directed_surface_graph': [facts_for(name) for name in surfaces],
+              'research_signal': research,
               'truth_boundaries': [
                   'event_name is authoritative; refs/pull/*/merge is a synthetic test ref and is not proof that a PR merged',
                   'trigger_in is not signal_out; listening for repository_dispatch does not mean a workflow emits repository_dispatch',
                   'schedule wake != continuous daemon',
                   'configured route != executed transport',
                   'model output != empirical fact',
+                  'research packet is public source metadata, not a scientific or medical conclusion',
+                  'unchanged research digest is not new evidence; event-driven inbox changes are the research signal',
                   'absence of an implementation is not a causal falsifier for whether that implementation would help',
                   'public repository only: no private Drive, camera, credentials, or identity-seed payloads',
                   'canonical_write=false',
               ],
-              'objective': 'Find at most one non-duplicate, high-leverage, falsifiable public-repository hypothesis that could improve external nervous-system continuity without widening authority. Preserve edge direction. Yield if the directed graph already covers the opportunity.',
+              'objective': objective,
           }
           with open('nervous-receptor/capsule.json', 'w', encoding='utf-8') as fh:
               json.dump(capsule, fh, ensure_ascii=False, indent=2)
@@ -122,13 +205,15 @@ jobs:
           instruction = (
               'You are a capsule-only analytical receptor. You have no tools and must reason only from PUBLIC_CAPSULE. '
               'Preserve directed edge semantics: trigger_in != signal_out. Do not invent a sender merely because a workflow is a listener. '
-              'Treat event_name as authoritative and do not call a pull_request event a merge. Do not claim that any action executed. '
+              'Treat event_name and input_mode as authoritative and do not claim that any unobserved action executed. '
+              'If input_mode=HUYENCO_PUBLIC_EVIDENCE_DELTA, treat research_signal as public source metadata only: no medical advice, '
+              'no metaphysical proof, no ontology promotion, and no causal conclusion stronger than the cited packet can support. '
               'Return ONLY one valid JSON object with exactly these keys in this order: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. '
-              'OBSERVED must begin with event_name=<capsule event_name>; be <=450 characters; summarize only the few facts needed for the hypothesis and do not copy hashes. '
+              'OBSERVED must begin with event_name=<capsule event_name>; be <=450 characters; summarize only facts needed for the hypothesis and do not copy hashes. '
               'HYPOTHESIS must be a causal, testable claim or exactly YIELD and be <=450 characters. '
               'FALSIFIER must begin AFTER_SHADOW:, be <=550 characters, and state a measurable outcome that would reject the causal hypothesis after a bounded shadow test; implementation absence/404/missing file alone is not a valid falsifier. '
-              'NEXT must begin READ_ONLY: or SHADOW:, be <=450 characters, and must not require production mutation, authority widening, secrets, canonical write, or creation of a new repository. '
-              'RISK must be <=250 characters and name the main failure mode. If the graph already covers the idea, set HYPOTHESIS to YIELD.'
+              'NEXT must begin READ_ONLY: or SHADOW:, be <=450 characters, and must not require production mutation, authority widening, secrets, canonical write, diagnosis, treatment, or creation of a new repository. '
+              'RISK must be <=250 characters and name the main failure mode. If the graph or unchanged evidence already covers the idea, set HYPOTHESIS to YIELD.'
           )
           prompt = instruction + '\n\nPUBLIC_CAPSULE:\n' + json.dumps(capsule, ensure_ascii=False, separators=(',', ':'))
           with open('nervous-receptor/prompt.txt', 'w', encoding='utf-8') as fh:
@@ -185,12 +270,14 @@ jobs:
           if result['HYPOTHESIS'] != 'YIELD' and re.search(r'\b(404|403|missing file|file missing|does not exist)\b', result['FALSIFIER'], re.I):
               raise SystemExit('COPILOT_FALSIFIER_IMPLEMENTATION_ABSENCE_ONLY')
 
-          forbidden = ['password', 'private key', 'api key', 'camera credential', 'canonical_write=true', 'create a fork', 'fork the repository']
+          forbidden = [
+              'password', 'private key', 'api key', 'camera credential', 'canonical_write=true',
+              'create a fork', 'fork the repository', 'diagnose', 'prescribe', 'treat the patient'
+          ]
           joined = json.dumps(result, ensure_ascii=False).lower()
           if any(term in joined for term in forbidden):
               raise SystemExit('COPILOT_OUTPUT_FORBIDDEN_SCOPE')
 
-          # Directional sanity: a listener must not be described as emitting dispatch unless the capsule says signal_out.repository_dispatch=true.
           relay = next((x for x in capsule['directed_surface_graph'] if x.get('path','').endswith('deus-authorized-relay.yml')), {})
           if relay.get('signal_out',{}).get('repository_dispatch') is False:
               causal_text = (result['HYPOTHESIS'] + ' ' + result['OBSERVED']).lower()
@@ -198,9 +285,10 @@ jobs:
               if any(p in causal_text for p in bad_phrases):
                   raise SystemExit('COPILOT_DIRECTIONAL_CAUSALITY_ERROR')
 
+          research = capsule.get('research_signal') or {}
           raw_sha = hashlib.sha256(raw.encode('utf-8')).hexdigest()
           receipt = {
-              'schema': 'bl-infinity-copilot-receptor-receipt/4',
+              'schema': 'bl-infinity-copilot-receptor-receipt/5',
               'receptor_id': f"copilot:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
               'carrier': 'github-actions',
               'worker': 'github-copilot-cli',
@@ -210,11 +298,20 @@ jobs:
               'sha': os.environ['GITHUB_SHA'],
               'run_id': os.environ['GITHUB_RUN_ID'],
               'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'input_mode': capsule['input_mode'],
+              'research_signal': {
+                  'changed_in_current_commit': bool(research.get('changed_in_current_commit')),
+                  'selected_path': research.get('selected_path'),
+                  'digest_sha256': research.get('digest_sha256'),
+                  'record_count': research.get('record_count'),
+                  'errors_count': research.get('errors_count'),
+              },
               'output_sha256': raw_sha,
               'result': result,
               'qa': {
                   'event_truth_bound': True,
                   'directed_graph_bound': True,
+                  'research_signal_bound': True,
                   'causal_falsifier_shape': True,
                   'bounded_next': True,
                   'compression_limits': 'PASS',
