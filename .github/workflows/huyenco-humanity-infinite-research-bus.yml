@@ -33,13 +33,24 @@ jobs:
       - name: Commit packet only when changed
         shell: bash
         run: |
-          if git diff --quiet -- .deus/research/humanity-infinite/inbox; then
+          set -euo pipefail
+          inbox='.deus/research/humanity-infinite/inbox'
+          if [[ -z "$(git status --porcelain -- "$inbox")" ]]; then
             echo "No research packet delta."
             exit 0
           fi
+
           git config user.name "DEUS HuyenCo Research Bus"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .deus/research/humanity-infinite/inbox
+          git add "$inbox"
+
+          # `git diff --quiet` alone misses untracked files. After staging, this
+          # cached diff is the authoritative material-delta check.
+          if git diff --cached --quiet -- "$inbox"; then
+            echo "No staged research packet delta."
+            exit 0
+          fi
+
           git commit -m "Huyen Co: update Humanity Infinite evidence packet"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"
