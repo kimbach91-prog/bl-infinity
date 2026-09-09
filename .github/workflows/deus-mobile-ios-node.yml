@@ -1,0 +1,39 @@
+name: DEUS Mobile iOS Node
+
+on:
+  push:
+    branches:
+      - deus/iphone13-1-node-agent
+    paths:
+      - 'deus/mobile/ios/**'
+      - '.github/workflows/deus-mobile-ios-node.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios-simulator:
+    runs-on: macos-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: deus/mobile/ios
+        run: xcodegen generate
+
+      - name: Build unsigned simulator target
+        working-directory: deus/mobile/ios
+        run: >-
+          xcodebuild
+          -project DEUSMobileNode.xcodeproj
+          -scheme DEUSMobileNode
+          -sdk iphonesimulator
+          -configuration Debug
+          CODE_SIGNING_ALLOWED=NO
+          build
