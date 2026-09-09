@@ -9,7 +9,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/deus-copilot-receptor.yml'
-      - '.deus/research/humanity-infinite/inbox/**'
+  repository_dispatch:
+    types: [huyenco_research_delta_v1]
   schedule:
     - cron: '4,19,34,49 * * * *'
   workflow_dispatch:
@@ -97,8 +98,16 @@ jobs:
 
           def research_signal():
               inbox = Path('.deus/research/humanity-infinite/inbox')
+              event_name = os.environ['GITHUB_EVENT_NAME']
+              event = {}
+              try:
+                  event = json.load(open(os.environ['GITHUB_EVENT_PATH'], encoding='utf-8'))
+              except Exception:
+                  event = {}
+              dispatch = event.get('client_payload') or {} if event_name == 'repository_dispatch' else {}
+
               changed_paths = []
-              if os.environ['GITHUB_EVENT_NAME'] == 'push':
+              if event_name == 'push':
                   try:
                       proc = subprocess.run(
                           ['git', 'show', '--format=', '--name-only', os.environ['GITHUB_SHA'], '--', str(inbox)],
@@ -112,6 +121,10 @@ jobs:
                   'available': False,
                   'changed_in_current_commit': bool(changed_paths),
                   'changed_paths': changed_paths[:12],
+                  'signal_kind': None,
+                  'dispatch_verified': False,
+                  'dispatch_source_commit': None,
+                  'dispatch_material_fingerprint': None,
                   'selected_path': None,
                   'digest_sha256': None,
                   'generated_at_utc': None,
@@ -121,6 +134,34 @@ jobs:
                   'seed_excerpt': None,
                   'truth_state': 'PUBLIC_SOURCE_METADATA_ONLY',
               }
+
+              if event_name == 'repository_dispatch':
+                  source = str(dispatch.get('source') or '')
+                  kind = str(dispatch.get('kind') or '')
+                  source_commit = str(dispatch.get('source_commit') or '')
+                  packet_path = str(dispatch.get('packet_path') or '')
+                  digest = str(dispatch.get('digest_sha256') or '')
+                  material_fp = str(dispatch.get('material_fingerprint') or '')
+                  if source != 'BL-HC-01':
+                      raise SystemExit('HUYENCO_DISPATCH_SOURCE_INVALID')
+                  if kind not in {'MATERIAL_DELTA', 'CANARY_NO_DELTA'}:
+                      raise SystemExit('HUYENCO_DISPATCH_KIND_INVALID')
+                  if packet_path != '.deus/research/humanity-infinite/inbox/latest.json':
+                      raise SystemExit('HUYENCO_DISPATCH_PATH_INVALID')
+                  if not re.fullmatch(r'[0-9a-f]{64}', digest):
+                      raise SystemExit('HUYENCO_DISPATCH_DIGEST_INVALID')
+                  if not re.fullmatch(r'[0-9a-f]{64}', material_fp):
+                      raise SystemExit('HUYENCO_DISPATCH_FINGERPRINT_INVALID')
+                  if not re.fullmatch(r'[0-9a-f]{40}', source_commit):
+                      raise SystemExit('HUYENCO_DISPATCH_SOURCE_COMMIT_INVALID')
+                  base.update({
+                      'signal_kind': kind,
+                      'dispatch_source_commit': source_commit,
+                      'dispatch_material_fingerprint': material_fp,
+                      'selected_path': packet_path,
+                      'changed_in_current_commit': kind == 'MATERIAL_DELTA',
+                  })
+
               latest_json = inbox / 'latest.json'
               latest_md = inbox / 'latest.md'
               manual = inbox / 'MANUAL_SEED_SWEEP_20260907.md'
@@ -145,7 +186,14 @@ jobs:
                       'errors_count': len(data.get('errors') or []),
                       'records_sample': sample,
                   })
+                  if event_name == 'repository_dispatch':
+                      if data.get('digest_sha256') != dispatch.get('digest_sha256'):
+                          raise SystemExit('HUYENCO_DISPATCH_PACKET_DIGEST_MISMATCH')
+                      base['dispatch_verified'] = True
                   return base
+
+              if event_name == 'repository_dispatch':
+                  raise SystemExit('HUYENCO_DISPATCH_PACKET_MISSING')
 
               if latest_md.exists() or manual.exists():
                   chosen = latest_md if latest_md.exists() else manual
@@ -159,12 +207,26 @@ jobs:
               return base
 
           research = research_signal()
-          input_mode = 'HUYENCO_PUBLIC_EVIDENCE_DELTA' if research['changed_in_current_commit'] else 'TOPOLOGY_MAINTENANCE'
+          if os.environ['GITHUB_EVENT_NAME'] == 'repository_dispatch' and research.get('dispatch_verified'):
+              if research.get('signal_kind') == 'MATERIAL_DELTA':
+                  input_mode = 'HUYENCO_PUBLIC_EVIDENCE_DELTA'
+              else:
+                  input_mode = 'HUYENCO_SIGNAL_CANARY'
+          elif research['changed_in_current_commit']:
+              input_mode = 'HUYENCO_PUBLIC_EVIDENCE_DELTA'
+          else:
+              input_mode = 'TOPOLOGY_MAINTENANCE'
+
           if input_mode == 'HUYENCO_PUBLIC_EVIDENCE_DELTA':
               objective = (
                   'From the changed public Huyen Co evidence packet, find at most one non-duplicate, falsifiable research hypothesis '
                   'or exactly YIELD. Preserve source-vs-conclusion boundaries; do not turn source metadata into medical advice, '
                   'metaphysical proof, or a production action. Prefer a mechanism or study-design hypothesis with a measurable shadow test.'
+              )
+          elif input_mode == 'HUYENCO_SIGNAL_CANARY':
+              objective = (
+                  'Verify the explicit Huyen Co -> Copilot synapse is semantically coherent. The packet is intentionally not new evidence. '
+                  'Return YIELD unless there is one bounded, falsifiable transport-integrity hypothesis that follows from the observed capsule.'
               )
           else:
               objective = (
@@ -173,7 +235,7 @@ jobs:
               )
 
           capsule = {
-              'schema': 'bl-infinity-public-receptor-capsule/5',
+              'schema': 'bl-infinity-public-receptor-capsule/6',
               'carrier': 'github-actions',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'event_name': os.environ['GITHUB_EVENT_NAME'],
@@ -188,11 +250,12 @@ jobs:
               'truth_boundaries': [
                   'event_name is authoritative; refs/pull/*/merge is a synthetic test ref and is not proof that a PR merged',
                   'trigger_in is not signal_out; listening for repository_dispatch does not mean a workflow emits repository_dispatch',
+                  'repository_dispatch is an explicit workflow handoff, not proof of downstream provider execution beyond this receptor',
                   'schedule wake != continuous daemon',
                   'configured route != executed transport',
                   'model output != empirical fact',
                   'research packet is public source metadata, not a scientific or medical conclusion',
-                  'unchanged research digest is not new evidence; event-driven inbox changes are the research signal',
+                  'unchanged research digest is not new evidence; CANARY_NO_DELTA must not be described as new research',
                   'absence of an implementation is not a causal falsifier for whether that implementation would help',
                   'public repository only: no private Drive, camera, credentials, or identity-seed payloads',
                   'canonical_write=false',
@@ -205,9 +268,10 @@ jobs:
           instruction = (
               'You are a capsule-only analytical receptor. You have no tools and must reason only from PUBLIC_CAPSULE. '
               'Preserve directed edge semantics: trigger_in != signal_out. Do not invent a sender merely because a workflow is a listener. '
-              'Treat event_name and input_mode as authoritative and do not claim that any unobserved action executed. '
+              'Treat event_name and input_mode as authoritative and do not claim any unobserved action executed. '
               'If input_mode=HUYENCO_PUBLIC_EVIDENCE_DELTA, treat research_signal as public source metadata only: no medical advice, '
               'no metaphysical proof, no ontology promotion, and no causal conclusion stronger than the cited packet can support. '
+              'If input_mode=HUYENCO_SIGNAL_CANARY, do not describe the packet as new evidence. '
               'Return ONLY one valid JSON object with exactly these keys in this order: OBSERVED, HYPOTHESIS, FALSIFIER, NEXT, RISK. '
               'OBSERVED must begin with event_name=<capsule event_name>; be <=450 characters; summarize only facts needed for the hypothesis and do not copy hashes. '
               'HYPOTHESIS must be a causal, testable claim or exactly YIELD and be <=450 characters. '
@@ -278,6 +342,11 @@ jobs:
           if any(term in joined for term in forbidden):
               raise SystemExit('COPILOT_OUTPUT_FORBIDDEN_SCOPE')
 
+          if capsule['input_mode'] == 'HUYENCO_SIGNAL_CANARY':
+              new_evidence_phrases = ['new evidence', 'new research', 'new study data']
+              if any(p in joined for p in new_evidence_phrases):
+                  raise SystemExit('COPILOT_CANARY_FALSE_DELTA_CLAIM')
+
           relay = next((x for x in capsule['directed_surface_graph'] if x.get('path','').endswith('deus-authorized-relay.yml')), {})
           if relay.get('signal_out',{}).get('repository_dispatch') is False:
               causal_text = (result['HYPOTHESIS'] + ' ' + result['OBSERVED']).lower()
@@ -288,7 +357,7 @@ jobs:
           research = capsule.get('research_signal') or {}
           raw_sha = hashlib.sha256(raw.encode('utf-8')).hexdigest()
           receipt = {
-              'schema': 'bl-infinity-copilot-receptor-receipt/5',
+              'schema': 'bl-infinity-copilot-receptor-receipt/6',
               'receptor_id': f"copilot:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
               'carrier': 'github-actions',
               'worker': 'github-copilot-cli',
@@ -301,6 +370,9 @@ jobs:
               'input_mode': capsule['input_mode'],
               'research_signal': {
                   'changed_in_current_commit': bool(research.get('changed_in_current_commit')),
+                  'signal_kind': research.get('signal_kind'),
+                  'dispatch_verified': bool(research.get('dispatch_verified')),
+                  'dispatch_source_commit': research.get('dispatch_source_commit'),
                   'selected_path': research.get('selected_path'),
                   'digest_sha256': research.get('digest_sha256'),
                   'record_count': research.get('record_count'),
@@ -312,6 +384,7 @@ jobs:
                   'event_truth_bound': True,
                   'directed_graph_bound': True,
                   'research_signal_bound': True,
+                  'dispatch_digest_bound': bool(research.get('dispatch_verified')) if os.environ['GITHUB_EVENT_NAME'] == 'repository_dispatch' else None,
                   'causal_falsifier_shape': True,
                   'bounded_next': True,
                   'compression_limits': 'PASS',
