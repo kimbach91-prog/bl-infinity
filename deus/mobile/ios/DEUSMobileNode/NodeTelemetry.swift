@@ -153,7 +153,7 @@ final class NodeTelemetryModel: ObservableObject {
         }
     }
 
-    private static func sha256Canary(iterations: Int) -> (elapsedSeconds: Double, opsPerSecond: Double, digestHex: String) {
+    nonisolated private static func sha256Canary(iterations: Int) -> (elapsedSeconds: Double, opsPerSecond: Double, digestHex: String) {
         var payload = Data("DEUS::IPHONE13,1::CANARY".utf8)
         let start = CFAbsoluteTimeGetCurrent()
         var digest = SHA256.hash(data: payload)
