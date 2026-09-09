@@ -1,0 +1,8 @@
+# Security-sensitive ownership. Server-side branch/ruleset enforcement must still be enabled in GitHub settings.
+/runtime/human-os-gateway/ @kimbach91-prog
+/runtime/federation/ @kimbach91-prog
+/nodes/windows/ @kimbach91-prog
+/security/ @kimbach91-prog
+/.github/workflows/ @kimbach91-prog
+/BL-CF/ @kimbach91-prog
+/deus/ @kimbach91-prog
