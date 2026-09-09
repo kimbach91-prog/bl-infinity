@@ -1,0 +1,118 @@
+name: DEUS External Pacemaker
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-external-pacemaker.yml'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-external-pacemaker.yml'
+  schedule:
+    - cron: '2-57/5 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deus-external-pacemaker
+  cancel-in-progress: false
+
+jobs:
+  pulse:
+    name: receipt-only-pulse
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Start bounded pulse
+        id: start
+        shell: bash
+        run: |
+          set -euo pipefail
+          start_ms="$(python3 - <<'PY'
+          import time
+          print(time.time_ns() // 1_000_000)
+          PY
+          )"
+          start_iso="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          echo "start_ms=$start_ms" >> "$GITHUB_OUTPUT"
+          echo "start_iso=$start_iso" >> "$GITHUB_OUTPUT"
+
+      - name: Probe carrier reality
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}" \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["full_name"]==sys.argv[1]; print("carrier_probe=PASS")' "$GITHUB_REPOSITORY"
+
+      - name: Emit pulse receipt
+        id: receipt
+        shell: bash
+        env:
+          START_MS: ${{ steps.start.outputs.start_ms }}
+          START_ISO: ${{ steps.start.outputs.start_iso }}
+        run: |
+          set -euo pipefail
+          mkdir -p nervous-pulse-evidence
+          END_MS="$(python3 - <<'PY'
+          import time
+          print(time.time_ns() // 1_000_000)
+          PY
+          )"
+          END_ISO="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          DURATION_MS=$(( END_MS - START_MS ))
+          export END_MS END_ISO DURATION_MS START_MS START_ISO
+
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+
+          start_ms = int(os.environ['START_MS'])
+          end_ms = int(os.environ['END_MS'])
+          duration_ms = int(os.environ['DURATION_MS'])
+          if end_ms < start_ms or duration_ms < 0:
+              raise SystemExit('INVALID_PULSE_TIME_BOUNDARY')
+          bucket = start_ms // (5 * 60 * 1000)
+          payload = {
+              'schema': 'bl-infinity-external-pacemaker/1',
+              'pulse_id': f"github:{os.environ['GITHUB_RUN_ID']}:{os.environ.get('GITHUB_RUN_ATTEMPT','1')}",
+              'idempotency_bucket_5m': str(bucket),
+              'carrier': 'github-actions',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'event_name': os.environ['GITHUB_EVENT_NAME'],
+              'ref': os.environ.get('GITHUB_REF'),
+              'sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'run_number': os.environ['GITHUB_RUN_NUMBER'],
+              'started_at': os.environ['START_ISO'],
+              'ended_at': os.environ['END_ISO'],
+              'start_ms': start_ms,
+              'end_ms': end_ms,
+              'duration_ms': duration_ms,
+              'carrier_probe': 'PASS',
+              'canonical_write': False,
+              'state_mutation': False,
+              'provider_execution': 'GITHUB_HOSTED_RUNNER_OBSERVED',
+              'continuity_claim': 'FINITE_PULSE_ONLY',
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+          }
+          with open('nervous-pulse-evidence/pulse-receipt.json','w',encoding='utf-8') as fh:
+              json.dump(payload, fh, ensure_ascii=False, indent=2)
+          print(json.dumps(payload, ensure_ascii=False))
+          PY
+
+      - name: Upload pulse evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-external-pacemaker-${{ github.run_id }}-${{ github.run_attempt }}
+          path: nervous-pulse-evidence/pulse-receipt.json
+          if-no-files-found: error
+          retention-days: 30
