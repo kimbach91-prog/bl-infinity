@@ -11,6 +11,11 @@ function fakeDaemon() {
     snapshot() {
       return {
         version: 1,
+        lineageId: 'lineage-public-id',
+        incarnationId: 'incarnation-public-id',
+        bootCount: 3,
+        currentBootAt: '2026-09-10T00:00:00.000Z',
+        lastShutdownAt: '2026-09-09T23:00:00.000Z',
         generation: 42,
         body: { E: 0.6, A: 1 },
         policyWeights: { SECRET_INTERNAL: 0.77 },
@@ -56,10 +61,13 @@ test('wrapped handler records only error class and rethrows original error', asy
   assert.equal(daemon.events[1].payload.errorClass, 'TypeError');
 });
 
-test('public snapshot exposes inspectable state but omits internal policy/scars/lease identity', () => {
+test('public snapshot exposes inspectable lineage/body state but omits internal policy/scars/lease identity', () => {
   const daemon = fakeDaemon();
   const projected = publicLifeSnapshot(daemon.snapshot());
   assert.equal(projected.generation, 42);
+  assert.equal(projected.lineageId, 'lineage-public-id');
+  assert.equal(projected.incarnationId, 'incarnation-public-id');
+  assert.equal(projected.bootCount, 3);
   assert.equal(projected.lastAction, 'HOLD_STEADY');
   assert.deepEqual(projected.body, { E: 0.6, A: 1 });
   const serialized = JSON.stringify(projected);
@@ -74,5 +82,6 @@ test('life.snapshot capability returns the bounded public projection', async () 
   const snapshot = await handlers.get('life.snapshot')();
   assert.equal(snapshot.generation, 42);
   assert.equal(snapshot.totalEvents, 42);
+  assert.equal(snapshot.lineageId, 'lineage-public-id');
   assert.equal(Object.hasOwn(snapshot, 'policyWeights'), false);
 });
