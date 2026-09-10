@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 
-export const LIFE_STATE_VERSION = 1;
+export const LIFE_STATE_VERSION = 2;
 
 export const TARGETS = Object.freeze({
-  E: [0.35, 0.85],
+  E: [0.35, 1.00],
   C: [0.70, 1.00],
   M: [0.80, 1.00],
   U: [0.00, 0.45],
@@ -11,13 +11,14 @@ export const TARGETS = Object.freeze({
   P: [0.55, 1.00],
   A: [0.90, 1.00],
   T: [0.75, 1.00],
+  H: [0.90, 1.00],
   B: [0.60, 1.00],
   X: [0.00, 0.70],
 });
 
 export const DEFAULT_BODY = Object.freeze({
   E: 0.60, C: 0.86, M: 0.94, U: 0.32, R: 0.12,
-  P: 0.78, A: 1.00, T: 0.91, B: 0.88, X: 0.40,
+  P: 0.78, A: 1.00, T: 0.91, H: 0.97, B: 0.88, X: 0.40,
 });
 
 export const ACTIONS = Object.freeze([
@@ -87,7 +88,7 @@ function stableStringify(value) {
 }
 
 export function assimilateEvent(body, event = {}) {
-  const next = { ...body };
+  const next = { ...DEFAULT_BODY, ...body };
   const metrics = event.metrics ?? {};
   const boundedSet = (key, value) => { if (value !== undefined && value !== null) next[key] = clamp01(value); };
 
@@ -99,6 +100,7 @@ export function assimilateEvent(body, event = {}) {
   boundedSet('P', metrics.progress);
   boundedSet('A', metrics.humanAutonomy);
   boundedSet('T', metrics.trustQuality);
+  boundedSet('H', metrics.truthIntegrity);
   boundedSet('B', metrics.contextContinuity);
   boundedSet('X', metrics.signalLoad);
 
@@ -127,6 +129,15 @@ export function assimilateEvent(body, event = {}) {
       next.M = clamp01(next.M - 0.10);
       next.C = clamp01(next.C - 0.05);
       break;
+    case 'truth-check-ok':
+      next.H = clamp01(next.H + 0.02);
+      next.T = clamp01(next.T + 0.01);
+      break;
+    case 'truth-check-error':
+      next.H = clamp01(next.H - 0.15);
+      next.T = clamp01(next.T - 0.08);
+      next.U = clamp01(next.U + 0.05);
+      break;
     case 'external-novelty':
       next.U = clamp01(next.U + 0.05);
       break;
@@ -142,11 +153,11 @@ export function assimilateEvent(body, event = {}) {
 
 export function deriveAffect(body) {
   const health = computeHealth(body);
-  const repairPressure = clamp01(((1 - health.perVariable.C) + (1 - health.perVariable.M)) / 2);
+  const repairPressure = clamp01(((1 - health.perVariable.C) + (1 - health.perVariable.M) + (1 - health.perVariable.H)) / 3);
   return {
     curiosity: clamp01(body.U * (1 - body.R)),
     caution: clamp01(body.U * body.R + repairPressure * 0.65),
-    continuityCare: clamp01(body.T * body.B * body.A),
+    continuityCare: clamp01(body.T * body.H * body.B * body.A),
     loadPressure: clamp01(body.X * (1 - body.E)),
     progressRelief: clamp01(body.P * (1 - body.U)),
     repairPressure,
@@ -217,6 +228,7 @@ export function stepLife(previous, event, now = Date.now()) {
 
   const next = {
     ...previous,
+    version: LIFE_STATE_VERSION,
     generation: previous.generation + 1,
     body,
     policyWeights,
@@ -228,7 +240,7 @@ export function stepLife(previous, event, now = Date.now()) {
     consecutiveQuiet: event?.type === 'quiet-pulse' ? previous.consecutiveQuiet + 1 : 0,
     totalEvents: previous.totalEvents + 1,
     totalMutations: previous.totalMutations + (mutation ? 1 : 0),
-    totalErrors: previous.totalErrors + (event?.type === 'task-error' || event?.type === 'memory-readback-error' ? 1 : 0),
+    totalErrors: previous.totalErrors + (['task-error', 'memory-readback-error', 'truth-check-error'].includes(event?.type) ? 1 : 0),
   };
 
   const record = {
@@ -259,8 +271,8 @@ function shouldMutate({ previous, event, action, affect, novelty }) {
 
 function inferReward(event, affect) {
   if (event?.reward !== undefined) return Math.max(-1, Math.min(1, Number(event.reward) || 0));
-  if (event?.type === 'task-success' || event?.type === 'memory-readback-ok') return 0.5;
-  if (event?.type === 'task-error' || event?.type === 'memory-readback-error') return -0.5;
+  if (event?.type === 'task-success' || event?.type === 'memory-readback-ok' || event?.type === 'truth-check-ok') return 0.5;
+  if (event?.type === 'task-error' || event?.type === 'memory-readback-error' || event?.type === 'truth-check-error') return -0.5;
   return affect.viability >= 0.8 ? 0.1 : 0;
 }
 
