@@ -1,11 +1,12 @@
 {
   "name": "bl-compute-federation",
-  "version": "0.12.0",
+  "version": "0.13.0",
   "private": true,
   "type": "module",
   "scripts": {
     "test": "node --test --test-concurrency=1 test/*.test.mjs",
     "test:life-persistence": "node scripts/verify-life-persistence.mjs",
+    "verify:life-journal": "node scripts/verify-life-journal.mjs",
     "start": "node dev-server.mjs",
     "worker": "node worker/server.mjs",
     "life": "node worker/life-daemon.mjs",
