@@ -203,7 +203,11 @@ export function stepLife(previous, event, now = Date.now()) {
   const body = assimilateEvent(previous.body, event);
   const affect = deriveAffect(body);
   const scored = scoreActions({ body, affect, policyWeights: previous.policyWeights, habituation: previous.habituation, novelty });
-  const action = chooseAction(scored);
+  let action = chooseAction(scored);
+  const passiveEvent = ['boot', 'quiet-pulse', 'shutdown'].includes(event?.type);
+  if (passiveEvent && affect.repairPressure < 0.25 && affect.caution < 0.45 && body.R < 0.50) {
+    action = 'HOLD_STEADY';
+  }
   const mutation = shouldMutate({ previous, event, action, affect, novelty });
   const reward = inferReward(event, affect);
   const policyWeights = mutation
