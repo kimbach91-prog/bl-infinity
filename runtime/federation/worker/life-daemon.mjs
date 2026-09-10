@@ -74,7 +74,8 @@ export class LifeDaemon {
         this.#scheduleNextPulse();
       }
     }, adaptive);
-    this.timer.unref?.();
+    // Deliberately keep this timer referenced. An unref'ed pulse plus a pending
+    // Promise is not enough to keep Node alive; the daemon must own a live handle.
   }
 
   async #sample() {
@@ -175,8 +176,8 @@ export async function runLifeDaemon(options = {}) {
   process.once('SIGINT', () => void shutdown('SIGINT'));
   process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
-  // A real daemon remains alive while the host keeps this process alive.
-  // Its work is event-driven; quiet periods back off instead of inventing mutations.
+  // The referenced pulse timer keeps the event loop alive. Quiet intervals
+  // back off but do not terminate the process while the host keeps it running.
   await new Promise(() => {});
 }
 
