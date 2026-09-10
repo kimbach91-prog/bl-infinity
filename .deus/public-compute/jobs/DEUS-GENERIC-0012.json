@@ -1,0 +1,10 @@
+{
+  "schema": "bl-public-compute-job/3",
+  "job_id": "DEUS-GENERIC-0012-B",
+  "route": "012",
+  "op": "SUM_INT",
+  "payload": {"values": [314, -27, 58, 91]},
+  "public_payload": true,
+  "contains_secret": false,
+  "expected_result_supplied": false
+}
