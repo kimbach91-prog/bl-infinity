@@ -1,0 +1,36 @@
+services:
+  deus-life:
+    build:
+      context: .
+      dockerfile: life-worker.Dockerfile
+    restart: unless-stopped
+    init: true
+    ports:
+      - "127.0.0.1:${DEUS_LIFE_PORT:-8790}:8790"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8790
+      BL_WORKER_MAX_CONCURRENCY: ${BL_WORKER_MAX_CONCURRENCY:-2}
+      BL_WORKER_MAX_BODY_BYTES: ${BL_WORKER_MAX_BODY_BYTES:-1048576}
+      BL_FEDERATION_SHARED_SECRET: ${BL_FEDERATION_SHARED_SECRET:?set BL_FEDERATION_SHARED_SECRET}
+      DEUS_LIFE_STATE_PATH: /app/storage/deus-life-state.json
+      DEUS_LIFE_JOURNAL_PATH: /app/storage/deus-life-events.ndjson
+      DEUS_LIFE_LEASE_PATH: /app/storage/deus-life.lock
+      DEUS_LIFE_PULSE_MS: ${DEUS_LIFE_PULSE_MS:-20000}
+      DEUS_LIFE_LEASE_TTL_MS: ${DEUS_LIFE_LEASE_TTL_MS:-90000}
+    volumes:
+      - deus-life-state:/app/storage
+    stop_grace_period: 30s
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8790/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  deus-life-state:
