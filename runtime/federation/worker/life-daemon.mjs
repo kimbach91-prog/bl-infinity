@@ -4,7 +4,7 @@ import readline from 'node:readline';
 import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { getHeapStatistics } from 'node:v8';
-import { createInitialLifeState, stepLife } from '../lib/life-core.mjs';
+import { createInitialLifeState, stableFingerprint, stepLife } from '../lib/life-core.mjs';
 import { acquireLease, createLeaseOwnerId, refreshLease, releaseLease } from '../lib/life-lease.mjs';
 
 const DEFAULT_PULSE_MS = 20_000;
@@ -18,10 +18,12 @@ export class LifeDaemon {
     journalPath = process.env.DEUS_LIFE_JOURNAL_PATH || './storage/deus-life-events.ndjson',
     leasePath = process.env.DEUS_LIFE_LEASE_PATH || './storage/deus-life.lock',
     checkpointPath = process.env.DEUS_LIFE_CHECKPOINT_PATH || './storage/deus-life-checkpoint.json',
+    pendingPath = process.env.DEUS_LIFE_PENDING_PATH || `${statePath}.pending`,
     pulseMs = Number(process.env.DEUS_LIFE_PULSE_MS || DEFAULT_PULSE_MS),
     leaseTtlMs = Number(process.env.DEUS_LIFE_LEASE_TTL_MS || DEFAULT_LEASE_TTL_MS),
     ownerId = createLeaseOwnerId(),
     sampleRuntime = defaultRuntimeSampler,
+    faultInjector = async () => {},
     now = () => Date.now(),
     logger = console,
   } = {}) {
@@ -30,11 +32,13 @@ export class LifeDaemon {
     this.journalPath = journalPath;
     this.leasePath = leasePath;
     this.checkpointPath = checkpointPath;
+    this.pendingPath = pendingPath;
     this.pulseMs = boundedMs(pulseMs, MIN_PULSE_MS, MAX_PULSE_MS, 'DEUS_LIFE_PULSE_MS');
     this.leaseTtlMs = boundedMs(leaseTtlMs, 10_000, 24 * 60 * 60_000, 'DEUS_LIFE_LEASE_TTL_MS');
     if (this.leaseTtlMs <= this.pulseMs * 2) throw new Error('DEUS_LIFE_LEASE_TTL_MS must be greater than 2 × pulse interval');
     this.ownerId = ownerId;
     this.sampleRuntime = sampleRuntime;
+    this.faultInjector = faultInjector;
     this.now = now;
     this.logger = logger;
     this.state = null;
@@ -51,7 +55,10 @@ export class LifeDaemon {
     await this.#ensureStorage();
     this.lease = await acquireLease({ leasePath: this.leasePath, ownerId: this.ownerId, ttlMs: this.leaseTtlMs, now: this.now });
     try {
+      await this.#recoverPendingCommit();
       this.state = await this.#loadState();
+      await this.#verifyJournalHead(this.state);
+      await this.#resumeActuationIfNeeded();
       this.#beginIncarnation();
       this.running = true;
       await this.emit({ type: 'boot', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
@@ -60,6 +67,7 @@ export class LifeDaemon {
     } catch (error) {
       this.running = false;
       await releaseLease({ leasePath: this.leasePath, ownerId: this.ownerId }).catch(() => {});
+      this.lease = null;
       throw error;
     }
   }
@@ -111,7 +119,7 @@ export class LifeDaemon {
         await this.emit({ type: 'quiet-pulse', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
       } catch (error) {
         this.logger.error?.(`DEUS life pulse failed: ${error.message}`);
-        if (error.code === 'LIFE_LEASE_LOST') this.running = false;
+        if (error.code === 'LIFE_LEASE_LOST' || error.code === 'LIFE_JOURNAL_DIVERGED') this.running = false;
       } finally {
         this.#scheduleNextPulse();
       }
@@ -154,23 +162,94 @@ export class LifeDaemon {
       while (this.queue.length) {
         if (this.lease) this.lease = await refreshLease({ leasePath: this.leasePath, ownerId: this.ownerId, ttlMs: this.leaseTtlMs, now: this.now });
         const event = this.queue.shift();
-        const { state, record } = stepLife(this.state ?? createInitialLifeState(this.now()), event, this.now());
-        this.state = state;
-        await this.#persistState(state);
-        const actuation = await this.#actuate(record.action, state);
-        await fs.appendFile(this.journalPath, `${JSON.stringify({
-          ...record,
-          inputAt: event.at,
-          lineageId: state.lineageId,
-          incarnationId: state.incarnationId,
-          leaseOwnerId: this.ownerId,
-          actuation,
-        })}\n`, 'utf8');
-        this.logger.info?.(`DEUS life lineage=${shortId(state.lineageId)} body=${shortId(state.incarnationId)} gen=${state.generation} event=${record.eventType} action=${record.action} V=${record.viability.toFixed(3)} mutation=${record.mutation}`);
+        const previous = this.state ?? createInitialLifeState(this.now());
+        const { state: candidateState, record } = stepLife(previous, event, this.now());
+        this.state = await this.#commitGeneration({ previous, candidateState, record, event });
+        await this.#executeAndRecordActuation(record.action);
+        this.logger.info?.(`DEUS life lineage=${shortId(this.state.lineageId)} body=${shortId(this.state.incarnationId)} gen=${this.state.generation} event=${record.eventType} action=${record.action} V=${record.viability.toFixed(3)} mutation=${record.mutation}`);
       }
     } finally {
       this.processing = false;
     }
+  }
+
+  async #commitGeneration({ previous, candidateState, record, event }) {
+    const journalBase = {
+      ...record,
+      inputAt: event.at,
+      lineageId: candidateState.lineageId ?? previous.lineageId ?? null,
+      incarnationId: candidateState.incarnationId ?? previous.incarnationId ?? null,
+      prevHash: previous.journalHead ?? null,
+    };
+    const journalHash = stableFingerprint(journalBase);
+    const journalEnvelope = { ...journalBase, journalHash };
+    const committedState = { ...candidateState, journalHead: journalHash };
+    const pending = { version: 1, state: committedState, journal: journalEnvelope };
+
+    await atomicWriteJson(this.pendingPath, pending);
+    await this.faultInjector('after-pending', { state: committedState, journal: journalEnvelope });
+    await fs.appendFile(this.journalPath, `${JSON.stringify(journalEnvelope)}\n`, 'utf8');
+    await this.faultInjector('after-journal', { state: committedState, journal: journalEnvelope });
+    await this.#persistState(committedState);
+    await this.faultInjector('after-state', { state: committedState, journal: journalEnvelope });
+    await fs.rm(this.pendingPath, { force: true });
+    return committedState;
+  }
+
+  async #recoverPendingCommit() {
+    const pending = await readJsonOrNull(this.pendingPath);
+    if (!pending?.state || !pending?.journal?.journalHash) return;
+
+    const currentState = await readValidState(this.statePath);
+    if (currentState?.generation > pending.state.generation) {
+      await fs.rm(this.pendingPath, { force: true });
+      return;
+    }
+
+    const tail = await readLastJsonLine(this.journalPath);
+    if (tail?.journalHash !== pending.journal.journalHash) {
+      await fs.appendFile(this.journalPath, `${JSON.stringify(pending.journal)}\n`, 'utf8');
+    }
+    await this.#persistState(pending.state);
+    await fs.rm(this.pendingPath, { force: true });
+    this.logger.warn?.(`DEUS life recovered pending generation ${pending.state.generation}`);
+  }
+
+  async #verifyJournalHead(state) {
+    if (!state?.journalHead) return;
+    const tail = await readLastJsonLine(this.journalPath);
+    if (!tail || tail.journalHash !== state.journalHead) {
+      const error = new Error('life journal head does not match persisted state');
+      error.code = 'LIFE_JOURNAL_DIVERGED';
+      throw error;
+    }
+    const { journalHash, ...base } = tail;
+    if (stableFingerprint(base) !== journalHash) {
+      const error = new Error('life journal tail hash verification failed');
+      error.code = 'LIFE_JOURNAL_DIVERGED';
+      throw error;
+    }
+  }
+
+  async #resumeActuationIfNeeded() {
+    if (!this.state?.generation || !this.state?.lastAction) return;
+    if (this.state.lastActuation?.generation === this.state.generation) return;
+    await this.#executeAndRecordActuation(this.state.lastAction, { recovery: true });
+  }
+
+  async #executeAndRecordActuation(action, { recovery = false } = {}) {
+    const result = await this.#actuate(action, this.state);
+    this.state = {
+      ...this.state,
+      lastActuation: {
+        generation: this.state.generation,
+        action,
+        recovery,
+        ...result,
+        at: new Date(this.now()).toISOString(),
+      },
+    };
+    await this.#persistState(this.state);
   }
 
   async #actuate(action, state) {
@@ -179,7 +258,8 @@ export class LifeDaemon {
         case 'VERIFY_REPAIR': {
           const primary = await readValidState(this.statePath);
           if (!primary || primary.generation !== state.generation) throw new Error('state readback mismatch');
-          return { status: 'ok', effect: 'state-readback-verified' };
+          await this.#verifyJournalHead(state);
+          return { status: 'ok', effect: 'state-and-journal-readback-verified' };
         }
         case 'CONSOLIDATE':
         case 'PRESERVE_CONTEXT':
@@ -205,19 +285,18 @@ export class LifeDaemon {
       incarnationId: state.incarnationId,
       bootCount: state.bootCount,
       generation: state.generation,
+      journalHead: state.journalHead,
       body: state.body,
       lastAction: state.lastAction,
       lastEventAt: state.lastEventAt,
       reason,
       writtenAt: new Date(this.now()).toISOString(),
     };
-    const tmp = `${this.checkpointPath}.${process.pid}.tmp`;
-    await fs.writeFile(tmp, `${JSON.stringify(checkpoint, null, 2)}\n`, 'utf8');
-    await fs.rename(tmp, this.checkpointPath);
+    await atomicWriteJson(this.checkpointPath, checkpoint);
   }
 
   async #ensureStorage() {
-    for (const filePath of [this.statePath, this.journalPath, this.leasePath, this.checkpointPath]) {
+    for (const filePath of [this.statePath, this.journalPath, this.leasePath, this.checkpointPath, this.pendingPath]) {
       await fs.mkdir(path.dirname(filePath), { recursive: true });
     }
   }
@@ -236,22 +315,54 @@ export class LifeDaemon {
   async #persistState(state) {
     try { await fs.copyFile(this.statePath, this.backupPath); }
     catch (error) { if (error.code !== 'ENOENT') throw error; }
-    const tmp = `${this.statePath}.${process.pid}.tmp`;
-    await fs.writeFile(tmp, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
-    await fs.rename(tmp, this.statePath);
+    await atomicWriteJson(this.statePath, state);
   }
 }
 
 async function readValidState(filePath) {
+  const parsed = await readJsonOrNull(filePath);
+  if (!parsed || typeof parsed !== 'object' || !parsed.body || !Number.isSafeInteger(parsed.generation)) return null;
+  return parsed;
+}
+
+async function readJsonOrNull(filePath) {
   try {
-    const raw = await fs.readFile(filePath, 'utf8');
-    const parsed = JSON.parse(raw);
-    if (!parsed || typeof parsed !== 'object' || !parsed.body || !Number.isSafeInteger(parsed.generation)) return null;
-    return parsed;
+    return JSON.parse(await fs.readFile(filePath, 'utf8'));
   } catch (error) {
     if (error.code === 'ENOENT' || error instanceof SyntaxError) return null;
     throw error;
   }
+}
+
+async function readLastJsonLine(filePath) {
+  let handle;
+  try {
+    handle = await fs.open(filePath, 'r');
+    const stat = await handle.stat();
+    if (stat.size === 0) return null;
+    let bytes = Math.min(stat.size, 64 * 1024);
+    while (bytes <= stat.size) {
+      const buffer = Buffer.alloc(bytes);
+      await handle.read(buffer, 0, bytes, stat.size - bytes);
+      const lines = buffer.toString('utf8').trim().split(/\r?\n/u).filter(Boolean);
+      if (lines.length > 1 || bytes === stat.size) return JSON.parse(lines.at(-1));
+      const next = Math.min(stat.size, bytes * 2);
+      if (next === bytes) return JSON.parse(lines.at(-1));
+      bytes = next;
+    }
+    return null;
+  } catch (error) {
+    if (error.code === 'ENOENT') return null;
+    throw error;
+  } finally {
+    await handle?.close().catch(() => {});
+  }
+}
+
+async function atomicWriteJson(filePath, value) {
+  const tmp = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
+  await fs.writeFile(tmp, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
+  await fs.rename(tmp, filePath);
 }
 
 export async function defaultRuntimeSampler() {
