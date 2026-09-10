@@ -3,6 +3,22 @@ import { createProviderHeartbeatClientFromEnv } from './heartbeat.mjs';
 import { safeDefaultHandlers } from './handlers.mjs';
 import { LifeDaemon } from './life-daemon.mjs';
 
+export function publicLifeSnapshot(state) {
+  if (!state || typeof state !== 'object') return null;
+  return {
+    version: state.version ?? null,
+    generation: state.generation ?? null,
+    body: state.body ? structuredClone(state.body) : null,
+    lastAction: state.lastAction ?? null,
+    lastEventAt: state.lastEventAt ?? null,
+    lastMutationAt: state.lastMutationAt ?? null,
+    consecutiveQuiet: state.consecutiveQuiet ?? 0,
+    totalEvents: state.totalEvents ?? 0,
+    totalMutations: state.totalMutations ?? 0,
+    totalErrors: state.totalErrors ?? 0,
+  };
+}
+
 export function wrapHandlersWithLifeEvents(handlers, daemon) {
   const source = handlers instanceof Map ? handlers : new Map(Object.entries(handlers));
   const wrapped = new Map();
@@ -26,6 +42,12 @@ export function wrapHandlersWithLifeEvents(handlers, daemon) {
   return wrapped;
 }
 
+export function installLifeCapabilities(handlers, daemon) {
+  const target = handlers instanceof Map ? handlers : new Map(Object.entries(handlers));
+  target.set('life.snapshot', async () => publicLifeSnapshot(daemon.snapshot()));
+  return target;
+}
+
 export async function startLifeWorkerFromEnv({ logger = console } = {}) {
   let server = null;
   let heartbeat = null;
@@ -47,7 +69,7 @@ export async function startLifeWorkerFromEnv({ logger = console } = {}) {
   });
 
   await daemon.start();
-  const handlers = wrapHandlersWithLifeEvents(safeDefaultHandlers, daemon);
+  const handlers = installLifeCapabilities(wrapHandlersWithLifeEvents(safeDefaultHandlers, daemon), daemon);
   server = createWorkerServer({ handlers });
 
   const port = Number(process.env.PORT || 8790);
