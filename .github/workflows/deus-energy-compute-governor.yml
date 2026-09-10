@@ -1,0 +1,31 @@
+name: DEUS Energy Compute Governor
+
+on:
+  push:
+    branches:
+      - deus/energy-compute-governor-v0.1-20260911
+    paths:
+      - 'deus/energy-compute/**'
+      - '.github/workflows/deus-energy-compute-governor.yml'
+  pull_request:
+    paths:
+      - 'deus/energy-compute/**'
+      - '.github/workflows/deus-energy-compute-governor.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20'
+      - name: Run bounded governor tests
+        run: node deus/energy-compute/test.mjs
