@@ -119,6 +119,7 @@ jobs:
           if [[ "$MATERIAL_DELTA" == "true" ]]; then
             kind='MATERIAL_DELTA'
           elif [[ "$GITHUB_EVENT_NAME" == "push" ]]; then
+            # Transport-only regression canary. This is explicitly NOT new research evidence.
             kind='CANARY_NO_DELTA'
           else
             echo "No material delta; no research signal emitted."
