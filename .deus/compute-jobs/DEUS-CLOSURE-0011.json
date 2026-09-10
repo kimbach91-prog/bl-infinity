@@ -1,0 +1,10 @@
+{
+  "schema": "bl-public-compute-job/2",
+  "job_id": "DEUS-CLOSURE-0011-B",
+  "route": "011",
+  "type": "DET2X2",
+  "matrix": [[41, -7], [13, 19]],
+  "public_payload": true,
+  "contains_secret": false,
+  "independent_expected_result_supplied": false
+}
