@@ -5,6 +5,7 @@ import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import { getHeapStatistics } from 'node:v8';
 import { createInitialLifeState, stableFingerprint, stepLife } from '../lib/life-core.mjs';
+import { recoverUncommittedPartialJournalTail } from '../lib/life-journal-tail.mjs';
 import { acquireLease, createLeaseOwnerId, refreshLease, releaseLease } from '../lib/life-lease.mjs';
 
 const DEFAULT_PULSE_MS = 20_000;
@@ -213,7 +214,19 @@ export class LifeDaemon {
       return;
     }
 
-    const tail = await readLastJsonLine(this.journalPath);
+    let tail;
+    try {
+      tail = await readLastJsonLine(this.journalPath);
+    } catch (error) {
+      if (!(error instanceof SyntaxError)) throw error;
+      const recovery = await recoverUncommittedPartialJournalTail({
+        journalPath: this.journalPath,
+        expectedCommittedHead: currentState?.journalHead ?? null,
+      });
+      tail = recovery.tail;
+      this.logger.warn?.(`DEUS life trimmed ${recovery.truncatedBytes} uncommitted journal bytes before pending recovery`);
+    }
+
     const observedHead = tail?.journalHash ?? null;
     const expectedPreviousHead = pending.journal.prevHash ?? null;
 
