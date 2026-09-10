@@ -1,0 +1,148 @@
+name: DEUS Public Compute Worker v1
+
+on:
+  push:
+    branches:
+      - deus/public-compute-worker-v1-20260910
+    paths:
+      - '.github/workflows/deus-public-compute-worker.yml'
+      - '.deus/public-compute/ACTIVE.json'
+      - '.deus/public-compute/jobs/**'
+
+permissions:
+  contents: read
+
+jobs:
+  compute:
+    name: bounded-public-compute
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout bounded public job
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate, execute and seal receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p compute-receipt
+          python3 - <<'PY'
+          import hashlib, json, os, platform
+          from datetime import datetime, timezone
+          from pathlib import Path, PurePosixPath
+
+          ROOT = Path('.').resolve()
+          active_raw = Path('.deus/public-compute/ACTIVE.json').read_bytes()
+          active = json.loads(active_raw)
+
+          if active.get('scheduled') is not False or active.get('dispatch_mode') != 'FOREGROUND_PUSH_ONLY':
+              raise SystemExit('DISPATCH_MODE_GATE_FAILED')
+
+          job_path_raw = active.get('job_path')
+          if not isinstance(job_path_raw, str):
+              raise SystemExit('JOB_PATH_REQUIRED')
+          pp = PurePosixPath(job_path_raw)
+          if pp.is_absolute() or '..' in pp.parts or pp.parts[:3] != ('.deus', 'public-compute', 'jobs'):
+              raise SystemExit('JOB_PATH_GATE_FAILED')
+
+          job_path = (ROOT / Path(*pp.parts)).resolve()
+          allowed_root = (ROOT / '.deus/public-compute/jobs').resolve()
+          if allowed_root not in job_path.parents:
+              raise SystemExit('JOB_PATH_ESCAPE_REJECTED')
+
+          raw = job_path.read_bytes()
+          if len(raw) > 16_384:
+              raise SystemExit('JOB_TOO_LARGE')
+          job = json.loads(raw)
+
+          if job.get('schema') != 'bl-public-compute-job/3':
+              raise SystemExit('SCHEMA_REJECTED')
+          if job.get('public_payload') is not True or job.get('contains_secret') is not False:
+              raise SystemExit('PUBLIC_PAYLOAD_GATE_FAILED')
+          if job.get('expected_result_supplied') is not False or 'expected_result' in job:
+              raise SystemExit('BLIND_COMPUTE_GATE_FAILED')
+          if not isinstance(job.get('job_id'), str) or len(job['job_id']) > 96:
+              raise SystemExit('JOB_ID_REJECTED')
+          if not isinstance(job.get('route'), str) or len(job['route']) > 16:
+              raise SystemExit('ROUTE_REJECTED')
+
+          op = job.get('op')
+          payload = job.get('payload')
+          if not isinstance(payload, dict):
+              raise SystemExit('PAYLOAD_OBJECT_REQUIRED')
+
+          MAX_ABS = 10**12
+          def int_list(value, max_len, min_len=1):
+              if not isinstance(value, list) or not (min_len <= len(value) <= max_len):
+                  raise SystemExit('INTEGER_LIST_SIZE_REJECTED')
+              if not all(isinstance(x, int) and not isinstance(x, bool) and abs(x) <= MAX_ABS for x in value):
+                  raise SystemExit('INTEGER_LIST_VALUE_REJECTED')
+              return value
+
+          if op == 'SUM_INT':
+              values = int_list(payload.get('values'), 256)
+              result = sum(values)
+          elif op == 'DET2X2':
+              values = int_list(payload.get('values'), 4, 4)
+              a, b, c, d = values
+              result = a*d - b*c
+          elif op == 'DOT_INT':
+              a = int_list(payload.get('a'), 64)
+              b = int_list(payload.get('b'), 64)
+              if len(a) != len(b):
+                  raise SystemExit('DOT_LENGTH_MISMATCH')
+              result = sum(x*y for x, y in zip(a, b))
+          elif op == 'POLY_HORNER_INT':
+              coeffs = int_list(payload.get('coeffs'), 32)
+              x = payload.get('x')
+              if not isinstance(x, int) or isinstance(x, bool) or abs(x) > MAX_ABS:
+                  raise SystemExit('POLY_X_REJECTED')
+              result = 0
+              for c in coeffs:
+                  result = result*x + c
+          else:
+              raise SystemExit('OP_NOT_WHITELISTED')
+
+          if not isinstance(result, int) or abs(result) > 10**100:
+              raise SystemExit('RESULT_BOUND_REJECTED')
+
+          receipt = {
+              'schema': 'bl-public-compute-receipt/2',
+              'job_id': job['job_id'],
+              'route': job['route'],
+              'op': op,
+              'input_sha256': hashlib.sha256(raw).hexdigest(),
+              'active_sha256': hashlib.sha256(active_raw).hexdigest(),
+              'result': result,
+              'expected_result_supplied': False,
+              'execution_ok': True,
+              'carrier': 'github-actions',
+              'runtime_class': 'github-hosted-ubuntu-runner',
+              'worker_contract': 'BOUNDED_PUBLIC_COMPUTE_V1',
+              'supported_ops': ['SUM_INT','DET2X2','DOT_INT','POLY_HORNER_INT'],
+              'runner_os': os.environ.get('RUNNER_OS'),
+              'runner_arch': os.environ.get('RUNNER_ARCH'),
+              'python': platform.python_version(),
+              'repository': os.environ.get('GITHUB_REPOSITORY'),
+              'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'sha': os.environ.get('GITHUB_SHA'),
+              'canonical_write': False,
+              'contains_secret': False,
+              'network_required': False,
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+          }
+          Path('compute-receipt/receipt.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          print(json.dumps(receipt))
+          PY
+
+      - name: Upload compute receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-public-compute-${{ github.run_id }}-${{ github.run_attempt }}
+          path: compute-receipt/receipt.json
+          if-no-files-found: error
+          retention-days: 7
