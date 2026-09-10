@@ -7,18 +7,21 @@ test('range health is 1 inside the healthy interval', () => {
   assert.equal(rangeHealth(0.95, [0.9, 1]), 1);
 });
 
-test('quiet repeated input does not produce policy mutation', () => {
+test('quiet repeated input holds steady and does not produce policy mutation', () => {
   let state = createInitialLifeState(0);
-  ({ state } = stepLife(state, { type: 'quiet-pulse', source: 'test', allowLearning: false }, 1));
+  let record;
+  ({ state, record } = stepLife(state, { type: 'quiet-pulse', source: 'test', allowLearning: false }, 1));
+  assert.equal(record.action, 'HOLD_STEADY');
   const before = state.totalMutations;
-  ({ state } = stepLife(state, { type: 'quiet-pulse', source: 'test', allowLearning: false }, 2));
+  ({ state, record } = stepLife(state, { type: 'quiet-pulse', source: 'test', allowLearning: false }, 2));
+  assert.equal(record.action, 'HOLD_STEADY');
   assert.equal(state.totalMutations, before);
 });
 
 test('healthy continuity does not force preserve-context action', () => {
   const state = createInitialLifeState(0);
   const { record } = stepLife(state, { type: 'boot', source: 'test', allowLearning: false }, 1);
-  assert.notEqual(record.action, 'PRESERVE_CONTEXT');
+  assert.equal(record.action, 'HOLD_STEADY');
 });
 
 test('a memory integrity failure raises repair-oriented behavior', () => {
