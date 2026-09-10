@@ -1,7 +1,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import readline from 'node:readline';
+import { randomUUID } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
+import { getHeapStatistics } from 'node:v8';
 import { createInitialLifeState, stepLife } from '../lib/life-core.mjs';
 import { acquireLease, createLeaseOwnerId, refreshLease, releaseLease } from '../lib/life-lease.mjs';
 
@@ -15,6 +17,7 @@ export class LifeDaemon {
     statePath = process.env.DEUS_LIFE_STATE_PATH || './storage/deus-life-state.json',
     journalPath = process.env.DEUS_LIFE_JOURNAL_PATH || './storage/deus-life-events.ndjson',
     leasePath = process.env.DEUS_LIFE_LEASE_PATH || './storage/deus-life.lock',
+    checkpointPath = process.env.DEUS_LIFE_CHECKPOINT_PATH || './storage/deus-life-checkpoint.json',
     pulseMs = Number(process.env.DEUS_LIFE_PULSE_MS || DEFAULT_PULSE_MS),
     leaseTtlMs = Number(process.env.DEUS_LIFE_LEASE_TTL_MS || DEFAULT_LEASE_TTL_MS),
     ownerId = createLeaseOwnerId(),
@@ -26,6 +29,7 @@ export class LifeDaemon {
     this.backupPath = `${statePath}.bak`;
     this.journalPath = journalPath;
     this.leasePath = leasePath;
+    this.checkpointPath = checkpointPath;
     this.pulseMs = boundedMs(pulseMs, MIN_PULSE_MS, MAX_PULSE_MS, 'DEUS_LIFE_PULSE_MS');
     this.leaseTtlMs = boundedMs(leaseTtlMs, 10_000, 24 * 60 * 60_000, 'DEUS_LIFE_LEASE_TTL_MS');
     if (this.leaseTtlMs <= this.pulseMs * 2) throw new Error('DEUS_LIFE_LEASE_TTL_MS must be greater than 2 × pulse interval');
@@ -48,6 +52,7 @@ export class LifeDaemon {
     this.lease = await acquireLease({ leasePath: this.leasePath, ownerId: this.ownerId, ttlMs: this.leaseTtlMs, now: this.now });
     try {
       this.state = await this.#loadState();
+      this.#beginIncarnation();
       this.running = true;
       await this.emit({ type: 'boot', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
       this.#scheduleNextPulse();
@@ -63,7 +68,10 @@ export class LifeDaemon {
     if (!this.running && !this.lease) return;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
-    if (this.running) await this.emit({ type: 'shutdown', source: 'life-daemon', allowLearning: false, payload: { reason } });
+    if (this.running) {
+      this.state.lastShutdownAt = new Date(this.now()).toISOString();
+      await this.emit({ type: 'shutdown', source: 'life-daemon', allowLearning: false, payload: { reason } });
+    }
     this.running = false;
     await this.#drain();
     await releaseLease({ leasePath: this.leasePath, ownerId: this.ownerId });
@@ -81,6 +89,18 @@ export class LifeDaemon {
     return this.state ? structuredClone(this.state) : null;
   }
 
+  #beginIncarnation() {
+    const now = new Date(this.now()).toISOString();
+    this.state = {
+      ...this.state,
+      lineageId: this.state?.lineageId || randomUUID(),
+      incarnationId: randomUUID(),
+      bootCount: Number.isSafeInteger(this.state?.bootCount) ? this.state.bootCount + 1 : 1,
+      currentBootAt: now,
+      lastShutdownAt: this.state?.lastShutdownAt ?? null,
+    };
+  }
+
   #scheduleNextPulse() {
     if (!this.running) return;
     const quiet = this.state?.consecutiveQuiet ?? 0;
@@ -96,7 +116,7 @@ export class LifeDaemon {
         this.#scheduleNextPulse();
       }
     }, leaseSafeDelay);
-    // Deliberately keep this timer referenced: it is the process lifetime anchor.
+    // Keep this timer referenced: the process owns a live handle while its host keeps it running.
   }
 
   async #sample() {
@@ -104,9 +124,13 @@ export class LifeDaemon {
       const runtime = await this.sampleRuntime();
       const current = performance.eventLoopUtilization(this.lastElu);
       this.lastElu = performance.eventLoopUtilization();
-      const elu = Math.max(0, Math.min(1, current.utilization || 0));
+      const eventLoopLoad = clamp01(current.utilization || 0);
+      const heap = getHeapStatistics();
+      const heapUsed = process.memoryUsage().heapUsed;
+      const heapHeadroom = heap.heap_size_limit > 0 ? clamp01(1 - heapUsed / heap.heap_size_limit) : 1;
+      const computeHeadroom = Math.min(1 - eventLoopLoad, heapHeadroom);
       return {
-        computeHeadroom: 1 - elu,
+        computeHeadroom,
         signalLoad: runtime?.signalLoad,
         progress: runtime?.progress,
         uncertainty: runtime?.uncertainty,
@@ -133,16 +157,67 @@ export class LifeDaemon {
         const { state, record } = stepLife(this.state ?? createInitialLifeState(this.now()), event, this.now());
         this.state = state;
         await this.#persistState(state);
-        await fs.appendFile(this.journalPath, `${JSON.stringify({ ...record, inputAt: event.at, leaseOwnerId: this.ownerId })}\n`, 'utf8');
-        this.logger.info?.(`DEUS life gen=${state.generation} event=${record.eventType} action=${record.action} V=${record.viability.toFixed(3)} mutation=${record.mutation}`);
+        const actuation = await this.#actuate(record.action, state);
+        await fs.appendFile(this.journalPath, `${JSON.stringify({
+          ...record,
+          inputAt: event.at,
+          lineageId: state.lineageId,
+          incarnationId: state.incarnationId,
+          leaseOwnerId: this.ownerId,
+          actuation,
+        })}\n`, 'utf8');
+        this.logger.info?.(`DEUS life lineage=${shortId(state.lineageId)} body=${shortId(state.incarnationId)} gen=${state.generation} event=${record.eventType} action=${record.action} V=${record.viability.toFixed(3)} mutation=${record.mutation}`);
       }
     } finally {
       this.processing = false;
     }
   }
 
+  async #actuate(action, state) {
+    try {
+      switch (action) {
+        case 'VERIFY_REPAIR': {
+          const primary = await readValidState(this.statePath);
+          if (!primary || primary.generation !== state.generation) throw new Error('state readback mismatch');
+          return { status: 'ok', effect: 'state-readback-verified' };
+        }
+        case 'CONSOLIDATE':
+        case 'PRESERVE_CONTEXT':
+        case 'COMPRESS_SERIALIZE':
+          await this.#writeCheckpoint(state, action);
+          return { status: 'ok', effect: 'checkpoint-written' };
+        case 'INSPECT_TEST':
+          return { status: 'ok', effect: 'runtime-observed' };
+        case 'HOLD_STEADY':
+        default:
+          return { status: 'ok', effect: 'no-op' };
+      }
+    } catch (error) {
+      this.logger.warn?.(`DEUS life actuator ${action} failed: ${error.message}`);
+      return { status: 'error', effect: 'actuator-failed', errorClass: error?.name || 'Error' };
+    }
+  }
+
+  async #writeCheckpoint(state, reason) {
+    const checkpoint = {
+      version: state.version,
+      lineageId: state.lineageId,
+      incarnationId: state.incarnationId,
+      bootCount: state.bootCount,
+      generation: state.generation,
+      body: state.body,
+      lastAction: state.lastAction,
+      lastEventAt: state.lastEventAt,
+      reason,
+      writtenAt: new Date(this.now()).toISOString(),
+    };
+    const tmp = `${this.checkpointPath}.${process.pid}.tmp`;
+    await fs.writeFile(tmp, `${JSON.stringify(checkpoint, null, 2)}\n`, 'utf8');
+    await fs.rename(tmp, this.checkpointPath);
+  }
+
   async #ensureStorage() {
-    for (const filePath of [this.statePath, this.journalPath, this.leasePath]) {
+    for (const filePath of [this.statePath, this.journalPath, this.leasePath, this.checkpointPath]) {
       await fs.mkdir(path.dirname(filePath), { recursive: true });
     }
   }
@@ -219,6 +294,16 @@ function boundedMs(value, min, max, name) {
   const n = Number(value);
   if (!Number.isFinite(n) || n < min || n > max) throw new Error(`${name} must be between ${min} and ${max} ms`);
   return n;
+}
+
+function clamp01(value) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.min(1, n));
+}
+
+function shortId(value) {
+  return typeof value === 'string' ? value.slice(0, 8) : 'unknown';
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
