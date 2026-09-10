@@ -2,6 +2,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { stableFingerprint } from '../lib/life-core.mjs';
 
 const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'deus-life-persistence-'));
 const statePath = path.join(dir, 'state.json');
@@ -15,6 +16,7 @@ try {
   await stopDaemon(first);
   const state1 = await readState();
   const journal1 = await readJournal();
+  verifyChain(journal1, state1);
   assert(state1.generation >= 3, `first run expected >=3 generations, got ${state1.generation}`);
   assert(typeof state1.lineageId === 'string', 'first run must create a stable lineage id');
   assert(typeof state1.incarnationId === 'string', 'first run must create an incarnation id');
@@ -27,6 +29,7 @@ try {
   await stopDaemon(second);
   const state2 = await readState();
   const journal2 = await readJournal();
+  verifyChain(journal2, state2);
   assert(state2.generation > state1.generation, 'restart must resume and advance prior lineage');
   assert(state2.lineageId === state1.lineageId, 'lineage id must survive restart');
   assert(state2.incarnationId !== state1.incarnationId, 'new process body must receive a new incarnation id');
@@ -49,6 +52,8 @@ try {
     finalGeneration: state2.generation,
     firstJournalLines: journal1.length,
     finalJournalLines: journal2.length,
+    journalHead: state2.journalHead,
+    hashChainVerified: true,
     resumed: state2.generation > state1.generation,
     lineagePreserved: state2.lineageId === state1.lineageId,
     incarnationReplaced: state2.incarnationId !== state1.incarnationId,
@@ -113,6 +118,19 @@ async function readState() {
 async function readJournal() {
   const raw = await fs.readFile(journalPath, 'utf8');
   return raw.split(/\r?\n/u).filter(Boolean).map((line) => JSON.parse(line));
+}
+
+function verifyChain(rows, state) {
+  let previousHash = null;
+  for (let index = 0; index < rows.length; index += 1) {
+    const row = rows[index];
+    const { journalHash, ...base } = row;
+    assert(typeof journalHash === 'string', `missing journal hash at line ${index + 1}`);
+    assert(stableFingerprint(base) === journalHash, `journal hash mismatch at line ${index + 1}`);
+    assert((row.prevHash ?? null) === previousHash, `journal prevHash mismatch at line ${index + 1}`);
+    previousHash = journalHash;
+  }
+  assert(state.journalHead === previousHash, 'state journalHead must equal verified journal tail');
 }
 
 async function assertLeaseReleased() {
