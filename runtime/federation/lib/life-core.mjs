@@ -219,10 +219,19 @@ export function stepLife(previous, event, now = Date.now()) {
   const affect = deriveAffect(body);
   const scored = scoreActions({ body, affect, policyWeights: previous.policyWeights, habituation: previous.habituation, novelty });
   let action = chooseAction(scored);
+
+  // Critical integrity loss is a reflex arc, not a preference competition.
+  // Habituation may damp ordinary repeated actions, but it must never suppress
+  // repair when coherence, memory integrity, or truth integrity is materially
+  // outside its healthy range.
+  const criticalIntegrityBreach = affect.repairPressure >= 0.25;
+  if (criticalIntegrityBreach) action = 'VERIFY_REPAIR';
+
   const passiveEvent = ['boot', 'quiet-pulse', 'shutdown'].includes(event?.type);
-  if (passiveEvent && affect.repairPressure < 0.25 && affect.caution < 0.45 && body.R < 0.50) {
+  if (!criticalIntegrityBreach && passiveEvent && affect.caution < 0.45 && body.R < 0.50) {
     action = 'HOLD_STEADY';
   }
+
   const mutation = shouldMutate({ previous, event, action, affect, novelty });
   const reward = inferReward(event, affect);
   const policyWeights = mutation
