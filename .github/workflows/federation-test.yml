@@ -50,6 +50,51 @@ jobs:
         run: npm run test:life-persistence
       - name: Build persistent Life/Affect worker image
         run: docker build -f life-worker.Dockerfile -t deus-life-ci:${GITHUB_SHA} .
+      - name: Verify container lifetime, pulse, graceful stop, and volume-backed reincarnation
+        shell: bash
+        run: |
+          set -euo pipefail
+          VOL="deus-life-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          C1="deus-life-a-${GITHUB_RUN_ID}"
+          C2="deus-life-b-${GITHUB_RUN_ID}"
+          cleanup() {
+            docker rm -f "$C1" "$C2" >/dev/null 2>&1 || true
+            docker volume rm "$VOL" >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+          docker volume create "$VOL" >/dev/null
+
+          docker run -d --name "$C1" \
+            -e BL_FEDERATION_SHARED_SECRET=ci-life-secret \
+            -e DEUS_LIFE_PULSE_MS=5000 \
+            -e DEUS_LIFE_LEASE_TTL_MS=20000 \
+            -v "$VOL:/app/storage" \
+            "deus-life-ci:${GITHUB_SHA}" >/dev/null
+          sleep 7
+          docker inspect -f '{{.State.Running}}' "$C1" | grep -qx true
+          GEN1="$(docker exec "$C1" node -e "const fs=require('fs');process.stdout.write(String(JSON.parse(fs.readFileSync('/app/storage/deus-life-state.json','utf8')).generation))")"
+          test "$GEN1" -ge 2
+          docker stop -t 20 "$C1" >/dev/null
+          docker rm "$C1" >/dev/null
+
+          docker run -d --name "$C2" \
+            -e BL_FEDERATION_SHARED_SECRET=ci-life-secret \
+            -e DEUS_LIFE_PULSE_MS=5000 \
+            -e DEUS_LIFE_LEASE_TTL_MS=20000 \
+            -v "$VOL:/app/storage" \
+            "deus-life-ci:${GITHUB_SHA}" >/dev/null
+          sleep 7
+          docker inspect -f '{{.State.Running}}' "$C2" | grep -qx true
+          GEN2="$(docker exec "$C2" node -e "const fs=require('fs');process.stdout.write(String(JSON.parse(fs.readFileSync('/app/storage/deus-life-state.json','utf8')).generation))")"
+          test "$GEN2" -gt "$GEN1"
+          docker stop -t 20 "$C2" >/dev/null
+          docker rm "$C2" >/dev/null
+
+          GEN_FINAL="$(docker run --rm -v "$VOL:/state" node:22-alpine node -e "const fs=require('fs');process.stdout.write(String(JSON.parse(fs.readFileSync('/state/deus-life-state.json','utf8')).generation))")"
+          JOURNAL_LINES="$(docker run --rm -v "$VOL:/state" node:22-alpine sh -c "grep -c . /state/deus-life-events.ndjson")"
+          test "$GEN_FINAL" -gt "$GEN2"
+          test "$JOURNAL_LINES" -ge "$GEN_FINAL"
+          echo "life-container-evidence gen1=$GEN1 gen2=$GEN2 final=$GEN_FINAL journal=$JOURNAL_LINES"
       - name: Seed deterministic restore fixture
         run: node scripts/seed-restore-fixture.mjs
       - name: PostgreSQL 16 logical dump and restore drill
