@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-09T23:45:53.070995+00:00
+- Generated: 2026-09-10T04:39:43.713524+00:00
 - Records: 91
-- Digest: `b2bd910e784218fcf46b4d5fa872783ed7f6409ec05910e3c31212a7aa7f6bf6`
+- Digest: `50c5885d37a16e0cd4f9c13880aac301b19b82f0b901d4ef7c8971cfae82b86f`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -43,11 +43,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-04
 
 - [Europe PMC] Effectiveness of Mind-Body Exercise in Older Adults With Sarcopenia and Frailty: A Systematic Review and Meta-Analysis. — 40254030
-- [Europe PMC] Effects of Baduanjin exercise on cognitive impairment in older adults: a systematic review and meta-analysis. — 40678632
 - [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
 - [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
 - [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
+- [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
 - [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
 
@@ -64,10 +64,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P0-06
 
-- [Europe PMC] Does aerobic exercise affect memory, attention, working memory, and fatigue after acquired brain injury? A single-blinded, randomized controlled pilot study. — 41988967
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
 - [Europe PMC] Exercise, cognition, and affective disorders. — 42181513
 - [Europe PMC] Physical activity, sedentary behavior, and cognitive function in children and adolescents: a scoping review of dose-response relationships, screen time interactions, and public health implications. — 42294390
+- [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
 - [Europe PMC] Advances in the Application of Brain-Computer Interface-Based Neurofeedback Training in the Rehabilitation of Patients with Major Depressive Disorder. — 42381831
 - [Europe PMC] Optimizing Exercise Prescriptions for Cognitive Subdomains in Diabetes: A Systematic Review and Meta-Analysis of Dose-Response Variables. — 42510341
