@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-10T16:22:48.207052+00:00
+- Generated: 2026-09-10T20:50:24.378022+00:00
 - Records: 91
-- Digest: `9b1161a91fc45907d47b50d83fd3ab01fbc36e96d2844fa40a46c36b10a6c325`
+- Digest: `0716d6de6ae36c41677e6558cf69fbfe6994dec47e8abc2830b5bec2e05ab9cc`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -65,13 +65,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
-- [Europe PMC] Exercise, cognition, and affective disorders. — 42181513
 - [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
 - [Europe PMC] Optimizing Exercise Prescriptions for Cognitive Subdomains in Diabetes: A Systematic Review and Meta-Analysis of Dose-Response Variables. — 42510341
 - [Europe PMC] Reprogramming brain bioenergetics in depression: an integrative framework linking creatine, branched-chain amino acids, and exercise to neuroplasticity, cognitive function, and depression-related outcomes. — 42614552
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Effects of Combined Exercise Interventions on Cognition in Older Persons: A Systematic Review and Meta-Analysis. — 42651369
+- [Europe PMC] Redox-exercise crosstalk in neurodegenerative diseases: mechanistic perspectives on antioxidant interactions with Nrf2-BDNF signaling, autophagy, and mitochondrial plasticity. — 42661679
 
 ## BA-P1-02
 
@@ -99,10 +99,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [Europe PMC] Could behaviour change interventions be incorporated into cardiac rehabilitation programmes for insomnia and poor sleep quality management? A scoping review. — 42176203
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
-- [Europe PMC] Prevention of cognitive decline and dementia: Current evidence on lifestyle factors and dietary patterns. — 42376437
 - [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
 - [Europe PMC] Hainan Longevity Model, Senile Degeneration, Cognitive Disability and Healthy Longevity. — 42610035
+- [Europe PMC] Midlife Vascular and Lifestyle Determinants of Late-Life Cognitive Decline and Dementia: A Life-Course Prevention Framework with a Gulf (GCC) Perspective. — 42652977
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
