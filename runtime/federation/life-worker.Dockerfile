@@ -10,7 +10,9 @@ ENV HOST=0.0.0.0 \
     NODE_ENV=production \
     DEUS_LIFE_STATE_PATH=/app/storage/deus-life-state.json \
     DEUS_LIFE_JOURNAL_PATH=/app/storage/deus-life-events.ndjson \
-    DEUS_LIFE_PULSE_MS=20000
+    DEUS_LIFE_LEASE_PATH=/app/storage/deus-life.lock \
+    DEUS_LIFE_PULSE_MS=20000 \
+    DEUS_LIFE_LEASE_TTL_MS=90000
 USER node
 EXPOSE 8790
 VOLUME ["/app/storage"]
