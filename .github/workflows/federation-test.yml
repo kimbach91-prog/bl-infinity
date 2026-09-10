@@ -44,8 +44,12 @@ jobs:
           package-manager-cache: false
       - name: Install pinned runtime dependencies
         run: npm install --no-audit --no-fund
-      - name: Test memory, SQLite, network and PostgreSQL lanes
+      - name: Test memory, SQLite, network, PostgreSQL, and Life/Affect lanes
         run: npm test
+      - name: Verify DEUS Life process persistence and restart continuity
+        run: npm run test:life-persistence
+      - name: Build persistent Life/Affect worker image
+        run: docker build -f life-worker.Dockerfile -t deus-life-ci:${GITHUB_SHA} .
       - name: Seed deterministic restore fixture
         run: node scripts/seed-restore-fixture.mjs
       - name: PostgreSQL 16 logical dump and restore drill
