@@ -1,0 +1,10 @@
+{
+  "schema": "bl-public-compute-job/1",
+  "job_id": "DEUS-GH-0010",
+  "route": "010",
+  "type": "DET2X2",
+  "matrix": [[37, -11], [8, 29]],
+  "expected_result": 1161,
+  "public_payload": true,
+  "contains_secret": false
+}
