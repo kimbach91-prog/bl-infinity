@@ -1,0 +1,10 @@
+{
+  "schema": "bl-public-compute-job/3",
+  "job_id": "DEUS-GENERIC-0014-B",
+  "route": "014",
+  "op": "POLY_HORNER_INT",
+  "payload": {"coeffs": [5, -3, 7, 2], "x": 4},
+  "public_payload": true,
+  "contains_secret": false,
+  "expected_result_supplied": false
+}
