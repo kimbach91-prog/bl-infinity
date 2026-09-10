@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-10T04:39:43.713524+00:00
+- Generated: 2026-09-10T16:22:48.207052+00:00
 - Records: 91
-- Digest: `50c5885d37a16e0cd4f9c13880aac301b19b82f0b901d4ef7c8971cfae82b86f`
+- Digest: `9b1161a91fc45907d47b50d83fd3ab01fbc36e96d2844fa40a46c36b10a6c325`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -42,13 +42,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P0-04
 
-- [Europe PMC] Effectiveness of Mind-Body Exercise in Older Adults With Sarcopenia and Frailty: A Systematic Review and Meta-Analysis. — 40254030
 - [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
 - [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
 - [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
 - [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
+- [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
 - [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
 
 ## BA-P0-05
@@ -66,12 +66,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
 - [Europe PMC] Exercise, cognition, and affective disorders. — 42181513
-- [Europe PMC] Physical activity, sedentary behavior, and cognitive function in children and adolescents: a scoping review of dose-response relationships, screen time interactions, and public health implications. — 42294390
 - [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
-- [Europe PMC] Advances in the Application of Brain-Computer Interface-Based Neurofeedback Training in the Rehabilitation of Patients with Major Depressive Disorder. — 42381831
 - [Europe PMC] Optimizing Exercise Prescriptions for Cognitive Subdomains in Diabetes: A Systematic Review and Meta-Analysis of Dose-Response Variables. — 42510341
 - [Europe PMC] Reprogramming brain bioenergetics in depression: an integrative framework linking creatine, branched-chain amino acids, and exercise to neuroplasticity, cognitive function, and depression-related outcomes. — 42614552
+- [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
+- [Europe PMC] Effects of Combined Exercise Interventions on Cognition in Older Persons: A Systematic Review and Meta-Analysis. — 42651369
 
 ## BA-P1-02
 
@@ -97,13 +97,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-04
 
-- [Europe PMC] Evidence-based interventions for promoting healthy aging: a scoping review. — 41934874
 - [Europe PMC] Could behaviour change interventions be incorporated into cardiac rehabilitation programmes for insomnia and poor sleep quality management? A scoping review. — 42176203
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] Prevention of cognitive decline and dementia: Current evidence on lifestyle factors and dietary patterns. — 42376437
 - [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
 - [Europe PMC] Hainan Longevity Model, Senile Degeneration, Cognitive Disability and Healthy Longevity. — 42610035
+- [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
 ## BA-P2-01
