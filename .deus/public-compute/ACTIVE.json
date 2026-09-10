@@ -1,6 +1,6 @@
 {
   "schema": "bl-public-compute-active/1",
-  "job_path": ".deus/public-compute/jobs/DEUS-GENERIC-0012.json",
+  "job_path": ".deus/public-compute/jobs/DEUS-GENERIC-0013.json",
   "dispatch_mode": "FOREGROUND_PUSH_ONLY",
   "scheduled": false
 }

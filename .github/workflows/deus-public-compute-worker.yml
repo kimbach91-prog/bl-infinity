@@ -7,7 +7,6 @@ on:
     paths:
       - '.github/workflows/deus-public-compute-worker.yml'
       - '.deus/public-compute/ACTIVE.json'
-      - '.deus/public-compute/jobs/**'
 
 permissions:
   contents: read
