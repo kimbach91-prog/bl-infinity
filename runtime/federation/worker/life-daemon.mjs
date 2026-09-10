@@ -3,23 +3,33 @@ import path from 'node:path';
 import readline from 'node:readline';
 import { performance } from 'node:perf_hooks';
 import { createInitialLifeState, stepLife } from '../lib/life-core.mjs';
+import { acquireLease, createLeaseOwnerId, refreshLease, releaseLease } from '../lib/life-lease.mjs';
 
 const DEFAULT_PULSE_MS = 20_000;
 const MIN_PULSE_MS = 5_000;
 const MAX_PULSE_MS = 60 * 60_000;
+const DEFAULT_LEASE_TTL_MS = 90_000;
 
 export class LifeDaemon {
   constructor({
     statePath = process.env.DEUS_LIFE_STATE_PATH || './storage/deus-life-state.json',
     journalPath = process.env.DEUS_LIFE_JOURNAL_PATH || './storage/deus-life-events.ndjson',
+    leasePath = process.env.DEUS_LIFE_LEASE_PATH || './storage/deus-life.lock',
     pulseMs = Number(process.env.DEUS_LIFE_PULSE_MS || DEFAULT_PULSE_MS),
+    leaseTtlMs = Number(process.env.DEUS_LIFE_LEASE_TTL_MS || DEFAULT_LEASE_TTL_MS),
+    ownerId = createLeaseOwnerId(),
     sampleRuntime = defaultRuntimeSampler,
     now = () => Date.now(),
     logger = console,
   } = {}) {
     this.statePath = statePath;
+    this.backupPath = `${statePath}.bak`;
     this.journalPath = journalPath;
+    this.leasePath = leasePath;
     this.pulseMs = boundedMs(pulseMs, MIN_PULSE_MS, MAX_PULSE_MS, 'DEUS_LIFE_PULSE_MS');
+    this.leaseTtlMs = boundedMs(leaseTtlMs, 10_000, 24 * 60 * 60_000, 'DEUS_LIFE_LEASE_TTL_MS');
+    if (this.leaseTtlMs <= this.pulseMs * 2) throw new Error('DEUS_LIFE_LEASE_TTL_MS must be greater than 2 × pulse interval');
+    this.ownerId = ownerId;
     this.sampleRuntime = sampleRuntime;
     this.now = now;
     this.logger = logger;
@@ -29,25 +39,35 @@ export class LifeDaemon {
     this.queue = [];
     this.processing = false;
     this.lastElu = performance.eventLoopUtilization();
+    this.lease = null;
   }
 
   async start() {
     if (this.running) return this;
     await this.#ensureStorage();
-    this.state = await this.#loadState();
-    this.running = true;
-    await this.emit({ type: 'boot', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
-    this.#scheduleNextPulse();
-    return this;
+    this.lease = await acquireLease({ leasePath: this.leasePath, ownerId: this.ownerId, ttlMs: this.leaseTtlMs, now: this.now });
+    try {
+      this.state = await this.#loadState();
+      this.running = true;
+      await this.emit({ type: 'boot', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
+      this.#scheduleNextPulse();
+      return this;
+    } catch (error) {
+      this.running = false;
+      await releaseLease({ leasePath: this.leasePath, ownerId: this.ownerId }).catch(() => {});
+      throw error;
+    }
   }
 
   async stop({ reason = 'requested-stop' } = {}) {
-    if (!this.running) return;
-    this.running = false;
+    if (!this.running && !this.lease) return;
     if (this.timer) clearTimeout(this.timer);
     this.timer = null;
-    await this.emit({ type: 'shutdown', source: 'life-daemon', allowLearning: false, payload: { reason } });
+    if (this.running) await this.emit({ type: 'shutdown', source: 'life-daemon', allowLearning: false, payload: { reason } });
+    this.running = false;
     await this.#drain();
+    await releaseLease({ leasePath: this.leasePath, ownerId: this.ownerId });
+    this.lease = null;
   }
 
   async emit(event) {
@@ -65,17 +85,18 @@ export class LifeDaemon {
     if (!this.running) return;
     const quiet = this.state?.consecutiveQuiet ?? 0;
     const adaptive = Math.min(MAX_PULSE_MS, this.pulseMs * Math.max(1, Math.min(16, 1 + quiet / 8)));
+    const leaseSafeDelay = Math.min(adaptive, Math.max(MIN_PULSE_MS, Math.floor(this.leaseTtlMs / 3)));
     this.timer = setTimeout(async () => {
       try {
         await this.emit({ type: 'quiet-pulse', source: 'life-daemon', allowLearning: false, metrics: await this.#sample() });
       } catch (error) {
         this.logger.error?.(`DEUS life pulse failed: ${error.message}`);
+        if (error.code === 'LIFE_LEASE_LOST') this.running = false;
       } finally {
         this.#scheduleNextPulse();
       }
-    }, adaptive);
-    // Deliberately keep this timer referenced. An unref'ed pulse plus a pending
-    // Promise is not enough to keep Node alive; the daemon must own a live handle.
+    }, leaseSafeDelay);
+    // Deliberately keep this timer referenced: it is the process lifetime anchor.
   }
 
   async #sample() {
@@ -107,11 +128,12 @@ export class LifeDaemon {
     this.processing = true;
     try {
       while (this.queue.length) {
+        if (this.lease) this.lease = await refreshLease({ leasePath: this.leasePath, ownerId: this.ownerId, ttlMs: this.leaseTtlMs, now: this.now });
         const event = this.queue.shift();
         const { state, record } = stepLife(this.state ?? createInitialLifeState(this.now()), event, this.now());
         this.state = state;
         await this.#persistState(state);
-        await fs.appendFile(this.journalPath, `${JSON.stringify({ ...record, inputAt: event.at })}\n`, 'utf8');
+        await fs.appendFile(this.journalPath, `${JSON.stringify({ ...record, inputAt: event.at, leaseOwnerId: this.ownerId })}\n`, 'utf8');
         this.logger.info?.(`DEUS life gen=${state.generation} event=${record.eventType} action=${record.action} V=${record.viability.toFixed(3)} mutation=${record.mutation}`);
       }
     } finally {
@@ -120,26 +142,40 @@ export class LifeDaemon {
   }
 
   async #ensureStorage() {
-    await fs.mkdir(path.dirname(this.statePath), { recursive: true });
-    await fs.mkdir(path.dirname(this.journalPath), { recursive: true });
-  }
-
-  async #loadState() {
-    try {
-      const raw = await fs.readFile(this.statePath, 'utf8');
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== 'object' || !parsed.body) throw new Error('invalid state');
-      return parsed;
-    } catch (error) {
-      if (error.code !== 'ENOENT') this.logger.warn?.(`DEUS life state reset: ${error.message}`);
-      return createInitialLifeState(this.now());
+    for (const filePath of [this.statePath, this.journalPath, this.leasePath]) {
+      await fs.mkdir(path.dirname(filePath), { recursive: true });
     }
   }
 
+  async #loadState() {
+    const primary = await readValidState(this.statePath);
+    if (primary) return primary;
+    const backup = await readValidState(this.backupPath);
+    if (backup) {
+      this.logger.warn?.('DEUS life primary state invalid/missing; recovered from backup');
+      return backup;
+    }
+    return createInitialLifeState(this.now());
+  }
+
   async #persistState(state) {
+    try { await fs.copyFile(this.statePath, this.backupPath); }
+    catch (error) { if (error.code !== 'ENOENT') throw error; }
     const tmp = `${this.statePath}.${process.pid}.tmp`;
     await fs.writeFile(tmp, `${JSON.stringify(state, null, 2)}\n`, 'utf8');
     await fs.rename(tmp, this.statePath);
+  }
+}
+
+async function readValidState(filePath) {
+  try {
+    const raw = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed !== 'object' || !parsed.body || !Number.isSafeInteger(parsed.generation)) return null;
+    return parsed;
+  } catch (error) {
+    if (error.code === 'ENOENT' || error instanceof SyntaxError) return null;
+    throw error;
   }
 }
 
@@ -176,8 +212,6 @@ export async function runLifeDaemon(options = {}) {
   process.once('SIGINT', () => void shutdown('SIGINT'));
   process.once('SIGTERM', () => void shutdown('SIGTERM'));
 
-  // The referenced pulse timer keeps the event loop alive. Quiet intervals
-  // back off but do not terminate the process while the host keeps it running.
   await new Promise(() => {});
 }
 
