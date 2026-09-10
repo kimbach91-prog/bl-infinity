@@ -275,8 +275,16 @@ jobs:
               forbidden = ['password','private key','api key','camera credential','canonical_write=true','create a fork','fork the repository','diagnose','prescribe','treat the patient']
               if any(x in joined for x in forbidden):
                   violations.append('FORBIDDEN_SCOPE')
-              if capsule['input_mode'] == 'HUYENCO_SIGNAL_CANARY' and any(x in joined for x in ['new evidence','new research','new study data']):
-                  violations.append('CANARY_FALSE_DELTA_CLAIM')
+
+              # Regression scar: negated warnings in RISK/FALSIFIER/NEXT are not claims.
+              # Only claim-bearing fields may assert that a CANARY_NO_DELTA carried new research/evidence.
+              if capsule['input_mode'] == 'HUYENCO_SIGNAL_CANARY':
+                  claim_text = ' '.join([
+                      str(candidate.get('OBSERVED','')),
+                      str(candidate.get('HYPOTHESIS','')),
+                  ]).lower()
+                  if any(x in claim_text for x in ['new evidence','new research','new study data']):
+                      violations.append('CANARY_FALSE_DELTA_CLAIM')
 
           accepted = not violations
           if accepted:
