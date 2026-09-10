@@ -1,0 +1,4 @@
+# generated runtime state
+/deus-life-state.json
+/deus-life-events.ndjson
+*.tmp
