@@ -153,7 +153,11 @@ export function assimilateEvent(body, event = {}) {
 
 export function deriveAffect(body) {
   const health = computeHealth(body);
-  const repairPressure = clamp01(((1 - health.perVariable.C) + (1 - health.perVariable.M) + (1 - health.perVariable.H)) / 3);
+  const repairPressure = clamp01(Math.max(
+    1 - health.perVariable.C,
+    1 - health.perVariable.M,
+    1 - health.perVariable.H,
+  ));
   return {
     curiosity: clamp01(body.U * (1 - body.R)),
     caution: clamp01(body.U * body.R + repairPressure * 0.65),
