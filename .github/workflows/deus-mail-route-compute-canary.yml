@@ -1,0 +1,90 @@
+name: DEUS Mail Route Compute Canary
+
+on:
+  push:
+    branches:
+      - deus/mail-route-010-compute-canary-20260910
+    paths:
+      - '.github/workflows/deus-mail-route-compute-canary.yml'
+      - '.deus/compute-jobs/DEUS-GH-0010.json'
+
+permissions:
+  contents: read
+
+jobs:
+  compute:
+    name: route-010-det2x2
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Checkout public compute payload
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Execute deterministic compute and seal receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p compute-receipt
+          python3 - <<'PY'
+          import hashlib, json, os, platform
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path('.deus/compute-jobs/DEUS-GH-0010.json')
+          raw = path.read_bytes()
+          job = json.loads(raw)
+
+          if job.get('public_payload') is not True or job.get('contains_secret') is not False:
+              raise SystemExit('PUBLIC_PAYLOAD_GATE_FAILED')
+          if job.get('type') != 'DET2X2':
+              raise SystemExit('UNSUPPORTED_JOB_TYPE')
+
+          m = job.get('matrix')
+          if not (isinstance(m, list) and len(m) == 2 and all(isinstance(r, list) and len(r) == 2 for r in m)):
+              raise SystemExit('MATRIX_SHAPE_INVALID')
+          a, b = m[0]
+          c, d = m[1]
+          if not all(isinstance(x, int) and not isinstance(x, bool) for x in (a,b,c,d)):
+              raise SystemExit('INTEGER_INPUT_REQUIRED')
+
+          result = a*d - b*c
+          expected = job.get('expected_result')
+          verified = result == expected
+          receipt = {
+              'schema': 'bl-public-compute-receipt/1',
+              'job_id': job['job_id'],
+              'route': job['route'],
+              'type': job['type'],
+              'input_sha256': hashlib.sha256(raw).hexdigest(),
+              'result': result,
+              'expected_result': expected,
+              'verified': verified,
+              'carrier': 'github-actions',
+              'runtime_class': 'github-hosted-ubuntu-runner',
+              'runner_os': os.environ.get('RUNNER_OS'),
+              'runner_arch': os.environ.get('RUNNER_ARCH'),
+              'python': platform.python_version(),
+              'repository': os.environ.get('GITHUB_REPOSITORY'),
+              'run_id': os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT'),
+              'sha': os.environ.get('GITHUB_SHA'),
+              'canonical_write': False,
+              'contains_secret': False,
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+          }
+          Path('compute-receipt/receipt.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          print(json.dumps(receipt))
+          if not verified:
+              raise SystemExit('EXPECTED_RESULT_MISMATCH')
+          PY
+
+      - name: Upload compute receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-mail-route-010-${{ github.run_id }}-${{ github.run_attempt }}
+          path: compute-receipt/receipt.json
+          if-no-files-found: error
+          retention-days: 7
