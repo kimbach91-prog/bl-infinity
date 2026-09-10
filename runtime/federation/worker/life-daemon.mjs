@@ -200,6 +200,13 @@ export class LifeDaemon {
     const pending = await readJsonOrNull(this.pendingPath);
     if (!pending?.state || !pending?.journal?.journalHash) return;
 
+    const { journalHash, ...journalBase } = pending.journal;
+    if (stableFingerprint(journalBase) !== journalHash) {
+      const error = new Error('pending life journal hash verification failed');
+      error.code = 'LIFE_JOURNAL_DIVERGED';
+      throw error;
+    }
+
     const currentState = await readValidState(this.statePath);
     if (currentState?.generation > pending.state.generation) {
       await fs.rm(this.pendingPath, { force: true });
@@ -207,9 +214,20 @@ export class LifeDaemon {
     }
 
     const tail = await readLastJsonLine(this.journalPath);
-    if (tail?.journalHash !== pending.journal.journalHash) {
+    const observedHead = tail?.journalHash ?? null;
+    const expectedPreviousHead = pending.journal.prevHash ?? null;
+
+    if (observedHead !== journalHash) {
+      if (observedHead !== expectedPreviousHead) {
+        const error = new Error('pending generation does not extend the current life journal head');
+        error.code = 'LIFE_JOURNAL_DIVERGED';
+        error.observedHead = observedHead;
+        error.expectedPreviousHead = expectedPreviousHead;
+        throw error;
+      }
       await fs.appendFile(this.journalPath, `${JSON.stringify(pending.journal)}\n`, 'utf8');
     }
+
     await this.#persistState(pending.state);
     await fs.rm(this.pendingPath, { force: true });
     this.logger.warn?.(`DEUS life recovered pending generation ${pending.state.generation}`);
