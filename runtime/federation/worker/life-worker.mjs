@@ -7,6 +7,11 @@ export function publicLifeSnapshot(state) {
   if (!state || typeof state !== 'object') return null;
   return {
     version: state.version ?? null,
+    lineageId: state.lineageId ?? null,
+    incarnationId: state.incarnationId ?? null,
+    bootCount: state.bootCount ?? 0,
+    currentBootAt: state.currentBootAt ?? null,
+    lastShutdownAt: state.lastShutdownAt ?? null,
     generation: state.generation ?? null,
     body: state.body ? structuredClone(state.body) : null,
     lastAction: state.lastAction ?? null,
