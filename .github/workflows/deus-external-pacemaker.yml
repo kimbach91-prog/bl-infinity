@@ -10,7 +10,9 @@ on:
     paths:
       - '.github/workflows/deus-external-pacemaker.yml'
   schedule:
-    - cron: '2-57/5 * * * *'
+    # Receipt-only health probe: hourly; event/manual triggers remain unchanged.
+    # The 5-minute receipt bucket is an unchanged schema field, not wake cadence.
+    - cron: '2 * * * *'
   workflow_dispatch:
 
 permissions:
