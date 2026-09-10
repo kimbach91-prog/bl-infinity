@@ -1,6 +1,6 @@
 {
   "name": "bl-compute-federation",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -8,6 +8,7 @@
     "start": "node dev-server.mjs",
     "worker": "node worker/server.mjs",
     "life": "node worker/life-daemon.mjs",
+    "life-worker": "node worker/life-worker.mjs",
     "keys": "node scripts/generate-provider-keypair.mjs"
   },
   "dependencies": {
