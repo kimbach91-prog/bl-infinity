@@ -1,0 +1,20 @@
+{
+  "standard": "HCS",
+  "targetVersion": "1.0.0",
+  "state": "CONSTRUCTION",
+  "truthfulnessInvariant": "NO_EVIDENCE_NO_PASS",
+  "gates": [
+    {"id":"G1","name":"Normative core frozen","status":"IN_PROGRESS","evidence":[]},
+    {"id":"G2","name":"Common Interaction Envelope stable","status":"IN_PROGRESS","evidence":[]},
+    {"id":"G3","name":"Machine-readable schemas complete","status":"IN_PROGRESS","evidence":[]},
+    {"id":"G4","name":"Conformance suite complete","status":"NOT_STARTED","evidence":[]},
+    {"id":"G5","name":"Security/privacy profile complete","status":"NOT_STARTED","evidence":[]},
+    {"id":"G6","name":"Sovereign/offline profile complete","status":"NOT_STARTED","evidence":[]},
+    {"id":"G7","name":"Interoperability mappings complete","status":"IN_PROGRESS","evidence":[]},
+    {"id":"G8","name":"Governance and change process complete","status":"NOT_STARTED","evidence":[]},
+    {"id":"G9","name":"Independent implementation evidence","status":"EXTERNAL_BLOCKER","evidence":[]},
+    {"id":"G10","name":"Independent review and publication","status":"EXTERNAL_BLOCKER","evidence":[]}
+  ],
+  "completionRule": "ALL_GATES_PASS_WITH_EVIDENCE",
+  "externalOutcomesNotRequiredForV1": ["universal_adoption","political_ratification","world_consensus"]
+}

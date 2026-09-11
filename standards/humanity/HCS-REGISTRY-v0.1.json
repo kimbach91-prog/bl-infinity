@@ -1,0 +1,34 @@
+{
+  "standard": "Humanity Common Standards",
+  "version": "0.1",
+  "status": "draft",
+  "languageNeutral": true,
+  "vendorNeutral": true,
+  "profiles": {
+    "HCS-BASIC": ["HCS-01","HCS-02","HCS-03","HCS-05","HCS-07"],
+    "HCS-SOVEREIGN": ["HCS-01","HCS-02","HCS-03","HCS-04","HCS-05","HCS-06","HCS-07","HCS-09"],
+    "HCS-CRITICAL": ["HCS-01","HCS-02","HCS-03","HCS-04","HCS-05","HCS-06","HCS-07","HCS-08","HCS-09","HCS-10"]
+  },
+  "standards": [
+    {"id":"HCS-01","name":"Truth, provenance and epistemic status","requiredFields":["sourceRef","actorOrAttribution","timestampOrVersion","epistemicClass"]},
+    {"id":"HCS-02","name":"Consent, authority and revocation","requiredFields":["grantor","grantee","scope","purpose","limits","validity","revocation","receiptRef"]},
+    {"id":"HCS-03","name":"Cryptographic identity and succession","requiredFields":["subject","keyOrCredentialRef","status","successionOrRotationPolicy"]},
+    {"id":"HCS-04","name":"Privacy and data sovereignty","requiredFields":["responsibleParty","purpose","dataClass","locality","retention","disclosureClass"]},
+    {"id":"HCS-05","name":"Secure interoperable messaging","requiredFields":["version","messageId","expiryOrFreshness","integrityEvidence","actorBinding"]},
+    {"id":"HCS-06","name":"Compute and resource sovereignty","requiredFields":["resourceOwner","capability","quota","workloadClass","dataPolicy","revocation"]},
+    {"id":"HCS-07","name":"Audit, accountability and receipts","requiredFields":["eventId","actor","authorityRef","actionType","target","timestamp","result"]},
+    {"id":"HCS-08","name":"Cultural and epistemic pluralism","requiredFields":["recordClass","sourceExpressionRef","interpretationClass","provenanceRef"]},
+    {"id":"HCS-09","name":"Sovereign/offline continuity","requiredFields":["manifestVersion","contentHashes","schemaVersions","trustRoots","revocationState","recoveryProcedure"]},
+    {"id":"HCS-10","name":"AI/agent action evidence","requiredFields":["actionState","authorityRef","evidenceRef","rollbackOrRecovery"]}
+  ],
+  "epistemicClasses": ["OBSERVED","REPORTED","INFERRED","ASSUMED","PREDICTED","UNKNOWN","DISPUTED"],
+  "actionStates": ["PROPOSED","AUTHORIZED","ATTEMPTED","OBSERVED_COMPLETE","INFERRED_OUTCOME","FAILED","REVOKED"],
+  "referenceBuildingBlocks": [
+    "W3C PROV-O",
+    "W3C Verifiable Credentials Data Model 2.0",
+    "WebAuthn",
+    "RFC 9421 HTTP Message Signatures",
+    "RFC 9180 HPKE",
+    "RFC 9334 RATS architecture"
+  ]
+}

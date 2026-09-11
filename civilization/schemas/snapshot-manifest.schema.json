@@ -1,0 +1,20 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://deusagi.ai/schema/viet-civilization/snapshot-manifest/v0.1",
+  "title":"Sovereign Snapshot Manifest v0.1",
+  "type":"object",
+  "required":["snapshotId","createdAt","scope","artifacts","rootHash","formatVersion"],
+  "properties":{
+    "snapshotId":{"type":"string","minLength":3},
+    "createdAt":{"type":"string","format":"date-time"},
+    "scope":{"type":"array","items":{"enum":["VNG","VKT","VC","VQ","VHOC","VKY","VKHOA","VKINH","VVAN"]},"minItems":1,"uniqueItems":true},
+    "formatVersion":{"const":"viet-civilization-snapshot/v0.1"},
+    "artifacts":{"type":"array","items":{"type":"object","required":["path","sha256","sizeBytes","disclosureClass"],"properties":{"path":{"type":"string","minLength":1},"sha256":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},"sizeBytes":{"type":"integer","minimum":0},"disclosureClass":{"enum":["PUBLIC","COMMON","RESTRICTED","BLACK_CORE"]},"mediaType":{"type":["string","null"]}}},"minItems":1},
+    "rootHash":{"type":"string","pattern":"^[a-fA-F0-9]{64}$"},
+    "parentSnapshotId":{"type":["string","null"]},
+    "signature":{"type":["object","null"]},
+    "restoreInstructions":{"type":["string","null"]},
+    "notes":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}

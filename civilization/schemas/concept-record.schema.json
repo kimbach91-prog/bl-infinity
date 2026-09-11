@@ -1,0 +1,18 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://deusagi.ai/schema/viet-civilization/concept-record/v0.1",
+  "title":"VTTN Concept Record v0.1",
+  "type":"object",
+  "required":["conceptId","canonicalLabel","aliases","definition","status","provenanceRefs"],
+  "properties":{
+    "conceptId":{"type":"string","pattern":"^vn:[a-z0-9._:-]{3,}$"},
+    "canonicalLabel":{"type":"string","minLength":1},
+    "aliases":{"type":"array","items":{"type":"object","required":["text","register"],"properties":{"text":{"type":"string","minLength":1},"register":{"enum":["vi-modern","han-viet","vi-historical","regional","technical","formal-vttn"]},"period":{"type":["string","null"]},"region":{"type":["string","null"]},"sourceRef":{"type":["string","null"]}}},"minItems":1},
+    "definition":{"type":"string","minLength":1},
+    "relations":{"type":"array","items":{"type":"object","required":["predicate","targetConceptId"],"properties":{"predicate":{"enum":["is_a","part_of","causes","caused_by","opposes","near_synonym","historical_form_of","derived_from","related_to"]},"targetConceptId":{"type":"string"},"evidenceRefs":{"type":"array","items":{"type":"string"}}}}},
+    "status":{"enum":["draft","reviewed","contested","deprecated","canonical"]},
+    "provenanceRefs":{"type":"array","items":{"type":"string"},"minItems":1},
+    "notes":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}
