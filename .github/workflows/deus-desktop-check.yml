@@ -1,0 +1,36 @@
+name: DEUS Desktop Shell Check
+
+on:
+  pull_request:
+    paths:
+      - 'apps/deus-desktop/**'
+      - '.github/workflows/deus-desktop-check.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/deus-desktop/**'
+      - '.github/workflows/deus-desktop-check.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  cargo-check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install Tauri Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Compile-check core-free native shell
+        working-directory: apps/deus-desktop/src-tauri
+        run: cargo check
