@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-10T20:50:24.378022+00:00
+- Generated: 2026-09-11T04:37:16.993066+00:00
 - Records: 91
-- Digest: `0716d6de6ae36c41677e6558cf69fbfe6994dec47e8abc2830b5bec2e05ab9cc`
+- Digest: `3a5793f98ff661c77f449b02eca9580d73a9d9bbe8fe657b1366f3c73827565d`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,23 +22,23 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
-- [Europe PMC] Effectiveness of behavioural sleep programs for middle-aged adults on cognition and sleep and associated behaviour change techniques: a systematic review and meta-analysis. — 41253918
 - [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
+- [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Mapping the Mind: A Network Meta-Analysis of Mindfulness and Traditional and Digital Interventions for Cognitive and Behavioral Enhancement in Children With Attention-Deficit/Hyperactivity Disorder (ADHD). — 41769550
 - [Europe PMC] Mindfulness-based interventions for children and adolescents with attention-deficit/hyperactivity disorder: a Bayesian meta-analysis of randomized controlled trials. — 41890930
 - [Europe PMC] Neuropsychological Mechanisms Associated with the Effectiveness of AI-Delivered Health Promotion Programs: A Comprehensive Meta-Analysis. — 42041799
 - [Europe PMC] Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment. — 42352506
-- [Europe PMC] Review of Emotion Regulation Psychosocial Interventions for Children and Adolescents with ADHD. — 42352569
 - [Europe PMC] Effects of open- versus closed-skill exercise combined with mindfulness training on inhibitory control in children with ADHD: protocol for a three-arm randomised controlled trial with fMRI. — 42431671
 - [Europe PMC] Breaking the Freeze: The Role of Cognitive Function in Freezing of Gait in Parkinson's Disease. — 42483310
+- [Europe PMC] Effects of mindfulness-based exercise on Parkinson's disease and Alzheimer's disease: a systematic review and meta-analysis. — 42598237
+- [Europe PMC] Does mindfulness mediate the relationship between anxiety and second language performance? A meta-analytic structural equation modeling study. — 42670559
 
 ## BA-P0-04
 
@@ -53,25 +53,25 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P0-05
 
-- [Europe PMC] The Body Can Balance the Score: Using a Somatic Self-Care Intervention to Support Well-Being and Promote Healing. — 40508871
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
-- [Europe PMC] Embodied Singing: Dual Role of Interoception in Vocal Expertise and Musical Competence. — 41165760
 - [Europe PMC] Pathophysiology of functional neurological disorder for the general neurologist. — 41190174
 - [Europe PMC] Paediatric occupational therapists' views on applying interoception in practice contexts. — 41854272
 - [Europe PMC] Feeling Like a Woman: Interoception and the Objectified Body. — 42192807
 - [Europe PMC] Emotional Coherence Under Hypoxia and Aging: A Registered Report on Subjective-Physiological Coupling. — 42438121
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
+- [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
+- [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
 
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
 - [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
-- [Europe PMC] Optimizing Exercise Prescriptions for Cognitive Subdomains in Diabetes: A Systematic Review and Meta-Analysis of Dose-Response Variables. — 42510341
 - [Europe PMC] Reprogramming brain bioenergetics in depression: an integrative framework linking creatine, branched-chain amino acids, and exercise to neuroplasticity, cognitive function, and depression-related outcomes. — 42614552
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Effects of Combined Exercise Interventions on Cognition in Older Persons: A Systematic Review and Meta-Analysis. — 42651369
 - [Europe PMC] Redox-exercise crosstalk in neurodegenerative diseases: mechanistic perspectives on antioxidant interactions with Nrf2-BDNF signaling, autophagy, and mitochondrial plasticity. — 42661679
+- [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
 
 ## BA-P1-02
 
@@ -101,9 +101,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
-- [Europe PMC] Hainan Longevity Model, Senile Degeneration, Cognitive Disability and Healthy Longevity. — 42610035
 - [Europe PMC] Midlife Vascular and Lifestyle Determinants of Late-Life Cognitive Decline and Dementia: A Life-Course Prevention Framework with a Gulf (GCC) Perspective. — 42652977
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
+- [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
 ## BA-P2-01
