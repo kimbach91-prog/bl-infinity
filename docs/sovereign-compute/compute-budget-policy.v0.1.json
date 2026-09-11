@@ -1,0 +1,83 @@
+{
+  "schema": "BLI_COMPUTE_BUDGET_POLICY/0.1",
+  "status": "PROPOSAL_NONCANONICAL",
+  "objective": "maximize_verified_useful_decision_value_per_joule_cost_time_and_risk",
+  "hard_gates": [
+    "lawful_authority",
+    "catastrophic_risk_veto",
+    "data_residency",
+    "privacy_and_data_rights",
+    "provenance",
+    "resource_headroom",
+    "rollback_available"
+  ],
+  "tiers": {
+    "T0": {"name": "reuse_or_deterministic", "default": true},
+    "T1": {"name": "edge_or_tiny_specialist", "requires_escalation": false},
+    "T2": {"name": "small_specialist_or_rag", "requires_escalation": false},
+    "T3": {"name": "independent_verification_ensemble", "requires_escalation": true},
+    "T4": {"name": "frontier_reasoning", "requires_escalation": true},
+    "T5": {"name": "hpc_simulation_or_training", "requires_explicit_authorization": true}
+  },
+  "escalation_triggers": [
+    "quality_below_required_threshold",
+    "material_unresolved_model_disagreement",
+    "novel_case_with_insufficient_evidence",
+    "high_or_critical_assurance_required",
+    "expected_value_of_additional_compute_exceeds_marginal_cost",
+    "independent_verification_required_by_policy"
+  ],
+  "stop_conditions": [
+    "required_quality_reached",
+    "verification_converged",
+    "no_material_new_evidence",
+    "marginal_quality_gain_per_joule_below_threshold",
+    "marginal_quality_gain_per_cost_below_threshold",
+    "recommended_action_stable",
+    "energy_or_resource_headroom_breached",
+    "safety_risk_exceeds_expected_benefit",
+    "deadline_value_exhausted"
+  ],
+  "worker_constraints": {
+    "may_self_increase_compute_budget": false,
+    "may_change_hard_gates": false,
+    "may_mutate_canonical_state": false,
+    "private_reasoning_exchange": false,
+    "credential_inheritance": false
+  },
+  "preferred_efficiency_methods": [
+    "exact_cache",
+    "semantic_cache",
+    "prefix_cache",
+    "kv_cache",
+    "retrieval_augmented_generation",
+    "batching",
+    "continuous_batching",
+    "quantization",
+    "lower_precision",
+    "speculative_decoding",
+    "sparse_execution",
+    "mixture_of_experts",
+    "adapters_over_full_retraining",
+    "distillation",
+    "structured_outputs",
+    "deterministic_tools",
+    "event_driven_execution",
+    "cross_job_deduplication",
+    "checkpoint_reuse"
+  ],
+  "required_metrics": [
+    "joules_per_quality_qualified_task",
+    "cost_per_quality_qualified_task",
+    "latency_p50_p95_p99",
+    "reuse_hit_rate",
+    "tier_distribution",
+    "escalation_rate_and_reason",
+    "retry_waste",
+    "power_cap_violations",
+    "residency_violations",
+    "safety_gate_blocks",
+    "provenance_completeness",
+    "rollback_success"
+  ]
+}

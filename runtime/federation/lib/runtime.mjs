@@ -10,6 +10,7 @@ import { BudgetGovernor } from './budget.mjs';
 import { ValuePolicyGovernor } from './value-policy.mjs';
 import { DeusComputeTreasury } from './compute-treasury.mjs';
 import { ResourceAcquisitionEngine } from './resource-acquisition.mjs';
+import { ResourceEnvelopeGovernor } from './resource-envelope.mjs';
 
 export function createFederationRuntime({
   providers = [],
@@ -17,6 +18,8 @@ export function createFederationRuntime({
   manifestVerifier = null,
   audit = null,
   budgetConfig = {},
+  resourceEnvelope = null,
+  resourceEnvelopeConfig = {},
   state = null,
   allowedStateDataClasses = null,
   valuePolicy = null,
@@ -49,6 +52,7 @@ export function createFederationRuntime({
   const effectiveValuePolicy = valuePolicy ?? new ValuePolicyGovernor();
   const treasury = computeTreasury ?? new DeusComputeTreasury(computeTreasuryConfig);
   const acquisition = resourceAcquisition ?? new ResourceAcquisitionEngine(resourceAcquisitionConfig);
+  const effectiveResourceEnvelope = resourceEnvelope ?? new ResourceEnvelopeGovernor(resourceEnvelopeConfig);
   const orchestrator = new FederationOrchestrator({
     registry,
     executor,
@@ -57,6 +61,7 @@ export function createFederationRuntime({
     cache: state?.cache,
     ledger: state?.ledger,
     budget: state?.budget ?? new BudgetGovernor(budgetConfig),
+    resourceEnvelope: effectiveResourceEnvelope,
     allowedStateDataClasses,
     valuePolicy: effectiveValuePolicy,
     treasury,
@@ -67,6 +72,7 @@ export function createFederationRuntime({
     circuit,
     executor,
     orchestrator,
+    resourceEnvelope: effectiveResourceEnvelope,
     audit: effectiveAudit,
     state,
     valuePolicy: effectiveValuePolicy,
