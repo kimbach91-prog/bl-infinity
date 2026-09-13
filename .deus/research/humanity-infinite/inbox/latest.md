@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-13T11:48:59.676979+00:00
-- Records: 91
-- Digest: `f39d0a57487e53ed1673b92803f5d4e4548a33f0e185d92e680d42e2d8215068`
+- Generated: 2026-09-13T16:15:02.446685+00:00
+- Records: 83
+- Digest: `092f0f5bc5d834949a22b1016cd942a64d5d9669306207962462326da750d51c`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -65,24 +65,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
-- [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
 - [Europe PMC] Reprogramming brain bioenergetics in depression: an integrative framework linking creatine, branched-chain amino acids, and exercise to neuroplasticity, cognitive function, and depression-related outcomes. — 42614552
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Effects of Combined Exercise Interventions on Cognition in Older Persons: A Systematic Review and Meta-Analysis. — 42651369
 - [Europe PMC] Redox-exercise crosstalk in neurodegenerative diseases: mechanistic perspectives on antioxidant interactions with Nrf2-BDNF signaling, autophagy, and mitochondrial plasticity. — 42661679
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
+- [Europe PMC] Editorial: Neurobiological mechanisms of adjuvant therapies for personalized stroke rehabilitation: towards comprehensive recovery. — 42707418
 
 ## BA-P1-02
 
 - [ClinicalTrials.gov] Neural Markers of Balance in Adults With Brain Injury — NCT05895084
-- [Europe PMC] Comparative Efficacy of Virtual Reality-Assisted Cognitive Behavioral Therapy Versus Yoga-Based Interventions for Reducing Performance Anxiety in Students: Protocol for a Randomized Controlled Trial. — 40587850
-- [Europe PMC] Evidence-Based Clinical Effectiveness of Kundalini Yoga: Systematic Review of RCTs Across Multiple Health Conditions. — 40985958
-- [Europe PMC] Efficacy of an Online Yoga Module in Alleviating Premenstrual Symptoms of Working Women in India: A Nonrandomized Controlled Trial. — 41561711
-- [Europe PMC] Effects of Isha Yoga Practices on Health Outcomes: A Systematic Review of Controlled Studies. — 41694821
-- [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
-- [Europe PMC] Types of physical activity and applied outcome measures in physical activity interventions among patients with inflammatory bowel disease: a scoping review. — 42010495
-- [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
 
 ## BA-P1-03
 
@@ -128,3 +121,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ePoster. — 42366021
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 
+## Collector errors
+
+- BA-P1-02 / Europe PMC: TimeoutError: The read operation timed out
