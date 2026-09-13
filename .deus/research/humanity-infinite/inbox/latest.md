@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-13T16:15:02.446685+00:00
-- Records: 83
-- Digest: `092f0f5bc5d834949a22b1016cd942a64d5d9669306207962462326da750d51c`
+- Generated: 2026-09-13T20:47:38.129582+00:00
+- Records: 91
+- Digest: `6ecd592e2a7d2312ba67e0ed5050785cf9aca73781fb59edc8dfc3c7036c8cd1`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -76,6 +76,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P1-02
 
 - [ClinicalTrials.gov] Neural Markers of Balance in Adults With Brain Injury — NCT05895084
+- [Europe PMC] Evidence-Based Clinical Effectiveness of Kundalini Yoga: Systematic Review of RCTs Across Multiple Health Conditions. — 40985958
+- [Europe PMC] Efficacy of an Online Yoga Module in Alleviating Premenstrual Symptoms of Working Women in India: A Nonrandomized Controlled Trial. — 41561711
+- [Europe PMC] Effects of Isha Yoga Practices on Health Outcomes: A Systematic Review of Controlled Studies. — 41694821
+- [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
+- [Europe PMC] Types of physical activity and applied outcome measures in physical activity interventions among patients with inflammatory bowel disease: a scoping review. — 42010495
+- [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
+- [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
 
 ## BA-P1-03
 
@@ -121,6 +128,3 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ePoster. — 42366021
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 
-## Collector errors
-
-- BA-P1-02 / Europe PMC: TimeoutError: The read operation timed out
