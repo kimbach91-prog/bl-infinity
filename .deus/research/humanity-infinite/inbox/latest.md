@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-11T04:37:16.993066+00:00
+- Generated: 2026-09-13T11:48:59.676979+00:00
 - Records: 91
-- Digest: `3a5793f98ff661c77f449b02eca9580d73a9d9bbe8fe657b1366f3c73827565d`
+- Digest: `f39d0a57487e53ed1673b92803f5d4e4548a33f0e185d92e680d42e2d8215068`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -46,9 +46,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
 - [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
-- [Europe PMC] The Neuroprotective Role of Exercise in Alzheimer's Disease: An Integrative Review of Animal and Human Studies. — 42347121
 - [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
 - [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
+- [Europe PMC] Effects of Health Qigong on quality of life, physical function, and mental health in older adults: a systematic review and meta-analysis of randomized controlled trials. — 42698455
 - [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
 
 ## BA-P0-05
