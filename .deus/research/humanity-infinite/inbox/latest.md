@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-14T04:52:56.967904+00:00
+- Generated: 2026-09-15T04:51:43.998238+00:00
 - Records: 91
-- Digest: `26b4ab246584423e58a76f5bf2a0131ebcb5ded88b4e1dceee687b63ab3a6566`
+- Digest: `a5f6b4986f13c1dee49733552da4c024bb9a1b93986871da68d665abfb24ee85`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,12 +22,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
-- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
+- [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
 
 ## BA-P0-03
 
