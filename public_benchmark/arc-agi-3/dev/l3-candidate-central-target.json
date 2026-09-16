@@ -1,0 +1,43 @@
+{
+  "base_actions": 58,
+  "frame_sha256": "583a8bee5966c225bdb2622408c14f4cf736648df40e7e4fb2dcc6abca7aee0b",
+  "levels_completed": 2,
+  "palette_counts": {
+    "0": 4,
+    "1": 12,
+    "11": 20,
+    "12": 36,
+    "14": 2,
+    "3": 1647,
+    "4": 1899,
+    "5": 439,
+    "8": 14,
+    "9": 23
+  },
+  "route_sha256": "245bfafd62f501a4ec8a5f85b171282734e823d14d3a178b5da72f8a7300f9f5",
+  "state": "NOT_FINISHED",
+  "suffix": [
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    1,
+    4,
+    4,
+    4,
+    4,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2
+  ],
+  "suffix_actions": 20,
+  "total_actions": 78
+}
