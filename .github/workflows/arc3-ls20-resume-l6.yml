@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 portal map probes
+name: ARC3 ls20 L4 bottom corridor probe
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Map reachable L4 portals
+      - name: Decode row y50 and trace right-bottom corridor
         run: |
           python - <<'PY'
           import json
@@ -30,13 +30,9 @@ jobs:
 
           prefix=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())['executed_actions']
           hub=[3,3,3,2,2,3,3,3,3]
-          # Each path ends by stepping into a mixed gate/portal candidate.
-          cases={
-            'P_A_r4c6_from_above': hub+[4,4,4,2],
-            'P_B_r4c5_from_left':  hub+[2,4,4],
-            'P_C_r6c7_from_right': hub+[4,4,4,2,2,2,3,3,3],
-            'P_D_r8c9_from_right': hub+[4,4,4,2,2,2,2,2,3],
-          }
+          # hub -> P_A teleport -> descend right corridor to y50 -> sweep left toward second refill.
+          tail=[4,4,4,2] + [2,2,2,2,2,2] + [3,3,3,3,3]
+
           def agent(f):
             out=[]
             for y in range(0,55):
@@ -46,35 +42,32 @@ jobs:
                 vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
                 if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
             return out
-          def key(f):
-            cur=f[55:61,3:9]; vals,cts=np.unique(cur,return_counts=True)
-            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(cand,key=lambda z:z[1])[0]
-            mask=[]
-            for r in range(3):
-              row=[]
-              for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
-              mask.append(row)
-            return {'color':color,'mask':mask}
-          results={}
-          for name,path in cases.items():
-            arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-            env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-            amap={a.value:a for a in env.action_space}; obs=env.observation_space
-            for a in prefix: obs=env.step(amap[a])
-            trace=[]; f=np.asarray(obs.frame[-1],dtype=np.int16)
-            for i,a in enumerate(path,1):
-              prev=f.copy(); before_agent=agent(prev)
-              obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-              if i>=len(path)-2:
-                trace.append({'i':i,'a':a,'before_agent':before_agent,'after_agent':agent(f),'diff_n':int((f!=prev).sum()),'key':key(f),'color11_total':int((f==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-            results[name]={'path':path,'trace':trace}
-          Path('public_benchmark/arc-agi-3/dev/l4-portal-map-probes.json').write_text(json.dumps(results,indent=2,sort_keys=True))
+
+          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+          amap={a.value:a for a in env.action_space}; obs=env.observation_space
+          for a in prefix: obs=env.step(amap[a])
+          f0=np.asarray(obs.frame[-1],dtype=np.int16)
+          xs=[4,9,14,19,24,29,34,39,44,49,54,59]
+          row50=[]
+          for c,x in enumerate(xs):
+            w=f0[50:55,x:x+5]
+            vals,cts=np.unique(w,return_counts=True)
+            row50.append({'c':c,'x':x,'y':50,'counts':{str(int(k)):int(v) for k,v in zip(vals,cts)}})
+
+          for a in hub: obs=env.step(amap[a])
+          trace=[]
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+          for i,a in enumerate(tail,1):
+            prev=f.copy(); before=agent(prev)
+            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+            trace.append({'i':i,'a':a,'before_agent':before,'after_agent':agent(f),'diff_n':int((f!=prev).sum()),'color11_total':int((f==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+          Path('public_benchmark/arc-agi-3/dev/l4-bottom-corridor-probe.json').write_text(json.dumps({'row50':row50,'tail':tail,'trace':trace},indent=2,sort_keys=True))
           PY
-      - name: Persist portal map
+      - name: Persist receipt
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-portal-map-probes.json
-          git commit -m 'benchmark: save L4 portal map probes [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-bottom-corridor-probe.json
+          git commit -m 'benchmark: save L4 bottom corridor probe [skip ci]'
           git push
