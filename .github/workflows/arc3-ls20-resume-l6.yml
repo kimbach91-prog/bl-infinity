@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 trace runner
+name: ARC3 ls20 L3 corrected portal route
 
 on:
   push:
@@ -17,59 +17,39 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
+        with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Trace observable player and meter
+      - name: Run corrected route
         run: |
           python - <<'PY'
-          import json
+          import json, hashlib
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
-
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          suffix=[1]*8+[4]*4+[2]*8
+          suffix=[1]*8+[3]+[2]*8
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-          if env is None: raise SystemExit('ENV_CREATE_FAILED')
-          amap={a.value:a for a in env.action_space}
-          obs=env.observation_space
-          for a in base:
-              obs=env.step(amap[a])
-
-          def frame_of(o): return np.asarray(o.frame[-1],dtype=np.int16)
-          def candidates(f):
-              out=[]
-              for y in range(0,50):
-                  for x in range(0,60):
-                      w=f[y:y+5,x:x+5]
-                      if w.shape!=(5,5): continue
-                      vals,cts=np.unique(w,return_counts=True)
-                      d={int(k):int(v) for k,v in zip(vals,cts)}
-                      if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:
-                          out.append([x,y])
-              return out
-          def objs(f,c):
-              ys,xs=np.where((f==c)&(np.indices(f.shape)[0]<50))
-              return {'n':int(len(xs)),'bbox':None if not len(xs) else [int(xs.min()),int(ys.min()),int(xs.max()),int(ys.max())]}
-
-          trace=[]
-          f=frame_of(obs)
-          trace.append({'step':0,'levels':obs.levels_completed,'state':obs.state.value,'agent':candidates(f),'meter11':int((f==11).sum()),'c8':objs(f,8),'c14':objs(f,14)})
-          for i,a in enumerate(suffix,1):
-              prev=f.copy()
-              obs=env.step(amap[a]); f=frame_of(obs)
-              trace.append({'step':i,'action':a,'levels':obs.levels_completed,'state':obs.state.value,'agent':candidates(f),'meter11':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'c8':objs(f,8),'c14':objs(f,14)})
-          Path('trace.json').write_text(json.dumps(trace,indent=2))
+          amap={a.value:a for a in env.action_space}; obs=env.observation_space
+          for a in base+suffix: obs=env.step(amap[a])
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+          agents=[]
+          for y in range(50):
+            for x in range(60):
+              w=f[y:y+5,x:x+5]
+              if w.shape==(5,5):
+                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: agents.append([x,y])
+          r={'suffix':suffix,'suffix_actions':len(suffix),'total_actions':len(base)+len(suffix),'levels_completed':obs.levels_completed,'state':obs.state.value,'agents':agents,'meter11':int((f==11).sum()),'c8':int(((f==8)&(np.indices(f.shape)[0]<50)).sum()),'c14':int(((f==14)&(np.indices(f.shape)[0]<50)).sum()),'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest()}
+          Path('result.json').write_text(json.dumps(r,indent=2,sort_keys=True))
           PY
-      - name: Persist trace
+      - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp trace.json public_benchmark/arc-agi-3/dev/l3-central-trace.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-corrected-portal-candidate.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-central-trace.json
-          git commit -m 'benchmark: save L3 observable trace [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-corrected-portal-candidate.json
+          git commit -m 'benchmark: save corrected L3 portal candidate [skip ci]'
           git push
