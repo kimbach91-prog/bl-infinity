@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 graph route planner
+name: ARC3 ls20 L4 full completion candidate
 
 on:
   push:
@@ -10,54 +10,93 @@ permissions:
   contents: write
 
 jobs:
-  plan:
+  solve:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - name: Compute directed routes between verified L4 landmarks
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
+      - name: Run composed L4 color-shape-door route
         run: |
           python - <<'PY'
-          import json
-          from collections import deque
+          import json, logging, hashlib
           from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
-          data=json.loads((ROOT/'l4-color-rotator-explorer.json').read_text())
-          graph={}
-          for ps,edges in data['graph'].items():
-            p=tuple(map(int,ps.split(',')))
-            graph[p]={int(a):tuple(q) for a,q in edges.items()}
-          def bfs(src,dst):
-            q=deque([(src,[])])
-            seen={src}
-            while q:
-              p,r=q.popleft()
-              if p==dst:return r
-              for a,nq in sorted(graph.get(p,{}).items()):
-                if nq==p or nq in seen:continue
-                seen.add(nq);q.append((nq,r+[a]))
+          prefix=json.loads((ROOT/'l3-dual-refill-final-touch.json').read_text())['executed_actions']
+
+          hub=[3,3,3,2,2,3,3,3,3]
+          hub_to_color=[4,4,4,2,2,2,3,3,1,2]
+          color_cycle=[1,2,1,2]              # first touch already happened; two more re-entries
+          color_exit=[1,4]                    # color -> above -> portal back to main graph
+          to_refill2=[2,2,2,2]               # 44,30 -> 44,35 -> 34,40 -> 34,45 -> 34,50
+          refill2_to_shape=[1,3,3,1,1,1]     # verified directed graph path
+          shape_to_door=[2,2,4,1,1,1,1,4,1,4,1,1,3,3]
+          final_touch=[3]
+          l4=hub+hub_to_color+color_cycle+color_exit+to_refill2+refill2_to_shape+shape_to_door+final_touch
+
+          checkpoints={9:'hub_refill',19:'color_touch_1',21:'color_touch_2',23:'color_touch_3',25:'color_exit',29:'refill2',35:'shape_touch',49:'door_right',50:'door_touch'}
+
+          def agent(frame):
+            f=np.asarray(frame,dtype=np.int16)
+            for y in range(0,55):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5): continue
+                vals,cts=np.unique(w,return_counts=True)
+                d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return [x,y]
             return None
-          landmarks={
-            'hub':(19,15),
-            'shape':(24,30),
-            'color':(34,30),
-            'color_above':(34,25),
-            'door_right':(14,5),
-            'door_far_right':(19,5),
-            'refill2':(34,50),
-          }
-          pairs={}
-          for an,a in landmarks.items():
-            for bn,b in landmarks.items():
-              if an==bn:continue
-              pairs[f'{an}->{bn}']=bfs(a,b)
-          out={'landmarks':{k:list(v) for k,v in landmarks.items()},'routes':pairs}
-          (ROOT/'l4-directed-landmark-routes.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+
+          def key(frame):
+            f=np.asarray(frame,dtype=np.int16); cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True)
+            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0]
+            mask=[]
+            for r in range(3):
+              row=[]
+              for c in range(3):
+                block=cur[2*r:2*r+2,2*c:2*c+2]
+                row.append(1 if int((block==color).sum())>=2 else 0)
+              mask.append(row)
+            return {'color':color,'mask':mask}
+
+          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+          if env is None: raise SystemExit('ENV_CREATE_FAILED')
+          amap={a.value:a for a in env.action_space}; obs=env.observation_space
+          executed=[]; milestones=[]
+          for a in prefix:
+            obs=env.step(amap[a])
+            if obs is None: raise SystemExit('NO_OBS_PREFIX')
+            executed.append(a)
+          if obs.levels_completed!=3: raise SystemExit(f'PREFIX_NOT_3:{obs.levels_completed}')
+
+          l4_executed=[]
+          for li,a in enumerate(l4,1):
+            obs=env.step(amap[a])
+            if obs is None: raise SystemExit(f'NO_OBS_L4_{li}')
+            executed.append(a); l4_executed.append(a)
+            if li in checkpoints or obs.levels_completed>=4 or obs.state.value!='NOT_FINISHED':
+              f=np.asarray(obs.frame[-1],dtype=np.int16)
+              milestones.append({'l4_i':li,'label':checkpoints.get(li,'event'),'a':a,'agent':agent(f),'key':key(f),'color11_total':int((f==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+            if obs.levels_completed>=4 or obs.state.value!='NOT_FINISHED': break
+
+          out={'candidate_l4_actions':len(l4),'executed_l4':len(l4_executed),'total_executed':len(executed),'levels_completed':obs.levels_completed,'state':obs.state.value,'l4_actions_executed':l4_executed,'full_actions_executed':executed,'route_sha256':hashlib.sha256(','.join(map(str,executed)).encode()).hexdigest(),'milestones':milestones}
+          (ROOT/'l4-full-completion-candidate.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist route plan
+      - name: Persist candidate receipt
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-directed-landmark-routes.json
-          git commit -m 'benchmark: save L4 directed landmark routes [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-full-completion-candidate.json
+          git commit -m 'benchmark: save L4 full completion candidate [skip ci]'
           git push
