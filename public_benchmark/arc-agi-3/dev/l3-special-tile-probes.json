@@ -1,0 +1,102 @@
+{
+  "r2c5_color11": {
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "suffix": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      3,
+      2,
+      2,
+      4
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "agent": [
+          [
+            29,
+            15
+          ]
+        ],
+        "diff_n": 54,
+        "i": 11,
+        "levels": 2,
+        "meter11": 56,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "agent": [
+          [
+            34,
+            15
+          ]
+        ],
+        "diff_n": 94,
+        "i": 12,
+        "levels": 2,
+        "meter11": 92,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "r5c2_color11": {
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "suffix": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      3,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3,
+      3
+    ],
+    "trace": [
+      {
+        "a": 3,
+        "agent": [
+          [
+            24,
+            30
+          ]
+        ],
+        "diff_n": 54,
+        "i": 15,
+        "levels": 2,
+        "meter11": 40,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "agent": [
+          [
+            19,
+            30
+          ]
+        ],
+        "diff_n": 110,
+        "i": 16,
+        "levels": 2,
+        "meter11": 92,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  }
+}
