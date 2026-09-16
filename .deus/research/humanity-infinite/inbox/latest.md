@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-15T11:41:31.967210+00:00
+- Generated: 2026-09-16T21:16:19.669818+00:00
 - Records: 91
-- Digest: `3be1047ead007a59d040358aa335d1a0f5ce232367ab8dc2e2228915748f2b8b`
+- Digest: `9d609ca148c812d561e14537e600c4cf5381e56c2d96118d0dac957dcdef3f57`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -97,6 +97,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-04
 
+- [Europe PMC] Could behaviour change interventions be incorporated into cardiac rehabilitation programmes for insomnia and poor sleep quality management? A scoping review. — 42176203
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
@@ -104,7 +105,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
-- [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial — PMC13573192
 
 ## BA-P2-01
 
