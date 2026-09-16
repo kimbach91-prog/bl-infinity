@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 lattice graph decoder
+name: ARC3 ls20 L3 event trace
 
 on:
   push:
@@ -19,81 +19,42 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Decode full movement lattice from public frame
+      - name: Trace only semantic state changes
         run: |
           python - <<'PY'
-          import json
-          from collections import deque
+          import json, hashlib
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
-
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
+          l3=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3] + [4,3] + [4]+[2]*7
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
           for a in base: obs=env.step(amap[a])
-          f=np.asarray(obs.frame[-1],dtype=np.int16)
 
-          xs=list(range(4,60,5))
-          ys=list(range(5,50,5))
-          cells={}
-          specials=[]
-          for y in ys:
-            for x in xs:
-              w=f[y:y+5,x:x+5]
-              vals,cts=np.unique(w,return_counts=True)
-              counts={str(int(k)):int(v) for k,v in zip(vals,cts)}
-              wall=(counts=={'4':25})
-              floor=(counts=={'3':25})
-              key=f'{x},{y}'
-              cells[key]={'x':x,'y':y,'wall':wall,'floor':floor,'counts':counts}
-              if not wall and not floor:
-                specials.append(cells[key])
-
-          dirs={1:(0,-5),2:(0,5),3:(-5,0),4:(5,0)}
-          start=(9,45)
-          def passable(p):
-            return f'{p[0]},{p[1]}' in cells and not cells[f'{p[0]},{p[1]}']['wall']
-          def follow(actions):
-            p=start; path=[list(p)]
-            for a in actions:
-              dx,dy=dirs[a]; q=(p[0]+dx,p[1]+dy)
-              if passable(q): p=q
-              path.append(list(p))
-            return {'end':list(p),'path':path}
-          known={
-            'to_color':[1]*8+[3]+[2]*8,
-            'to_refill_after_color':[1]*8+[3]+[2]*8+[1]*3+[3]*2,
-            'to_shape_first':[1]*8+[3]+[2]*8+[1]*3+[3]*2+[4]*7+[1]*4+[3],
-          }
-          known_follow={k:follow(v) for k,v in known.items()}
-
-          # BFS all-pairs among passable lattice cells; output key candidate distances around known endpoints.
-          def bfs(src):
-            q=deque([src]); dist={src:0}; parent={}
-            while q:
-              p=q.popleft()
-              for a,(dx,dy) in dirs.items():
-                n=(p[0]+dx,p[1]+dy)
-                if passable(n) and n not in dist:
-                  dist[n]=dist[p]+1; parent[n]=(p,a); q.append(n)
-            return dist,parent
-          dist0,_=bfs(start)
-          special_dist=[]
-          for s in specials:
-            p=(s['x'],s['y'])
-            special_dist.append({'p':[s['x'],s['y']],'d_from_start':dist0.get(p),'counts':s['counts']})
-          out={'xs':xs,'ys':ys,'start':list(start),'specials':specials,'known_follow':known_follow,'special_distances':special_dist}
-          Path('result.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          def semantic(f):
+            cur=f[55:61,3:9]
+            return {
+              'meter11':int((f==11).sum()),
+              'key_sha':hashlib.sha256(cur.tobytes()).hexdigest()[:16],
+              'key_raw':cur.tolist(),
+            }
+          prev=semantic(np.asarray(obs.frame[-1],dtype=np.int16)); events=[{'i':0,'a':None,**prev,'levels':obs.levels_completed,'state':obs.state.value}]
+          for i,a in enumerate(l3,1):
+            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16); now=semantic(f)
+            if now['key_sha']!=prev['key_sha'] or now['meter11']>prev['meter11'] or i in (8,9,10,16,17,18,19,20,21,22,23,32,33,34,35,36,37,43,44):
+              events.append({'i':i,'a':a,**now,'levels':obs.levels_completed,'state':obs.state.value,'meter_delta':now['meter11']-prev['meter11'],'key_changed':now['key_sha']!=prev['key_sha']})
+            prev=now
+          Path('result.json').write_text(json.dumps(events,indent=2,sort_keys=True))
           PY
-      - name: Persist graph receipt
+      - name: Persist event trace
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-lattice-graph.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-semantic-events.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-lattice-graph.json
-          git commit -m 'benchmark: decode L3 movement lattice [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-semantic-events.json
+          git commit -m 'benchmark: save L3 semantic event trace [skip ci]'
           git push
