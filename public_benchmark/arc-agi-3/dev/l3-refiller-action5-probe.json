@@ -1,0 +1,12 @@
+{
+  "action5_unavailable": true,
+  "available_actions": [
+    1,
+    2,
+    3,
+    4
+  ],
+  "before_action5_meter11": 92,
+  "before_levels": 2,
+  "before_state": "NOT_FINISHED"
+}
