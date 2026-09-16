@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 initial public-frame decoder
+name: ARC3 ls20 L4 object probes
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  decode:
+  probe:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,103 +19,62 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Replay 3/7 prefix and decode L4 initial observation
+      - name: Probe L4 refill and rotator candidates
         run: |
           python - <<'PY'
-          import json, hashlib
+          import json
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
 
-          solved=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())
-          prefix=solved['executed_actions']
-          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-          if env is None: raise SystemExit('ENV_CREATE_FAILED')
-          amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          for i,a in enumerate(prefix,1):
-            obs=env.step(amap[a])
-            if obs is None: raise SystemExit(f'NO_OBS_AT_{i}')
-          if obs.levels_completed != 3: raise SystemExit(f'PREFIX_NOT_3OF7:{obs.levels_completed}')
-          f=np.asarray(obs.frame[-1],dtype=np.int16)
-          H,W=f.shape
-
-          # player: current ls20 rendering has a stable 5x5 9/12 motif
-          players=[]
-          for y in range(0,50):
-            for x in range(0,60):
-              w=f[y:y+5,x:x+5]
-              if w.shape!=(5,5): continue
-              vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-              if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: players.append([x,y])
-          if not players: raise SystemExit('PLAYER_NOT_FOUND')
-          px,py=players[0]
-          x0=px%5; y0=py%5
-          xs=list(range(x0,60,5)); ys=list(range(y0,50,5))
-
-          # connected components for all non-dominant colors
-          comps={}
-          for color in sorted(map(int,np.unique(f))):
-            seen=set(); arr=[]
-            coords=list(zip(*np.where(f==color)))
-            for yy,xx in coords:
-              yy=int(yy); xx=int(xx)
-              if (yy,xx) in seen: continue
-              stack=[(yy,xx)]; seen.add((yy,xx)); pts=[]
-              while stack:
-                cy,cx=stack.pop(); pts.append((cy,cx))
-                for dy,dx in ((1,0),(-1,0),(0,1),(0,-1)):
-                  ny,nx=cy+dy,cx+dx
-                  if 0<=ny<H and 0<=nx<W and (ny,nx) not in seen and int(f[ny,nx])==color:
-                    seen.add((ny,nx)); stack.append((ny,nx))
-              ys2=[p[0] for p in pts]; xs2=[p[1] for p in pts]
-              arr.append({'n':len(pts),'bbox':[min(xs2),min(ys2),max(xs2),max(ys2)]})
-            arr.sort(key=lambda z:(-z['n'],z['bbox']))
-            comps[str(color)]=arr[:40]
-
-          # coarse 5x5 cells; preserve counts so mixed objects can be classified downstream.
-          cells=[]; compact=[]
-          for r,y in enumerate(ys):
-            row=[]; chars=[]
-            for c,x in enumerate(xs):
-              w=f[y:y+5,x:x+5]
-              if w.shape!=(5,5): continue
-              vals,cts=np.unique(w,return_counts=True); d={str(int(k)):int(v) for k,v in zip(vals,cts)}
-              row.append({'r':r,'c':c,'x':x,'y':y,'counts':d})
-              di={int(k):v for k,v in d.items()}
-              if di.get(9,0)==15 and di.get(12,0)==10: ch='A'
-              elif max(di.values())==25:
-                dominant=max(di,key=di.get); ch=f'{dominant:X}'
-              else: ch='?'
-              chars.append(ch)
-            cells.append(row); compact.append(''.join(chars))
-
-          cur=f[55:61,3:9].tolist()
-          out={
-            'prefix_actions':len(prefix),
-            'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-            'levels_completed':obs.levels_completed,
-            'state':obs.state.value,
-            'frame_shape':list(f.shape),
-            'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest(),
-            'player_candidates':players,
-            'grid_origin_mod5':[x0,y0],
-            'x_anchors':xs,
-            'y_anchors':ys,
-            'coarse':compact,
-            'cells':cells,
-            'palette':{str(int(k)):int(v) for k,v in zip(*np.unique(f,return_counts=True))},
-            'components':comps,
-            'current_key_raw':cur,
-            'bottom_right_patch':f[45:60,45:64].tolist()
+          prefix=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())['executed_actions']
+          cases={
+            'candidate_color_r6c6':[3,3,3,2,2,2,2,3,2],
+            'candidate_shape_r6c4':[3,3,3,2,2,3,3,3,2,3,3,2,2,2,4,4,1],
+            'candidate_refill_r3c3':[3,3,3,2,2,3,3,3,3],
           }
-          Path('public_benchmark/arc-agi-3/dev/l4-initial-decoder.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          def key_state(f):
+            cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True)
+            candidates=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(candidates,key=lambda z:z[1])[0]
+            mask=[]
+            for r in range(3):
+              row=[]
+              for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
+              mask.append(row)
+            return {'color':color,'mask':mask,'raw':cur.tolist()}
+          def agent(f):
+            out=[]
+            for y in range(0,55):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5): continue
+                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
+            return out
+          results={}
+          for name,suffix in cases.items():
+            arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+            env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+            if env is None: raise SystemExit('ENV_CREATE_FAILED')
+            amap={a.value:a for a in env.action_space}; obs=env.observation_space
+            for a in prefix: obs=env.step(amap[a])
+            before=np.asarray(obs.frame[-1],dtype=np.int16)
+            before_key=key_state(before); trace=[]
+            for i,a in enumerate(suffix,1):
+              prev=np.asarray(obs.frame[-1],dtype=np.int16)
+              obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+              if i>=len(suffix)-1:
+                trace.append({'i':i,'a':a,'agent':agent(f),'color11_total':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'key':key_state(f),'levels':obs.levels_completed,'state':obs.state.value})
+            results[name]={'suffix':suffix,'before_key':before_key,'trace':trace,'levels':obs.levels_completed,'state':obs.state.value}
+          Path('public_benchmark/arc-agi-3/dev/l4-object-probes.json').write_text(json.dumps(results,indent=2,sort_keys=True))
           PY
-      - name: Persist decoder receipt
+      - name: Persist probe receipt
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-initial-decoder.json
-          git commit -m 'benchmark: decode L4 initial public frame [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-object-probes.json
+          git commit -m 'benchmark: save L4 object probes [skip ci]'
           git push
