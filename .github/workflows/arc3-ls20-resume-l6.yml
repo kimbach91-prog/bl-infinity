@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 public board decoder
+name: ARC3 ls20 L3 direct-goal candidate
 
 on:
   push:
@@ -19,54 +19,35 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Decode coarse board from public frame
+      - name: Run 24-step direct-goal candidate
         run: |
           python - <<'PY'
-          import json
+          import json, hashlib
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
+          suffix=[1]*8+[3]+[2]*5+[4]*5+[1]*4+[3]
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
+          trace=[]
           for a in base: obs=env.step(amap[a])
+          for i,a in enumerate(suffix,1):
+            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+            trace.append({'i':i,'a':a,'levels':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum())})
+            if obs.levels_completed>=3 or obs.state.value!='NOT_FINISHED': break
           f=np.asarray(obs.frame[-1],dtype=np.int16)
-          xs=[9+5*i for i in range(10)]
-          ys=[5+5*i for i in range(9)]
-          cells=[]
-          for r,y in enumerate(ys):
-            row=[]
-            for c,x in enumerate(xs):
-              w=f[y:y+5,x:x+5]
-              vals,cts=np.unique(w,return_counts=True)
-              counts={str(int(k)):int(v) for k,v in zip(vals,cts)}
-              row.append({'c':c,'r':r,'x':x,'y':y,'counts':counts})
-            cells.append(row)
-          # Compact symbol view: # wall, . floor, A agent, K special 8/14, G special 0/1, ? mixed.
-          symbols=[]
-          for row in cells:
-            s=[]
-            for cell in row:
-              d={int(k):v for k,v in cell['counts'].items()}
-              if d.get(9,0)==15 and d.get(12,0)==10: ch='A'
-              elif d.get(8,0) or d.get(14,0): ch='K'
-              elif d.get(0,0) or d.get(1,0): ch='G'
-              elif d.get(4,0)==25: ch='#'
-              elif d.get(3,0)==25: ch='.'
-              else: ch='?'
-              s.append(ch)
-            symbols.append(''.join(s))
-          out={'x_anchors':xs,'y_anchors':ys,'symbols':symbols,'cells':cells}
-          Path('board.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          out={'suffix':suffix,'executed_suffix':len(trace),'total_actions':len(base)+len(trace),'levels_completed':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum()),'route_sha256':hashlib.sha256(','.join(map(str,base+suffix[:len(trace)])).encode()).hexdigest(),'trace':trace}
+          Path('result.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist decoded board
+      - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp board.json public_benchmark/arc-agi-3/dev/l3-coarse-board.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-direct-goal-candidate.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-coarse-board.json
-          git commit -m 'benchmark: decode L3 board from public frame [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-direct-goal-candidate.json
+          git commit -m 'benchmark: save L3 direct-goal candidate [skip ci]'
           git push
