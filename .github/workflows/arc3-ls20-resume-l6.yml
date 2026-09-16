@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 verified rotator cycles
+name: ARC3 ls20 L4 approach transition trace
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  probe:
+  trace:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe rotators via confirmed refill hub
+      - name: Trace approaches from confirmed refill hub
         run: |
           python - <<'PY'
           import json
@@ -29,14 +29,22 @@ jobs:
           from arc_agi import OperationMode
 
           prefix=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())['executed_actions']
-          to_hub=[3,3,3,2,2,3,3,3,3]  # confirmed refill at (19,15)
-          routes={
-            'color': to_hub+[4,4,4,2,2,2],              # (34,30)
-            'shape': to_hub+[3,3,2,2,2,2,4,4,4,1],      # (24,30) via lower-left safe corridor
+          to_hub=[3,3,3,2,2,3,3,3,3]
+          cases={
+            'to_multicolor_r6c6':[4,4,4,2,2,2],
+            'to_black_r6c4':[3,3,2,2,2,2,4,4,4,1],
           }
-          def key_state(f):
-            cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True)
+          def agent(f):
+            out=[]
+            for y in range(0,55):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5): continue
+                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
+            return out
+          def key(f):
+            cur=f[55:61,3:9]; vals,cts=np.unique(cur,return_counts=True)
             cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
             color=max(cand,key=lambda z:z[1])[0]
             mask=[]
@@ -44,39 +52,26 @@ jobs:
               row=[]
               for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
               mask.append(row)
-            return {'color':color,'mask':mask,'raw':cur.tolist()}
-          def target_state(f):
-            # L4 door body is unique color-5 component bbox x8..14,y4..10; target occupies 3x3 at x10..12,y6..8.
-            tgt=f[6:9,10:13]
-            vals,cts=np.unique(tgt,return_counts=True)
-            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(cand,key=lambda z:z[1])[0]
-            return {'color':color,'mask':(tgt==color).astype(int).tolist(),'raw':tgt.tolist()}
+            return {'color':color,'mask':mask}
           results={}
-          for kind,route in routes.items():
+          for name,tail in cases.items():
             arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
             env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-            if env is None: raise SystemExit('ENV_CREATE_FAILED')
             amap={a.value:a for a in env.action_space}; obs=env.observation_space
-            for a in prefix: obs=env.step(amap[a])
-            initial=np.asarray(obs.frame[-1],dtype=np.int16)
-            states=[{'touches':0,'key':key_state(initial),'target':target_state(initial),'color11_total':int((initial==11).sum())}]
-            for a in route: obs=env.step(amap[a])
+            for a in prefix+to_hub: obs=env.step(amap[a])
+            trace=[]
             f=np.asarray(obs.frame[-1],dtype=np.int16)
-            states.append({'touches':1,'key':key_state(f),'target':target_state(f),'color11_total':int((f==11).sum())})
-            # repeat 3 more touches by stepping to known adjacent floor and back.
-            away,back=(1,2) if kind=='color' else (2,1)
-            for touch in (2,3,4):
-              obs=env.step(amap[away]); obs=env.step(amap[back])
-              f=np.asarray(obs.frame[-1],dtype=np.int16)
-              states.append({'touches':touch,'key':key_state(f),'target':target_state(f),'color11_total':int((f==11).sum())})
-            results[kind]={'route':route,'states':states,'levels':obs.levels_completed,'state':obs.state.value}
-          Path('public_benchmark/arc-agi-3/dev/l4-rotator-cycles.json').write_text(json.dumps(results,indent=2,sort_keys=True))
+            trace.append({'i':0,'agent':agent(f),'key':key(f),'color11_total':int((f==11).sum())})
+            for i,a in enumerate(tail,1):
+              prev=f.copy(); obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+              trace.append({'i':i,'a':a,'agent':agent(f),'key':key(f),'color11_total':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+            results[name]={'tail':tail,'trace':trace}
+          Path('public_benchmark/arc-agi-3/dev/l4-approach-transition-trace.json').write_text(json.dumps(results,indent=2,sort_keys=True))
           PY
-      - name: Persist receipt
+      - name: Persist trace
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-rotator-cycles.json
-          git commit -m 'benchmark: save verified L4 rotator cycles [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-approach-transition-trace.json
+          git commit -m 'benchmark: trace L4 approaches from refill hub [skip ci]'
           git push
