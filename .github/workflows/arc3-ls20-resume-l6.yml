@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 deterministic transition explorer
+name: ARC3 ls20 L4 resilient transition explorer
 
 on:
   push:
@@ -19,29 +19,28 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Explore L4 transition graph until key changes
+      - name: Explore L4 graph with retry and seeded receipts
         run: |
           python - <<'PY'
-          import json, logging, hashlib
+          import json, logging, hashlib, time
           from collections import deque
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
 
-          # Suppress toolkit INFO logs so ephemeral anonymous API material is never persisted.
           logging.disable(logging.INFO)
 
-          prefix=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())['executed_actions']
-          hub_route=[3,3,3,2,2,3,3,3,3]  # verified L4 first refiller, ending at (19,15)
-          hub_pos=(19,15)
-          action_priority=[2,4,3,1]
-          max_episode_steps=18
-          max_episodes=42
+          ROOT=Path('public_benchmark/arc-agi-3/dev')
+          prefix=json.loads((ROOT/'l3-dual-refill-final-touch.json').read_text())['executed_actions']
+          hub_route=[3,3,3,2,2,3,3,3,3]
+          hub=(19,15)
+          priority=[2,4,3,1]
+          max_episodes=24
+          max_steps=18
 
-          def agent_pos(frame):
+          def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
-            out=[]
             for y in range(0,55):
               for x in range(0,60):
                 w=f[y:y+5,x:x+5]
@@ -49,15 +48,15 @@ jobs:
                 vals,cts=np.unique(w,return_counts=True)
                 d={int(k):int(v) for k,v in zip(vals,cts)}
                 if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:
-                  out.append((x,y))
-            return out[0] if out else None
+                  return (x,y)
+            return None
 
-          def key_state(frame):
+          def key(frame):
             f=np.asarray(frame,dtype=np.int16)
             cur=f[55:61,3:9]
             vals,cts=np.unique(cur,return_counts=True)
-            candidates=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(candidates,key=lambda z:z[1])[0]
+            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0]
             mask=[]
             for r in range(3):
               for c in range(3):
@@ -65,126 +64,178 @@ jobs:
                 mask.append(1 if int((block==color).sum())>=2 else 0)
             return (color,tuple(mask))
 
-          def make_env():
-            arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-            env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-            if env is None: raise RuntimeError('ENV_CREATE_FAILED')
-            amap={a.value:a for a in env.action_space}
-            obs=env.observation_space
-            for a in prefix+hub_route:
-              obs=env.step(amap[a])
-              if obs is None: raise RuntimeError('NO_OBS_DURING_PREFIX')
-            f=np.asarray(obs.frame[-1],dtype=np.int16)
-            pos=agent_pos(f)
-            if obs.levels_completed!=3 or pos!=hub_pos:
-              raise RuntimeError(f'BAD_HUB levels={obs.levels_completed} pos={pos}')
-            return env,amap,obs
+          graph={}
+          def edge(p,a,q):
+            if p is None or q is None: return
+            graph.setdefault(tuple(p),{})[int(a)]=tuple(q)
 
-          graph={}  # pos -> action(str) -> next_pos
-          route_to={}  # shortest discovered route from hub to pos
-          route_to[hub_pos]=[]
-          initial_key=None
-          found=None
-          episodes=[]
+          # Seed graph from already verified public-observation receipts.
+          def harvest(obj):
+            if isinstance(obj,dict):
+              if 'a' in obj and 'before_agent' in obj and 'after_agent' in obj:
+                b=obj.get('before_agent') or []
+                q=obj.get('after_agent') or []
+                if len(b)==1 and len(q)==1:
+                  edge(tuple(b[0]),int(obj['a']),tuple(q[0]))
+              for v in obj.values(): harvest(v)
+            elif isinstance(obj,list):
+              for v in obj: harvest(v)
 
-          def add_edge(p,a,q,route):
-            graph.setdefault(p,{})[str(a)]=list(q) if q is not None else None
-            if q is not None:
-              cand=route+[a]
-              if q not in route_to or len(cand)<len(route_to[q]):
-                route_to[q]=cand
+          seeded=[]
+          for fn in [
+            'l4-bottom-corridor-probe.json',
+            'l4-portal-map-probes.json',
+            'l4-one-way-gate-probes.json',
+            'l4-approach-transition-trace.json',
+          ]:
+            p=ROOT/fn
+            if p.exists():
+              harvest(json.loads(p.read_text())); seeded.append(fn)
 
-          def known_path(src, predicate, max_depth=18):
-            # Directed BFS over already observed non-blocking transitions.
+          def bfs(src, predicate, depth=18):
             q=deque([(src,[])])
             seen={src}
             while q:
               p,path=q.popleft()
               if predicate(p): return path,p
-              if len(path)>=max_depth: continue
-              for a in action_priority:
-                qv=graph.get(p,{}).get(str(a),'MISSING')
-                if qv in ('MISSING',None): continue
-                nq=tuple(qv)
-                if nq==p or nq in seen: continue
+              if len(path)>=depth: continue
+              for a in priority:
+                nq=graph.get(p,{}).get(a)
+                if nq is None or nq==p or nq in seen: continue
                 seen.add(nq); q.append((nq,path+[a]))
             return None,None
 
+          def make_hub():
+            last=None
+            for attempt in range(1,5):
+              try:
+                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+                if env is None: raise RuntimeError('ENV_CREATE_FAILED')
+                amap={a.value:a for a in env.action_space}; obs=env.observation_space
+                for a in prefix+hub_route:
+                  obs=env.step(amap[a])
+                  if obs is None: raise RuntimeError('NO_OBS_PREFIX')
+                f=np.asarray(obs.frame[-1],dtype=np.int16)
+                if obs.levels_completed!=3 or pos(f)!=hub:
+                  raise RuntimeError(f'BAD_HUB:{obs.levels_completed}:{pos(f)}')
+                return env,amap,obs
+              except Exception as e:
+                last=type(e).__name__
+                time.sleep(min(2*attempt,6))
+            raise RuntimeError(f'MAKE_HUB_RETRIES_EXHAUSTED:{last}')
+
+          initial_key=None
+          found=None
+          episodes=[]
+          network_failures=0
+
           for ep in range(1,max_episodes+1):
-            env,amap,obs=make_env()
+            # Choose nearest reachable state with at least one untried action.
+            route,target=bfs(hub,lambda p:any(a not in graph.get(p,{}) for a in priority),depth=max_steps-1)
+            if target is None:
+              break
+            try:
+              env,amap,obs=make_hub()
+            except Exception as e:
+              network_failures+=1
+              episodes.append({'episode':ep,'error':type(e).__name__,'stage':'make_hub'})
+              continue
+
             f=np.asarray(obs.frame[-1],dtype=np.int16)
-            pos=agent_pos(f)
-            ks=key_state(f)
+            ks=key(f)
             if initial_key is None: initial_key=ks
-            ep_actions=[]; discoveries=[]
+            cur=hub; actions=[]; discoveries=[]; failed=False
 
-            for step in range(1,max_episode_steps+1):
-              # Prefer an untried action at the current position.
-              tried=graph.get(pos,{})
-              untried=[a for a in action_priority if str(a) not in tried]
-              if untried:
-                a=untried[0]
-              else:
-                # Navigate through known graph to nearest state with an untried action.
-                path,target=known_path(pos,lambda p:any(str(a) not in graph.get(p,{}) for a in action_priority),max_depth=max_episode_steps-step)
-                if not path:
+            try:
+              # Replay known directed path from hub to frontier.
+              for a in route:
+                before=cur
+                obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+                cur=pos(f); ks=key(f); actions.append(a)
+                if cur is None: raise RuntimeError('NO_AGENT')
+                edge(before,a,cur)
+              if cur!=target:
+                raise RuntimeError(f'ROUTE_DIVERGED:{cur}:{target}')
+
+              # Spend remaining episode budget discovering local transitions.
+              while len(actions)<max_steps:
+                untried=[a for a in priority if a not in graph.get(cur,{})]
+                if untried:
+                  a=untried[0]
+                else:
+                  path2,t2=bfs(cur,lambda p:any(a not in graph.get(p,{}) for a in priority),depth=max_steps-len(actions))
+                  if not path2: break
+                  a=path2[0]
+
+                before=cur; before_key=ks
+                obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+                cur=pos(f); ks=key(f); actions.append(a)
+                if cur is None: raise RuntimeError('NO_AGENT_AFTER_STEP')
+                is_new=a not in graph.get(before,{})
+                edge(before,a,cur)
+                if is_new:
+                  discoveries.append({
+                    'a':a,'from':list(before),'to':list(cur),
+                    'key_changed':ks!=before_key,
+                    'color11_total':int((f==11).sum()),
+                    'levels':obs.levels_completed,
+                    'state':obs.state.value,
+                  })
+                if ks!=initial_key:
+                  found={
+                    'episode':ep,
+                    'route_from_hub':actions,
+                    'l4_route_from_start':hub_route+actions,
+                    'position':list(cur),
+                    'initial_key':{'color':initial_key[0],'mask':list(initial_key[1])},
+                    'changed_key':{'color':ks[0],'mask':list(ks[1])},
+                    'levels_completed':obs.levels_completed,
+                    'state':obs.state.value,
+                    'color11_total':int((f==11).sum()),
+                  }
                   break
-                # Execute only first navigation step; loop re-evaluates after transition.
-                a=path[0]
+                if obs.levels_completed>3 or obs.state.value!='NOT_FINISHED':
+                  found={'episode':ep,'route_from_hub':actions,'event':'LEVEL_OR_STATE_CHANGE','levels_completed':obs.levels_completed,'state':obs.state.value,'position':list(cur)}
+                  break
+            except Exception as e:
+              failed=True; network_failures+=1
+              discoveries.append({'error':type(e).__name__,'stage':'episode'})
 
-              before_pos=pos; before_key=ks
-              obs=env.step(amap[a])
-              if obs is None: break
-              f=np.asarray(obs.frame[-1],dtype=np.int16)
-              pos=agent_pos(f); ks=key_state(f)
-              ep_actions.append(a)
-              if pos is None:
-                discoveries.append({'step':step,'a':a,'from':list(before_pos),'to':None,'kind':'NO_AGENT'})
-                break
-              is_new = str(a) not in graph.get(before_pos,{})
-              add_edge(before_pos,a,pos,route_to.get(before_pos,[]))
-              if is_new:
-                discoveries.append({'step':step,'a':a,'from':list(before_pos),'to':list(pos),'key_changed':ks!=before_key,'color11_total':int((f==11).sum())})
-              if ks!=initial_key:
-                full_route=hub_route+ep_actions
-                found={
-                  'episode':ep,
-                  'episode_actions':ep_actions,
-                  'l4_route_from_start':full_route,
-                  'position':list(pos),
-                  'initial_key':{'color':initial_key[0],'mask':list(initial_key[1])},
-                  'changed_key':{'color':ks[0],'mask':list(ks[1])},
-                  'levels_completed':obs.levels_completed,
-                  'state':obs.state.value,
-                  'color11_total':int((f==11).sum()),
-                }
-                break
-              if obs.levels_completed>3 or obs.state.value!='NOT_FINISHED':
-                found={'episode':ep,'episode_actions':ep_actions,'event':'LEVEL_OR_STATE_CHANGE','levels_completed':obs.levels_completed,'state':obs.state.value,'position':list(pos)}
-                break
-            episodes.append({'episode':ep,'actions':ep_actions,'discoveries':discoveries,'end_pos':None if pos is None else list(pos),'end_key':{'color':ks[0],'mask':list(ks[1])}})
+            episodes.append({'episode':ep,'frontier':list(target),'route_to_frontier':route,'actions':actions,'discoveries':discoveries,'failed':failed,'end_pos':None if cur is None else list(cur)})
             if found: break
 
-          # Serialize graph without sensitive runtime identifiers.
-          graph_out={f'{p[0]},{p[1]}':edges for p,edges in sorted(graph.items())}
-          routes_out={f'{p[0]},{p[1]}':r for p,r in sorted(route_to.items(),key=lambda kv:(len(kv[1]),kv[0]))}
+          routes={}
+          # Export shortest known routes from hub to all reachable positions.
+          q=deque([(hub,[])]); seen={hub}
+          while q:
+            p,r=q.popleft(); routes[f'{p[0]},{p[1]}']=r
+            for a in priority:
+              nq=graph.get(p,{}).get(a)
+              if nq is None or nq==p or nq in seen: continue
+              seen.add(nq); q.append((nq,r+[a]))
+
           out={
+            'seeded_receipts':seeded,
             'episodes_run':len(episodes),
+            'network_failures':network_failures,
             'initial_key':None if initial_key is None else {'color':initial_key[0],'mask':list(initial_key[1])},
             'found':found,
             'graph_nodes':len(graph),
-            'reachable_positions':len(route_to),
-            'graph':graph_out,
-            'shortest_routes_from_hub':routes_out,
+            'reachable_positions':len(routes),
+            'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in sorted(edges.items())} for p,edges in sorted(graph.items())},
+            'shortest_routes_from_hub':routes,
             'episodes':episodes,
             'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
           }
-          Path('public_benchmark/arc-agi-3/dev/l4-deterministic-transition-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          (ROOT/'l4-resilient-transition-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
       - name: Persist explorer receipt
+        if: always()
         run: |
+          test -f public_benchmark/arc-agi-3/dev/l4-resilient-transition-explorer.json || exit 0
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-deterministic-transition-explorer.json
-          git commit -m 'benchmark: save L4 deterministic transition explorer receipt [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-resilient-transition-explorer.json
+          git commit -m 'benchmark: save resilient L4 transition explorer [skip ci]' || exit 0
           git push
