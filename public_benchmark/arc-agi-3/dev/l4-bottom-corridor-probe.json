@@ -1,0 +1,422 @@
+{
+  "row50": [
+    {
+      "c": 0,
+      "counts": {
+        "4": 15,
+        "5": 10
+      },
+      "x": 4,
+      "y": 50
+    },
+    {
+      "c": 1,
+      "counts": {
+        "4": 21,
+        "5": 4
+      },
+      "x": 9,
+      "y": 50
+    },
+    {
+      "c": 2,
+      "counts": {
+        "4": 25
+      },
+      "x": 14,
+      "y": 50
+    },
+    {
+      "c": 3,
+      "counts": {
+        "4": 25
+      },
+      "x": 19,
+      "y": 50
+    },
+    {
+      "c": 4,
+      "counts": {
+        "3": 25
+      },
+      "x": 24,
+      "y": 50
+    },
+    {
+      "c": 5,
+      "counts": {
+        "3": 25
+      },
+      "x": 29,
+      "y": 50
+    },
+    {
+      "c": 6,
+      "counts": {
+        "11": 8,
+        "3": 17
+      },
+      "x": 34,
+      "y": 50
+    },
+    {
+      "c": 7,
+      "counts": {
+        "4": 25
+      },
+      "x": 39,
+      "y": 50
+    },
+    {
+      "c": 8,
+      "counts": {
+        "4": 25
+      },
+      "x": 44,
+      "y": 50
+    },
+    {
+      "c": 9,
+      "counts": {
+        "3": 25
+      },
+      "x": 49,
+      "y": 50
+    },
+    {
+      "c": 10,
+      "counts": {
+        "3": 25
+      },
+      "x": 54,
+      "y": 50
+    },
+    {
+      "c": 11,
+      "counts": {
+        "4": 25
+      },
+      "x": 59,
+      "y": 50
+    }
+  ],
+  "tail": [
+    4,
+    4,
+    4,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    2,
+    3,
+    3,
+    3,
+    3,
+    3
+  ],
+  "trace": [
+    {
+      "a": 4,
+      "after_agent": [
+        [
+          24,
+          15
+        ]
+      ],
+      "before_agent": [
+        [
+          19,
+          15
+        ]
+      ],
+      "color11_total": 90,
+      "diff_n": 52,
+      "i": 1,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 4,
+      "after_agent": [
+        [
+          29,
+          15
+        ]
+      ],
+      "before_agent": [
+        [
+          24,
+          15
+        ]
+      ],
+      "color11_total": 88,
+      "diff_n": 52,
+      "i": 2,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 4,
+      "after_agent": [
+        [
+          34,
+          15
+        ]
+      ],
+      "before_agent": [
+        [
+          29,
+          15
+        ]
+      ],
+      "color11_total": 86,
+      "diff_n": 52,
+      "i": 3,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          20
+        ]
+      ],
+      "before_agent": [
+        [
+          34,
+          15
+        ]
+      ],
+      "color11_total": 84,
+      "diff_n": 52,
+      "i": 4,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          25
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          20
+        ]
+      ],
+      "color11_total": 82,
+      "diff_n": 52,
+      "i": 5,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          30
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          25
+        ]
+      ],
+      "color11_total": 80,
+      "diff_n": 52,
+      "i": 6,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          35
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          30
+        ]
+      ],
+      "color11_total": 78,
+      "diff_n": 52,
+      "i": 7,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          40
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          35
+        ]
+      ],
+      "color11_total": 76,
+      "diff_n": 52,
+      "i": 8,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          45
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          40
+        ]
+      ],
+      "color11_total": 74,
+      "diff_n": 52,
+      "i": 9,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 2,
+      "after_agent": [
+        [
+          54,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          45
+        ]
+      ],
+      "color11_total": 72,
+      "diff_n": 52,
+      "i": 10,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 3,
+      "after_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          54,
+          50
+        ]
+      ],
+      "color11_total": 70,
+      "diff_n": 52,
+      "i": 11,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 3,
+      "after_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "color11_total": 68,
+      "diff_n": 2,
+      "i": 12,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 3,
+      "after_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "color11_total": 66,
+      "diff_n": 2,
+      "i": 13,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 3,
+      "after_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "color11_total": 64,
+      "diff_n": 2,
+      "i": 14,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    },
+    {
+      "a": 3,
+      "after_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "before_agent": [
+        [
+          49,
+          50
+        ]
+      ],
+      "color11_total": 62,
+      "diff_n": 2,
+      "i": 15,
+      "levels": 3,
+      "state": "NOT_FINISHED"
+    }
+  ]
+}
