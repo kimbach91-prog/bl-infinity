@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 matched-key fresh-energy candidate
+name: ARC3 ls20 L3 energy-tight completion
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Run matched key with post-rotation refill
+      - name: Test blocked-move rotator retrigger and door
         run: |
           python - <<'PY'
           import json, hashlib
@@ -28,19 +28,27 @@ jobs:
           import arc_agi
           from arc_agi import OperationMode
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          pre=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3] + [4,3]
-          # matched at r1c8. Detour via r2c5 refiller, then approach door from above with fresh energy.
-          post=[4]+[2]*3+[3]*4+[1]*2 + [2]*2+[4]*4+[2]*4
-          l3=pre+post
+          # Reach color rotator once, r5c2 refill, then shape rotator once.
+          pre=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3]
+          # While standing on shape rotator, DOWN is blocked by wall. If collision retriggers rotator,
+          # this gets the second 90-degree rotation in one action; then 8 actions to door.
+          tail=[2]+[4]+[2]*7
+          l3=pre+tail
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
           executed=[]; trace=[]
           for i,a in enumerate(base+l3,1):
             obs=env.step(amap[a]); executed.append(a)
-            if i>len(base)+len(pre)-2:
+            if i>=len(base)+33:
               f=np.asarray(obs.frame[-1],dtype=np.int16)
-              trace.append({'l3_i':i-len(base),'a':a,'levels':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum())})
+              cur=f[55:61,3:9]; vals,cts=np.unique(cur,return_counts=True); candidates=[(int(c),int(n)) for c,n in zip(vals,cts) if int(c)!=5]; color=max(candidates,key=lambda z:z[1])[0]
+              mask=[]
+              for r in range(3):
+                row=[]
+                for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
+                mask.append(row)
+              trace.append({'l3_i':i-len(base),'a':a,'levels':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum()),'key_color':color,'key_mask':mask})
             if obs.levels_completed>=3 or obs.state.value!='NOT_FINISHED': break
           f=np.asarray(obs.frame[-1],dtype=np.int16)
           out={'candidate_actions':len(l3),'executed_l3':len(executed)-len(base),'levels_completed':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum()),'route_sha256':hashlib.sha256(','.join(map(str,executed)).encode()).hexdigest(),'executed_actions':executed,'tail_trace':trace}
@@ -49,9 +57,9 @@ jobs:
       - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-matched-key-fresh-energy.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-energy-tight-completion.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-matched-key-fresh-energy.json
-          git commit -m 'benchmark: save L3 fresh-energy door candidate [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-energy-tight-completion.json
+          git commit -m 'benchmark: save energy-tight L3 completion probe [skip ci]'
           git push
