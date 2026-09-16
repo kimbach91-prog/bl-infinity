@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 key-state rotator decoder
+name: ARC3 ls20 L3 color-match gate probe
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Decode target/current key and accessible rotator cycle
+      - name: Test right gate after matching target color
         run: |
           python - <<'PY'
           import json
@@ -27,54 +27,45 @@ jobs:
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
-
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
+          # touch color rotator once, recharge at r5c2, then approach upper-right gate and shape rotator.
+          suffix=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3]
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
           for a in base: obs=env.step(amap[a])
-
-          def key_state(f):
-            # Current key is the 6x6 scaled key inside bottom-left panel; target is 3x3 key inside exit door.
-            cur=f[55:61,3:9]
-            tgt=f[51:54,55:58]
-            # dominant non-panel color in current-key region
-            cur_vals,cur_cts=np.unique(cur,return_counts=True)
-            cur_color=int(cur_vals[np.argmax(cur_cts)])
-            # choose non-door-border/background target color by most frequent in 3x3 region
-            tgt_vals,tgt_cts=np.unique(tgt,return_counts=True)
-            tgt_color=int(tgt_vals[np.argmax(tgt_cts)])
-            cur_mask=[]
+          def agent(f):
+            out=[]
+            for y in range(0,50):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5): continue
+                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
+            return out
+          def current_key(f):
+            cur=f[55:61,3:9]; vals,cts=np.unique(cur,return_counts=True); color=int(vals[np.argmax(cts)])
+            mask=[]
             for r in range(3):
               row=[]
-              for c in range(3):
-                block=cur[2*r:2*r+2,2*c:2*c+2]
-                row.append(1 if int((block==cur_color).sum())>=2 else 0)
-              cur_mask.append(row)
-            tgt_mask=(tgt==tgt_color).astype(int).tolist()
-            return {'current_color':cur_color,'current_mask':cur_mask,'target_color':tgt_color,'target_mask':tgt_mask,'current_raw':cur.tolist(),'target_raw':tgt.tolist()}
-
-          states=[]
-          f=np.asarray(obs.frame[-1],dtype=np.int16)
-          states.append({'touches':0,'meter11':int((f==11).sum()),'key':key_state(f)})
-          # Reach accessible rotator at r8c4: 8U, L, 8D.
-          to_rot=[1]*8+[3]+[2]*8
-          for a in to_rot: obs=env.step(amap[a])
-          f=np.asarray(obs.frame[-1],dtype=np.int16)
-          states.append({'touches':1,'meter11':int((f==11).sum()),'key':key_state(f)})
-          # leave one cell up and re-enter down for additional rotations
-          for touch in (2,3,4):
-            obs=env.step(amap[1]); obs=env.step(amap[2])
-            f=np.asarray(obs.frame[-1],dtype=np.int16)
-            states.append({'touches':touch,'meter11':int((f==11).sum()),'key':key_state(f)})
-          Path('result.json').write_text(json.dumps(states,indent=2,sort_keys=True))
+              for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
+              mask.append(row)
+            return {'color':color,'mask':mask}
+          trace=[]
+          for i,a in enumerate(suffix,1):
+            prev=np.asarray(obs.frame[-1],dtype=np.int16)
+            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+            if i>=30:
+              trace.append({'i':i,'a':a,'agent':agent(f),'meter11':int((f==11).sum()),'key':current_key(f),'diff_n':int((f!=prev).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+              if obs.levels_completed>=3 or obs.state.value!='NOT_FINISHED': break
+          Path('result.json').write_text(json.dumps({'suffix':suffix,'trace':trace,'levels':obs.levels_completed,'state':obs.state.value},indent=2,sort_keys=True))
           PY
       - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-key-state-rotator-cycle.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-color-match-gate-probe.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-key-state-rotator-cycle.json
-          git commit -m 'benchmark: decode L3 key-state rotator cycle [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-color-match-gate-probe.json
+          git commit -m 'benchmark: probe L3 gate after color match [skip ci]'
           git push
