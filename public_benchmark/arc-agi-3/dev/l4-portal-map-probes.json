@@ -1,0 +1,567 @@
+{
+  "P_A_r4c6_from_above": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      2
+    ],
+    "trace": [
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            29,
+            15
+          ]
+        ],
+        "before_agent": [
+          [
+            24,
+            15
+          ]
+        ],
+        "color11_total": 88,
+        "diff_n": 52,
+        "i": 11,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            34,
+            15
+          ]
+        ],
+        "before_agent": [
+          [
+            29,
+            15
+          ]
+        ],
+        "color11_total": 86,
+        "diff_n": 52,
+        "i": 12,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            54,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            34,
+            15
+          ]
+        ],
+        "color11_total": 84,
+        "diff_n": 52,
+        "i": 13,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "P_B_r4c5_from_left": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      2,
+      4,
+      4
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            19,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            19,
+            15
+          ]
+        ],
+        "color11_total": 90,
+        "diff_n": 52,
+        "i": 10,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            24,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            19,
+            20
+          ]
+        ],
+        "color11_total": 88,
+        "diff_n": 52,
+        "i": 11,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            24,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            24,
+            20
+          ]
+        ],
+        "color11_total": 86,
+        "diff_n": 2,
+        "i": 12,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "P_C_r6c7_from_right": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      2,
+      2,
+      2,
+      3,
+      3,
+      3
+    ],
+    "trace": [
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            49,
+            30
+          ]
+        ],
+        "before_agent": [
+          [
+            54,
+            30
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            44,
+            30
+          ]
+        ],
+        "before_agent": [
+          [
+            49,
+            30
+          ]
+        ],
+        "color11_total": 76,
+        "diff_n": 52,
+        "i": 17,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            44,
+            30
+          ]
+        ],
+        "before_agent": [
+          [
+            44,
+            30
+          ]
+        ],
+        "color11_total": 74,
+        "diff_n": 2,
+        "i": 18,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "P_D_r8c9_from_right": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      2,
+      2,
+      2,
+      2,
+      2,
+      3
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            54,
+            35
+          ]
+        ],
+        "before_agent": [
+          [
+            54,
+            30
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            54,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            54,
+            35
+          ]
+        ],
+        "color11_total": 76,
+        "diff_n": 52,
+        "i": 17,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            54,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            54,
+            40
+          ]
+        ],
+        "color11_total": 74,
+        "diff_n": 2,
+        "i": 18,
+        "key": {
+          "color": 14,
+          "mask": [
+            [
+              0,
+              1,
+              0
+            ],
+            [
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              1,
+              1
+            ]
+          ]
+        },
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  }
+}
