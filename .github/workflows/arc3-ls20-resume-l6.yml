@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 resilient transition explorer
+name: ARC3 ls20 L4 color-rotator explorer
 
 on:
   push:
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Explore L4 graph with retry and seeded receipts
+      - name: Continue L4 graph until held-key color changes
         run: |
           python - <<'PY'
           import json, logging, hashlib, time
@@ -30,13 +30,12 @@ jobs:
           from arc_agi import OperationMode
 
           logging.disable(logging.INFO)
-
           ROOT=Path('public_benchmark/arc-agi-3/dev')
           prefix=json.loads((ROOT/'l3-dual-refill-final-touch.json').read_text())['executed_actions']
           hub_route=[3,3,3,2,2,3,3,3,3]
           hub=(19,15)
           priority=[2,4,3,1]
-          max_episodes=24
+          max_episodes=30
           max_steps=18
 
           def pos(frame):
@@ -64,35 +63,17 @@ jobs:
                 mask.append(1 if int((block==color).sum())>=2 else 0)
             return (color,tuple(mask))
 
+          seed=json.loads((ROOT/'l4-resilient-transition-explorer.json').read_text())
           graph={}
+          for ps,edges in seed.get('graph',{}).items():
+            x,y=map(int,ps.split(',')); p=(x,y)
+            graph[p]={int(a):tuple(q) for a,q in edges.items()}
+
           def edge(p,a,q):
-            if p is None or q is None: return
-            graph.setdefault(tuple(p),{})[int(a)]=tuple(q)
+            if p is not None and q is not None:
+              graph.setdefault(tuple(p),{})[int(a)]=tuple(q)
 
-          # Seed graph from already verified public-observation receipts.
-          def harvest(obj):
-            if isinstance(obj,dict):
-              if 'a' in obj and 'before_agent' in obj and 'after_agent' in obj:
-                b=obj.get('before_agent') or []
-                q=obj.get('after_agent') or []
-                if len(b)==1 and len(q)==1:
-                  edge(tuple(b[0]),int(obj['a']),tuple(q[0]))
-              for v in obj.values(): harvest(v)
-            elif isinstance(obj,list):
-              for v in obj: harvest(v)
-
-          seeded=[]
-          for fn in [
-            'l4-bottom-corridor-probe.json',
-            'l4-portal-map-probes.json',
-            'l4-one-way-gate-probes.json',
-            'l4-approach-transition-trace.json',
-          ]:
-            p=ROOT/fn
-            if p.exists():
-              harvest(json.loads(p.read_text())); seeded.append(fn)
-
-          def bfs(src, predicate, depth=18):
+          def bfs(src,predicate,depth=18):
             q=deque([(src,[])])
             seen={src}
             while q:
@@ -106,7 +87,7 @@ jobs:
             return None,None
 
           def make_hub():
-            last=None
+            last='unknown'
             for attempt in range(1,5):
               try:
                 arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
@@ -118,47 +99,38 @@ jobs:
                   if obs is None: raise RuntimeError('NO_OBS_PREFIX')
                 f=np.asarray(obs.frame[-1],dtype=np.int16)
                 if obs.levels_completed!=3 or pos(f)!=hub:
-                  raise RuntimeError(f'BAD_HUB:{obs.levels_completed}:{pos(f)}')
+                  raise RuntimeError('BAD_HUB')
                 return env,amap,obs
               except Exception as e:
-                last=type(e).__name__
-                time.sleep(min(2*attempt,6))
-            raise RuntimeError(f'MAKE_HUB_RETRIES_EXHAUSTED:{last}')
+                last=type(e).__name__; time.sleep(min(2*attempt,6))
+            raise RuntimeError('MAKE_HUB_RETRIES_EXHAUSTED_'+last)
 
-          initial_key=None
+          initial_color=14
           found=None
           episodes=[]
           network_failures=0
 
           for ep in range(1,max_episodes+1):
-            # Choose nearest reachable state with at least one untried action.
             route,target=bfs(hub,lambda p:any(a not in graph.get(p,{}) for a in priority),depth=max_steps-1)
-            if target is None:
-              break
+            if target is None: break
             try:
               env,amap,obs=make_hub()
             except Exception as e:
               network_failures+=1
-              episodes.append({'episode':ep,'error':type(e).__name__,'stage':'make_hub'})
+              episodes.append({'episode':ep,'stage':'make_hub','error':type(e).__name__})
               continue
 
-            f=np.asarray(obs.frame[-1],dtype=np.int16)
-            ks=key(f)
-            if initial_key is None: initial_key=ks
             cur=hub; actions=[]; discoveries=[]; failed=False
-
+            f=np.asarray(obs.frame[-1],dtype=np.int16); ks=key(f)
             try:
-              # Replay known directed path from hub to frontier.
               for a in route:
                 before=cur
                 obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
                 cur=pos(f); ks=key(f); actions.append(a)
                 if cur is None: raise RuntimeError('NO_AGENT')
                 edge(before,a,cur)
-              if cur!=target:
-                raise RuntimeError(f'ROUTE_DIVERGED:{cur}:{target}')
+              if cur!=target: raise RuntimeError('ROUTE_DIVERGED')
 
-              # Spend remaining episode budget discovering local transitions.
               while len(actions)<max_steps:
                 untried=[a for a in priority if a not in graph.get(cur,{})]
                 if untried:
@@ -167,7 +139,6 @@ jobs:
                   path2,t2=bfs(cur,lambda p:any(a not in graph.get(p,{}) for a in priority),depth=max_steps-len(actions))
                   if not path2: break
                   a=path2[0]
-
                 before=cur; before_key=ks
                 obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
                 cur=pos(f); ks=key(f); actions.append(a)
@@ -175,39 +146,18 @@ jobs:
                 is_new=a not in graph.get(before,{})
                 edge(before,a,cur)
                 if is_new:
-                  discoveries.append({
-                    'a':a,'from':list(before),'to':list(cur),
-                    'key_changed':ks!=before_key,
-                    'color11_total':int((f==11).sum()),
-                    'levels':obs.levels_completed,
-                    'state':obs.state.value,
-                  })
-                if ks!=initial_key:
-                  found={
-                    'episode':ep,
-                    'route_from_hub':actions,
-                    'l4_route_from_start':hub_route+actions,
-                    'position':list(cur),
-                    'initial_key':{'color':initial_key[0],'mask':list(initial_key[1])},
-                    'changed_key':{'color':ks[0],'mask':list(ks[1])},
-                    'levels_completed':obs.levels_completed,
-                    'state':obs.state.value,
-                    'color11_total':int((f==11).sum()),
-                  }
-                  break
-                if obs.levels_completed>3 or obs.state.value!='NOT_FINISHED':
-                  found={'episode':ep,'route_from_hub':actions,'event':'LEVEL_OR_STATE_CHANGE','levels_completed':obs.levels_completed,'state':obs.state.value,'position':list(cur)}
+                  discoveries.append({'a':a,'from':list(before),'to':list(cur),'before_key':{'color':before_key[0],'mask':list(before_key[1])},'after_key':{'color':ks[0],'mask':list(ks[1])},'color11_total':int((f==11).sum())})
+                if ks[0]!=initial_color:
+                  found={'episode':ep,'route_from_hub':actions,'l4_route_from_start':hub_route+actions,'position':list(cur),'key':{'color':ks[0],'mask':list(ks[1])},'color11_total':int((f==11).sum()),'levels_completed':obs.levels_completed,'state':obs.state.value}
                   break
             except Exception as e:
               failed=True; network_failures+=1
               discoveries.append({'error':type(e).__name__,'stage':'episode'})
-
             episodes.append({'episode':ep,'frontier':list(target),'route_to_frontier':route,'actions':actions,'discoveries':discoveries,'failed':failed,'end_pos':None if cur is None else list(cur)})
             if found: break
 
-          routes={}
-          # Export shortest known routes from hub to all reachable positions.
-          q=deque([(hub,[])]); seen={hub}
+          # shortest position routes in final directed graph
+          routes={}; q=deque([(hub,[])]); seen={hub}
           while q:
             p,r=q.popleft(); routes[f'{p[0]},{p[1]}']=r
             for a in priority:
@@ -215,27 +165,15 @@ jobs:
               if nq is None or nq==p or nq in seen: continue
               seen.add(nq); q.append((nq,r+[a]))
 
-          out={
-            'seeded_receipts':seeded,
-            'episodes_run':len(episodes),
-            'network_failures':network_failures,
-            'initial_key':None if initial_key is None else {'color':initial_key[0],'mask':list(initial_key[1])},
-            'found':found,
-            'graph_nodes':len(graph),
-            'reachable_positions':len(routes),
-            'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in sorted(edges.items())} for p,edges in sorted(graph.items())},
-            'shortest_routes_from_hub':routes,
-            'episodes':episodes,
-            'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-          }
-          (ROOT/'l4-resilient-transition-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          out={'found':found,'episodes_run':len(episodes),'network_failures':network_failures,'graph_nodes':len(graph),'reachable_positions':len(routes),'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in sorted(edges.items())} for p,edges in sorted(graph.items())},'shortest_routes_from_hub':routes,'episodes':episodes,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest()}
+          (ROOT/'l4-color-rotator-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist explorer receipt
+      - name: Persist color explorer receipt
         if: always()
         run: |
-          test -f public_benchmark/arc-agi-3/dev/l4-resilient-transition-explorer.json || exit 0
+          test -f public_benchmark/arc-agi-3/dev/l4-color-rotator-explorer.json || exit 0
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-resilient-transition-explorer.json
-          git commit -m 'benchmark: save resilient L4 transition explorer [skip ci]' || exit 0
+          git add public_benchmark/arc-agi-3/dev/l4-color-rotator-explorer.json
+          git commit -m 'benchmark: save L4 color-rotator explorer [skip ci]' || exit 0
           git push
