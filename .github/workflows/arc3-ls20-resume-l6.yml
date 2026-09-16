@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 final-door trace
+name: ARC3 ls20 L3 matched-key fresh-energy candidate
 
 on:
   push:
@@ -19,59 +19,39 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Trace matched-key door approach
+      - name: Run matched key with post-rotation refill
         run: |
           python - <<'PY'
-          import json
+          import json, hashlib
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          l3=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3] + [4,3] + [4]+[2]*7
+          pre=[1]*8+[3]+[2]*8 + [1]*3+[3]*2 + [4]*7+[1]*4+[3] + [4,3]
+          # matched at r1c8. Detour via r2c5 refiller, then approach door from above with fresh energy.
+          post=[4]+[2]*3+[3]*4+[1]*2 + [2]*2+[4]*4+[2]*4
+          l3=pre+post
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          for a in base: obs=env.step(amap[a])
-          def agent(f):
-            out=[]
-            for y in range(0,50):
-              for x in range(0,60):
-                w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5): continue
-                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
-            return out
-          def key_state(f):
-            cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True)
-            candidates=[(int(c),int(n)) for c,n in zip(vals,cts) if int(c)!=5]
-            color=max(candidates,key=lambda z:z[1])[0]
-            mask=[]
-            for r in range(3):
-              row=[]
-              for c in range(3): row.append(1 if int((cur[2*r:2*r+2,2*c:2*c+2]==color).sum())>=2 else 0)
-              mask.append(row)
-            tgt=f[51:54,55:58]
-            tv,tc=np.unique(tgt,return_counts=True)
-            tcands=[(int(c),int(n)) for c,n in zip(tv,tc) if int(c)!=5]
-            tcolor=max(tcands,key=lambda z:z[1])[0]
-            tmask=(tgt==tcolor).astype(int).tolist()
-            return {'color':color,'mask':mask,'target_color':tcolor,'target_mask':tmask,'cur_raw':cur.tolist(),'tgt_raw':tgt.tolist()}
-          trace=[]
-          for i,a in enumerate(l3,1):
-            before=np.asarray(obs.frame[-1],dtype=np.int16)
-            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-            if i>=33:
-              trace.append({'i':i,'a':a,'agent':agent(f),'meter11':int((f==11).sum()),'key':key_state(f),'door_patch':f[47:57,51:61].tolist(),'diff_n':int((f!=before).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-          Path('result.json').write_text(json.dumps(trace,indent=2,sort_keys=True))
+          executed=[]; trace=[]
+          for i,a in enumerate(base+l3,1):
+            obs=env.step(amap[a]); executed.append(a)
+            if i>len(base)+len(pre)-2:
+              f=np.asarray(obs.frame[-1],dtype=np.int16)
+              trace.append({'l3_i':i-len(base),'a':a,'levels':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum())})
+            if obs.levels_completed>=3 or obs.state.value!='NOT_FINISHED': break
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+          out={'candidate_actions':len(l3),'executed_l3':len(executed)-len(base),'levels_completed':obs.levels_completed,'state':obs.state.value,'meter11':int((f==11).sum()),'route_sha256':hashlib.sha256(','.join(map(str,executed)).encode()).hexdigest(),'executed_actions':executed,'tail_trace':trace}
+          Path('result.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist trace
+      - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-final-door-trace.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-matched-key-fresh-energy.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-final-door-trace.json
-          git commit -m 'benchmark: trace L3 final door interaction [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-matched-key-fresh-energy.json
+          git commit -m 'benchmark: save L3 fresh-energy door candidate [skip ci]'
           git push
