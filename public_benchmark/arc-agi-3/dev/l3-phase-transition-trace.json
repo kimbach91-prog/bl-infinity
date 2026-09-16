@@ -1,0 +1,258 @@
+[
+  {
+    "i": 15,
+    "a": 2,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        35
+      ]
+    ],
+    "meter11": 40,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 16,
+    "a": 2,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        40
+      ]
+    ],
+    "meter11": 36,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 17,
+    "a": 2,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        45
+      ]
+    ],
+    "meter11": 32,
+    "diff_n": 77,
+    "c8": 0,
+    "c14": 0
+  },
+  {
+    "i": 18,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        40
+      ]
+    ],
+    "meter11": 28,
+    "diff_n": 53,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 19,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        35
+      ]
+    ],
+    "meter11": 24,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 20,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        30
+      ]
+    ],
+    "meter11": 20,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 21,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        29,
+        25
+      ]
+    ],
+    "meter11": 16,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 22,
+    "a": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        9,
+        45
+      ]
+    ],
+    "meter11": 100,
+    "diff_n": 162,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 23,
+    "a": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        45
+      ]
+    ],
+    "meter11": 96,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 24,
+    "a": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        45
+      ]
+    ],
+    "meter11": 92,
+    "diff_n": 4,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 25,
+    "a": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        45
+      ]
+    ],
+    "meter11": 88,
+    "diff_n": 4,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 26,
+    "a": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        45
+      ]
+    ],
+    "meter11": 84,
+    "diff_n": 4,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 27,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        40
+      ]
+    ],
+    "meter11": 80,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 28,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        40
+      ]
+    ],
+    "meter11": 76,
+    "diff_n": 4,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 29,
+    "a": 1,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        14,
+        40
+      ]
+    ],
+    "meter11": 72,
+    "diff_n": 4,
+    "c8": 2,
+    "c14": 2
+  },
+  {
+    "i": 30,
+    "a": 3,
+    "levels": 2,
+    "state": "NOT_FINISHED",
+    "agent": [
+      [
+        9,
+        40
+      ]
+    ],
+    "meter11": 68,
+    "diff_n": 54,
+    "c8": 2,
+    "c14": 2
+  }
+]
