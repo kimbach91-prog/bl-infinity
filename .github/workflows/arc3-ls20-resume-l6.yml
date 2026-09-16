@@ -1,0 +1,75 @@
+name: ARC3 ls20 resume L6 probe
+
+on:
+  push:
+    branches:
+      - deus/arc3-ls20-resume-l6-20260916
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official ARC toolkit
+        run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
+      - name: Replay verified public prefix and inspect Level 3 initial observation
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          python - <<'PY'
+          import json
+          import hashlib
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          route = json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())
+          actions = route['actions']
+          print('ROUTE_ACTIONS', len(actions))
+          print('ROUTE_SHA256', hashlib.sha256(','.join(map(str, actions)).encode('ascii')).hexdigest())
+
+          arcade = arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          env = arcade.make('ls20', save_recording=False, include_frame_data=True)
+          if env is None:
+              raise SystemExit('ENV_CREATE_FAILED')
+          action_map = {a.value: a for a in env.action_space}
+          obs = env.observation_space
+          for i, action_id in enumerate(actions, 1):
+              obs = env.step(action_map[action_id])
+              if obs is None:
+                  raise SystemExit(f'NO_OBS_AT_{i}')
+          print('AFTER_PREFIX_STATE', obs.state.value)
+          print('AFTER_PREFIX_LEVELS', obs.levels_completed)
+          print('AVAILABLE_ACTIONS', [getattr(a, 'value', a) for a in env.action_space])
+
+          frame = np.asarray(obs.frame[-1], dtype=np.int16)
+          print('FRAME_SHAPE', frame.shape)
+          values, counts = np.unique(frame, return_counts=True)
+          print('PALETTE_COUNTS', json.dumps(dict(zip(map(int, values), map(int, counts))), sort_keys=True))
+          for color in values:
+              ys, xs = np.where(frame == color)
+              print('COLOR_BBOX', int(color), int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()), 'N', len(xs))
+          print('FRAME_RLE_BEGIN')
+          for y, row in enumerate(frame):
+              runs=[]
+              start=0
+              cur=int(row[0])
+              for x in range(1, len(row)):
+                  v=int(row[x])
+                  if v != cur:
+                      runs.append([start,x-1,cur])
+                      start=x; cur=v
+              runs.append([start,len(row)-1,cur])
+              if len(runs) > 1 or runs[0][2] != 0:
+                  print(y, json.dumps(runs, separators=(',',':')))
+          print('FRAME_RLE_END')
+          PY
