@@ -1,0 +1,415 @@
+{
+  "G_r4c5_from_right": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      2,
+      3,
+      3
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            39,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            15
+          ]
+        ],
+        "color11_total": 82,
+        "diff_n": 52,
+        "i": 14,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            54,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            20
+          ]
+        ],
+        "color11_total": 80,
+        "diff_n": 52,
+        "i": 15,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 3,
+        "after_agent": [
+          [
+            49,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            54,
+            20
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "G_r5c9_from_left": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      2,
+      4,
+      2,
+      4
+    ],
+    "trace": [
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            44,
+            45
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            20
+          ]
+        ],
+        "color11_total": 80,
+        "diff_n": 52,
+        "i": 15,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            44,
+            45
+          ]
+        ],
+        "before_agent": [
+          [
+            44,
+            45
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 2,
+        "i": 16,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            49,
+            45
+          ]
+        ],
+        "before_agent": [
+          [
+            44,
+            45
+          ]
+        ],
+        "color11_total": 76,
+        "diff_n": 52,
+        "i": 17,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "G_r6c3_from_below": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      2,
+      3,
+      2,
+      2,
+      2,
+      4,
+      1
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            14,
+            35
+          ]
+        ],
+        "before_agent": [
+          [
+            14,
+            30
+          ]
+        ],
+        "color11_total": 82,
+        "diff_n": 52,
+        "i": 14,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            19,
+            45
+          ]
+        ],
+        "before_agent": [
+          [
+            14,
+            35
+          ]
+        ],
+        "color11_total": 80,
+        "diff_n": 52,
+        "i": 15,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 1,
+        "after_agent": [
+          [
+            19,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            19,
+            45
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "G_r6c7_from_above": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      4,
+      4,
+      4,
+      4,
+      2,
+      2,
+      2
+    ],
+    "trace": [
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            39,
+            20
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            15
+          ]
+        ],
+        "color11_total": 82,
+        "diff_n": 52,
+        "i": 14,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            39,
+            5
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            20
+          ]
+        ],
+        "color11_total": 80,
+        "diff_n": 52,
+        "i": 15,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 2,
+        "after_agent": [
+          [
+            39,
+            10
+          ]
+        ],
+        "before_agent": [
+          [
+            39,
+            5
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  },
+  "G_r8c5_from_left": {
+    "path": [
+      3,
+      3,
+      3,
+      2,
+      2,
+      3,
+      3,
+      3,
+      3,
+      2,
+      3,
+      2,
+      2,
+      2,
+      2,
+      4,
+      4,
+      4
+    ],
+    "trace": [
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            19,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            14,
+            40
+          ]
+        ],
+        "color11_total": 78,
+        "diff_n": 52,
+        "i": 16,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            9,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            19,
+            40
+          ]
+        ],
+        "color11_total": 76,
+        "diff_n": 52,
+        "i": 17,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      },
+      {
+        "a": 4,
+        "after_agent": [
+          [
+            14,
+            40
+          ]
+        ],
+        "before_agent": [
+          [
+            9,
+            40
+          ]
+        ],
+        "color11_total": 74,
+        "diff_n": 52,
+        "i": 18,
+        "levels": 3,
+        "state": "NOT_FINISHED"
+      }
+    ]
+  }
+}
