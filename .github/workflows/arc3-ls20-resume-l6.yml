@@ -7,10 +7,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -24,7 +25,7 @@ jobs:
         env:
           PYTHONUNBUFFERED: '1'
         run: |
-          python - <<'PY'
+          python - <<'PY' | tee arc3_probe_output.txt
           import json
           import hashlib
           from pathlib import Path
@@ -73,3 +74,12 @@ jobs:
                   print(y, json.dumps(runs, separators=(',',':')))
           print('FRAME_RLE_END')
           PY
+      - name: Commit probe receipt to isolated branch
+        run: |
+          mkdir -p public_benchmark/arc-agi-3/dev
+          cp arc3_probe_output.txt public_benchmark/arc-agi-3/dev/l3-initial-probe.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add public_benchmark/arc-agi-3/dev/l3-initial-probe.txt
+          git commit -m 'benchmark: save L3 public-observation probe [skip ci]'
+          git push
