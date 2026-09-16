@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 special-tile probes
+name: ARC3 ls20 L3 object-component decoder
 
 on:
   push:
@@ -13,55 +13,63 @@ jobs:
   probe:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 12
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe two public-frame special cells
+      - name: Decode public-frame object components
         run: |
           python - <<'PY'
           import json
+          from collections import deque
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          cases={
-            'r2c5_color11':[1]*8+[3]+[2]*2+[4],
-            'r5c2_color11':[1]*8+[3]+[2]*5+[3]*2,
+          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+          amap={a.value:a for a in env.action_space}; obs=env.observation_space
+          for a in base: obs=env.step(amap[a])
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+          H,W=f.shape
+          comps={}
+          for color in sorted(map(int,np.unique(f))):
+            seen=set(); arr=[]
+            for y,x in zip(*np.where(f==color)):
+              y=int(y); x=int(x)
+              if (y,x) in seen: continue
+              q=[(y,x)]; seen.add((y,x)); pts=[]
+              while q:
+                cy,cx=q.pop(); pts.append((cy,cx))
+                for dy,dx in ((1,0),(-1,0),(0,1),(0,-1)):
+                  ny,nx=cy+dy,cx+dx
+                  if 0<=ny<H and 0<=nx<W and (ny,nx) not in seen and int(f[ny,nx])==color:
+                    seen.add((ny,nx)); q.append((ny,nx))
+              ys=[p[0] for p in pts]; xs=[p[1] for p in pts]
+              arr.append({'n':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)]})
+            arr.sort(key=lambda z:(-z['n'],z['bbox']))
+            comps[str(color)]=arr[:30]
+          # Exact small patches around all non-floor/wall playable special cells plus UI strips.
+          patches={
+            'r1c8':f[8:17,46:55].tolist(),
+            'r2c5':f[13:22,31:40].tolist(),
+            'r5c2':f[28:37,16:25].tolist(),
+            'r8c4':f[42:51,26:35].tolist(),
+            'bottom_left_ui':f[50:64,0:24].tolist(),
+            'bottom_right':f[42:64,46:64].tolist(),
+            'top_left':f[0:18,0:18].tolist()
           }
-          def detect_agent(f):
-            out=[]
-            for y in range(0,50):
-              for x in range(0,60):
-                w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5): continue
-                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
-            return out
-          results={}
-          for name,suffix in cases.items():
-            arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-            env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-            amap={a.value:a for a in env.action_space}; obs=env.observation_space
-            for a in base: obs=env.step(amap[a])
-            trace=[]
-            for i,a in enumerate(suffix,1):
-              prev=np.asarray(obs.frame[-1],dtype=np.int16)
-              obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-              if i>=len(suffix)-1:
-                trace.append({'i':i,'a':a,'agent':detect_agent(f),'meter11':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-            results[name]={'suffix':suffix,'trace':trace,'levels':obs.levels_completed,'state':obs.state.value}
-          Path('result.json').write_text(json.dumps(results,indent=2,sort_keys=True))
+          Path('result.json').write_text(json.dumps({'palette':{str(int(k)):int(v) for k,v in zip(*np.unique(f,return_counts=True))},'components':comps,'patches':patches},indent=2,sort_keys=True))
           PY
       - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-special-tile-probes.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-object-components.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-special-tile-probes.json
-          git commit -m 'benchmark: probe L3 public special tiles [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-object-components.json
+          git commit -m 'benchmark: decode L3 public object components [skip ci]'
           git push
