@@ -1,4 +1,4 @@
-name: ARC3 ls20 L5 initial public decoder
+name: ARC3 ls20 L5 short key-state explorer
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  decode:
+  explore:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,10 +19,11 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Replay verified 4/7 prefix and decode L5
+      - name: Explore L5 transition graph until key changes
         run: |
           python - <<'PY'
-          import json, logging, hashlib
+          import json, logging, hashlib, time
+          from collections import deque
           from pathlib import Path
           import numpy as np
           import arc_agi
@@ -31,88 +32,120 @@ jobs:
           logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
           prefix=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
+          start=(49,40)
+          priority=[1,3,4,2]
+          max_episodes=20
+          max_steps=18
 
-          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-          if env is None: raise SystemExit('ENV_CREATE_FAILED')
-          amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          for i,a in enumerate(prefix,1):
-            obs=env.step(amap[a])
-            if obs is None: raise SystemExit(f'NO_OBS_{i}')
-          if obs.levels_completed!=4: raise SystemExit(f'PREFIX_NOT_4:{obs.levels_completed}')
-          f=np.asarray(obs.frame[-1],dtype=np.int16); H,W=f.shape
+          def pos(frame):
+            f=np.asarray(frame,dtype=np.int16)
+            for y in range(0,55):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5): continue
+                vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
+            return None
 
-          players=[]
-          for y in range(0,55):
-            for x in range(0,60):
-              w=f[y:y+5,x:x+5]
-              if w.shape!=(5,5): continue
-              vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-              if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: players.append([x,y])
-          if not players: raise SystemExit('PLAYER_NOT_FOUND')
-          px,py=players[0]
-          x0=px%5; y0=py%5
-          xs=list(range(x0,60,5)); ys=list(range(y0,55,5))
+          def key(frame):
+            f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0];mask=[]
+            for r in range(3):
+              for c in range(3):
+                block=cur[2*r:2*r+2,2*c:2*c+2]
+                mask.append(1 if int((block==color).sum())>=2 else 0)
+            return (color,tuple(mask))
 
-          # Connected components, capped to useful top components per color.
-          comps={}
-          for color in sorted(map(int,np.unique(f))):
-            seen=set(); arr=[]
-            for yy,xx in zip(*np.where(f==color)):
-              yy=int(yy);xx=int(xx)
-              if (yy,xx) in seen: continue
-              stack=[(yy,xx)]; seen.add((yy,xx)); pts=[]
-              while stack:
-                cy,cx=stack.pop();pts.append((cy,cx))
-                for dy,dx in ((1,0),(-1,0),(0,1),(0,-1)):
-                  ny,nx=cy+dy,cx+dx
-                  if 0<=ny<H and 0<=nx<W and (ny,nx) not in seen and int(f[ny,nx])==color:
-                    seen.add((ny,nx)); stack.append((ny,nx))
-              yy2=[p[0] for p in pts];xx2=[p[1] for p in pts]
-              arr.append({'n':len(pts),'bbox':[min(xx2),min(yy2),max(xx2),max(yy2)]})
-            arr.sort(key=lambda z:(-z['n'],z['bbox']));comps[str(color)]=arr[:50]
+          def make_start():
+            last='unknown'
+            for attempt in range(1,5):
+              try:
+                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+                if env is None: raise RuntimeError('ENV_CREATE_FAILED')
+                amap={a.value:a for a in env.action_space};obs=env.observation_space
+                for a in prefix:
+                  obs=env.step(amap[a])
+                  if obs is None: raise RuntimeError('NO_OBS_PREFIX')
+                f=np.asarray(obs.frame[-1],dtype=np.int16)
+                if obs.levels_completed!=4 or pos(f)!=start:raise RuntimeError('BAD_L5_START')
+                return env,amap,obs
+              except Exception as e:
+                last=type(e).__name__;time.sleep(min(2*attempt,6))
+            raise RuntimeError('START_RETRY_EXHAUSTED_'+last)
 
-          coarse=[]; cells=[]
-          for r,y in enumerate(ys):
-            chars=[]; row=[]
-            for c,x in enumerate(xs):
-              w=f[y:y+5,x:x+5]
-              vals,cts=np.unique(w,return_counts=True);d={str(int(k)):int(v) for k,v in zip(vals,cts)}
-              row.append({'r':r,'c':c,'x':x,'y':y,'counts':d})
-              di={int(k):v for k,v in d.items()}
-              if di.get(9,0)==15 and di.get(12,0)==10:ch='A'
-              elif max(di.values())==25:ch=f'{max(di,key=di.get):X}'
-              else:ch='?'
-              chars.append(ch)
-            cells.append(row);coarse.append(''.join(chars))
+          graph={}
+          def edge(p,a,q):
+            if p is not None and q is not None:graph.setdefault(p,{})[a]=q
+          def bfs(src,predicate,depth):
+            q=deque([(src,[])]);seen={src}
+            while q:
+              p,r=q.popleft()
+              if predicate(p):return r,p
+              if len(r)>=depth:continue
+              for a in priority:
+                nq=graph.get(p,{}).get(a)
+                if nq is None or nq==p or nq in seen:continue
+                seen.add(nq);q.append((nq,r+[a]))
+            return None,None
 
-          cur=f[55:61,3:9]
-          vals,cts=np.unique(cur,return_counts=True); cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-          kcolor=max(cand,key=lambda z:z[1])[0]
-          kmask=[]
-          for r in range(3):
-            row=[]
-            for c in range(3):
-              block=cur[2*r:2*r+2,2*c:2*c+2]
-              row.append(1 if int((block==kcolor).sum())>=2 else 0)
-            kmask.append(row)
+          initial_key=(12,(0,1,0,1,1,0,0,1,1))
+          found=None;episodes=[];network_failures=0;refill_events=[]
+          for ep in range(1,max_episodes+1):
+            route,target=bfs(start,lambda p:any(a not in graph.get(p,{}) for a in priority),max_steps-1)
+            if target is None:
+              target=start;route=[]
+            try:env,amap,obs=make_start()
+            except Exception as e:
+              network_failures+=1;episodes.append({'episode':ep,'error':type(e).__name__});continue
+            f=np.asarray(obs.frame[-1],dtype=np.int16);cur=start;ks=key(f);actions=[];disc=[];failed=False
+            try:
+              for a in route:
+                before=cur;prev11=int((f==11).sum())
+                obs=env.step(amap[a]);f=np.asarray(obs.frame[-1],dtype=np.int16);cur=pos(f);ks=key(f);actions.append(a)
+                if cur is None:raise RuntimeError('NO_AGENT_ROUTE')
+                edge(before,a,cur)
+                now11=int((f==11).sum())
+                if now11>prev11+4:refill_events.append({'episode':ep,'route':actions.copy(),'from':list(before),'to':list(cur),'before11':prev11,'after11':now11})
+              if cur!=target:raise RuntimeError('ROUTE_DIVERGED')
+              while len(actions)<max_steps:
+                untried=[a for a in priority if a not in graph.get(cur,{})]
+                if untried:a=untried[0]
+                else:
+                  p2,t2=bfs(cur,lambda p:any(a not in graph.get(p,{}) for a in priority),max_steps-len(actions))
+                  if not p2:break
+                  a=p2[0]
+                before=cur;before_key=ks;prev11=int((f==11).sum())
+                obs=env.step(amap[a]);f=np.asarray(obs.frame[-1],dtype=np.int16);cur=pos(f);ks=key(f);actions.append(a)
+                if cur is None:raise RuntimeError('NO_AGENT_STEP')
+                is_new=a not in graph.get(before,{})
+                edge(before,a,cur);now11=int((f==11).sum())
+                if now11>prev11+4:refill_events.append({'episode':ep,'route':actions.copy(),'from':list(before),'to':list(cur),'before11':prev11,'after11':now11})
+                if is_new:disc.append({'a':a,'from':list(before),'to':list(cur),'before_key':{'color':before_key[0],'mask':list(before_key[1])},'after_key':{'color':ks[0],'mask':list(ks[1])},'before11':prev11,'after11':now11})
+                if ks!=initial_key:
+                  found={'episode':ep,'route_from_start':actions,'position':list(cur),'initial_key':{'color':initial_key[0],'mask':list(initial_key[1])},'changed_key':{'color':ks[0],'mask':list(ks[1])},'color11_total':now11,'levels':obs.levels_completed,'state':obs.state.value};break
+            except Exception as e:
+              failed=True;network_failures+=1;disc.append({'error':type(e).__name__})
+            episodes.append({'episode':ep,'frontier':list(target),'route_to_frontier':route,'actions':actions,'discoveries':disc,'failed':failed,'end_pos':None if cur is None else list(cur)})
+            if found:break
 
-          out={
-            'prefix_actions':len(prefix),'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-            'levels_completed':obs.levels_completed,'state':obs.state.value,
-            'frame_shape':list(f.shape),'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest(),
-            'player_candidates':players,'grid_origin_mod5':[x0,y0],'x_anchors':xs,'y_anchors':ys,
-            'coarse':coarse,'cells':cells,'palette':{str(int(k)):int(v) for k,v in zip(*np.unique(f,return_counts=True))},
-            'components':comps,'current_key':{'color':kcolor,'mask':kmask,'raw':cur.tolist()},
-            'top_left_patch':f[0:18,0:20].tolist(),'top_right_patch':f[0:18,44:64].tolist(),
-            'bottom_play_patch':f[42:55,0:64].tolist()
-          }
-          (ROOT/'l5-initial-decoder.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          routes={};q=deque([(start,[])]);seen={start}
+          while q:
+            p,r=q.popleft();routes[f'{p[0]},{p[1]}']=r
+            for a in priority:
+              nq=graph.get(p,{}).get(a)
+              if nq is None or nq==p or nq in seen:continue
+              seen.add(nq);q.append((nq,r+[a]))
+          out={'found':found,'refill_events':refill_events,'episodes_run':len(episodes),'network_failures':network_failures,'graph_nodes':len(graph),'reachable_positions':len(routes),'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in edges.items()} for p,edges in graph.items()},'shortest_routes_from_start':routes,'episodes':episodes,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest()}
+          (ROOT/'l5-key-state-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist L5 decoder
+      - name: Persist L5 explorer receipt
+        if: always()
         run: |
+          test -f public_benchmark/arc-agi-3/dev/l5-key-state-explorer.json || exit 0
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l5-initial-decoder.json
-          git commit -m 'benchmark: decode L5 initial public frame [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l5-key-state-explorer.json
+          git commit -m 'benchmark: save L5 short key-state explorer [skip ci]' || exit 0
           git push
