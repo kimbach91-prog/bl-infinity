@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 corrected full completion
+name: ARC3 ls20 L5 initial public decoder
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  solve:
+  decode:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,7 +19,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Run corrected L4 composed route
+      - name: Replay verified 4/7 prefix and decode L5
         run: |
           python - <<'PY'
           import json, logging, hashlib
@@ -30,81 +30,89 @@ jobs:
 
           logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
-          prefix=json.loads((ROOT/'l3-dual-refill-final-touch.json').read_text())['executed_actions']
-
-          hub=[3,3,3,2,2,3,3,3,3]
-          hub_to_color=[4,4,4,2,2,2,3,3,1,2]
-          color_cycle=[1,2,1,2]
-          color_exit=[1,4]  # verified result: (34,30)->(34,25)->(39,5)
-          # Directed graph from (39,5): down to (39,20), portal RIGHT to (44,45), UP->(34,40), then DOWN twice to refill2 (34,50)
-          color_exit_to_refill2=[2,2,2,4,1,2,2]
-          refill2_to_shape=[1,3,3,1,1,1]
-          shape_to_door=[2,2,4,1,1,1,1,4,1,4,1,1,3,3]
-          final_touch=[3]
-          l4=hub+hub_to_color+color_cycle+color_exit+color_exit_to_refill2+refill2_to_shape+shape_to_door+final_touch
-
-          checkpoints={
-            9:'hub_refill',19:'color_touch_1',21:'color_touch_2',23:'color_touch_3',25:'color_exit',
-            32:'refill2',38:'shape_touch',52:'door_right',53:'door_touch'
-          }
-
-          def agent(frame):
-            f=np.asarray(frame,dtype=np.int16)
-            for y in range(0,55):
-              for x in range(0,60):
-                w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5): continue
-                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return [x,y]
-            return None
-
-          def key(frame):
-            f=np.asarray(frame,dtype=np.int16); cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True)
-            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(cand,key=lambda z:z[1])[0]
-            mask=[]
-            for r in range(3):
-              row=[]
-              for c in range(3):
-                block=cur[2*r:2*r+2,2*c:2*c+2]
-                row.append(1 if int((block==color).sum())>=2 else 0)
-              mask.append(row)
-            return {'color':color,'mask':mask}
+          prefix=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
 
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           if env is None: raise SystemExit('ENV_CREATE_FAILED')
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          executed=[]
-          for a in prefix:
-            obs=env.step(amap[a]); executed.append(a)
-            if obs is None: raise SystemExit('NO_OBS_PREFIX')
-          if obs.levels_completed!=3: raise SystemExit(f'PREFIX_NOT_3:{obs.levels_completed}')
-
-          l4_executed=[]; milestones=[]
-          for li,a in enumerate(l4,1):
+          for i,a in enumerate(prefix,1):
             obs=env.step(amap[a])
-            if obs is None: raise SystemExit(f'NO_OBS_L4_{li}')
-            executed.append(a); l4_executed.append(a)
-            if li in checkpoints or obs.levels_completed>=4 or obs.state.value!='NOT_FINISHED':
-              f=np.asarray(obs.frame[-1],dtype=np.int16)
-              milestones.append({'l4_i':li,'label':checkpoints.get(li,'event'),'a':a,'agent':agent(f),'key':key(f),'color11_total':int((f==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-            if obs.levels_completed>=4 or obs.state.value!='NOT_FINISHED': break
+            if obs is None: raise SystemExit(f'NO_OBS_{i}')
+          if obs.levels_completed!=4: raise SystemExit(f'PREFIX_NOT_4:{obs.levels_completed}')
+          f=np.asarray(obs.frame[-1],dtype=np.int16); H,W=f.shape
+
+          players=[]
+          for y in range(0,55):
+            for x in range(0,60):
+              w=f[y:y+5,x:x+5]
+              if w.shape!=(5,5): continue
+              vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
+              if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: players.append([x,y])
+          if not players: raise SystemExit('PLAYER_NOT_FOUND')
+          px,py=players[0]
+          x0=px%5; y0=py%5
+          xs=list(range(x0,60,5)); ys=list(range(y0,55,5))
+
+          # Connected components, capped to useful top components per color.
+          comps={}
+          for color in sorted(map(int,np.unique(f))):
+            seen=set(); arr=[]
+            for yy,xx in zip(*np.where(f==color)):
+              yy=int(yy);xx=int(xx)
+              if (yy,xx) in seen: continue
+              stack=[(yy,xx)]; seen.add((yy,xx)); pts=[]
+              while stack:
+                cy,cx=stack.pop();pts.append((cy,cx))
+                for dy,dx in ((1,0),(-1,0),(0,1),(0,-1)):
+                  ny,nx=cy+dy,cx+dx
+                  if 0<=ny<H and 0<=nx<W and (ny,nx) not in seen and int(f[ny,nx])==color:
+                    seen.add((ny,nx)); stack.append((ny,nx))
+              yy2=[p[0] for p in pts];xx2=[p[1] for p in pts]
+              arr.append({'n':len(pts),'bbox':[min(xx2),min(yy2),max(xx2),max(yy2)]})
+            arr.sort(key=lambda z:(-z['n'],z['bbox']));comps[str(color)]=arr[:50]
+
+          coarse=[]; cells=[]
+          for r,y in enumerate(ys):
+            chars=[]; row=[]
+            for c,x in enumerate(xs):
+              w=f[y:y+5,x:x+5]
+              vals,cts=np.unique(w,return_counts=True);d={str(int(k)):int(v) for k,v in zip(vals,cts)}
+              row.append({'r':r,'c':c,'x':x,'y':y,'counts':d})
+              di={int(k):v for k,v in d.items()}
+              if di.get(9,0)==15 and di.get(12,0)==10:ch='A'
+              elif max(di.values())==25:ch=f'{max(di,key=di.get):X}'
+              else:ch='?'
+              chars.append(ch)
+            cells.append(row);coarse.append(''.join(chars))
+
+          cur=f[55:61,3:9]
+          vals,cts=np.unique(cur,return_counts=True); cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+          kcolor=max(cand,key=lambda z:z[1])[0]
+          kmask=[]
+          for r in range(3):
+            row=[]
+            for c in range(3):
+              block=cur[2*r:2*r+2,2*c:2*c+2]
+              row.append(1 if int((block==kcolor).sum())>=2 else 0)
+            kmask.append(row)
 
           out={
-            'candidate_l4_actions':len(l4),'executed_l4':len(l4_executed),'total_executed':len(executed),
+            'prefix_actions':len(prefix),'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
             'levels_completed':obs.levels_completed,'state':obs.state.value,
-            'l4_actions_executed':l4_executed,'full_actions_executed':executed,
-            'route_sha256':hashlib.sha256(','.join(map(str,executed)).encode()).hexdigest(),
-            'milestones':milestones
+            'frame_shape':list(f.shape),'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest(),
+            'player_candidates':players,'grid_origin_mod5':[x0,y0],'x_anchors':xs,'y_anchors':ys,
+            'coarse':coarse,'cells':cells,'palette':{str(int(k)):int(v) for k,v in zip(*np.unique(f,return_counts=True))},
+            'components':comps,'current_key':{'color':kcolor,'mask':kmask,'raw':cur.tolist()},
+            'top_left_patch':f[0:18,0:20].tolist(),'top_right_patch':f[0:18,44:64].tolist(),
+            'bottom_play_patch':f[42:55,0:64].tolist()
           }
-          (ROOT/'l4-corrected-full-completion.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          (ROOT/'l5-initial-decoder.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist corrected receipt
+      - name: Persist L5 decoder
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-corrected-full-completion.json
-          git commit -m 'benchmark: save corrected L4 completion receipt [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l5-initial-decoder.json
+          git commit -m 'benchmark: decode L5 initial public frame [skip ci]'
           git push
