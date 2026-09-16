@@ -33,7 +33,17 @@ The script creates a custom scorecard with the public source URL and tags it wit
 
 The route and its integrity hash are in [`route.json`](./route.json).
 
+## Verified public result
+
+- Official ARC score: **10.714285714285714%**
+- Levels: **2 / 7**
+- Actions: **58**
+- Level 1 efficiency score: **115%** (13 actions; human baseline 22)
+- Level 2 efficiency score: **115%** (45 actions; human baseline 123)
+- Scorecard: [48180853-70f8-42d8-abe7-b5e00e701650](https://arcprize.org/scorecards/48180853-70f8-42d8-abe7-b5e00e701650)
+- Replay: [3e93f549-89f6-4c93-86ad-d9227d5ebd95](https://arcprize.org/replay/3e93f549-89f6-4c93-86ad-d9227d5ebd95)
+- Server receipt: [`result.json`](./result.json)
+
 ## Honest interpretation
 
 The first two public levels are a progress receipt, not a finished benchmark claim. ARC-AGI-3's official score also rewards action efficiency, and full-game/competition results require all applicable environments under the official rules.
-

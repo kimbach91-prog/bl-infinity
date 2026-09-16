@@ -13,7 +13,7 @@ This directory is the public, evidence-first benchmark surface for the **Bách L
 
 | Benchmark | Why it is included | Current state |
 | --- | --- | --- |
-| [ARC-AGI-3](https://arcprize.org/arc-agi/3) | Interactive exploration, world-modeling, planning, and action efficiency | Active; first public-development `ls20` route included here |
+| [ARC-AGI-3](https://arcprize.org/arc-agi/3) | Interactive exploration, world-modeling, planning, and action efficiency | Public scorecard: `10.71%`, `2 / 7` levels on `ls20`, `58` actions |
 | [ARC-AGI-2](https://arcprize.org/arc-agi/2) | Novel static abstraction and few-shot generalization | Planned; official Kaggle submission requires an offline open-source solver |
 | [Humanity's Last Exam](https://agi.safe.ai/) | Broad expert-level academic reasoning | Planned; official run requires a reproducible model endpoint and compliant evaluation harness |
 | [GAIA](https://huggingface.co/spaces/gaia-benchmark/leaderboard) | Real-world assistant tasks with tools and multimodal evidence | Planned; gated dataset/submission access required |
@@ -25,4 +25,3 @@ Public system label: **Bách Lâm × DEUS**
 Owner/researcher: **Lâm Kim Bách (Bách Lâm / Optimizer)**
 
 See [`arc-agi-3/`](./arc-agi-3/) for the first executable lane.
-
