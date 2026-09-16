@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 portal2 trace
+name: ARC3 ls20 L3 special-tile probes
 
 on:
   push:
@@ -13,13 +13,13 @@ jobs:
   probe:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Trace second portal
+      - name: Probe two public-frame special cells
         run: |
           python - <<'PY'
           import json
@@ -28,12 +28,11 @@ jobs:
           import arc_agi
           from arc_agi import OperationMode
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          suffix=[1]*8+[3]+[2]*5+[4]*5+[1]*4+[3]
-          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-          amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          for a in base: obs=env.step(amap[a])
-          def agent(f):
+          cases={
+            'r2c5_color11':[1]*8+[3]+[2]*2+[4],
+            'r5c2_color11':[1]*8+[3]+[2]*5+[3]*2,
+          }
+          def detect_agent(f):
             out=[]
             for y in range(0,50):
               for x in range(0,60):
@@ -42,20 +41,27 @@ jobs:
                 vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
                 if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
             return out
-          trace=[]
-          for i,a in enumerate(suffix,1):
-            prev=np.asarray(obs.frame[-1],dtype=np.int16)
-            obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-            if i>=18:
-              trace.append({'i':i,'a':a,'agent':agent(f),'meter11':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-          Path('result.json').write_text(json.dumps(trace,indent=2))
+          results={}
+          for name,suffix in cases.items():
+            arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+            env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+            amap={a.value:a for a in env.action_space}; obs=env.observation_space
+            for a in base: obs=env.step(amap[a])
+            trace=[]
+            for i,a in enumerate(suffix,1):
+              prev=np.asarray(obs.frame[-1],dtype=np.int16)
+              obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
+              if i>=len(suffix)-1:
+                trace.append({'i':i,'a':a,'agent':detect_agent(f),'meter11':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+            results[name]={'suffix':suffix,'trace':trace,'levels':obs.levels_completed,'state':obs.state.value}
+          Path('result.json').write_text(json.dumps(results,indent=2,sort_keys=True))
           PY
       - name: Persist receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-portal2-trace.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-special-tile-probes.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-portal2-trace.json
-          git commit -m 'benchmark: trace L3 second portal [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-special-tile-probes.json
+          git commit -m 'benchmark: probe L3 public special tiles [skip ci]'
           git push
