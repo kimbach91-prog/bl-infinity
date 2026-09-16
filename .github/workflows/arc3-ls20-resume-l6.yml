@@ -1,4 +1,4 @@
-name: ARC3 ls20 resume L6 probe
+name: ARC3 ls20 public-observation transition probe
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
   probe:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -21,65 +21,62 @@ jobs:
           python-version: '3.12'
       - name: Install official ARC toolkit
         run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Replay verified public prefix and inspect Level 3 initial observation
+      - name: Probe one-step public transitions from Level 3 start
         env:
           PYTHONUNBUFFERED: '1'
         run: |
-          python - <<'PY' | tee arc3_probe_output.txt
-          import json
-          import hashlib
+          python - <<'PY' > arc3_action_probe.txt
+          import json, logging
+          from collections import Counter
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
 
-          route = json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())
-          actions = route['actions']
-          print('ROUTE_ACTIONS', len(actions))
-          print('ROUTE_SHA256', hashlib.sha256(','.join(map(str, actions)).encode('ascii')).hexdigest())
+          logging.getLogger().setLevel(logging.WARNING)
+          for n in ('arc_agi', 'arc_agi.scorecard'):
+              logging.getLogger(n).setLevel(logging.WARNING)
 
-          arcade = arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-          env = arcade.make('ls20', save_recording=False, include_frame_data=True)
-          if env is None:
-              raise SystemExit('ENV_CREATE_FAILED')
-          action_map = {a.value: a for a in env.action_space}
-          obs = env.observation_space
-          for i, action_id in enumerate(actions, 1):
-              obs = env.step(action_map[action_id])
-              if obs is None:
-                  raise SystemExit(f'NO_OBS_AT_{i}')
-          print('AFTER_PREFIX_STATE', obs.state.value)
-          print('AFTER_PREFIX_LEVELS', obs.levels_completed)
-          print('AVAILABLE_ACTIONS', [getattr(a, 'value', a) for a in env.action_space])
+          base_actions = json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
 
-          frame = np.asarray(obs.frame[-1], dtype=np.int16)
-          print('FRAME_SHAPE', frame.shape)
-          values, counts = np.unique(frame, return_counts=True)
-          print('PALETTE_COUNTS', json.dumps(dict(zip(map(int, values), map(int, counts))), sort_keys=True))
-          for color in values:
-              ys, xs = np.where(frame == color)
-              print('COLOR_BBOX', int(color), int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()), 'N', len(xs))
-          print('FRAME_RLE_BEGIN')
-          for y, row in enumerate(frame):
-              runs=[]
-              start=0
-              cur=int(row[0])
-              for x in range(1, len(row)):
-                  v=int(row[x])
-                  if v != cur:
-                      runs.append([start,x-1,cur])
-                      start=x; cur=v
-              runs.append([start,len(row)-1,cur])
-              if len(runs) > 1 or runs[0][2] != 0:
-                  print(y, json.dumps(runs, separators=(',',':')))
-          print('FRAME_RLE_END')
+          def run(suffix):
+              arcade = arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              env = arcade.make('ls20', save_recording=False, include_frame_data=True)
+              if env is None:
+                  raise SystemExit('ENV_CREATE_FAILED')
+              amap = {a.value: a for a in env.action_space}
+              obs = env.observation_space
+              for action_id in base_actions + suffix:
+                  obs = env.step(amap[action_id])
+                  if obs is None:
+                      raise SystemExit('NO_OBS')
+              return obs, np.asarray(obs.frame[-1], dtype=np.int16)
+
+          base_obs, base = run([])
+          print('BASE_LEVELS', base_obs.levels_completed)
+          print('BASE_STATE', base_obs.state.value)
+
+          for action in (1,2,3,4):
+              obs, frame = run([action])
+              mask = frame != base
+              ys, xs = np.where(mask)
+              trans = Counter((int(a), int(b)) for a,b in zip(base[mask], frame[mask]))
+              print('ACTION', action)
+              print('LEVELS', obs.levels_completed, 'STATE', obs.state.value, 'DIFF_N', int(mask.sum()))
+              if len(xs):
+                  print('DIFF_BBOX', int(xs.min()), int(ys.min()), int(xs.max()), int(ys.max()))
+              print('TRANSITIONS', json.dumps({f'{a}>{b}':n for (a,b),n in sorted(trans.items())}, sort_keys=True))
+              for color in (0,1,8,9,12,14):
+                  cy, cx = np.where(frame == color)
+                  if len(cx):
+                      print('COLOR', color, 'N', len(cx), 'BBOX', int(cx.min()), int(cy.min()), int(cx.max()), int(cy.max()))
           PY
-      - name: Commit probe receipt to isolated branch
+      - name: Persist sanitized probe receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp arc3_probe_output.txt public_benchmark/arc-agi-3/dev/l3-initial-probe.txt
+          cp arc3_action_probe.txt public_benchmark/arc-agi-3/dev/l3-action-probe.txt
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-initial-probe.txt
-          git commit -m 'benchmark: save L3 public-observation probe [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-action-probe.txt
+          git commit -m 'benchmark: save L3 action-transition probe [skip ci]'
           git push
