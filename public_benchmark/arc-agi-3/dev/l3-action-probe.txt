@@ -1,17 +1,5 @@
-2026-09-16 12:48:40 | INFO | Got anonymous API key: 84f7c999-5303-4cf5-8c66-5598614ac896
-2026-09-16 12:48:40 | INFO | You can register for an API key at https://three.arcprize.org
-2026-09-16 12:48:41 | INFO | Successfully fetched 25 environment(s) from API
-2026-09-16 12:48:41 | INFO | Created new scorecard: 76b903b4-471b-4bca-a8a5-71e3a1815097
-2026-09-16 12:48:41 | INFO | Successfully fetched metadata for game ls20
-2026-09-16 12:48:42 | INFO | Successfully reset game ls20-9607627b, guid=0729e54f-7202-42f4-8a25-fa9ef72c7d9f, scorecard_id=76b903b4-471b-4bca-a8a5-71e3a1815097
 BASE_LEVELS 2
 BASE_STATE NOT_FINISHED
-2026-09-16 12:48:49 | INFO | Got anonymous API key: f3d93089-901c-4daa-90b0-793c7c481946
-2026-09-16 12:48:49 | INFO | You can register for an API key at https://three.arcprize.org
-2026-09-16 12:48:49 | INFO | Successfully fetched 25 environment(s) from API
-2026-09-16 12:48:50 | INFO | Created new scorecard: 97044edd-a3e7-44e4-8934-e42b9ae05645
-2026-09-16 12:48:50 | INFO | Successfully fetched metadata for game ls20
-2026-09-16 12:48:50 | INFO | Successfully reset game ls20-9607627b, guid=4bd54002-ec45-4305-99cc-b523171bd6c8, scorecard_id=97044edd-a3e7-44e4-8934-e42b9ae05645
 ACTION 1
 LEVELS 2 STATE NOT_FINISHED DIFF_N 54
 DIFF_BBOX 9 40 14 62
@@ -22,12 +10,6 @@ COLOR 8 N 14 BBOX 32 47 63 62
 COLOR 9 N 23 BBOX 9 42 57 53
 COLOR 12 N 36 BBOX 3 40 31 60
 COLOR 14 N 2 BBOX 31 46 32 46
-2026-09-16 12:48:57 | INFO | Got anonymous API key: c7fd3011-4b75-4b9c-9497-a585dfcf4cd2
-2026-09-16 12:48:57 | INFO | You can register for an API key at https://three.arcprize.org
-2026-09-16 12:48:57 | INFO | Successfully fetched 25 environment(s) from API
-2026-09-16 12:48:57 | INFO | Created new scorecard: 18077e79-e0f5-47c0-af8a-95b601cb1080
-2026-09-16 12:48:58 | INFO | Successfully fetched metadata for game ls20
-2026-09-16 12:48:58 | INFO | Successfully reset game ls20-9607627b, guid=0ec2e6e4-c4a2-417b-b09b-5916f33abeed, scorecard_id=18077e79-e0f5-47c0-af8a-95b601cb1080
 ACTION 2
 LEVELS 2 STATE NOT_FINISHED DIFF_N 4
 DIFF_BBOX 13 61 14 62
@@ -38,12 +20,6 @@ COLOR 8 N 14 BBOX 32 47 63 62
 COLOR 9 N 23 BBOX 9 46 57 53
 COLOR 12 N 36 BBOX 3 45 31 60
 COLOR 14 N 2 BBOX 31 46 32 46
-2026-09-16 12:49:04 | INFO | Got anonymous API key: 9ea77693-e17e-4889-9741-1b917628bec5
-2026-09-16 12:49:04 | INFO | You can register for an API key at https://three.arcprize.org
-2026-09-16 12:49:05 | INFO | Successfully fetched 25 environment(s) from API
-2026-09-16 12:49:05 | INFO | Created new scorecard: b723d6ee-ec2b-48eb-95da-7e606065dbb1
-2026-09-16 12:49:05 | INFO | Successfully fetched metadata for game ls20
-2026-09-16 12:49:05 | INFO | Successfully reset game ls20-9607627b, guid=15736c80-e5ef-4a5b-b11a-825aaaf83218, scorecard_id=b723d6ee-ec2b-48eb-95da-7e606065dbb1
 ACTION 3
 LEVELS 2 STATE NOT_FINISHED DIFF_N 4
 DIFF_BBOX 13 61 14 62
@@ -54,12 +30,6 @@ COLOR 8 N 14 BBOX 32 47 63 62
 COLOR 9 N 23 BBOX 9 46 57 53
 COLOR 12 N 36 BBOX 3 45 31 60
 COLOR 14 N 2 BBOX 31 46 32 46
-2026-09-16 12:49:12 | INFO | Got anonymous API key: da8b7c94-2f69-49e9-b2ea-51b0fe453723
-2026-09-16 12:49:12 | INFO | You can register for an API key at https://three.arcprize.org
-2026-09-16 12:49:12 | INFO | Successfully fetched 25 environment(s) from API
-2026-09-16 12:49:12 | INFO | Created new scorecard: 7f773692-bb1c-4089-8f07-261c2083c18c
-2026-09-16 12:49:13 | INFO | Successfully fetched metadata for game ls20
-2026-09-16 12:49:13 | INFO | Successfully reset game ls20-9607627b, guid=c155eec0-2f33-4dc7-8b0f-33b3213408ba, scorecard_id=7f773692-bb1c-4089-8f07-261c2083c18c
 ACTION 4
 LEVELS 2 STATE NOT_FINISHED DIFF_N 54
 DIFF_BBOX 9 45 18 62
