@@ -1,4 +1,4 @@
-name: ARC3 ls20 L4 one-way gate orientation probes
+name: ARC3 ls20 L4 deterministic transition explorer
 
 on:
   push:
@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  probe:
+  explore:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -19,52 +19,172 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe one-way gate orientations
+      - name: Explore L4 transition graph until key changes
         run: |
           python - <<'PY'
-          import json
+          import json, logging, hashlib
+          from collections import deque
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
 
+          # Suppress toolkit INFO logs so ephemeral anonymous API material is never persisted.
+          logging.disable(logging.INFO)
+
           prefix=json.loads(Path('public_benchmark/arc-agi-3/dev/l3-dual-refill-final-touch.json').read_text())['executed_actions']
-          hub=[3,3,3,2,2,3,3,3,3]
-          cases={
-            'G_r6c7_from_above': hub+[4,4,4,4,2,2,2],
-            'G_r4c5_from_right': hub+[4,4,4,4,2,3,3],
-            'G_r5c9_from_left': hub+[4,4,4,4,2,4,2,4],
-            'G_r8c5_from_left': hub+[2,3,2,2,2,2,4,4,4],
-            'G_r6c3_from_below': hub+[2,3,2,2,2,4,1],
-          }
-          def agent(f):
+          hub_route=[3,3,3,2,2,3,3,3,3]  # verified L4 first refiller, ending at (19,15)
+          hub_pos=(19,15)
+          action_priority=[2,4,3,1]
+          max_episode_steps=18
+          max_episodes=42
+
+          def agent_pos(frame):
+            f=np.asarray(frame,dtype=np.int16)
             out=[]
             for y in range(0,55):
               for x in range(0,60):
                 w=f[y:y+5,x:x+5]
                 if w.shape!=(5,5): continue
-                vals,cts=np.unique(w,return_counts=True); d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
-            return out
-          results={}
-          for name,path in cases.items():
+                vals,cts=np.unique(w,return_counts=True)
+                d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:
+                  out.append((x,y))
+            return out[0] if out else None
+
+          def key_state(frame):
+            f=np.asarray(frame,dtype=np.int16)
+            cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True)
+            candidates=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(candidates,key=lambda z:z[1])[0]
+            mask=[]
+            for r in range(3):
+              for c in range(3):
+                block=cur[2*r:2*r+2,2*c:2*c+2]
+                mask.append(1 if int((block==color).sum())>=2 else 0)
+            return (color,tuple(mask))
+
+          def make_env():
             arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
             env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-            amap={a.value:a for a in env.action_space}; obs=env.observation_space
-            for a in prefix: obs=env.step(amap[a])
-            f=np.asarray(obs.frame[-1],dtype=np.int16); trace=[]
-            for i,a in enumerate(path,1):
-              prev=f.copy(); before=agent(prev)
-              obs=env.step(amap[a]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-              if i>=len(path)-2:
-                trace.append({'i':i,'a':a,'before_agent':before,'after_agent':agent(f),'diff_n':int((f!=prev).sum()),'color11_total':int((f==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
-            results[name]={'path':path,'trace':trace}
-          Path('public_benchmark/arc-agi-3/dev/l4-one-way-gate-probes.json').write_text(json.dumps(results,indent=2,sort_keys=True))
+            if env is None: raise RuntimeError('ENV_CREATE_FAILED')
+            amap={a.value:a for a in env.action_space}
+            obs=env.observation_space
+            for a in prefix+hub_route:
+              obs=env.step(amap[a])
+              if obs is None: raise RuntimeError('NO_OBS_DURING_PREFIX')
+            f=np.asarray(obs.frame[-1],dtype=np.int16)
+            pos=agent_pos(f)
+            if obs.levels_completed!=3 or pos!=hub_pos:
+              raise RuntimeError(f'BAD_HUB levels={obs.levels_completed} pos={pos}')
+            return env,amap,obs
+
+          graph={}  # pos -> action(str) -> next_pos
+          route_to={}  # shortest discovered route from hub to pos
+          route_to[hub_pos]=[]
+          initial_key=None
+          found=None
+          episodes=[]
+
+          def add_edge(p,a,q,route):
+            graph.setdefault(p,{})[str(a)]=list(q) if q is not None else None
+            if q is not None:
+              cand=route+[a]
+              if q not in route_to or len(cand)<len(route_to[q]):
+                route_to[q]=cand
+
+          def known_path(src, predicate, max_depth=18):
+            # Directed BFS over already observed non-blocking transitions.
+            q=deque([(src,[])])
+            seen={src}
+            while q:
+              p,path=q.popleft()
+              if predicate(p): return path,p
+              if len(path)>=max_depth: continue
+              for a in action_priority:
+                qv=graph.get(p,{}).get(str(a),'MISSING')
+                if qv in ('MISSING',None): continue
+                nq=tuple(qv)
+                if nq==p or nq in seen: continue
+                seen.add(nq); q.append((nq,path+[a]))
+            return None,None
+
+          for ep in range(1,max_episodes+1):
+            env,amap,obs=make_env()
+            f=np.asarray(obs.frame[-1],dtype=np.int16)
+            pos=agent_pos(f)
+            ks=key_state(f)
+            if initial_key is None: initial_key=ks
+            ep_actions=[]; discoveries=[]
+
+            for step in range(1,max_episode_steps+1):
+              # Prefer an untried action at the current position.
+              tried=graph.get(pos,{})
+              untried=[a for a in action_priority if str(a) not in tried]
+              if untried:
+                a=untried[0]
+              else:
+                # Navigate through known graph to nearest state with an untried action.
+                path,target=known_path(pos,lambda p:any(str(a) not in graph.get(p,{}) for a in action_priority),max_depth=max_episode_steps-step)
+                if not path:
+                  break
+                # Execute only first navigation step; loop re-evaluates after transition.
+                a=path[0]
+
+              before_pos=pos; before_key=ks
+              obs=env.step(amap[a])
+              if obs is None: break
+              f=np.asarray(obs.frame[-1],dtype=np.int16)
+              pos=agent_pos(f); ks=key_state(f)
+              ep_actions.append(a)
+              if pos is None:
+                discoveries.append({'step':step,'a':a,'from':list(before_pos),'to':None,'kind':'NO_AGENT'})
+                break
+              is_new = str(a) not in graph.get(before_pos,{})
+              add_edge(before_pos,a,pos,route_to.get(before_pos,[]))
+              if is_new:
+                discoveries.append({'step':step,'a':a,'from':list(before_pos),'to':list(pos),'key_changed':ks!=before_key,'color11_total':int((f==11).sum())})
+              if ks!=initial_key:
+                full_route=hub_route+ep_actions
+                found={
+                  'episode':ep,
+                  'episode_actions':ep_actions,
+                  'l4_route_from_start':full_route,
+                  'position':list(pos),
+                  'initial_key':{'color':initial_key[0],'mask':list(initial_key[1])},
+                  'changed_key':{'color':ks[0],'mask':list(ks[1])},
+                  'levels_completed':obs.levels_completed,
+                  'state':obs.state.value,
+                  'color11_total':int((f==11).sum()),
+                }
+                break
+              if obs.levels_completed>3 or obs.state.value!='NOT_FINISHED':
+                found={'episode':ep,'episode_actions':ep_actions,'event':'LEVEL_OR_STATE_CHANGE','levels_completed':obs.levels_completed,'state':obs.state.value,'position':list(pos)}
+                break
+            episodes.append({'episode':ep,'actions':ep_actions,'discoveries':discoveries,'end_pos':None if pos is None else list(pos),'end_key':{'color':ks[0],'mask':list(ks[1])}})
+            if found: break
+
+          # Serialize graph without sensitive runtime identifiers.
+          graph_out={f'{p[0]},{p[1]}':edges for p,edges in sorted(graph.items())}
+          routes_out={f'{p[0]},{p[1]}':r for p,r in sorted(route_to.items(),key=lambda kv:(len(kv[1]),kv[0]))}
+          out={
+            'episodes_run':len(episodes),
+            'initial_key':None if initial_key is None else {'color':initial_key[0],'mask':list(initial_key[1])},
+            'found':found,
+            'graph_nodes':len(graph),
+            'reachable_positions':len(route_to),
+            'graph':graph_out,
+            'shortest_routes_from_hub':routes_out,
+            'episodes':episodes,
+            'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+          }
+          Path('public_benchmark/arc-agi-3/dev/l4-deterministic-transition-explorer.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist gate receipts
+      - name: Persist explorer receipt
         run: |
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l4-one-way-gate-probes.json
-          git commit -m 'benchmark: save L4 one-way gate probes [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l4-deterministic-transition-explorer.json
+          git commit -m 'benchmark: save L4 deterministic transition explorer receipt [skip ci]'
           git push
