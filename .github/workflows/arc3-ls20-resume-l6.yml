@@ -1,4 +1,4 @@
-name: ARC3 ls20 L3 refiller no-op probe
+name: ARC3 ls20 L3 lattice graph decoder
 
 on:
   push:
@@ -19,36 +19,81 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe ACTION5 while standing on refiller
+      - name: Decode full movement lattice from public frame
         run: |
           python - <<'PY'
           import json
+          from collections import deque
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
+
           base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          # reach color rotator then r5c2 refiller
-          pre=[1]*8+[3]+[2]*8+[1]*3+[3]*2
           arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
           env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           amap={a.value:a for a in env.action_space}; obs=env.observation_space
-          for a in base+pre: obs=env.step(amap[a])
+          for a in base: obs=env.step(amap[a])
           f=np.asarray(obs.frame[-1],dtype=np.int16)
-          out={'available_actions':sorted(amap.keys()),'before_action5_meter11':int((f==11).sum()),'before_levels':obs.levels_completed,'before_state':obs.state.value}
-          if 5 in amap:
-            before=f.copy(); obs=env.step(amap[5]); f=np.asarray(obs.frame[-1],dtype=np.int16)
-            out.update({'after_action5_meter11':int((f==11).sum()),'after_levels':obs.levels_completed,'after_state':obs.state.value,'diff_n':int((f!=before).sum())})
-          else:
-            out['action5_unavailable']=True
+
+          xs=list(range(4,60,5))
+          ys=list(range(5,50,5))
+          cells={}
+          specials=[]
+          for y in ys:
+            for x in xs:
+              w=f[y:y+5,x:x+5]
+              vals,cts=np.unique(w,return_counts=True)
+              counts={str(int(k)):int(v) for k,v in zip(vals,cts)}
+              wall=(counts=={'4':25})
+              floor=(counts=={'3':25})
+              key=f'{x},{y}'
+              cells[key]={'x':x,'y':y,'wall':wall,'floor':floor,'counts':counts}
+              if not wall and not floor:
+                specials.append(cells[key])
+
+          dirs={1:(0,-5),2:(0,5),3:(-5,0),4:(5,0)}
+          start=(9,45)
+          def passable(p):
+            return f'{p[0]},{p[1]}' in cells and not cells[f'{p[0]},{p[1]}']['wall']
+          def follow(actions):
+            p=start; path=[list(p)]
+            for a in actions:
+              dx,dy=dirs[a]; q=(p[0]+dx,p[1]+dy)
+              if passable(q): p=q
+              path.append(list(p))
+            return {'end':list(p),'path':path}
+          known={
+            'to_color':[1]*8+[3]+[2]*8,
+            'to_refill_after_color':[1]*8+[3]+[2]*8+[1]*3+[3]*2,
+            'to_shape_first':[1]*8+[3]+[2]*8+[1]*3+[3]*2+[4]*7+[1]*4+[3],
+          }
+          known_follow={k:follow(v) for k,v in known.items()}
+
+          # BFS all-pairs among passable lattice cells; output key candidate distances around known endpoints.
+          def bfs(src):
+            q=deque([src]); dist={src:0}; parent={}
+            while q:
+              p=q.popleft()
+              for a,(dx,dy) in dirs.items():
+                n=(p[0]+dx,p[1]+dy)
+                if passable(n) and n not in dist:
+                  dist[n]=dist[p]+1; parent[n]=(p,a); q.append(n)
+            return dist,parent
+          dist0,_=bfs(start)
+          special_dist=[]
+          for s in specials:
+            p=(s['x'],s['y'])
+            special_dist.append({'p':[s['x'],s['y']],'d_from_start':dist0.get(p),'counts':s['counts']})
+          out={'xs':xs,'ys':ys,'start':list(start),'specials':specials,'known_follow':known_follow,'special_distances':special_dist}
           Path('result.json').write_text(json.dumps(out,indent=2,sort_keys=True))
           PY
-      - name: Persist receipt
+      - name: Persist graph receipt
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp result.json public_benchmark/arc-agi-3/dev/l3-refiller-action5-probe.json
+          cp result.json public_benchmark/arc-agi-3/dev/l3-lattice-graph.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-refiller-action5-probe.json
-          git commit -m 'benchmark: probe L3 refiller ACTION5 behavior [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-lattice-graph.json
+          git commit -m 'benchmark: decode L3 movement lattice [skip ci]'
           git push
