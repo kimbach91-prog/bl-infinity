@@ -1,4 +1,4 @@
-name: ARC3 ls20 public-observation candidate runner
+name: ARC3 ls20 L3 trace runner
 
 on:
   push:
@@ -19,53 +19,57 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install official ARC toolkit
-        run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Run candidate from verified 2/7 public prefix
-        env:
-          PYTHONUNBUFFERED: '1'
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
+      - name: Trace observable player and meter
         run: |
           python - <<'PY'
-          import json, hashlib
+          import json
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
 
-          base = json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
-          # L3 geometry-only candidate: start bottom-left -> top corridor -> central shaft -> marked target.
-          suffix = [1]*8 + [4]*4 + [2]*8
-          arcade = arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-          env = arcade.make('ls20', save_recording=False, include_frame_data=True)
+          base=json.loads(Path('public_benchmark/arc-agi-3/route.json').read_text())['actions']
+          suffix=[1]*8+[4]*4+[2]*8
+          arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          env=arcade.make('ls20',save_recording=False,include_frame_data=True)
           if env is None: raise SystemExit('ENV_CREATE_FAILED')
-          amap = {a.value:a for a in env.action_space}
-          obs = env.observation_space
-          executed=[]
-          for action_id in base + suffix:
-              obs = env.step(amap[action_id])
-              if obs is None: raise SystemExit('NO_OBS')
-              executed.append(action_id)
-          frame=np.asarray(obs.frame[-1],dtype=np.int16)
-          values,counts=np.unique(frame,return_counts=True)
-          result={
-            'base_actions':len(base),
-            'suffix':suffix,
-            'suffix_actions':len(suffix),
-            'total_actions':len(executed),
-            'levels_completed':obs.levels_completed,
-            'state':obs.state.value,
-            'frame_sha256':hashlib.sha256(frame.tobytes()).hexdigest(),
-            'route_sha256':hashlib.sha256(','.join(map(str,executed)).encode()).hexdigest(),
-            'palette_counts':{str(int(k)):int(v) for k,v in zip(values,counts)},
-          }
-          Path('candidate-result.json').write_text(json.dumps(result,indent=2,sort_keys=True))
+          amap={a.value:a for a in env.action_space}
+          obs=env.observation_space
+          for a in base:
+              obs=env.step(amap[a])
+
+          def frame_of(o): return np.asarray(o.frame[-1],dtype=np.int16)
+          def candidates(f):
+              out=[]
+              for y in range(0,50):
+                  for x in range(0,60):
+                      w=f[y:y+5,x:x+5]
+                      if w.shape!=(5,5): continue
+                      vals,cts=np.unique(w,return_counts=True)
+                      d={int(k):int(v) for k,v in zip(vals,cts)}
+                      if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:
+                          out.append([x,y])
+              return out
+          def objs(f,c):
+              ys,xs=np.where((f==c)&(np.indices(f.shape)[0]<50))
+              return {'n':int(len(xs)),'bbox':None if not len(xs) else [int(xs.min()),int(ys.min()),int(xs.max()),int(ys.max())]}
+
+          trace=[]
+          f=frame_of(obs)
+          trace.append({'step':0,'levels':obs.levels_completed,'state':obs.state.value,'agent':candidates(f),'meter11':int((f==11).sum()),'c8':objs(f,8),'c14':objs(f,14)})
+          for i,a in enumerate(suffix,1):
+              prev=f.copy()
+              obs=env.step(amap[a]); f=frame_of(obs)
+              trace.append({'step':i,'action':a,'levels':obs.levels_completed,'state':obs.state.value,'agent':candidates(f),'meter11':int((f==11).sum()),'diff_n':int((f!=prev).sum()),'c8':objs(f,8),'c14':objs(f,14)})
+          Path('trace.json').write_text(json.dumps(trace,indent=2))
           PY
-      - name: Persist candidate receipt
+      - name: Persist trace
         run: |
           mkdir -p public_benchmark/arc-agi-3/dev
-          cp candidate-result.json public_benchmark/arc-agi-3/dev/l3-candidate-central-target.json
+          cp trace.json public_benchmark/arc-agi-3/dev/l3-central-trace.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add public_benchmark/arc-agi-3/dev/l3-candidate-central-target.json
-          git commit -m 'benchmark: save L3 geometry candidate receipt [skip ci]'
+          git add public_benchmark/arc-agi-3/dev/l3-central-trace.json
+          git commit -m 'benchmark: save L3 observable trace [skip ci]'
           git push
