@@ -1,0 +1,100 @@
+[
+  {
+    "i": 18,
+    "a": 4,
+    "agent": [
+      [
+        49,
+        30
+      ]
+    ],
+    "meter11": 28,
+    "diff_n": 54,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 19,
+    "a": 4,
+    "agent": [
+      [
+        54,
+        30
+      ]
+    ],
+    "meter11": 24,
+    "diff_n": 54,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 20,
+    "a": 1,
+    "agent": [
+      [
+        54,
+        25
+      ]
+    ],
+    "meter11": 20,
+    "diff_n": 54,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 21,
+    "a": 1,
+    "agent": [
+      [
+        54,
+        20
+      ]
+    ],
+    "meter11": 16,
+    "diff_n": 54,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 22,
+    "a": 1,
+    "agent": [
+      [
+        9,
+        45
+      ]
+    ],
+    "meter11": 100,
+    "diff_n": 138,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 23,
+    "a": 1,
+    "agent": [
+      [
+        9,
+        40
+      ]
+    ],
+    "meter11": 96,
+    "diff_n": 54,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  },
+  {
+    "i": 24,
+    "a": 3,
+    "agent": [
+      [
+        9,
+        40
+      ]
+    ],
+    "meter11": 92,
+    "diff_n": 4,
+    "levels": 2,
+    "state": "NOT_FINISHED"
+  }
+]
