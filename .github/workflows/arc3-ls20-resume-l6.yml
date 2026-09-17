@@ -39,15 +39,14 @@ jobs:
           p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
           p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
           prefix=p4+p5; START=(24,50)
-          E=[1,0,1,1,1,0,0,1,1]   # door color8 target
-          F=[1,0,1,0,0,1,1,1,1]   # door color9 target
+          E=[1,0,1,1,1,0,0,1,1]
+          F=[1,0,1,0,0,1,1,1,1]
           START_LOWER=[1,4,4,1]
-          LOWER_TOUCH=[2,1,2,1]     # verified first lower transform on final UP
+          LOWER_TOUCH=[2,1,2,1]
           START_UPPER=[1,3,3,3,1,1,1,1,1,1,1,4]
-          UPPER_TOUCH=[3,4,3,4]     # verified first upper transform on final RIGHT
+          UPPER_TOUCH=[3,4,3,4]
           LOWER_TO_UPPER=[2,3,3,3,3,3,1,1,1,1,1,1,1,4]
-          UPPER_TO_LOWER=[3,2,2,2,2,2,1,1,1,1,1,1,1,4,4,4,4,4,1]
-          # UPPER_TO_LOWER leaves at (34,40); long but crosses refill at (9,45).
+          UPPER_TO_LOWER=[3,2,2,2,2,2,2,2,4,4,4,4,4,1]
           plans={
             'lower_upper':[('start_lower',START_LOWER),('lower_touch',LOWER_TOUCH),('to_upper',LOWER_TO_UPPER),('upper_touch',UPPER_TOUCH)],
             'upper_lower':[('start_upper',START_UPPER),('upper_touch',UPPER_TOUCH),('to_lower',UPPER_TO_LOWER),('lower_touch',LOWER_TOUCH)],
@@ -55,7 +54,6 @@ jobs:
             'upper_lower_upper':[('start_upper',START_UPPER),('upper_touch1',UPPER_TOUCH),('to_lower',UPPER_TO_LOWER),('lower_touch',LOWER_TOUCH),('to_upper',LOWER_TO_UPPER),('upper_touch2',UPPER_TOUCH)],
           }
           plan=plans[os.environ['CELL']]
-
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
@@ -91,7 +89,6 @@ jobs:
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
           env,amap,obs=make_env();trace=[];milestones=[];found=None;executed=[]
           for label,actions in plan:
-            before_stage=key(np.asarray(obs.frame[-1],dtype=np.int16))
             for a in actions:
               bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
               obs=env.step(amap[a]);executed.append(a)
