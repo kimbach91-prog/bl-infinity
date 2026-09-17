@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 corrected target-ready door explorers
+name: ARC3 ls20 L6 color-transition trace
 
 on:
   push:
@@ -10,28 +10,20 @@ permissions:
   contents: read
 
 jobs:
-  explore:
+  trace:
     if: github.actor != 'github-actions[bot]'
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        cell: [east_first, south_first, north_first, west_first]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Verify corrected color8 state then explore L6 door graph
+      - name: Trace every L6 color-route transition
         run: |
           python - <<'PY'
-          import os,json,logging,time,hashlib
+          import json,logging,time,hashlib
           from pathlib import Path
-          from collections import deque
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
@@ -40,20 +32,8 @@ jobs:
           p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
           p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
           prefix=p4+p5
-          TC=8; TM=[1,0,1,1,1,0,0,1,1]
           SHAPE_E=[1,4,4,1,2,1,2,1,2,3,3,4,4,1,2,1]
-          TO_COLOR14=[2,3,3,3,3,3,1,1,1,1,4,4]
-          COLOR14_TO8=[3,4]
-          CORE=SHAPE_E+TO_COLOR14+COLOR14_TO8
-          TARGET_POS=(19,25)
-          priorities={
-            'east_first':[4,2,1,3],
-            'south_first':[2,4,3,1],
-            'north_first':[1,4,2,3],
-            'west_first':[3,1,2,4],
-          }
-          AP=priorities[os.environ['CELL']]
-          MAX_EP=8; MAX_STEPS=18
+          TO_COLOR=[2,3,3,3,3,3,1,1,1,1,4,4]
 
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
@@ -72,97 +52,31 @@ jobs:
               for c in range(3):
                 b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
-          def ready(k): return k['color']==TC and k['mask']==TM
 
-          def make_env():
-            last=None
-            for attempt in range(1,5):
-              try:
-                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-                if env is None:raise RuntimeError('ENV_CREATE_FAILED')
-                amap={a.value:a for a in env.action_space};obs=env.observation_space
-                for a in prefix+CORE:
-                  obs=env.step(amap[a])
-                  if obs is None:raise RuntimeError('NO_OBS_REPLAY')
-                f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f)
-                if obs.levels_completed!=5 or p!=TARGET_POS or not ready(k):
-                  raise ValueError(f'CORRECTION_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k}')
-                return env,amap,obs
-              except ValueError:
-                raise
-              except Exception as e:
-                last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
+          last=None
+          for attempt in range(1,5):
+            try:
+              arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+              if env is None:raise RuntimeError('ENV_CREATE_FAILED')
+              amap={a.value:a for a in env.action_space};obs=env.observation_space
+              for a in prefix+SHAPE_E:
+                obs=env.step(amap[a])
+                if obs is None:raise RuntimeError('NO_OBS_BASE')
+              break
+            except Exception as e:
+              last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
+          else:
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
-          graph={};invalid={};episodes=[];found=None;failures=0
-          def add(p,a,q):graph.setdefault(p,{})[a]=q
-          def frontier_path():
-            q=deque([(TARGET_POS,[])]);seen={TARGET_POS}
-            while q:
-              p,path=q.popleft()
-              tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
-              if any(a not in tried for a in AP):return path,p
-              if len(path)>=MAX_STEPS-1:continue
-              for a in AP:
-                nq=graph.get(p,{}).get(a)
-                if nq is None or nq==p or nq in seen:continue
-                seen.add(nq);q.append((nq,path+[a]))
-            return None,None
-
-          guard_receipt=None
-          for ep in range(1,MAX_EP+1):
-            try:
-              env,amap,obs=make_env()
-              if guard_receipt is None:
-                f0=np.asarray(obs.frame[-1],dtype=np.int16)
-                guard_receipt={'levels':obs.levels_completed,'pos':list(pos(f0)),'key':key(f0),'energy_proxy':int((f0==11).sum())}
-            except ValueError as e:
-              raise RuntimeError(str(e))
-            except Exception as e:
-              failures+=1;episodes.append({'ep':ep,'error':f'{type(e).__name__}:{e}'});continue
-            p=TARGET_POS;actions=[];discoveries=[]
-            nav,frontier=frontier_path()
-            if nav is None:break
-            ok=True
-            for a in nav:
-              obs=env.step(amap[a]);actions.append(a)
-              if obs is None:ok=False;break
-              f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f)
-              if obs.levels_completed>5:
-                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'event':'PASS_DURING_NAV'};ok=False;break
-              if p is None or not ready(k):ok=False;break
-            if found:break
-            if not ok:continue
-            for step in range(len(actions)+1,MAX_STEPS+1):
-              tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
-              candidates=[a for a in AP if a not in tried]
-              if candidates:a=candidates[0]
-              else:
-                nxt=None
-                for a0 in AP:
-                  q0=graph.get(p,{}).get(a0)
-                  if q0 is not None and q0!=p:nxt=a0;break
-                if nxt is None:break
-                a=nxt
-              before=p;obs=env.step(amap[a]);actions.append(a)
-              if obs is None:break
-              f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
-              if obs.levels_completed>5:
-                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'from':list(before),'a':a,'to':None if p is None else list(p),'energy_proxy':e};break
-              if p is None or not ready(k):
-                invalid.setdefault(before,set()).add(a)
-                discoveries.append({'from':list(before),'a':a,'to':None if p is None else list(p),'kind':'TARGET_LOSS','key':k});break
-              is_new=a not in graph.get(before,{})
-              add(before,a,p)
-              if is_new:discoveries.append({'from':list(before),'a':a,'to':list(p),'kind':'SAFE','energy_proxy':e})
-            episodes.append({'ep':ep,'frontier':None if frontier is None else list(frontier),'actions':actions,'discoveries':discoveries,'end_pos':None if p is None else list(p)})
-            if found:break
-
-          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'core_actions':CORE,'color_correction':COLOR14_TO8,'guard_receipt':guard_receipt,'priority':AP,
-               'found':found,'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in es.items()} for p,es in graph.items()},
-               'invalid':{f'{p[0]},{p[1]}':sorted(list(v)) for p,v in invalid.items()},
-               'episodes':episodes,'network_failures':failures}
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+          trace=[{'i':0,'action':None,'pos':list(pos(f)),'key':key(f),'energy_proxy':int((f==11).sum()),'levels':obs.levels_completed}]
+          for i,a in enumerate(TO_COLOR,1):
+            before=np.asarray(obs.frame[-1],dtype=np.int16);bk=key(before);bp=pos(before)
+            obs=env.step(amap[a])
+            if obs is None:raise RuntimeError(f'NO_OBS_STEP_{i}')
+            after=np.asarray(obs.frame[-1],dtype=np.int16);ak=key(after);ap=pos(after)
+            trace.append({'i':i,'action':a,'from':None if bp is None else list(bp),'pos':None if ap is None else list(ap),'before_key':bk,'key':ak,'color_changed':ak['color']!=bk['color'],'mask_changed':ak['mask']!=bk['mask'],'energy_proxy':int((after==11).sum()),'levels':obs.levels_completed,'state':obs.state.value})
+          out={'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'shape_actions':SHAPE_E,'to_color':TO_COLOR,'trace':trace}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
