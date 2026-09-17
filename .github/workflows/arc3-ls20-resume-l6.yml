@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 lower-operator second-activation supercells
+name: ARC3 ls20 L6 target-ready door explorers
 
 on:
   push:
@@ -10,13 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  explore:
     if: github.actor != 'github-actions[bot]'
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        cell: [short_loop, medium_loop, refill_loop, refill_detour]
+        cell: [east_first, south_first, north_first, west_first]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -26,11 +26,12 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Reset then replay full lower activation cycle
+      - name: Explore only target-preserving L6 transitions toward door8
         run: |
           python - <<'PY'
           import os,json,logging,time,hashlib
           from pathlib import Path
+          from collections import deque
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
@@ -39,16 +40,21 @@ jobs:
           p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
           p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
           prefix=p4+p5; START=(24,50)
-          E=[1,0,1,1,1,0,0,1,1]
-          START_LOWER=[1,4,4,1]
-          ACT=[2,1,2,1]
-          loops={
-            'short_loop':[2,3,3,4,4,1],
-            'medium_loop':[2,3,3,3,3,4,4,4,4,1],
-            'refill_loop':[2,3,3,3,3,3,4,4,4,4,4,1],
-            'refill_detour':[2,3,3,3,3,3,1,2,4,4,4,4,4,1]
+          TC=8; TM=[1,0,1,1,1,0,0,1,1]
+          # Verified shape E (16 actions), then lower->refill(9,45)->color8 at (19,25) (12 actions).
+          SHAPE_E=[1,4,4,1,2,1,2,1,2,3,3,4,4,1,2,1]
+          TO_COLOR=[2,3,3,3,3,3,1,1,1,1,4,4]
+          CORE=SHAPE_E+TO_COLOR
+          TARGET_POS=(19,25)
+          priorities={
+            'east_first':[4,2,1,3],
+            'south_first':[2,4,3,1],
+            'north_first':[1,4,2,3],
+            'west_first':[3,1,2,4],
           }
-          loop=loops[os.environ['CELL']]
+          AP=priorities[os.environ['CELL']]
+          MAX_EP=8; MAX_STEPS=16
+
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
@@ -66,6 +72,7 @@ jobs:
               for c in range(3):
                 b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
+          def ready(k): return k['color']==TC and k['mask']==TM
           def make_env():
             last=None
             for attempt in range(1,5):
@@ -73,30 +80,82 @@ jobs:
                 arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE);env=arcade.make('ls20',save_recording=False,include_frame_data=True)
                 if env is None:raise RuntimeError('ENV_CREATE_FAILED')
                 amap={a.value:a for a in env.action_space};obs=env.observation_space
-                for a in prefix:
+                for a in prefix+CORE:
                   obs=env.step(amap[a])
-                  if obs is None:raise RuntimeError('NO_OBS_PREFIX')
-                f=np.asarray(obs.frame[-1],dtype=np.int16)
-                if obs.levels_completed!=5 or pos(f)!=START:raise RuntimeError('BAD_START')
+                  if obs is None:raise RuntimeError('NO_OBS_REPLAY')
+                f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f)
+                if obs.levels_completed!=5 or p!=TARGET_POS or not ready(k):
+                  raise RuntimeError(f'BAD_TARGET_START levels={obs.levels_completed} pos={p} key={k}')
                 return env,amap,obs
               except Exception as e:
                 last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
-          env,amap,obs=make_env();trace=[];executed=[];found=None
-          stages=[('start_lower',START_LOWER),('first_activation',ACT),('reset_loop',loop),('second_activation',ACT)]
-          for label,actions in stages:
-            for a in actions:
-              bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
-              obs=env.step(amap[a]);executed.append(a)
+
+          graph={}; invalid={}; route_to={TARGET_POS:[]}; episodes=[]; found=None; failures=0
+          def add(p,a,q):
+            graph.setdefault(p,{})[a]=q
+            cand=route_to.get(p,[])+[a]
+            if q not in route_to or len(cand)<len(route_to[q]):route_to[q]=cand
+          def path_to_frontier():
+            q=deque([(TARGET_POS,[])]);seen={TARGET_POS}
+            while q:
+              p,path=q.popleft()
+              tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
+              if any(a not in tried for a in AP):return path,p
+              if len(path)>=MAX_STEPS-1:continue
+              for a in AP:
+                nq=graph.get(p,{}).get(a)
+                if nq is None or nq==p or nq in seen:continue
+                seen.add(nq);q.append((nq,path+[a]))
+            return None,None
+
+          for ep in range(1,MAX_EP+1):
+            try: env,amap,obs=make_env()
+            except Exception as e:
+              failures+=1;episodes.append({'ep':ep,'error':f'{type(e).__name__}:{e}'});continue
+            p=TARGET_POS; actions=[]; discoveries=[]
+            nav,frontier=path_to_frontier()
+            if nav is None:break
+            # navigate known-safe path to frontier
+            ok=True
+            for a in nav:
+              obs=env.step(amap[a]);actions.append(a)
+              if obs is None:ok=False;break
+              f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f)
+              if obs.levels_completed>5:
+                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'event':'PASS_DURING_NAV'};ok=False;break
+              if p is None or not ready(k):ok=False;break
+            if found:break
+            if not ok:continue
+            for step in range(len(actions)+1,MAX_STEPS+1):
+              tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
+              candidates=[a for a in AP if a not in tried]
+              if not candidates:
+                # follow one known non-self edge toward a new state if possible
+                nxt=None
+                for a in AP:
+                  q=graph.get(p,{}).get(a)
+                  if q is not None and q!=p:
+                    nxt=a;break
+                if nxt is None:break
+                a=nxt
+              else:a=candidates[0]
+              before=p;obs=env.step(amap[a]);actions.append(a)
               if obs is None:break
-              aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
-              ev={'stage':label,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'levels':obs.levels_completed,'state':obs.state.value}
-              trace.append(ev)
-              if ak['mask']==E:
-                found={'event':ev,'actions':executed.copy()};break
-              if obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
-            if found or obs is None or obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
-          f=np.asarray(obs.frame[-1],dtype=np.int16) if obs is not None else None
-          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'loop':loop,'found':found,'executed':executed,'final_pos':None if f is None or pos(f) is None else list(pos(f)),'final_key':None if f is None else key(f),'energy_proxy':None if f is None else int((f==11).sum()),'trace':trace}
+              f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
+              if obs.levels_completed>5:
+                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'from':list(before),'a':a,'to':None if p is None else list(p),'energy_proxy':e};break
+              if p is None or not ready(k):
+                invalid.setdefault(before,set()).add(a)
+                discoveries.append({'from':list(before),'a':a,'to':None if p is None else list(p),'kind':'TARGET_LOSS','key':k});break
+              is_new=a not in graph.get(before,{})
+              add(before,a,p)
+              if is_new:discoveries.append({'from':list(before),'a':a,'to':list(p),'kind':'SAFE','energy_proxy':e})
+            episodes.append({'ep':ep,'frontier':None if frontier is None else list(frontier),'actions':actions,'discoveries':discoveries,'end_pos':None if p is None else list(p)})
+            if found:break
+          gout={f'{p[0]},{p[1]}':{str(a):list(q) for a,q in es.items()} for p,es in graph.items()}
+          iout={f'{p[0]},{p[1]}':sorted(list(v)) for p,v in invalid.items()}
+          rout={f'{p[0]},{p[1]}':r for p,r in route_to.items()}
+          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'core_actions':CORE,'target_start':list(TARGET_POS),'priority':AP,'found':found,'graph':gout,'invalid':iout,'routes':rout,'episodes':episodes,'network_failures':failures}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
