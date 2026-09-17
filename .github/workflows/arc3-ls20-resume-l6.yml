@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 target-ready door supercells
+name: ARC3 ls20 L6 target-ready frame decoder
 
 on:
   push:
@@ -10,28 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  door:
+  decode:
     if: github.actor != 'github-actions[bot]'
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        cell: [east_first, south_first, north_first, west_first]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Explore L6 door from runtime-verified color8 target state
+      - name: Decode target-ready L6 frame around door/color objects
         run: |
           python - <<'PY'
-          import os,json,logging,time,hashlib
+          import json,logging,time,hashlib
           from pathlib import Path
-          from collections import deque
+          from collections import deque,Counter
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
@@ -44,15 +37,7 @@ jobs:
           TO_REFILL=[2,3,3,3,3,3]
           TO_COLOR8=[1,1,4,1,4,1,4,4,4,4]
           CORE=SHAPE_E+TO_REFILL+TO_COLOR8
-          START=(29,25); TARGET_COLOR=8; TARGET_MASK=[1,0,1,1,1,0,0,1,1]
-          priorities={
-            'east_first':[4,2,1,3],
-            'south_first':[2,4,3,1],
-            'north_first':[1,4,2,3],
-            'west_first':[3,2,4,1],
-          }
-          AP=priorities[os.environ['CELL']]
-          MAX_EP=5; MAX_STEPS=16
+          TARGET_MASK=[1,0,1,1,1,0,0,1,1]
 
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
@@ -71,99 +56,63 @@ jobs:
               for c in range(3):
                 b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
-          def ready(k): return k['color']==TARGET_COLOR and k['mask']==TARGET_MASK
 
-          def make_env():
-            last=None
-            for attempt in range(1,4):
-              try:
-                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-                if env is None: raise RuntimeError('ENV_CREATE_FAILED')
-                amap={a.value:a for a in env.action_space};obs=env.observation_space
-                for a in prefix+CORE:
-                  obs=env.step(amap[a])
-                  if obs is None: raise RuntimeError('NO_OBS_REPLAY')
-                f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
-                if obs.levels_completed!=5 or p!=START or not ready(k) or e<70:
-                  raise ValueError(f'READY_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k} energy={e}')
-                return env,amap,obs
-              except ValueError:
-                raise
-              except Exception as e:
-                last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,5))
-            raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
-
-          graph={};invalid={};episodes=[];found=None;network_failures=0;guard_receipt=None
-          def add(p,a,q): graph.setdefault(p,{})[a]=q
-          def frontier_path():
-            q=deque([(START,[])]);seen={START}
-            while q:
-              p,path=q.popleft();tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
-              if any(a not in tried for a in AP): return path,p
-              if len(path)>=MAX_STEPS-1: continue
-              for a in AP:
-                nq=graph.get(p,{}).get(a)
-                if nq is None or nq==p or nq in seen: continue
-                seen.add(nq);q.append((nq,path+[a]))
-            return None,None
-
-          for ep in range(1,MAX_EP+1):
+          last=None
+          for attempt in range(1,4):
             try:
-              env,amap,obs=make_env()
-              if guard_receipt is None:
-                f0=np.asarray(obs.frame[-1],dtype=np.int16)
-                guard_receipt={'levels':obs.levels_completed,'pos':list(pos(f0)),'key':key(f0),'energy_proxy':int((f0==11).sum())}
-            except ValueError as e:
-              raise RuntimeError(str(e))
-            except Exception as e:
-              network_failures+=1;episodes.append({'ep':ep,'error':f'{type(e).__name__}:{e}'});continue
-
-            nav,frontier=frontier_path()
-            if nav is None: break
-            p=START;actions=[];disc=[];ok=True
-            for a in nav:
-              obs=env.step(amap[a]);actions.append(a)
-              if obs is None:ok=False;break
+              arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+              if env is None: raise RuntimeError('ENV_CREATE_FAILED')
+              amap={a.value:a for a in env.action_space};obs=env.observation_space
+              for a in prefix+CORE:
+                obs=env.step(amap[a])
+                if obs is None: raise RuntimeError('NO_OBS_REPLAY')
               f=np.asarray(obs.frame[-1],dtype=np.int16)
-              if obs.levels_completed>5:
-                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'state':obs.state.value,'phase':'NAV'};ok=False;break
-              np0=pos(f);k=key(f)
-              if np0 is None or not ready(k):ok=False;break
-              p=np0
-            if found:break
-            if not ok:continue
+              if obs.levels_completed!=5 or pos(f)!=(29,25) or key(f)!={'color':8,'mask':TARGET_MASK}:
+                raise RuntimeError(f'BAD_TARGET_READY levels={obs.levels_completed} pos={pos(f)} key={key(f)}')
+              break
+            except Exception as e:
+              last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,5))
+          else: raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
-            while len(actions)<MAX_STEPS:
-              tried=set(graph.get(p,{}))|set(invalid.get(p,set()))
-              cand=[a for a in AP if a not in tried]
-              if cand:a=cand[0]
-              else:
-                nxt=None
-                for a0 in AP:
-                  q0=graph.get(p,{}).get(a0)
-                  if q0 is not None and q0!=p:nxt=a0;break
-                if nxt is None:break
-                a=nxt
-              before=p;obs=env.step(amap[a]);actions.append(a)
-              if obs is None:break
-              f=np.asarray(obs.frame[-1],dtype=np.int16);energy=int((f==11).sum())
-              if obs.levels_completed>5:
-                found={'ep':ep,'actions':actions.copy(),'levels':obs.levels_completed,'state':obs.state.value,'from':list(before),'a':a,'energy_proxy':energy,'phase':'EXPLORE'};break
-              np0=pos(f);k=key(f)
-              if np0 is None or not ready(k):
-                invalid.setdefault(before,set()).add(a)
-                disc.append({'from':list(before),'a':a,'to':None if np0 is None else list(np0),'kind':'KEY_LOSS','key':k});break
-              is_new=a not in graph.get(before,{})
-              add(before,a,np0);p=np0
-              if is_new:disc.append({'from':list(before),'a':a,'to':list(p),'kind':'SAFE','energy_proxy':energy})
-            episodes.append({'ep':ep,'frontier':None if frontier is None else list(frontier),'actions':actions,'discoveries':disc,'end_pos':list(p)})
-            if found:break
+          play=f[:55,:64]
+          # Connected components for every non-background color, 4-neighbor.
+          comps=[]
+          seen=set()
+          H,W=play.shape
+          for y in range(H):
+            for x in range(W):
+              c=int(play[y,x])
+              if c in {0,3,4,5,9,11,12} or (x,y) in seen: continue
+              q=deque([(x,y)]);seen.add((x,y));pts=[]
+              while q:
+                xx,yy=q.popleft();pts.append((xx,yy))
+                for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+                  nx,ny=xx+dx,yy+dy
+                  if 0<=nx<W and 0<=ny<H and (nx,ny) not in seen and int(play[ny,nx])==c:
+                    seen.add((nx,ny));q.append((nx,ny))
+              xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+              comps.append({'color':c,'count':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],'points':pts if len(pts)<=40 else None})
 
-          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'core_actions':CORE,'guard_receipt':guard_receipt,'priority':AP,'found':found,
-               'graph':{f'{p[0]},{p[1]}':{str(a):list(q) for a,q in es.items()} for p,es in graph.items()},
-               'invalid':{f'{p[0]},{p[1]}':sorted(list(v)) for p,v in invalid.items()},
-               'episodes':episodes,'network_failures':network_failures}
+          # Pixel crop covering the color-8 cluster plus surrounding corridor.
+          x0,x1,y0,y1=20,63,18,45
+          crop=play[y0:y1+1,x0:x1+1]
+          rows=[''.join('0123456789ABCDEF'[int(v)] if 0<=int(v)<16 else '?' for v in row) for row in crop]
+
+          # 5x5 tile signatures at all reachable-grid anchors (x,y ending 4 or 9 pattern from observed agent positions).
+          tile=[]
+          for y in range(0,55,5):
+            for x in range(4,60,5):
+              w=play[y:y+5,x:x+5]
+              if w.shape!=(5,5): continue
+              cnt=Counter(map(int,w.flatten()))
+              dom=cnt.most_common(3)
+              special={str(k):v for k,v in cnt.items() if k not in {0,3,4,5}}
+              if special:
+                tile.append({'anchor':[x,y],'top3':dom,'special':special})
+
+          out={'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+               'levels':obs.levels_completed,'agent_pos':list(pos(f)),'key':key(f),'energy_proxy':int((f==11).sum()),
+               'components':comps,'crop_origin':[x0,y0],'crop_rows':rows,'tile_specials':tile}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
