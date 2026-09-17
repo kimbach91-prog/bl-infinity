@@ -1,4 +1,4 @@
-name: ARC3 ls20 L5 target-ready door-exit supercells
+name: ARC3 ls20 L6 initial public decoder
 
 on:
   push:
@@ -7,99 +7,129 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  probe:
+  decode:
     if: github.actor != 'github-actions[bot]'
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        cell: [right_trace, down_exit, up_exit, left_exit]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Trace exits from verified target-ready L5 state
+      - name: Replay verified 5/7 prefix and decode L6
         run: |
           python - <<'PY'
-          import os,json,logging,time,hashlib
+          import json,logging,hashlib,time
           from pathlib import Path
+          from collections import deque
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
           logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
-          prefix=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
-          START=(49,40); TC=8; TM=[1,0,1,1,1,0,0,1,1]
-          COLOR=[1,3,1,1,1,1,3,1,1,3,3,4,3,4,3]
-          TO_UR=[4,1,1,3,1,1,4]
-          UR_TO_U2_UL=[3,2,2,3,3,3,3,1,2,1,3,3]
-          UL_TO_LL=[4,2,4,2,2,2,2,2,4,2]
-          LOWER_TWO=[4,1,1,2,1]
-          CORE=COLOR+TO_UR+UR_TO_U2_UL+UL_TO_LL+LOWER_TWO
-          sequences={
-            'right_trace':[4,2,4,4,1,4,4,4,4,2,2,2,1],
-            'down_exit':[2,4,4,4,1,4,4,4,4,4,2,2,2,1],
-            'up_exit':[1,4,4,2,4,4,1,4,4,4,4,2,2,2,1],
-            'left_exit':[3,2,4,4,1,4,4,4,4,2,2,2,1],
-          }
-          seq=sequences[os.environ['CELL']]
-          def pos(frame):
-            f=np.asarray(frame,dtype=np.int16)
-            for y in range(0,55):
-              for x in range(0,60):
-                w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5):continue
-                vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
-            return None
-          def key(frame):
-            f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(cand,key=lambda z:z[1])[0];mask=[]
-            for r in range(3):
-              for c in range(3):
-                b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
-            return {'color':color,'mask':mask}
+          p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
+          p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
+          prefix=p4+p5
+
           def make_env():
             last=None
             for attempt in range(1,5):
               try:
-                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE);env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-                if env is None:raise RuntimeError('ENV_CREATE_FAILED')
+                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+                if env is None: raise RuntimeError('ENV_CREATE_FAILED')
                 amap={a.value:a for a in env.action_space};obs=env.observation_space
                 for a in prefix:
                   obs=env.step(amap[a])
-                  if obs is None:raise RuntimeError('NO_OBS_PREFIX')
-                f=np.asarray(obs.frame[-1],dtype=np.int16)
-                if obs.levels_completed!=4 or pos(f)!=START:raise RuntimeError('BAD_START')
+                  if obs is None: raise RuntimeError('NO_OBS_PREFIX')
                 return env,amap,obs
               except Exception as e:
                 last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
+
           env,amap,obs=make_env()
-          for a in CORE:
-            obs=env.step(amap[a])
-            if obs is None:raise RuntimeError('NO_OBS_CORE')
-          f=np.asarray(obs.frame[-1],dtype=np.int16);core={'pos':list(pos(f)),'key':key(f),'e':int((f==11).sum()),'levels':obs.levels_completed}
-          if core['key']['color']!=TC or core['key']['mask']!=TM: raise RuntimeError('CORE_NOT_TARGET_READY '+json.dumps(core))
-          trace=[];first_change=None
-          for i,a in enumerate(seq,1):
-            bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
-            obs=env.step(amap[a])
-            if obs is None:break
-            aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
-            ev={'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'target_ready':ak['color']==TC and ak['mask']==TM,'levels':obs.levels_completed,'state':obs.state.value}
-            trace.append(ev)
-            if first_change is None and not ev['target_ready']:first_change=ev
-            if obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
-          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'core_actions':len(CORE),'core':core,'sequence':seq,'first_target_loss':first_change,'levels_completed':obs.levels_completed if obs else None,'state':obs.state.value if obs else None,'trace':trace}
-          print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
+          if obs.levels_completed!=5:
+            raise RuntimeError(f'BAD_PREFIX levels={obs.levels_completed} state={obs.state.value}')
+          f=np.asarray(obs.frame[-1],dtype=np.int16)
+
+          def components_for_color(color):
+            m=(f==color); seen=np.zeros_like(m,dtype=bool); out=[]
+            H,W=m.shape
+            for y in range(H):
+              for x in range(W):
+                if not m[y,x] or seen[y,x]: continue
+                q=deque([(x,y)]);seen[y,x]=True;pts=[]
+                while q:
+                  xx,yy=q.popleft();pts.append((xx,yy))
+                  for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+                    nx,ny=xx+dx,yy+dy
+                    if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                      seen[ny,nx]=True;q.append((nx,ny))
+                xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                out.append({'n':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)]})
+            return sorted(out,key=lambda z:(-z['n'],z['bbox']))
+
+          def agent_candidates():
+            out=[]
+            for y in range(0,60):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5):continue
+                vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25: out.append([x,y])
+            return out
+
+          def key_state():
+            cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0];mask=[]
+            for r in range(3):
+              row=[]
+              for c in range(3):
+                b=cur[2*r:2*r+2,2*c:2*c+2];row.append(1 if int((b==color).sum())>=2 else 0)
+              mask.append(row)
+            return {'color':color,'mask':mask,'raw':cur.tolist()}
+
+          anchors_x=list(range(4,60,5)); anchors_y=list(range(0,55,5))
+          blocks=[]; coarse=[]
+          for r,y in enumerate(anchors_y):
+            row=[]; chars=[]
+            for c,x in enumerate(anchors_x):
+              w=f[y:y+5,x:x+5];vals,cts=np.unique(w,return_counts=True);d={str(int(k)):int(v) for k,v in zip(vals,cts)}
+              row.append({'r':r,'c':c,'x':x,'y':y,'counts':d})
+              if d=={'3':25}:ch='3'
+              elif d=={'4':25}:ch='4'
+              elif d.get('9')==15 and d.get('12')==10:ch='A'
+              else:ch='?'
+              chars.append(ch)
+            blocks.append(row);coarse.append(''.join(chars))
+
+          palette={str(int(v)):int(c) for v,c in zip(*np.unique(f,return_counts=True))}
+          colors=sorted(int(x) for x in np.unique(f))
+          out={
+            'levels_completed':obs.levels_completed,'state':obs.state.value,
+            'prefix_actions':len(prefix),'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+            'parent_l4_sha256':hashlib.sha256(','.join(map(str,p4)).encode()).hexdigest(),
+            'l5_suffix_sha256':hashlib.sha256(','.join(map(str,p5)).encode()).hexdigest(),
+            'frame_shape':list(f.shape),'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest(),
+            'palette':palette,'player_candidates':agent_candidates(),'current_key':key_state(),
+            'grid_origin_mod5':[4,0],'x_anchors':anchors_x,'y_anchors':anchors_y,
+            'coarse':coarse,'blocks':blocks,
+            'components':{str(c):components_for_color(c) for c in colors},
+            'top_left_patch':f[:20,:20].tolist(),'top_right_patch':f[:20,44:].tolist(),
+            'bottom_left_patch':f[44:,:20].tolist(),'bottom_right_patch':f[44:,44:].tolist(),
+            'frame':f.tolist()
+          }
+          (ROOT/'l6-initial-decoder.json').write_text(json.dumps(out,indent=2,sort_keys=True))
+          print(json.dumps({'levels':obs.levels_completed,'prefix_actions':len(prefix),'prefix_sha256':out['prefix_sha256'],'player':out['player_candidates'],'key':out['current_key'],'palette':out['palette']},sort_keys=True))
           PY
+      - name: Persist L6 decoder receipt
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public_benchmark/arc-agi-3/dev/l6-initial-decoder.json
+          git commit -m 'benchmark: persist L6 initial decoder receipt'
+          git push
