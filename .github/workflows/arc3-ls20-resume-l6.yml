@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 bottom-portal probes
+name: ARC3 ls20 L6 door-marker horizontal probes
 
 on:
   push:
@@ -16,17 +16,17 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        extra: [1, 2, 3, 4]
+        cell: [left_chain, right_chain, left_then_up, right_then_down]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      EXTRA: ${{ matrix.extra }}
+      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Cross bottom portal from 54,45 then probe one direction
+      - name: Probe horizontal activation from D marker at 54,35
         run: |
           python - <<'PY'
           import os,json,logging,time,hashlib
@@ -43,10 +43,16 @@ jobs:
           TO_REFILL=[2,3,3,3,3,3]
           TO_COLOR8=[1,1,4,1,4,1,4,4,4,4]
           TO_RIGHT_PORTAL=[4,4,1,4,1,4,1,1]
-          TO_54_45=[4,2,2,2,2]
-          BASE=SHAPE_E+TO_REFILL+TO_COLOR8+TO_RIGHT_PORTAL+TO_54_45
+          TO_D=[4,2,2]
+          BASE=SHAPE_E+TO_REFILL+TO_COLOR8+TO_RIGHT_PORTAL+TO_D
           TM=[1,0,1,1,1,0,0,1,1]
-          extra=int(os.environ['EXTRA'])
+          plans={
+            'left_chain':[3,3,3],
+            'right_chain':[4,4,4],
+            'left_then_up':[3,1,4],
+            'right_then_down':[4,2,3],
+          }
+          seq=plans[os.environ['CELL']]
 
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
@@ -77,8 +83,8 @@ jobs:
                 obs=env.step(amap[a])
                 if obs is None:raise RuntimeError('NO_OBS_BASE')
               f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
-              if obs.levels_completed!=5 or p!=(54,45) or k!={'color':8,'mask':TM}:
-                raise ValueError(f'BOTTOM_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k} energy={e}')
+              if obs.levels_completed!=5 or p!=(54,35) or k!={'color':8,'mask':TM}:
+                raise ValueError(f'D_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k} energy={e}')
               guard={'pos':list(p),'key':k,'energy_proxy':e,'levels':obs.levels_completed}
               break
             except ValueError:raise
@@ -87,19 +93,20 @@ jobs:
           else:raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
           trace=[];found=None
-          for i,a in enumerate([2,extra],1):
+          for i,a in enumerate(seq,1):
             before=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(before);bk=key(before);be=int((before==11).sum())
             obs=env.step(amap[a])
             if obs is None:break
             after=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(after);ak=key(after);ae=int((after==11).sum())
             jump=None if bp is None or ap is None else abs(ap[0]-bp[0])+abs(ap[1]-bp[1])
             ev={'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'jump':jump,
-                'before_key':bk,'after_key':ak,'before_energy':be,'after_energy':ae,'levels':obs.levels_completed,'state':obs.state.value}
+                'before_key':bk,'after_key':ak,'before_energy':be,'after_energy':ae,
+                'levels':obs.levels_completed,'state':obs.state.value}
             trace.append(ev)
             if obs.levels_completed>5:
-              found={'i':i,'actions':[2,extra][:i],'event':ev};break
-          out={'extra':extra,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'guard_receipt':guard,'found':found,'trace':trace,'levels_completed':obs.levels_completed if obs else None,
-               'state':obs.state.value if obs else None}
+              found={'i':i,'actions':seq[:i],'event':ev};break
+          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+               'guard_receipt':guard,'sequence':seq,'found':found,'trace':trace,
+               'levels_completed':obs.levels_completed if obs else None,'state':obs.state.value if obs else None}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
