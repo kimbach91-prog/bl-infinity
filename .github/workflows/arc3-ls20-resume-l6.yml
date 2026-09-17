@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 lower-operator reset supercells
+name: ARC3 ls20 L6 lower-operator second-activation supercells
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Test second lower rotation after reset loop
+      - name: Reset then replay full lower activation cycle
         run: |
           python - <<'PY'
           import os,json,logging,time,hashlib
@@ -41,7 +41,7 @@ jobs:
           prefix=p4+p5; START=(24,50)
           E=[1,0,1,1,1,0,0,1,1]
           START_LOWER=[1,4,4,1]
-          FIRST_ROT=[2,1,2,1]
+          ACT=[2,1,2,1]
           loops={
             'short_loop':[2,3,3,4,4,1],
             'medium_loop':[2,3,3,3,3,4,4,4,4,1],
@@ -49,7 +49,6 @@ jobs:
             'refill_detour':[2,3,3,3,3,3,1,2,4,4,4,4,4,1]
           }
           loop=loops[os.environ['CELL']]
-
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
@@ -59,24 +58,19 @@ jobs:
                 vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
                 if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
             return None
-
           def key(frame):
             f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True)
-            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
             color=max(cand,key=lambda z:z[1])[0];mask=[]
             for r in range(3):
               for c in range(3):
-                b=cur[2*r:2*r+2,2*c:2*c+2]
-                mask.append(1 if int((b==color).sum())>=2 else 0)
+                b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
-
           def make_env():
             last=None
             for attempt in range(1,5):
               try:
-                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
-                env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE);env=arcade.make('ls20',save_recording=False,include_frame_data=True)
                 if env is None:raise RuntimeError('ENV_CREATE_FAILED')
                 amap={a.value:a for a in env.action_space};obs=env.observation_space
                 for a in prefix:
@@ -88,35 +82,21 @@ jobs:
               except Exception as e:
                 last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
-
           env,amap,obs=make_env();trace=[];executed=[];found=None
-          stages=[('start_lower',START_LOWER),('first_rotation',FIRST_ROT),('reset_loop',loop)]
+          stages=[('start_lower',START_LOWER),('first_activation',ACT),('reset_loop',loop),('second_activation',ACT)]
           for label,actions in stages:
             for a in actions:
-              bef=np.asarray(obs.frame[-1],dtype=np.int16)
-              bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
+              bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
               obs=env.step(amap[a]);executed.append(a)
               if obs is None:break
-              aft=np.asarray(obs.frame[-1],dtype=np.int16)
-              ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
-              ev={'stage':label,'a':a,'from':None if bp is None else list(bp),
-                  'to':None if ap is None else list(ap),
-                  'before_key':bk,'after_key':ak,
-                  'before11':b11,'after11':a11,
-                  'levels':obs.levels_completed,'state':obs.state.value}
+              aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
+              ev={'stage':label,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'levels':obs.levels_completed,'state':obs.state.value}
               trace.append(ev)
               if ak['mask']==E:
                 found={'event':ev,'actions':executed.copy()};break
               if obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
             if found or obs is None or obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
-
           f=np.asarray(obs.frame[-1],dtype=np.int16) if obs is not None else None
-          out={'cell':os.environ['CELL'],
-               'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'loop':loop,'found':found,
-               'final_pos':None if f is None or pos(f) is None else list(pos(f)),
-               'final_key':None if f is None else key(f),
-               'energy_proxy':None if f is None else int((f==11).sum()),
-               'trace':trace}
+          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'loop':loop,'found':found,'executed':executed,'final_pos':None if f is None or pos(f) is None else list(pos(f)),'final_key':None if f is None else key(f),'energy_proxy':None if f is None else int((f==11).sum()),'trace':trace}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
