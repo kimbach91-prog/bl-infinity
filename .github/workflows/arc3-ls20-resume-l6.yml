@@ -1,4 +1,4 @@
-name: ARC3 ls20 L5 supercell strike group
+name: ARC3 ls20 L5 shape-direction supercells
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        cell: [shape_cycle, color_cycle, refill_top_right, refill_bottom_left]
+        cell: [from_below, vertical_orbit, right_loop, left_loop]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -26,134 +26,82 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Execute receipt-gated L5 supercell probe
+      - name: Probe L5 shape rotator from multiple directions
         run: |
           python - <<'PY'
-          import os, json, logging, time, hashlib
+          import os,json,logging,time,hashlib
           from pathlib import Path
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
-
           logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
           prefix=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
-          cell=os.environ['CELL']
           START=(49,40)
+          TARGET=[1,0,1,1,1,0,0,1,1]  # door target: 101/110/011
+          # Verified route: start -> lower shape touch -> lower-left refill. Ends at (14,45) with energy reset.
+          BASE=[1,3,3,3,2,3,3,1,3,2,2,3]
+          sequences={
+            'from_below':[1,1,2,1,2,1,2,1,2,1,2,1],
+            'vertical_orbit':[1,1,1,2,2,2,1,1,2,2,1,2],
+            'right_loop':[4,1,1,3,1,4,2,3,2,4,1,3],
+            'left_loop':[1,3,4,1,3,4,2,3,1,4,2,3],
+          }
+          seq=sequences[os.environ['CELL']]
 
-          def agent_pos(frame):
+          def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
               for x in range(0,60):
                 w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5): continue
-                vals,cts=np.unique(w,return_counts=True)
-                d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:
-                  return (x,y)
+                if w.shape!=(5,5):continue
+                vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
             return None
-
-          def key_state(frame):
-            f=np.asarray(frame,dtype=np.int16)
-            cur=f[55:61,3:9]
-            vals,cts=np.unique(cur,return_counts=True)
-            cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
-            color=max(cand,key=lambda z:z[1])[0]
-            mask=[]
+          def key(frame):
+            f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0];mask=[]
             for r in range(3):
               for c in range(3):
-                block=cur[2*r:2*r+2,2*c:2*c+2]
-                mask.append(1 if int((block==color).sum())>=2 else 0)
+                b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
-
           def make_env():
             last=None
             for attempt in range(1,5):
               try:
                 arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
                 env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-                if env is None: raise RuntimeError('ENV_CREATE_FAILED')
-                amap={a.value:a for a in env.action_space}
-                obs=env.observation_space
+                if env is None:raise RuntimeError('ENV_CREATE_FAILED')
+                amap={a.value:a for a in env.action_space};obs=env.observation_space
                 for a in prefix:
                   obs=env.step(amap[a])
-                  if obs is None: raise RuntimeError('NO_OBS_PREFIX')
+                  if obs is None:raise RuntimeError('NO_OBS_PREFIX')
                 f=np.asarray(obs.frame[-1],dtype=np.int16)
-                if obs.levels_completed!=4 or agent_pos(f)!=START:
-                  raise RuntimeError(f'BAD_L5_START levels={obs.levels_completed} pos={agent_pos(f)}')
+                if obs.levels_completed!=4 or pos(f)!=START:raise RuntimeError('BAD_START')
                 return env,amap,obs
               except Exception as e:
-                last=f'{type(e).__name__}:{e}'
-                time.sleep(min(2*attempt,6))
+                last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
-          plans={
-            # End one cell before the verified shape-changing edge, then bounce across it.
-            'shape_cycle': {
-              'route':[1,3,3,3,2,3,3,1],
-              'probe':[3,4,3,4,3,4,3],
-              'expected_route_end':[24,35]
-            },
-            # Verified graph reaches (34,25); static frame places the multicolor object immediately left.
-            'color_cycle': {
-              'route':[1,3,1,1,1,1,3,1,1,3],
-              'probe':[3,4,3,4,3,4,3],
-              'expected_route_end':[34,25]
-            },
-            # Portal shortcut reaches (54,10); walk left-left-up toward top-right refill ring at anchor (44,5).
-            'refill_top_right': {
-              'route':[3,2,2],
-              'probe':[3,3,1,4,3,4,1],
-              'expected_route_end':[54,10]
-            },
-            # Reach verified shape edge, then descend toward bottom-left refill ring near anchor (14,45).
-            'refill_bottom_left': {
-              'route':[1,3,3,3,2,3,3,1,3],
-              'probe':[2,2,3,4,3,1,2],
-              'expected_route_end':[19,35]
-            }
-          }
-          plan=plans[cell]
-          env,amap,obs=make_env()
-          frame=np.asarray(obs.frame[-1],dtype=np.int16)
-          trace=[]
-          def snap(label,a=None,before11=None,before_key=None,before_pos=None):
-            nonlocal_frame=np.asarray(obs.frame[-1],dtype=np.int16)
-            return {
-              'label':label,'a':a,'before_pos':None if before_pos is None else list(before_pos),
-              'after_pos':None if agent_pos(nonlocal_frame) is None else list(agent_pos(nonlocal_frame)),
-              'before11':before11,'after11':int((nonlocal_frame==11).sum()),
-              'before_key':before_key,'after_key':key_state(nonlocal_frame),
-              'levels':obs.levels_completed,'state':obs.state.value
-            }
-
-          for i,a in enumerate(plan['route'],1):
-            before=np.asarray(obs.frame[-1],dtype=np.int16); bp=agent_pos(before); bk=key_state(before); b11=int((before==11).sum())
+          env,amap,obs=make_env();trace=[]
+          for i,a in enumerate(BASE,1):
+            bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
+            obs=env.step(amap[a]);aft=np.asarray(obs.frame[-1],dtype=np.int16)
+            trace.append({'phase':'base','i':i,'a':a,'from':list(bp),'to':list(pos(aft)),'before_key':bk,'after_key':key(aft),'before11':b11,'after11':int((aft==11).sum())})
+          base_frame=np.asarray(obs.frame[-1],dtype=np.int16)
+          base={'pos':list(pos(base_frame)),'key':key(base_frame),'energy_proxy':int((base_frame==11).sum())}
+          found=None
+          for i,a in enumerate(seq,1):
+            bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
             obs=env.step(amap[a])
-            if obs is None: raise RuntimeError('NO_OBS_ROUTE')
-            trace.append(snap(f'route_{i}',a,b11,bk,bp))
-          route_end=agent_pos(np.asarray(obs.frame[-1],dtype=np.int16))
-
-          for i,a in enumerate(plan['probe'],1):
-            before=np.asarray(obs.frame[-1],dtype=np.int16); bp=agent_pos(before); bk=key_state(before); b11=int((before==11).sum())
-            obs=env.step(amap[a])
-            if obs is None: break
-            trace.append(snap(f'probe_{i}',a,b11,bk,bp))
-            if obs.levels_completed>4 or obs.state.value!='NOT_FINISHED': break
-
-          key_changes=[t for t in trace if t['before_key'] and t['after_key']!=t['before_key']]
-          refill_events=[t for t in trace if t['before11'] is not None and t['after11']>t['before11']+4]
-          result={
-            'cell':cell,
-            'prefix_actions':len(prefix),
-            'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-            'route':plan['route'],'probe':plan['probe'],
-            'route_end':None if route_end is None else list(route_end),
-            'expected_route_end':plan['expected_route_end'],
-            'key_changes':key_changes,
-            'refill_events':refill_events,
-            'final':trace[-1] if trace else None,
-            'trace':trace
-          }
-          print('SUPERCELL_RESULT='+json.dumps(result,separators=(',',':'),sort_keys=True))
+            if obs is None:break
+            aft=np.asarray(obs.frame[-1],dtype=np.int16);ak=key(aft);ap=pos(aft)
+            event={'phase':'probe','i':i,'a':a,'from':list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':int((aft==11).sum()),'levels':obs.levels_completed}
+            trace.append(event)
+            if ak['mask']==TARGET:
+              found={'i':i,'actions':seq[:i],'event':event};break
+            if obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
+          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'base_actions':BASE,'base':base,'probe':seq,'target_mask':TARGET,'found':found,'final':trace[-1] if trace else None,'trace':trace}
+          print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
