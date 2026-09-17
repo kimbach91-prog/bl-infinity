@@ -1,4 +1,4 @@
-name: ARC3 ls20 L5 refill and U2 route supercells
+name: ARC3 ls20 L5 decisive composition supercells
 
 on:
   push:
@@ -10,13 +10,13 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  solve:
     if: github.actor != 'github-actions[bot]'
     strategy:
       fail-fast: false
       max-parallel: 4
       matrix:
-        cell: [color_to_ur_refill, u2_ul_down, u2_ul_side, u2_direct_down]
+        cell: [ul_to_ll, ul_to_ll_shape, door_scout, full_candidate]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe short refill routes
+      - name: Execute decisive L5 composed route
         run: |
           python - <<'PY'
           import os,json,logging,time,hashlib
@@ -37,25 +37,33 @@ jobs:
           logging.disable(logging.INFO)
           ROOT=Path('public_benchmark/arc-agi-3/dev')
           prefix=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
-          START=(49,40); cell=os.environ['CELL']
-          color=[1,3,1,1,1,1,3,1,1,3,3,4,3,4,3]
-          to_ur=[4,1,1,3,1,1,4]
-          to_u2=[1,3,1,1,1,1,3,3,3,3,3,1,2,1]
-          to_ul=[3,3]
-          plans={
-            'color_to_ur_refill': (color, to_ur),
-            'u2_ul_down': (to_u2+to_ul, [2,2,2,2,2,2,2,2]),
-            'u2_ul_side': (to_u2+to_ul, [4,2,2,3,2,4,2,2]),
-            'u2_direct_down': (to_u2, [2,2,2,2,3,2,2,4,2,3,2,2]),
-          }
-          base,probe=plans[cell]
+          START=(49,40); TARGET_COLOR=8; TARGET=[1,0,1,1,1,0,0,1,1]
+          cell=os.environ['CELL']
+
+          COLOR=[1,3,1,1,1,1,3,1,1,3,3,4,3,4,3]
+          TO_UR=[4,1,1,3,1,1,4]                         # refill @ (44,5)
+          UR_TO_U2_UL=[3,2,2,3,3,3,3,1,2,1,3,3]        # U2 then refill @ (9,10)
+          UL_TO_LL=[4,2,4,2,2,2,2,2,4,2]               # portal via (9,25), target refill @ (14,45)
+          LOWER_TWO=[4,1,1,2,1]                         # touch lower operator twice
+          DOOR=[4,2,4,4,1,4,4,4,4,2,2,2,1]            # expected -> door from (19,35)
+          START_TO_LL=[1,3,3,3,2,3,3,1,3,2,2,3]       # verified lower-left refill
+          LL_TO_LOWER=[4,1,1]                           # reach lower operator from refill
+
+          if cell=='ul_to_ll':
+            stages=[('u2_ul', [1,3,1,1,1,1,3,3,3,3,3,1,2,1,3,3]),('ul_to_ll',UL_TO_LL)]
+          elif cell=='ul_to_ll_shape':
+            stages=[('u2_ul', [1,3,1,1,1,1,3,3,3,3,3,1,2,1,3,3]),('ul_to_ll',UL_TO_LL),('lower_two',LOWER_TWO)]
+          elif cell=='door_scout':
+            stages=[('ll_refill',START_TO_LL),('lower_entry',LL_TO_LOWER),('door',DOOR)]
+          else:
+            stages=[('color',COLOR),('ur_refill',TO_UR),('u2_ul_refill',UR_TO_U2_UL),('ul_ll_refill',UL_TO_LL),('lower_two',LOWER_TWO),('door',DOOR)]
 
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
               for x in range(0,60):
                 w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5):continue
+                if w.shape!=(5,5): continue
                 vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
                 if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
             return None
@@ -83,17 +91,19 @@ jobs:
               except Exception as e:
                 last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
-          env,amap,obs=make_env();trace=[]
-          for phase,actions in [('base',base),('probe',probe)]:
-            for i,a in enumerate(actions,1):
-              bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
-              obs=env.step(amap[a])
-              if obs is None:break
-              aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
-              trace.append({'phase':phase,'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'refill':a11>b11+20,'levels':obs.levels_completed,'state':obs.state.value})
-              if obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
-            if obs is None or obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
-          refills=[t for t in trace if t['refill']]
-          out={'cell':cell,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'base':base,'probe':probe,'refills':refills,'final':trace[-1] if trace else None,'trace':trace}
+
+          env,amap,obs=make_env();milestones=[];executed=[];prev11=int((np.asarray(obs.frame[-1],dtype=np.int16)==11).sum())
+          for label,actions in stages:
+            for a in actions:
+              obs=env.step(amap[a]);executed.append(a)
+              if obs is None or obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
+            if obs is None:
+              milestones.append({'stage':label,'obs':None});break
+            f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
+            milestones.append({'stage':label,'n':len(executed),'pos':None if p is None else list(p),'key':k,'energy_proxy':e,'delta11':e-prev11,'levels':obs.levels_completed,'state':obs.state.value,'target_ready':k['color']==TARGET_COLOR and k['mask']==TARGET})
+            prev11=e
+            if obs.levels_completed>4 or obs.state.value!='NOT_FINISHED':break
+          f=np.asarray(obs.frame[-1],dtype=np.int16) if obs is not None else None
+          out={'cell':cell,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'executed':executed,'milestones':milestones,'levels_completed':None if obs is None else obs.levels_completed,'state':None if obs is None else obs.state.value,'final_pos':None if f is None or pos(f) is None else list(pos(f)),'final_key':None if f is None else key(f),'target_color':TARGET_COLOR,'target_mask':TARGET}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
