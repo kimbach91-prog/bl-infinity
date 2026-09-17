@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 offline decoder summary
+name: ARC3 ls20 L6 operator supercells
 
 on:
   push:
@@ -10,38 +10,106 @@ permissions:
   contents: read
 
 jobs:
-  summarize:
+  probe:
     if: github.actor != 'github-actions[bot]'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        cell: [color_cycle, upper_shape, lower_shape, refill_chain]
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
-      - name: Summarize decoded L6 public frame
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
+      - name: Probe verified L6 landmarks
         run: |
           python - <<'PY'
-          import json
+          import os,json,logging,time,hashlib
           from pathlib import Path
-          d=json.loads(Path('public_benchmark/arc-agi-3/dev/l6-initial-decoder.json').read_text())
-          frame=d['frame']
-          special=[]
-          for row in d['blocks']:
-            for b in row:
-              vals=b['counts']
-              pure=(vals=={'3':25} or vals=={'4':25})
-              agent=(vals.get('9')==15 and vals.get('12')==10 and sum(vals.values())==25)
-              if not pure and not agent:
-                special.append(b)
-          comps={k:v for k,v in d['components'].items() if k in ['0','1','5','8','9','11','12','14']}
-          doorish=[]
-          for comp in comps.get('5',[]):
-            if 30<=comp['n']<=120:
-              x0,y0,x1,y1=comp['bbox'];pad=3
-              yy0=max(0,y0-pad);yy1=min(63,y1+pad);xx0=max(0,x0-pad);xx1=min(63,x1+pad)
-              patch=[r[xx0:xx1+1] for r in frame[yy0:yy1+1]]
-              doorish.append({'component':comp,'patch_bbox':[xx0,yy0,xx1,yy1],'patch':patch})
-          out={
-            'levels':d['levels_completed'],'prefix_actions':d['prefix_actions'],'prefix_sha256':d['prefix_sha256'],
-            'player':d['player_candidates'],'key':d['current_key'],'palette':d['palette'],
-            'coarse':d['coarse'],'special_blocks':special,'components':comps,'doorish_color5':doorish
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.INFO)
+          ROOT=Path('public_benchmark/arc-agi-3/dev')
+          p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
+          p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
+          prefix=p4+p5; START=(24,50); cell=os.environ['CELL']
+          plans={
+            'color_cycle': {
+              'route':[1,3,3,3,1,1,1,1,4,4,4,2],
+              'probe':[1,2,1,2,1,2,1,2],
+              'expect':[24,30]
+            },
+            'upper_shape': {
+              'route':[1,3,3,3,1,1,1,1,1,1,1,4],
+              'probe':[3,4,3,4,3,4,3,4],
+              'expect':[14,10]
+            },
+            'lower_shape': {
+              'route':[1,4,4,1],
+              'probe':[2,1,2,1,2,1,2,1],
+              'expect':[34,40]
+            },
+            'refill_chain': {
+              'route':[1,3,3,3,1,1,1,1,1,1,1,1],
+              'probe':[4,4,4,4,4,4],
+              'expect':[9,5]
+            }
           }
-          print('L6_SUMMARY='+json.dumps(out,separators=(',',':'),sort_keys=True))
+          plan=plans[cell]
+          def pos(frame):
+            f=np.asarray(frame,dtype=np.int16)
+            for y in range(0,55):
+              for x in range(0,60):
+                w=f[y:y+5,x:x+5]
+                if w.shape!=(5,5):continue
+                vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
+            return None
+          def key(frame):
+            f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
+            vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
+            color=max(cand,key=lambda z:z[1])[0];mask=[]
+            for r in range(3):
+              for c in range(3):
+                b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
+            return {'color':color,'mask':mask}
+          def make_env():
+            last=None
+            for attempt in range(1,5):
+              try:
+                arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE);env=arcade.make('ls20',save_recording=False,include_frame_data=True)
+                if env is None:raise RuntimeError('ENV_CREATE_FAILED')
+                amap={a.value:a for a in env.action_space};obs=env.observation_space
+                for a in prefix:
+                  obs=env.step(amap[a])
+                  if obs is None:raise RuntimeError('NO_OBS_PREFIX')
+                f=np.asarray(obs.frame[-1],dtype=np.int16)
+                if obs.levels_completed!=5 or pos(f)!=START:raise RuntimeError(f'BAD_START {obs.levels_completed} {pos(f)}')
+                return env,amap,obs
+              except Exception as e:
+                last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
+            raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
+          env,amap,obs=make_env();trace=[]
+          for phase,actions in [('route',plan['route']),('probe',plan['probe'])]:
+            for i,a in enumerate(actions,1):
+              bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
+              obs=env.step(amap[a])
+              if obs is None:break
+              aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
+              trace.append({'phase':phase,'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'refill':a11>b11+20,'levels':obs.levels_completed,'state':obs.state.value})
+              if obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
+            if obs is None or obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
+          changes=[t for t in trace if t['before_key']!=t['after_key']]
+          refills=[t for t in trace if t['refill']]
+          route_end=None
+          for t in trace:
+            if t['phase']=='route':route_end=t['to']
+          out={'cell':cell,'prefix_actions':len(prefix),'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'expected_route_end':plan['expect'],'route_end':route_end,'key_changes':changes,'refills':refills,'final':trace[-1] if trace else None,'trace':trace}
+          print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
