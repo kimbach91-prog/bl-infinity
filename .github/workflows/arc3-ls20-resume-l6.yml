@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 target-ready frame decoder
+name: ARC3 ls20 L6 upper-gate four-way probe
 
 on:
   push:
@@ -10,21 +10,27 @@ permissions:
   contents: read
 
 jobs:
-  decode:
+  probe:
     if: github.actor != 'github-actions[bot]'
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        action: [1, 2, 3, 4]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env:
+      ACTION: ${{ matrix.action }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Decode target-ready L6 frame around door/color objects
+      - name: Probe exact upper gate at 44,20
         run: |
           python - <<'PY'
-          import json,logging,time,hashlib
+          import os,json,logging,time,hashlib
           from pathlib import Path
-          from collections import deque,Counter
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
@@ -36,18 +42,20 @@ jobs:
           SHAPE_E=[1,4,4,1,2,1,2,1,2,3,3,4,4,1,2,1]
           TO_REFILL=[2,3,3,3,3,3]
           TO_COLOR8=[1,1,4,1,4,1,4,4,4,4]
-          CORE=SHAPE_E+TO_REFILL+TO_COLOR8
-          TARGET_MASK=[1,0,1,1,1,0,0,1,1]
+          TO_GATE=[4,4,1,4]
+          CORE=SHAPE_E+TO_REFILL+TO_COLOR8+TO_GATE
+          TM=[1,0,1,1,1,0,0,1,1]
+          a=int(os.environ['ACTION'])
 
-          def pos(frame):
-            f=np.asarray(frame,dtype=np.int16)
+          def candidates(frame):
+            f=np.asarray(frame,dtype=np.int16);out=[]
             for y in range(0,55):
               for x in range(0,60):
                 w=f[y:y+5,x:x+5]
-                if w.shape!=(5,5): continue
+                if w.shape!=(5,5):continue
                 vals,cts=np.unique(w,return_counts=True);d={int(k):int(v) for k,v in zip(vals,cts)}
-                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:return (x,y)
-            return None
+                if d.get(9,0)==15 and d.get(12,0)==10 and sum(d.values())==25:out.append((x,y))
+            return out
           def key(frame):
             f=np.asarray(frame,dtype=np.int16);cur=f[55:61,3:9]
             vals,cts=np.unique(cur,return_counts=True);cand=[(int(v),int(c)) for v,c in zip(vals,cts) if int(v)!=5]
@@ -56,63 +64,41 @@ jobs:
               for c in range(3):
                 b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
+          def crop(frame,x0=35,x1=63,y0=14,y1=31):
+            f=np.asarray(frame,dtype=np.int16)
+            return [''.join('0123456789ABCDEF'[int(v)] if 0<=int(v)<16 else '?' for v in f[y,x0:x1+1]) for y in range(y0,y1+1)]
 
           last=None
           for attempt in range(1,4):
             try:
               arcade=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
               env=arcade.make('ls20',save_recording=False,include_frame_data=True)
-              if env is None: raise RuntimeError('ENV_CREATE_FAILED')
-              amap={a.value:a for a in env.action_space};obs=env.observation_space
-              for a in prefix+CORE:
-                obs=env.step(amap[a])
-                if obs is None: raise RuntimeError('NO_OBS_REPLAY')
-              f=np.asarray(obs.frame[-1],dtype=np.int16)
-              if obs.levels_completed!=5 or pos(f)!=(29,25) or key(f)!={'color':8,'mask':TARGET_MASK}:
-                raise RuntimeError(f'BAD_TARGET_READY levels={obs.levels_completed} pos={pos(f)} key={key(f)}')
+              if env is None:raise RuntimeError('ENV_CREATE_FAILED')
+              amap={x.value:x for x in env.action_space};obs=env.observation_space
+              trace=[]
+              for i,x in enumerate(prefix+CORE,1):
+                obs=env.step(amap[x])
+                if obs is None:raise RuntimeError('NO_OBS_REPLAY')
+              f=np.asarray(obs.frame[-1],dtype=np.int16);cs=candidates(f);k=key(f)
+              if obs.levels_completed!=5 or cs!=[(44,20)] or k!={'color':8,'mask':TM}:
+                raise ValueError(f'GATE_GUARD_FAILED levels={obs.levels_completed} candidates={cs} key={k}')
               break
+            except ValueError: raise
             except Exception as e:
               last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,5))
           else: raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
-          play=f[:55,:64]
-          # Connected components for every non-background color, 4-neighbor.
-          comps=[]
-          seen=set()
-          H,W=play.shape
-          for y in range(H):
-            for x in range(W):
-              c=int(play[y,x])
-              if c in {0,3,4,5,9,11,12} or (x,y) in seen: continue
-              q=deque([(x,y)]);seen.add((x,y));pts=[]
-              while q:
-                xx,yy=q.popleft();pts.append((xx,yy))
-                for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
-                  nx,ny=xx+dx,yy+dy
-                  if 0<=nx<W and 0<=ny<H and (nx,ny) not in seen and int(play[ny,nx])==c:
-                    seen.add((nx,ny));q.append((nx,ny))
-              xs=[p[0] for p in pts];ys=[p[1] for p in pts]
-              comps.append({'color':c,'count':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],'points':pts if len(pts)<=40 else None})
-
-          # Pixel crop covering the color-8 cluster plus surrounding corridor.
-          x0,x1,y0,y1=20,63,18,45
-          crop=play[y0:y1+1,x0:x1+1]
-          rows=[''.join('0123456789ABCDEF'[int(v)] if 0<=int(v)<16 else '?' for v in row) for row in crop]
-
-          # 5x5 tile signatures at all reachable-grid anchors (x,y ending 4 or 9 pattern from observed agent positions).
-          tile=[]
-          for y in range(0,55,5):
-            for x in range(4,60,5):
-              w=play[y:y+5,x:x+5]
-              if w.shape!=(5,5): continue
-              cnt=Counter(map(int,w.flatten()))
-              dom=cnt.most_common(3)
-              special={str(k):v for k,v in cnt.items() if k not in {0,3,4,5}}
-              if special:
-                tile.append({'anchor':[x,y],'top3':dom,'special':special})
-
-          out={'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'levels':obs.levels_completed,'agent_pos':list(pos(f)),'key':key(f),'energy_proxy':int((f==11).sum()),
-               'components':comps,'crop_origin':[x0,y0],'crop_rows':rows,'tile_specials':tile}
+          before=np.asarray(obs.frame[-1],dtype=np.int16)
+          obs=env.step(amap[a])
+          if obs is None:raise RuntimeError('NO_OBS_PROBE')
+          after=np.asarray(obs.frame[-1],dtype=np.int16)
+          diff=np.argwhere(before[:55,:64]!=after[:55,:64])
+          if len(diff):
+            ys=diff[:,0];xs=diff[:,1];db=[int(xs.min()),int(ys.min()),int(xs.max()),int(ys.max())]
+          else: db=None
+          out={'action':a,'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+               'before':{'candidates':[list(x) for x in candidates(before)],'key':key(before),'energy_proxy':int((before==11).sum()),'crop':crop(before)},
+               'after':{'candidates':[list(x) for x in candidates(after)],'key':key(after),'energy_proxy':int((after==11).sum()),'levels':obs.levels_completed,'state':obs.state.value,'crop':crop(after)},
+               'playfield_diff_bbox':db,'playfield_diff_count':int(len(diff))}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
