@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 operator supercells
+name: ARC3 ls20 L6 shape-composition supercells
 
 on:
   push:
@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       max-parallel: 4
       matrix:
-        cell: [color_cycle, upper_shape, lower_shape, refill_chain]
+        cell: [lower_upper, upper_lower, lower_upper_lower, upper_lower_upper]
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -26,7 +26,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe verified L6 landmarks
+      - name: Compose verified L6 shape operators
         run: |
           python - <<'PY'
           import os,json,logging,time,hashlib
@@ -38,30 +38,24 @@ jobs:
           ROOT=Path('public_benchmark/arc-agi-3/dev')
           p4=json.loads((ROOT/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
           p5=json.loads((ROOT/'l5-verified-completion.json').read_text())['l5_actions_executed']
-          prefix=p4+p5; START=(24,50); cell=os.environ['CELL']
+          prefix=p4+p5; START=(24,50)
+          E=[1,0,1,1,1,0,0,1,1]   # door color8 target
+          F=[1,0,1,0,0,1,1,1,1]   # door color9 target
+          START_LOWER=[1,4,4,1]
+          LOWER_TOUCH=[2,1,2,1]     # verified first lower transform on final UP
+          START_UPPER=[1,3,3,3,1,1,1,1,1,1,1,4]
+          UPPER_TOUCH=[3,4,3,4]     # verified first upper transform on final RIGHT
+          LOWER_TO_UPPER=[2,3,3,3,3,3,1,1,1,1,1,1,1,4]
+          UPPER_TO_LOWER=[3,2,2,2,2,2,1,1,1,1,1,1,1,4,4,4,4,4,1]
+          # UPPER_TO_LOWER leaves at (34,40); long but crosses refill at (9,45).
           plans={
-            'color_cycle': {
-              'route':[1,3,3,3,1,1,1,1,4,4,4,2],
-              'probe':[1,2,1,2,1,2,1,2],
-              'expect':[24,30]
-            },
-            'upper_shape': {
-              'route':[1,3,3,3,1,1,1,1,1,1,1,4],
-              'probe':[3,4,3,4,3,4,3,4],
-              'expect':[14,10]
-            },
-            'lower_shape': {
-              'route':[1,4,4,1],
-              'probe':[2,1,2,1,2,1,2,1],
-              'expect':[34,40]
-            },
-            'refill_chain': {
-              'route':[1,3,3,3,1,1,1,1,1,1,1,1],
-              'probe':[4,4,4,4,4,4],
-              'expect':[9,5]
-            }
+            'lower_upper':[('start_lower',START_LOWER),('lower_touch',LOWER_TOUCH),('to_upper',LOWER_TO_UPPER),('upper_touch',UPPER_TOUCH)],
+            'upper_lower':[('start_upper',START_UPPER),('upper_touch',UPPER_TOUCH),('to_lower',UPPER_TO_LOWER),('lower_touch',LOWER_TOUCH)],
+            'lower_upper_lower':[('start_lower',START_LOWER),('lower_touch1',LOWER_TOUCH),('to_upper',LOWER_TO_UPPER),('upper_touch',UPPER_TOUCH),('to_lower',UPPER_TO_LOWER),('lower_touch2',LOWER_TOUCH)],
+            'upper_lower_upper':[('start_upper',START_UPPER),('upper_touch1',UPPER_TOUCH),('to_lower',UPPER_TO_LOWER),('lower_touch',LOWER_TOUCH),('to_upper',LOWER_TO_UPPER),('upper_touch2',UPPER_TOUCH)],
           }
-          plan=plans[cell]
+          plan=plans[os.environ['CELL']]
+
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
             for y in range(0,55):
@@ -90,26 +84,27 @@ jobs:
                   obs=env.step(amap[a])
                   if obs is None:raise RuntimeError('NO_OBS_PREFIX')
                 f=np.asarray(obs.frame[-1],dtype=np.int16)
-                if obs.levels_completed!=5 or pos(f)!=START:raise RuntimeError(f'BAD_START {obs.levels_completed} {pos(f)}')
+                if obs.levels_completed!=5 or pos(f)!=START:raise RuntimeError('BAD_START')
                 return env,amap,obs
               except Exception as e:
                 last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,6))
             raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
-          env,amap,obs=make_env();trace=[]
-          for phase,actions in [('route',plan['route']),('probe',plan['probe'])]:
-            for i,a in enumerate(actions,1):
+          env,amap,obs=make_env();trace=[];milestones=[];found=None;executed=[]
+          for label,actions in plan:
+            before_stage=key(np.asarray(obs.frame[-1],dtype=np.int16))
+            for a in actions:
               bef=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(bef);bk=key(bef);b11=int((bef==11).sum())
-              obs=env.step(amap[a])
+              obs=env.step(amap[a]);executed.append(a)
               if obs is None:break
               aft=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(aft);ak=key(aft);a11=int((aft==11).sum())
-              trace.append({'phase':phase,'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'refill':a11>b11+20,'levels':obs.levels_completed,'state':obs.state.value})
+              ev={'stage':label,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'before_key':bk,'after_key':ak,'before11':b11,'after11':a11,'levels':obs.levels_completed,'state':obs.state.value}
+              trace.append(ev)
+              if ak['mask'] in (E,F):
+                found={'target':'E' if ak['mask']==E else 'F','event':ev,'actions':executed.copy()};break
               if obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
-            if obs is None or obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
-          changes=[t for t in trace if t['before_key']!=t['after_key']]
-          refills=[t for t in trace if t['refill']]
-          route_end=None
-          for t in trace:
-            if t['phase']=='route':route_end=t['to']
-          out={'cell':cell,'prefix_actions':len(prefix),'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'expected_route_end':plan['expect'],'route_end':route_end,'key_changes':changes,'refills':refills,'final':trace[-1] if trace else None,'trace':trace}
+            if obs is None:break
+            f=np.asarray(obs.frame[-1],dtype=np.int16);milestones.append({'stage':label,'pos':None if pos(f) is None else list(pos(f)),'key':key(f),'energy_proxy':int((f==11).sum()),'levels':obs.levels_completed})
+            if found or obs.levels_completed>5 or obs.state.value!='NOT_FINISHED':break
+          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),'found':found,'milestones':milestones,'executed':executed,'final':trace[-1] if trace else None,'trace':trace}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
