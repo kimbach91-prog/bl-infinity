@@ -1,4 +1,4 @@
-name: ARC3 public ls20 local replay environment
+name: ARC3 ls20 complete seven-level verification
 
 on:
   push:
@@ -10,42 +10,77 @@ permissions:
   contents: read
 
 jobs:
-  prepare:
+  verify:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ONLINE, NORMAL]
     steps:
       - uses: actions/checkout@v4
         with: {persist-credentials: false}
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
-      - name: Obtain official public development environment without source inspection
+      - name: Execute exact public route and require actual seven-level WIN
+        env:
+          REPLAY_MODE: ${{ matrix.mode }}
         run: |
           python - <<'PY'
-          import arc_agi,logging,json,hashlib,shutil,os
-          from arc_agi import OperationMode
+          import json,logging,time,hashlib,os,platform
           from pathlib import Path
+          from datetime import datetime,timezone
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
           logging.disable(logging.CRITICAL)
-          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
-          env=arc.make('ls20',save_recording=False,include_frame_data=True)
+          root=Path('public_benchmark/arc-agi-3/dev')
+          out=Path('verification');out.mkdir()
+          route=json.loads((root/'l6-l7-observation-model-route.json').read_text())
+          p4=json.loads((root/'l4-corrected-full-completion.json').read_text())['full_actions_executed']
+          p5=json.loads((root/'l5-verified-completion.json').read_text())['l5_actions_executed']
+          prefix=p4+p5
+          digest=lambda a:hashlib.sha256(','.join(map(str,a)).encode()).hexdigest()
+          assert len(prefix)==223 and digest(prefix)==route['prefix_sha256']
+          assert len(route['l6_actions'])==72 and len(route['l7_actions'])==53
+          actions=prefix+route['l6_actions']+route['l7_actions']
+          assert len(actions)==348 and digest(actions)==route['full_action_sha256']
+          mode=os.environ['REPLAY_MODE'];source_sha=os.environ['GITHUB_SHA']
+          source_url='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+source_sha+'/public_benchmark/arc-agi-3/dev/l6-l7-observation-model-route.json'
+          arc=arc_agi.Arcade(operation_mode=OperationMode[mode])
+          card_id=arc.open_scorecard(source_url=source_url,tags=['DEUS','public-development','observation-model-route-replay',mode.lower()])
+          env=arc.make('ls20',seed=0,scorecard_id=card_id,save_recording=False,include_frame_data=True)
           if env is None:raise RuntimeError('ENV_UNAVAILABLE')
-          out=Path('local_replay');out.mkdir()
-          src=Path('environment_files')
-          files=[p for p in src.rglob('*') if p.is_file() and '__pycache__' not in p.parts and p.suffix in {'.py','.json','.png','.npy'}]
-          if not files:raise RuntimeError('OFFICIAL_LOCAL_ENV_MISSING')
-          manifest=[]
-          for p in files:
-              rel=p.relative_to(src)
-              dest=out/'environment_files'/rel;dest.parent.mkdir(parents=True,exist_ok=True)
-              shutil.copyfile(p,dest)
-              manifest.append({'path':str(rel),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
-          rec={'source_sha':os.environ.get('GITHUB_SHA'),'origin':'official ARC-AGI toolkit NORMAL public development download','toolkit_version':'0.9.9','engine_version':'0.9.3','protocol':'public observations and actions only; no hidden game source/state used by solver','official_competition_claim':False,'files':manifest}
-          (out/'provenance.json').write_text(json.dumps(rec,indent=2))
-          print('PUBLIC_LOCAL_REPLAY_READY files='+str(len(files)))
+          amap={a.value:a for a in env.action_space};obs=env.observation_space
+          milestones=[];executed=[];transcript=[];before_levels=obs.levels_completed
+          started=datetime.now(timezone.utc).isoformat();t0=time.monotonic()
+          for i,a in enumerate(actions,1):
+              if obs.state.value=='WIN':raise RuntimeError('UNEXPECTED_EARLY_WIN')
+              obs=env.step(amap[a])
+              if obs is None:raise RuntimeError('OBSERVATION_MISSING_AT_'+str(i))
+              executed.append(a)
+              f=np.asarray(obs.frame[-1],dtype=np.uint8)
+              record={'i':i,'a':a,'levels_completed':obs.levels_completed,'state':obs.state.value,'frame_sha256':hashlib.sha256(f.tobytes()).hexdigest()}
+              transcript.append(record)
+              if obs.levels_completed!=before_levels:
+                  milestones.append(record);before_levels=obs.levels_completed
+              if i==223 and obs.levels_completed!=5:raise RuntimeError('PREFIX_STATE_DIVERGENCE')
+              if i==295 and obs.levels_completed!=6:raise RuntimeError('L6_NOT_COMPLETED')
+          passed=obs.levels_completed==7 and obs.state.value=='WIN'
+          card=arc.close_scorecard(card_id)
+          receipt={'schema':'public-development-game-replay/1','result':'PASS' if passed else 'FAIL','mode':mode,'game':'ls20','seed':0,'toolkit':'arc-agi 0.9.9','engine':'arcengine 0.9.3','python':platform.python_version(),'source_sha':source_sha,'run_id':os.environ['GITHUB_RUN_ID'],'started_at':started,'completed_at':datetime.now(timezone.utc).isoformat(),'replay_seconds':time.monotonic()-t0,'actions_executed':len(executed),'prefix_actions':223,'l6_actions':72,'l7_actions':53,'levels_completed':obs.levels_completed,'state':obs.state.value,'route_sha256':digest(executed),'final_frame_sha256':hashlib.sha256(f.tobytes()).hexdigest(),'milestones':milestones,'scorecard_id':card_id,'scorecard_score':None if card is None else card.score,'official_competition_claim':False,'exploration_actions_included':False,'frontier_model_comparison_claim':False,'hidden_state_read':False}
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          (out/'actions.json').write_text(json.dumps(executed))
+          (out/'transcript.json').write_text(json.dumps(transcript,separators=(',',':')))
+          (out/'final_frame.json').write_text(json.dumps(f.tolist()))
+          print('VERIFIED_GAME_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if not passed:raise RuntimeError('SEVEN_LEVEL_WIN_REQUIRED')
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: arc3-official-public-local-replay
-          path: local_replay/
-          retention-days: 1
+          name: arc3-seven-level-verification-${{ matrix.mode }}
+          path: verification/
+          retention-days: 30
