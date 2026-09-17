@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-16T21:16:19.669818+00:00
+- Generated: 2026-09-17T04:50:06.957034+00:00
 - Records: 91
-- Digest: `9d609ca148c812d561e14537e600c4cf5381e56c2d96118d0dac957dcdef3f57`
+- Digest: `7d024dc8f30960f92b80db12ca6f118dfe4508f9dcce636c4885950016fb9c59`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -80,9 +80,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Efficacy of an Online Yoga Module in Alleviating Premenstrual Symptoms of Working Women in India: A Nonrandomized Controlled Trial. — 41561711
 - [Europe PMC] Effects of Isha Yoga Practices on Health Outcomes: A Systematic Review of Controlled Studies. — 41694821
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
-- [Europe PMC] Types of physical activity and applied outcome measures in physical activity interventions among patients with inflammatory bowel disease: a scoping review. — 42010495
 - [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
 - [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
+- [Europe PMC] Ayurveda Treatments for Insomnia: A Narrative Review. — 42739755
 
 ## BA-P1-03
 
@@ -97,13 +97,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-04
 
-- [Europe PMC] Could behaviour change interventions be incorporated into cardiac rehabilitation programmes for insomnia and poor sleep quality management? A scoping review. — 42176203
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
 - [Europe PMC] Midlife Vascular and Lifestyle Determinants of Late-Life Cognitive Decline and Dementia: A Life-Course Prevention Framework with a Gulf (GCC) Perspective. — 42652977
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
+- [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
 ## BA-P2-01
