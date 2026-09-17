@@ -1,4 +1,4 @@
-name: ARC3 ls20 L6 door-marker horizontal probes
+name: ARC3 ls20 L6 synchronized-motion survey
 
 on:
   push:
@@ -10,27 +10,21 @@ permissions:
   contents: read
 
 jobs:
-  probe:
+  survey:
     if: github.actor != 'github-actions[bot]'
-    strategy:
-      fail-fast: false
-      max-parallel: 4
-      matrix:
-        cell: [left_chain, right_chain, left_then_up, right_then_down]
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    env:
-      CELL: ${{ matrix.cell }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' numpy
-      - name: Probe horizontal activation from D marker at 54,35
+      - name: Observe autonomous motion from activated Gate-1 safe wait context
         run: |
           python - <<'PY'
-          import os,json,logging,time,hashlib
+          import json,logging,time,hashlib
           from pathlib import Path
+          from collections import deque,Counter
           import numpy as np
           import arc_agi
           from arc_agi import OperationMode
@@ -43,16 +37,10 @@ jobs:
           TO_REFILL=[2,3,3,3,3,3]
           TO_COLOR8=[1,1,4,1,4,1,4,4,4,4]
           TO_RIGHT_PORTAL=[4,4,1,4,1,4,1,1]
-          TO_D=[4,2,2]
-          BASE=SHAPE_E+TO_REFILL+TO_COLOR8+TO_RIGHT_PORTAL+TO_D
+          ACTIVATE_GATE1_AND_RETURN=[4,2,2,2,1]
+          BASE=SHAPE_E+TO_REFILL+TO_COLOR8+TO_RIGHT_PORTAL+ACTIVATE_GATE1_AND_RETURN
           TM=[1,0,1,1,1,0,0,1,1]
-          plans={
-            'left_chain':[3,3,3],
-            'right_chain':[4,4,4],
-            'left_then_up':[3,1,4],
-            'right_then_down':[4,2,3],
-          }
-          seq=plans[os.environ['CELL']]
+          WAITS=16
 
           def pos(frame):
             f=np.asarray(frame,dtype=np.int16)
@@ -71,6 +59,34 @@ jobs:
               for c in range(3):
                 b=cur[2*r:2*r+2,2*c:2*c+2];mask.append(1 if int((b==color).sum())>=2 else 0)
             return {'color':color,'mask':mask}
+          def diff_components(before,after):
+            a=np.asarray(before,dtype=np.int16)[:55,:64];b=np.asarray(after,dtype=np.int16)[:55,:64]
+            mask=a!=b
+            # Player is intentionally stationary here; no manual masking needed.
+            seen=set();out=[]
+            for y,x in np.argwhere(mask):
+              p=(int(x),int(y))
+              if p in seen:continue
+              q=deque([p]);seen.add(p);pts=[]
+              while q:
+                xx,yy=q.popleft();pts.append((xx,yy))
+                for dx,dy in ((1,0),(-1,0),(0,1),(0,-1)):
+                  nx,ny=xx+dx,yy+dy
+                  if 0<=nx<64 and 0<=ny<55 and mask[ny,nx] and (nx,ny) not in seen:
+                    seen.add((nx,ny));q.append((nx,ny))
+              xs=[v[0] for v in pts];ys=[v[1] for v in pts]
+              before_colors=Counter(int(a[yy,xx]) for xx,yy in pts)
+              after_colors=Counter(int(b[yy,xx]) for xx,yy in pts)
+              out.append({'count':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                          'before_colors':dict(before_colors),'after_colors':dict(after_colors)})
+            return sorted(out,key=lambda z:(z['bbox'][1],z['bbox'][0]))
+          def special_bboxes(frame):
+            f=np.asarray(frame,dtype=np.int16)[:55,:64];out=[]
+            for c in sorted(int(v) for v in np.unique(f)):
+              if c in {3,4,5}:continue
+              ys,xs=np.where(f==c)
+              if len(xs):out.append({'color':c,'count':int(len(xs)),'bbox':[int(xs.min()),int(ys.min()),int(xs.max()),int(ys.max())]})
+            return out
 
           last=None
           for attempt in range(1,4):
@@ -84,29 +100,25 @@ jobs:
                 if obs is None:raise RuntimeError('NO_OBS_BASE')
               f=np.asarray(obs.frame[-1],dtype=np.int16);p=pos(f);k=key(f);e=int((f==11).sum())
               if obs.levels_completed!=5 or p!=(54,35) or k!={'color':8,'mask':TM}:
-                raise ValueError(f'D_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k} energy={e}')
+                raise ValueError(f'SURVEY_GUARD_FAILED levels={obs.levels_completed} pos={p} key={k} energy={e}')
               guard={'pos':list(p),'key':k,'energy_proxy':e,'levels':obs.levels_completed}
               break
             except ValueError:raise
-            except Exception as e:
-              last=f'{type(e).__name__}:{e}';time.sleep(min(2*attempt,5))
+            except Exception as exc:
+              last=f'{type(exc).__name__}:{exc}';time.sleep(min(2*attempt,5))
           else:raise RuntimeError('ENV_RETRY_EXHAUSTED '+str(last))
 
-          trace=[];found=None
-          for i,a in enumerate(seq,1):
-            before=np.asarray(obs.frame[-1],dtype=np.int16);bp=pos(before);bk=key(before);be=int((before==11).sum())
-            obs=env.step(amap[a])
+          frames=[];prev=np.asarray(obs.frame[-1],dtype=np.int16)
+          frames.append({'t':0,'energy_proxy':int((prev==11).sum()),'pos':list(pos(prev)),'key':key(prev),'special':special_bboxes(prev)})
+          for t in range(1,WAITS+1):
+            obs=env.step(amap[4])  # blocked right at Gate-1 marker = wait surrogate
             if obs is None:break
-            after=np.asarray(obs.frame[-1],dtype=np.int16);ap=pos(after);ak=key(after);ae=int((after==11).sum())
-            jump=None if bp is None or ap is None else abs(ap[0]-bp[0])+abs(ap[1]-bp[1])
-            ev={'i':i,'a':a,'from':None if bp is None else list(bp),'to':None if ap is None else list(ap),'jump':jump,
-                'before_key':bk,'after_key':ak,'before_energy':be,'after_energy':ae,
-                'levels':obs.levels_completed,'state':obs.state.value}
-            trace.append(ev)
-            if obs.levels_completed>5:
-              found={'i':i,'actions':seq[:i],'event':ev};break
-          out={'cell':os.environ['CELL'],'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
-               'guard_receipt':guard,'sequence':seq,'found':found,'trace':trace,
-               'levels_completed':obs.levels_completed if obs else None,'state':obs.state.value if obs else None}
+            cur=np.asarray(obs.frame[-1],dtype=np.int16)
+            frames.append({'t':t,'energy_proxy':int((cur==11).sum()),'pos':None if pos(cur) is None else list(pos(cur)),'key':key(cur),
+                           'diff_components':diff_components(prev,cur),'special':special_bboxes(cur),
+                           'levels':obs.levels_completed,'state':obs.state.value})
+            prev=cur
+          out={'prefix_sha256':hashlib.sha256(','.join(map(str,prefix)).encode()).hexdigest(),
+               'guard_receipt':guard,'wait_action':4,'waits_requested':WAITS,'frames':frames}
           print('SUPERCELL_RESULT='+json.dumps(out,separators=(',',':'),sort_keys=True))
           PY
