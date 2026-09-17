@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-17T04:50:06.957034+00:00
+- Generated: 2026-09-17T11:38:37.086086+00:00
 - Records: 91
-- Digest: `7d024dc8f30960f92b80db12ca6f118dfe4508f9dcce636c4885950016fb9c59`
+- Digest: `c29b74e252645860132b603785145b433c115f54cfd9ae5312720fa3c41e386b`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -68,10 +68,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
 - [Europe PMC] Reprogramming brain bioenergetics in depression: an integrative framework linking creatine, branched-chain amino acids, and exercise to neuroplasticity, cognitive function, and depression-related outcomes. — 42614552
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
-- [Europe PMC] Effects of Combined Exercise Interventions on Cognition in Older Persons: A Systematic Review and Meta-Analysis. — 42651369
-- [Europe PMC] Redox-exercise crosstalk in neurodegenerative diseases: mechanistic perspectives on antioxidant interactions with Nrf2-BDNF signaling, autophagy, and mitochondrial plasticity. — 42661679
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
-- [Europe PMC] Editorial: Neurobiological mechanisms of adjuvant therapies for personalized stroke rehabilitation: towards comprehensive recovery. — 42707418
+- [Europe PMC] Non-Pharmacological Interventions for Cognitive Function Management in Middle-Aged and Older Adults with Hypertension: A Scoping Review. — 42746159
+- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
+- [Europe PMC] Effects of High-Intensity Interval Training on Cognitive Function in Older Adults: A Systematic Review of Randomized Controlled Trials — PMC13580880
 
 ## BA-P1-02
 
