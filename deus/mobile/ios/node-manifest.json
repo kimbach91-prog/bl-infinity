@@ -1,5 +1,5 @@
 {
-  "schema": "DEUS_NODE_MANIFEST/v0.1",
+  "schema": "DEUS_NODE_MANIFEST/v0.2",
   "node_id": "DEV-MOBILE-IPHONE13_1-OWNER-001",
   "binding_id": "BIND-OWNER-IPHONE13_1-SESSION-001",
   "target": {
@@ -8,8 +8,8 @@
     "minimum_os": "iOS 17.0"
   },
   "authority": {
-    "source": "OWNER_DIRECT_2026-09-09",
-    "scope": "owner-authorized on-device telemetry, bounded own-process compute canary, receipt generation, and future explicitly admitted local inference",
+    "source": "OWNER_DIRECT_2026-09-09 + OWNER_REAFFIRMED_2026-09-18",
+    "scope": "owner-authorized on-device telemetry, bounded own-process compute, OS-scheduled background maintenance, receipt generation, offload-first optimization, and future explicitly admitted local inference",
     "revocable": true
   },
   "capabilities": [
@@ -20,31 +20,52 @@
     "LOW_POWER_MODE",
     "BATTERY_STATE",
     "BOUNDED_OWN_PROCESS_COMPUTE",
-    "LOCAL_RECEIPT_WRITE"
+    "OS_SCHEDULED_BACKGROUND_PROCESSING_REQUEST",
+    "THERMAL_AWARE_BACKGROUND_MAINTENANCE",
+    "LOCAL_RECEIPT_WRITE",
+    "OFFLOAD_FIRST_POLICY"
   ],
   "not_claimed": [
     "JAILBREAK",
     "ROOT",
     "KERNEL_CONTROL",
     "RAW_GPU_COUNTERS",
+    "RAW_ANE_COUNTERS",
     "OTHER_PROCESS_CONTROL",
     "PERSISTENT_BACKGROUND_DAEMON",
+    "GUARANTEED_BACKGROUND_CADENCE",
     "LOCAL_LLM_PRESENT"
   ],
   "scheduler": {
-    "normal_percent": 1.0,
-    "charging_nominal_percent": 2.0,
-    "fair_thermal_percent": 0.5,
-    "serious_thermal_percent": 0.25,
-    "critical_thermal_percent": 0.0,
-    "interpretation": "cooperative application duty-cycle budget, not a hard CPU reservation"
+    "foreground_normal_percent": 1.0,
+    "foreground_charging_nominal_percent": 2.0,
+    "foreground_fair_thermal_percent": 0.5,
+    "foreground_serious_thermal_percent": 0.25,
+    "foreground_critical_thermal_percent": 0.0,
+    "background_task_identifier": "io.blinfinity.deus.mobile.maintenance",
+    "background_requires_external_power": true,
+    "background_requires_network": false,
+    "background_nominal_iterations": 2000,
+    "background_fair_iterations": 1000,
+    "background_serious_or_critical_iterations": 0,
+    "interpretation": "cooperative own-app budgets under iOS scheduling, not hard CPU reservations or persistent daemon rights"
+  },
+  "offload_policy": {
+    "default": "OFFLOAD_FIRST",
+    "heavy_local_work": "HOLD_UNLESS_EXPLICITLY_ADMITTED_AND_THERMAL_SAFE",
+    "remote_route_requirement": "AUTHORIZED_TASK_FIT_ROUTE_WITH_RECEIPT"
+  },
+  "kernel_gate": {
+    "state": "HOLD_NO_VERIFIED_SUPPORTED_PATH_FOR_CURRENT_TARGET_SCOPE",
+    "rule": "ownership provides authority but not a kernel exploit/primitive; re-evaluate only from exact target+iOS source evidence with rollback and task-bound receipt"
   },
   "promotion_gates": [
     "CI_BUILD_PASS",
     "SIGNED_INSTALL_ON_OWNER_DEVICE",
     "ON_DEVICE_MODEL_IDENTIFIER_EQUALS_iPhone13,1",
-    "ON_DEVICE_CANARY_RECEIPT",
-    "THERMAL_AND_BATTERY_FAILSAFE_PASS"
+    "ON_DEVICE_FOREGROUND_CANARY_RECEIPT",
+    "ON_DEVICE_BACKGROUND_RECEIPT_IF_OS_GRANTS_TASK",
+    "THERMAL_AND_POWER_FAILSAFE_PASS"
   ],
-  "state": "SOURCE_DEPLOYED_TO_REPO / DEVICE_INSTALL_PENDING"
+  "state": "SOURCE_V0_2_BRANCH_BUILD_PENDING / DEVICE_INSTALL_PENDING"
 }
