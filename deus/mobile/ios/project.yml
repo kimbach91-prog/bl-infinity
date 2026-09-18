@@ -12,12 +12,20 @@ targets:
     platform: iOS
     sources:
       - DEUSMobileNode
+    info:
+      path: DEUSMobileNode/Info.plist
+      properties:
+        CFBundleDisplayName: DEUS Mobile Node
+        UILaunchScreen: {}
+        BGTaskSchedulerPermittedIdentifiers:
+          - io.blinfinity.deus.mobile.maintenance
+        UIBackgroundModes:
+          - processing
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: io.blinfinity.deus.mobile
-        GENERATE_INFOPLIST_FILE: YES
         TARGETED_DEVICE_FAMILY: "1"
         CODE_SIGN_STYLE: Automatic
-        CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: 0.1.0
+        CURRENT_PROJECT_VERSION: 2
+        MARKETING_VERSION: 0.2.0
         IPHONEOS_DEPLOYMENT_TARGET: 17.0
