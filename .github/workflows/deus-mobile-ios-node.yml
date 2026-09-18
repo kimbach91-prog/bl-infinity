@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - deus/iphone13-1-node-agent
+      - deus/iphone13-1-node-agent-v02
     paths:
       - 'deus/mobile/ios/**'
       - '.github/workflows/deus-mobile-ios-node.yml'
@@ -37,3 +38,17 @@ jobs:
           -configuration Debug
           CODE_SIGNING_ALLOWED=NO
           build
+
+      - name: Assert mobile truth boundary
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          m=json.loads(Path("deus/mobile/ios/node-manifest.json").read_text())
+          required={"JAILBREAK","ROOT","KERNEL_CONTROL","PERSISTENT_BACKGROUND_DAEMON","GUARANTEED_BACKGROUND_CADENCE"}
+          missing=required-set(m["not_claimed"])
+          assert not missing, f"truth-boundary regression: {sorted(missing)}"
+          assert m["kernel_gate"]["state"].startswith("HOLD_")
+          assert m["offload_policy"]["default"]=="OFFLOAD_FIRST"
+          print("mobile truth boundary PASS")
+          PY
