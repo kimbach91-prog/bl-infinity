@@ -37,11 +37,11 @@
     "LOCAL_LLM_PRESENT"
   ],
   "scheduler": {
-    "foreground_normal_percent": 1.0,
-    "foreground_charging_nominal_percent": 2.0,
+    "foreground_normal_percent": 1,
+    "foreground_charging_nominal_percent": 2,
     "foreground_fair_thermal_percent": 0.5,
     "foreground_serious_thermal_percent": 0.25,
-    "foreground_critical_thermal_percent": 0.0,
+    "foreground_critical_thermal_percent": 0,
     "background_task_identifier": "io.blinfinity.deus.mobile.maintenance",
     "background_requires_external_power": true,
     "background_requires_network": false,
@@ -67,5 +67,15 @@
     "ON_DEVICE_BACKGROUND_RECEIPT_IF_OS_GRANTS_TASK",
     "THERMAL_AND_POWER_FAILSAFE_PASS"
   ],
-  "state": "SOURCE_V0_2_BRANCH_BUILD_PENDING / DEVICE_INSTALL_PENDING"
+  "state": "SOURCE_V0_2_CI_PASS / DEVICE_INSTALL_PENDING",
+  "ci_evidence": {
+    "run_id": 35373664034,
+    "head_sha": "43a5f859bc56d8d10132e0776c70822ca3651a33",
+    "conclusion": "success",
+    "verified_steps": [
+      "Generate Xcode project",
+      "Build unsigned simulator target",
+      "Assert mobile truth boundary"
+    ]
+  }
 }
