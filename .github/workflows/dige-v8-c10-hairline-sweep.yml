@@ -1,0 +1,119 @@
+name: DIGE V8 C10 Hairline Field Sweep
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c10-hairline-sweep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c10-hairline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hairline-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/c10_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Resolve official CC0 skin albedo
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          PACK=/tmp/skins01_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o "$PACK"
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $PACK" | sha256sum -c -
+          unzip -p "$PACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+      - name: Render controlled hairline candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          for SPEC in "45:0.045" "55:0.055" "65:0.065"; do
+            TAG=$(echo "$SPEC" | cut -d: -f1)
+            OFF=$(echo "$SPEC" | cut -d: -f2)
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="c10_hl_${TAG}" \
+            DIGE_HAIR_ROOT_COUNT="12000" \
+            DIGE_HAIR_GUIDE_COUNT="210" \
+            DIGE_HAIR_LEN_MIN="0.060" \
+            DIGE_HAIR_LEN_MAX="0.115" \
+            DIGE_HAIR_BEVEL="0.000032" \
+            DIGE_HAIRLINE_CENTER_OFFSET="$OFF" \
+            DIGE_HAIRLINE_TEMPLE_RISE="0.016" \
+            DIGE_SKIN_ALBEDO_PATH="runtime/assets/young_eurasian_female_diffuse.png" \
+            DIGE_SKIN_ALBEDO_SHA256="e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf" \
+            DIGE_SAMPLES_PREVIEW="8" \
+            DIGE_SAMPLES_HERO="12" \
+            DIGE_RENDER_SEED="20260919" \
+            DIGE_RUNTIME_COMMIT="$GITHUB_SHA" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee "runtime/c10_hl_${TAG}.log"
+          done
+
+      - name: Verify hairline receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          expected={"45":0.045,"55":0.055,"65":0.065}
+          root=pathlib.Path("runtime/renders")
+          for tag,off in expected.items():
+              j=json.loads((root/f"c10_hl_{tag}"/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              h=j["hair_surface_contract"]
+              assert j["engine"]=="CYCLES" and j["device"]=="CPU"
+              assert j["render_set"]=="HERO_ONLY"
+              assert j["skin_albedo"]["sha256"]=="e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+              assert h["style"]=="PARAMETRIC_HAIRLINE_STRATIFIED_CLUMP_V3"
+              assert h["root_count"]==12000 and h["guide_count"]==210
+              assert abs(h["hairline_center_offset_m"]-off)<1e-12
+              assert abs(h["hairline_temple_rise_m"]-.016)<1e-12
+              assert h["mass_mesh_rendered"] is False
+              assert len(j["outputs"])==1 and j["outputs"][0]["view"]=="04_HERO85"
+          print("DIGE_C10_HAIRLINE_SWEEP_PASS")
+          PY
+
+      - name: Upload hairline sweep
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C10-HAIRLINE-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c10_hl_*/04_HERO85_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c10_hl_*/04_HERO85_DENOISED_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c10_hl_*/DIGE_V8_RENDER_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 14
