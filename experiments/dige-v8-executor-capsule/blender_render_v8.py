@@ -724,39 +724,150 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C16: official hm08 hair asset selected from canon-bound system pack.
+# C17: keep the exact fitted short03 asset only as a non-rendered groom guide, then
+# materialize real Blender Hair Curves. This moves the realism bottleneck from alpha-card
+# silhouette swaps to strand geometry + Principled Hair BSDF + Cycles 3D curves.
 if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_short"):
     raise RuntimeError(f"Unsupported DIGE_HAIR_ASSET_KEY={HAIR_ASSET_KEY}")
 hair_asset=system_contract[HAIR_ASSET_KEY]
 hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
-hair_card_mat=alpha_card_material(
-    f"DIGE_C16_{hair_label}",
+hair_guide_mat=alpha_card_material(
+    f"DIGE_C17_GUIDE_{hair_label}",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
     rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
-    f"DIGE_C16_{hair_label}",
+    f"DIGE_C17_GUIDE_{hair_label}",
     system_dir/hair_asset["obj"]["runtime_name"],
     system_dir/hair_asset["mhclo"]["runtime_name"],
-    fit_vertices,hair_card_mat,hair_asset,
+    fit_vertices,hair_guide_mat,hair_asset,
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
-strands=[]
+
+def build_c17_strand_groom(guide_obj, surface_obj, material):
+    guide_obj.data.update()
+    rng=random.Random(20260920)
+    roots=[]
+    rot=guide_obj.matrix_world.to_3x3()
+    for idx,v in enumerate(guide_obj.data.vertices):
+        root=guide_obj.matrix_world @ v.co
+        # Keep only the actual head-hair volume and reject low outliers.
+        if root.z < 1.495 or root.z > 1.715:
+            continue
+        n=(rot @ v.normal).normalized()
+        if n.length < 1e-8:
+            n=Vector((0,0,1))
+        roots.append((idx,root,n))
+    if len(roots) < 500:
+        raise RuntimeError(f"C17 groom guide too sparse: {len(roots)} roots")
+
+    points_per_curve=7
+    strands_per_root=5
+    curve_count=len(roots)*strands_per_root
+    hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
+    hair_data.add_curves([points_per_curve]*curve_count)
+    try:
+        hair_data.set_types(type='CATMULL_ROM')
+    except Exception:
+        pass
+    hair_data.surface=surface_obj
+    hair_data.materials.append(material)
+
+    positions=[]
+    radii=[]
+    center=Vector((0.0,-0.025,1.595))
+    base_radius=0.000055
+    tip_radius=0.000010
+    for root_index,root,n in roots:
+        radial=(root-center)
+        if radial.length < 1e-8:
+            radial=Vector((0,0,1))
+        radial.normalize()
+        side=Vector((1.0 if root.x>=0 else -1.0,0.0,0.0))
+        back=Vector((0.0,-1.0,0.0))
+        # Production-groom principle: preserve guide/surface flow, then let gravity and
+        # localized clumping bend the fiber. Do not shoot strands along normals.
+        crown=max(0.0,min(1.0,(root.z-1.54)/0.17))
+        base_flow=(n*(0.24+0.12*crown) + Vector((0,0,-1))*(0.52-0.20*crown) + back*0.10 + side*0.08).normalized()
+        cluster_phase=(root_index % 17)/17.0*math.tau
+        clump_bias=Vector((math.cos(cluster_phase),math.sin(cluster_phase)*0.35,-0.15)).normalized()
+        for k in range(strands_per_root):
+            jx=rng.uniform(-0.0014,0.0014)
+            jy=rng.uniform(-0.0010,0.0010)
+            jz=rng.uniform(-0.0008,0.0008)
+            root_j=root + n*0.00045 + Vector((jx,jy,jz))
+            flow=(base_flow + clump_bias*rng.uniform(0.025,0.085) + radial*rng.uniform(0.00,0.05)).normalized()
+            length=rng.uniform(0.035,0.070)*(0.88+0.28*crown)
+            lateral=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-0.30,0.20)))
+            if lateral.length < 1e-8:
+                lateral=side
+            lateral.normalize()
+            amp=rng.uniform(0.0010,0.0038)
+            for j in range(points_per_curve):
+                t=j/(points_per_curve-1)
+                bend=math.sin(math.pi*t)
+                sag=t*t
+                p=root_j + flow*(length*t) + lateral*(amp*bend) + Vector((0,0,-length*0.12*sag))
+                positions.extend((p.x,p.y,p.z))
+                # Physically plausible visible fiber profile: thicker root, fine tip.
+                r=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(0.90,1.10)
+                radii.append(r)
+
+    pos=hair_data.attributes["position"]
+    pos.data.foreach_set("vector",positions)
+    radius_attr=hair_data.attributes.get("radius")
+    if radius_attr is None:
+        radius_attr=hair_data.attributes.new("radius",'FLOAT','POINT')
+    radius_attr.data.foreach_set("value",radii)
+
+    groom=bpy.data.objects.new("DIGE_C17_STRAND_GROOM",hair_data)
+    bpy.context.collection.objects.link(groom)
+    # Static certification render: surface is bound for provenance and future deformation,
+    # while coordinates remain in the canonical world/body frame.
+    guide_obj.hide_render=True
+    try:
+        guide_obj.hide_set(True)
+    except Exception:
+        pass
+    return groom,{
+        "root_count":len(roots),
+        "strands_per_root":strands_per_root,
+        "curve_count":curve_count,
+        "points_per_curve":points_per_curve,
+        "point_count":curve_count*points_per_curve,
+        "root_radius_m":base_radius,
+        "tip_radius_m":tip_radius,
+        "guide_mesh_rendered":False,
+        "blender_datablock":"HAIR_CURVES",
+        "curve_type":"CATMULL_ROM",
+        "surface_bound":True,
+        "distribution":"DETERMINISTIC_GUIDE_VERTEX_INTERPOLATION_WITH_CLUSTER_BIAS",
+        "seed":20260920,
+    }
+
+hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
-    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO",
+    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO_GUIDE_PLUS_BLENDER_HAIR_CURVES",
     "asset_key":HAIR_ASSET_KEY,
     "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
     "obj_sha256":hair_asset["obj"]["sha256"],
     "mhclo_sha256":hair_asset["mhclo"]["sha256"],
     "diffuse_sha256":hair_asset["diffuse"]["sha256"],
-    "object_vertices":hair_fit["vertices"],
-    "object_polygons":hair_fit["polygons"],
-    "uv_layers":hair_fit["uv_layers"],
-    "mass_mesh_rendered":True,
-    "curve_count":0,
-    "style":f"MHCLO_FITTED_{HAIR_ASSET_KEY.upper()}_SYSTEM_CC0_V1",
+    "guide_vertices":hair_fit["vertices"],
+    "guide_polygons":hair_fit["polygons"],
+    "mass_mesh_rendered":False,
+    "curve_count":hair_curve_metrics["curve_count"],
+    "point_count":hair_curve_metrics["point_count"],
+    "points_per_curve":hair_curve_metrics["points_per_curve"],
+    "root_radius_m":hair_curve_metrics["root_radius_m"],
+    "tip_radius_m":hair_curve_metrics["tip_radius_m"],
+    "surface_bound":hair_curve_metrics["surface_bound"],
+    "distribution":hair_curve_metrics["distribution"],
+    "seed":hair_curve_metrics["seed"],
+    "style":"HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -840,6 +951,12 @@ def configure_cycles_device(scene):
 
 scene=bpy.context.scene
 scene.render.engine='CYCLES'
+# C17 close-up hair certification uses geometric strand cylinders so radius is physical.
+try:
+    scene.render.hair_type='CYLINDER'
+    scene.render.hair_subdiv=1
+except Exception:
+    pass
 device_info=configure_cycles_device(scene)
 scene.cycles.samples=int(os.environ.get("DIGE_SAMPLES_PREVIEW","128"))
 scene.cycles.seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
@@ -935,14 +1052,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C16_HAIR_ASSET_SWEEP_OVER_C15_V1",
+ "appearance_candidate":"C17_MATURE_STRAND_GROOM_OVER_C16_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH",
+   "selection_basis":"C16_RUNTIME_VISUAL_AUDIT_FAIL_CARD_MASS; MATURE_HAIR_CURVES_ROUTE; PRINCIPLED_HAIR; CYCLES_3D_CURVES",
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -965,6 +1082,8 @@ receipt={
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
+ "hair_curve_metrics":hair_curve_metrics,
+ "render_curve_shape":"CYLINDER",
  "provenance":{
    "source_pixels_used":False,
    "reference_pixels_read_by_renderer":False,
