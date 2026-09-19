@@ -28,12 +28,12 @@
       "license": "CC0-1.0"
     },
     "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
-    "candidate_body_only_normalized_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160",
+    "candidate_body_only_normalized_obj_sha256": "16c4dbe5103e2e58d90f5807e1ddf4686791c4d3080fb94d7a884bc1a033e0fd",
     "precompact_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
     "garment_helper_tights": {
       "group": "helper-tights",
       "expected_faces": 2650,
-      "normalized_obj_sha256": "76d213df0203c936cf4129e7a6df198e5c270df4cbd7030081de82ece91f5bcf",
+      "normalized_obj_sha256": "f1e3728271b5623cd6a0a90bac75b3f30128f17c076fc5ad9f3411d74b50513e",
       "license": "CC0-1.0"
     },
     "eye_helpers": {
@@ -41,17 +41,18 @@
         "group": "helper-l-eye",
         "vertices": 72,
         "faces": 70,
-        "compact_obj_sha256": "fe51546368dc9de30826ca78a2ec728529863007c321cb8997f8e8782fd78273",
+        "compact_obj_sha256": "d867a87491242974faf991d34274fd466321b2930bc8d105d43c2fe0117bfd9a",
         "license": "CC0-1.0"
       },
       "right": {
         "group": "helper-r-eye",
         "vertices": 72,
         "faces": 70,
-        "compact_obj_sha256": "059527ce47f98bc1d764c8b9b0d989f381f7163e6a0b454cedb8264d6cad7247",
+        "compact_obj_sha256": "6b9034ad52e2786709128c2fbb4d4b8e577cb3c74716f9fba5b43e7a7b3454fb",
         "license": "CC0-1.0"
       }
-    }
+    },
+    "pre_body_height_normalization_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160"
   },
   "policy": {
     "identity_bound": false,
@@ -77,7 +78,8 @@
       "boundary_edges": 0,
       "nonmanifold_edges": 0,
       "state": "LOCALLY_RECOMPUTED_FROM_DRIVE_STAGING_BYTES",
-      "body_vertices": 13380
+      "body_vertices": 13380,
+      "normalization": "BODY_REFERENCED_HEIGHT_1P70_GROUND_Z0"
     },
     "source_total_vertices": 19158,
     "expected_body_vertices": 13380,
@@ -117,5 +119,13 @@
       "drive_upload_readback_hash_pass"
     ],
     "delivery_gate": "delivery_sent_readback_pass"
+  },
+  "normalization_policy": {
+    "reference_group": "body",
+    "target_height_m": 1.7,
+    "ground_z_m": 0,
+    "x_y_center": "body_bbox_midpoint",
+    "applies_same_transform_to_helpers": true,
+    "rationale": "Previous transform used all source/helper vertices and produced 1.662 m body height with feet ~0.0318 m above ground. Current transform is body-referenced and grounds the body at z=0."
   }
 }
