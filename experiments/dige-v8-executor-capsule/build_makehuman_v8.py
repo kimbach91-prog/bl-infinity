@@ -173,7 +173,7 @@ tights_sha=hashlib.sha256(tights.read_bytes()).hexdigest()
 body_ids=sorted(group_vertex_ids["body"])
 mouth_candidates=[
     normalized[i] for i in body_ids
-    if abs(normalized[i][0]) < 0.045 and 1.525 <= normalized[i][2] <= 1.560
+    if abs(normalized[i][0]) < 0.045 and 1.500 <= normalized[i][2] <= 1.530
 ]
 if not mouth_candidates:
     raise RuntimeError("mouth surface landmark candidates empty")
