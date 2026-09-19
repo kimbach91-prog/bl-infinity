@@ -4,7 +4,10 @@ from mathutils import Vector
 
 ROOT=Path(__file__).resolve().parent
 RUNTIME=ROOT/"runtime"
+OUTPUT_TAG=os.environ.get("DIGE_OUTPUT_TAG","").strip()
 OUT=RUNTIME/"renders"
+if OUTPUT_TAG:
+    OUT=OUT/OUTPUT_TAG
 OUT.mkdir(parents=True,exist_ok=True)
 CANON_PATH=ROOT/"DIGE_CANON_EXECUTION_MANIFEST.json"
 CANON_BYTES=CANON_PATH.read_bytes()
@@ -22,8 +25,10 @@ def set_input(node,name,val):
 
 SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.16"))
 SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0035"))
+SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
 SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.46"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.62"))
+RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -39,6 +44,7 @@ def make_skin():
         bs.distribution='MULTI_GGX'
     set_input(bs,"Subsurface Radius",(1.0,.45,.20))
     set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
 
     macro=nt.nodes.new("ShaderNodeTexNoise")
     macro.inputs["Scale"].default_value=12.0
@@ -470,13 +476,19 @@ if hasattr(vl,"cycles") and hasattr(vl.cycles,"use_pass_denoising_data"):
     vl.cycles.use_pass_denoising_data=True
 
 # Distances inherit the latest provider-backed Drive sweep: V6C-122 fullbody=5.1m, hero=2.7m.
-views=[
+all_views=[
  ("01_FRONT50",(0,5.1,1.03),(0,0,.92),50,7.1,512,768),
  ("02_LEFT_PROFILE50",(5.1,0,1.08),(0,0,.98),50,7.1,512,768),
  ("03_THREE_QUARTER50",(3.60,3.60,1.10),(0,0,1.00),50,6.3,512,768),
  ("04_HERO85",(0,1.10,1.595),(0,.030,1.580),85,4.5,900,900),
  ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,512,768)
 ]
+if RENDER_SET=="FULL":
+    views=all_views
+elif RENDER_SET=="HERO_ONLY":
+    views=[v for v in all_views if v[0]=="04_HERO85"]
+else:
+    raise RuntimeError(f"Unsupported DIGE_RENDER_SET={RENDER_SET}")
 outputs=[]
 for vid,loc,target,lens,fstop,w,h in views:
     scene.render.resolution_x=w; scene.render.resolution_y=h
@@ -510,6 +522,8 @@ receipt={
  "blender_version":bpy.app.version_string,
  "engine":"CYCLES","device":device_info["actual_mode"],"device_info":device_info,
  "identity_bound":False,
+ "render_set":RENDER_SET,
+ "output_tag":OUTPUT_TAG or None,
  "canon_execution_manifest_sha256":CANON_SHA256,
  "runtime_commit":os.environ.get("DIGE_RUNTIME_COMMIT") or os.environ.get("GITHUB_SHA"),
  "runner":{"name":os.environ.get("RUNNER_NAME"),"os":os.environ.get("RUNNER_OS"),"arch":os.environ.get("RUNNER_ARCH")},
@@ -524,7 +538,7 @@ receipt={
  "hair_regime":"SHAVED_STUBBLE_CANONICAL_SURFACE_V1",
  "hair_surface_contract":hair_surface_contract,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
  "provenance":{
    "source_pixels_used":False,
