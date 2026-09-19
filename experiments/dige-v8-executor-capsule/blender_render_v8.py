@@ -307,7 +307,7 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
     if not obj.data.uv_layers:
         raise RuntimeError(f"C12 {name} has no UV layer after OBJ import")
 
-    hverts=body.data.vertices
+    hverts=fit_vertices
     hl=len(hverts)
     xs,ys,zs=spec["x_scale"],spec["y_scale"],spec["z_scale"]
     for pair in (xs,ys,zs):
@@ -324,9 +324,9 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         if max(refs)>=hl:
             raise RuntimeError(f"C12 {name} MHCLO ref outside body: {refs} body_vertices={hl}")
         co=(
-            hverts[refs[0]].co*weights[0] +
-            hverts[refs[1]].co*weights[1] +
-            hverts[refs[2]].co*weights[2] +
+            hverts[refs[0]]*weights[0] +
+            hverts[refs[1]]*weights[1] +
+            hverts[refs[2]]*weights[2] +
             Vector((offset[0]*s0,offset[1]*s1,offset[2]*s2))
         )
         obj.data.vertices[n].co=co
