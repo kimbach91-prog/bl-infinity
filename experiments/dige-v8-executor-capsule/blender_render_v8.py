@@ -508,9 +508,13 @@ craniofacial_deform={
   "nasolabial_y_m":0.00085,
   "philtrum_groove_y_m":0.00065,
   "philtrum_ridge_y_m":0.00055,
+  "alar_groove_y_m":0.00075,
+  "labiomental_groove_y_m":0.00070,
+  "lip_corner_y_m":0.00045,
+  "lower_lid_roll_y_m":0.00050,
 }
 # FACE_MESO_SCALE_APPLIED
-for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m"):
+for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m","alar_groove_y_m","labiomental_groove_y_m","lip_corner_y_m","lower_lid_roll_y_m"):
     craniofacial_deform[_k] *= FACE_MESO_SCALE
 def g2(x,z,cx,cz,sx,sz):
     return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
@@ -551,6 +555,19 @@ for v in body.data.vertices:
     co.y += craniofacial_deform["philtrum_ridge_y_m"]*(
         g2(co.x,co.z,.006,mouth_z+.014,.004,.010)+
         g2(co.x,co.z,-.006,mouth_z+.014,.004,.010)
+    )
+    co.y -= craniofacial_deform["alar_groove_y_m"]*(
+        g2(co.x,co.z,.013,nose_tip_z-.004,.007,.010)+
+        g2(co.x,co.z,-.013,nose_tip_z-.004,.007,.010)
+    )
+    co.y -= craniofacial_deform["labiomental_groove_y_m"]*g2(co.x,co.z,0.0,mouth_z-.018,.026,.008)
+    co.y -= craniofacial_deform["lip_corner_y_m"]*(
+        g2(co.x,co.z,.023,mouth_z,.007,.008)+
+        g2(co.x,co.z,-.023,mouth_z,.007,.008)
+    )
+    co.y += craniofacial_deform["lower_lid_roll_y_m"]*(
+        g2(co.x,co.z,.032,eye_mid_z-.006,.022,.008)+
+        g2(co.x,co.z,-.032,eye_mid_z-.006,.022,.008)
     )
 
     # Chin projection.
@@ -645,8 +662,8 @@ lower_lip=[
     (.009,my+.0005,mz-.0025),
     (.018,my+.0002,mz-.0012),
 ]
-curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00018,lip)
-curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00022,lip)
+curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00010,lip)
+curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00013,lip)
 
 # Small recessed nostril discs add depth without altering topology.
 nose_z=mouth_center[2]+.0275
