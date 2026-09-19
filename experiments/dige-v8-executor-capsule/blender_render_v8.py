@@ -36,8 +36,8 @@ def make_skin():
     set_input(bs,"Specular IOR Level",.28)
 
     macro=nt.nodes.new("ShaderNodeTexNoise")
-    macro.inputs["Scale"].default_value=5.0
-    macro.inputs["Detail"].default_value=2.0
+    macro.inputs["Scale"].default_value=12.0
+    macro.inputs["Detail"].default_value=3.0
     tone=nt.nodes.new("ShaderNodeValToRGB")
     tone.color_ramp.elements[0].position=.20
     tone.color_ramp.elements[0].color=(0.255,0.090,0.058,1)
@@ -124,10 +124,12 @@ def curve_object(name,splines,bevel,mat):
     ob=bpy.data.objects.new(name,cu); bpy.context.collection.objects.link(ob)
     for pts in splines:
         sp=cu.splines.new('BEZIER'); sp.bezier_points.add(len(pts)-1)
-        for p,co in zip(sp.bezier_points,pts):
+        n=max(1,len(pts)-1)
+        for idx,(p,co) in enumerate(zip(sp.bezier_points,pts)):
             p.co=co
             p.handle_left_type='AUTO'
             p.handle_right_type='AUTO'
+            p.radius=max(.26,1.0-.74*(idx/n))
     ob.data.materials.append(mat); return ob
 
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
@@ -280,7 +282,7 @@ mouth_line=[
     (.010,my+.0005,mz-.0004),
     (.020,my,mz)
 ]
-curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00018,mouth_dark)
+curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00010,mouth_dark)
 
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
 brow_hairs=[]; lashes=[]
@@ -333,7 +335,7 @@ for i in range(4500):
         (x*1.05+side*random.uniform(0,.008)-wave*.30,y-.025,z-L*.58),
         (x*1.08+side*random.uniform(0,.015)+wave,y-.035,z-L)
     ])
-# Fine procedural hairline: root every strand on the actual canonical forehead/scalp surface.
+# Fine procedural hairline: sparse, tapered strands rooted on the canonical forehead surface.
 head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.020 and v.co.y>-0.02]
 def forehead_surface_y(x,z):
     best=None
@@ -347,21 +349,21 @@ def forehead_surface_y(x,z):
     return (best.y if best is not None else .040)
 
 hairline=[]
-for i in range(520):
-    t=(i+.5)/520
+for i in range(260):
+    t=(i+.5)/260
     x=-.076+.152*t
     xn=x/.076
     arch=max(0.0,1.0-xn*xn)
-    root_z=eye_z+.052+.032*arch
-    root_y=forehead_surface_y(x,root_z)+.0007
+    root_z=eye_z+.052+.032*arch+(random.random()-.5)*.0022
+    root_y=forehead_surface_y(x,root_z)+.00035+(random.random()-.5)*.0005
     side=1 if x>=0 else -1
-    jitter=(random.random()-.5)*.0018
+    jitter=(random.random()-.5)*.0022
     hairline.append([
         (x,root_y,root_z),
         (x+side*.002+jitter,root_y-.012,root_z+.014),
         (x+side*.005+jitter,root_y-.030,root_z+.020)
     ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.000045,hair)
+curve_object("DIGE_V8_HAIRLINE",hairline,.000030,hair)
 
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
@@ -373,7 +375,7 @@ for i in range(90):
         continue
     side=1 if x>=0 else -1
     strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.000070,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.000060,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
@@ -392,7 +394,7 @@ tights.name="DIGE_V8_FITTED_TIGHTS"
 tights.data.materials.append(cloth)
 bpy.context.view_layer.objects.active=tights
 bpy.ops.object.shade_smooth()
-gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsub.render_levels=1
+gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsub.render_levels=2
 solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0030; solid.offset=1.0
 
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
