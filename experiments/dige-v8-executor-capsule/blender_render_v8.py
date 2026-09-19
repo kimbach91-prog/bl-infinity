@@ -165,6 +165,12 @@ lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
 mouth_dark=principled("MOUTH_DARK",(0.018,0.004,0.004),rough=.58,ior=1.35)
 scalp_shadow=principled("SCALP_SHADOW",(0.075,0.026,0.018),rough=.50,ior=1.42,subsurface=.06)
 hair=hair_material()
+hair_mass=principled("DIGE_V8_HAIR_MASS",(0.006,0.0035,0.0022),rough=.46,ior=1.55)
+hm_bs=hair_mass.node_tree.nodes.get("Principled BSDF")
+set_input(hm_bs,"Specular IOR Level",.22)
+set_input(hm_bs,"Coat Weight",.10)
+set_input(hm_bs,"Coat Roughness",.30)
+set_input(hm_bs,"Anisotropic IOR Level",.35)
 cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
 
@@ -378,50 +384,56 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
 curve_object("DIGE_V8_BROWS",brow_hairs,.000075,hair)
 curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
-# Canonical-surface shaved/stubble regime. Tiny fibers avoid silhouette spikes while preserving hair transport.
+# Hybrid hair: filtered MakeHuman helper-hair guide supplies open-face side/back mass;
+# fine strand curves supply microstructure. The 50 front-curtain faces are removed in the builder.
+hair_guide_path=RUNTIME/geom["hair_guide"]["output"]
+bpy.ops.wm.obj_import(
+    filepath=str(hair_guide_path),
+    forward_axis='Y',
+    up_axis='Z',
+    use_split_objects=False,
+    use_split_groups=False,
+)
+hair_guides=[o for o in bpy.context.selected_objects if o.type=='MESH']
+if len(hair_guides)!=1:
+    raise RuntimeError(f"Expected one filtered hair guide mesh, got {len(hair_guides)}")
+hair_mass_obj=hair_guides[0]
+hair_mass_obj.name="DIGE_V8_FILTERED_HAIR_MASS"
+hair_mass_obj.data.materials.append(hair_mass)
+bpy.context.view_layer.objects.active=hair_mass_obj
+bpy.ops.object.shade_smooth()
+hsub=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_SUBDIV","SUBSURF"); hsub.levels=1; hsub.render_levels=2
+hsolid=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_THICKNESS","SOLIDIFY"); hsolid.thickness=.00055; hsolid.offset=.25
+
+# Fiber detail sampled deterministically from guide vertices, with shorter frontal/upper fibers
+# and longer side/back fibers. These do not define the primary silhouette.
 random.seed(20260919)
-eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-head_center=Vector((0.0,-.055,eye_z+.060))
-up=Vector((0.0,0.0,1.0))
-scalp_vertices=[]
-for v in body.data.vertices:
-    p=v.co.copy()
-    if p.z < eye_z+.028:
-        continue
-    if p.y>.030 and p.z<eye_z+.090 and abs(p.x)<.100:
-        continue
-    if abs(p.x)>.115 and p.z<eye_z+.070:
-        continue
-    scalp_vertices.append(p)
-if len(scalp_vertices)<120:
-    raise RuntimeError(f"stubble scalp candidate count unexpectedly low: {len(scalp_vertices)}")
-
+guide_vertices=[hair_mass_obj.matrix_world @ v.co for v in hair_mass_obj.data.vertices]
 strands=[]
-replicas=HAIR_REPLICAS
-for p in scalp_vertices:
-    outward=(p-head_center).normalized()
-    tangent=outward.cross(up)
-    if tangent.length<1e-6:
-        tangent=Vector((1.0,0.0,0.0))
-    else:
-        tangent.normalize()
-    bitangent=outward.cross(tangent).normalized()
-    for _ in range(replicas):
-        root=p+tangent*random.uniform(-.0014,.0014)+bitangent*random.uniform(-.0010,.0010)+outward*.00015
-        L=random.uniform(HAIR_LEN_MIN,HAIR_LEN_MAX)
-        lean=tangent*random.uniform(-.00025,.00025)+Vector((0,-.00015,0))
-        tip=root+outward*L+lean
-        strands.append([tuple(root),tuple(tip)])
+for p in guide_vertices:
+    # Guide mesh is already filtered to the side/back region.
+    radial=Vector((p.x, p.y+.055, max(.001,p.z-1.46))).normalized()
+    reps=3 if p.z>1.58 else 2
+    for _ in range(reps):
+        jitter=Vector((random.uniform(-.0012,.0012),random.uniform(-.0008,.0008),random.uniform(-.0012,.0012)))
+        root=p+jitter
+        L=random.uniform(.018,.055) if p.z>1.55 else random.uniform(.035,.090)
+        side=1.0 if p.x>=0 else -1.0
+        tip=root+Vector((side*random.uniform(.002,.010),-.010,-L))
+        mid=root+(tip-root)*.48+Vector((side*random.uniform(-.003,.003),-.004,random.uniform(-.004,.004)))
+        strands.append([tuple(root),tuple(mid),tuple(tip)])
+curve_object("DIGE_V8_GUIDE_FIBERS",strands,.000045,hair)
 
-curve_object("DIGE_V8_STRAND_GROOM",strands,HAIR_BEVEL,hair)
 hair_surface_contract={
-    "candidate_vertices":len(scalp_vertices),
-    "replicas_per_vertex":replicas,
+    "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR",
+    "source_faces":geom["hair_guide"]["source_faces"],
+    "removed_front_faces":geom["hair_guide"]["removed_front_faces"],
+    "retained_faces":geom["hair_guide"]["faces"],
+    "guide_vertices":geom["hair_guide"]["vertices"],
+    "guide_sha256":geom["hair_guide"]["sha256"],
     "curve_count":len(strands),
-    "bevel_radius_m":HAIR_BEVEL,
-    "length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
-    "root_source":"CANONICAL_BODY_SURFACE_VERTICES",
-    "style":"SHAVED_STUBBLE_V1",
+    "bevel_radius_m":0.000045,
+    "style":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -584,7 +596,7 @@ receipt={
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"SHAVED_STUBBLE_CANONICAL_SURFACE_V1",
+ "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
  "hair_surface_contract":hair_surface_contract,
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
@@ -599,6 +611,7 @@ receipt={
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
+ "hair_guide":geom["hair_guide"],
  "provenance":{
    "source_pixels_used":False,
    "reference_pixels_read_by_renderer":False,
