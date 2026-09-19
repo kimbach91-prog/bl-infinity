@@ -68,7 +68,7 @@ jobs:
           DIGE_RUNTIME_COMMIT: ${{ github.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python blender_render_v8.py | tee runtime/blender_execution.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/blender_execution.log
 
       - name: Verify receipt and outputs
         working-directory: experiments/dige-v8-executor-capsule
