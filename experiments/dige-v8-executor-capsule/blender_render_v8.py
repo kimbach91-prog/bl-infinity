@@ -175,6 +175,46 @@ if bbox_extent[1] >= 0.65:
 if bbox_min[2] < -0.03 or bbox_max[2] > 1.75:
     raise RuntimeError(f"Body Z placement invalid: min={bbox_min[2]} max={bbox_max[2]}")
 
+craniofacial_deform={
+  "cheek_y_m":0.0045,
+  "nose_bridge_y_m":0.0035,
+  "nose_tip_y_m":0.0060,
+  "chin_y_m":0.0030,
+  "lip_volume_y_m":0.0018,
+  "jaw_x_scale":0.985,
+  "asymmetry_y_m":0.0007,
+}
+def g2(x,z,cx,cz,sx,sz):
+    return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
+
+for v in body.data.vertices:
+    co=v.co
+    # Only the forward facial surface; back/head/body vertices remain untouched.
+    if co.y <= 0.0 or co.z < 1.455 or co.z > 1.665 or abs(co.x) > .115:
+        continue
+
+    # Cheek/malar projection with tiny natural asymmetry.
+    wl=g2(co.x,co.z,.052,1.555,.030,.030)
+    wr=g2(co.x,co.z,-.052,1.555,.030,.030)
+    co.y += craniofacial_deform["cheek_y_m"]*(wl+wr)
+    co.y += craniofacial_deform["asymmetry_y_m"]*(wr-wl)
+
+    # Nose bridge and tip remain bounded around the midline.
+    co.y += craniofacial_deform["nose_bridge_y_m"]*g2(co.x,co.z,0.0,1.575,.015,.030)
+    co.y += craniofacial_deform["nose_tip_y_m"]*g2(co.x,co.z,0.0,1.548,.014,.015)
+
+    # Native lip volume: geometry, not a painted/floating replacement.
+    co.y += craniofacial_deform["lip_volume_y_m"]*g2(co.x,co.z,0.0,1.523,.030,.008)
+
+    # Chin projection.
+    co.y += craniofacial_deform["chin_y_m"]*g2(co.x,co.z,0.0,1.486,.035,.022)
+
+    # Mild lower-face taper from the existing canonical topology.
+    jaw_w=max(0.0,1.0-abs(co.z-1.495)/.050)
+    if jaw_w>0 and abs(co.x)>.030:
+        s=1.0-(1.0-craniofacial_deform["jaw_x_scale"])*jaw_w
+        co.x *= s
+
 sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
 # Preserve topology metrics before subdivision
 bm=bmesh.new(); bm.from_mesh(body.data)
@@ -286,27 +326,40 @@ for i in range(4500):
     if front_zone:
         continue
     L=random.uniform(.15,.37)
+    wave=random.uniform(-.006,.006)
     strands.append([
         (x,y,z),
-        (x*1.02,y-.012,z-L*.22),
-        (x*1.05+side*random.uniform(0,.008),y-.025,z-L*.58),
-        (x*1.08+side*random.uniform(0,.015),y-.035,z-L)
+        (x*1.02+wave*.35,y-.012,z-L*.22),
+        (x*1.05+side*random.uniform(0,.008)-wave*.30,y-.025,z-L*.58),
+        (x*1.08+side*random.uniform(0,.015)+wave,y-.035,z-L)
     ])
-# Fine procedural hairline uses a separate, much thinner curve object to avoid visible root spikes.
+# Fine procedural hairline: root every strand on the actual canonical forehead/scalp surface.
+head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.020 and v.co.y>-0.02]
+def forehead_surface_y(x,z):
+    best=None
+    best_d=1e9
+    for p in head_surface:
+        dx=(p.x-x)/.012
+        dz=(p.z-z)/.014
+        d=dx*dx+dz*dz
+        if d<best_d:
+            best_d=d; best=p
+    return (best.y if best is not None else .040)
+
 hairline=[]
-for i in range(420):
-    t=(i+.5)/420
-    x=-.082+.164*t
-    xn=x/.082
+for i in range(520):
+    t=(i+.5)/520
+    x=-.076+.152*t
+    xn=x/.076
     arch=max(0.0,1.0-xn*xn)
-    root_y=-.002-.010*abs(xn)
-    root_z=eye_z+.070+.020*arch
+    root_z=eye_z+.052+.032*arch
+    root_y=forehead_surface_y(x,root_z)+.0007
     side=1 if x>=0 else -1
-    jitter=(random.random()-.5)*.0025
+    jitter=(random.random()-.5)*.0018
     hairline.append([
         (x,root_y,root_z),
-        (x+side*.002+jitter,root_y-.018,root_z+.018),
-        (x+side*.005+jitter,root_y-.040,root_z+.032)
+        (x+side*.002+jitter,root_y-.012,root_z+.014),
+        (x+side*.005+jitter,root_y-.030,root_z+.020)
     ])
 curve_object("DIGE_V8_HAIRLINE",hairline,.000045,hair)
 
@@ -472,6 +525,7 @@ receipt={
  "eye_helpers":geom["eye_helpers"],
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
+ "craniofacial_runtime_deform":craniofacial_deform,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
