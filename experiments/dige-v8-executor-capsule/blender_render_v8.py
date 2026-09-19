@@ -29,15 +29,15 @@ SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
 SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
+SKIN_TEXTURE_KEY=os.environ.get("DIGE_SKIN_TEXTURE_KEY",CANON["assets"].get("skin_texture_default_key","eurasian")).strip()
+if SKIN_TEXTURE_KEY not in CANON["assets"]["skin_texture_candidates"]:
+    raise RuntimeError("Unknown DIGE_SKIN_TEXTURE_KEY="+SKIN_TEXTURE_KEY)
 
 def make_skin():
-    asset=CANON["assets"]["skin_texture_candidate"]
+    asset=CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]
     texture_path=RUNTIME/"assets"/asset["texture_runtime_name"]
-    mhmat_path=RUNTIME/"assets"/asset["mhmat_runtime_name"]
     if not texture_path.exists() or sha(texture_path)!=asset["texture_sha256"]:
-        raise RuntimeError(f"C7 skin texture missing/hash mismatch: {texture_path}")
-    if not mhmat_path.exists() or sha(mhmat_path)!=asset["mhmat_sha256"]:
-        raise RuntimeError(f"C7 skin MHMAT missing/hash mismatch: {mhmat_path}")
+        raise RuntimeError("C7B skin texture missing/hash mismatch: "+str(texture_path))
 
     m=bpy.data.materials.new("DIGE_V8_SKIN_CC0_TEXTURED")
     m.use_nodes=True
@@ -58,7 +58,7 @@ def make_skin():
 
     tex=nt.nodes.new("ShaderNodeTexImage")
     tex.name="DIGE_C7_CC0_SKIN_DIFFUSE"
-    tex.label="MakeHuman Skins01 CC0 / onlytheghosts young eurasian female"
+    tex.label="MakeHuman Skins01 CC0 / "+asset["asset_name"]
     tex.image=bpy.data.images.load(str(texture_path),check_existing=True)
     tex.image.colorspace_settings.name='sRGB'
     tex.interpolation='Smart'
@@ -516,11 +516,12 @@ receipt={
  "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
  "geometry_source":"MakeHuman bundled CC0 base mesh + CC0 asian-female-young morph target",
  "public_skin_texture":{
-   "asset_name":CANON["assets"]["skin_texture_candidate"]["asset_name"],
-   "pack_license":CANON["assets"]["skin_texture_candidate"]["pack_license"],
-   "pack_sha256":CANON["assets"]["skin_texture_candidate"]["pack_sha256"],
-   "texture_sha256":CANON["assets"]["skin_texture_candidate"]["texture_sha256"],
-   "mhmat_sha256":CANON["assets"]["skin_texture_candidate"]["mhmat_sha256"],
+   "candidate_key":SKIN_TEXTURE_KEY,
+   "asset_name":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["asset_name"],
+   "pack_license":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["pack_license"],
+   "pack_sha256":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["pack_sha256"],
+   "texture_sha256":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["texture_sha256"],
+   "mhmat_sha256_metadata_only":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY].get("mhmat_sha256"),
    "body_uv_layer":body_uv_name
  },
  "garment_helper":geom["garment_helper"],
@@ -539,7 +540,7 @@ receipt={
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE_SWEEPS; STUBBLE_SWEEP_REJECTED; R4_FILTERED_HAIR_GUIDE_REUSED"
  },
- "appearance_candidate":"C7_OFFICIAL_CC0_EURASIAN_DIFFUSE_HAIRLESS_ISOLATION_V1",
+ "appearance_candidate":"C7B_OFFICIAL_CC0_SKIN_SWEEP_HAIRLESS_ISOLATION_V1",
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
@@ -551,8 +552,8 @@ receipt={
    "reference_images_composited":False,
    "reference_textures_used":False,
    "public_cc0_texture_used":True,
-   "public_cc0_texture_sha256":CANON["assets"]["skin_texture_candidate"]["texture_sha256"],
-   "public_cc0_texture_license":CANON["assets"]["skin_texture_candidate"]["pack_license"],
+   "public_cc0_texture_sha256":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["texture_sha256"],
+   "public_cc0_texture_license":CANON["assets"]["skin_texture_candidates"][SKIN_TEXTURE_KEY]["pack_license"],
    "external_geometry_asset_used":True,
    "external_geometry_asset_license":"CC0-1.0",
    "image_model_calls":0,
