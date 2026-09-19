@@ -251,7 +251,7 @@ jobs:
           rm -rf _site
           mkdir -p _site/novel _site/assets/css _site/assets/js _site/books
           mkdir -p _site/research/human-development/kevin-nt/studio
-          mkdir -p _site/deus _site/BL-CF
+          mkdir -p _site/deus _site/BL-CF _site/public-compute
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
           cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
           cp assets/css/main.css assets/css/reader.css _site/assets/css/
@@ -264,6 +264,7 @@ jobs:
           cp research/human-development/kevin-nt/studio/index.html _site/research/human-development/kevin-nt/studio/
           cp deus/index.html deus/styles.css deus/app.js _site/deus/
           cp BL-CF/CONSTITUTION.md BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md _site/BL-CF/
+          cp public-compute/webgpu-s0.html _site/public-compute/
 
       - name: Assert public books, research studio and protected-core boundary
         shell: bash
@@ -294,6 +295,10 @@ jobs:
           test -f _site/deus/app.js
           test -f _site/BL-CF/CONSTITUTION.md
           test -f _site/BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md
+          test -f _site/public-compute/webgpu-s0.html
+          grep -q 'PUBLIC_S0_ONLY' _site/public-compute/webgpu-s0.html
+          grep -q 'network_egress:false' _site/public-compute/webgpu-s0.html
+          grep -q 'navigator.gpu' _site/public-compute/webgpu-s0.html
           test "$(find _site/BL-CF -maxdepth 1 -type f | wc -l)" -eq 2
           test ! -e _site/research/human-development/kevin-nt/CURRENT.md
           test ! -e _site/research/human-development/kevin-nt/collision-benchmark-policy.json

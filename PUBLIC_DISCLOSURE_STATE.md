@@ -20,6 +20,7 @@ The following are public by separate owner decision and do not count as disclosu
 
 1. **Fiction / Novel** — `Bách Lâm: Lần Hồi Quy Thứ Một Triệu`, including the current public Chapter 1 as a living HALF-CANON fiction draft.
 2. **Academic Freedom** — a public manifesto supporting broad rights to question, propose, critique and participate in knowledge creation while preserving unequal evidence weight and falsifiability.
+3. **Public Compute Canary (S0)** — an opt-in browser-side WebGPU/CPU canary that executes only public deterministic work, exports a local receipt, performs no automatic network egress, and discloses no protected DEUS core, private memory, credentials or private topology. Its existence does not prove external mesh capacity, revenue, yield or unattended worker execution.
 
 ## Author's promise
 

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<meta name="description" content="Opt-in public S0 browser compute canary using WebGPU when available. No secrets, no private model, no automatic network egress.">
+<title>Public S0 Compute Canary</title>
+<style>
+:root{color-scheme:dark}
+body{font:15px/1.55 system-ui,-apple-system,Segoe UI,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;background:#0d0f12;color:#e9edf1}
+h1{font-size:1.9rem} .card{background:#15191f;border:1px solid #2a313b;border-radius:14px;padding:18px;margin:18px 0}
+button{font:inherit;padding:10px 14px;border-radius:10px;border:1px solid #5d6877;background:#202733;color:#fff;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed} pre{white-space:pre-wrap;word-break:break-word;background:#090b0e;padding:14px;border-radius:10px;overflow:auto}
+.ok{color:#9fe3b0}.hold{color:#ffd479}.small{opacity:.78;font-size:.92rem}
+code{color:#b9d8ff}
+</style>
+</head>
+<body>
+<h1>Public S0 Compute Canary</h1>
+<div class="card">
+<p><strong>PUBLIC_S0_ONLY.</strong> This page runs a deterministic, opt-in compute test in your browser. It does not contain a private model or protected DEUS core.</p>
+<p>Nothing runs until you press the button. The canary performs <strong>no automatic network egress</strong>, asks for no account, wallet, credential or personal data, and keeps its receipt in this browser unless you download it yourself.</p>
+<button id="run">Run one compute canary</button>
+<button id="download" disabled>Download local receipt</button>
+</div>
+<div class="card">
+<pre id="out">STATE=NOT_RUN</pre>
+</div>
+<p class="small">Scope: public deterministic BL-S0 work only. A successful result proves compute in the current browser session; it does not prove a global worker mesh, revenue, yield, persistence, or trusted execution.</p>
+
+<script type="module">
+const out=document.querySelector('#out');
+const runBtn=document.querySelector('#run');
+const downloadBtn=document.querySelector('#download');
+let lastReceipt=null;
+const N=131072;
+
+function emit(obj,cls=''){
+  lastReceipt=obj;
+  out.className=cls;
+  out.textContent=JSON.stringify(obj,null,2);
+  downloadBtn.disabled=false;
+}
+function u32(x){return x>>>0}
+function expectedAt(x){return u32(Math.imul(x,1664525)+1013904223)}
+function checksum(arr){
+  let a=2166136261>>>0;
+  for(let i=0;i<arr.length;i++){a^=arr[i];a=Math.imul(a,16777619)>>>0}
+  return a.toString(16).padStart(8,'0');
+}
+async function sha256Bytes(view){
+  const copy=view.buffer.slice(view.byteOffset,view.byteOffset+view.byteLength);
+  const digest=await crypto.subtle.digest('SHA-256',copy);
+  return [...new Uint8Array(digest)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function base(route){
+  return {
+    schema:'public-s0-browser-compute-receipt/1',
+    route_id:route,
+    state:'RUNNING',
+    data_class:'BL-S0',
+    consent:'EXPLICIT_BUTTON_CLICK',
+    canonical_write:false,
+    protected_core_export:false,
+    private_memory_export:false,
+    credentials_requested:false,
+    network_egress:false,
+    persistence_claim:false,
+    external_mesh_capacity_claim:false,
+    economic_yield_claim:false,
+    workload:{kind:'u32_lcg_transform',elements:N,bytes:N*4}
+  };
+}
+async function cpuCanary(started){
+  const input=new Uint32Array(N);
+  const result=new Uint32Array(N);
+  for(let i=0;i<N;i++){input[i]=i+1;result[i]=expectedAt(input[i])}
+  const sample=[0,1,2,17,N-1].map(i=>[i,result[i],expectedAt(input[i])]);
+  const ok=sample.every(x=>x[1]===x[2]);
+  return {...base('PUBLIC-BROWSER-CPU-S0'),state:ok?'RESULT_VERIFIED_DEVICE_SCOPE':'QA_FAIL',
+    engine:'CPU_TYPED_ARRAY_FALLBACK',sample,checksum:checksum(result),
+    result_digest:await sha256Bytes(result),elapsed_ms:Math.round(performance.now()-started),
+    receipt_scope:'CURRENT_BROWSER_SESSION_ONLY'};
+}
+async function webgpuCanary(started){
+  const adapter=await navigator.gpu.requestAdapter();
+  if(!adapter) throw new Error('WebGPU adapter unavailable');
+  const device=await adapter.requestDevice();
+  const input=new Uint32Array(N);
+  for(let i=0;i<N;i++) input[i]=i+1;
+  const bytes=input.byteLength;
+  const src=device.createBuffer({size:bytes,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_DST});
+  const dst=device.createBuffer({size:bytes,usage:GPUBufferUsage.STORAGE|GPUBufferUsage.COPY_SRC});
+  const read=device.createBuffer({size:bytes,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+  device.queue.writeBuffer(src,0,input);
+  const shader=device.createShaderModule({code:`
+    @group(0) @binding(0) var<storage,read> src: array<u32>;
+    @group(0) @binding(1) var<storage,read_write> dst: array<u32>;
+    @compute @workgroup_size(256)
+    fn main(@builtin(global_invocation_id) id: vec3<u32>){
+      let i=id.x;
+      if(i<${N}u){ dst[i]=src[i]*1664525u+1013904223u; }
+    }`});
+  const pipeline=device.createComputePipeline({layout:'auto',compute:{module:shader,entryPoint:'main'}});
+  const group=device.createBindGroup({layout:pipeline.getBindGroupLayout(0),entries:[
+    {binding:0,resource:{buffer:src}},{binding:1,resource:{buffer:dst}}
+  ]});
+  const encoder=device.createCommandEncoder();
+  const pass=encoder.beginComputePass();
+  pass.setPipeline(pipeline);pass.setBindGroup(0,group);pass.dispatchWorkgroups(Math.ceil(N/256));pass.end();
+  encoder.copyBufferToBuffer(dst,0,read,0,bytes);
+  device.queue.submit([encoder.finish()]);
+  await read.mapAsync(GPUMapMode.READ);
+  const result=new Uint32Array(read.getMappedRange().slice(0));
+  read.unmap();
+  const sample=[0,1,2,17,N-1].map(i=>[i,result[i],expectedAt(input[i])]);
+  const ok=sample.every(x=>x[1]===x[2]);
+  return {...base('PUBLIC-BROWSER-WEBGPU-S0'),state:ok?'RESULT_VERIFIED_DEVICE_SCOPE':'QA_FAIL',
+    engine:'WEBGPU',sample,checksum:checksum(result),
+    result_digest:await sha256Bytes(result),elapsed_ms:Math.round(performance.now()-started),
+    receipt_scope:'CURRENT_BROWSER_SESSION_ONLY'};
+}
+
+runBtn.onclick=async()=>{
+  runBtn.disabled=true; downloadBtn.disabled=true;
+  const started=performance.now();
+  try{
+    let receipt;
+    if(navigator.gpu){
+      try{receipt=await webgpuCanary(started)}
+      catch(e){receipt=await cpuCanary(started);receipt.webgpu_hold=String(e?.message||e).slice(0,180)}
+    }else{
+      receipt=await cpuCanary(started);receipt.webgpu_hold='navigator.gpu unavailable';
+    }
+    receipt.generated_at=new Date().toISOString();
+    emit(receipt,receipt.state==='RESULT_VERIFIED_DEVICE_SCOPE'?'ok':'hold');
+  }catch(e){
+    emit({...base('PUBLIC-BROWSER-S0'),state:'CANARY_ERROR',error:String(e?.message||e).slice(0,240),
+      elapsed_ms:Math.round(performance.now()-started),generated_at:new Date().toISOString()},'hold');
+  }finally{runBtn.disabled=false}
+};
+downloadBtn.onclick=()=>{
+  if(!lastReceipt)return;
+  const blob=new Blob([JSON.stringify(lastReceipt,null,2)+'\n'],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='public-s0-compute-receipt.json';
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+};
+</script>
+</body>
+</html>
