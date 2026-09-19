@@ -53,6 +53,7 @@ jobs:
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
+          mkdir -p runtime
           python build_makehuman_v8.py | tee runtime/geometry_execution.json
           test -s runtime/dige_makehuman_v8.obj
           test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
