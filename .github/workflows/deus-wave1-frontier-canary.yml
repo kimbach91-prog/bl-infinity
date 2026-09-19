@@ -1,0 +1,131 @@
+name: DEUS Wave 1 Frontier Benchmark Canary
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-wave1-frontier-canary.yml'
+      - 'public_benchmark/wave1/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-access-gates:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout DEUS benchmark surface
+        uses: actions/checkout@v4
+
+      - name: Record ARC-AGI-3 private access gate
+        shell: bash
+        run: |
+          mkdir -p receipts
+          python - <<'PY'
+          import json
+          r = {
+            "lane": "ARC-AGI-3-private",
+            "phase": "access_gate",
+            "state": "HOLD_OFFICIAL_PRIVATE_COMPETITION_ACCESS",
+            "hard_run_executed": False,
+            "reason": "Private competition evaluation requires the official authorized route; no private task payload or competition credential is present in this public CI canary.",
+            "claim_boundary": "This is an access-gate canary, not an ARC-AGI-3 private score."
+          }
+          open("receipts/arcagi3-private-access.json","w").write(json.dumps(r,indent=2)+"\n")
+          PY
+
+      - name: Checkout official public FrontierMath / LeanOpenProblems source
+        uses: actions/checkout@v4
+        with:
+          repository: epoch-research/LeanOpenProblems
+          ref: af3b82f9d2fd38bea33d59e637b6b4eff54a464c
+          path: vendor/LeanOpenProblems
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: FrontierMath Erdős source/harness canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd vendor/LeanOpenProblems
+          uv sync
+          uv run pytest -q tests/test_erdos.py
+          cd ../..
+          python - <<'PY'
+          import json
+          r = {
+            "lane": "FrontierMath-Erdos",
+            "phase": "official_public_harness_canary",
+            "source_repo": "epoch-research/LeanOpenProblems",
+            "source_commit": "af3b82f9d2fd38bea33d59e637b6b4eff54a464c",
+            "erdos_manifest_test": "PASS",
+            "hard_problem_solve_executed": False,
+            "hard_run_state": "HOLD_DEUS_GENERAL_REASONING_EXECUTOR",
+            "claim_boundary": "PASS proves official public Erdős source/harness ingestion on this CI route; it is not a solved FrontierMath Erdős problem."
+          }
+          open("receipts/frontiermath-erdos-canary.json","w").write(json.dumps(r,indent=2)+"\n")
+          PY
+
+      - name: Checkout CAIS HLE public repository snapshot
+        uses: actions/checkout@v4
+        with:
+          repository: centerforaisafety/hle
+          ref: 73ae974b1844c3ffa64c3f4343d9f1f259575700
+          path: vendor/hle
+
+      - name: HLE public source canary and Rolling freshness gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f vendor/hle/README.md
+          test -f vendor/hle/hle-rolling-changes.txt
+          python - <<'PY'
+          import json, pathlib
+          text = pathlib.Path("vendor/hle/hle-rolling-changes.txt").read_text(errors="replace")
+          r = {
+            "lane": "HLE-Rolling",
+            "phase": "source_canary",
+            "public_repo": "centerforaisafety/hle",
+            "public_repo_commit": "73ae974b1844c3ffa64c3f4343d9f1f259575700",
+            "rolling_change_file_present": True,
+            "rolling_change_file_bytes": len(text.encode()),
+            "current_2026_09_17_dataset_bytes_verified": False,
+            "hard_run_executed": False,
+            "hard_run_state": "HOLD_CURRENT_ROLLING_DATASET_AND_DEUS_GENERAL_REASONING_ENDPOINT",
+            "claim_boundary": "The repository snapshot is a source canary. It does not establish possession of the Sep-17-2026 HLE-Rolling evaluation bytes or a DEUS HLE score."
+          }
+          open("receipts/hle-rolling-source-canary.json","w").write(json.dumps(r,indent=2)+"\n")
+          PY
+
+      - name: Build Wave 1 canary receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, glob, hashlib, pathlib
+          items=[]
+          for p in sorted(glob.glob("receipts/*.json")):
+            b=pathlib.Path(p).read_bytes()
+            items.append({"file":p,"sha256":hashlib.sha256(b).hexdigest(),"payload":json.loads(b)})
+          out={
+            "campaign":"DEUS_WAVE1_FRONTIER_BENCHMARK_20260919",
+            "state":"CANARY_EXECUTED_HARD_RUNS_HELD",
+            "receipts":items,
+            "protected_method_payload_externalized":False,
+            "external_model_delegated_solving":False
+          }
+          pathlib.Path("receipts/wave1-canary-receipt.json").write_text(json.dumps(out,indent=2)+"\n")
+          PY
+          cat receipts/wave1-canary-receipt.json
+
+      - name: Upload canary receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-wave1-frontier-canary-receipts
+          path: receipts/*.json
+          if-no-files-found: error
