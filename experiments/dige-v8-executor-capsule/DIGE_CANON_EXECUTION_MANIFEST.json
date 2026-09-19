@@ -157,7 +157,33 @@
           "zip_path": "eyelashes/eyelashes01/eyelashes01.png",
           "sha256": "4b69c0fff2648874460e9caf80c31413c444218a5c50afebc425aeaa65484a35"
         }
-      }
+      },
+      "hair_short04": {
+        "tags": [
+          "MakeHuman",
+          "Male",
+          "Short"
+        ],
+        "obj": {
+          "runtime_name": "short04.obj",
+          "zip_path": "hair/short04/short04.obj",
+          "sha256": "676964a133ee35ffcea1195382bf75542da7a298931e4001bc7b0d7b707225de",
+          "vertices": 865,
+          "faces": 525,
+          "uvs": 991
+        },
+        "mhclo": {
+          "runtime_name": "short04.mhclo",
+          "zip_path": "hair/short04/short04.mhclo",
+          "sha256": "d60640aa4c4ffce1aa269647ba436b6ee0bb21bb948f927b84e27a48d2107157"
+        },
+        "diffuse": {
+          "runtime_name": "short04_diffuse.png",
+          "zip_path": "hair/short04/short04_diffuse.png",
+          "sha256": "0bef7fc0e403db5a40fabb2111ebfa6f7e8158e204c6e56b8da98e9ef527846e"
+        }
+      },
+      "hair_default_key": "hair_short03"
     }
   },
   "policy": {
