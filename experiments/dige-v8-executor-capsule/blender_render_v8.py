@@ -926,7 +926,7 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C13_MATERIAL_RESPONSE_SWEEP_OVER_C12_V1",
+ "appearance_candidate":"C15_STRUCTURAL_MATERIAL_FACE_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
@@ -940,7 +940,14 @@ receipt={
    "eye_texture_value":EYE_TEX_VALUE,
    "hair_texture_saturation":HAIR_TEX_SAT,
    "hair_texture_value":HAIR_TEX_VALUE,
-   "face_meso_scale":FACE_MESO_SCALE
+   "face_meso_scale":FACE_MESO_SCALE,
+   "skin_tone_rgb":[SKIN_TONE_R,SKIN_TONE_G,SKIN_TONE_B],
+   "skin_tone_mix":SKIN_TONE_MIX,
+   "skin_micro_strength":SKIN_MICRO_STRENGTH,
+   "hair_card_specular":0.16,
+   "hair_card_coat":0.004,
+   "hair_card_roughness":0.54,
+   "hair_card_anisotropy":0.34
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
