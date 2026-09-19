@@ -1,0 +1,119 @@
+name: DIGE V8 Cycles Executor Capsule
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/dige-v8-executor-capsule/**'
+      - '.github/workflows/dige-v8-executor-capsule.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-executor-capsule-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  cycles-cpu-receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Runtime receipt
+        run: |
+          set -euxo pipefail
+          uname -a
+          python --version
+          free -h
+          lscpu | sed -n '1,40p'
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "RUNNER_NAME=$RUNNER_NAME"
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+      - name: Resolve Blender 5.2.2 from official release
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          test -x "$BLENDER"
+          "$BLENDER" --version | tee "experiments/dige-v8-executor-capsule/blender_version.txt"
+          sha256sum "/tmp/$TAR" | tee "experiments/dige-v8-executor-capsule/blender_archive.sha256"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build canon-locked geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python build_makehuman_v8.py | tee runtime/geometry_execution.json
+          test -s runtime/dige_makehuman_v8.obj
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Render bounded Cycles CPU path-trace
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_SAMPLES_PREVIEW: '48'
+          DIGE_SAMPLES_HERO: '64'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python blender_render_v8.py | tee runtime/blender_execution.log
+
+      - name: Verify receipt and outputs
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, hashlib, os
+          root=pathlib.Path(".")
+          r=json.loads((root/"runtime/renders/DIGE_V8_RENDER_RECEIPT.json").read_text())
+          canon=(root/"DIGE_CANON_EXECUTION_MANIFEST.json").read_bytes()
+          assert r["engine"]=="CYCLES"
+          assert r["device"]=="CPU"
+          assert r["runtime_commit"] == os.environ["GITHUB_SHA"]
+          assert r["canon_execution_manifest_sha256"] == hashlib.sha256(canon).hexdigest()
+          assert r["identity_bound"] is False
+          assert r["provenance"]["source_pixels_used"] is False
+          assert r["provenance"]["reference_pixels_read_by_renderer"] is False
+          assert len(r["outputs"]) == 5 and all(o["sha256"] for o in r["outputs"])
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["evidence_boundary"]["hyperreal_certified"] is False
+          print("DIGE_V8_CPU_CYCLES_EXECUTOR_CAPSULE_PASS")
+          PY
+
+      - name: Hash evidence bundle
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          find runtime -type f -maxdepth 2 -print0 | sort -z | xargs -0 sha256sum > DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          sha256sum DIGE_CANON_EXECUTION_MANIFEST.json >> DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          cat DIGE_V8_EXECUTOR_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-CYCLES-CPU-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/*.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+            experiments/dige-v8-executor-capsule/runtime/geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/blender_execution.log
+            experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json
+            experiments/dige-v8-executor-capsule/blender_version.txt
+            experiments/dige-v8-executor-capsule/blender_archive.sha256
+            experiments/dige-v8-executor-capsule/DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
