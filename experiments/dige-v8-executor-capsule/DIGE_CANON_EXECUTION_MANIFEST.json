@@ -35,6 +35,22 @@
       "expected_faces": 2650,
       "normalized_obj_sha256": "76d213df0203c936cf4129e7a6df198e5c270df4cbd7030081de82ece91f5bcf",
       "license": "CC0-1.0"
+    },
+    "eye_helpers": {
+      "left": {
+        "group": "helper-l-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "fe51546368dc9de30826ca78a2ec728529863007c321cb8997f8e8782fd78273",
+        "license": "CC0-1.0"
+      },
+      "right": {
+        "group": "helper-r-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "059527ce47f98bc1d764c8b9b0d989f381f7163e6a0b454cedb8264d6cad7247",
+        "license": "CC0-1.0"
+      }
     }
   },
   "policy": {
