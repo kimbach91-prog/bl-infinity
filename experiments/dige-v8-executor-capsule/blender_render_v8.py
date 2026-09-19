@@ -60,7 +60,6 @@ def make_skin():
     bump=nt.nodes.new("ShaderNodeBump")
     bump.inputs["Strength"].default_value=.11
     bump.inputs["Distance"].default_value=.00028
-    bump.inputs["Midlevel"].default_value=.5
     nt.links.new(mix.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m
