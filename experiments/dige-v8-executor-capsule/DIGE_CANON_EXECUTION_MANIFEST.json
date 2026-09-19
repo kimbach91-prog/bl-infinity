@@ -28,7 +28,13 @@
       "license": "CC0-1.0"
     },
     "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
-    "candidate_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49"
+    "candidate_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
+    "garment_helper_tights": {
+      "group": "helper-tights",
+      "expected_faces": 2650,
+      "normalized_obj_sha256": "76d213df0203c936cf4129e7a6df198e5c270df4cbd7030081de82ece91f5bcf",
+      "license": "CC0-1.0"
+    }
   },
   "policy": {
     "identity_bound": false,
@@ -45,6 +51,8 @@
     "exclude_helper_and_joint_groups": true,
     "expected_body_faces": 13378,
     "source_total_faces": 18486,
-    "rationale": "Cycles renderer builds eyes/hair/lashes/cloth separately; helper/joint geometry must not leak into render mesh."
+    "rationale": "Body render mesh excludes helper/joint groups. Deterministic CC0 helper-tights is emitted separately as a fitted garment proxy; eyes/hair are renderer-built from source-derived landmarks.",
+    "garment_helper_group": "helper-tights",
+    "expected_garment_faces": 2650
   }
 }
