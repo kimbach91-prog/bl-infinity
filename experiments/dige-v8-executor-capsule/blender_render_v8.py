@@ -38,6 +38,13 @@ def make_skin():
     macro=nt.nodes.new("ShaderNodeTexNoise")
     macro.inputs["Scale"].default_value=5.0
     macro.inputs["Detail"].default_value=2.0
+    tone=nt.nodes.new("ShaderNodeValToRGB")
+    tone.color_ramp.elements[0].position=.20
+    tone.color_ramp.elements[0].color=(0.255,0.090,0.058,1)
+    tone.color_ramp.elements[1].position=.80
+    tone.color_ramp.elements[1].color=(0.335,0.145,0.090,1)
+    nt.links.new(macro.outputs["Fac"],tone.inputs["Fac"])
+    nt.links.new(tone.outputs["Color"],bs.inputs["Base Color"])
     rough_map=nt.nodes.new("ShaderNodeMapRange")
     rough_map.inputs["From Min"].default_value=0.0
     rough_map.inputs["From Max"].default_value=1.0
@@ -112,12 +119,15 @@ def cylinder(name,loc,radius,depth,mat,rot=(math.radians(90),0,0)):
     return o
 
 def curve_object(name,splines,bevel,mat):
-    cu=bpy.data.curves.new(name,"CURVE"); cu.dimensions='3D'; cu.resolution_u=1
-    cu.bevel_depth=bevel; cu.bevel_resolution=1; cu.fill_mode='FULL'
+    cu=bpy.data.curves.new(name,"CURVE"); cu.dimensions='3D'; cu.resolution_u=2
+    cu.bevel_depth=bevel; cu.bevel_resolution=2; cu.fill_mode='FULL'
     ob=bpy.data.objects.new(name,cu); bpy.context.collection.objects.link(ob)
     for pts in splines:
-        sp=cu.splines.new('POLY'); sp.points.add(len(pts)-1)
-        for p,co in zip(sp.points,pts): p.co=(*co,1.0)
+        sp=cu.splines.new('BEZIER'); sp.bezier_points.add(len(pts)-1)
+        for p,co in zip(sp.bezier_points,pts):
+            p.co=co
+            p.handle_left_type='AUTO'
+            p.handle_right_type='AUTO'
     ob.data.materials.append(mat); return ob
 
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
@@ -125,9 +135,11 @@ bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=Fal
 skin=make_skin()
 sclera=principled("SCLERA",(0.58,0.52,0.48),rough=.30,ior=1.376,subsurface=.02)
 iris=principled("IRIS",(0.070,0.026,0.012),rough=.32,ior=1.40)
+iris_ring=principled("IRIS_RING",(0.012,0.005,0.003),rough=.34,ior=1.40)
 black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
-lip=principled("LIP",(0.20,0.040,0.035),rough=.42,ior=1.40,subsurface=.05)
+lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
+nostril=principled("NOSTRIL",(0.020,0.006,0.005),rough=.65,ior=1.35)
 hair=hair_material()
 cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
@@ -190,22 +202,23 @@ for label,sx in (("left_eye",1),("right_eye",-1)):
     st=landmarks[label]
     helper_center=st["center"]
     mi=st["bbox_min"]; ma=st["bbox_max"]
-    rx=(ma[0]-mi[0])*.405
-    ry=(ma[1]-mi[1])*.405
-    rz=(ma[2]-mi[2])*.405
+    rx=(ma[0]-mi[0])*.370
+    ry=(ma[1]-mi[1])*.370
+    rz=(ma[2]-mi[2])*.370
     lid_key="left_upperlid" if label=="left_eye" else "right_upperlid"
     lower_key="left_lowerlid" if label=="left_eye" else "right_lowerlid"
     lid_front=max(landmarks[lid_key]["center"][1],landmarks[lower_key]["center"][1])
     eye_z=(landmarks[lid_key]["center"][2]+landmarks[lower_key]["center"][2])*.5
     front_target=lid_front+.0006
-    center_y=front_target-ry*1.08
+    center_y=front_target-ry*1.35
     center=(helper_center[0],center_y,eye_z)
     uv(f"SCLERA_{sx}",center,(rx,ry,rz),sclera,48,24)
-    iris_y=front_target+.00015
-    iris_r=min(rx,rz)*.37
-    cylinder(f"IRIS_{sx}",(center[0],iris_y,center[2]),iris_r,.00075,iris)
-    cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00045,center[2]),iris_r*.34,.00065,black)
-    cornea_center=(center[0],center[1]+ry*.10,center[2])
+    iris_y=center[1]+ry*.94
+    iris_r=min(rx,rz)*.34
+    cylinder(f"IRIS_RING_{sx}",(center[0],iris_y,center[2]),iris_r,.00065,iris_ring)
+    cylinder(f"IRIS_{sx}",(center[0],iris_y+.00016,center[2]),iris_r*.83,.00055,iris)
+    cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00036,center[2]),iris_r*.31,.00050,black)
+    cornea_center=(center[0],center[1]+ry*.08,center[2])
     uv(f"CORNEA_{sx}",cornea_center,(rx*1.008,ry*1.025,rz*1.008),cornea,48,24)
 
 # Use the native mouth topology; only assign a bounded lip material region instead of floating lip meshes.
@@ -217,30 +230,35 @@ for poly in body.data.polygons:
     cx=sum(p.x for p in pts)/len(pts)
     cy=sum(p.y for p in pts)/len(pts)
     cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx-mouth_center[0])<.040 and abs(cz-mouth_center[2])<.013 and cy>mouth_center[1]-.008:
+    if abs(cx-mouth_center[0])<.032 and abs(cz-mouth_center[2])<.0068 and cy>mouth_center[1]-.003:
         poly.material_index=lip_index
 
+nose_z=mouth_center[2]+.0255
+nose_y=mouth_center[1]+.0060
+for sx in (-1,1):
+    uv(f"NOSTRIL_{sx}",(sx*.0075,nose_y,nose_z),(.0027,.0010,.0015),nostril,24,12)
+
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
-brows=[]; lashes=[]
+brow_hairs=[]; lashes=[]
 for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_upperlid",-1)):
     ec=landmarks[eye_key]["center"]
     lid=landmarks[lid_key]["center"]
-    brow=[]
-    for i in range(8):
-        t=i/7
-        x=ec[0] + (t-.5)*.030
-        y=max(lid[1]+.0040, ec[1]+.008)
-        z=ec[2]+.026+.003*math.sin(t*math.pi)
-        brow.append((x,y,z))
-    brows.append(brow)
-    for j in range(9):
-        t=(j-4)/4
-        x=ec[0]+t*.013
-        y=max(lid[1]+.0025, ec[1]+.004)
-        z=ec[2]+.0055+.0018*(1-abs(t))
-        lashes.append([(x,y,z),(x+sx*.0007,y+.0028,z+.0014)])
-curve_object("DIGE_V8_BROWS",brows,.0010,black)
-curve_object("DIGE_V8_LASHES",lashes,.00017,black)
+    brow_y=max(lid[1]+.0045,ec[1]+.0085)
+    for j in range(46):
+        t=j/45
+        x=ec[0]+(t-.5)*.036
+        arch=math.sin(t*math.pi)
+        z=ec[2]+.024+.0042*arch
+        lean=(t-.5)*.0015
+        brow_hairs.append([(x,brow_y,z),(x+lean,brow_y+.0018,z+.0040)])
+    for j in range(11):
+        t=(j-5)/5
+        x=ec[0]+t*.0125
+        y=max(lid[1]+.0030,ec[1]+.0070)
+        z=ec[2]+.0052+.0014*(1-abs(t))
+        lashes.append([(x,y,z),(x+sx*.0006,y+.0024,z+.0011)])
+curve_object("DIGE_V8_BROWS",brow_hairs,.00015,hair)
+curve_object("DIGE_V8_LASHES",lashes,.00013,black)
 
 # Swept-back deterministic groom. Long strands are limited to side/back; frontal roots remain short.
 random.seed(20260919)
@@ -284,7 +302,7 @@ for i in range(420):
         (x+side*.002+jitter,root_y-.018,root_z+.018),
         (x+side*.005+jitter,root_y-.040,root_z+.032)
     ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.00012,hair)
+curve_object("DIGE_V8_HAIRLINE",hairline,.000085,hair)
 
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
@@ -296,7 +314,7 @@ for i in range(90):
         continue
     side=1 if x>=0 else -1
     strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.00026,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.00022,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
