@@ -306,12 +306,12 @@ scene.render.resolution_x=720; scene.render.resolution_y=720
 scene.cycles.seed=hero_seed
 
 scene.cycles.use_denoising=False; scene.cycles.samples=hero_samples
-scene.render.image_settings.file_format='OPEN_EXR_MULTILAYER'; scene.render.image_settings.color_depth='32'
+scene.render.image_settings.file_format='OPEN_EXR'; scene.render.image_settings.media_type='MULTI_LAYER_IMAGE'; scene.render.image_settings.color_depth='32'
 raw=OUT/"04_HERO85_RAW_AOV_V8.exr"; scene.render.filepath=str(raw)
 bpy.ops.render.render(write_still=True)
 
 scene.cycles.use_denoising=True; scene.cycles.samples=hero_samples; scene.cycles.seed=hero_seed
-scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
+scene.render.image_settings.media_type='IMAGE'; scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
 denoised=OUT/"04_HERO85_DENOISED_V8.png"; scene.render.filepath=str(denoised)
 bpy.ops.render.render(write_still=True)
 
