@@ -1,10 +1,6 @@
 name: DIGE V8 Skin SSS Sweep
 
 on:
-  pull_request:
-    paths:
-      - 'experiments/dige-v8-executor-capsule/**'
-      - '.github/workflows/dige-v8-skin-sweep.yml'
   workflow_dispatch:
 
 permissions:
