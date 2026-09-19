@@ -1,0 +1,13 @@
+{
+  "schema":"DEUS_INDEPENDENT_EVALUATOR_V1",
+  "role":"P09_EQUIVALENT_BENCHMARK_QA",
+  "must_be_distinct_from_semantic_solver":true,
+  "inputs":["task_id","benchmark","benchmark_version","candidate_result_ref","official_or_deterministic_verifier_ref"],
+  "outputs":["verdict","score_or_passfail","verifier_receipt_ref","reproducibility_state","qa_receipt_id"],
+  "rules":[
+    "EVALUATOR_MUST_NOT_REWRITE_CANDIDATE_RESULT",
+    "NO_SELF_ATTESTED_PROMOTION",
+    "OFFICIAL_VERIFIER_OVERRIDES_NARRATIVE_CONFIDENCE",
+    "FAILURES_AND_RESETS_RECORDED"
+  ]
+}
