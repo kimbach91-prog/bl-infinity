@@ -28,14 +28,19 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -f public_benchmark/wave1/ARC3_DISCLOSURE_GATE.md
+          test -f public_benchmark/wave1/FRONTIERMATH_DEUS_BINDING_GATE.md
+          test -f public_benchmark/wave1/HLE_DEUS_BINDING_GATE.md
           python - <<'PY'
           import hashlib, json, pathlib
           p=pathlib.Path("public_benchmark/wave1/OFFICIAL_ACCESS_STATE.json")
           x=json.loads(p.read_text())
           assert x["schema"]=="DEUS_WAVE1_OFFICIAL_ACCESS_STATE_V1"
           assert x["arc_agi_3_private"]["access_state"]=="USER_ACCOUNT_RULE_ACCEPTANCE_REQUIRED"
+          assert x["arc_agi_3_private"]["disclosure_state"]=="UNRESOLVED_DIVERGENCE_PROTECTED_CORE_VS_OPEN_SOURCE"
           assert x["frontiermath_erdos"]["access_state"]=="PUBLIC_SOURCE_AVAILABLE"
           assert x["hle_rolling"]["access_state"]=="GATED_DATASET_REQUIRES_LOGGED_IN_ACCEPTANCE_AND_CONTACT_SHARE"
+          assert "IMAGE_URL_MULTIMODAL_ITEMS_OR_DECLARED_RESTRICTED_SUBSET" in x["hle_rolling"]["endpoint_contract"]
           handoff={
             "schema":"DEUS_WAVE1_PRETEST_HANDOFF_V1",
             "source_manifest_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
@@ -44,9 +49,9 @@ jobs:
             "gpt_semantic_test_access":False,
             "hard_test_eligible":False,
             "lane_gates":{
-              "ARC_AGI_3_PRIVATE":["OFFICIAL_KAGGLE_RULE_ACCEPTANCE","DEUS_OFFLINE_AGENT_FROZEN"],
-              "FRONTIERMATH_ERDOS":["DEUS_GENERAL_REASONING_PROOF_EXECUTOR_RECEIPT"],
-              "HLE_ROLLING":["HF_GATED_DATASET_ACCEPTANCE","DEUS_MODEL_ENDPOINT_RECEIPT"]
+              "ARC_AGI_3_PRIVATE":["OWNER_DISCLOSURE_PATH_DECISION","OFFICIAL_KAGGLE_RULE_ACCEPTANCE","DEUS_OFFLINE_AGENT_FROZEN"],
+              "FRONTIERMATH_ERDOS":["DEUS_GENERAL_REASONING_PROOF_EXECUTOR_RECEIPT","OFFICIAL_COMPARATOR_CANARY"],
+              "HLE_ROLLING":["HF_GATED_DATASET_ACCEPTANCE","DEUS_MODEL_ENDPOINT_RECEIPT","HLE_MULTIMODAL_ENDPOINT_CONTRACT"]
             },
             "claim_boundary":"PRETEST_READY is not a benchmark score."
           }
@@ -84,12 +89,51 @@ jobs:
             "phase":"PREP",
             "source_repo":"epoch-research/LeanOpenProblems",
             "source_commit":"af3b82f9d2fd38bea33d59e637b6b4eff54a464c",
+            "canonical_config":"configs/bloom68.yaml",
             "harness_test":"tests/test_erdos.py",
             "harness_state":"PASS",
             "semantic_test_executed":False,
             "next_gate":"DEUS_GENERAL_REASONING_PROOF_EXECUTOR_RECEIPT"
           }
           pathlib.Path("receipts/frontiermath-pretest.json").write_text(json.dumps(r,indent=2)+"\n")
+          PY
+
+      - name: Checkout CAIS HLE public evaluator
+        uses: actions/checkout@v4
+        with:
+          repository: centerforaisafety/hle
+          ref: 73ae974b1844c3ffa64c3f4343d9f1f259575700
+          path: vendor/HLE
+
+      - name: HLE public evaluator interface preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          repo=pathlib.Path("vendor/HLE")
+          pred=repo/"hle_eval/run_model_predictions.py"
+          readme=repo/"README.md"
+          assert pred.is_file() and readme.is_file()
+          src=pred.read_text(errors="replace")
+          for needle in ["AsyncOpenAI", "load_dataset", "chat.completions.create", "image_url", "max_completion_tokens"]:
+              assert needle in src, needle
+          r={
+            "lane":"HLE_ROLLING",
+            "phase":"PREP",
+            "public_eval_repo":"centerforaisafety/hle",
+            "public_eval_commit":"73ae974b1844c3ffa64c3f4343d9f1f259575700",
+            "prediction_script":"hle_eval/run_model_predictions.py",
+            "prediction_script_sha256":hashlib.sha256(pred.read_bytes()).hexdigest(),
+            "openai_compatible_interface_observed":True,
+            "image_url_multimodal_path_observed":True,
+            "gated_rolling_dataset_accessed":False,
+            "semantic_test_executed":False,
+            "next_gates":["HF_GATED_DATASET_ACCEPTANCE","DEUS_MODEL_ENDPOINT_RECEIPT","HLE_MULTIMODAL_ENDPOINT_CONTRACT"],
+            "claim_boundary":"Public evaluator-interface preflight only; no HLE question was loaded or answered."
+          }
+          pathlib.Path("receipts/hle-interface-pretest.json").write_text(json.dumps(r,indent=2)+"\n")
+          print(json.dumps(r,indent=2))
           PY
 
       - name: Build pretest receipt bundle
@@ -103,8 +147,8 @@ jobs:
             b=pathlib.Path(p).read_bytes()
             rows.append({"file":p,"sha256":hashlib.sha256(b).hexdigest(),"payload":json.loads(b)})
           out={
-            "schema":"DEUS_WAVE1_GPT_TOOL_SUBSTRATE_PRETEST_RECEIPT_V1",
-            "state":"PRETEST_TOOL_SUBSTRATE_VERIFIED_HARD_TEST_HELD",
+            "schema":"DEUS_WAVE1_GPT_TOOL_SUBSTRATE_PRETEST_RECEIPT_V2",
+            "state":"PRETEST_TOOL_SUBSTRATE_VERIFIED_HARD_TESTS_HELD",
             "gpt_role":"TOOL_CONTROL_PLANE",
             "deus_role":"SEMANTIC_BENCHMARK_EXECUTOR",
             "external_model_delegated_solving":False,
