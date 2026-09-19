@@ -1,6 +1,7 @@
 from pathlib import Path
 from urllib.request import Request, urlopen
 import hashlib, json, math, os
+from collections import Counter
 
 ROOT=Path(__file__).resolve().parent
 RUNTIME=ROOT/"runtime"
@@ -88,7 +89,7 @@ cx=(mins[0]+maxs[0])/2
 cy=(mins[1]+maxs[1])/2
 normalized=[[(x-cx)*scale,(y-cy)*scale,(z-mins[2])*scale] for x,y,z in morphed]
 
-# Parse exact source groups once so downstream landmarks and garment geometry stay bound to the same CC0 topology.
+# Parse exact face groups for deterministic landmarks and helper-derived garment geometry.
 group_vertex_ids={}
 current_group=None
 for line in base_text.splitlines():
@@ -110,34 +111,64 @@ def group_stats(name):
     ce=[sum(p[a] for p in pts)/len(pts) for a in range(3)]
     return {"center":ce,"bbox_min":mi,"bbox_max":ma,"vertex_count":len(ids)}
 
-def emit_group_obj(group_name, filename):
-    out_lines=[]
-    vi=0
-    current=None
-    face_count_local=0
-    for line in base_text.splitlines():
-        if line.startswith("v "):
-            x,y,z=normalized[vi]; vi+=1
+# Compact body OBJ: retain exactly the contiguous body-referenced vertex prefix.
+out_lines=[]
+vi=0
+face_count=0
+edge_counts=Counter()
+referenced_vertices=set()
+expected_body_vertices=CANON["mesh_policy"]["expected_body_vertices"]
+current_group=None
+allowed_groups=set(CANON["mesh_policy"]["include_face_groups"])
+for line in base_text.splitlines():
+    if line.startswith("v "):
+        x,y,z=normalized[vi]
+        if vi < expected_body_vertices:
             out_lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
-        elif line.startswith("g "):
-            current=line[2:].strip()
-            if current == group_name:
-                out_lines.append(line)
-        elif line.startswith("f "):
-            if current == group_name:
-                face_count_local+=1
-                out_lines.append(line)
-        else:
+        vi+=1
+    elif line.startswith("g "):
+        current_group=line[2:].strip()
+        if current_group in allowed_groups:
             out_lines.append(line)
-    path=RUNTIME/filename
-    path.write_text("\n".join(out_lines)+"\n",encoding="utf-8")
-    return path,face_count_local,hashlib.sha256(path.read_bytes()).hexdigest()
+    elif line.startswith("f "):
+        if current_group in allowed_groups:
+            face_count+=1
+            face_indices=[int(tok.split("/")[0])-1 for tok in line.split()[1:]]
+            referenced_vertices.update(face_indices)
+            for a,bidx in zip(face_indices,face_indices[1:]+face_indices[:1]):
+                edge_counts[tuple(sorted((a,bidx)))]+=1
+            out_lines.append(line)
+    else:
+        out_lines.append(line)
 
-out,face_count,body_sha=emit_group_obj("body","dige_makehuman_v8.obj")
-tights,tights_face_count,tights_sha=emit_group_obj(
-    CANON["mesh_policy"]["garment_helper_group"],
-    "dige_makehuman_tights_v8.obj"
-)
+out=RUNTIME/"dige_makehuman_v8.obj"
+out.write_text("\n".join(out_lines)+"\n",encoding="utf-8")
+body_sha=hashlib.sha256(out.read_bytes()).hexdigest()
+
+# Separate helper-tights OBJ: preserve the complete source vertex table because helper faces reference helper vertices.
+garment_group=CANON["mesh_policy"]["garment_helper_group"]
+tights_lines=[]
+vi=0
+current_group=None
+tights_face_count=0
+for line in base_text.splitlines():
+    if line.startswith("v "):
+        x,y,z=normalized[vi]; vi+=1
+        tights_lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
+    elif line.startswith("g "):
+        current_group=line[2:].strip()
+        if current_group == garment_group:
+            tights_lines.append(line)
+    elif line.startswith("f "):
+        if current_group == garment_group:
+            tights_face_count+=1
+            tights_lines.append(line)
+    else:
+        tights_lines.append(line)
+
+tights=RUNTIME/"dige_makehuman_tights_v8.obj"
+tights.write_text("\n".join(tights_lines)+"\n",encoding="utf-8")
+tights_sha=hashlib.sha256(tights.read_bytes()).hexdigest()
 
 body_ids=sorted(group_vertex_ids["body"])
 mouth_candidates=[
@@ -170,6 +201,9 @@ if tights_sha != CANON["assets"]["garment_helper_tights"]["normalized_obj_sha256
 
 final_mins=[min(v[a] for v in normalized) for a in range(3)]
 final_maxs=[max(v[a] for v in normalized) for a in range(3)]
+boundary_edges=sum(1 for count in edge_counts.values() if count == 1)
+nonmanifold_edges=sum(1 for count in edge_counts.values() if count > 2)
+
 manifest={
   "pipeline":"DIGE_V8_MAKEHUMAN_CC0_TOPOLOGY",
   "canon_execution_manifest_sha256":CANON_SHA256,
@@ -192,7 +226,9 @@ manifest={
   },
   "morph":{"weight":MORPH_WEIGHT,"target_name":"asian-female-young"},
   "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"bbox_min":final_mins,"bbox_max":final_maxs},
-  "mesh":{"vertices":len(normalized),"faces":face_count,"output":out.name,"sha256":body_sha},\n  "garment_helper":{"group":CANON["mesh_policy"]["garment_helper_group"],"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},\n  "landmarks":landmarks,
+  "mesh":{"source_vertices":len(normalized),"vertices_written":expected_body_vertices,"referenced_body_vertices":len(referenced_vertices),"faces":face_count,"undirected_edges":len(edge_counts),"boundary_edges":boundary_edges,"nonmanifold_edges":nonmanifold_edges,"output":out.name,"sha256":body_sha},
+  "garment_helper":{"group":garment_group,"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},
+  "landmarks":landmarks,
   "mesh_policy":CANON["mesh_policy"],
   "expected_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"],
   "drive_compute_priors":{
@@ -203,6 +239,12 @@ manifest={
 }
 if face_count != CANON["mesh_policy"]["expected_body_faces"]:
     raise RuntimeError(f"body face-count drift: expected={CANON['mesh_policy']['expected_body_faces']} got={face_count}")
+if len(referenced_vertices) != expected_body_vertices or min(referenced_vertices) != 0 or max(referenced_vertices) != expected_body_vertices-1:
+    raise RuntimeError(f"body vertex-range drift: expected contiguous 0..{expected_body_vertices-1}, got count={len(referenced_vertices)} min={min(referenced_vertices)} max={max(referenced_vertices)}")
+if boundary_edges != CANON["mesh_policy"]["expected_boundary_edges"]:
+    raise RuntimeError(f"body boundary-edge drift: expected={CANON['mesh_policy']['expected_boundary_edges']} got={boundary_edges}")
+if nonmanifold_edges != CANON["mesh_policy"]["expected_nonmanifold_edges"]:
+    raise RuntimeError(f"body non-manifold drift: expected={CANON['mesh_policy']['expected_nonmanifold_edges']} got={nonmanifold_edges}")
 if manifest["mesh"]["sha256"] != CANON["assets"]["candidate_body_only_normalized_obj_sha256"]:
     raise RuntimeError(f"body-only normalized OBJ drift: expected={CANON['assets']['candidate_body_only_normalized_obj_sha256']} got={manifest['mesh']['sha256']}")
 (RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
