@@ -275,9 +275,11 @@ def parse_mhclo(path):
         if words[0].startswith("#"):
             continue
         if status=="verts":
-            if not words[0].lstrip("-").isdigit():
-                status=None
-            else:
+            # Official MHCLO files may place metadata such as "material" after
+            # the verts marker and before the first numeric mapping (short04 does).
+            # Keep the verts section armed until the first mapping arrives; only
+            # close it on a non-numeric directive after mappings have started.
+            if words[0].lstrip("-").isdigit():
                 idx=first+vn
                 if len(words)==1:
                     v=int(words[0])
@@ -290,6 +292,8 @@ def parse_mhclo(path):
                     spec["verts"][idx]=((v0,v1,v2),(w0,w1,w2),(d0,-d2,d1))
                 vn+=1
                 continue
+            elif vn>0:
+                status=None
         key=words[0]
         if key in ("x_scale","y_scale","z_scale"):
             spec[key]=(int(words[1]),int(words[2]),float(words[3]))
