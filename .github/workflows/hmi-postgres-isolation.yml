@@ -1,0 +1,52 @@
+name: DEUS HMI PostgreSQL Isolation
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/hmi/storage/**'
+      - 'runtime/hmi/test/postgres-isolation.sh'
+      - '.github/workflows/hmi-postgres-isolation.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/hmi/storage/**'
+      - 'runtime/hmi/test/postgres-isolation.sh'
+      - '.github/workflows/hmi-postgres-isolation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  postgres-rls:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Install PostgreSQL client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Test fail-closed RLS tenant boundary
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGDATABASE: postgres
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        run: bash runtime/hmi/test/postgres-isolation.sh
