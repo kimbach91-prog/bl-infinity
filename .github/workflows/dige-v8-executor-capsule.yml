@@ -58,6 +58,27 @@ jobs:
           test -s runtime/dige_makehuman_v8.obj
           test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
 
+      - name: Resolve official MakeHuman CC0 skin albedo
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          PACK=/tmp/skins01_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o "$PACK"
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $PACK" | sha256sum -c -
+          unzip -p "$PACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          {
+            echo "pack_sha256=7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
+            echo "asset_sha256=e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+            echo "license=CC0"
+            echo "asset=onlytheghosts_young_eurasian_female"
+          } > runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
+
       - name: Render bounded Cycles CPU path-trace
         working-directory: experiments/dige-v8-executor-capsule
         env:
@@ -66,6 +87,8 @@ jobs:
           DIGE_SAMPLES_HERO: '24'
           DIGE_RENDER_SEED: '20260919'
           DIGE_RUNTIME_COMMIT: ${{ github.sha }}
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
         run: |
           set -euxo pipefail
           "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/blender_execution.log
@@ -86,6 +109,15 @@ jobs:
           assert r["identity_bound"] is False
           assert r["provenance"]["source_pixels_used"] is False
           assert r["provenance"]["reference_pixels_read_by_renderer"] is False
+          assert r["skin_albedo"]["enabled"] is True
+          assert r["skin_albedo"]["sha256"] == "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+          assert r["provenance"]["external_skin_texture_used"] is True
+          assert r["provenance"]["external_skin_texture_license"] == "CC0"
+          assert r["provenance"]["external_skin_texture_pack_sha256"] == "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
+          assert r["hair_surface_contract"]["style"] == "AREA_SAMPLED_GUIDE_CHILD_CLUMP_V1"
+          assert r["hair_surface_contract"]["root_count"] == 2600
+          assert r["hair_surface_contract"]["guide_count"] == 96
+          assert r["hair_surface_contract"]["mass_mesh_rendered"] is False
           assert len(r["outputs"]) == 5 and all(o["sha256"] for o in r["outputs"])
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
@@ -112,6 +144,8 @@ jobs:
             experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
             experiments/dige-v8-executor-capsule/runtime/geometry_execution.json
             experiments/dige-v8-executor-capsule/runtime/blender_execution.log
+            experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
+            experiments/dige-v8-executor-capsule/runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
             experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json
             experiments/dige-v8-executor-capsule/blender_version.txt
             experiments/dige-v8-executor-capsule/blender_archive.sha256
