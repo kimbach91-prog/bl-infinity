@@ -1,0 +1,153 @@
+name: DIGE V8 C15 Structural Appearance Canary
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c15-structural-appearance.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c15-structural-appearance-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact head
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets runtime/system_assets
+          python build_makehuman_v8.py | tee runtime/c15_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Stage official CC0 skin and system assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          SKINPACK=/tmp/skins01_cc0.zip
+          curl -fL --retry 4 --retry-delay 3 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 4 --retry-delay 4 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
+          unzip -p "$SYSPACK" "hair/short03/short03.obj" > runtime/system_assets/short03.obj
+          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > runtime/system_assets/short03.mhclo
+          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > runtime/system_assets/short03_diffuse.png
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > runtime/system_assets/high-poly.obj
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > runtime/system_assets/high-poly.mhclo
+          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > runtime/system_assets/brown_eye.png
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > runtime/system_assets/eyebrow001.obj
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > runtime/system_assets/eyebrow001.png
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > runtime/system_assets/eyelashes01.obj
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > runtime/system_assets/eyelashes01.png
+
+      - name: Render three C15 hero candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          render_one() {
+            TAG="$1"; SKVAL="$2"; TONE="$3"; MICRO="$4"; EYSAT="$5"; EYVAL="$6"; HRSAT="$7"; HRVAL="$8"; MESO="$9"; TR="${10}"; TG="${11}"; TB="${12}"
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="$TAG" \
+            DIGE_SKIN_ALBEDO_PATH=runtime/assets/young_eurasian_female_diffuse.png \
+            DIGE_SKIN_ALBEDO_SHA256=e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf \
+            DIGE_SKIN_ALBEDO_NAME=onlytheghosts_young_eurasian_female \
+            DIGE_SKIN_SSS_WEIGHT=0.20 \
+            DIGE_SKIN_SSS_SCALE=0.0018 \
+            DIGE_SKIN_ROUGH_MIN=0.34 \
+            DIGE_SKIN_ROUGH_MAX=0.52 \
+            DIGE_SKIN_ALBEDO_SAT=0.94 \
+            DIGE_SKIN_ALBEDO_VALUE="$SKVAL" \
+            DIGE_EYE_TEX_SAT="$EYSAT" \
+            DIGE_EYE_TEX_VALUE="$EYVAL" \
+            DIGE_HAIR_TEX_SAT="$HRSAT" \
+            DIGE_HAIR_TEX_VALUE="$HRVAL" \
+            DIGE_FACE_MESO_SCALE="$MESO" \
+            DIGE_SKIN_TONE_R="$TR" \
+            DIGE_SKIN_TONE_G="$TG" \
+            DIGE_SKIN_TONE_B="$TB" \
+            DIGE_SKIN_TONE_MIX="$TONE" \
+            DIGE_SKIN_MICRO_STRENGTH="$MICRO" \
+            DIGE_SAMPLES_PREVIEW=48 \
+            DIGE_SAMPLES_HERO=96 \
+            DIGE_RENDER_SEED=20260920 \
+            DIGE_RUNTIME_COMMIT="${{ github.event.pull_request.head.sha }}" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee "runtime/${TAG}.log"
+          }
+          render_one c15_natural 0.50 0.30 0.12 0.50 0.78 0.58 0.42 1.18 0.86 0.72 0.66
+          render_one c15_deep 0.47 0.40 0.14 0.46 0.75 0.54 0.38 1.24 0.82 0.68 0.62
+          render_one c15_soft 0.53 0.24 0.10 0.56 0.82 0.62 0.45 1.14 0.88 0.75 0.69
+
+      - name: Verify C15 receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, os
+          root=pathlib.Path("runtime/renders")
+          out={}
+          for tag in ("c15_natural","c15_deep","c15_soft"):
+              r=json.loads((root/tag/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+              assert r["render_set"]=="HERO_ONLY"
+              assert r["appearance_candidate"]=="C15_STRUCTURAL_MATERIAL_FACE_V1"
+              a=r["appearance_selection"]
+              assert a["hair_card_specular"]==0.16 and a["hair_card_coat"]==0.004
+              assert "alar_groove_y_m" in r["craniofacial_runtime_deform"]
+              assert "labiomental_groove_y_m" in r["craniofacial_runtime_deform"]
+              assert r["system_asset_fits"]["high_poly_eyes"]["vertices"]==1064
+              assert r["hair_surface_contract"]["style"]=="MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1"
+              assert len(r["outputs"])==1
+              out[tag]={"hero_sha256":r["outputs"][0]["sha256"],"raw_sha256":r["denoise_ab"]["raw_aov"]["sha256"],"denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],"appearance_selection":a}
+          (root/"DIGE_C15_CANARY_SUMMARY.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(out,sort_keys=True))
+          PY
+
+      - name: Upload C15 canary evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C15-CANARY-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c15_*/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c15_*/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c15_*/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/DIGE_C15_CANARY_SUMMARY.json
+          if-no-files-found: error
+          retention-days: 14
