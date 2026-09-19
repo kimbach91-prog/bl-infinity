@@ -130,9 +130,14 @@ jobs:
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
-          DIGE_SAMPLES_PREVIEW: '16'
-          DIGE_SAMPLES_HERO: '24'
+          DIGE_SAMPLES_PREVIEW: '32'
+          DIGE_SAMPLES_HERO: '64'
           DIGE_RENDER_SEED: '20260919'
+          DIGE_SKIN_SSS_WEIGHT: '0.28'
+          DIGE_SKIN_SSS_SCALE: '0.0022'
+          DIGE_SKIN_SSS_ANISO: '0.80'
+          DIGE_SKIN_ROUGH_MIN: '0.34'
+          DIGE_SKIN_ROUGH_MAX: '0.52'
           DIGE_RUNTIME_COMMIT: ${{ github.sha }}
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
@@ -161,14 +166,22 @@ jobs:
           assert r["provenance"]["external_skin_texture_used"] is True
           assert r["provenance"]["external_skin_texture_license"] == "CC0"
           assert r["provenance"]["external_skin_texture_pack_sha256"] == "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
-          assert r["appearance_candidate"] == "C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1"
+          assert r["appearance_candidate"] == "C13_FINAL_SKIN_EYE_HAIR_REFINEMENT_V1"
           assert r["system_asset_pack"]["pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
           assert r["system_asset_pack"]["license"] == "CC0"
           assert r["provenance"]["external_system_asset_used"] is True
           assert r["provenance"]["external_system_asset_pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
-          assert r["hair_surface_contract"]["style"] == "MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1"
+          assert r["hair_surface_contract"]["style"] == "MHCLO_SHORT03_PLUS_MICRO_FLYAWAYS_V2"
           assert r["hair_surface_contract"]["object_vertices"] == 1011
           assert r["hair_surface_contract"]["mass_mesh_rendered"] is True
+          assert r["hair_surface_contract"]["micro_flyaway_count"] == 140
+          assert r["appearance_tuning"]["skin_albedo_value"] == 0.67
+          assert r["appearance_tuning"]["skin_albedo_saturation"] == 0.98
+          assert r["appearance_tuning"]["eye_texture_saturation"] == 0.62
+          assert r["appearance_tuning"]["short03_roughness"] == 0.52
+          assert abs(r["skin_model"]["subsurface_weight"] - 0.28) < 1e-9
+          assert abs(r["skin_model"]["subsurface_scale"] - 0.0022) < 1e-12
+          assert r["skin_model"]["roughness_range"] == [0.34,0.52]
           fits=r["system_asset_fits"]
           assert fits["hair_short03"]["vertices"] == 1011
           assert fits["high_poly_eyes"]["vertices"] == 1064

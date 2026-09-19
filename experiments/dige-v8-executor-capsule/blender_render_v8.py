@@ -94,8 +94,8 @@ def make_skin():
         albedo.extension='EXTEND'
         nt.links.new(tex.outputs["UV"],albedo.inputs["Vector"])
         grade=nt.nodes.new("ShaderNodeHueSaturation")
-        grade.inputs["Saturation"].default_value=.92
-        grade.inputs["Value"].default_value=.74
+        grade.inputs["Saturation"].default_value=.98
+        grade.inputs["Value"].default_value=.67
         nt.links.new(albedo.outputs["Color"],grade.inputs["Color"])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
@@ -204,6 +204,25 @@ def hair_material():
     except Exception:
         h=nt.nodes.new("ShaderNodeBsdfPrincipled")
         set_input(h,"Base Color",(0.018,0.010,0.006,1)); set_input(h,"Roughness",.31)
+    nt.links.new(h.outputs[0],out.inputs["Surface"])
+    return m
+
+def c13_brown_fiber_material():
+    m=bpy.data.materials.new("DIGE_C13_BROWN_HAIR_FIBER"); m.use_nodes=True
+    nt=m.node_tree; nt.nodes.clear()
+    out=nt.nodes.new("ShaderNodeOutputMaterial")
+    h=nt.nodes.new("ShaderNodeBsdfHairPrincipled")
+    if hasattr(h,"parametrization"):
+        try: h.parametrization='MELANIN'
+        except Exception: pass
+    set_input(h,"Melanin",.72)
+    set_input(h,"Melanin Redness",.18)
+    set_input(h,"Random Color",.055)
+    set_input(h,"Roughness",.36)
+    set_input(h,"Radial Roughness",.40)
+    set_input(h,"Random Roughness",.08)
+    set_input(h,"Coat",.018)
+    set_input(h,"IOR",1.55)
     nt.links.new(h.outputs[0],out.inputs["Surface"])
     return m
 
@@ -351,7 +370,7 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
     }
 
-def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0):
+def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,specular=.24,coat=.012):
     image_path=verify_asset(image_path,expected_sha256)
     m=bpy.data.materials.new(name); m.use_nodes=True
     nt=m.node_tree; nt.nodes.clear()
@@ -364,9 +383,9 @@ def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,aniso
     trans=nt.nodes.new("ShaderNodeBsdfTransparent")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"Roughness",rough); set_input(bs,"IOR",ior)
-    set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Specular IOR Level",specular)
     set_input(bs,"Anisotropic IOR Level",anisotropy)
-    set_input(bs,"Coat Weight",.025)
+    set_input(bs,"Coat Weight",coat)
     nt.links.new(tex.outputs["Color"],bs.inputs["Base Color"])
     mix=nt.nodes.new("ShaderNodeMixShader")
     nt.links.new(tex.outputs["Alpha"],mix.inputs[0])
@@ -386,12 +405,16 @@ def eye_texture_material(name,image_path,expected_sha256):
     except Exception: pass
     tex.interpolation='Linear'
     base=nt.nodes.new("ShaderNodeBsdfPrincipled")
-    set_input(base,"Roughness",.24); set_input(base,"IOR",1.376)
-    set_input(base,"Specular IOR Level",.34)
-    set_input(base,"Subsurface Weight",.012)
-    nt.links.new(tex.outputs["Color"],base.inputs["Base Color"])
+    set_input(base,"Roughness",.30); set_input(base,"IOR",1.376)
+    set_input(base,"Specular IOR Level",.25)
+    set_input(base,"Subsurface Weight",0.0)
+    grade=nt.nodes.new("ShaderNodeHueSaturation")
+    grade.inputs["Saturation"].default_value=.62
+    grade.inputs["Value"].default_value=.72
+    nt.links.new(tex.outputs["Color"],grade.inputs["Color"])
+    nt.links.new(grade.outputs["Color"],base.inputs["Base Color"])
     glass=nt.nodes.new("ShaderNodeBsdfGlass")
-    set_input(glass,"Roughness",.012); set_input(glass,"IOR",1.376)
+    set_input(glass,"Roughness",.018); set_input(glass,"IOR",1.376)
     mix=nt.nodes.new("ShaderNodeMixShader")
     # Opaque texels are sclera/iris; transparent texels become refractive cornea.
     nt.links.new(tex.outputs["Alpha"],mix.inputs[0])
@@ -678,7 +701,7 @@ hair_card_mat=alpha_card_material(
     "DIGE_C12_SHORT03_HAIR",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
-    rough=.38,ior=1.55,anisotropy=.58,
+    rough=.52,ior=1.55,anisotropy=.36,specular=.16,coat=.006,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
     "DIGE_C12_SHORT03_HAIR",
@@ -687,7 +710,40 @@ hair_obj,hair_fit=fit_mhclo_asset(
     fit_vertices,hair_card_mat,hair_asset,
 )
 system_asset_fits["hair_short03"]=hair_fit
-strands=[]
+
+# C13 micro-flyaways: short, sparse fibers only to break the card silhouette.
+# Primary mass/silhouette remains the verified short03 MHCLO asset.
+random.seed(20260932)
+hair_fiber_mat=c13_brown_fiber_material()
+hair_pts=[hair_obj.matrix_world @ v.co for v in hair_obj.data.vertices]
+silhouette_pts=[
+    p for p in hair_pts
+    if (p.z > eye_mid_z+.035) and (p.z > 1.60 or abs(p.x)>.070 or p.y < -.095)
+]
+if len(silhouette_pts)<40:
+    silhouette_pts=sorted(hair_pts,key=lambda p:p.z,reverse=True)[:120]
+flyaways=[]
+head_center=Vector((0.0,-.050,eye_mid_z+.055))
+for _ in range(140):
+    p=random.choice(silhouette_pts)
+    radial=p-head_center
+    if radial.length<1e-8:
+        radial=Vector((0,0,1))
+    else:
+        radial.normalize()
+    side=1.0 if p.x>=0 else -1.0
+    flow=Vector((side*.10,-.45,-.34))
+    direction=radial*.18+flow*.82
+    if direction.length<1e-8:
+        direction=Vector((0,-1,-.5))
+    direction.normalize()
+    root=p+radial*.00018
+    L=random.uniform(.012,.030)
+    tip=root+direction*L+Vector((side*random.uniform(-.002,.002),random.uniform(-.002,.001),random.uniform(-.002,.003)))
+    mid=root+(tip-root)*.52+Vector((side*random.uniform(-.0015,.0015),random.uniform(-.001,.001),random.uniform(-.001,.0015)))
+    flyaways.append([tuple(root),tuple(mid),tuple(tip)])
+curve_object("DIGE_C13_HAIR_FLYAWAYS",flyaways,.000018,hair_fiber_mat)
+strands=flyaways
 hair_surface_contract={
     "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO",
     "asset":"short03",
@@ -699,8 +755,9 @@ hair_surface_contract={
     "object_polygons":hair_fit["polygons"],
     "uv_layers":hair_fit["uv_layers"],
     "mass_mesh_rendered":True,
-    "curve_count":0,
-    "style":"MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1",
+    "curve_count":len(flyaways),
+    "micro_flyaway_count":len(flyaways),
+    "style":"MHCLO_SHORT03_PLUS_MICRO_FLYAWAYS_V2",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -879,14 +936,24 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1",
+ "appearance_candidate":"C13_FINAL_SKIN_EYE_HAIR_REFINEMENT_V1",
+ "appearance_tuning":{
+   "skin_albedo_saturation":0.98,
+   "skin_albedo_value":0.67,
+   "eye_texture_saturation":0.62,
+   "eye_texture_value":0.72,
+   "short03_roughness":0.52,
+   "short03_specular":0.16,
+   "short03_anisotropy":0.36,
+   "micro_flyaway_count":len(flyaways)
+ },
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH"
+   "selection_basis":"C12_EXECUTION_PASS; HUMAN_AUDIT_WASHOUT_RED_EYE_PLASTIC_HAIR; C13_ONLY_MATERIAL_MICRO_REFINEMENT"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
