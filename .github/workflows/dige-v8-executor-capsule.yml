@@ -79,6 +79,53 @@ jobs:
             echo "asset=onlytheghosts_young_eurasian_female"
           } > runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
 
+      - name: Resolve official MakeHuman CC0 system hair and face assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/system_assets
+          PACK=/tmp/makehuman_system_assets_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 4 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 4 "$SECONDARY" -o "$PACK"
+          fi
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $PACK" | sha256sum -c -
+
+          unzip -p "$PACK" "hair/short03/short03.obj" > runtime/system_assets/short03.obj
+          unzip -p "$PACK" "hair/short03/short03.mhclo" > runtime/system_assets/short03.mhclo
+          unzip -p "$PACK" "hair/short03/short03_diffuse.png" > runtime/system_assets/short03_diffuse.png
+
+          unzip -p "$PACK" "eyes/high-poly/high-poly.obj" > runtime/system_assets/high-poly.obj
+          unzip -p "$PACK" "eyes/high-poly/high-poly.mhclo" > runtime/system_assets/high-poly.mhclo
+          unzip -p "$PACK" "eyes/materials/brown_eye.png" > runtime/system_assets/brown_eye.png
+
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.obj" > runtime/system_assets/eyebrow001.obj
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.png" > runtime/system_assets/eyebrow001.png
+
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.obj" > runtime/system_assets/eyelashes01.obj
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.png" > runtime/system_assets/eyelashes01.png
+
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+
+          echo "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1  runtime/system_assets/high-poly.obj" | sha256sum -c -
+          echo "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d  runtime/system_assets/high-poly.mhclo" | sha256sum -c -
+          echo "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b  runtime/system_assets/brown_eye.png" | sha256sum -c -
+
+          echo "88b13146395133f3901715e11706cdfd293e5d6087ad7c5e01efe1485a26b513  runtime/system_assets/eyebrow001.obj" | sha256sum -c -
+          echo "54c8892c2ba577f4152d779ce1f20f7cd323beb8cbd9cb701796165c221b4f5b  runtime/system_assets/eyebrow001.mhclo" | sha256sum -c -
+          echo "9940f7d0b1b223709a19b05156ba6f6e9e4dbdbced02d7574f4d51d72c58967b  runtime/system_assets/eyebrow001.png" | sha256sum -c -
+
+          echo "f78f5b93fea1946fcae103d32c4f082dd9612a1ec2e7e2f90b03ebe59b0baf20  runtime/system_assets/eyelashes01.obj" | sha256sum -c -
+          echo "5a86b29c15649273d723084954b7fa7bf199112571d4f58539b46734d397ee6b  runtime/system_assets/eyelashes01.mhclo" | sha256sum -c -
+          echo "4b69c0fff2648874460e9caf80c31413c444218a5c50afebc425aeaa65484a35  runtime/system_assets/eyelashes01.png" | sha256sum -c -
+
+          sha256sum runtime/system_assets/* | tee runtime/system_assets/DIGE_C12_SYSTEM_ASSET_SHA256SUMS.txt
+
       - name: Render bounded Cycles CPU path-trace
         working-directory: experiments/dige-v8-executor-capsule
         env:
@@ -114,10 +161,20 @@ jobs:
           assert r["provenance"]["external_skin_texture_used"] is True
           assert r["provenance"]["external_skin_texture_license"] == "CC0"
           assert r["provenance"]["external_skin_texture_pack_sha256"] == "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
-          assert r["hair_surface_contract"]["style"] == "AREA_SAMPLED_GUIDE_CHILD_CLUMP_V1"
-          assert r["hair_surface_contract"]["root_count"] == 2600
-          assert r["hair_surface_contract"]["guide_count"] == 96
-          assert r["hair_surface_contract"]["mass_mesh_rendered"] is False
+          assert r["appearance_candidate"] == "C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1"
+          assert r["system_asset_pack"]["pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+          assert r["system_asset_pack"]["license"] == "CC0"
+          assert r["provenance"]["external_system_asset_used"] is True
+          assert r["provenance"]["external_system_asset_pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+          assert r["hair_surface_contract"]["style"] == "MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1"
+          assert r["hair_surface_contract"]["object_vertices"] == 1011
+          assert r["hair_surface_contract"]["mass_mesh_rendered"] is True
+          fits=r["system_asset_fits"]
+          assert fits["hair_short03"]["vertices"] == 1011
+          assert fits["high_poly_eyes"]["vertices"] == 1064
+          assert fits["eyebrow001"]["vertices"] == 124
+          assert fits["eyelashes01"]["vertices"] == 250
+          assert all(v["fit_algorithm"] == "MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED" for v in fits.values())
           assert len(r["outputs"]) == 5 and all(o["sha256"] for o in r["outputs"])
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
@@ -143,6 +200,7 @@ jobs:
             experiments/dige-v8-executor-capsule/runtime/renders/*.json
             experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
             experiments/dige-v8-executor-capsule/runtime/geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/system_assets/*
             experiments/dige-v8-executor-capsule/runtime/blender_execution.log
             experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
             experiments/dige-v8-executor-capsule/runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
