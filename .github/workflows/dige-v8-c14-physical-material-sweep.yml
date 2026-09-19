@@ -1,0 +1,152 @@
+name: DIGE V8 C14 Physical Material Sweep
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c14-physical-material-sweep.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c14-physical-material-sweep-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  material-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact head
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen C12 geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets runtime/system_assets
+          python build_makehuman_v8.py | tee runtime/c14_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Stage official CC0 C12 assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          SKINPACK=/tmp/skins01_cc0.zip
+          curl -fL --retry 4 --retry-delay 3 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 4 --retry-delay 4 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
+          unzip -p "$SYSPACK" "hair/short03/short03.obj" > runtime/system_assets/short03.obj
+          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > runtime/system_assets/short03.mhclo
+          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > runtime/system_assets/short03_diffuse.png
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > runtime/system_assets/high-poly.obj
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > runtime/system_assets/high-poly.mhclo
+          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > runtime/system_assets/brown_eye.png
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > runtime/system_assets/eyebrow001.obj
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > runtime/system_assets/eyebrow001.png
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > runtime/system_assets/eyelashes01.obj
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > runtime/system_assets/eyelashes01.png
+
+      - name: Render three C14 physical presets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          render_one() {
+            TAG="$1"; SSSW="$2"; SSSS="$3"; RMIN="$4"; RMAX="$5"; SKSAT="$6"; SKVAL="$7"; EYSAT="$8"; EYVAL="$9"; HRSAT="${10}"; HRVAL="${11}"; MESO="${12}"
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="$TAG" \
+            DIGE_SKIN_ALBEDO_PATH=runtime/assets/young_eurasian_female_diffuse.png \
+            DIGE_SKIN_ALBEDO_SHA256=e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf \
+            DIGE_SKIN_ALBEDO_NAME=onlytheghosts_young_eurasian_female \
+            DIGE_SKIN_SSS_WEIGHT="$SSSW" \
+            DIGE_SKIN_SSS_SCALE="$SSSS" \
+            DIGE_SKIN_ROUGH_MIN="$RMIN" \
+            DIGE_SKIN_ROUGH_MAX="$RMAX" \
+            DIGE_SKIN_ALBEDO_SAT="$SKSAT" \
+            DIGE_SKIN_ALBEDO_VALUE="$SKVAL" \
+            DIGE_EYE_TEX_SAT="$EYSAT" \
+            DIGE_EYE_TEX_VALUE="$EYVAL" \
+            DIGE_HAIR_TEX_SAT="$HRSAT" \
+            DIGE_HAIR_TEX_VALUE="$HRVAL" \
+            DIGE_FACE_MESO_SCALE="$MESO" \
+            DIGE_SAMPLES_PREVIEW=48 \
+            DIGE_SAMPLES_HERO=96 \
+            DIGE_RENDER_SEED=20260919 \
+            DIGE_RUNTIME_COMMIT="${{ github.event.pull_request.head.sha }}" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee "runtime/${TAG}.log"
+          }
+          render_one c14_balanced 0.22 0.0018 0.34 0.52 0.90 0.50 0.50 0.78 0.58 0.42 1.18
+          render_one c14_dry 0.16 0.0015 0.38 0.56 0.88 0.46 0.44 0.74 0.52 0.38 1.22
+          render_one c14_warm 0.24 0.0022 0.32 0.50 0.96 0.52 0.56 0.80 0.62 0.44 1.16
+
+      - name: Verify C14 sweep receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, os
+          root=pathlib.Path("runtime/renders")
+          expected={
+            "c14_balanced":(.22,.0018,.34,.52,.90,.50,.50,.78,.58,.42,1.18),
+            "c14_dry":(.16,.0015,.38,.56,.88,.46,.44,.74,.52,.38,1.22),
+            "c14_warm":(.24,.0022,.32,.50,.96,.52,.56,.80,.62,.44,1.16),
+          }
+          out={}
+          for tag,vals in expected.items():
+              r=json.loads((root/tag/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+              assert r["render_set"]=="HERO_ONLY"
+              assert r["appearance_candidate"]=="C13_MATERIAL_RESPONSE_SWEEP_OVER_C12_V1"
+              a=r["appearance_selection"]
+              got=(r["skin_model"]["subsurface_weight"],r["skin_model"]["subsurface_scale"],r["skin_model"]["roughness_range"][0],r["skin_model"]["roughness_range"][1],a["skin_albedo_saturation"],a["skin_albedo_value"],a["eye_texture_saturation"],a["eye_texture_value"],a["hair_texture_saturation"],a["hair_texture_value"],a["face_meso_scale"])
+              assert all(abs(x-y)<1e-9 for x,y in zip(got,vals)), (tag,got,vals)
+              assert r["hair_surface_contract"]["style"]=="MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1"
+              assert r["system_asset_fits"]["high_poly_eyes"]["vertices"]==1064
+              assert len(r["outputs"])==1
+              out[tag]={"hero_sha256":r["outputs"][0]["sha256"],"raw_sha256":r["denoise_ab"]["raw_aov"]["sha256"],"denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],"tuning":got}
+          (root/"DIGE_C14_SWEEP_SUMMARY.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(out,sort_keys=True))
+          PY
+
+      - name: Upload C14 sweep evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C14-PHYSICAL-SWEEP-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c14_*/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c14_*/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c14_*/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/DIGE_C14_SWEEP_SUMMARY.json
+          if-no-files-found: error
+          retention-days: 14
