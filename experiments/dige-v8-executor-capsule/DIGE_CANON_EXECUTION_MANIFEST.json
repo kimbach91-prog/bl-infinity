@@ -1,0 +1,50 @@
+{
+  "schema": "DIGE_CANON_EXECUTION_MANIFEST_V1",
+  "project_id": "DEUS_CORE_COMPUTE_DIGE_V1",
+  "state": "CANDIDATE_SOURCE_BINDING_NOT_RUNTIME_RECEIPT",
+  "canonical_drive": {
+    "staging_id": "1FZaAu-thWXBCGAToFXawt62he8JTJVrBWI9emF6XE7g",
+    "staging_modified_time": "2026-09-19T07:05:47.246Z",
+    "execution_receipt_id": "1hALdiqsgnY52lY8t3qxxh-TCzOW1QTEXlXfZbhOmnD0",
+    "execution_receipt_revision": "2",
+    "execution_receipt_revision_token": "ANLCKQnYoObhF_zfekFolvGypaHcXHSNSl3TYDhFoDwLaoExtaYaf2laAhO-3E1ABkGwHYWguvRNnU0QAeXt8P0mO8vmowon9mKeFaC08g"
+  },
+  "code_lineage": {
+    "branch": "deus/dige-v8-makehuman-cycles-20260919",
+    "parent_head": "206395b1a6529046c2d1b3c4e244b8d3f01b978f",
+    "runtime_commit_must_be_recorded": true
+  },
+  "assets": {
+    "base": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/3dobjs/base.obj",
+      "git_blob_sha1": "d26635e9326e3cca30778fd7b9c00062b03cce09",
+      "reconstructed_sha256": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c",
+      "license": "CC0-1.0"
+    },
+    "target": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/asian-female-young.target",
+      "git_blob_sha1": "f862c96add11c31ab1ca75c69e1c67ae5e0e3d5f",
+      "reconstructed_sha256": "095fe79694fa19e1fe98d93009ec116199bd524e081c640351a10eccf2cca1eb",
+      "license": "CC0-1.0"
+    },
+    "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
+    "candidate_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49"
+  },
+  "policy": {
+    "identity_bound": false,
+    "source_pixels_allowed": false,
+    "reference_images_allowed": false,
+    "external_geometry_license_required": "CC0-1.0",
+    "hyperreal_claim_allowed": false,
+    "execution_receipt_required_for_promotion": true
+  },
+  "mesh_policy": {
+    "include_face_groups": [
+      "body"
+    ],
+    "exclude_helper_and_joint_groups": true,
+    "expected_body_faces": 13378,
+    "source_total_faces": 18486,
+    "rationale": "Cycles renderer builds eyes/hair/lashes/cloth separately; helper/joint geometry must not leak into render mesh."
+  }
+}
