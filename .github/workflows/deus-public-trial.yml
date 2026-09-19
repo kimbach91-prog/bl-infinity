@@ -1,0 +1,47 @@
+name: DEUS Public Compute Alliance Trial
+
+on:
+  pull_request:
+    paths:
+      - 'apps/deus-public-trial/**'
+      - '.github/workflows/deus-public-trial.yml'
+  push:
+    branches:
+      - 'deus/public-compute-alliance-r2'
+    paths:
+      - 'apps/deus-public-trial/**'
+      - '.github/workflows/deus-public-trial.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  public-trial:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: apps/deus-public-trial
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install
+        run: npm install --no-audit --no-fund
+      - name: Build
+        run: npm run build
+      - name: Guard public compute boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          grep -q "participationRequired: true" lib/alliance-policy.ts
+          grep -q "localFirst: true" lib/alliance-policy.ts
+          grep -q "foreignComputeOnlyWhenIdle: true" lib/alliance-policy.ts
+          grep -q "coreVisibility: 'DENIED'" lib/alliance-policy.ts
+          grep -q "backgroundPersistence: 'DENIED_BY_DEFAULT'" lib/alliance-policy.ts
+          grep -q "crossNodeExecutionProven: false" app/api/chat/route.ts
+          grep -q "ALLIANCE_CONSENT_REQUIRED" app/api/chat/route.ts
+          grep -q "INSUFFICIENT_COMPUTE_CONTRIBUTION" app/api/chat/route.ts
+          ! grep -R -E "navigator\.(clipboard|usb|serial)|showOpenFilePicker|FileSystemHandle|eval\(|new Function\(" app public lib
+          echo "public compute alliance boundary checks passed"
