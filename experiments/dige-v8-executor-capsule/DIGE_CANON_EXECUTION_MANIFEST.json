@@ -63,6 +63,101 @@
       "compact_obj_sha256": "5fee5c08c835431c66862160dfc07c2e0d7450e62ab342e99ead82ea7db46c0b",
       "license": "CC0-1.0",
       "scar_lineage": "R4 face-curtain removal reconstructed exactly by retained/removed face counts"
+    },
+    "system_assets_c12": {
+      "source_page": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+      "pack_primary_url": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+      "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+      "pack_sha256": "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107",
+      "license": "CC0",
+      "probe_run": 35455034704,
+      "probe_artifact_id": 10588620236,
+      "probe_artifact_digest": "sha256:325275f0ab7de2f45aae5bc95f7343e6d45cf7afa6fe074561b31b56e17e87d1",
+      "hair_short03": {
+        "tags": [
+          "MakeHuman",
+          "Short",
+          "Female"
+        ],
+        "obj": {
+          "runtime_name": "short03.obj",
+          "zip_path": "hair/short03/short03.obj",
+          "sha256": "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c",
+          "vertices": 1011,
+          "faces": 961,
+          "uvs": 1071
+        },
+        "mhclo": {
+          "runtime_name": "short03.mhclo",
+          "zip_path": "hair/short03/short03.mhclo",
+          "sha256": "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f"
+        },
+        "diffuse": {
+          "runtime_name": "short03_diffuse.png",
+          "zip_path": "hair/short03/short03_diffuse.png",
+          "sha256": "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da"
+        }
+      },
+      "high_poly_eyes": {
+        "obj": {
+          "runtime_name": "high-poly.obj",
+          "zip_path": "eyes/high-poly/high-poly.obj",
+          "sha256": "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1",
+          "vertices": 1064,
+          "faces": 1020,
+          "uvs": 808
+        },
+        "mhclo": {
+          "runtime_name": "high-poly.mhclo",
+          "zip_path": "eyes/high-poly/high-poly.mhclo",
+          "sha256": "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d"
+        },
+        "diffuse": {
+          "runtime_name": "brown_eye.png",
+          "zip_path": "eyes/materials/brown_eye.png",
+          "sha256": "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b"
+        }
+      },
+      "eyebrow001": {
+        "obj": {
+          "runtime_name": "eyebrow001.obj",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.obj",
+          "sha256": "88b13146395133f3901715e11706cdfd293e5d6087ad7c5e01efe1485a26b513",
+          "vertices": 124,
+          "faces": 96,
+          "uvs": 126
+        },
+        "mhclo": {
+          "runtime_name": "eyebrow001.mhclo",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.mhclo",
+          "sha256": "54c8892c2ba577f4152d779ce1f20f7cd323beb8cbd9cb701796165c221b4f5b"
+        },
+        "diffuse": {
+          "runtime_name": "eyebrow001.png",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.png",
+          "sha256": "9940f7d0b1b223709a19b05156ba6f6e9e4dbdbced02d7574f4d51d72c58967b"
+        }
+      },
+      "eyelashes01": {
+        "obj": {
+          "runtime_name": "eyelashes01.obj",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.obj",
+          "sha256": "f78f5b93fea1946fcae103d32c4f082dd9612a1ec2e7e2f90b03ebe59b0baf20",
+          "vertices": 250,
+          "faces": 184,
+          "uvs": 250
+        },
+        "mhclo": {
+          "runtime_name": "eyelashes01.mhclo",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.mhclo",
+          "sha256": "5a86b29c15649273d723084954b7fa7bf199112571d4f58539b46734d397ee6b"
+        },
+        "diffuse": {
+          "runtime_name": "eyelashes01.png",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.png",
+          "sha256": "4b69c0fff2648874460e9caf80c31413c444218a5c50afebc425aeaa65484a35"
+        }
+      }
     }
   },
   "policy": {
@@ -71,7 +166,9 @@
     "reference_images_allowed": false,
     "external_geometry_license_required": "CC0-1.0",
     "hyperreal_claim_allowed": false,
-    "execution_receipt_required_for_promotion": true
+    "execution_receipt_required_for_promotion": true,
+    "system_asset_fit_algorithm": "MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
+    "system_asset_probe_required": true
   },
   "mesh_policy": {
     "include_face_groups": [
