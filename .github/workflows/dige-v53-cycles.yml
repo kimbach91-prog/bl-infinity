@@ -1,0 +1,143 @@
+name: DIGE V5.3 Cycles From-Scratch Trial
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'research/dige-v53/**'
+      - '.github/workflows/dige-v53-cycles.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v53-cycles-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Runtime receipt
+        run: |
+          set -euxo pipefail
+          uname -a
+          python3 --version
+          free -h
+          nproc
+          lscpu | sed -n '1,30p'
+
+      - name: Install safe geometry dependencies
+        run: |
+          set -euxo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input             numpy scipy scikit-image trimesh pillow
+
+      - name: Download and verify Blender 5.2.2 LTS
+        run: |
+          set -euxo pipefail
+          cd /tmp
+          curl -fL --retry 4 --retry-delay 3             https://download.blender.org/release/Blender5.2/blender-5.2.2-linux-x64.tar.xz             -o blender.tar.xz
+          curl -fL --retry 4 --retry-delay 3             https://download.blender.org/release/Blender5.2/blender-5.2.2.sha256             -o blender.sha256
+          grep 'blender-5.2.2-linux-x64.tar.xz' blender.sha256 > expected.sha256
+          sed -E 's#  blender-5.2.2-linux-x64.tar.xz#  /tmp/blender.tar.xz#' expected.sha256 > expected.local.sha256
+          sha256sum -c expected.local.sha256
+          tar -xf blender.tar.xz -C /tmp
+          /tmp/blender-5.2.2-linux-x64/blender --version
+
+      - name: Generate V5.3 geometry from formulas
+        run: |
+          set -euxo pipefail
+          python3 research/dige-v53/generate_geometry.py             | tee research/dige-v53/runtime/geometry_execution.json
+          test -s research/dige-v53/runtime/dige_head_v53.obj
+          test -s research/dige-v53/runtime/dige_body_v53.obj
+          grep -q '"source_pixels_used": false' research/dige-v53/runtime/geometry_manifest.json
+          grep -q '"reference_pixels_read_by_renderer": false' research/dige-v53/runtime/geometry_manifest.json
+
+      - name: Render five views with Cycles
+        run: |
+          set -euxo pipefail
+          /tmp/blender-5.2.2-linux-x64/blender             --background             --factory-startup             --python research/dige-v53/blender_render_v53.py             | tee research/dige-v53/runtime/blender_execution.log
+
+      - name: Build contact sheet and execution receipt
+        run: |
+          set -euxo pipefail
+          python3 - <<'PY'
+          from PIL import Image
+          from pathlib import Path
+          import json, hashlib, platform, os
+
+          root=Path("research/dige-v53/runtime/renders")
+          files=[
+            "01_FRONT50_V53.png",
+            "02_LEFT_PROFILE50_V53.png",
+            "03_THREE_QUARTER50_V53.png",
+            "04_HERO85_V53.png",
+            "05_BACK_THREE_QUARTER50_V53.png",
+          ]
+          ims=[Image.open(root/f).convert("RGB") for f in files]
+          H=720
+          thumbs=[]
+          for im in ims:
+              w=round(im.width*H/im.height)
+              thumbs.append(im.resize((w,H),Image.Resampling.LANCZOS))
+          gap=12
+          W=sum(i.width for i in thumbs)+gap*(len(thumbs)-1)
+          out=Image.new("RGB",(W,H),(18,18,18))
+          x=0
+          for im in thumbs:
+              out.paste(im,(x,0)); x+=im.width+gap
+          contact=root/"DIGE_V53_CONTACT_SHEET.png"
+          out.save(contact)
+
+          def sha(p): return hashlib.sha256(Path(p).read_bytes()).hexdigest()
+          render=json.loads((root/"DIGE_V53_RENDER_RECEIPT.json").read_text())
+          execution={
+            "task_id":"DIGE-V53-CYCLES-20260919",
+            "executor":"github-actions/bl-infinity",
+            "repository":os.environ.get("GITHUB_REPOSITORY"),
+            "run_id":os.environ.get("GITHUB_RUN_ID"),
+            "run_attempt":os.environ.get("GITHUB_RUN_ATTEMPT"),
+            "sha":os.environ.get("GITHUB_SHA"),
+            "event":os.environ.get("GITHUB_EVENT_NAME"),
+            "platform":platform.platform(),
+            "render_receipt_sha256":sha(root/"DIGE_V53_RENDER_RECEIPT.json"),
+            "contact_sheet_sha256":sha(contact),
+            "provenance":render["provenance"],
+            "output_count":len(render["outputs"]),
+            "truth_boundary":"CYCLES_EXECUTED_ON_GITHUB_HOSTED_CPU_RUNNER; NOT_GPU; HYPERREAL_PROMOTION_REQUIRES_VISUAL_AUDIT"
+          }
+          (root/"DIGE_V53_EXECUTION_RECEIPT.json").write_text(json.dumps(execution,indent=2))
+          print(json.dumps(execution,sort_keys=True))
+          PY
+
+      - name: Verify evidence
+        run: |
+          set -euxo pipefail
+          R=research/dige-v53/runtime/renders
+          test -s "$R/DIGE_V53_RENDER_RECEIPT.json"
+          test -s "$R/DIGE_V53_EXECUTION_RECEIPT.json"
+          test -s "$R/DIGE_V53_CONTACT_SHEET.png"
+          test -s "$R/04_HERO85_RAW_V53.exr"
+          for f in 01_FRONT50_V53.png 02_LEFT_PROFILE50_V53.png 03_THREE_QUARTER50_V53.png 04_HERO85_V53.png 05_BACK_THREE_QUARTER50_V53.png; do test -s "$R/$f"; done
+          grep -q '"engine": "CYCLES"' "$R/DIGE_V53_RENDER_RECEIPT.json"
+          grep -q '"source_pixels_used": false' "$R/DIGE_V53_RENDER_RECEIPT.json"
+          grep -q '"output_count": 5' "$R/DIGE_V53_EXECUTION_RECEIPT.json"
+          echo DIGE_V53_CYCLES_EXECUTION_PASS
+
+      - name: Upload DIGE V5.3 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-V53-CYCLES-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            research/dige-v53/runtime/renders/*.png
+            research/dige-v53/runtime/renders/*.exr
+            research/dige-v53/runtime/renders/*.json
+            research/dige-v53/runtime/geometry_manifest.json
+            research/dige-v53/runtime/geometry_execution.json
+            research/dige-v53/runtime/blender_execution.log
+          if-no-files-found: error
+          retention-days: 14
