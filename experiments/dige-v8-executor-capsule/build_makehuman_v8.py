@@ -170,6 +170,38 @@ tights=RUNTIME/"dige_makehuman_tights_v8.obj"
 tights.write_text("\n".join(tights_lines)+"\n",encoding="utf-8")
 tights_sha=hashlib.sha256(tights.read_bytes()).hexdigest()
 
+def emit_full_vertex_group(group_name, filename):
+    lines=[]
+    vi_local=0
+    cur_local=None
+    face_count_local=0
+    for line in base_text.splitlines():
+        if line.startswith("v "):
+            x,y,z=normalized[vi_local]; vi_local+=1
+            lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
+        elif line.startswith("g "):
+            cur_local=line[2:].strip()
+            if cur_local == group_name:
+                lines.append(line)
+        elif line.startswith("f "):
+            if cur_local == group_name:
+                face_count_local+=1
+                lines.append(line)
+        else:
+            lines.append(line)
+    path=RUNTIME/filename
+    path.write_text("\n".join(lines)+"\n",encoding="utf-8")
+    return path,face_count_local,hashlib.sha256(path.read_bytes()).hexdigest()
+
+left_eye,left_eye_faces,left_eye_sha=emit_full_vertex_group("helper-l-eye","dige_makehuman_l_eye_v8.obj")
+right_eye,right_eye_faces,right_eye_sha=emit_full_vertex_group("helper-r-eye","dige_makehuman_r_eye_v8.obj")
+if left_eye_faces != 70 or right_eye_faces != 70:
+    raise RuntimeError(f"helper-eye face drift: left={left_eye_faces} right={right_eye_faces}")
+if left_eye_sha != "529b08db844a6c4f1b168c6cae539f893b7ad8c5a509b712fd52b2bc9ecd31a9":
+    raise RuntimeError(f"left helper-eye hash drift: {left_eye_sha}")
+if right_eye_sha != "8be09d137af39fe7f8d45ca8d6c5d63b6683c6509e8f6744ab7be91c08420a06":
+    raise RuntimeError(f"right helper-eye hash drift: {right_eye_sha}")
+
 body_ids=sorted(group_vertex_ids["body"])
 mouth_candidates=[
     normalized[i] for i in body_ids
@@ -228,6 +260,10 @@ manifest={
   "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"bbox_min":final_mins,"bbox_max":final_maxs},
   "mesh":{"source_vertices":len(normalized),"vertices_written":expected_body_vertices,"referenced_body_vertices":len(referenced_vertices),"faces":face_count,"undirected_edges":len(edge_counts),"boundary_edges":boundary_edges,"nonmanifold_edges":nonmanifold_edges,"output":out.name,"sha256":body_sha},
   "garment_helper":{"group":garment_group,"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},
+  "eye_helpers":{
+    "left":{"group":"helper-l-eye","faces":left_eye_faces,"output":left_eye.name,"sha256":left_eye_sha},
+    "right":{"group":"helper-r-eye","faces":right_eye_faces,"output":right_eye.name,"sha256":right_eye_sha}
+  },
   "landmarks":landmarks,
   "mesh_policy":CANON["mesh_policy"],
   "expected_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"],
