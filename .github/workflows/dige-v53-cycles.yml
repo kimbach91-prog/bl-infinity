@@ -58,6 +58,11 @@ jobs:
           grep -q '"source_pixels_used": false' research/dige-v53/runtime/geometry_manifest.json
           grep -q '"reference_pixels_read_by_renderer": false' research/dige-v53/runtime/geometry_manifest.json
 
+      - name: Validate Blender script syntax
+        run: |
+          set -euxo pipefail
+          python3 -m py_compile research/dige-v53/blender_render_v53.py
+
       - name: Render five views with Cycles
         run: |
           set -euxo pipefail
