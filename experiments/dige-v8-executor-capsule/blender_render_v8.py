@@ -38,6 +38,11 @@ EYE_TEX_VALUE=float(os.environ.get("DIGE_EYE_TEX_VALUE","1.0"))
 HAIR_TEX_SAT=float(os.environ.get("DIGE_HAIR_TEX_SAT","1.0"))
 HAIR_TEX_VALUE=float(os.environ.get("DIGE_HAIR_TEX_VALUE","1.0"))
 FACE_MESO_SCALE=float(os.environ.get("DIGE_FACE_MESO_SCALE","1.0"))
+SKIN_TONE_R=float(os.environ.get("DIGE_SKIN_TONE_R","0.86"))
+SKIN_TONE_G=float(os.environ.get("DIGE_SKIN_TONE_G","0.72"))
+SKIN_TONE_B=float(os.environ.get("DIGE_SKIN_TONE_B","0.66"))
+SKIN_TONE_MIX=float(os.environ.get("DIGE_SKIN_TONE_MIX","0.32"))
+SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.12"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -104,10 +109,17 @@ def make_skin():
         grade.inputs["Saturation"].default_value=SKIN_ALBEDO_SAT
         grade.inputs["Value"].default_value=SKIN_ALBEDO_VALUE
         nt.links.new(albedo.outputs["Color"],grade.inputs["Color"])
+        skin_tone=nt.nodes.new("ShaderNodeRGB")
+        skin_tone.outputs[0].default_value=(SKIN_TONE_R,SKIN_TONE_G,SKIN_TONE_B,1)
+        warm_mix=nt.nodes.new("ShaderNodeMixRGB")
+        warm_mix.blend_type='MULTIPLY'
+        warm_mix.inputs["Fac"].default_value=SKIN_TONE_MIX
+        nt.links.new(grade.outputs["Color"],warm_mix.inputs[1])
+        nt.links.new(skin_tone.outputs["Color"],warm_mix.inputs[2])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
-        color_mix.inputs["Fac"].default_value=.18
-        nt.links.new(grade.outputs["Color"],color_mix.inputs[1])
+        color_mix.inputs["Fac"].default_value=.10
+        nt.links.new(warm_mix.outputs["Color"],color_mix.inputs[1])
         nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
         nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
         skin_asset.update({"enabled":True,"file":p.name,"sha256":got})
@@ -168,8 +180,8 @@ def make_skin():
     nt.links.new(meso.outputs["Fac"],m1.inputs[0]); nt.links.new(pore.outputs["Fac"],m2.inputs[0]); nt.links.new(micro.outputs["Fac"],m3.inputs[0])
     nt.links.new(m1.outputs[0],ma.inputs[0]); nt.links.new(m2.outputs[0],ma.inputs[1]); nt.links.new(ma.outputs[0],mb.inputs[0]); nt.links.new(m3.outputs[0],mb.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.09
-    bump.inputs["Distance"].default_value=.00010
+    bump.inputs["Strength"].default_value=SKIN_MICRO_STRENGTH
+    bump.inputs["Distance"].default_value=.00012
     nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m,skin_asset
