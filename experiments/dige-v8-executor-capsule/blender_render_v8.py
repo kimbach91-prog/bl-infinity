@@ -315,99 +315,79 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
         y=max(lid[1]+.0030,ec[1]+.0070)
         z=ec[2]+.0052+.0014*(1-abs(t))
         lashes.append([(x,y,z),(x+sx*.0006,y+.0024,z+.0011)])
-curve_object("DIGE_V8_BROWS",brow_hairs,.00015,hair)
-curve_object("DIGE_V8_LASHES",lashes,.00013,black)
+curve_object("DIGE_V8_BROWS",brow_hairs,.000045,hair)
+curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
-# Scalp-cap surface removed: run19 proved a closed scalp proxy reads as a helmet.
-eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-
-# Surface-bound short-crop groom. Fibers follow an ellipsoid scalp normal with a mild backward sweep.
+# Canonical-surface short crop. Roots come from the actual body head mesh, never an ellipsoid/cap proxy.
 random.seed(20260919)
-hair_box=landmarks["hair_helper"]
-scalp_center=(0.0,-.034,eye_z+.050)
-rx=min(.118,(hair_box["bbox_max"][0]-hair_box["bbox_min"][0])*.44)
-ry=min(.092,(hair_box["bbox_max"][1]-hair_box["bbox_min"][1])*.34)
-rz=.065
+eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
+head_center=Vector((0.0,-.055,eye_z+.060))
+back=Vector((0.0,-1.0,0.0))
+up=Vector((0.0,0.0,1.0))
+
+scalp_vertices=[]
+for v in body.data.vertices:
+    p=v.co.copy()
+    if p.z < eye_z+.028:
+        continue
+    # Reserve the central lower forehead; include crown/front hairline, sides and back.
+    if p.y>.025 and p.z<eye_z+.095 and abs(p.x)<.100:
+        continue
+    if abs(p.x)>.115 and p.z<eye_z+.070:
+        continue
+    scalp_vertices.append(p)
+if len(scalp_vertices)<120:
+    raise RuntimeError(f"surface scalp candidate count unexpectedly low: {len(scalp_vertices)}")
+
 strands=[]
-for i in range(5200):
-    phi=random.uniform(-math.pi,math.pi)
-    theta=random.uniform(.10,1.43)
-    x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
-    y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
-    z=scalp_center[2]+rz*math.cos(theta)
+replicas=28
+for p in scalp_vertices:
+    outward=(p-head_center).normalized()
+    tangent=outward.cross(up)
+    if tangent.length<1e-6:
+        tangent=Vector((1.0,0.0,0.0))
+    else:
+        tangent.normalize()
+    bitangent=outward.cross(tangent).normalized()
+    sweep=(outward*.32+back*.60+up*.08).normalized()
 
-    # Approximate the outward normal of the scalp ellipsoid.
-    nx=(x-scalp_center[0])/(rx*rx)
-    ny=(y-scalp_center[1])/(ry*ry)
-    nz=(z-scalp_center[2])/(rz*rz)
-    nl=math.sqrt(nx*nx+ny*ny+nz*nz) or 1.0
-    nx/=nl; ny/=nl; nz/=nl
+    for _ in range(replicas):
+        root=p+tangent*random.uniform(-.0015,.0015)+bitangent*random.uniform(-.0012,.0012)+outward*.00030
+        # Shorter at frontal/crown roots, slightly longer at side/back.
+        front=(root.y>.005 and abs(root.x)<.085)
+        L=random.uniform(.014,.030) if front else random.uniform(.022,.052)
+        bend=random.uniform(-.0030,.0030)
+        side=1 if root.x>=0 else -1
+        strands.append([
+            tuple(root),
+            tuple(root+outward*.0035),
+            tuple(root+sweep*(L*.52)+tangent*bend*.35),
+            tuple(root+sweep*L+tangent*bend+Vector((side*.0012,0,-.0010)))
+        ])
 
-    front_zone=(y>-.004 and abs(x)<.080)
-    L=random.uniform(.008,.018) if front_zone else random.uniform(.012,.028)
+# Sparse baby hairs are also rooted on actual forehead/crown vertices.
+forehead=[p for p in scalp_vertices if p.y>.010 and p.z>eye_z+.072]
+for p in forehead:
+    outward=(p-head_center).normalized()
+    for _ in range(3):
+        root=p+outward*.00020
+        side=1 if root.x>=0 else -1
+        L=random.uniform(.008,.018)
+        strands.append([
+            tuple(root),
+            tuple(root+Vector((side*.0008,-.0035,.0018))),
+            tuple(root+Vector((side*.0025,-.008,-L)))
+        ])
 
-    # Hair stands off the scalp, but is combed mildly backward and slightly toward the crown.
-    dx=nx*.72 + random.uniform(-.10,.10)
-    dy=ny*.35 - .55 + random.uniform(-.08,.08)
-    dz=nz*.72 + .12 + random.uniform(-.08,.08)
-    dl=math.sqrt(dx*dx+dy*dy+dz*dz) or 1.0
-    dx/=dl; dy/=dl; dz/=dl
-
-    bend=random.uniform(-.0014,.0014)
-    strands.append([
-        (x,y,z),
-        (x+dx*L*.34+bend*.20, y+dy*L*.34, z+dz*L*.34),
-        (x+dx*L*.70-bend*.15, y+dy*L*.70, z+dz*L*.70),
-        (x+dx*L+bend, y+dy*L, z+dz*L)
-    ])
-# Sparse short hairline: roots use the real forehead surface, then immediately bend backward.
-head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.018 and v.co.y>-0.02]
-def forehead_surface_y(x,z):
-    best=None
-    best_d=1e9
-    for p in head_surface:
-        dx=(p.x-x)/.010
-        dz=(p.z-z)/.012
-        d=dx*dx+dz*dz
-        if d<best_d:
-            best_d=d; best=p
-    return (best.y if best is not None else .040)
-
-hairline=[]
-for i in range(180):
-    t=(i+.5)/180
-    x=-.074+.148*t
-    xn=x/.074
-    arch=max(0.0,1.0-xn*xn)
-    root_z=eye_z+.050+.026*arch
-    root_y=forehead_surface_y(x,root_z)+.00025
-    side=1 if x>=0 else -1
-    jitter=(random.random()-.5)*.0012
-    hairline.append([
-        (x,root_y,root_z),
-        (x+side*.001+jitter,root_y-.006,root_z+.003),
-        (x+side*.003+jitter,root_y-.014,root_z+.005)
-    ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.000035,hair)
-
-for i in range(140):
-    phi=random.uniform(-math.pi,math.pi)
-    theta=random.uniform(.18,1.20)
-    x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
-    y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
-    z=scalp_center[2]+rz*math.cos(theta)
-    nx=(x-scalp_center[0])/(rx*rx)
-    ny=(y-scalp_center[1])/(ry*ry)
-    nz=(z-scalp_center[2])/(rz*rz)
-    nl=math.sqrt(nx*nx+ny*ny+nz*nz) or 1.0
-    nx/=nl; ny/=nl; nz/=nl
-    L=random.uniform(.018,.035)
-    strands.append([
-        (x,y,z),
-        (x+nx*L*.45,y+(ny*.25-.45)*L*.45,z+(nz*.80+.10)*L*.45),
-        (x+nx*L,y+(ny*.25-.45)*L,z+(nz*.80+.10)*L)
-    ])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.000060,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.000035,hair)
+hair_surface_contract={
+    "candidate_vertices":len(scalp_vertices),
+    "replicas_per_vertex":replicas,
+    "curve_count":len(strands),
+    "bevel_radius_m":0.000035,
+    "root_source":"CANONICAL_BODY_SURFACE_VERTICES",
+    "style":"SHORT_SWEPT_CROP_V3",
+}
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
@@ -561,7 +541,8 @@ receipt={
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"SHORT_CROP_SURFACE_NORMAL_V2",
+ "hair_regime":"SHORT_CROP_CANONICAL_SURFACE_V3",
+ "hair_surface_contract":hair_surface_contract,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
