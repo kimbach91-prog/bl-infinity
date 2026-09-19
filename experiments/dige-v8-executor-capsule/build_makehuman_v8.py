@@ -79,11 +79,24 @@ for i,(x,y,z) in enumerate(verts):
     # MakeHuman: X lateral, Y vertical, Z front/back. Blender: X lateral, Y depth, Z up.
     morphed.append([x,z,y])
 
-mins=[min(v[a] for v in morphed) for a in range(3)]
-maxs=[max(v[a] for v in morphed) for a in range(3)]
+# Normalize from the actual body group, not helper/joint vertices.
+pre_group=None
+body_source_ids=set()
+for line in base_text.splitlines():
+    if line.startswith("g "):
+        pre_group=line[2:].strip()
+    elif line.startswith("f ") and pre_group=="body":
+        for tok in line.split()[1:]:
+            body_source_ids.add(int(tok.split("/")[0])-1)
+if not body_source_ids:
+    raise RuntimeError("body source id set empty before normalization")
+
+body_source_pts=[morphed[i] for i in sorted(body_source_ids)]
+mins=[min(v[a] for v in body_source_pts) for a in range(3)]
+maxs=[max(v[a] for v in body_source_pts) for a in range(3)]
 height=maxs[2]-mins[2]
 if not (5.0 < height < 30.0):
-    raise RuntimeError(f"unexpected MakeHuman source height {height}")
+    raise RuntimeError(f"unexpected MakeHuman body source height {height}")
 scale=TARGET_HEIGHT_M/height
 cx=(mins[0]+maxs[0])/2
 cy=(mins[1]+maxs[1])/2
@@ -262,7 +275,7 @@ manifest={
     "reference_images_used":False
   },
   "morph":{"weight":MORPH_WEIGHT,"target_name":"asian-female-young"},
-  "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"bbox_min":final_mins,"bbox_max":final_maxs},
+  "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"reference_group":"body","ground_z_m":0.0,"source_bbox_min":mins,"source_bbox_max":maxs,"bbox_min":final_mins,"bbox_max":final_maxs},
   "mesh":{"source_vertices":len(normalized),"vertices_written":expected_body_vertices,"referenced_body_vertices":len(referenced_vertices),"faces":face_count,"undirected_edges":len(edge_counts),"boundary_edges":boundary_edges,"nonmanifold_edges":nonmanifold_edges,"output":out.name,"sha256":body_sha},
   "garment_helper":{"group":garment_group,"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},
   "eye_helpers":{
