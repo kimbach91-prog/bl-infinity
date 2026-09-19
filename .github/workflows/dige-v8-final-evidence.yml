@@ -68,10 +68,6 @@ jobs:
           DIGE_SKIN_SSS_ANISO: '0.80'
           DIGE_SKIN_ROUGH_MIN: '0.30'
           DIGE_SKIN_ROUGH_MAX: '0.48'
-          DIGE_HAIR_REPLICAS: '28'
-          DIGE_HAIR_LEN_MIN: '0.0010'
-          DIGE_HAIR_LEN_MAX: '0.0024'
-          DIGE_HAIR_BEVEL: '0.000022'
           DIGE_SAMPLES_PREVIEW: '128'
           DIGE_SAMPLES_HERO: '256'
           DIGE_RENDER_SEED: '20260919'
@@ -100,9 +96,13 @@ jobs:
           assert abs(r["skin_model"]["subsurface_anisotropy"]-.80)<1e-9
           assert r["skin_model"]["roughness_range"]==[0.30,0.48]
           h=r["hair_surface_contract"]
-          assert h["replicas_per_vertex"]==28
-          assert h["length_range_m"]==[0.001,0.0024]
-          assert abs(h["bevel_radius_m"]-.000022)<1e-12
+          hc=canon["assets"]["filtered_hair_helper"]
+          assert h["guide_source"]=="FILTERED_MAKEHUMAN_HELPER_HAIR"
+          assert h["source_faces"]==hc["source_faces"]==198
+          assert h["removed_front_faces"]==hc["removed_front_faces"]==50
+          assert h["retained_faces"]==hc["retained_faces"]==148
+          assert h["guide_vertices"]==hc["retained_vertices"]==324
+          assert h["guide_sha256"]==hc["compact_obj_sha256"]
           assert len(r["outputs"])==5 and all(x["sha256"] for x in r["outputs"])
           assert r["denoise_ab"]["raw_aov"]["sha256"] and r["denoise_ab"]["denoised"]["sha256"]
           mesh=geom["mesh"]; pol=canon["mesh_policy"]
@@ -111,6 +111,7 @@ jobs:
             "body_topology_exact": mesh["vertices_written"]==pol["expected_body_vertices"] and mesh["faces"]==pol["expected_body_faces"] and mesh["boundary_edges"]==0 and mesh["nonmanifold_edges"]==0,
             "body_height_grounded": abs(geom["normalization"]["height_m"]-1.70)<1e-9 and abs(geom["normalization"]["bbox_min"][2])<1e-9,
             "eye_helpers_exact": geom["eye_helpers"]["left"]["sha256"]==canon["assets"]["eye_helpers"]["left"]["compact_obj_sha256"] and geom["eye_helpers"]["right"]["sha256"]==canon["assets"]["eye_helpers"]["right"]["compact_obj_sha256"],
+            "hair_guide_exact": geom["hair_guide"]["sha256"]==canon["assets"]["filtered_hair_helper"]["compact_obj_sha256"] and geom["hair_guide"]["faces"]==148 and geom["hair_guide"]["removed_front_faces"]==50,
             "five_views_present": len(r["outputs"])==5,
             "raw_aov_present": bool(r["denoise_ab"]["raw_aov"]["sha256"]),
             "same_seed_denoise_present": bool(r["denoise_ab"]["denoised"]["sha256"]),
