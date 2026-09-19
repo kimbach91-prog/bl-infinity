@@ -1,0 +1,33 @@
+{
+  "schema": "DEUS_WAVE1_OFFICIAL_ACCESS_STATE_V1",
+  "checked_at_utc": "2026-09-19T02:40:24Z",
+  "tool_substrate": "GPT_TOOL_SUBSTRATE",
+  "arc_agi_3_private": {
+    "official_page": "https://arcprize.org/competitions/2026/arc-agi-3",
+    "competition": "https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-3",
+    "access_state": "USER_ACCOUNT_RULE_ACCEPTANCE_REQUIRED",
+    "evaluation_constraints": [
+      "KAGGLE_NOTEBOOK_SUBMISSION",
+      "NO_INTERNET_DURING_EVALUATION",
+      "OPEN_SOURCE_REQUIRED_FOR_OFFICIAL_PRIVATE_SCORE_ELIGIBILITY"
+    ],
+    "entry_deadline_utc": "2026-10-26T23:59:00Z",
+    "final_submission_deadline_utc": "2026-11-02T23:59:00Z",
+    "hard_run_state": "HOLD_OFFICIAL_COMPETITION_ACCOUNT_ACCESS"
+  },
+  "frontiermath_erdos": {
+    "source_repo": "epoch-research/LeanOpenProblems",
+    "source_commit": "af3b82f9d2fd38bea33d59e637b6b4eff54a464c",
+    "access_state": "PUBLIC_SOURCE_AVAILABLE",
+    "source_harness_canary": "PASS_ON_GITHUB_ACTIONS_RUN_35415803703",
+    "hard_run_state": "HOLD_DEUS_GENERAL_REASONING_PROOF_EXECUTOR"
+  },
+  "hle_rolling": {
+    "official_dataset": "https://huggingface.co/datasets/cais/hle-rolling",
+    "access_state": "GATED_DATASET_REQUIRES_LOGGED_IN_ACCEPTANCE_AND_CONTACT_SHARE",
+    "public_card_state": "VISIBLE",
+    "hard_run_state": "HOLD_DATASET_ACCEPTANCE_AND_DEUS_MODEL_ENDPOINT",
+    "distribution_warning": "DO_NOT_PUBLICLY_REUPLOAD_OR_DISTRIBUTE_DATASET"
+  },
+  "claim_boundary": "This manifest records public access routes and gates only. It contains no hidden benchmark data and no hard benchmark score."
+}
