@@ -38,6 +38,11 @@ EYE_TEX_VALUE=float(os.environ.get("DIGE_EYE_TEX_VALUE","1.0"))
 HAIR_TEX_SAT=float(os.environ.get("DIGE_HAIR_TEX_SAT","1.0"))
 HAIR_TEX_VALUE=float(os.environ.get("DIGE_HAIR_TEX_VALUE","1.0"))
 FACE_MESO_SCALE=float(os.environ.get("DIGE_FACE_MESO_SCALE","1.0"))
+SKIN_TONE_R=float(os.environ.get("DIGE_SKIN_TONE_R","0.86"))
+SKIN_TONE_G=float(os.environ.get("DIGE_SKIN_TONE_G","0.72"))
+SKIN_TONE_B=float(os.environ.get("DIGE_SKIN_TONE_B","0.66"))
+SKIN_TONE_MIX=float(os.environ.get("DIGE_SKIN_TONE_MIX","0.32"))
+SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.12"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -104,10 +109,17 @@ def make_skin():
         grade.inputs["Saturation"].default_value=SKIN_ALBEDO_SAT
         grade.inputs["Value"].default_value=SKIN_ALBEDO_VALUE
         nt.links.new(albedo.outputs["Color"],grade.inputs["Color"])
+        skin_tone=nt.nodes.new("ShaderNodeRGB")
+        skin_tone.outputs[0].default_value=(SKIN_TONE_R,SKIN_TONE_G,SKIN_TONE_B,1)
+        warm_mix=nt.nodes.new("ShaderNodeMixRGB")
+        warm_mix.blend_type='MULTIPLY'
+        warm_mix.inputs["Fac"].default_value=SKIN_TONE_MIX
+        nt.links.new(grade.outputs["Color"],warm_mix.inputs[1])
+        nt.links.new(skin_tone.outputs["Color"],warm_mix.inputs[2])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
-        color_mix.inputs["Fac"].default_value=.18
-        nt.links.new(grade.outputs["Color"],color_mix.inputs[1])
+        color_mix.inputs["Fac"].default_value=.10
+        nt.links.new(warm_mix.outputs["Color"],color_mix.inputs[1])
         nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
         nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
         skin_asset.update({"enabled":True,"file":p.name,"sha256":got})
@@ -168,8 +180,8 @@ def make_skin():
     nt.links.new(meso.outputs["Fac"],m1.inputs[0]); nt.links.new(pore.outputs["Fac"],m2.inputs[0]); nt.links.new(micro.outputs["Fac"],m3.inputs[0])
     nt.links.new(m1.outputs[0],ma.inputs[0]); nt.links.new(m2.outputs[0],ma.inputs[1]); nt.links.new(ma.outputs[0],mb.inputs[0]); nt.links.new(m3.outputs[0],mb.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.09
-    bump.inputs["Distance"].default_value=.00010
+    bump.inputs["Strength"].default_value=SKIN_MICRO_STRENGTH
+    bump.inputs["Distance"].default_value=.00012
     nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m,skin_asset
@@ -358,7 +370,7 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
     }
 
-def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0):
+def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0,spec=.28,coat=.025):
     image_path=verify_asset(image_path,expected_sha256)
     m=bpy.data.materials.new(name); m.use_nodes=True
     nt=m.node_tree; nt.nodes.clear()
@@ -371,9 +383,9 @@ def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,aniso
     trans=nt.nodes.new("ShaderNodeBsdfTransparent")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"Roughness",rough); set_input(bs,"IOR",ior)
-    set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Specular IOR Level",spec)
     set_input(bs,"Anisotropic IOR Level",anisotropy)
-    set_input(bs,"Coat Weight",.025)
+    set_input(bs,"Coat Weight",coat)
     grade=nt.nodes.new("ShaderNodeHueSaturation")
     grade.inputs["Saturation"].default_value=sat
     grade.inputs["Value"].default_value=value
@@ -496,9 +508,13 @@ craniofacial_deform={
   "nasolabial_y_m":0.00085,
   "philtrum_groove_y_m":0.00065,
   "philtrum_ridge_y_m":0.00055,
+  "alar_groove_y_m":0.00075,
+  "labiomental_groove_y_m":0.00070,
+  "lip_corner_y_m":0.00045,
+  "lower_lid_roll_y_m":0.00050,
 }
 # FACE_MESO_SCALE_APPLIED
-for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m"):
+for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m","alar_groove_y_m","labiomental_groove_y_m","lip_corner_y_m","lower_lid_roll_y_m"):
     craniofacial_deform[_k] *= FACE_MESO_SCALE
 def g2(x,z,cx,cz,sx,sz):
     return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
@@ -539,6 +555,19 @@ for v in body.data.vertices:
     co.y += craniofacial_deform["philtrum_ridge_y_m"]*(
         g2(co.x,co.z,.006,mouth_z+.014,.004,.010)+
         g2(co.x,co.z,-.006,mouth_z+.014,.004,.010)
+    )
+    co.y -= craniofacial_deform["alar_groove_y_m"]*(
+        g2(co.x,co.z,.013,nose_tip_z-.004,.007,.010)+
+        g2(co.x,co.z,-.013,nose_tip_z-.004,.007,.010)
+    )
+    co.y -= craniofacial_deform["labiomental_groove_y_m"]*g2(co.x,co.z,0.0,mouth_z-.018,.026,.008)
+    co.y -= craniofacial_deform["lip_corner_y_m"]*(
+        g2(co.x,co.z,.023,mouth_z,.007,.008)+
+        g2(co.x,co.z,-.023,mouth_z,.007,.008)
+    )
+    co.y += craniofacial_deform["lower_lid_roll_y_m"]*(
+        g2(co.x,co.z,.032,eye_mid_z-.006,.022,.008)+
+        g2(co.x,co.z,-.032,eye_mid_z-.006,.022,.008)
     )
 
     # Chin projection.
@@ -633,8 +662,8 @@ lower_lip=[
     (.009,my+.0005,mz-.0025),
     (.018,my+.0002,mz-.0012),
 ]
-curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00018,lip)
-curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00022,lip)
+curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00010,lip)
+curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00013,lip)
 
 # Small recessed nostril discs add depth without altering topology.
 nose_z=mouth_center[2]+.0275
@@ -696,7 +725,7 @@ hair_card_mat=alpha_card_material(
     "DIGE_C12_SHORT03_HAIR",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
-    rough=.38,ior=1.55,anisotropy=.58,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,
+    rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
     "DIGE_C12_SHORT03_HAIR",
@@ -897,7 +926,7 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C13_MATERIAL_RESPONSE_SWEEP_OVER_C12_V1",
+ "appearance_candidate":"C15_STRUCTURAL_MATERIAL_FACE_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
@@ -911,7 +940,14 @@ receipt={
    "eye_texture_value":EYE_TEX_VALUE,
    "hair_texture_saturation":HAIR_TEX_SAT,
    "hair_texture_value":HAIR_TEX_VALUE,
-   "face_meso_scale":FACE_MESO_SCALE
+   "face_meso_scale":FACE_MESO_SCALE,
+   "skin_tone_rgb":[SKIN_TONE_R,SKIN_TONE_G,SKIN_TONE_B],
+   "skin_tone_mix":SKIN_TONE_MIX,
+   "skin_micro_strength":SKIN_MICRO_STRENGTH,
+   "hair_card_specular":0.16,
+   "hair_card_coat":0.004,
+   "hair_card_roughness":0.54,
+   "hair_card_anisotropy":0.34
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
