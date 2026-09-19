@@ -257,20 +257,8 @@ nose_tip_z=mouth_z+.027
 chin_z=mouth_z-.038
 jaw_z=mouth_z-.026
 
-# Shaved scalp shadow is painted onto canonical body polygons, not a floating cap mesh.
-body.data.materials.append(scalp_shadow)
-scalp_shadow_index=len(body.data.materials)-1
+# No hard polygon scalp-shadow assignment in C6; canonical scalp remains skin under strand coverage.
 scalp_shadow_polygons=0
-for poly in body.data.polygons:
-    pts=[body.data.vertices[i].co for i in poly.vertices]
-    cx=sum(p.x for p in pts)/len(pts)
-    cy=sum(p.y for p in pts)/len(pts)
-    cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx)<.130 and cz>eye_mid_z+.045 and (cy<.020 or cz>eye_mid_z+.100):
-        poly.material_index=scalp_shadow_index
-        scalp_shadow_polygons+=1
-if scalp_shadow_polygons<40:
-    raise RuntimeError(f"scalp shadow polygon count unexpectedly low: {scalp_shadow_polygons}")
 
 craniofacial_deform={
   "cheek_y_m":0.0045,
@@ -466,80 +454,106 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# Strand-only hair: filtered MakeHuman helper-hair supplies root topology, not a rendered shell.
-hair_guide_path=RUNTIME/geom["hair_guide"]["output"]
-bpy.ops.wm.obj_import(
-    filepath=str(hair_guide_path),
-    forward_axis='Y',
-    up_axis='Z',
-    use_split_objects=False,
-    use_split_groups=False,
-)
-hair_guides=[o for o in bpy.context.selected_objects if o.type=='MESH']
-if len(hair_guides)!=1:
-    raise RuntimeError(f"Expected one filtered hair guide mesh, got {len(hair_guides)}")
-hair_mass_obj=hair_guides[0]
-hair_mass_obj.name="DIGE_V8_FILTERED_HAIR_GUIDE_SOURCE"
-hair_mass_obj.hide_render=True
-
-random.seed(20260919)
-guide_vertices=[hair_mass_obj.matrix_world @ v.co for v in hair_mass_obj.data.vertices]
+# C6 canonical-scalp strand groom. The filtered helper-hair remains provenance guidance only;
+# roots come from the actual closed body scalp surface to avoid bald crown/frontal gaps.
+hair_guide_meta=geom["hair_guide"]
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-root_candidates=[p for p in guide_vertices if p.z>eye_z+.010]
-if len(root_candidates)<40:
-    root_candidates=sorted(guide_vertices,key=lambda p:p.z,reverse=True)[:max(40,min(120,len(guide_vertices)))]
-head_center=Vector((0.0,-.060,eye_z+.055))
+head_center=Vector((0.0,-.055,eye_z+.055))
+scalp_roots=[]
+for v in body.data.vertices:
+    p=body.matrix_world @ v.co
+    if p.z < eye_z+.030:
+        continue
+    if abs(p.x) > .128:
+        continue
+    # Exclude visible face/forehead below the hairline while keeping the crown.
+    if p.y > .038 and p.z < eye_z+.095:
+        continue
+    # Exclude low lateral ear/temple region.
+    if abs(p.x) > .108 and p.z < eye_z+.070:
+        continue
+    scalp_roots.append(p)
+
+if len(scalp_roots)<120:
+    raise RuntimeError(f"C6 scalp root candidate count unexpectedly low: {len(scalp_roots)}")
+
+# Bound CPU cost deterministically while keeping broad scalp coverage.
+random.seed(20260919)
+if len(scalp_roots)>360:
+    scalp_roots=random.sample(scalp_roots,360)
+scalp_roots=sorted(scalp_roots,key=lambda p:(round(p.z,6),round(p.x,6),round(p.y,6)))
+
 up=Vector((0.0,0.0,1.0))
 strands=[]
-base_reps=18
-for p in root_candidates:
-    outward=(p-head_center).normalized()
+replicas=10
+for p in scalp_roots:
+    outward=(p-head_center)
+    if outward.length<1e-8:
+        outward=Vector((0,0,1))
+    else:
+        outward.normalize()
     tangent=outward.cross(up)
-    if tangent.length<1e-6:
-        tangent=Vector((1.0,0.0,0.0))
+    if tangent.length<1e-8:
+        tangent=Vector((1,0,0))
     else:
         tangent.normalize()
-    bitangent=outward.cross(tangent).normalized()
+    bitangent=outward.cross(tangent)
+    if bitangent.length<1e-8:
+        bitangent=Vector((0,1,0))
+    else:
+        bitangent.normalize()
+
     side=1.0 if p.x>=0 else -1.0
-    # Upper roots grow longer; lower side roots stay shorter to avoid curtain sheets.
-    upper=max(0.0,min(1.0,(p.z-(eye_z+.010))/.125))
-    for j in range(base_reps):
-        root=p+tangent*random.uniform(-.0016,.0016)+bitangent*random.uniform(-.0012,.0012)+outward*.00025
-        L=random.uniform(.11,.24)*(0.72+.45*upper)
-        fan=(j/(base_reps-1)-.5)
-        lateral=side*(.018+.020*upper)+fan*.012
-        back=-.018-random.uniform(.000,.015)
-        tip=root+Vector((lateral,back,-L))
-        mid1=root+(tip-root)*.30+Vector((side*random.uniform(-.005,.006),-.006,random.uniform(.002,.012)))
-        mid2=root+(tip-root)*.66+Vector((side*random.uniform(-.008,.008),-.004,random.uniform(-.010,.006)))
+    crown=max(0.0,min(1.0,(p.z-(eye_z+.03))/.12))
+    rear=max(0.0,min(1.0,(-p.y+.02)/.18))
+    for j in range(replicas):
+        jitter=tangent*random.uniform(-.0014,.0014)+bitangent*random.uniform(-.0010,.0010)+outward*.00022
+        root=p+jitter
+
+        # Short crop: top is 3.5-6.5 cm, lower side/back 2.2-4.5 cm.
+        L=random.uniform(.035,.065) if crown>.52 else random.uniform(.022,.045)
+        L*=.92+.18*rear
+
+        # Lay strands backward and slightly downward instead of radially spiking.
+        part=side*(.12+.12*crown)
+        fall=Vector((part,-.58,-.48+.18*crown))
+        direction=(outward*.22+fall*.78)
+        if direction.length<1e-8:
+            direction=Vector((0,-.7,-.3))
+        direction.normalize()
+
+        tip=root+direction*L
+        bend=Vector((side*random.uniform(-.004,.004),random.uniform(-.004,.002),random.uniform(-.002,.005)))
+        mid1=root+(tip-root)*.34+bend*.45
+        mid2=root+(tip-root)*.70-bend*.25
         strands.append([tuple(root),tuple(mid1),tuple(mid2),tuple(tip)])
 
-# Sparse flyaways break the silhouette without becoming the mass itself.
-for _ in range(180):
-    p=random.choice(root_candidates)
+# Sparse fine flyaways break the silhouette without becoming a shell.
+flyaways=160
+for _ in range(flyaways):
+    p=random.choice(scalp_roots)
     side=1.0 if p.x>=0 else -1.0
-    root=p+Vector((random.uniform(-.001,.001),random.uniform(-.0008,.0008),random.uniform(-.001,.001)))
-    L=random.uniform(.055,.14)
-    tip=root+Vector((side*random.uniform(.015,.050),random.uniform(-.025,.005),-L))
-    mid=root+(tip-root)*.55+Vector((side*random.uniform(-.010,.010),random.uniform(-.008,.008),random.uniform(-.006,.010)))
+    root=p+Vector((random.uniform(-.001,.001),random.uniform(-.0007,.0007),random.uniform(-.001,.001)))
+    L=random.uniform(.028,.070)
+    tip=root+Vector((side*random.uniform(.004,.018),random.uniform(-.030,-.008),random.uniform(-.040,.012)))
+    mid=root+(tip-root)*.55+Vector((side*random.uniform(-.006,.006),random.uniform(-.004,.004),random.uniform(-.004,.008)))
     strands.append([tuple(root),tuple(mid),tuple(tip)])
 
-curve_object("DIGE_V8_GUIDE_TO_STRAND_GROOM",strands,.000035,hair)
+curve_object("DIGE_V8_C6_SCALP_STRANDS",strands,.000026,hair)
 
 hair_surface_contract={
-    "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR",
-    "source_faces":geom["hair_guide"]["source_faces"],
-    "removed_front_faces":geom["hair_guide"]["removed_front_faces"],
-    "retained_faces":geom["hair_guide"]["faces"],
-    "guide_vertices":geom["hair_guide"]["vertices"],
-    "guide_sha256":geom["hair_guide"]["sha256"],
-    "root_candidate_count":len(root_candidates),
-    "base_reps":base_reps,
-    "flyaway_count":180,
+    "root_source":"CANONICAL_BODY_SCALP_SURFACE",
+    "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR_PROVENANCE_ONLY",
+    "guide_sha256":hair_guide_meta["sha256"],
+    "guide_faces":hair_guide_meta["faces"],
+    "guide_removed_front_faces":hair_guide_meta["removed_front_faces"],
+    "root_candidate_count":len(scalp_roots),
+    "replicas_per_root":replicas,
+    "flyaway_count":flyaways,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000035,
+    "bevel_radius_m":0.000026,
     "mass_mesh_rendered":False,
-    "style":"GUIDE_TO_STRAND_INTERPOLATED_V2",
+    "style":"CANONICAL_SCALP_SHORT_CROP_V2",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -702,20 +716,20 @@ receipt={
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+ "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C5_REGIONAL_SKIN_MESO_FACE_GUIDE_STRANDS_V1",
+ "appearance_candidate":"C6_C5_SKIN_MESO_WETLINE_CANONICAL_SCALP_SHORT_CROP_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
-   "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+   "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE_SWEEPS; STUBBLE_SWEEP_REJECTED; R4_FILTERED_HAIR_GUIDE_REUSED"
+   "selection_basis":"C5_SKIN+MESO+WETLINE_RETAINED; C5_STRAND_ROOT_COVERAGE_REJECTED; C6_CANONICAL_SCALP_SHORT_CROP"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[105,520,1650]},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "provenance":{
