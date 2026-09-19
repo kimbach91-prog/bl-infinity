@@ -264,25 +264,8 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
 curve_object("DIGE_V8_BROWS",brow_hairs,.00015,hair)
 curve_object("DIGE_V8_LASHES",lashes,.00013,black)
 
-# Partial scalp cap hides root discontinuities while keeping forehead/face unobstructed.
+# Scalp-cap surface removed: run19 proved a closed scalp proxy reads as a helmet.
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-bpy.ops.mesh.primitive_uv_sphere_add(segments=96,ring_count=48,location=(0,-.038,eye_z+.048))
-scalp=bpy.context.object
-scalp.name="DIGE_V8_SCALP_CAP"
-scalp.scale=(.099,.079,.068)
-bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
-bmcap=bmesh.new(); bmcap.from_mesh(scalp.data)
-kill=[]
-for v in bmcap.verts:
-    wp=scalp.matrix_world @ v.co
-    if wp.y>-.006 and wp.z<eye_z+.102:
-        kill.append(v)
-if kill:
-    bmesh.ops.delete(bmcap,geom=kill,context='VERTS')
-bmcap.to_mesh(scalp.data); bmcap.free()
-scalp.data.materials.append(scalp_mat)
-bpy.context.view_layer.objects.active=scalp
-bpy.ops.object.shade_smooth()
 
 # Swept-back deterministic groom. Long strands are limited to side/back; frontal roots remain short.
 random.seed(20260919)
@@ -292,7 +275,7 @@ rx=min(.118,(hair_box["bbox_max"][0]-hair_box["bbox_min"][0])*.44)
 ry=min(.092,(hair_box["bbox_max"][1]-hair_box["bbox_min"][1])*.34)
 rz=.065
 strands=[]
-for i in range(2200):
+for i in range(4500):
     phi=random.uniform(-math.pi,math.pi)
     theta=random.uniform(.12,1.38)
     x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
@@ -325,7 +308,7 @@ for i in range(420):
         (x+side*.002+jitter,root_y-.018,root_z+.018),
         (x+side*.005+jitter,root_y-.040,root_z+.032)
     ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.000070,hair)
+curve_object("DIGE_V8_HAIRLINE",hairline,.000045,hair)
 
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
@@ -337,7 +320,7 @@ for i in range(90):
         continue
     side=1 if x>=0 else -1
     strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.00019,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.000070,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
