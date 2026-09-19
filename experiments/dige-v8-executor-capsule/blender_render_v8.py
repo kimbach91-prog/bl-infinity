@@ -274,7 +274,7 @@ scene.cycles.glossy_bounces=4
 scene.cycles.transmission_bounces=8
 scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
 scene.render.resolution_percentage=100
-scene.view_settings.look='Medium High Contrast'
+scene.view_settings.look='AgX - Medium High Contrast'
 vl=scene.view_layers[0]
 vl.use_pass_normal=True; vl.use_pass_z=True; vl.use_pass_diffuse_color=True
 vl.use_pass_glossy_direct=True; vl.use_pass_transmission_direct=True
