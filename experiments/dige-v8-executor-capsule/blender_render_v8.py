@@ -321,7 +321,7 @@ curve_object("DIGE_V8_LASHES",lashes,.00013,black)
 # Scalp-cap surface removed: run19 proved a closed scalp proxy reads as a helmet.
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
 
-# Swept-back deterministic groom. Long strands are limited to side/back; frontal roots remain short.
+# Surface-bound short-crop groom. Fibers follow an ellipsoid scalp normal with a mild backward sweep.
 random.seed(20260919)
 hair_box=landmarks["hair_helper"]
 scalp_center=(0.0,-.034,eye_z+.050)
@@ -329,21 +329,36 @@ rx=min(.118,(hair_box["bbox_max"][0]-hair_box["bbox_min"][0])*.44)
 ry=min(.092,(hair_box["bbox_max"][1]-hair_box["bbox_min"][1])*.34)
 rz=.065
 strands=[]
-for i in range(4500):
+for i in range(5200):
     phi=random.uniform(-math.pi,math.pi)
-    theta=random.uniform(.12,1.38)
+    theta=random.uniform(.10,1.43)
     x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
     y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
     z=scalp_center[2]+rz*math.cos(theta)
-    front_zone=(y>-.006 and abs(x)<.078)
-    side=1 if x>=0 else -1
-    L=random.uniform(.018,.045) if front_zone else random.uniform(.035,.095)
-    wave=random.uniform(-.0035,.0035)
+
+    # Approximate the outward normal of the scalp ellipsoid.
+    nx=(x-scalp_center[0])/(rx*rx)
+    ny=(y-scalp_center[1])/(ry*ry)
+    nz=(z-scalp_center[2])/(rz*rz)
+    nl=math.sqrt(nx*nx+ny*ny+nz*nz) or 1.0
+    nx/=nl; ny/=nl; nz/=nl
+
+    front_zone=(y>-.004 and abs(x)<.080)
+    L=random.uniform(.008,.018) if front_zone else random.uniform(.012,.028)
+
+    # Hair stands off the scalp, but is combed mildly backward and slightly toward the crown.
+    dx=nx*.72 + random.uniform(-.10,.10)
+    dy=ny*.35 - .55 + random.uniform(-.08,.08)
+    dz=nz*.72 + .12 + random.uniform(-.08,.08)
+    dl=math.sqrt(dx*dx+dy*dy+dz*dz) or 1.0
+    dx/=dl; dy/=dl; dz/=dl
+
+    bend=random.uniform(-.0014,.0014)
     strands.append([
         (x,y,z),
-        (x*1.012+wave*.25,y-.006,z-L*.24),
-        (x*1.025+side*random.uniform(0,.004)-wave*.20,y-.012,z-L*.58),
-        (x*1.035+side*random.uniform(0,.007)+wave,y-.018,z-L)
+        (x+dx*L*.34+bend*.20, y+dy*L*.34, z+dz*L*.34),
+        (x+dx*L*.70-bend*.15, y+dy*L*.70, z+dz*L*.70),
+        (x+dx*L+bend, y+dy*L, z+dz*L)
     ])
 # Sparse short hairline: roots use the real forehead surface, then immediately bend backward.
 head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.018 and v.co.y>-0.02]
@@ -375,15 +390,23 @@ for i in range(180):
     ])
 curve_object("DIGE_V8_HAIRLINE",hairline,.000035,hair)
 
-for i in range(120):
+for i in range(140):
     phi=random.uniform(-math.pi,math.pi)
-    theta=random.uniform(.20,1.18)
+    theta=random.uniform(.18,1.20)
     x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
     y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
     z=scalp_center[2]+rz*math.cos(theta)
-    side=1 if x>=0 else -1
-    L=random.uniform(.018,.055)
-    strands.append([(x,y,z),(x+side*.002,y-.008,z+.006),(x+side*.005,y-.015,z-L)])
+    nx=(x-scalp_center[0])/(rx*rx)
+    ny=(y-scalp_center[1])/(ry*ry)
+    nz=(z-scalp_center[2])/(rz*rz)
+    nl=math.sqrt(nx*nx+ny*ny+nz*nz) or 1.0
+    nx/=nl; ny/=nl; nz/=nl
+    L=random.uniform(.018,.035)
+    strands.append([
+        (x,y,z),
+        (x+nx*L*.45,y+(ny*.25-.45)*L*.45,z+(nz*.80+.10)*L*.45),
+        (x+nx*L,y+(ny*.25-.45)*L,z+(nz*.80+.10)*L)
+    ])
 curve_object("DIGE_V8_STRAND_GROOM",strands,.000060,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -538,7 +561,7 @@ receipt={
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"SHORT_CROP_SURFACE_BOUND_V1",
+ "hair_regime":"SHORT_CROP_SURFACE_NORMAL_V2",
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
