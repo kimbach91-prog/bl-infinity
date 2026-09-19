@@ -313,10 +313,10 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
     for pair in (xs,ys,zs):
         if pair[0]>=hl or pair[1]>=hl or pair[2]==0:
             raise RuntimeError(f"C12 {name} MHCLO scale reference invalid: {pair} body_vertices={hl}")
-    s0=abs(hverts[xs[0]].co.x-hverts[xs[1]].co.x)/xs[2]
+    s0=abs(hverts[xs[0]].x-hverts[xs[1]].x)/xs[2]
     # MakeClothes Blender importer maps y_scale to Blender Z and z_scale to Blender Y.
-    s2=abs(hverts[ys[0]].co.z-hverts[ys[1]].co.z)/ys[2]
-    s1=abs(hverts[zs[0]].co.y-hverts[zs[1]].co.y)/zs[2]
+    s2=abs(hverts[ys[0]].z-hverts[ys[1]].z)/ys[2]
+    s1=abs(hverts[zs[0]].y-hverts[zs[1]].y)/zs[2]
     scales=(s0,s1,s2)
 
     for n in range(expected):
