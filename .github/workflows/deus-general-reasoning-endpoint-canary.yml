@@ -1,0 +1,36 @@
+name: DEUS General Reasoning Endpoint Canary
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/general_reasoning_endpoint.py'
+      - 'public_benchmark/wave1/test_general_reasoning_endpoint.py'
+      - 'public_benchmark/wave1/deus_bench_executor_contract.json'
+      - 'public_benchmark/wave1/independent_evaluator_contract.json'
+      - '.github/workflows/deus-general-reasoning-endpoint-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Endpoint contract canary
+        run: python public_benchmark/wave1/test_general_reasoning_endpoint.py
+      - name: Validate contracts
+        run: |
+          python - <<'PY'
+          import json
+          for p in [
+            "public_benchmark/wave1/deus_bench_executor_contract.json",
+            "public_benchmark/wave1/independent_evaluator_contract.json"
+          ]:
+            x=json.load(open(p))
+            assert x["schema"].startswith("DEUS_")
+          print("CONTRACTS=PASS")
+          PY
