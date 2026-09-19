@@ -1,0 +1,118 @@
+name: DIGE V8 C9 Hair Density Sweep
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c9-hair-density-sweep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c9-hair-density-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  density-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/c9_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Resolve official CC0 skin albedo
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          PACK=/tmp/skins01_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o "$PACK"
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $PACK" | sha256sum -c -
+          unzip -p "$PACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+      - name: Render controlled density candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          for SPEC in "6k:6000:140" "12k:12000:210" "18k:18000:280"; do
+            TAG=$(echo "$SPEC" | cut -d: -f1)
+            ROOTS=$(echo "$SPEC" | cut -d: -f2)
+            GUIDES=$(echo "$SPEC" | cut -d: -f3)
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="c9_${TAG}" \
+            DIGE_HAIR_ROOT_COUNT="$ROOTS" \
+            DIGE_HAIR_GUIDE_COUNT="$GUIDES" \
+            DIGE_HAIR_LEN_MIN="0.080" \
+            DIGE_HAIR_LEN_MAX="0.150" \
+            DIGE_HAIR_BEVEL="0.000032" \
+            DIGE_SKIN_ALBEDO_PATH="runtime/assets/young_eurasian_female_diffuse.png" \
+            DIGE_SKIN_ALBEDO_SHA256="e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf" \
+            DIGE_SAMPLES_PREVIEW="8" \
+            DIGE_SAMPLES_HERO="12" \
+            DIGE_RENDER_SEED="20260919" \
+            DIGE_RUNTIME_COMMIT="$GITHUB_SHA" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee "runtime/c9_${TAG}.log"
+          done
+
+      - name: Verify density receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          expected={"6k":(6000,140),"12k":(12000,210),"18k":(18000,280)}
+          root=pathlib.Path("runtime/renders")
+          for tag,(roots,guides) in expected.items():
+              j=json.loads((root/f"c9_{tag}"/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              h=j["hair_surface_contract"]
+              assert j["engine"]=="CYCLES" and j["device"]=="CPU"
+              assert j["render_set"]=="HERO_ONLY"
+              assert j["skin_albedo"]["sha256"]=="e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+              assert h["style"]=="STRATIFIED_AREA_GUIDE_CHILD_CLUMP_V2"
+              assert h["root_count"]==roots and h["guide_count"]==guides
+              assert h["allocation"]=="PROPORTIONAL_AREA_LARGEST_REMAINDER"
+              assert h["mass_mesh_rendered"] is False
+              assert len(j["outputs"])==1 and j["outputs"][0]["view"]=="04_HERO85"
+              assert j["denoise_ab"]["raw_aov"]["sha256"] and j["denoise_ab"]["denoised"]["sha256"]
+          print("DIGE_C9_HAIR_DENSITY_SWEEP_PASS")
+          PY
+
+      - name: Upload density sweep
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C9-HAIR-DENSITY-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c9_*/04_HERO85_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c9_*/04_HERO85_DENOISED_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c9_*/DIGE_V8_RENDER_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 14

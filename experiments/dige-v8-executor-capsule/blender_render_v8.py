@@ -30,6 +30,11 @@ SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 SKIN_ALBEDO_PATH=os.environ.get("DIGE_SKIN_ALBEDO_PATH","").strip()
 SKIN_ALBEDO_EXPECTED_SHA256=os.environ.get("DIGE_SKIN_ALBEDO_SHA256","").strip().lower()
+HAIR_ROOT_COUNT=int(os.environ.get("DIGE_HAIR_ROOT_COUNT","6000"))
+HAIR_GUIDE_COUNT=int(os.environ.get("DIGE_HAIR_GUIDE_COUNT","140"))
+HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.080"))
+HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.150"))
+HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000032"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -524,17 +529,18 @@ if len(scalp_tris)<100 or scalp_area<=0:
     raise RuntimeError(f"C8 scalp triangle selection invalid: tris={len(scalp_tris)} area={scalp_area}")
 
 random.seed(20260919)
-cdf=[]
-acc=0.0
-for a,b,c3,ar in scalp_tris:
-    acc+=ar
-    cdf.append(acc)
 
-def sample_scalp_point():
-    import bisect
-    x=random.random()*acc
-    idx=bisect.bisect_left(cdf,x)
-    a,b,c3,_=scalp_tris[min(idx,len(scalp_tris)-1)]
+# Stratified allocation: every accepted scalp triangle receives roots proportional to its area.
+# This eliminates random bald islands from independent global sampling.
+root_count=max(600,HAIR_ROOT_COUNT)
+raw_counts=[root_count*(tr[3]/scalp_area) for tr in scalp_tris]
+alloc=[int(v) for v in raw_counts]
+remaining=root_count-sum(alloc)
+order=sorted(range(len(scalp_tris)),key=lambda i:(raw_counts[i]-alloc[i]),reverse=True)
+for i in order[:remaining]:
+    alloc[i]+=1
+
+def sample_in_triangle(a,b,c3):
     r1=math.sqrt(random.random()); r2=random.random()
     p=a*(1-r1)+b*(r1*(1-r2))+c3*(r1*r2)
     n=(b-a).cross(c3-a)
@@ -547,18 +553,28 @@ def sample_scalp_point():
         n=-n
     return p,n
 
-root_count=2600
-roots=[sample_scalp_point() for _ in range(root_count)]
+roots=[]
+for (a,b,c3,ar),count in zip(scalp_tris,alloc):
+    for _ in range(count):
+        roots.append(sample_in_triangle(a,b,c3))
+if len(roots)!=root_count:
+    raise RuntimeError(f"C9 stratified root count drift: expected={root_count} got={len(roots)}")
 
-# Sparse guide centers define local flow/clumps; children inherit and vary that field.
-guide_count=96
-guide_indices=random.sample(range(root_count),guide_count)
+guide_count=max(24,min(HAIR_GUIDE_COUNT,root_count))
+# Spatially spread guides: sort by azimuth/z then take evenly spaced indices.
+roots_order=sorted(range(root_count),key=lambda i:(math.atan2(roots[i][0].x,roots[i][0].y+.055),roots[i][0].z))
+guide_indices=[roots_order[min(len(roots_order)-1,round(j*(len(roots_order)-1)/(guide_count-1)))] for j in range(guide_count)]
 guides=[roots[i] for i in guide_indices]
 
 def tangent_flow(p,n):
     side=1.0 if p.x>=0 else -1.0
     crown=max(0.0,min(1.0,(p.z-(eye_z+.028))/.135))
-    desired=Vector((side*(.10+.12*crown),-1.0,-.22+.26*crown))
+    front=max(0.0,min(1.0,(p.y+.015)/.070))
+    if front>.25:
+        # Front/temple roots sweep laterally and back so hair remains visible around the face.
+        desired=Vector((side*(.38+.24*crown),-.74,-.12+.18*crown))
+    else:
+        desired=Vector((side*(.10+.12*crown),-1.0,-.22+.26*crown))
     flow=desired-n*desired.dot(n)
     if flow.length<1e-8:
         flow=Vector((side*.08,-.98,-.15))
@@ -578,7 +594,7 @@ for root,n in roots:
     flow.normalize()
 
     # Medium-short style: enough mass to cover scalp while remaining easier than long hair.
-    L=random.uniform(.075,.145)*(0.86+.24*crown)
+    L=random.uniform(HAIR_LEN_MIN,HAIR_LEN_MAX)*(0.86+.24*crown)
     root2=root+n*.00028
     tip=root2+flow*L+Vector((0,0,-.012*(1-crown)))
 
@@ -591,7 +607,7 @@ for root,n in roots:
     p3=root2+(tip-root2)*.82+guide_delta*(clump_strength*.28)+frizz*.45
     strands.append([tuple(root2),tuple(p1),tuple(p2),tuple(p3),tuple(tip)])
 
-flyaways=140
+flyaways=max(100,int(root_count*.012))
 for _ in range(flyaways):
     root,n=random.choice(roots)
     base,crown=tangent_flow(root,n)
@@ -602,23 +618,26 @@ for _ in range(flyaways):
     mid=root2+(tip-root2)*.52+Vector((side*random.uniform(-.009,.009),random.uniform(-.006,.006),random.uniform(-.006,.010)))
     strands.append([tuple(root2),tuple(mid),tuple(tip)])
 
-curve_object("DIGE_V8_C8_AREA_CLUMP_GROOM",strands,.000032,hair)
+curve_object("DIGE_V8_C9_STRATIFIED_CLUMP_GROOM",strands,HAIR_BEVEL,hair)
 
 hair_surface_contract={
-    "root_source":"AREA_WEIGHTED_CANONICAL_SCALP_TRIANGLES",
+    "root_source":"STRATIFIED_AREA_CANONICAL_SCALP_TRIANGLES",
     "guide_source":"DERIVED_LOCAL_FLOW_WITH_FILTERED_MAKEHUMAN_HAIR_PROVENANCE",
     "guide_sha256":hair_guide_meta["sha256"],
     "scalp_triangle_count":len(scalp_tris),
     "scalp_area_m2":scalp_area,
     "root_count":root_count,
     "guide_count":guide_count,
+    "length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
+    "allocation":"PROPORTIONAL_AREA_LARGEST_REMAINDER",
+    "front_flow":"TEMPLE_LATERAL_BACK_SWEEP",
     "flyaway_count":flyaways,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000032,
+    "bevel_radius_m":HAIR_BEVEL,
     "mass_mesh_rendered":False,
     "clumping":"NEAREST_GUIDE_XZ_PROGRESSIVE",
     "frizz":"LOW_AMPLITUDE_PER_STRAND",
-    "style":"AREA_SAMPLED_GUIDE_CHILD_CLUMP_V1",
+    "style":"STRATIFIED_AREA_GUIDE_CHILD_CLUMP_V2",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -783,14 +802,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C8_CC0_TEXTURE_RANDOM_WALK_AREA_CLUMP_HAIR_V1",
+ "appearance_candidate":"C9_CC0_SKIN_STRATIFIED_DENSITY_HAIR_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C7_OFFICIAL_CC0_SKIN_PROBE_PASS; C5_MESO+WETLINE_RETAINED; C6_VERTEX_ROOT_COVERAGE_REJECTED; C8_AREA_SAMPLING+CLUMP"
+   "selection_basis":"C8_SKIN_VISUAL_GAIN_RETAINED; C8_2600_ROOT_HAIR_DENSITY_REJECTED; C9_STRATIFIED_DENSITY_SWEEP"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
