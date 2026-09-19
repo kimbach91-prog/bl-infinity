@@ -42,45 +42,95 @@ def make_skin():
         bs.subsurface_method='RANDOM_WALK_SKIN'
     if hasattr(bs,"distribution"):
         bs.distribution='MULTI_GGX'
-    set_input(bs,"Subsurface Radius",(1.0,.45,.20))
-    set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Subsurface Radius",(1.0,.45,.18))
+    set_input(bs,"Specular IOR Level",.32)
     set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
+    set_input(bs,"Coat Weight",.018)
+    set_input(bs,"Coat Roughness",.28)
 
-    macro=nt.nodes.new("ShaderNodeTexNoise")
-    macro.inputs["Scale"].default_value=12.0
-    macro.inputs["Detail"].default_value=3.0
+    tex=nt.nodes.new("ShaderNodeTexCoord")
+
+    # Regional melanin/hemoglobin proxy: broad field plus independent chroma breakup.
+    regional=nt.nodes.new("ShaderNodeTexNoise")
+    regional.inputs["Scale"].default_value=3.5
+    regional.inputs["Detail"].default_value=3.0
+    regional.inputs["Roughness"].default_value=.52
+    nt.links.new(tex.outputs["Generated"],regional.inputs["Vector"])
+
     tone=nt.nodes.new("ShaderNodeValToRGB")
-    tone.color_ramp.elements[0].position=.20
-    tone.color_ramp.elements[0].color=(0.255,0.090,0.058,1)
-    tone.color_ramp.elements[1].position=.80
-    tone.color_ramp.elements[1].color=(0.335,0.145,0.090,1)
-    nt.links.new(macro.outputs["Fac"],tone.inputs["Fac"])
-    nt.links.new(tone.outputs["Color"],bs.inputs["Base Color"])
+    tone.color_ramp.elements[0].position=.18
+    tone.color_ramp.elements[0].color=(0.205,0.055,0.036,1)
+    tone.color_ramp.elements[1].position=.82
+    tone.color_ramp.elements[1].color=(0.385,0.165,0.102,1)
+    nt.links.new(regional.outputs["Fac"],tone.inputs["Fac"])
+
+    chroma=nt.nodes.new("ShaderNodeTexNoise")
+    chroma.inputs["Scale"].default_value=31.0
+    chroma.inputs["Detail"].default_value=4.2
+    chroma.inputs["Roughness"].default_value=.66
+    nt.links.new(tex.outputs["Generated"],chroma.inputs["Vector"])
+    chroma_ramp=nt.nodes.new("ShaderNodeValToRGB")
+    chroma_ramp.color_ramp.elements[0].color=(0.74,0.46,0.39,1)
+    chroma_ramp.color_ramp.elements[1].color=(1.05,0.88,0.77,1)
+    nt.links.new(chroma.outputs["Fac"],chroma_ramp.inputs["Fac"])
+    color_mix=nt.nodes.new("ShaderNodeMixRGB")
+    color_mix.blend_type='MULTIPLY'
+    color_mix.inputs["Fac"].default_value=.28
+    nt.links.new(tone.outputs["Color"],color_mix.inputs[1])
+    nt.links.new(chroma_ramp.outputs["Color"],color_mix.inputs[2])
+    nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
+
+    # Roughness is independent from color so oily/dry patches do not mirror pigmentation.
+    rough_macro=nt.nodes.new("ShaderNodeTexNoise")
+    rough_macro.inputs["Scale"].default_value=6.0
+    rough_macro.inputs["Detail"].default_value=3.0
+    rough_macro.inputs["Roughness"].default_value=.55
+    nt.links.new(tex.outputs["Generated"],rough_macro.inputs["Vector"])
+    rough_micro=nt.nodes.new("ShaderNodeTexNoise")
+    rough_micro.inputs["Scale"].default_value=72.0
+    rough_micro.inputs["Detail"].default_value=2.8
+    rough_micro.inputs["Roughness"].default_value=.60
+    nt.links.new(tex.outputs["Generated"],rough_micro.inputs["Vector"])
+    r1=nt.nodes.new("ShaderNodeMath"); r1.operation='MULTIPLY'; r1.inputs[1].default_value=.72
+    r2=nt.nodes.new("ShaderNodeMath"); r2.operation='MULTIPLY'; r2.inputs[1].default_value=.28
+    rsum=nt.nodes.new("ShaderNodeMath"); rsum.operation='ADD'
+    nt.links.new(rough_macro.outputs["Fac"],r1.inputs[0]); nt.links.new(rough_micro.outputs["Fac"],r2.inputs[0])
+    nt.links.new(r1.outputs[0],rsum.inputs[0]); nt.links.new(r2.outputs[0],rsum.inputs[1])
     rough_map=nt.nodes.new("ShaderNodeMapRange")
     rough_map.inputs["From Min"].default_value=0.0
     rough_map.inputs["From Max"].default_value=1.0
     rough_map.inputs["To Min"].default_value=SKIN_ROUGH_MIN
     rough_map.inputs["To Max"].default_value=SKIN_ROUGH_MAX
-    nt.links.new(macro.outputs["Fac"],rough_map.inputs["Value"])
+    nt.links.new(rsum.outputs[0],rough_map.inputs["Value"])
     nt.links.new(rough_map.outputs["Result"],bs.inputs["Roughness"])
 
+    # Multi-scale meso/micro normal: orange-peel -> pores -> fine breakup.
+    meso=nt.nodes.new("ShaderNodeTexNoise")
+    meso.inputs["Scale"].default_value=105.0
+    meso.inputs["Detail"].default_value=5.0
+    meso.inputs["Roughness"].default_value=.68
+    nt.links.new(tex.outputs["Generated"],meso.inputs["Vector"])
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=260.0
+    pore.inputs["Scale"].default_value=520.0
     pore.inputs["Detail"].default_value=4.0
     pore.inputs["Roughness"].default_value=.62
+    nt.links.new(tex.outputs["Generated"],pore.inputs["Vector"])
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=850.0
+    micro.inputs["Scale"].default_value=1650.0
     micro.inputs["Detail"].default_value=2.0
-    pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.68
-    mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.32
-    mix=nt.nodes.new("ShaderNodeMath"); mix.operation='ADD'
-    nt.links.new(pore.outputs["Fac"],pscale.inputs[0])
-    nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
-    nt.links.new(pscale.outputs[0],mix.inputs[0]); nt.links.new(mscale.outputs[0],mix.inputs[1])
+    micro.inputs["Roughness"].default_value=.58
+    nt.links.new(tex.outputs["Generated"],micro.inputs["Vector"])
+    m1=nt.nodes.new("ShaderNodeMath"); m1.operation='MULTIPLY'; m1.inputs[1].default_value=.30
+    m2=nt.nodes.new("ShaderNodeMath"); m2.operation='MULTIPLY'; m2.inputs[1].default_value=.48
+    m3=nt.nodes.new("ShaderNodeMath"); m3.operation='MULTIPLY'; m3.inputs[1].default_value=.22
+    ma=nt.nodes.new("ShaderNodeMath"); ma.operation='ADD'
+    mb=nt.nodes.new("ShaderNodeMath"); mb.operation='ADD'
+    nt.links.new(meso.outputs["Fac"],m1.inputs[0]); nt.links.new(pore.outputs["Fac"],m2.inputs[0]); nt.links.new(micro.outputs["Fac"],m3.inputs[0])
+    nt.links.new(m1.outputs[0],ma.inputs[0]); nt.links.new(m2.outputs[0],ma.inputs[1]); nt.links.new(ma.outputs[0],mb.inputs[0]); nt.links.new(m3.outputs[0],mb.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.075
-    bump.inputs["Distance"].default_value=.00020
-    nt.links.new(mix.outputs[0],bump.inputs["Height"])
+    bump.inputs["Strength"].default_value=.085
+    bump.inputs["Distance"].default_value=.00011
+    nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m
 
@@ -151,6 +201,7 @@ iris=principled("IRIS",(0.070,0.026,0.012),rough=.32,ior=1.40)
 iris_ring=principled("IRIS_RING",(0.012,0.005,0.003),rough=.34,ior=1.40)
 black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
+wetline=principled("EYE_WETLINE",(0.90,0.92,0.94),rough=.018,ior=1.333,transmission=1.0)
 lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
 mouth_dark=principled("MOUTH_DARK",(0.018,0.004,0.004),rough=.58,ior=1.35)
 scalp_shadow=principled("SCALP_SHADOW",(0.075,0.026,0.018),rough=.50,ior=1.42,subsurface=.06)
@@ -229,6 +280,11 @@ craniofacial_deform={
   "lip_volume_y_m":0.0018,
   "jaw_x_scale":0.985,
   "asymmetry_y_m":0.0007,
+  "brow_ridge_y_m":0.0013,
+  "tear_trough_y_m":0.00075,
+  "nasolabial_y_m":0.00085,
+  "philtrum_groove_y_m":0.00065,
+  "philtrum_ridge_y_m":0.00055,
 }
 def g2(x,z,cx,cz,sx,sz):
     return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
@@ -251,6 +307,25 @@ for v in body.data.vertices:
 
     # Native lip volume: geometry, not a painted/floating replacement.
     co.y += craniofacial_deform["lip_volume_y_m"]*g2(co.x,co.z,0.0,mouth_z,.030,.008)
+
+    # Meso facial planes. All offsets remain sub-1.5 mm and are landmark-relative.
+    co.y += craniofacial_deform["brow_ridge_y_m"]*(
+        g2(co.x,co.z,.030,eye_mid_z+.024,.020,.013)+
+        g2(co.x,co.z,-.030,eye_mid_z+.024,.020,.013)
+    )
+    co.y -= craniofacial_deform["tear_trough_y_m"]*(
+        g2(co.x,co.z,.032,eye_mid_z-.016,.023,.010)+
+        g2(co.x,co.z,-.032,eye_mid_z-.016,.023,.010)
+    )
+    co.y -= craniofacial_deform["nasolabial_y_m"]*(
+        g2(co.x,co.z,.027,mouth_z+.020,.015,.024)+
+        g2(co.x,co.z,-.027,mouth_z+.020,.015,.024)
+    )
+    co.y -= craniofacial_deform["philtrum_groove_y_m"]*g2(co.x,co.z,0.0,mouth_z+.014,.0055,.010)
+    co.y += craniofacial_deform["philtrum_ridge_y_m"]*(
+        g2(co.x,co.z,.006,mouth_z+.014,.004,.010)+
+        g2(co.x,co.z,-.006,mouth_z+.014,.004,.010)
+    )
 
     # Chin projection.
     co.y += craniofacial_deform["chin_y_m"]*g2(co.x,co.z,0.0,chin_z,.035,.022)
@@ -374,8 +449,24 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
 curve_object("DIGE_V8_BROWS",brow_hairs,.000075,hair)
 curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
-# Hybrid hair: filtered MakeHuman helper-hair guide supplies open-face side/back mass;
-# fine strand curves supply microstructure. The 50 front-curtain faces are removed in the builder.
+# Lower-lid wetline/tear meniscus follows the native lower-lid landmarks.
+wetlines=[]
+for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerlid")):
+    ec=landmarks[eye_key]["center"]
+    lid=landmarks[lid_key]
+    mi=lid["bbox_min"]; ma=lid["bbox_max"]
+    pts=[]
+    for i in range(9):
+        t=i/8
+        x=mi[0]+(ma[0]-mi[0])*t
+        arch=math.sin(t*math.pi)
+        y=max(ma[1]+.00045,ec[1]+.0070)
+        z=ma[2]-.0008+.0012*arch
+        pts.append((x,y,z))
+    wetlines.append(pts)
+curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
+
+# Strand-only hair: filtered MakeHuman helper-hair supplies root topology, not a rendered shell.
 hair_guide_path=RUNTIME/geom["hair_guide"]["output"]
 bpy.ops.wm.obj_import(
     filepath=str(hair_guide_path),
@@ -388,31 +479,52 @@ hair_guides=[o for o in bpy.context.selected_objects if o.type=='MESH']
 if len(hair_guides)!=1:
     raise RuntimeError(f"Expected one filtered hair guide mesh, got {len(hair_guides)}")
 hair_mass_obj=hair_guides[0]
-hair_mass_obj.name="DIGE_V8_FILTERED_HAIR_MASS"
-hair_mass_obj.data.materials.append(hair_mass)
-bpy.context.view_layer.objects.active=hair_mass_obj
-bpy.ops.object.shade_smooth()
-hsub=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_SUBDIV","SUBSURF"); hsub.levels=1; hsub.render_levels=2
-hsolid=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_THICKNESS","SOLIDIFY"); hsolid.thickness=.00055; hsolid.offset=.25
+hair_mass_obj.name="DIGE_V8_FILTERED_HAIR_GUIDE_SOURCE"
+hair_mass_obj.hide_render=True
 
-# Fiber detail sampled deterministically from guide vertices, with shorter frontal/upper fibers
-# and longer side/back fibers. These do not define the primary silhouette.
 random.seed(20260919)
 guide_vertices=[hair_mass_obj.matrix_world @ v.co for v in hair_mass_obj.data.vertices]
+eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
+root_candidates=[p for p in guide_vertices if p.z>eye_z+.010]
+if len(root_candidates)<40:
+    root_candidates=sorted(guide_vertices,key=lambda p:p.z,reverse=True)[:max(40,min(120,len(guide_vertices)))]
+head_center=Vector((0.0,-.060,eye_z+.055))
+up=Vector((0.0,0.0,1.0))
 strands=[]
-for p in guide_vertices:
-    # Guide mesh is already filtered to the side/back region.
-    radial=Vector((p.x, p.y+.055, max(.001,p.z-1.46))).normalized()
-    reps=3 if p.z>1.58 else 2
-    for _ in range(reps):
-        jitter=Vector((random.uniform(-.0012,.0012),random.uniform(-.0008,.0008),random.uniform(-.0012,.0012)))
-        root=p+jitter
-        L=random.uniform(.018,.055) if p.z>1.55 else random.uniform(.035,.090)
-        side=1.0 if p.x>=0 else -1.0
-        tip=root+Vector((side*random.uniform(.002,.010),-.010,-L))
-        mid=root+(tip-root)*.48+Vector((side*random.uniform(-.003,.003),-.004,random.uniform(-.004,.004)))
-        strands.append([tuple(root),tuple(mid),tuple(tip)])
-curve_object("DIGE_V8_GUIDE_FIBERS",strands,.000045,hair)
+base_reps=18
+for p in root_candidates:
+    outward=(p-head_center).normalized()
+    tangent=outward.cross(up)
+    if tangent.length<1e-6:
+        tangent=Vector((1.0,0.0,0.0))
+    else:
+        tangent.normalize()
+    bitangent=outward.cross(tangent).normalized()
+    side=1.0 if p.x>=0 else -1.0
+    # Upper roots grow longer; lower side roots stay shorter to avoid curtain sheets.
+    upper=max(0.0,min(1.0,(p.z-(eye_z+.010))/.125))
+    for j in range(base_reps):
+        root=p+tangent*random.uniform(-.0016,.0016)+bitangent*random.uniform(-.0012,.0012)+outward*.00025
+        L=random.uniform(.11,.24)*(0.72+.45*upper)
+        fan=(j/(base_reps-1)-.5)
+        lateral=side*(.018+.020*upper)+fan*.012
+        back=-.018-random.uniform(.000,.015)
+        tip=root+Vector((lateral,back,-L))
+        mid1=root+(tip-root)*.30+Vector((side*random.uniform(-.005,.006),-.006,random.uniform(.002,.012)))
+        mid2=root+(tip-root)*.66+Vector((side*random.uniform(-.008,.008),-.004,random.uniform(-.010,.006)))
+        strands.append([tuple(root),tuple(mid1),tuple(mid2),tuple(tip)])
+
+# Sparse flyaways break the silhouette without becoming the mass itself.
+for _ in range(180):
+    p=random.choice(root_candidates)
+    side=1.0 if p.x>=0 else -1.0
+    root=p+Vector((random.uniform(-.001,.001),random.uniform(-.0008,.0008),random.uniform(-.001,.001)))
+    L=random.uniform(.055,.14)
+    tip=root+Vector((side*random.uniform(.015,.050),random.uniform(-.025,.005),-L))
+    mid=root+(tip-root)*.55+Vector((side*random.uniform(-.010,.010),random.uniform(-.008,.008),random.uniform(-.006,.010)))
+    strands.append([tuple(root),tuple(mid),tuple(tip)])
+
+curve_object("DIGE_V8_GUIDE_TO_STRAND_GROOM",strands,.000035,hair)
 
 hair_surface_contract={
     "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR",
@@ -421,9 +533,13 @@ hair_surface_contract={
     "retained_faces":geom["hair_guide"]["faces"],
     "guide_vertices":geom["hair_guide"]["vertices"],
     "guide_sha256":geom["hair_guide"]["sha256"],
+    "root_candidate_count":len(root_candidates),
+    "base_reps":base_reps,
+    "flyaway_count":180,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000045,
-    "style":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+    "bevel_radius_m":0.000035,
+    "mass_mesh_rendered":False,
+    "style":"GUIDE_TO_STRAND_INTERPOLATED_V2",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -588,6 +704,7 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
  "hair_surface_contract":hair_surface_contract,
+ "appearance_candidate":"C5_REGIONAL_SKIN_MESO_FACE_GUIDE_STRANDS_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
