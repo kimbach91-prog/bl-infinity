@@ -31,10 +31,17 @@ SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
-    m=bpy.data.materials.new("DIGE_V8_SKIN")
+    asset=CANON["assets"]["skin_texture_candidate"]
+    texture_path=RUNTIME/"assets"/asset["texture_runtime_name"]
+    mhmat_path=RUNTIME/"assets"/asset["mhmat_runtime_name"]
+    if not texture_path.exists() or sha(texture_path)!=asset["texture_sha256"]:
+        raise RuntimeError(f"C7 skin texture missing/hash mismatch: {texture_path}")
+    if not mhmat_path.exists() or sha(mhmat_path)!=asset["mhmat_sha256"]:
+        raise RuntimeError(f"C7 skin MHMAT missing/hash mismatch: {mhmat_path}")
+
+    m=bpy.data.materials.new("DIGE_V8_SKIN_CC0_TEXTURED")
     m.use_nodes=True
     nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
-    set_input(bs,"Base Color",(0.30,0.115,0.072,1))
     set_input(bs,"IOR",1.42)
     set_input(bs,"Subsurface Weight",SKIN_SSS_WEIGHT)
     set_input(bs,"Subsurface Scale",SKIN_SSS_SCALE)
@@ -42,45 +49,57 @@ def make_skin():
         bs.subsurface_method='RANDOM_WALK_SKIN'
     if hasattr(bs,"distribution"):
         bs.distribution='MULTI_GGX'
-    set_input(bs,"Subsurface Radius",(1.0,.45,.20))
-    set_input(bs,"Specular IOR Level",.28)
+    # MHMAT source uses 5/2.5/1; normalized to 1/.5/.2 here.
+    set_input(bs,"Subsurface Radius",(1.0,.50,.20))
+    set_input(bs,"Specular IOR Level",.30)
     set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
+    set_input(bs,"Coat Weight",.012)
+    set_input(bs,"Coat Roughness",.32)
 
-    macro=nt.nodes.new("ShaderNodeTexNoise")
-    macro.inputs["Scale"].default_value=12.0
-    macro.inputs["Detail"].default_value=3.0
-    tone=nt.nodes.new("ShaderNodeValToRGB")
-    tone.color_ramp.elements[0].position=.20
-    tone.color_ramp.elements[0].color=(0.255,0.090,0.058,1)
-    tone.color_ramp.elements[1].position=.80
-    tone.color_ramp.elements[1].color=(0.335,0.145,0.090,1)
-    nt.links.new(macro.outputs["Fac"],tone.inputs["Fac"])
-    nt.links.new(tone.outputs["Color"],bs.inputs["Base Color"])
-    rough_map=nt.nodes.new("ShaderNodeMapRange")
-    rough_map.inputs["From Min"].default_value=0.0
-    rough_map.inputs["From Max"].default_value=1.0
-    rough_map.inputs["To Min"].default_value=SKIN_ROUGH_MIN
-    rough_map.inputs["To Max"].default_value=SKIN_ROUGH_MAX
-    nt.links.new(macro.outputs["Fac"],rough_map.inputs["Value"])
-    nt.links.new(rough_map.outputs["Result"],bs.inputs["Roughness"])
+    tex=nt.nodes.new("ShaderNodeTexImage")
+    tex.name="DIGE_C7_CC0_SKIN_DIFFUSE"
+    tex.label="MakeHuman Skins01 CC0 / onlytheghosts young eurasian female"
+    tex.image=bpy.data.images.load(str(texture_path),check_existing=True)
+    tex.image.colorspace_settings.name='sRGB'
+    tex.interpolation='Smart'
+    nt.links.new(tex.outputs["Color"],bs.inputs["Base Color"])
 
+    # Independent roughness variation avoids reusing diffuse contrast as gloss.
+    rough=nt.nodes.new("ShaderNodeTexNoise")
+    rough.inputs["Scale"].default_value=7.0
+    rough.inputs["Detail"].default_value=3.0
+    rough.inputs["Roughness"].default_value=.58
+    rmap=nt.nodes.new("ShaderNodeMapRange")
+    rmap.inputs["From Min"].default_value=0.0
+    rmap.inputs["From Max"].default_value=1.0
+    rmap.inputs["To Min"].default_value=SKIN_ROUGH_MIN
+    rmap.inputs["To Max"].default_value=SKIN_ROUGH_MAX
+    nt.links.new(rough.outputs["Fac"],rmap.inputs["Value"])
+    nt.links.new(rmap.outputs["Result"],bs.inputs["Roughness"])
+
+    # Procedural normal only; the public CC0 pack candidate has diffuse but no normal/roughness map.
+    meso=nt.nodes.new("ShaderNodeTexNoise")
+    meso.inputs["Scale"].default_value=115.0
+    meso.inputs["Detail"].default_value=5.0
+    meso.inputs["Roughness"].default_value=.68
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=260.0
+    pore.inputs["Scale"].default_value=560.0
     pore.inputs["Detail"].default_value=4.0
-    pore.inputs["Roughness"].default_value=.62
+    pore.inputs["Roughness"].default_value=.64
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=850.0
+    micro.inputs["Scale"].default_value=1750.0
     micro.inputs["Detail"].default_value=2.0
-    pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.68
-    mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.32
-    mix=nt.nodes.new("ShaderNodeMath"); mix.operation='ADD'
-    nt.links.new(pore.outputs["Fac"],pscale.inputs[0])
-    nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
-    nt.links.new(pscale.outputs[0],mix.inputs[0]); nt.links.new(mscale.outputs[0],mix.inputs[1])
+    a=nt.nodes.new("ShaderNodeMath"); a.operation='MULTIPLY'; a.inputs[1].default_value=.28
+    b=nt.nodes.new("ShaderNodeMath"); b.operation='MULTIPLY'; b.inputs[1].default_value=.50
+    d=nt.nodes.new("ShaderNodeMath"); d.operation='MULTIPLY'; d.inputs[1].default_value=.22
+    e=nt.nodes.new("ShaderNodeMath"); e.operation='ADD'
+    g=nt.nodes.new("ShaderNodeMath"); g.operation='ADD'
+    nt.links.new(meso.outputs["Fac"],a.inputs[0]); nt.links.new(pore.outputs["Fac"],b.inputs[0]); nt.links.new(micro.outputs["Fac"],d.inputs[0])
+    nt.links.new(a.outputs[0],e.inputs[0]); nt.links.new(b.outputs[0],e.inputs[1]); nt.links.new(e.outputs[0],g.inputs[0]); nt.links.new(d.outputs[0],g.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.075
-    bump.inputs["Distance"].default_value=.00020
-    nt.links.new(mix.outputs[0],bump.inputs["Height"])
+    bump.inputs["Strength"].default_value=.072
+    bump.inputs["Distance"].default_value=.00010
+    nt.links.new(g.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m
 
@@ -153,7 +172,6 @@ black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
 lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
 mouth_dark=principled("MOUTH_DARK",(0.018,0.004,0.004),rough=.58,ior=1.35)
-scalp_shadow=principled("SCALP_SHADOW",(0.075,0.026,0.018),rough=.50,ior=1.42,subsurface=.06)
 hair=hair_material()
 hair_mass=principled("DIGE_V8_HAIR_MASS",(0.006,0.0035,0.0022),rough=.46,ior=1.55)
 hm_bs=hair_mass.node_tree.nodes.get("Principled BSDF")
@@ -179,6 +197,9 @@ if len(imported_meshes) != 1:
     raise RuntimeError(f"Expected exactly one body mesh, got {len(imported_meshes)}")
 body=imported_meshes[0]
 body.name="DIGE_V8_MAKEHUMAN_BODY"
+if not body.data.uv_layers:
+    raise RuntimeError("C7 requires body UVs for official CC0 skin texture")
+body_uv_name=body.data.uv_layers.active.name
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
 
@@ -206,20 +227,8 @@ nose_tip_z=mouth_z+.027
 chin_z=mouth_z-.038
 jaw_z=mouth_z-.026
 
-# Shaved scalp shadow is painted onto canonical body polygons, not a floating cap mesh.
-body.data.materials.append(scalp_shadow)
-scalp_shadow_index=len(body.data.materials)-1
+# C7 texture canary uses the diffuse scalp directly; no polygon scalp-shadow override.
 scalp_shadow_polygons=0
-for poly in body.data.polygons:
-    pts=[body.data.vertices[i].co for i in poly.vertices]
-    cx=sum(p.x for p in pts)/len(pts)
-    cy=sum(p.y for p in pts)/len(pts)
-    cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx)<.130 and cz>eye_mid_z+.045 and (cy<.020 or cz>eye_mid_z+.100):
-        poly.material_index=scalp_shadow_index
-        scalp_shadow_polygons+=1
-if scalp_shadow_polygons<40:
-    raise RuntimeError(f"scalp shadow polygon count unexpectedly low: {scalp_shadow_polygons}")
 
 craniofacial_deform={
   "cheek_y_m":0.0045,
@@ -328,102 +337,28 @@ mouth_line=[
 ]
 curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00010,mouth_dark)
 
-# Thin vermilion tint uses tiny curves; native lip volume remains the geometry source.
-upper_lip=[
-    (-.018,my+.0002,mz+.0015),
-    (-.009,my+.0006,mz+.0031),
-    (0.0,my+.0008,mz+.0020),
-    (.009,my+.0006,mz+.0031),
-    (.018,my+.0002,mz+.0015),
-]
-lower_lip=[
-    (-.018,my+.0002,mz-.0012),
-    (-.009,my+.0005,mz-.0025),
-    (0.0,my+.0007,mz-.0030),
-    (.009,my+.0005,mz-.0025),
-    (.018,my+.0002,mz-.0012),
-]
-curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00018,lip)
-curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00022,lip)
-
-# Small recessed nostril discs add depth without altering topology.
-nose_z=mouth_center[2]+.0275
-nose_y=mouth_center[1]+.0030
-for sx in (-1,1):
-    cylinder(f"NOSTRIL_{sx}",(sx*.0065,nose_y,nose_z),.00145,.00022,mouth_dark)
-
-# Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
-brow_hairs=[]; lashes=[]
+# C7: diffuse texture carries brows; keep only fine lashes anchored to eyelid landmarks.
+lashes=[]
 for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_upperlid",-1)):
     ec=landmarks[eye_key]["center"]
     lid=landmarks[lid_key]["center"]
-    brow_y=max(lid[1]+.0045,ec[1]+.0085)
-    for j in range(46):
-        t=j/45
-        x=ec[0]+(t-.5)*.036
-        arch=math.sin(t*math.pi)
-        z=ec[2]+.024+.0042*arch
-        lean=(t-.5)*.0015
-        brow_hairs.append([(x,brow_y,z),(x+lean,brow_y+.0018,z+.0040)])
     for j in range(11):
         t=(j-5)/5
         x=ec[0]+t*.0125
         y=max(lid[1]+.0030,ec[1]+.0070)
         z=ec[2]+.0052+.0014*(1-abs(t))
         lashes.append([(x,y,z),(x+sx*.0006,y+.0024,z+.0011)])
-curve_object("DIGE_V8_BROWS",brow_hairs,.000075,hair)
 curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
-# Hybrid hair: filtered MakeHuman helper-hair guide supplies open-face side/back mass;
-# fine strand curves supply microstructure. The 50 front-curtain faces are removed in the builder.
-hair_guide_path=RUNTIME/geom["hair_guide"]["output"]
-bpy.ops.wm.obj_import(
-    filepath=str(hair_guide_path),
-    forward_axis='Y',
-    up_axis='Z',
-    use_split_objects=False,
-    use_split_groups=False,
-)
-hair_guides=[o for o in bpy.context.selected_objects if o.type=='MESH']
-if len(hair_guides)!=1:
-    raise RuntimeError(f"Expected one filtered hair guide mesh, got {len(hair_guides)}")
-hair_mass_obj=hair_guides[0]
-hair_mass_obj.name="DIGE_V8_FILTERED_HAIR_MASS"
-hair_mass_obj.data.materials.append(hair_mass)
-bpy.context.view_layer.objects.active=hair_mass_obj
-bpy.ops.object.shade_smooth()
-hsub=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_SUBDIV","SUBSURF"); hsub.levels=1; hsub.render_levels=2
-hsolid=hair_mass_obj.modifiers.new("DIGE_V8_HAIR_MASS_THICKNESS","SOLIDIFY"); hsolid.thickness=.00055; hsolid.offset=.25
-
-# Fiber detail sampled deterministically from guide vertices, with shorter frontal/upper fibers
-# and longer side/back fibers. These do not define the primary silhouette.
-random.seed(20260919)
-guide_vertices=[hair_mass_obj.matrix_world @ v.co for v in hair_mass_obj.data.vertices]
+# C7 skin-texture isolation canary: intentional hairless/buzz presentation.
+# This prevents the previously rejected synthetic hair shell from masking skin evaluation.
 strands=[]
-for p in guide_vertices:
-    # Guide mesh is already filtered to the side/back region.
-    radial=Vector((p.x, p.y+.055, max(.001,p.z-1.46))).normalized()
-    reps=3 if p.z>1.58 else 2
-    for _ in range(reps):
-        jitter=Vector((random.uniform(-.0012,.0012),random.uniform(-.0008,.0008),random.uniform(-.0012,.0012)))
-        root=p+jitter
-        L=random.uniform(.018,.055) if p.z>1.55 else random.uniform(.035,.090)
-        side=1.0 if p.x>=0 else -1.0
-        tip=root+Vector((side*random.uniform(.002,.010),-.010,-L))
-        mid=root+(tip-root)*.48+Vector((side*random.uniform(-.003,.003),-.004,random.uniform(-.004,.004)))
-        strands.append([tuple(root),tuple(mid),tuple(tip)])
-curve_object("DIGE_V8_GUIDE_FIBERS",strands,.000045,hair)
-
 hair_surface_contract={
-    "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR",
-    "source_faces":geom["hair_guide"]["source_faces"],
-    "removed_front_faces":geom["hair_guide"]["removed_front_faces"],
-    "retained_faces":geom["hair_guide"]["faces"],
-    "guide_vertices":geom["hair_guide"]["vertices"],
-    "guide_sha256":geom["hair_guide"]["sha256"],
-    "curve_count":len(strands),
-    "bevel_radius_m":0.000045,
-    "style":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+    "style":"TEXTURED_HAIRLESS_ISOLATION_V1",
+    "curve_count":0,
+    "mass_mesh_rendered":False,
+    "public_skin_texture_carries_scalp":True,
+    "reason":"Isolate official CC0 skin gain before reintroducing high-fidelity hair."
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -580,25 +515,34 @@ receipt={
  "runner":{"name":os.environ.get("RUNNER_NAME"),"os":os.environ.get("RUNNER_OS"),"arch":os.environ.get("RUNNER_ARCH")},
  "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
  "geometry_source":"MakeHuman bundled CC0 base mesh + CC0 asian-female-young morph target",
+ "public_skin_texture":{
+   "asset_name":CANON["assets"]["skin_texture_candidate"]["asset_name"],
+   "pack_license":CANON["assets"]["skin_texture_candidate"]["pack_license"],
+   "pack_sha256":CANON["assets"]["skin_texture_candidate"]["pack_sha256"],
+   "texture_sha256":CANON["assets"]["skin_texture_candidate"]["texture_sha256"],
+   "mhmat_sha256":CANON["assets"]["skin_texture_candidate"]["mhmat_sha256"],
+   "body_uv_layer":body_uv_name
+ },
  "garment_helper":geom["garment_helper"],
  "eye_helpers":geom["eye_helpers"],
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+ "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
-   "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+   "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE_SWEEPS; STUBBLE_SWEEP_REJECTED; R4_FILTERED_HAIR_GUIDE_REUSED"
  },
+ "appearance_candidate":"C7_OFFICIAL_CC0_EURASIAN_DIFFUSE_HAIRLESS_ISOLATION_V1",
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "provenance":{
@@ -606,6 +550,9 @@ receipt={
    "reference_pixels_read_by_renderer":False,
    "reference_images_composited":False,
    "reference_textures_used":False,
+   "public_cc0_texture_used":True,
+   "public_cc0_texture_sha256":CANON["assets"]["skin_texture_candidate"]["texture_sha256"],
+   "public_cc0_texture_license":CANON["assets"]["skin_texture_candidate"]["pack_license"],
    "external_geometry_asset_used":True,
    "external_geometry_asset_license":"CC0-1.0",
    "image_model_calls":0,

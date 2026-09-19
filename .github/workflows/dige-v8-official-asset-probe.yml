@@ -1,0 +1,97 @@
+name: DIGE V8 Official Asset Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-official-asset-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Download official CC0 skin pack
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/dige_asset_probe
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o /tmp/skins01_cc0.zip; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o /tmp/skins01_cc0.zip
+          fi
+          test -s /tmp/skins01_cc0.zip
+          sha256sum /tmp/skins01_cc0.zip | tee /tmp/dige_asset_probe/SKINS01_ZIP_SHA256.txt
+          unzip -t /tmp/skins01_cc0.zip | tee /tmp/dige_asset_probe/SKINS01_ZIP_TEST.txt
+          unzip -Z1 /tmp/skins01_cc0.zip > /tmp/dige_asset_probe/SKINS01_LISTING.txt
+
+      - name: Extract selected natural female candidates
+        run: |
+          set -euxo pipefail
+          cd /tmp/dige_asset_probe
+          grep -Ei "(bobby_03_young_female_hairless|onlytheghosts_young_eurasian_female|blindsaypatten_uniform_skin_texture)" SKINS01_LISTING.txt > CANDIDATE_PATHS.txt || true
+          test -s CANDIDATE_PATHS.txt
+          mkdir -p candidates
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            safe=$(echo "$p" | tr "/" "__")
+            unzip -p /tmp/skins01_cc0.zip "$p" > "candidates/$safe"
+          done < CANDIDATE_PATHS.txt
+          find candidates -type f -size +0c -print0 | sort -z | xargs -0 sha256sum | tee CANDIDATE_SHA256SUMS.txt
+          find candidates -type f -printf "%P\t%s bytes\n" | sort | tee CANDIDATE_SIZES.txt
+
+      - name: Build material manifest
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, re
+          root=pathlib.Path("/tmp/dige_asset_probe")
+          files=[]
+          for p in sorted((root/"candidates").iterdir()):
+              b=p.read_bytes()
+              rec={"file":p.name,"size":len(b),"sha256":hashlib.sha256(b).hexdigest()}
+              if p.suffix.lower()==".mhmat":
+                  txt=b.decode("utf-8",errors="replace")
+                  kv={}
+                  for line in txt.splitlines():
+                      s=line.strip()
+                      if not s or s.startswith("#"): continue
+                      parts=s.split(None,1)
+                      if len(parts)==2 and parts[0] in {"name","diffuseTexture","normalmapTexture","normalMapTexture","bumpmapTexture","bumpMapTexture","roughnessmapTexture","roughnessMapTexture","displacementmapTexture","displacementMapTexture","specularmapTexture","specularMapTexture"}:
+                          kv[parts[0]]=parts[1]
+                  rec["mhmat"]=kv
+                  rec["declares_cc0"]="CC0" in txt
+              files.append(rec)
+          manifest={
+            "schema":"DIGE_OFFICIAL_ASSET_PROBE_V1",
+            "source_page":"https://static.makehumancommunity.org/assets/assetpacks/skins01.html",
+            "primary_url":"https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+            "secondary_url":"https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+            "pack_license":"CC0 per official MakeHuman asset-pack page",
+            "zip_sha256":(root/"SKINS01_ZIP_SHA256.txt").read_text().split()[0],
+            "files":files
+          }
+          (root/"DIGE_OFFICIAL_ASSET_PROBE.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(manifest,indent=2,sort_keys=True))
+          PY
+
+      - name: Upload probe evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-OFFICIAL-ASSET-PROBE-${{ github.sha }}
+          path: |
+            /tmp/dige_asset_probe/DIGE_OFFICIAL_ASSET_PROBE.json
+            /tmp/dige_asset_probe/SKINS01_ZIP_SHA256.txt
+            /tmp/dige_asset_probe/SKINS01_ZIP_TEST.txt
+            /tmp/dige_asset_probe/SKINS01_LISTING.txt
+            /tmp/dige_asset_probe/CANDIDATE_PATHS.txt
+            /tmp/dige_asset_probe/CANDIDATE_SHA256SUMS.txt
+            /tmp/dige_asset_probe/CANDIDATE_SIZES.txt
+            /tmp/dige_asset_probe/candidates/*
+          if-no-files-found: error
+          retention-days: 14
