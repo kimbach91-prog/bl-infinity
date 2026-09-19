@@ -52,7 +52,18 @@
         "license": "CC0-1.0"
       }
     },
-    "pre_body_height_normalization_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160"
+    "pre_body_height_normalization_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160",
+    "filtered_hair_helper": {
+      "group": "helper-hair",
+      "source_faces": 198,
+      "removed_front_faces": 50,
+      "retained_faces": 148,
+      "retained_vertices": 324,
+      "filter": "retain face when centroid_y_m <= 0.01 after canonical body-referenced normalization",
+      "compact_obj_sha256": "5fee5c08c835431c66862160dfc07c2e0d7450e62ab342e99ead82ea7db46c0b",
+      "license": "CC0-1.0",
+      "scar_lineage": "R4 face-curtain removal reconstructed exactly by retained/removed face counts"
+    }
   },
   "policy": {
     "identity_bound": false,
