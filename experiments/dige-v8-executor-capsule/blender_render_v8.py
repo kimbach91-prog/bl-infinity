@@ -24,15 +24,15 @@ def set_input(node,name,val):
         s.default_value=val
 
 SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.35"))
-SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0035"))
+SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0025"))
 SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
 SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
-HAIR_REPLICAS=int(os.environ.get("DIGE_HAIR_REPLICAS","18"))
-HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.0007"))
-HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.0018"))
-HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000022"))
+HAIR_REPLICAS=int(os.environ.get("DIGE_HAIR_REPLICAS","24"))
+HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.0015"))
+HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.0032"))
+HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000026"))
 if not (4 <= HAIR_REPLICAS <= 64):
     raise RuntimeError(f"DIGE_HAIR_REPLICAS out of range: {HAIR_REPLICAS}")
 if not (0.0002 <= HAIR_LEN_MIN < HAIR_LEN_MAX <= 0.010):
@@ -163,7 +163,7 @@ black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
 lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
 mouth_dark=principled("MOUTH_DARK",(0.018,0.004,0.004),rough=.58,ior=1.35)
-scalp_mat=principled("SCALP_CAP_SURFACE",(0.012,0.005,0.003),rough=.52,ior=1.45)
+scalp_shadow=principled("SCALP_SHADOW",(0.075,0.026,0.018),rough=.50,ior=1.42,subsurface=.06)
 hair=hair_material()
 cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
@@ -209,6 +209,21 @@ nose_bridge_z=eye_mid_z-.010
 nose_tip_z=mouth_z+.027
 chin_z=mouth_z-.038
 jaw_z=mouth_z-.026
+
+# Shaved scalp shadow is painted onto canonical body polygons, not a floating cap mesh.
+body.data.materials.append(scalp_shadow)
+scalp_shadow_index=len(body.data.materials)-1
+scalp_shadow_polygons=0
+for poly in body.data.polygons:
+    pts=[body.data.vertices[i].co for i in poly.vertices]
+    cx=sum(p.x for p in pts)/len(pts)
+    cy=sum(p.y for p in pts)/len(pts)
+    cz=sum(p.z for p in pts)/len(pts)
+    if abs(cx)<.130 and cz>eye_mid_z+.045 and (cy<.020 or cz>eye_mid_z+.100):
+        poly.material_index=scalp_shadow_index
+        scalp_shadow_polygons+=1
+if scalp_shadow_polygons<40:
+    raise RuntimeError(f"scalp shadow polygon count unexpectedly low: {scalp_shadow_polygons}")
 
 craniofacial_deform={
   "cheek_y_m":0.0045,
@@ -317,6 +332,30 @@ mouth_line=[
 ]
 curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00010,mouth_dark)
 
+# Thin vermilion tint uses tiny curves; native lip volume remains the geometry source.
+upper_lip=[
+    (-.018,my+.0002,mz+.0015),
+    (-.009,my+.0006,mz+.0031),
+    (0.0,my+.0008,mz+.0020),
+    (.009,my+.0006,mz+.0031),
+    (.018,my+.0002,mz+.0015),
+]
+lower_lip=[
+    (-.018,my+.0002,mz-.0012),
+    (-.009,my+.0005,mz-.0025),
+    (0.0,my+.0007,mz-.0030),
+    (.009,my+.0005,mz-.0025),
+    (.018,my+.0002,mz-.0012),
+]
+curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00018,lip)
+curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00022,lip)
+
+# Small recessed nostril discs add depth without altering topology.
+nose_z=mouth_center[2]+.0275
+nose_y=mouth_center[1]+.0030
+for sx in (-1,1):
+    cylinder(f"NOSTRIL_{sx}",(sx*.0065,nose_y,nose_z),.00145,.00022,mouth_dark)
+
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
 brow_hairs=[]; lashes=[]
 for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_upperlid",-1)):
@@ -336,7 +375,7 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
         y=max(lid[1]+.0030,ec[1]+.0070)
         z=ec[2]+.0052+.0014*(1-abs(t))
         lashes.append([(x,y,z),(x+sx*.0006,y+.0024,z+.0011)])
-curve_object("DIGE_V8_BROWS",brow_hairs,.000045,hair)
+curve_object("DIGE_V8_BROWS",brow_hairs,.000075,hair)
 curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
 # Canonical-surface shaved/stubble regime. Tiny fibers avoid silhouette spikes while preserving hair transport.
@@ -547,6 +586,16 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":"SHAVED_STUBBLE_CANONICAL_SURFACE_V1",
  "hair_surface_contract":hair_surface_contract,
+ "appearance_selection":{
+   "skin_sss_weight":SKIN_SSS_WEIGHT,
+   "skin_sss_scale":SKIN_SSS_SCALE,
+   "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
+   "hair_replicas":HAIR_REPLICAS,
+   "hair_length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
+   "hair_bevel_m":HAIR_BEVEL,
+   "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE+HAIR_SWEEPS"
+ },
+ "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
