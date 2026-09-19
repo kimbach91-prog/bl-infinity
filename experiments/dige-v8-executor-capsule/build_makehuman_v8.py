@@ -102,6 +102,17 @@ cx=(mins[0]+maxs[0])/2
 cy=(mins[1]+maxs[1])/2
 normalized=[[(x-cx)*scale,(y-cy)*scale,(z-mins[2])*scale] for x,y,z in morphed]
 
+# C12 full hm08 fit reference: preserve every normalized source/helper vertex so MHCLO assets
+# can reference helper indices above the compact body prefix (e.g. high-poly eyes at 14598+).
+fit_reference_path=RUNTIME/"DIGE_V8_FIT_REFERENCE.json"
+fit_reference_payload={
+    "schema":"DIGE_V8_FIT_REFERENCE_V1",
+    "coordinate_system":"BLENDER_X_DEPTH_Y_UP_Z_NORMALIZED_BODY_REFERENCED",
+    "vertices":normalized,
+}
+fit_reference_path.write_text(json.dumps(fit_reference_payload,separators=(",",":"))+"\n",encoding="utf-8")
+fit_reference_sha=hashlib.sha256(fit_reference_path.read_bytes()).hexdigest()
+
 # Parse exact face groups for deterministic landmarks and helper-derived garment geometry.
 group_vertex_ids={}
 current_group=None
@@ -325,6 +336,7 @@ manifest={
   "morph":{"weight":MORPH_WEIGHT,"target_name":"asian-female-young"},
   "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"reference_group":"body","ground_z_m":0.0,"source_bbox_min":mins,"source_bbox_max":maxs,"bbox_min":final_mins,"bbox_max":final_maxs},
   "mesh":{"source_vertices":len(normalized),"vertices_written":expected_body_vertices,"referenced_body_vertices":len(referenced_vertices),"faces":face_count,"undirected_edges":len(edge_counts),"boundary_edges":boundary_edges,"nonmanifold_edges":nonmanifold_edges,"output":out.name,"sha256":body_sha},
+  "fit_reference":{"vertices":len(normalized),"output":fit_reference_path.name,"sha256":fit_reference_sha,"coordinate_system":"BLENDER_X_DEPTH_Y_UP_Z_NORMALIZED_BODY_REFERENCED"},
   "garment_helper":{"group":garment_group,"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},
   "eye_helpers":{
     "left":{"group":"helper-l-eye","vertices":left_eye_vertices,"faces":left_eye_faces,"output":left_eye.name,"sha256":left_eye_sha},
