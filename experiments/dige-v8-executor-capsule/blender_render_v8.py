@@ -44,6 +44,7 @@ SKIN_TONE_B=float(os.environ.get("DIGE_SKIN_TONE_B","0.66"))
 SKIN_TONE_MIX=float(os.environ.get("DIGE_SKIN_TONE_MIX","0.32"))
 SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.12"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
+HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -719,25 +720,29 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C12: replace procedural strand field with official female short03 hm08 hair cards.
-hair_asset=system_contract["hair_short03"]
+# C16: official hm08 hair asset selected from canon-bound system pack.
+if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_short"):
+    raise RuntimeError(f"Unsupported DIGE_HAIR_ASSET_KEY={HAIR_ASSET_KEY}")
+hair_asset=system_contract[HAIR_ASSET_KEY]
+hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
 hair_card_mat=alpha_card_material(
-    "DIGE_C12_SHORT03_HAIR",
+    f"DIGE_C16_{hair_label}",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
     rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
-    "DIGE_C12_SHORT03_HAIR",
+    f"DIGE_C16_{hair_label}",
     system_dir/hair_asset["obj"]["runtime_name"],
     system_dir/hair_asset["mhclo"]["runtime_name"],
     fit_vertices,hair_card_mat,hair_asset,
 )
-system_asset_fits["hair_short03"]=hair_fit
+system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 strands=[]
 hair_surface_contract={
     "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO",
-    "asset":"short03",
+    "asset_key":HAIR_ASSET_KEY,
+    "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
     "obj_sha256":hair_asset["obj"]["sha256"],
     "mhclo_sha256":hair_asset["mhclo"]["sha256"],
@@ -747,7 +752,7 @@ hair_surface_contract={
     "uv_layers":hair_fit["uv_layers"],
     "mass_mesh_rendered":True,
     "curve_count":0,
-    "style":"MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1",
+    "style":f"MHCLO_FITTED_{HAIR_ASSET_KEY.upper()}_SYSTEM_CC0_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -926,7 +931,7 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C15_STRUCTURAL_MATERIAL_FACE_V1",
+ "appearance_candidate":"C16_HAIR_ASSET_SWEEP_OVER_C15_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
@@ -947,7 +952,8 @@ receipt={
    "hair_card_specular":0.16,
    "hair_card_coat":0.004,
    "hair_card_roughness":0.54,
-   "hair_card_anisotropy":0.34
+   "hair_card_anisotropy":0.34,
+   "hair_asset_key":HAIR_ASSET_KEY
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
