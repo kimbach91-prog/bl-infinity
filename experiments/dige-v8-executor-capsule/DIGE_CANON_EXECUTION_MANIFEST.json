@@ -28,7 +28,8 @@
       "license": "CC0-1.0"
     },
     "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
-    "candidate_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
+    "candidate_body_only_normalized_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160",
+    "precompact_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
     "garment_helper_tights": {
       "group": "helper-tights",
       "expected_faces": 2650,
@@ -51,8 +52,54 @@
     "exclude_helper_and_joint_groups": true,
     "expected_body_faces": 13378,
     "source_total_faces": 18486,
-    "rationale": "Body render mesh excludes helper/joint groups. Deterministic CC0 helper-tights is emitted separately as a fitted garment proxy; eyes/hair are renderer-built from source-derived landmarks.",
+    "rationale": "Body render mesh is compact, closed and helper-free. Deterministic CC0 helper-tights is emitted separately as a fitted garment proxy; eyes/hair are renderer-built from exact source-derived landmarks.",
+    "expected_boundary_edges": 0,
+    "expected_nonmanifold_edges": 0,
+    "local_drive_staging_topology_receipt": {
+      "body_faces": 13378,
+      "undirected_edges": 26756,
+      "boundary_edges": 0,
+      "nonmanifold_edges": 0,
+      "state": "LOCALLY_RECOMPUTED_FROM_DRIVE_STAGING_BYTES",
+      "body_vertices": 13380
+    },
+    "source_total_vertices": 19158,
+    "expected_body_vertices": 13380,
+    "vertex_compaction": "retain exactly body-referenced vertex indices 0..13379; helper loose vertices excluded",
     "garment_helper_group": "helper-tights",
     "expected_garment_faces": 2650
+  },
+  "l_hyper_spec": {
+    "source_drive_id": "1BKIfzxRR0nk_qqo85uiBuz1DDegHQQEeML76H4hlZi0",
+    "source_marker": "DIGE_HYPERREAL_APPEARANCE_PARAMETER_PACK_V1 + DIGE_DEEP_RESEARCH_HYPERREAL_UPGRADE_V2/V3",
+    "weights": {
+      "identity": 0.26,
+      "geometry": 0.16,
+      "skin_transport": 0.12,
+      "hair_transport": 0.1,
+      "eye": 0.08,
+      "cloth": 0.08,
+      "light": 0.08,
+      "camera": 0.06,
+      "color": 0.06
+    },
+    "normalization": "each component normalized to [0,1] using calibration anchors",
+    "role": "RANK_CANDIDATES_NOT_UNIVERSAL_CERTIFIER",
+    "universal_threshold_state": "NOT_CANONIZED_PENDING_HELD_OUT_CALIBRATION",
+    "identity_input_boundary": "TRUSTED_SCALAR_ONLY_NO_RAW_REFERENCE_PIXELS",
+    "core_hard_gates": [
+      "provenance_clean",
+      "renderer_reference_open_count_zero",
+      "dependency_config_hashes_complete",
+      "mesh_valid_for_random_walk",
+      "nan_inf_zero",
+      "cloth_body_penetration_zero",
+      "critical_face_eye_clipping_zero",
+      "raw_quality_auditable",
+      "denoise_detail_retention_checked",
+      "human_visual_audit_pass",
+      "drive_upload_readback_hash_pass"
+    ],
+    "delivery_gate": "delivery_sent_readback_pass"
   }
 }
