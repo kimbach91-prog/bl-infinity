@@ -1,0 +1,129 @@
+name: DIGE V8 C11 Skin Texture Sweep
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c11-skin-texture-sweep.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c11-skin-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skin-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          python build_makehuman_v8.py | tee runtime/c11_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Resolve official CC0 skin candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          PACK=/tmp/skins01_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o "$PACK"
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $PACK" | sha256sum -c -
+          unzip -p "$PACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/eurasian.png
+          unzip -p "$PACK" "skins/bobby_03_young_female_hairless/Young_Female_Hairless.png" > runtime/assets/bobby.png
+          unzip -p "$PACK" "skins/blindsaypatten_uniform_skin_texture/skin_texture.png" > runtime/assets/uniform.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/eurasian.png" | sha256sum -c -
+          echo "9e2fa4ab993dd938ba896bb98848bd65346500c4c0a07d8789d2f1e14bb3dd7f  runtime/assets/bobby.png" | sha256sum -c -
+          echo "b30c832a5610e9e1e981f913d25e7d7055e4cb90cdb59c23acd04a168392506a  runtime/assets/uniform.png" | sha256sum -c -
+
+      - name: Render controlled skin candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          for SPEC in \
+            "eurasian:runtime/assets/eurasian.png:e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf:onlytheghosts_young_eurasian_female" \
+            "bobby:runtime/assets/bobby.png:9e2fa4ab993dd938ba896bb98848bd65346500c4c0a07d8789d2f1e14bb3dd7f:bobby_03_young_female_hairless" \
+            "uniform:runtime/assets/uniform.png:b30c832a5610e9e1e981f913d25e7d7055e4cb90cdb59c23acd04a168392506a:blindsaypatten_uniform_skin_texture"; do
+            TAG=$(echo "$SPEC" | cut -d: -f1)
+            FILE=$(echo "$SPEC" | cut -d: -f2)
+            SHA=$(echo "$SPEC" | cut -d: -f3)
+            NAME=$(echo "$SPEC" | cut -d: -f4)
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="c11_skin_${TAG}" \
+            DIGE_SKIN_ALBEDO_PATH="$FILE" \
+            DIGE_SKIN_ALBEDO_SHA256="$SHA" \
+            DIGE_SKIN_ALBEDO_NAME="$NAME" \
+            DIGE_SKIN_SSS_WEIGHT="0.35" \
+            DIGE_SKIN_SSS_SCALE="0.0025" \
+            DIGE_SKIN_SSS_ANISO="0.80" \
+            DIGE_SKIN_ROUGH_MIN="0.30" \
+            DIGE_SKIN_ROUGH_MAX="0.48" \
+            DIGE_SAMPLES_PREVIEW="8" \
+            DIGE_SAMPLES_HERO="12" \
+            DIGE_RENDER_SEED="20260919" \
+            DIGE_RUNTIME_COMMIT="$GITHUB_SHA" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee "runtime/c11_${TAG}.log"
+          done
+
+      - name: Verify skin receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          expected={
+            "eurasian":("e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf","onlytheghosts_young_eurasian_female"),
+            "bobby":("9e2fa4ab993dd938ba896bb98848bd65346500c4c0a07d8789d2f1e14bb3dd7f","bobby_03_young_female_hairless"),
+            "uniform":("b30c832a5610e9e1e981f913d25e7d7055e4cb90cdb59c23acd04a168392506a","blindsaypatten_uniform_skin_texture"),
+          }
+          root=pathlib.Path("runtime/renders")
+          for tag,(sha,name) in expected.items():
+              j=json.loads((root/f"c11_skin_{tag}"/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              assert j["engine"]=="CYCLES" and j["device"]=="CPU"
+              assert j["render_set"]=="HERO_ONLY"
+              assert j["skin_albedo"]["enabled"] is True
+              assert j["skin_albedo"]["sha256"]==sha
+              assert j["skin_albedo"]["asset_name"]==name
+              assert j["skin_albedo"]["license"]=="CC0"
+              assert j["skin_model"]["subsurface_method"]=="RANDOM_WALK_SKIN"
+              assert j["skin_model"]["roughness_range"]==[0.30,0.48]
+              assert len(j["outputs"])==1 and j["outputs"][0]["view"]=="04_HERO85"
+          print("DIGE_C11_SKIN_TEXTURE_SWEEP_PASS")
+          PY
+
+      - name: Upload skin sweep
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C11-SKIN-TEXTURE-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c11_skin_*/04_HERO85_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c11_skin_*/04_HERO85_DENOISED_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c11_skin_*/DIGE_V8_RENDER_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 14
