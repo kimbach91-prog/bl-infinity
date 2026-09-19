@@ -88,29 +88,85 @@ cx=(mins[0]+maxs[0])/2
 cy=(mins[1]+maxs[1])/2
 normalized=[[(x-cx)*scale,(y-cy)*scale,(z-mins[2])*scale] for x,y,z in morphed]
 
-out_lines=[]
-vi=0
-face_count=0
+# Parse exact source groups once so downstream landmarks and garment geometry stay bound to the same CC0 topology.
+group_vertex_ids={}
 current_group=None
-allowed_groups=set(CANON["mesh_policy"]["include_face_groups"])
 for line in base_text.splitlines():
-    if line.startswith("v "):
-        x,y,z=normalized[vi]; vi+=1
-        out_lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
-    elif line.startswith("g "):
+    if line.startswith("g "):
         current_group=line[2:].strip()
-        if current_group in allowed_groups:
-            out_lines.append(line)
-    elif line.startswith("f "):
-        if current_group in allowed_groups:
-            face_count+=1
-            out_lines.append(line)
-    else:
-        # Keep shared comments/UVs/normals/smoothing directives; exclude helper faces/groups above.
-        out_lines.append(line)
+        group_vertex_ids.setdefault(current_group,set())
+    elif line.startswith("f ") and current_group:
+        ids=group_vertex_ids.setdefault(current_group,set())
+        for tok in line.split()[1:]:
+            ids.add(int(tok.split("/")[0])-1)
 
-out=(RUNTIME/"dige_makehuman_v8.obj")
-out.write_text("\n".join(out_lines)+"\n",encoding="utf-8")
+def group_stats(name):
+    ids=sorted(group_vertex_ids.get(name,()))
+    if not ids:
+        raise RuntimeError(f"missing required MakeHuman group: {name}")
+    pts=[normalized[i] for i in ids]
+    mi=[min(p[a] for p in pts) for a in range(3)]
+    ma=[max(p[a] for p in pts) for a in range(3)]
+    ce=[sum(p[a] for p in pts)/len(pts) for a in range(3)]
+    return {"center":ce,"bbox_min":mi,"bbox_max":ma,"vertex_count":len(ids)}
+
+def emit_group_obj(group_name, filename):
+    out_lines=[]
+    vi=0
+    current=None
+    face_count_local=0
+    for line in base_text.splitlines():
+        if line.startswith("v "):
+            x,y,z=normalized[vi]; vi+=1
+            out_lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
+        elif line.startswith("g "):
+            current=line[2:].strip()
+            if current == group_name:
+                out_lines.append(line)
+        elif line.startswith("f "):
+            if current == group_name:
+                face_count_local+=1
+                out_lines.append(line)
+        else:
+            out_lines.append(line)
+    path=RUNTIME/filename
+    path.write_text("\n".join(out_lines)+"\n",encoding="utf-8")
+    return path,face_count_local,hashlib.sha256(path.read_bytes()).hexdigest()
+
+out,face_count,body_sha=emit_group_obj("body","dige_makehuman_v8.obj")
+tights,tights_face_count,tights_sha=emit_group_obj(
+    CANON["mesh_policy"]["garment_helper_group"],
+    "dige_makehuman_tights_v8.obj"
+)
+
+body_ids=sorted(group_vertex_ids["body"])
+mouth_candidates=[
+    normalized[i] for i in body_ids
+    if abs(normalized[i][0]) < 0.045 and 1.525 <= normalized[i][2] <= 1.560
+]
+if not mouth_candidates:
+    raise RuntimeError("mouth surface landmark candidates empty")
+mouth_front=max(mouth_candidates,key=lambda p:p[1])
+
+landmarks={
+    "left_eye":group_stats("helper-l-eye"),
+    "right_eye":group_stats("helper-r-eye"),
+    "left_upperlid":group_stats("joint-l-upperlid"),
+    "right_upperlid":group_stats("joint-r-upperlid"),
+    "left_lowerlid":group_stats("joint-l-lowerlid"),
+    "right_lowerlid":group_stats("joint-r-lowerlid"),
+    "neck":group_stats("joint-neck"),
+    "left_shoulder":group_stats("joint-l-shoulder"),
+    "right_shoulder":group_stats("joint-r-shoulder"),
+    "pelvis":group_stats("joint-pelvis"),
+    "mouth_front":{"center":mouth_front},
+    "hair_helper":group_stats("helper-hair")
+}
+
+if tights_face_count != CANON["assets"]["garment_helper_tights"]["expected_faces"]:
+    raise RuntimeError(f"garment face-count drift: expected={CANON['assets']['garment_helper_tights']['expected_faces']} got={tights_face_count}")
+if tights_sha != CANON["assets"]["garment_helper_tights"]["normalized_obj_sha256"]:
+    raise RuntimeError(f"garment normalized OBJ drift: expected={CANON['assets']['garment_helper_tights']['normalized_obj_sha256']} got={tights_sha}")
 
 final_mins=[min(v[a] for v in normalized) for a in range(3)]
 final_maxs=[max(v[a] for v in normalized) for a in range(3)]
@@ -136,7 +192,7 @@ manifest={
   },
   "morph":{"weight":MORPH_WEIGHT,"target_name":"asian-female-young"},
   "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"bbox_min":final_mins,"bbox_max":final_maxs},
-  "mesh":{"vertices":len(normalized),"faces":face_count,"output":out.name,"sha256":hashlib.sha256(out.read_bytes()).hexdigest()},
+  "mesh":{"vertices":len(normalized),"faces":face_count,"output":out.name,"sha256":body_sha},\n  "garment_helper":{"group":CANON["mesh_policy"]["garment_helper_group"],"faces":tights_face_count,"output":tights.name,"sha256":tights_sha},\n  "landmarks":landmarks,
   "mesh_policy":CANON["mesh_policy"],
   "expected_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"],
   "drive_compute_priors":{
