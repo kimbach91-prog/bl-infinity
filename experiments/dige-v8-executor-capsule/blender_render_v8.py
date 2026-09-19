@@ -131,18 +131,51 @@ cloth=principled("CLOTH",(0.08,0.065,0.055),rough=.63,sheen=.28)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
 
 mesh_path=RUNTIME/"dige_makehuman_v8.obj"
-bpy.ops.wm.obj_import(filepath=str(mesh_path))
-body=bpy.context.selected_objects[0]
+# Builder already writes Blender-space coordinates (Y forward, Z up). Import with an identity axis convention;
+# Blender's default OBJ convention (-Z forward, Y up) would rotate the body a second time.
+bpy.ops.wm.obj_import(
+    filepath=str(mesh_path),
+    forward_axis='Y',
+    up_axis='Z',
+    use_split_objects=False,
+    use_split_groups=False,
+)
+imported_meshes=[o for o in bpy.context.selected_objects if o.type == 'MESH']
+if len(imported_meshes) != 1:
+    raise RuntimeError(f"Expected exactly one body mesh, got {len(imported_meshes)}")
+body=imported_meshes[0]
 body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
+
+# Hard orientation gate before any cosmetic layer can hide an ingestion error.
+bbox_world=[body.matrix_world @ Vector(corner) for corner in body.bound_box]
+bbox_min=[min(v[i] for v in bbox_world) for i in range(3)]
+bbox_max=[max(v[i] for v in bbox_world) for i in range(3)]
+bbox_extent=[bbox_max[i]-bbox_min[i] for i in range(3)]
+if not (1.60 <= bbox_extent[2] <= 1.80):
+    raise RuntimeError(f"Body vertical extent invalid after OBJ import: {bbox_extent}")
+if bbox_extent[1] >= 0.65:
+    raise RuntimeError(f"Body depth indicates axis-rotation regression: {bbox_extent}")
+if bbox_min[2] < -0.03 or bbox_max[2] > 1.75:
+    raise RuntimeError(f"Body Z placement invalid: min={bbox_min[2]} max={bbox_max[2]}")
+
 sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=1
 # Preserve topology metrics before subdivision
 bm=bmesh.new(); bm.from_mesh(body.data)
 nonmanifold=sum(1 for e in bm.edges if not e.is_manifold)
 boundary=sum(1 for e in bm.edges if e.is_boundary)
 bm.free()
-topology={"vertices":len(body.data.vertices),"polygons":len(body.data.polygons),"nonmanifold_edges":nonmanifold,"boundary_edges":boundary}
+topology={
+    "vertices":len(body.data.vertices),
+    "polygons":len(body.data.polygons),
+    "nonmanifold_edges":nonmanifold,
+    "boundary_edges":boundary,
+    "bbox_min":bbox_min,
+    "bbox_max":bbox_max,
+    "bbox_extent":bbox_extent,
+    "orientation_gate":"PASS",
+}
 
 # Eyes: generic optical stack; identity-specific placement remains a later private gate.
 eye_z=1.585; eye_y=.092
