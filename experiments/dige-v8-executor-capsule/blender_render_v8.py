@@ -30,11 +30,13 @@ SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 SKIN_ALBEDO_PATH=os.environ.get("DIGE_SKIN_ALBEDO_PATH","").strip()
 SKIN_ALBEDO_EXPECTED_SHA256=os.environ.get("DIGE_SKIN_ALBEDO_SHA256","").strip().lower()
-HAIR_ROOT_COUNT=int(os.environ.get("DIGE_HAIR_ROOT_COUNT","6000"))
-HAIR_GUIDE_COUNT=int(os.environ.get("DIGE_HAIR_GUIDE_COUNT","140"))
-HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.080"))
-HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.150"))
+HAIR_ROOT_COUNT=int(os.environ.get("DIGE_HAIR_ROOT_COUNT","12000"))
+HAIR_GUIDE_COUNT=int(os.environ.get("DIGE_HAIR_GUIDE_COUNT","210"))
+HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.060"))
+HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.115"))
 HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000032"))
+HAIRLINE_CENTER_OFFSET=float(os.environ.get("DIGE_HAIRLINE_CENTER_OFFSET","0.055"))
+HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_HAIRLINE_TEMPLE_RISE","0.016"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -514,8 +516,10 @@ for poly in body.data.polygons:
     center=sum(pts,Vector((0,0,0)))/len(pts)
     if center.z < eye_z+.028 or abs(center.x)>.132:
         continue
-    # Keep forehead open below hairline; retain crown/back.
-    if center.y>.032 and center.z<eye_z+.105:
+    # Parametric female hairline: center sits above brows; temples recede upward smoothly.
+    xn=min(1.0,abs(center.x)/.095)
+    hairline_z=eye_z+HAIRLINE_CENTER_OFFSET+HAIRLINE_TEMPLE_RISE*(xn**1.6)
+    if center.y>.018 and center.z<hairline_z:
         continue
     if abs(center.x)>.112 and center.z<eye_z+.074:
         continue
@@ -571,10 +575,10 @@ def tangent_flow(p,n):
     crown=max(0.0,min(1.0,(p.z-(eye_z+.028))/.135))
     front=max(0.0,min(1.0,(p.y+.015)/.070))
     if front>.25:
-        # Front/temple roots sweep laterally and back so hair remains visible around the face.
-        desired=Vector((side*(.38+.24*crown),-.74,-.12+.18*crown))
+        # Front roots sweep backward with a mild side part; keep roots visible without starburst spikes.
+        desired=Vector((side*(.20+.16*crown),-.96,-.04+.12*crown))
     else:
-        desired=Vector((side*(.10+.12*crown),-1.0,-.22+.26*crown))
+        desired=Vector((side*(.08+.10*crown),-1.0,-.16+.22*crown))
     flow=desired-n*desired.dot(n)
     if flow.length<1e-8:
         flow=Vector((side*.08,-.98,-.15))
@@ -630,14 +634,16 @@ hair_surface_contract={
     "guide_count":guide_count,
     "length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
     "allocation":"PROPORTIONAL_AREA_LARGEST_REMAINDER",
-    "front_flow":"TEMPLE_LATERAL_BACK_SWEEP",
+    "front_flow":"SCALP_HUGGING_SIDE_PART_BACK_SWEEP",
+    "hairline_center_offset_m":HAIRLINE_CENTER_OFFSET,
+    "hairline_temple_rise_m":HAIRLINE_TEMPLE_RISE,
     "flyaway_count":flyaways,
     "curve_count":len(strands),
     "bevel_radius_m":HAIR_BEVEL,
     "mass_mesh_rendered":False,
     "clumping":"NEAREST_GUIDE_XZ_PROGRESSIVE",
     "frizz":"LOW_AMPLITUDE_PER_STRAND",
-    "style":"STRATIFIED_AREA_GUIDE_CHILD_CLUMP_V2",
+    "style":"PARAMETRIC_HAIRLINE_STRATIFIED_CLUMP_V3",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -802,14 +808,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C9_CC0_SKIN_STRATIFIED_DENSITY_HAIR_V1",
+ "appearance_candidate":"C10_CC0_SKIN_PARAMETRIC_HAIRLINE_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C8_SKIN_VISUAL_GAIN_RETAINED; C8_2600_ROOT_HAIR_DENSITY_REJECTED; C9_STRATIFIED_DENSITY_SWEEP"
+   "selection_basis":"C8_SKIN_VISUAL_GAIN_RETAINED; C9_DENSITY_ONLY_REJECTED; C10_HAIRLINE_FIELD_SWEEP"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
