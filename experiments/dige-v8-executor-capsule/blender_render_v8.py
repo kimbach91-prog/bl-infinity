@@ -139,7 +139,8 @@ iris_ring=principled("IRIS_RING",(0.012,0.005,0.003),rough=.34,ior=1.40)
 black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
 lip=principled("LIP",(0.18,0.035,0.032),rough=.44,ior=1.40,subsurface=.04)
-nostril=principled("NOSTRIL",(0.020,0.006,0.005),rough=.65,ior=1.35)
+mouth_dark=principled("MOUTH_DARK",(0.018,0.004,0.004),rough=.58,ior=1.35)
+scalp_mat=principled("SCALP_CAP_SURFACE",(0.012,0.005,0.003),rough=.52,ior=1.45)
 hair=hair_material()
 cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
@@ -196,77 +197,50 @@ if geom.get("canon_execution_manifest_sha256") != CANON_SHA256:
     raise RuntimeError("geometry/canon manifest causal binding mismatch")
 landmarks=geom["landmarks"]
 
-# Localized eyelid-aperture correction on the native body mesh.
-# This narrows the circular MakeHuman opening while preserving topology/manifold state.
-for eye_key in ("left_eye","right_eye"):
-    ec=landmarks[eye_key]["center"]
-    for v in body.data.vertices:
-        co=v.co
-        dx=(co.x-ec[0])/.034
-        dz=(co.z-ec[2])/.023
-        if abs(dx)>=1.0 or abs(dz)>=1.0 or co.y<.035:
-            continue
-        w=(1.0-dx*dx)*(1.0-dz*dz)
-        if w<=0:
-            continue
-        if dz>0:
-            co.z-=.0062*w
-        else:
-            co.z+=.0042*w
-        co.y+=.0008*w
+# Eyes: use exact MakeHuman helper-eye meshes emitted by the provenance-locked builder.
+for side,label,sx in (("left","left_eye",1),("right","right_eye",-1)):
+    eye_meta=geom["eye_helpers"][side]
+    eye_path=RUNTIME/eye_meta["output"]
+    bpy.ops.wm.obj_import(
+        filepath=str(eye_path),
+        forward_axis='Y',
+        up_axis='Z',
+        use_split_objects=False,
+        use_split_groups=False,
+    )
+    imported=[o for o in bpy.context.selected_objects if o.type=='MESH']
+    if len(imported)!=1:
+        raise RuntimeError(f"Expected one helper eye mesh for {side}, got {len(imported)}")
+    eye_obj=imported[0]
+    eye_obj.name=f"DIGE_V8_HELPER_EYE_{side.upper()}"
+    eye_obj.data.materials.append(sclera)
+    bpy.context.view_layer.objects.active=eye_obj
+    bpy.ops.object.shade_smooth()
 
-# Eyes: exact placement and scale derive from the canonical MakeHuman helper-eye groups.
-for label,sx in (("left_eye",1),("right_eye",-1)):
     st=landmarks[label]
-    helper_center=st["center"]
+    ceye=st["center"]
     mi=st["bbox_min"]; ma=st["bbox_max"]
-    rx=(ma[0]-mi[0])*.370
-    ry=(ma[1]-mi[1])*.370
-    rz=(ma[2]-mi[2])*.370
-    lid_key="left_upperlid" if label=="left_eye" else "right_upperlid"
-    lower_key="left_lowerlid" if label=="left_eye" else "right_lowerlid"
-    lid_front=max(landmarks[lid_key]["center"][1],landmarks[lower_key]["center"][1])
-    eye_z=(landmarks[lid_key]["center"][2]+landmarks[lower_key]["center"][2])*.5
-    front_target=lid_front+.0006
-    center_y=front_target-ry*1.35
-    center=(helper_center[0],center_y,eye_z)
-    uv(f"SCLERA_{sx}",center,(rx,ry,rz),sclera,48,24)
-    iris_y=center[1]+ry*.94
-    iris_r=min(rx,rz)*.34
-    cylinder(f"IRIS_RING_{sx}",(center[0],iris_y,center[2]),iris_r,.00065,iris_ring)
-    cylinder(f"IRIS_{sx}",(center[0],iris_y+.00016,center[2]),iris_r*.83,.00055,iris)
-    cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00036,center[2]),iris_r*.31,.00050,black)
-    cornea_center=(center[0],center[1]+ry*.08,center[2])
-    uv(f"CORNEA_{sx}",cornea_center,(rx*1.008,ry*1.025,rz*1.008),cornea,48,24)
+    eye_rx=(ma[0]-mi[0])*.5
+    eye_rz=(ma[2]-mi[2])*.5
+    front_y=ma[1]+.00025
+    iris_r=min(eye_rx,eye_rz)*.39
+    cylinder(f"IRIS_RING_{sx}",(ceye[0],front_y,ceye[2]),iris_r,.00045,iris_ring)
+    cylinder(f"IRIS_{sx}",(ceye[0],front_y+.00012,ceye[2]),iris_r*.82,.00035,iris)
+    cylinder(f"PUPIL_{sx}",(ceye[0],front_y+.00028,ceye[2]),iris_r*.30,.00030,black)
+    cylinder(f"CORNEA_DISC_{sx}",(ceye[0],front_y+.00044,ceye[2]),iris_r*1.18,.00018,cornea)
 
-# Smooth lip geometry anchored to the source-derived mouth landmark.
+# Mouth: preserve native face topology; add only a thin, source-anchored mouth gap.
 mouth_center=landmarks["mouth_front"]["center"]
-my=mouth_center[1]+.0015
-mz=mouth_center[2]
-upper=[
-    (-.022,my,mz+.0010),
-    (-.011,my+.0007,mz+.0038),
-    (0.0,my+.0009,mz+.0020),
-    (.011,my+.0007,mz+.0038),
-    (.022,my,mz+.0010)
+my=mouth_center[1]+.0010
+mz=mouth_center[2]-.0012
+mouth_line=[
+    (-.020,my,mz),
+    (-.010,my+.0005,mz-.0004),
+    (0.0,my+.0007,mz-.0006),
+    (.010,my+.0005,mz-.0004),
+    (.020,my,mz)
 ]
-lower=[
-    (-.022,my+.0002,mz-.0020),
-    (-.011,my+.0008,mz-.0040),
-    (0.0,my+.0010,mz-.0048),
-    (.011,my+.0008,mz-.0040),
-    (.022,my+.0002,mz-.0020)
-]
-mouth_line=[(-.020,my+.0011,mz-.0008),(0.0,my+.0013,mz-.0012),(.020,my+.0011,mz-.0008)]
-curve_object("DIGE_V8_UPPER_LIP",[upper],.00135,lip)
-curve_object("DIGE_V8_LOWER_LIP",[lower],.00155,lip)
-curve_object("DIGE_V8_MOUTH_LINE",[mouth_line],.00034,black)
-
-# Tiny nostril cavities sit slightly behind the nose surface.
-nose_z=mouth_center[2]+.0245
-nose_y=mouth_center[1]+.0040
-for sx in (-1,1):
-    uv(f"NOSTRIL_{sx}",(sx*.0070,nose_y,nose_z),(.0019,.0007,.0010),nostril,20,10)
+curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00018,mouth_dark)
 
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
 brow_hairs=[]; lashes=[]
@@ -292,21 +266,21 @@ curve_object("DIGE_V8_LASHES",lashes,.00013,black)
 
 # Partial scalp cap hides root discontinuities while keeping forehead/face unobstructed.
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-bpy.ops.mesh.primitive_uv_sphere_add(segments=96,ring_count=48,location=(0,-.034,eye_z+.055))
+bpy.ops.mesh.primitive_uv_sphere_add(segments=96,ring_count=48,location=(0,-.038,eye_z+.048))
 scalp=bpy.context.object
 scalp.name="DIGE_V8_SCALP_CAP"
-scalp.scale=(.102,.082,.076)
+scalp.scale=(.099,.079,.068)
 bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
 bmcap=bmesh.new(); bmcap.from_mesh(scalp.data)
 kill=[]
 for v in bmcap.verts:
     wp=scalp.matrix_world @ v.co
-    if wp.y>.000 and wp.z<eye_z+.096:
+    if wp.y>-.006 and wp.z<eye_z+.102:
         kill.append(v)
 if kill:
     bmesh.ops.delete(bmcap,geom=kill,context='VERTS')
 bmcap.to_mesh(scalp.data); bmcap.free()
-scalp.data.materials.append(hair)
+scalp.data.materials.append(scalp_mat)
 bpy.context.view_layer.objects.active=scalp
 bpy.ops.object.shade_smooth()
 
@@ -351,7 +325,7 @@ for i in range(420):
         (x+side*.002+jitter,root_y-.018,root_z+.018),
         (x+side*.005+jitter,root_y-.040,root_z+.032)
     ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.000085,hair)
+curve_object("DIGE_V8_HAIRLINE",hairline,.000070,hair)
 
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
@@ -363,7 +337,7 @@ for i in range(90):
         continue
     side=1 if x>=0 else -1
     strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.00022,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.00019,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
@@ -512,6 +486,7 @@ receipt={
  "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
  "geometry_source":"MakeHuman bundled CC0 base mesh + CC0 asian-female-young morph target",
  "garment_helper":geom["garment_helper"],
+ "eye_helpers":geom["eye_helpers"],
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
  "drive_compute_priors":geom["drive_compute_priors"],
