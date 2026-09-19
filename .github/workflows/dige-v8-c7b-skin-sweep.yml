@@ -1,0 +1,177 @@
+name: DIGE V8 C7B Skin Sweep
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c7b-skin-sweep.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c7b-skin-sweep-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  skin-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact head
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          test -x "$BLENDER"
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build canon geometry once
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          python build_makehuman_v8.py | tee runtime/c7b_geometry_execution.json
+          test -s runtime/dige_makehuman_v8.obj
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Stage three official CC0 skin textures
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o /tmp/skins01_cc0.zip; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o /tmp/skins01_cc0.zip
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  /tmp/skins01_cc0.zip" | sha256sum -c -
+          unzip -p /tmp/skins01_cc0.zip "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          unzip -p /tmp/skins01_cc0.zip "skins/bobby_03_young_female_hairless/Young_Female_Hairless.png" > runtime/assets/bobby_03_Young_Female_Hairless.png
+          unzip -p /tmp/skins01_cc0.zip "skins/blindsaypatten_uniform_skin_texture/skin_texture.png" > runtime/assets/blindsaypatten_skin_texture.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          echo "9e2fa4ab993dd938ba896bb98848bd65346500c4c0a07d8789d2f1e14bb3dd7f  runtime/assets/bobby_03_Young_Female_Hairless.png" | sha256sum -c -
+          echo "b30c832a5610e9e1e981f913d25e7d7055e4cb90cdb59c23acd04a168392506a  runtime/assets/blindsaypatten_skin_texture.png" | sha256sum -c -
+          sha256sum runtime/assets/*.png | tee runtime/assets/C7B_SKIN_SHA256SUMS.txt
+
+      - name: Render eurasian
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_OUTPUT_TAG: c7b_eurasian
+          DIGE_SKIN_TEXTURE_KEY: eurasian
+          DIGE_SAMPLES_PREVIEW: '48'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c7b_eurasian.log
+
+      - name: Render bobby young
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_OUTPUT_TAG: c7b_bobby_young
+          DIGE_SKIN_TEXTURE_KEY: bobby_young
+          DIGE_SAMPLES_PREVIEW: '48'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c7b_bobby_young.log
+
+      - name: Render uniform asian
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_OUTPUT_TAG: c7b_uniform_asian
+          DIGE_SKIN_TEXTURE_KEY: uniform_asian
+          DIGE_SAMPLES_PREVIEW: '48'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c7b_uniform_asian.log
+
+      - name: Verify sweep receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, os
+          root=pathlib.Path("runtime/renders")
+          expected={
+            "c7b_eurasian":"eurasian",
+            "c7b_bobby_young":"bobby_young",
+            "c7b_uniform_asian":"uniform_asian",
+          }
+          summary={}
+          for tag,key in expected.items():
+              p=root/tag/"DIGE_V8_RENDER_RECEIPT.json"
+              r=json.loads(p.read_text())
+              assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+              assert r["render_set"]=="HERO_ONLY"
+              assert r["public_skin_texture"]["candidate_key"]==key
+              assert r["provenance"]["public_cc0_texture_used"] is True
+              assert r["provenance"]["source_pixels_used"] is False
+              assert r["provenance"]["reference_pixels_read_by_renderer"] is False
+              assert r["hair_surface_contract"]["style"]=="TEXTURED_HAIRLESS_ISOLATION_V1"
+              assert len(r["outputs"])==1
+              assert r["denoise_ab"]["raw_aov"]["sha256"] and r["denoise_ab"]["denoised"]["sha256"]
+              summary[key]={
+                  "receipt":str(p),
+                  "hero_sha256":r["outputs"][0]["sha256"],
+                  "raw_sha256":r["denoise_ab"]["raw_aov"]["sha256"],
+                  "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
+                  "texture_sha256":r["public_skin_texture"]["texture_sha256"],
+              }
+          out=root/"DIGE_C7B_SKIN_SWEEP_SUMMARY.json"
+          out.write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - name: Hash sweep evidence
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          find runtime/renders/c7b_* -type f -print0 | sort -z | xargs -0 sha256sum > DIGE_C7B_SWEEP_SHA256SUMS.txt
+          sha256sum runtime/renders/DIGE_C7B_SKIN_SWEEP_SUMMARY.json >> DIGE_C7B_SWEEP_SHA256SUMS.txt
+          cat DIGE_C7B_SWEEP_SHA256SUMS.txt
+
+      - name: Upload C7B sweep evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C7B-SKIN-SWEEP-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c7b_*/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c7b_*/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c7b_*/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/DIGE_C7B_SKIN_SWEEP_SUMMARY.json
+            experiments/dige-v8-executor-capsule/runtime/assets/C7B_SKIN_SHA256SUMS.txt
+            experiments/dige-v8-executor-capsule/DIGE_C7B_SWEEP_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
