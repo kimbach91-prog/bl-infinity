@@ -233,6 +233,174 @@ def curve_object(name,splines,bevel,mat):
             p.radius=max(.26,1.0-.74*(idx/n))
     ob.data.materials.append(mat); return ob
 
+
+def verify_asset(path,expected_sha256):
+    p=Path(path)
+    if not p.exists():
+        raise RuntimeError(f"Required C12 system asset missing: {p}")
+    got=sha(p)
+    if got != expected_sha256:
+        raise RuntimeError(f"C12 system asset hash drift: {p.name} expected={expected_sha256} got={got}")
+    return p
+
+def parse_mhclo(path):
+    spec={"x_scale":None,"y_scale":None,"z_scale":None,"verts":{}}
+    status=None
+    first=0
+    vn=0
+    for raw in Path(path).read_text(encoding="utf-8",errors="replace").splitlines():
+        words=raw.split()
+        if not words:
+            continue
+        if words[0].startswith("#"):
+            continue
+        if status=="verts":
+            if not words[0].lstrip("-").isdigit():
+                status=None
+            else:
+                idx=first+vn
+                if len(words)==1:
+                    v=int(words[0])
+                    spec["verts"][idx]=((v,v,v),(1.0,0.0,0.0),(0.0,0.0,0.0))
+                else:
+                    v0,v1,v2=(int(words[0]),int(words[1]),int(words[2]))
+                    w0,w1,w2=(float(words[3]),float(words[4]),float(words[5]))
+                    d0,d1,d2=(float(words[6]),float(words[7]),float(words[8]))
+                    # Official MakeClothes importer converts MakeHuman offsets to Blender as (d0,-d2,d1).
+                    spec["verts"][idx]=((v0,v1,v2),(w0,w1,w2),(d0,-d2,d1))
+                vn+=1
+                continue
+        key=words[0]
+        if key in ("x_scale","y_scale","z_scale"):
+            spec[key]=(int(words[1]),int(words[2]),float(words[3]))
+        elif key=="verts":
+            first=int(words[1]) if len(words)>1 else 0
+            vn=0
+            status="verts"
+    if not spec["verts"]:
+        raise RuntimeError(f"C12 MHCLO has no vertex mappings: {path}")
+    if spec["x_scale"] is None or spec["y_scale"] is None or spec["z_scale"] is None:
+        raise RuntimeError(f"C12 MHCLO missing scale contract: {path}")
+    return spec
+
+def fit_mhclo_asset(name,obj_path,mhclo_path,body,material,contract):
+    obj_path=verify_asset(obj_path,contract["obj"]["sha256"])
+    mhclo_path=verify_asset(mhclo_path,contract["mhclo"]["sha256"])
+    spec=parse_mhclo(mhclo_path)
+    bpy.ops.wm.obj_import(
+        filepath=str(obj_path),
+        forward_axis='Y',
+        up_axis='Z',
+        use_split_objects=False,
+        use_split_groups=False,
+    )
+    imported=[o for o in bpy.context.selected_objects if o.type=='MESH']
+    if len(imported)!=1:
+        raise RuntimeError(f"C12 expected one imported mesh for {name}, got {len(imported)}")
+    obj=imported[0]
+    obj.name=name
+    expected=contract["obj"]["vertices"]
+    if len(obj.data.vertices)!=expected:
+        raise RuntimeError(f"C12 {name} vertex count drift: expected={expected} got={len(obj.data.vertices)}")
+    if len(spec["verts"])!=expected or min(spec["verts"])!=0 or max(spec["verts"])!=expected-1:
+        raise RuntimeError(f"C12 {name} MHCLO mapping range drift: count={len(spec['verts'])} min={min(spec['verts'])} max={max(spec['verts'])}")
+    if not obj.data.uv_layers:
+        raise RuntimeError(f"C12 {name} has no UV layer after OBJ import")
+
+    hverts=body.data.vertices
+    hl=len(hverts)
+    xs,ys,zs=spec["x_scale"],spec["y_scale"],spec["z_scale"]
+    for pair in (xs,ys,zs):
+        if pair[0]>=hl or pair[1]>=hl or pair[2]==0:
+            raise RuntimeError(f"C12 {name} MHCLO scale reference invalid: {pair} body_vertices={hl}")
+    s0=abs(hverts[xs[0]].co.x-hverts[xs[1]].co.x)/xs[2]
+    # MakeClothes Blender importer maps y_scale to Blender Z and z_scale to Blender Y.
+    s2=abs(hverts[ys[0]].co.z-hverts[ys[1]].co.z)/ys[2]
+    s1=abs(hverts[zs[0]].co.y-hverts[zs[1]].co.y)/zs[2]
+    scales=(s0,s1,s2)
+
+    for n in range(expected):
+        refs,weights,offset=spec["verts"][n]
+        if max(refs)>=hl:
+            raise RuntimeError(f"C12 {name} MHCLO ref outside body: {refs} body_vertices={hl}")
+        co=(
+            hverts[refs[0]].co*weights[0] +
+            hverts[refs[1]].co*weights[1] +
+            hverts[refs[2]].co*weights[2] +
+            Vector((offset[0]*s0,offset[1]*s1,offset[2]*s2))
+        )
+        obj.data.vertices[n].co=co
+
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
+    bpy.context.view_layer.objects.active=obj
+    bpy.ops.object.shade_smooth()
+    pts=[obj.matrix_world @ v.co for v in obj.data.vertices]
+    mi=[min(p[i] for p in pts) for i in range(3)]
+    ma=[max(p[i] for p in pts) for i in range(3)]
+    return obj,{
+        "name":name,
+        "obj_sha256":sha(obj_path),
+        "mhclo_sha256":sha(mhclo_path),
+        "vertices":len(obj.data.vertices),
+        "polygons":len(obj.data.polygons),
+        "uv_layers":len(obj.data.uv_layers),
+        "fit_scales":scales,
+        "bbox_min":mi,
+        "bbox_max":ma,
+        "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
+    }
+
+def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0):
+    image_path=verify_asset(image_path,expected_sha256)
+    m=bpy.data.materials.new(name); m.use_nodes=True
+    nt=m.node_tree; nt.nodes.clear()
+    out=nt.nodes.new("ShaderNodeOutputMaterial")
+    tex=nt.nodes.new("ShaderNodeTexImage")
+    tex.image=bpy.data.images.load(str(image_path),check_existing=True)
+    try: tex.image.colorspace_settings.name='sRGB'
+    except Exception: pass
+    tex.interpolation='Linear'
+    trans=nt.nodes.new("ShaderNodeBsdfTransparent")
+    bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
+    set_input(bs,"Roughness",rough); set_input(bs,"IOR",ior)
+    set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Anisotropic IOR Level",anisotropy)
+    set_input(bs,"Coat Weight",.025)
+    nt.links.new(tex.outputs["Color"],bs.inputs["Base Color"])
+    mix=nt.nodes.new("ShaderNodeMixShader")
+    nt.links.new(tex.outputs["Alpha"],mix.inputs[0])
+    nt.links.new(trans.outputs[0],mix.inputs[1])
+    nt.links.new(bs.outputs[0],mix.inputs[2])
+    nt.links.new(mix.outputs[0],out.inputs["Surface"])
+    return m
+
+def eye_texture_material(name,image_path,expected_sha256):
+    image_path=verify_asset(image_path,expected_sha256)
+    m=bpy.data.materials.new(name); m.use_nodes=True
+    nt=m.node_tree; nt.nodes.clear()
+    out=nt.nodes.new("ShaderNodeOutputMaterial")
+    tex=nt.nodes.new("ShaderNodeTexImage")
+    tex.image=bpy.data.images.load(str(image_path),check_existing=True)
+    try: tex.image.colorspace_settings.name='sRGB'
+    except Exception: pass
+    tex.interpolation='Linear'
+    base=nt.nodes.new("ShaderNodeBsdfPrincipled")
+    set_input(base,"Roughness",.24); set_input(base,"IOR",1.376)
+    set_input(base,"Specular IOR Level",.34)
+    set_input(base,"Subsurface Weight",.012)
+    nt.links.new(tex.outputs["Color"],base.inputs["Base Color"])
+    glass=nt.nodes.new("ShaderNodeBsdfGlass")
+    set_input(glass,"Roughness",.012); set_input(glass,"IOR",1.376)
+    mix=nt.nodes.new("ShaderNodeMixShader")
+    # Opaque texels are sclera/iris; transparent texels become refractive cornea.
+    nt.links.new(tex.outputs["Alpha"],mix.inputs[0])
+    nt.links.new(glass.outputs[0],mix.inputs[1])
+    nt.links.new(base.outputs[0],mix.inputs[2])
+    nt.links.new(mix.outputs[0],out.inputs["Surface"])
+    return m
+
+
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 
 skin,skin_asset=make_skin()
@@ -386,37 +554,23 @@ if geom.get("canon_execution_manifest_sha256") != CANON_SHA256:
     raise RuntimeError("geometry/canon manifest causal binding mismatch")
 landmarks=geom["landmarks"]
 
-# Eyes: use exact MakeHuman helper-eye meshes emitted by the provenance-locked builder.
-for side,label,sx in (("left","left_eye",1),("right","right_eye",-1)):
-    eye_meta=geom["eye_helpers"][side]
-    eye_path=RUNTIME/eye_meta["output"]
-    bpy.ops.wm.obj_import(
-        filepath=str(eye_path),
-        forward_axis='Y',
-        up_axis='Z',
-        use_split_objects=False,
-        use_split_groups=False,
-    )
-    imported=[o for o in bpy.context.selected_objects if o.type=='MESH']
-    if len(imported)!=1:
-        raise RuntimeError(f"Expected one helper eye mesh for {side}, got {len(imported)}")
-    eye_obj=imported[0]
-    eye_obj.name=f"DIGE_V8_HELPER_EYE_{side.upper()}"
-    eye_obj.data.materials.append(sclera)
-    bpy.context.view_layer.objects.active=eye_obj
-    bpy.ops.object.shade_smooth()
-
-    st=landmarks[label]
-    ceye=st["center"]
-    mi=st["bbox_min"]; ma=st["bbox_max"]
-    eye_rx=(ma[0]-mi[0])*.5
-    eye_rz=(ma[2]-mi[2])*.5
-    front_y=ma[1]+.00025
-    iris_r=min(eye_rx,eye_rz)*.39
-    cylinder(f"IRIS_RING_{sx}",(ceye[0],front_y,ceye[2]),iris_r,.00045,iris_ring)
-    cylinder(f"IRIS_{sx}",(ceye[0],front_y+.00012,ceye[2]),iris_r*.82,.00035,iris)
-    cylinder(f"PUPIL_{sx}",(ceye[0],front_y+.00028,ceye[2]),iris_r*.30,.00030,black)
-    cylinder(f"CORNEA_DISC_{sx}",(ceye[0],front_y+.00044,ceye[2]),iris_r*1.18,.00018,cornea)
+# C12: replace proxy helper eyes + flat iris discs with the official high-poly hm08 eye asset.
+system_contract=CANON["assets"]["system_assets_c12"]
+system_dir=RUNTIME/"system_assets"
+system_asset_fits={}
+eye_asset=system_contract["high_poly_eyes"]
+eye_mat=eye_texture_material(
+    "DIGE_C12_HIGH_POLY_EYE",
+    system_dir/eye_asset["diffuse"]["runtime_name"],
+    eye_asset["diffuse"]["sha256"],
+)
+eye_obj,eye_fit=fit_mhclo_asset(
+    "DIGE_C12_HIGH_POLY_EYES",
+    system_dir/eye_asset["obj"]["runtime_name"],
+    system_dir/eye_asset["mhclo"]["runtime_name"],
+    body,eye_mat,eye_asset,
+)
+system_asset_fits["high_poly_eyes"]=eye_fit
 
 # Mouth: preserve native face topology; add only a thin, source-anchored mouth gap.
 mouth_center=landmarks["mouth_front"]["center"]
@@ -455,29 +609,38 @@ nose_y=mouth_center[1]+.0030
 for sx in (-1,1):
     cylinder(f"NOSTRIL_{sx}",(sx*.0065,nose_y,nose_z),.00145,.00022,mouth_dark)
 
-# Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
-brow_hairs=[]; lashes=[]
-for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_upperlid",-1)):
-    ec=landmarks[eye_key]["center"]
-    lid=landmarks[lid_key]["center"]
-    brow_y=max(lid[1]+.0045,ec[1]+.0085)
-    for j in range(46):
-        t=j/45
-        x=ec[0]+(t-.5)*.036
-        arch=math.sin(t*math.pi)
-        z=ec[2]+.024+.0042*arch
-        lean=(t-.5)*.0015
-        brow_hairs.append([(x,brow_y,z),(x+lean,brow_y+.0018,z+.0040)])
-    for j in range(11):
-        t=(j-5)/5
-        x=ec[0]+t*.0125
-        y=max(lid[1]+.0030,ec[1]+.0070)
-        z=ec[2]+.0052+.0014*(1-abs(t))
-        lashes.append([(x,y,z),(x+sx*.0006,y+.0024,z+.0011)])
-curve_object("DIGE_V8_BROWS",brow_hairs,.000075,hair)
-curve_object("DIGE_V8_LASHES",lashes,.000035,black)
+# C12: official system eyebrow/eyelash cards fitted through their hm08 MHCLO mappings.
+brow_asset=system_contract["eyebrow001"]
+brow_mat=alpha_card_material(
+    "DIGE_C12_EYEBROW001",
+    system_dir/brow_asset["diffuse"]["runtime_name"],
+    brow_asset["diffuse"]["sha256"],
+    rough=.52,ior=1.46,anisotropy=.15,
+)
+brow_obj,brow_fit=fit_mhclo_asset(
+    "DIGE_C12_EYEBROW001",
+    system_dir/brow_asset["obj"]["runtime_name"],
+    system_dir/brow_asset["mhclo"]["runtime_name"],
+    body,brow_mat,brow_asset,
+)
+system_asset_fits["eyebrow001"]=brow_fit
 
-# Lower-lid wetline/tear meniscus follows the native lower-lid landmarks.
+lash_asset=system_contract["eyelashes01"]
+lash_mat=alpha_card_material(
+    "DIGE_C12_EYELASHES01",
+    system_dir/lash_asset["diffuse"]["runtime_name"],
+    lash_asset["diffuse"]["sha256"],
+    rough=.48,ior=1.46,anisotropy=.25,
+)
+lash_obj,lash_fit=fit_mhclo_asset(
+    "DIGE_C12_EYELASHES01",
+    system_dir/lash_asset["obj"]["runtime_name"],
+    system_dir/lash_asset["mhclo"]["runtime_name"],
+    body,lash_mat,lash_asset,
+)
+system_asset_fits["eyelashes01"]=lash_fit
+
+# Preserve C5 tear meniscus: it is landmark-bound and complements the high-poly eye asset.
 wetlines=[]
 for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerlid")):
     ec=landmarks[eye_key]["center"]
@@ -494,132 +657,35 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C8 production-style scalp sampling: area-weighted roots -> guide field -> children/clump/frizz.
-hair_guide_meta=geom["hair_guide"]
-eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
-head_center=Vector((0.0,-.055,eye_z+.055))
-
-def tri_area(a,b,c):
-    return ((b-a).cross(c-a)).length*.5
-
-# Select scalp polygons on the actual body surface, then triangulate for area-weighted sampling.
-scalp_tris=[]
-scalp_area=0.0
-for poly in body.data.polygons:
-    pts=[body.matrix_world @ body.data.vertices[i].co for i in poly.vertices]
-    center=sum(pts,Vector((0,0,0)))/len(pts)
-    if center.z < eye_z+.028 or abs(center.x)>.132:
-        continue
-    # Keep forehead open below hairline; retain crown/back.
-    if center.y>.032 and center.z<eye_z+.105:
-        continue
-    if abs(center.x)>.112 and center.z<eye_z+.074:
-        continue
-    for i in range(1,len(pts)-1):
-        a,b,c3=pts[0],pts[i],pts[i+1]
-        ar=tri_area(a,b,c3)
-        if ar>1e-10:
-            scalp_tris.append((a,b,c3,ar))
-            scalp_area+=ar
-if len(scalp_tris)<100 or scalp_area<=0:
-    raise RuntimeError(f"C8 scalp triangle selection invalid: tris={len(scalp_tris)} area={scalp_area}")
-
-random.seed(20260919)
-cdf=[]
-acc=0.0
-for a,b,c3,ar in scalp_tris:
-    acc+=ar
-    cdf.append(acc)
-
-def sample_scalp_point():
-    import bisect
-    x=random.random()*acc
-    idx=bisect.bisect_left(cdf,x)
-    a,b,c3,_=scalp_tris[min(idx,len(scalp_tris)-1)]
-    r1=math.sqrt(random.random()); r2=random.random()
-    p=a*(1-r1)+b*(r1*(1-r2))+c3*(r1*r2)
-    n=(b-a).cross(c3-a)
-    if n.length<1e-9:
-        n=(p-head_center)
-    if n.length<1e-9:
-        n=Vector((0,0,1))
-    n.normalize()
-    if (p-head_center).dot(n)<0:
-        n=-n
-    return p,n
-
-root_count=2600
-roots=[sample_scalp_point() for _ in range(root_count)]
-
-# Sparse guide centers define local flow/clumps; children inherit and vary that field.
-guide_count=96
-guide_indices=random.sample(range(root_count),guide_count)
-guides=[roots[i] for i in guide_indices]
-
-def tangent_flow(p,n):
-    side=1.0 if p.x>=0 else -1.0
-    crown=max(0.0,min(1.0,(p.z-(eye_z+.028))/.135))
-    desired=Vector((side*(.10+.12*crown),-1.0,-.22+.26*crown))
-    flow=desired-n*desired.dot(n)
-    if flow.length<1e-8:
-        flow=Vector((side*.08,-.98,-.15))
-    flow.normalize()
-    return flow,crown
-
-guide_flow=[tangent_flow(p,n)[0] for p,n in guides]
-
+# C12: replace procedural strand field with official female short03 hm08 hair cards.
+hair_asset=system_contract["hair_short03"]
+hair_card_mat=alpha_card_material(
+    "DIGE_C12_SHORT03_HAIR",
+    system_dir/hair_asset["diffuse"]["runtime_name"],
+    hair_asset["diffuse"]["sha256"],
+    rough=.38,ior=1.55,anisotropy=.58,
+)
+hair_obj,hair_fit=fit_mhclo_asset(
+    "DIGE_C12_SHORT03_HAIR",
+    system_dir/hair_asset["obj"]["runtime_name"],
+    system_dir/hair_asset["mhclo"]["runtime_name"],
+    body,hair_card_mat,hair_asset,
+)
+system_asset_fits["hair_short03"]=hair_fit
 strands=[]
-for root,n in roots:
-    # Nearest guide in XZ gives deterministic clump field at modest CPU cost.
-    gi=min(range(guide_count),key=lambda k:(guides[k][0].x-root.x)**2+(guides[k][0].z-root.z)**2)
-    gpos,gn=guides[gi]
-    base_flow,crown=tangent_flow(root,n)
-    flow=(base_flow*.72+guide_flow[gi]*.28)
-    if flow.length<1e-8: flow=base_flow
-    flow.normalize()
-
-    # Medium-short style: enough mass to cover scalp while remaining easier than long hair.
-    L=random.uniform(.075,.145)*(0.86+.24*crown)
-    root2=root+n*.00028
-    tip=root2+flow*L+Vector((0,0,-.012*(1-crown)))
-
-    # Clump children progressively toward guide trajectory without collapsing roots.
-    guide_delta=(gpos-root)
-    clump_strength=random.uniform(.08,.20)
-    frizz=Vector((random.uniform(-.004,.004),random.uniform(-.003,.003),random.uniform(-.004,.004)))
-    p1=root2+(tip-root2)*.28+guide_delta*(clump_strength*.10)+frizz*.35
-    p2=root2+(tip-root2)*.58+guide_delta*(clump_strength*.20)-frizz*.20
-    p3=root2+(tip-root2)*.82+guide_delta*(clump_strength*.28)+frizz*.45
-    strands.append([tuple(root2),tuple(p1),tuple(p2),tuple(p3),tuple(tip)])
-
-flyaways=140
-for _ in range(flyaways):
-    root,n=random.choice(roots)
-    base,crown=tangent_flow(root,n)
-    L=random.uniform(.045,.100)
-    side=1.0 if root.x>=0 else -1.0
-    root2=root+n*.00035
-    tip=root2+base*L+Vector((side*random.uniform(-.012,.012),random.uniform(-.010,.005),random.uniform(-.010,.018)))
-    mid=root2+(tip-root2)*.52+Vector((side*random.uniform(-.009,.009),random.uniform(-.006,.006),random.uniform(-.006,.010)))
-    strands.append([tuple(root2),tuple(mid),tuple(tip)])
-
-curve_object("DIGE_V8_C8_AREA_CLUMP_GROOM",strands,.000032,hair)
-
 hair_surface_contract={
-    "root_source":"AREA_WEIGHTED_CANONICAL_SCALP_TRIANGLES",
-    "guide_source":"DERIVED_LOCAL_FLOW_WITH_FILTERED_MAKEHUMAN_HAIR_PROVENANCE",
-    "guide_sha256":hair_guide_meta["sha256"],
-    "scalp_triangle_count":len(scalp_tris),
-    "scalp_area_m2":scalp_area,
-    "root_count":root_count,
-    "guide_count":guide_count,
-    "flyaway_count":flyaways,
-    "curve_count":len(strands),
-    "bevel_radius_m":0.000032,
-    "mass_mesh_rendered":False,
-    "clumping":"NEAREST_GUIDE_XZ_PROGRESSIVE",
-    "frizz":"LOW_AMPLITUDE_PER_STRAND",
-    "style":"AREA_SAMPLED_GUIDE_CHILD_CLUMP_V1",
+    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO",
+    "asset":"short03",
+    "asset_tags":hair_asset["tags"],
+    "obj_sha256":hair_asset["obj"]["sha256"],
+    "mhclo_sha256":hair_asset["mhclo"]["sha256"],
+    "diffuse_sha256":hair_asset["diffuse"]["sha256"],
+    "object_vertices":hair_fit["vertices"],
+    "object_polygons":hair_fit["polygons"],
+    "uv_layers":hair_fit["uv_layers"],
+    "mass_mesh_rendered":True,
+    "curve_count":0,
+    "style":"MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -777,6 +843,14 @@ receipt={
  "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
  "geometry_source":"MakeHuman bundled CC0 base mesh + CC0 asian-female-young morph target",
  "garment_helper":geom["garment_helper"],
+ "system_asset_pack":{
+   "source_page":system_contract["source_page"],
+   "pack_sha256":system_contract["pack_sha256"],
+   "license":system_contract["license"],
+   "probe_run":system_contract["probe_run"],
+   "probe_artifact_id":system_contract["probe_artifact_id"]
+ },
+ "system_asset_fits":system_asset_fits,
  "eye_helpers":geom["eye_helpers"],
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
@@ -784,14 +858,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C8_CC0_TEXTURE_RANDOM_WALK_AREA_CLUMP_HAIR_V1",
+ "appearance_candidate":"C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C7_OFFICIAL_CC0_SKIN_PROBE_PASS; C5_MESO+WETLINE_RETAINED; C6_VERTEX_ROOT_COVERAGE_REJECTED; C8_AREA_SAMPLING+CLUMP"
+   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
@@ -808,6 +882,9 @@ receipt={
    "external_skin_texture_sha256":skin_asset["sha256"],
    "external_skin_texture_license":"CC0" if skin_asset["enabled"] else None,
    "external_skin_texture_pack_sha256":"7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9" if skin_asset["enabled"] else None,
+   "external_system_asset_used":True,
+   "external_system_asset_pack_sha256":system_contract["pack_sha256"],
+   "external_system_asset_license":system_contract["license"],
    "external_geometry_asset_used":True,
    "external_geometry_asset_license":"CC0-1.0",
    "image_model_calls":0,
