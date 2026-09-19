@@ -196,6 +196,24 @@ if geom.get("canon_execution_manifest_sha256") != CANON_SHA256:
     raise RuntimeError("geometry/canon manifest causal binding mismatch")
 landmarks=geom["landmarks"]
 
+# Localized eyelid-aperture correction on the native body mesh.
+# This narrows the circular MakeHuman opening while preserving topology/manifold state.
+for eye_key in ("left_eye","right_eye"):
+    ec=landmarks[eye_key]["center"]
+    for v in body.data.vertices:
+        co=v.co
+        dx=(co.x-ec[0])/.034
+        dz=(co.z-ec[2])/.023
+        if abs(dx)>=1.0 or abs(dz)>=1.0 or co.y<.035:
+            continue
+        w=(1.0-dx*dx)*(1.0-dz*dz)
+        if w<=0:
+            continue
+        if dz>0:
+            co.z-=.0062*w
+        else:
+            co.z+=.0042*w
+        co.y+=.0008*w
 
 # Eyes: exact placement and scale derive from the canonical MakeHuman helper-eye groups.
 for label,sx in (("left_eye",1),("right_eye",-1)):
@@ -221,22 +239,34 @@ for label,sx in (("left_eye",1),("right_eye",-1)):
     cornea_center=(center[0],center[1]+ry*.08,center[2])
     uv(f"CORNEA_{sx}",cornea_center,(rx*1.008,ry*1.025,rz*1.008),cornea,48,24)
 
-# Use the native mouth topology; only assign a bounded lip material region instead of floating lip meshes.
-body.data.materials.append(lip)
-lip_index=len(body.data.materials)-1
+# Smooth lip geometry anchored to the source-derived mouth landmark.
 mouth_center=landmarks["mouth_front"]["center"]
-for poly in body.data.polygons:
-    pts=[body.data.vertices[i].co for i in poly.vertices]
-    cx=sum(p.x for p in pts)/len(pts)
-    cy=sum(p.y for p in pts)/len(pts)
-    cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx-mouth_center[0])<.032 and abs(cz-mouth_center[2])<.0068 and cy>mouth_center[1]-.003:
-        poly.material_index=lip_index
+my=mouth_center[1]+.0015
+mz=mouth_center[2]
+upper=[
+    (-.022,my,mz+.0010),
+    (-.011,my+.0007,mz+.0038),
+    (0.0,my+.0009,mz+.0020),
+    (.011,my+.0007,mz+.0038),
+    (.022,my,mz+.0010)
+]
+lower=[
+    (-.022,my+.0002,mz-.0020),
+    (-.011,my+.0008,mz-.0040),
+    (0.0,my+.0010,mz-.0048),
+    (.011,my+.0008,mz-.0040),
+    (.022,my+.0002,mz-.0020)
+]
+mouth_line=[(-.020,my+.0011,mz-.0008),(0.0,my+.0013,mz-.0012),(.020,my+.0011,mz-.0008)]
+curve_object("DIGE_V8_UPPER_LIP",[upper],.00135,lip)
+curve_object("DIGE_V8_LOWER_LIP",[lower],.00155,lip)
+curve_object("DIGE_V8_MOUTH_LINE",[mouth_line],.00034,black)
 
-nose_z=mouth_center[2]+.0255
-nose_y=mouth_center[1]+.0060
+# Tiny nostril cavities sit slightly behind the nose surface.
+nose_z=mouth_center[2]+.0245
+nose_y=mouth_center[1]+.0040
 for sx in (-1,1):
-    uv(f"NOSTRIL_{sx}",(sx*.0075,nose_y,nose_z),(.0027,.0010,.0015),nostril,24,12)
+    uv(f"NOSTRIL_{sx}",(sx*.0070,nose_y,nose_z),(.0019,.0007,.0010),nostril,20,10)
 
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
 brow_hairs=[]; lashes=[]
@@ -260,9 +290,28 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
 curve_object("DIGE_V8_BROWS",brow_hairs,.00015,hair)
 curve_object("DIGE_V8_LASHES",lashes,.00013,black)
 
+# Partial scalp cap hides root discontinuities while keeping forehead/face unobstructed.
+eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
+bpy.ops.mesh.primitive_uv_sphere_add(segments=96,ring_count=48,location=(0,-.034,eye_z+.055))
+scalp=bpy.context.object
+scalp.name="DIGE_V8_SCALP_CAP"
+scalp.scale=(.102,.082,.076)
+bpy.ops.object.transform_apply(location=False,rotation=False,scale=True)
+bmcap=bmesh.new(); bmcap.from_mesh(scalp.data)
+kill=[]
+for v in bmcap.verts:
+    wp=scalp.matrix_world @ v.co
+    if wp.y>.000 and wp.z<eye_z+.096:
+        kill.append(v)
+if kill:
+    bmesh.ops.delete(bmcap,geom=kill,context='VERTS')
+bmcap.to_mesh(scalp.data); bmcap.free()
+scalp.data.materials.append(hair)
+bpy.context.view_layer.objects.active=scalp
+bpy.ops.object.shade_smooth()
+
 # Swept-back deterministic groom. Long strands are limited to side/back; frontal roots remain short.
 random.seed(20260919)
-eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
 hair_box=landmarks["hair_helper"]
 scalp_center=(0.0,-.034,eye_z+.050)
 rx=min(.118,(hair_box["bbox_max"][0]-hair_box["bbox_min"][0])*.44)
