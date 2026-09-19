@@ -1,0 +1,161 @@
+name: DIGE V8 Final Evidence Candidate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-final-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-final-evidence-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  final-evidence:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Runtime receipt
+        run: |
+          set -euxo pipefail
+          uname -a
+          python --version
+          free -h
+          lscpu | sed -n '1,40p'
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "RUNNER_NAME=$RUNNER_NAME"
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+      - name: Resolve Blender 5.2.2 with official checksum
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          test -x "$BLENDER"
+          "$BLENDER" --version | tee experiments/dige-v8-executor-capsule/final_blender_version.txt
+          sha256sum "/tmp/$TAR" | tee experiments/dige-v8-executor-capsule/final_blender_archive.sha256
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build exact canon-locked geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/final_geometry_execution.json
+          test -s runtime/dige_makehuman_v8.obj
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Render final selected full set
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: FULL
+          DIGE_OUTPUT_TAG: final_c3
+          DIGE_SKIN_SSS_WEIGHT: '0.35'
+          DIGE_SKIN_SSS_SCALE: '0.0025'
+          DIGE_SKIN_SSS_ANISO: '0.80'
+          DIGE_SKIN_ROUGH_MIN: '0.30'
+          DIGE_SKIN_ROUGH_MAX: '0.48'
+          DIGE_HAIR_REPLICAS: '28'
+          DIGE_HAIR_LEN_MIN: '0.0010'
+          DIGE_HAIR_LEN_MAX: '0.0024'
+          DIGE_HAIR_BEVEL: '0.000022'
+          DIGE_SAMPLES_PREVIEW: '128'
+          DIGE_SAMPLES_HERO: '256'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/final_blender_execution.log
+
+      - name: Verify selected parameters and machine gates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import hashlib, json, math, pathlib, os
+          root=pathlib.Path(".")
+          geom=json.loads((root/"runtime/DIGE_V8_GEOMETRY_MANIFEST.json").read_text())
+          r=json.loads((root/"runtime/renders/final_c3/DIGE_V8_RENDER_RECEIPT.json").read_text())
+          canon_bytes=(root/"DIGE_CANON_EXECUTION_MANIFEST.json").read_bytes()
+          canon=json.loads(canon_bytes)
+          assert r["engine"]=="CYCLES" and r["device"]=="CPU"
+          assert r["render_set"]=="FULL" and r["output_tag"]=="final_c3"
+          assert r["runtime_commit"]==os.environ["GITHUB_SHA"]
+          assert r["canon_execution_manifest_sha256"]==hashlib.sha256(canon_bytes).hexdigest()
+          assert abs(r["skin_model"]["subsurface_weight"]-.35)<1e-9
+          assert abs(r["skin_model"]["subsurface_scale"]-.0025)<1e-12
+          assert abs(r["skin_model"]["subsurface_anisotropy"]-.80)<1e-9
+          assert r["skin_model"]["roughness_range"]==[0.30,0.48]
+          h=r["hair_surface_contract"]
+          assert h["replicas_per_vertex"]==28
+          assert h["length_range_m"]==[0.001,0.0024]
+          assert abs(h["bevel_radius_m"]-.000022)<1e-12
+          assert len(r["outputs"])==5 and all(x["sha256"] for x in r["outputs"])
+          assert r["denoise_ab"]["raw_aov"]["sha256"] and r["denoise_ab"]["denoised"]["sha256"]
+          mesh=geom["mesh"]; pol=canon["mesh_policy"]
+          machine={
+            "provenance_clean": r["provenance"]["source_pixels_used"] is False and r["provenance"]["reference_pixels_read_by_renderer"] is False and r["provenance"]["reference_images_composited"] is False and r["provenance"]["reference_textures_used"] is False,
+            "body_topology_exact": mesh["vertices_written"]==pol["expected_body_vertices"] and mesh["faces"]==pol["expected_body_faces"] and mesh["boundary_edges"]==0 and mesh["nonmanifold_edges"]==0,
+            "body_height_grounded": abs(geom["normalization"]["height_m"]-1.70)<1e-9 and abs(geom["normalization"]["bbox_min"][2])<1e-9,
+            "eye_helpers_exact": geom["eye_helpers"]["left"]["sha256"]==canon["assets"]["eye_helpers"]["left"]["compact_obj_sha256"] and geom["eye_helpers"]["right"]["sha256"]==canon["assets"]["eye_helpers"]["right"]["compact_obj_sha256"],
+            "five_views_present": len(r["outputs"])==5,
+            "raw_aov_present": bool(r["denoise_ab"]["raw_aov"]["sha256"]),
+            "same_seed_denoise_present": bool(r["denoise_ab"]["denoised"]["sha256"]),
+            "identity_not_bound": r["identity_bound"] is False,
+            "hyperreal_not_claimed": r["evidence_boundary"]["hyperreal_certified"] is False,
+          }
+          out={
+            "schema":"DIGE_FINAL_MACHINE_GATE_V1",
+            "runtime_commit":r["runtime_commit"],
+            "selected_skin":r["skin_model"],
+            "selected_hair":h,
+            "machine_gates":machine,
+            "machine_gates_pass":all(machine.values()),
+            "human_visual_audit_required":True,
+            "hyperreal_certified":False,
+            "truth_boundary":"Machine gates do not replace human visual audit, held-out L_hyper calibration, GPU receipt, or trusted identity bind."
+          }
+          (root/"runtime/renders/final_c3/DIGE_FINAL_MACHINE_GATE.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          assert out["machine_gates_pass"]
+          print(json.dumps(out,sort_keys=True))
+          PY
+
+      - name: Hash final evidence bundle
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          find runtime/renders/final_c3 -type f -print0 | sort -z | xargs -0 sha256sum > DIGE_V8_FINAL_SHA256SUMS.txt
+          sha256sum runtime/DIGE_V8_GEOMETRY_MANIFEST.json >> DIGE_V8_FINAL_SHA256SUMS.txt
+          sha256sum DIGE_CANON_EXECUTION_MANIFEST.json >> DIGE_V8_FINAL_SHA256SUMS.txt
+          cat DIGE_V8_FINAL_SHA256SUMS.txt
+
+      - name: Upload final evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-FINAL-C3-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/final_c3/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/final_c3/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/final_c3/*.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+            experiments/dige-v8-executor-capsule/runtime/final_geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/final_blender_execution.log
+            experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json
+            experiments/dige-v8-executor-capsule/final_blender_version.txt
+            experiments/dige-v8-executor-capsule/final_blender_archive.sha256
+            experiments/dige-v8-executor-capsule/DIGE_V8_FINAL_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14
