@@ -291,7 +291,7 @@ scene.cycles.samples=128
 scene.cycles.adaptive_threshold=.007
 scene.render.resolution_x=640; scene.render.resolution_y=640
 aim((0,2.35,1.515),(0,.01,1.510),85,2.6)
-scene.render.image_settings.file_format='OPEN_EXR_MULTILAYER'
+scene.render.image_settings.file_format='OPEN_EXR'
 scene.render.image_settings.color_depth='32'
 raw=OUT/"04_HERO85_RAW_V53.exr"
 scene.render.filepath=str(raw)
@@ -307,7 +307,7 @@ manifest={
  "engine":"CYCLES",
  "device":"CPU",
  "samples_png":96,
- "samples_raw_hero":128,
+ "samples_raw_hero":128,\n "raw_format":"OPEN_EXR_32F_COMBINED; pass flags retained in scene for next certification AOV gate",
  "adaptive_threshold_png":.010,
  "adaptive_threshold_raw":.007,
  "hair_strands":len(strands),
