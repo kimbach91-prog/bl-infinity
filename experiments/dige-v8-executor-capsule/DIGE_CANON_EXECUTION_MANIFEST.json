@@ -70,28 +70,100 @@
       "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
       "pack_sha256": "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9",
       "pack_license": "CC0",
+      "identity_material": false,
       "asset_name": "onlytheghosts_young_eurasian_female",
       "texture_zip_path": "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png",
       "texture_runtime_name": "young_eurasian_female_diffuse.png",
       "texture_sha256": "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf",
       "texture_size_bytes": 3716441,
-      "mhmat_zip_path": "skins/onlytheghosts_young_eurasian_female/onlytheghosts_young_eurasian_female.mhmat",
-      "mhmat_runtime_name": "onlytheghosts_young_eurasian_female.mhmat",
-      "mhmat_sha256": "90f77f4d2a62cd8faaec0df3370c73ebd3efe1fb9f07e9a6228613dcf505b8be",
       "tags": [
         "asian",
         "caucasian",
         "eurasian",
         "female"
       ],
+      "mhmat_sha256": "90f77f4d2a62cd8faaec0df3370c73ebd3efe1fb9f07e9a6228613dcf505b8be",
       "mhmat_sss_rgb_scale": [
         5,
         2.5,
         1
-      ],
-      "state": "CANDIDATE_PUBLIC_CC0_TEXTURE_NOT_IDENTITY",
-      "identity_material": false
-    }
+      ]
+    },
+    "skin_texture_candidates": {
+      "eurasian": {
+        "source_page": "https://static.makehumancommunity.org/assets/assetpacks/skins01.html",
+        "pack_primary_url": "https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_sha256": "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9",
+        "pack_license": "CC0",
+        "identity_material": false,
+        "asset_name": "onlytheghosts_young_eurasian_female",
+        "texture_zip_path": "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png",
+        "texture_runtime_name": "young_eurasian_female_diffuse.png",
+        "texture_sha256": "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf",
+        "texture_size_bytes": 3716441,
+        "tags": [
+          "asian",
+          "caucasian",
+          "eurasian",
+          "female"
+        ],
+        "mhmat_sha256": "90f77f4d2a62cd8faaec0df3370c73ebd3efe1fb9f07e9a6228613dcf505b8be",
+        "mhmat_sss_rgb_scale": [
+          5,
+          2.5,
+          1
+        ]
+      },
+      "bobby_young": {
+        "source_page": "https://static.makehumancommunity.org/assets/assetpacks/skins01.html",
+        "pack_primary_url": "https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_sha256": "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9",
+        "pack_license": "CC0",
+        "identity_material": false,
+        "asset_name": "bobby_03_young_female_hairless",
+        "texture_zip_path": "skins/bobby_03_young_female_hairless/Young_Female_Hairless.png",
+        "texture_runtime_name": "bobby_03_Young_Female_Hairless.png",
+        "texture_sha256": "9e2fa4ab993dd938ba896bb98848bd65346500c4c0a07d8789d2f1e14bb3dd7f",
+        "texture_size_bytes": 4405289,
+        "tags": [
+          "young",
+          "caucasian",
+          "person"
+        ],
+        "mhmat_sha256": "bbe9c208a969ddd315c00ae295595c8d84290c6e53c9ee469cf1f395f0248763",
+        "mhmat_sss_rgb_scale": [
+          5,
+          2.5,
+          1
+        ]
+      },
+      "uniform_asian": {
+        "source_page": "https://static.makehumancommunity.org/assets/assetpacks/skins01.html",
+        "pack_primary_url": "https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "pack_sha256": "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9",
+        "pack_license": "CC0",
+        "identity_material": false,
+        "asset_name": "blindsaypatten_uniform_skin_texture",
+        "texture_zip_path": "skins/blindsaypatten_uniform_skin_texture/skin_texture.png",
+        "texture_runtime_name": "blindsaypatten_skin_texture.png",
+        "texture_sha256": "b30c832a5610e9e1e981f913d25e7d7055e4cb90cdb59c23acd04a168392506a",
+        "texture_size_bytes": 1037180,
+        "tags": [
+          "asian"
+        ],
+        "mhmat_sha256": "efb9d157052b78abf5b7890637c1538f557cfc368cdf6d7875209f2e4269d93e",
+        "mhmat_sss_rgb_scale": [
+          5,
+          2.5,
+          1
+        ],
+        "legacy_mhmat_license_note": "MHMAT header says AGPLv3; renderer does not consume MHMAT bytes. PNG texture use is based on official Skins01 pack-level CC0 grant."
+      }
+    },
+    "skin_texture_default_key": "eurasian"
   },
   "policy": {
     "identity_bound": false,
