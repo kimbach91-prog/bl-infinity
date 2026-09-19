@@ -283,7 +283,7 @@ def parse_mhclo(path):
         raise RuntimeError(f"C12 MHCLO missing scale contract: {path}")
     return spec
 
-def fit_mhclo_asset(name,obj_path,mhclo_path,body,material,contract):
+def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
     obj_path=verify_asset(obj_path,contract["obj"]["sha256"])
     mhclo_path=verify_asset(mhclo_path,contract["mhclo"]["sha256"])
     spec=parse_mhclo(mhclo_path)
@@ -313,10 +313,10 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,body,material,contract):
     for pair in (xs,ys,zs):
         if pair[0]>=hl or pair[1]>=hl or pair[2]==0:
             raise RuntimeError(f"C12 {name} MHCLO scale reference invalid: {pair} body_vertices={hl}")
-    s0=abs(hverts[xs[0]].co.x-hverts[xs[1]].co.x)/xs[2]
+    s0=abs(hverts[xs[0]].x-hverts[xs[1]].x)/xs[2]
     # MakeClothes Blender importer maps y_scale to Blender Z and z_scale to Blender Y.
-    s2=abs(hverts[ys[0]].co.z-hverts[ys[1]].co.z)/ys[2]
-    s1=abs(hverts[zs[0]].co.y-hverts[zs[1]].co.y)/zs[2]
+    s2=abs(hverts[ys[0]].z-hverts[ys[1]].z)/ys[2]
+    s1=abs(hverts[zs[0]].y-hverts[zs[1]].y)/zs[2]
     scales=(s0,s1,s2)
 
     for n in range(expected):
@@ -554,6 +554,21 @@ if geom.get("canon_execution_manifest_sha256") != CANON_SHA256:
     raise RuntimeError("geometry/canon manifest causal binding mismatch")
 landmarks=geom["landmarks"]
 
+# C12 full normalized hm08 fit reference emitted by the builder.
+fit_ref_meta=geom["fit_reference"]
+fit_ref_path=RUNTIME/fit_ref_meta["output"]
+if not fit_ref_path.exists() or sha(fit_ref_path)!=fit_ref_meta["sha256"]:
+    raise RuntimeError("C12 fit-reference missing/hash mismatch")
+fit_payload=json.loads(fit_ref_path.read_text(encoding="utf-8"))
+fit_vertices=[Vector(v) for v in fit_payload["vertices"]]
+if len(fit_vertices)!=fit_ref_meta["vertices"]:
+    raise RuntimeError(f"C12 fit-reference vertex-count drift: expected={fit_ref_meta['vertices']} got={len(fit_vertices)}")
+if len(fit_vertices) < len(body.data.vertices):
+    raise RuntimeError("C12 fit-reference shorter than compact body")
+# Preserve runtime craniofacial meso deformation on the body prefix while retaining normalized helper vertices.
+for i,v in enumerate(body.data.vertices):
+    fit_vertices[i]=v.co.copy()
+
 # C12: replace proxy helper eyes + flat iris discs with the official high-poly hm08 eye asset.
 system_contract=CANON["assets"]["system_assets_c12"]
 system_dir=RUNTIME/"system_assets"
@@ -568,7 +583,7 @@ eye_obj,eye_fit=fit_mhclo_asset(
     "DIGE_C12_HIGH_POLY_EYES",
     system_dir/eye_asset["obj"]["runtime_name"],
     system_dir/eye_asset["mhclo"]["runtime_name"],
-    body,eye_mat,eye_asset,
+    fit_vertices,eye_mat,eye_asset,
 )
 system_asset_fits["high_poly_eyes"]=eye_fit
 
@@ -621,7 +636,7 @@ brow_obj,brow_fit=fit_mhclo_asset(
     "DIGE_C12_EYEBROW001",
     system_dir/brow_asset["obj"]["runtime_name"],
     system_dir/brow_asset["mhclo"]["runtime_name"],
-    body,brow_mat,brow_asset,
+    fit_vertices,brow_mat,brow_asset,
 )
 system_asset_fits["eyebrow001"]=brow_fit
 
@@ -636,7 +651,7 @@ lash_obj,lash_fit=fit_mhclo_asset(
     "DIGE_C12_EYELASHES01",
     system_dir/lash_asset["obj"]["runtime_name"],
     system_dir/lash_asset["mhclo"]["runtime_name"],
-    body,lash_mat,lash_asset,
+    fit_vertices,lash_mat,lash_asset,
 )
 system_asset_fits["eyelashes01"]=lash_fit
 
@@ -669,7 +684,7 @@ hair_obj,hair_fit=fit_mhclo_asset(
     "DIGE_C12_SHORT03_HAIR",
     system_dir/hair_asset["obj"]["runtime_name"],
     system_dir/hair_asset["mhclo"]["runtime_name"],
-    body,hair_card_mat,hair_asset,
+    fit_vertices,hair_card_mat,hair_asset,
 )
 system_asset_fits["hair_short03"]=hair_fit
 strands=[]
@@ -851,6 +866,12 @@ receipt={
    "probe_artifact_id":system_contract["probe_artifact_id"]
  },
  "system_asset_fits":system_asset_fits,
+ "fit_reference":{
+   "vertices":fit_ref_meta["vertices"],
+   "sha256":fit_ref_meta["sha256"],
+   "body_prefix_overridden_vertices":len(body.data.vertices),
+   "coordinate_system":fit_ref_meta["coordinate_system"]
+ },
  "eye_helpers":geom["eye_helpers"],
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
