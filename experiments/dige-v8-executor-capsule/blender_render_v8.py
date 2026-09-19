@@ -28,13 +28,14 @@ SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0025"))
 SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
 SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
+SKIN_ALBEDO_PATH=os.environ.get("DIGE_SKIN_ALBEDO_PATH","").strip()
+SKIN_ALBEDO_EXPECTED_SHA256=os.environ.get("DIGE_SKIN_ALBEDO_SHA256","").strip().lower()
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
     m.use_nodes=True
     nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
-    set_input(bs,"Base Color",(0.30,0.115,0.072,1))
     set_input(bs,"IOR",1.42)
     set_input(bs,"Subsurface Weight",SKIN_SSS_WEIGHT)
     set_input(bs,"Subsurface Scale",SKIN_SSS_SCALE)
@@ -43,56 +44,87 @@ def make_skin():
     if hasattr(bs,"distribution"):
         bs.distribution='MULTI_GGX'
     set_input(bs,"Subsurface Radius",(1.0,.45,.18))
-    set_input(bs,"Specular IOR Level",.32)
+    set_input(bs,"Specular IOR Level",.30)
     set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
-    set_input(bs,"Coat Weight",.018)
-    set_input(bs,"Coat Roughness",.28)
+    set_input(bs,"Coat Weight",.012)
+    set_input(bs,"Coat Roughness",.30)
 
     tex=nt.nodes.new("ShaderNodeTexCoord")
+    skin_asset={
+        "enabled":False,
+        "file":None,
+        "sha256":None,
+        "expected_sha256":SKIN_ALBEDO_EXPECTED_SHA256 or None,
+        "license":"CC0",
+        "source_pack":"MakeHuman Skins01 CC0",
+        "source_url":"https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
+        "asset_name":"onlytheghosts_young_eurasian_female",
+    }
 
-    # Regional melanin/hemoglobin proxy: broad field plus independent chroma breakup.
     regional=nt.nodes.new("ShaderNodeTexNoise")
-    regional.inputs["Scale"].default_value=3.5
-    regional.inputs["Detail"].default_value=3.0
-    regional.inputs["Roughness"].default_value=.52
+    regional.inputs["Scale"].default_value=3.2
+    regional.inputs["Detail"].default_value=2.4
+    regional.inputs["Roughness"].default_value=.50
     nt.links.new(tex.outputs["Generated"],regional.inputs["Vector"])
+    tint=nt.nodes.new("ShaderNodeValToRGB")
+    tint.color_ramp.elements[0].position=.18
+    tint.color_ramp.elements[0].color=(0.92,0.86,0.83,1)
+    tint.color_ramp.elements[1].position=.82
+    tint.color_ramp.elements[1].color=(1.06,1.02,.98,1)
+    nt.links.new(regional.outputs["Fac"],tint.inputs["Fac"])
 
-    tone=nt.nodes.new("ShaderNodeValToRGB")
-    tone.color_ramp.elements[0].position=.18
-    tone.color_ramp.elements[0].color=(0.205,0.055,0.036,1)
-    tone.color_ramp.elements[1].position=.82
-    tone.color_ramp.elements[1].color=(0.385,0.165,0.102,1)
-    nt.links.new(regional.outputs["Fac"],tone.inputs["Fac"])
+    if SKIN_ALBEDO_PATH:
+        p=Path(SKIN_ALBEDO_PATH)
+        if not p.is_absolute():
+            p=ROOT/p
+        if not p.exists():
+            raise RuntimeError(f"Configured skin albedo missing: {p}")
+        got=sha(p)
+        if SKIN_ALBEDO_EXPECTED_SHA256 and got.lower()!=SKIN_ALBEDO_EXPECTED_SHA256:
+            raise RuntimeError(f"Skin albedo hash drift: expected={SKIN_ALBEDO_EXPECTED_SHA256} got={got}")
+        img=bpy.data.images.load(str(p),check_existing=True)
+        try:
+            img.colorspace_settings.name='sRGB'
+        except Exception:
+            pass
+        albedo=nt.nodes.new("ShaderNodeTexImage")
+        albedo.image=img
+        albedo.interpolation='Linear'
+        albedo.extension='EXTEND'
+        nt.links.new(tex.outputs["UV"],albedo.inputs["Vector"])
+        grade=nt.nodes.new("ShaderNodeHueSaturation")
+        grade.inputs["Saturation"].default_value=.92
+        grade.inputs["Value"].default_value=.74
+        nt.links.new(albedo.outputs["Color"],grade.inputs["Color"])
+        color_mix=nt.nodes.new("ShaderNodeMixRGB")
+        color_mix.blend_type='MULTIPLY'
+        color_mix.inputs["Fac"].default_value=.18
+        nt.links.new(grade.outputs["Color"],color_mix.inputs[1])
+        nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
+        nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
+        skin_asset.update({"enabled":True,"file":p.name,"sha256":got})
+    else:
+        tone=nt.nodes.new("ShaderNodeValToRGB")
+        tone.color_ramp.elements[0].position=.20
+        tone.color_ramp.elements[0].color=(0.255,0.090,0.058,1)
+        tone.color_ramp.elements[1].position=.80
+        tone.color_ramp.elements[1].color=(0.335,0.145,0.090,1)
+        nt.links.new(regional.outputs["Fac"],tone.inputs["Fac"])
+        nt.links.new(tone.outputs["Color"],bs.inputs["Base Color"])
 
-    chroma=nt.nodes.new("ShaderNodeTexNoise")
-    chroma.inputs["Scale"].default_value=31.0
-    chroma.inputs["Detail"].default_value=4.2
-    chroma.inputs["Roughness"].default_value=.66
-    nt.links.new(tex.outputs["Generated"],chroma.inputs["Vector"])
-    chroma_ramp=nt.nodes.new("ShaderNodeValToRGB")
-    chroma_ramp.color_ramp.elements[0].color=(0.74,0.46,0.39,1)
-    chroma_ramp.color_ramp.elements[1].color=(1.05,0.88,0.77,1)
-    nt.links.new(chroma.outputs["Fac"],chroma_ramp.inputs["Fac"])
-    color_mix=nt.nodes.new("ShaderNodeMixRGB")
-    color_mix.blend_type='MULTIPLY'
-    color_mix.inputs["Fac"].default_value=.28
-    nt.links.new(tone.outputs["Color"],color_mix.inputs[1])
-    nt.links.new(chroma_ramp.outputs["Color"],color_mix.inputs[2])
-    nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
-
-    # Roughness is independent from color so oily/dry patches do not mirror pigmentation.
+    # Roughness is independent from albedo so pigmentation never becomes gloss directly.
     rough_macro=nt.nodes.new("ShaderNodeTexNoise")
     rough_macro.inputs["Scale"].default_value=6.0
     rough_macro.inputs["Detail"].default_value=3.0
     rough_macro.inputs["Roughness"].default_value=.55
     nt.links.new(tex.outputs["Generated"],rough_macro.inputs["Vector"])
     rough_micro=nt.nodes.new("ShaderNodeTexNoise")
-    rough_micro.inputs["Scale"].default_value=72.0
-    rough_micro.inputs["Detail"].default_value=2.8
-    rough_micro.inputs["Roughness"].default_value=.60
+    rough_micro.inputs["Scale"].default_value=78.0
+    rough_micro.inputs["Detail"].default_value=3.0
+    rough_micro.inputs["Roughness"].default_value=.62
     nt.links.new(tex.outputs["Generated"],rough_micro.inputs["Vector"])
-    r1=nt.nodes.new("ShaderNodeMath"); r1.operation='MULTIPLY'; r1.inputs[1].default_value=.72
-    r2=nt.nodes.new("ShaderNodeMath"); r2.operation='MULTIPLY'; r2.inputs[1].default_value=.28
+    r1=nt.nodes.new("ShaderNodeMath"); r1.operation='MULTIPLY'; r1.inputs[1].default_value=.70
+    r2=nt.nodes.new("ShaderNodeMath"); r2.operation='MULTIPLY'; r2.inputs[1].default_value=.30
     rsum=nt.nodes.new("ShaderNodeMath"); rsum.operation='ADD'
     nt.links.new(rough_macro.outputs["Fac"],r1.inputs[0]); nt.links.new(rough_micro.outputs["Fac"],r2.inputs[0])
     nt.links.new(r1.outputs[0],rsum.inputs[0]); nt.links.new(r2.outputs[0],rsum.inputs[1])
@@ -104,35 +136,35 @@ def make_skin():
     nt.links.new(rsum.outputs[0],rough_map.inputs["Value"])
     nt.links.new(rough_map.outputs["Result"],bs.inputs["Roughness"])
 
-    # Multi-scale meso/micro normal: orange-peel -> pores -> fine breakup.
+    # Meso / pore / micro normal remain independent from the color texture.
     meso=nt.nodes.new("ShaderNodeTexNoise")
-    meso.inputs["Scale"].default_value=105.0
+    meso.inputs["Scale"].default_value=115.0
     meso.inputs["Detail"].default_value=5.0
     meso.inputs["Roughness"].default_value=.68
     nt.links.new(tex.outputs["Generated"],meso.inputs["Vector"])
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=520.0
+    pore.inputs["Scale"].default_value=560.0
     pore.inputs["Detail"].default_value=4.0
     pore.inputs["Roughness"].default_value=.62
     nt.links.new(tex.outputs["Generated"],pore.inputs["Vector"])
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=1650.0
+    micro.inputs["Scale"].default_value=1750.0
     micro.inputs["Detail"].default_value=2.0
     micro.inputs["Roughness"].default_value=.58
     nt.links.new(tex.outputs["Generated"],micro.inputs["Vector"])
-    m1=nt.nodes.new("ShaderNodeMath"); m1.operation='MULTIPLY'; m1.inputs[1].default_value=.30
-    m2=nt.nodes.new("ShaderNodeMath"); m2.operation='MULTIPLY'; m2.inputs[1].default_value=.48
+    m1=nt.nodes.new("ShaderNodeMath"); m1.operation='MULTIPLY'; m1.inputs[1].default_value=.28
+    m2=nt.nodes.new("ShaderNodeMath"); m2.operation='MULTIPLY'; m2.inputs[1].default_value=.50
     m3=nt.nodes.new("ShaderNodeMath"); m3.operation='MULTIPLY'; m3.inputs[1].default_value=.22
     ma=nt.nodes.new("ShaderNodeMath"); ma.operation='ADD'
     mb=nt.nodes.new("ShaderNodeMath"); mb.operation='ADD'
     nt.links.new(meso.outputs["Fac"],m1.inputs[0]); nt.links.new(pore.outputs["Fac"],m2.inputs[0]); nt.links.new(micro.outputs["Fac"],m3.inputs[0])
     nt.links.new(m1.outputs[0],ma.inputs[0]); nt.links.new(m2.outputs[0],ma.inputs[1]); nt.links.new(ma.outputs[0],mb.inputs[0]); nt.links.new(m3.outputs[0],mb.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.085
-    bump.inputs["Distance"].default_value=.00011
+    bump.inputs["Strength"].default_value=.09
+    bump.inputs["Distance"].default_value=.00010
     nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
-    return m
+    return m,skin_asset
 
 def principled(name,base,rough=.45,ior=1.45,subsurface=0.0,transmission=0.0,metallic=0.0,sheen=0.0):
     m=bpy.data.materials.new(name); m.use_nodes=True
@@ -152,13 +184,20 @@ def hair_material():
         if hasattr(h,"parametrization"):
             try: h.parametrization='MELANIN'
             except Exception: pass
+        if hasattr(h,"model"):
+            try: h.model='HUANG'
+            except Exception: pass
+        set_input(h,"Aspect Ratio",.90)
+        set_input(h,"Reflection",1.0)
+        set_input(h,"Transmission",1.0)
+        set_input(h,"Secondary Reflection",1.0)
         set_input(h,"Melanin",.93)
         set_input(h,"Melanin Redness",.04)
         set_input(h,"Random Color",.03)
-        set_input(h,"Roughness",.32)
-        set_input(h,"Radial Roughness",.34)
-        set_input(h,"Random Roughness",.08)
-        set_input(h,"Coat",.04)
+        set_input(h,"Roughness",.28)
+        set_input(h,"Radial Roughness",.30)
+        set_input(h,"Random Roughness",.06)
+        set_input(h,"Coat",.02)
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -195,7 +234,7 @@ def curve_object(name,splines,bevel,mat):
 
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 
-skin=make_skin()
+skin,skin_asset=make_skin()
 sclera=principled("SCLERA",(0.58,0.52,0.48),rough=.30,ior=1.376,subsurface=.02)
 iris=principled("IRIS",(0.070,0.026,0.012),rough=.32,ior=1.40)
 iris_ring=principled("IRIS_RING",(0.012,0.005,0.003),rough=.34,ior=1.40)
@@ -454,106 +493,132 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C6 canonical-scalp strand groom. The filtered helper-hair remains provenance guidance only;
-# roots come from the actual closed body scalp surface to avoid bald crown/frontal gaps.
+# C8 production-style scalp sampling: area-weighted roots -> guide field -> children/clump/frizz.
 hair_guide_meta=geom["hair_guide"]
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
 head_center=Vector((0.0,-.055,eye_z+.055))
-scalp_roots=[]
-for v in body.data.vertices:
-    p=body.matrix_world @ v.co
-    if p.z < eye_z+.030:
-        continue
-    if abs(p.x) > .128:
-        continue
-    # Exclude visible face/forehead below the hairline while keeping the crown.
-    if p.y > .038 and p.z < eye_z+.095:
-        continue
-    # Exclude low lateral ear/temple region.
-    if abs(p.x) > .108 and p.z < eye_z+.070:
-        continue
-    scalp_roots.append(p)
 
-if len(scalp_roots)<120:
-    raise RuntimeError(f"C6 scalp root candidate count unexpectedly low: {len(scalp_roots)}")
+def tri_area(a,b,c):
+    return ((b-a).cross(c-a)).length*.5
 
-# Bound CPU cost deterministically while keeping broad scalp coverage.
+# Select scalp polygons on the actual body surface, then triangulate for area-weighted sampling.
+scalp_tris=[]
+scalp_area=0.0
+for poly in body.data.polygons:
+    pts=[body.matrix_world @ body.data.vertices[i].co for i in poly.vertices]
+    center=sum(pts,Vector((0,0,0)))/len(pts)
+    if center.z < eye_z+.028 or abs(center.x)>.132:
+        continue
+    # Keep forehead open below hairline; retain crown/back.
+    if center.y>.032 and center.z<eye_z+.105:
+        continue
+    if abs(center.x)>.112 and center.z<eye_z+.074:
+        continue
+    for i in range(1,len(pts)-1):
+        a,b,c3=pts[0],pts[i],pts[i+1]
+        ar=tri_area(a,b,c3)
+        if ar>1e-10:
+            scalp_tris.append((a,b,c3,ar))
+            scalp_area+=ar
+if len(scalp_tris)<100 or scalp_area<=0:
+    raise RuntimeError(f"C8 scalp triangle selection invalid: tris={len(scalp_tris)} area={scalp_area}")
+
 random.seed(20260919)
-if len(scalp_roots)>360:
-    scalp_roots=random.sample(scalp_roots,360)
-scalp_roots=sorted(scalp_roots,key=lambda p:(round(p.z,6),round(p.x,6),round(p.y,6)))
+cdf=[]
+acc=0.0
+for a,b,c3,ar in scalp_tris:
+    acc+=ar
+    cdf.append(acc)
 
-up=Vector((0.0,0.0,1.0))
+def sample_scalp_point():
+    import bisect
+    x=random.random()*acc
+    idx=bisect.bisect_left(cdf,x)
+    a,b,c3,_=scalp_tris[min(idx,len(scalp_tris)-1)]
+    r1=math.sqrt(random.random()); r2=random.random()
+    p=a*(1-r1)+b*(r1*(1-r2))+c3*(r1*r2)
+    n=(b-a).cross(c3-a)
+    if n.length<1e-9:
+        n=(p-head_center)
+    if n.length<1e-9:
+        n=Vector((0,0,1))
+    n.normalize()
+    if (p-head_center).dot(n)<0:
+        n=-n
+    return p,n
+
+root_count=2600
+roots=[sample_scalp_point() for _ in range(root_count)]
+
+# Sparse guide centers define local flow/clumps; children inherit and vary that field.
+guide_count=96
+guide_indices=random.sample(range(root_count),guide_count)
+guides=[roots[i] for i in guide_indices]
+
+def tangent_flow(p,n):
+    side=1.0 if p.x>=0 else -1.0
+    crown=max(0.0,min(1.0,(p.z-(eye_z+.028))/.135))
+    desired=Vector((side*(.10+.12*crown),-1.0,-.22+.26*crown))
+    flow=desired-n*desired.dot(n)
+    if flow.length<1e-8:
+        flow=Vector((side*.08,-.98,-.15))
+    flow.normalize()
+    return flow,crown
+
+guide_flow=[tangent_flow(p,n)[0] for p,n in guides]
+
 strands=[]
-replicas=10
-for p in scalp_roots:
-    outward=(p-head_center)
-    if outward.length<1e-8:
-        outward=Vector((0,0,1))
-    else:
-        outward.normalize()
-    tangent=outward.cross(up)
-    if tangent.length<1e-8:
-        tangent=Vector((1,0,0))
-    else:
-        tangent.normalize()
-    bitangent=outward.cross(tangent)
-    if bitangent.length<1e-8:
-        bitangent=Vector((0,1,0))
-    else:
-        bitangent.normalize()
+for root,n in roots:
+    # Nearest guide in XZ gives deterministic clump field at modest CPU cost.
+    gi=min(range(guide_count),key=lambda k:(guides[k][0].x-root.x)**2+(guides[k][0].z-root.z)**2)
+    gpos,gn=guides[gi]
+    base_flow,crown=tangent_flow(root,n)
+    flow=(base_flow*.72+guide_flow[gi]*.28)
+    if flow.length<1e-8: flow=base_flow
+    flow.normalize()
 
-    side=1.0 if p.x>=0 else -1.0
-    crown=max(0.0,min(1.0,(p.z-(eye_z+.03))/.12))
-    rear=max(0.0,min(1.0,(-p.y+.02)/.18))
-    for j in range(replicas):
-        jitter=tangent*random.uniform(-.0014,.0014)+bitangent*random.uniform(-.0010,.0010)+outward*.00022
-        root=p+jitter
+    # Medium-short style: enough mass to cover scalp while remaining easier than long hair.
+    L=random.uniform(.075,.145)*(0.86+.24*crown)
+    root2=root+n*.00028
+    tip=root2+flow*L+Vector((0,0,-.012*(1-crown)))
 
-        # Short crop: top is 3.5-6.5 cm, lower side/back 2.2-4.5 cm.
-        L=random.uniform(.035,.065) if crown>.52 else random.uniform(.022,.045)
-        L*=.92+.18*rear
+    # Clump children progressively toward guide trajectory without collapsing roots.
+    guide_delta=(gpos-root)
+    clump_strength=random.uniform(.08,.20)
+    frizz=Vector((random.uniform(-.004,.004),random.uniform(-.003,.003),random.uniform(-.004,.004)))
+    p1=root2+(tip-root2)*.28+guide_delta*(clump_strength*.10)+frizz*.35
+    p2=root2+(tip-root2)*.58+guide_delta*(clump_strength*.20)-frizz*.20
+    p3=root2+(tip-root2)*.82+guide_delta*(clump_strength*.28)+frizz*.45
+    strands.append([tuple(root2),tuple(p1),tuple(p2),tuple(p3),tuple(tip)])
 
-        # Lay strands backward and slightly downward instead of radially spiking.
-        part=side*(.12+.12*crown)
-        fall=Vector((part,-.58,-.48+.18*crown))
-        direction=(outward*.22+fall*.78)
-        if direction.length<1e-8:
-            direction=Vector((0,-.7,-.3))
-        direction.normalize()
-
-        tip=root+direction*L
-        bend=Vector((side*random.uniform(-.004,.004),random.uniform(-.004,.002),random.uniform(-.002,.005)))
-        mid1=root+(tip-root)*.34+bend*.45
-        mid2=root+(tip-root)*.70-bend*.25
-        strands.append([tuple(root),tuple(mid1),tuple(mid2),tuple(tip)])
-
-# Sparse fine flyaways break the silhouette without becoming a shell.
-flyaways=160
+flyaways=140
 for _ in range(flyaways):
-    p=random.choice(scalp_roots)
-    side=1.0 if p.x>=0 else -1.0
-    root=p+Vector((random.uniform(-.001,.001),random.uniform(-.0007,.0007),random.uniform(-.001,.001)))
-    L=random.uniform(.028,.070)
-    tip=root+Vector((side*random.uniform(.004,.018),random.uniform(-.030,-.008),random.uniform(-.040,.012)))
-    mid=root+(tip-root)*.55+Vector((side*random.uniform(-.006,.006),random.uniform(-.004,.004),random.uniform(-.004,.008)))
-    strands.append([tuple(root),tuple(mid),tuple(tip)])
+    root,n=random.choice(roots)
+    base,crown=tangent_flow(root,n)
+    L=random.uniform(.045,.100)
+    side=1.0 if root.x>=0 else -1.0
+    root2=root+n*.00035
+    tip=root2+base*L+Vector((side*random.uniform(-.012,.012),random.uniform(-.010,.005),random.uniform(-.010,.018)))
+    mid=root2+(tip-root2)*.52+Vector((side*random.uniform(-.009,.009),random.uniform(-.006,.006),random.uniform(-.006,.010)))
+    strands.append([tuple(root2),tuple(mid),tuple(tip)])
 
-curve_object("DIGE_V8_C6_SCALP_STRANDS",strands,.000026,hair)
+curve_object("DIGE_V8_C8_AREA_CLUMP_GROOM",strands,.000032,hair)
 
 hair_surface_contract={
-    "root_source":"CANONICAL_BODY_SCALP_SURFACE",
-    "guide_source":"FILTERED_MAKEHUMAN_HELPER_HAIR_PROVENANCE_ONLY",
+    "root_source":"AREA_WEIGHTED_CANONICAL_SCALP_TRIANGLES",
+    "guide_source":"DERIVED_LOCAL_FLOW_WITH_FILTERED_MAKEHUMAN_HAIR_PROVENANCE",
     "guide_sha256":hair_guide_meta["sha256"],
-    "guide_faces":hair_guide_meta["faces"],
-    "guide_removed_front_faces":hair_guide_meta["removed_front_faces"],
-    "root_candidate_count":len(scalp_roots),
-    "replicas_per_root":replicas,
+    "scalp_triangle_count":len(scalp_tris),
+    "scalp_area_m2":scalp_area,
+    "root_count":root_count,
+    "guide_count":guide_count,
     "flyaway_count":flyaways,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000026,
+    "bevel_radius_m":0.000032,
     "mass_mesh_rendered":False,
-    "style":"CANONICAL_SCALP_SHORT_CROP_V2",
+    "clumping":"NEAREST_GUIDE_XZ_PROGRESSIVE",
+    "frizz":"LOW_AMPLITUDE_PER_STRAND",
+    "style":"AREA_SAMPLED_GUIDE_CHILD_CLUMP_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -718,18 +783,19 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C6_C5_SKIN_MESO_WETLINE_CANONICAL_SCALP_SHORT_CROP_V1",
+ "appearance_candidate":"C8_CC0_TEXTURE_RANDOM_WALK_AREA_CLUMP_HAIR_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C5_SKIN+MESO+WETLINE_RETAINED; C5_STRAND_ROOT_COVERAGE_REJECTED; C6_CANONICAL_SCALP_SHORT_CROP"
+   "selection_basis":"C7_OFFICIAL_CC0_SKIN_PROBE_PASS; C5_MESO+WETLINE_RETAINED; C6_VERTEX_ROOT_COVERAGE_REJECTED; C8_AREA_SAMPLING+CLUMP"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[105,520,1650]},
+ "skin_albedo":skin_asset,
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "provenance":{
@@ -737,6 +803,10 @@ receipt={
    "reference_pixels_read_by_renderer":False,
    "reference_images_composited":False,
    "reference_textures_used":False,
+   "external_skin_texture_used":skin_asset["enabled"],
+   "external_skin_texture_sha256":skin_asset["sha256"],
+   "external_skin_texture_license":"CC0" if skin_asset["enabled"] else None,
+   "external_skin_texture_pack_sha256":"7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9" if skin_asset["enabled"] else None,
    "external_geometry_asset_used":True,
    "external_geometry_asset_license":"CC0-1.0",
    "image_model_calls":0,
