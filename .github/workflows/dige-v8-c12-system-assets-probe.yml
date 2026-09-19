@@ -1,0 +1,105 @@
+name: DIGE V8 C12 System Assets Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c12-system-assets-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Download official MakeHuman system assets CC0 pack
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/dige_c12
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 4 "$PRIMARY" -o /tmp/system_assets_cc0.zip; then
+            curl -fL --retry 4 --retry-delay 4 "$SECONDARY" -o /tmp/system_assets_cc0.zip
+          fi
+          test -s /tmp/system_assets_cc0.zip
+          sha256sum /tmp/system_assets_cc0.zip | tee /tmp/dige_c12/SYSTEM_ASSETS_ZIP_SHA256.txt
+          unzip -t /tmp/system_assets_cc0.zip > /tmp/dige_c12/SYSTEM_ASSETS_ZIP_TEST.txt
+          unzip -Z1 /tmp/system_assets_cc0.zip > /tmp/dige_c12/SYSTEM_ASSETS_LISTING.txt
+
+      - name: Extract hair and eye candidate paths
+        run: |
+          set -euxo pipefail
+          cd /tmp/dige_c12
+          grep -Ei "(short03|short04|high-poly|brown_eye|brown\.mhmat|eyelashes0[1-4]|eyebrow00[1-9])" SYSTEM_ASSETS_LISTING.txt > CANDIDATE_PATHS.txt || true
+          cat CANDIDATE_PATHS.txt
+          test -s CANDIDATE_PATHS.txt
+          mkdir -p candidates
+          while IFS= read -r p; do
+            [ -n "$p" ] || continue
+            case "$p" in */) continue ;; esac
+            safe=$(echo "$p" | tr "/" "__")
+            unzip -p /tmp/system_assets_cc0.zip "$p" > "candidates/$safe"
+          done < CANDIDATE_PATHS.txt
+          find candidates -type f -size +0c -print0 | sort -z | xargs -0 sha256sum | tee CANDIDATE_SHA256SUMS.txt
+          find candidates -type f -printf "%P\t%s bytes\n" | sort | tee CANDIDATE_SIZES.txt
+
+      - name: Build topology and material manifest
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, re
+          root=pathlib.Path("/tmp/dige_c12")
+          records=[]
+          for p in sorted((root/"candidates").iterdir()):
+              b=p.read_bytes()
+              rec={"file":p.name,"size":len(b),"sha256":hashlib.sha256(b).hexdigest()}
+              low=p.name.lower()
+              if low.endswith(".obj"):
+                  txt=b.decode("utf-8",errors="replace")
+                  verts=[]; faces=0; uvs=0
+                  for line in txt.splitlines():
+                      if line.startswith("v "):
+                          try: verts.append(tuple(float(x) for x in line.split()[1:4]))
+                          except Exception: pass
+                      elif line.startswith("f "): faces+=1
+                      elif line.startswith("vt "): uvs+=1
+                  if verts:
+                      mins=[min(v[i] for v in verts) for i in range(3)]
+                      maxs=[max(v[i] for v in verts) for i in range(3)]
+                      rec.update({"vertices":len(verts),"faces":faces,"uvs":uvs,"bbox_min":mins,"bbox_max":maxs})
+              elif low.endswith(".mhmat") or low.endswith(".mhclo"):
+                  txt=b.decode("utf-8",errors="replace")
+                  rec["text_head"]="\n".join(txt.splitlines()[:80])
+              records.append(rec)
+          manifest={
+            "schema":"DIGE_C12_SYSTEM_ASSET_PROBE_V1",
+            "source_page":"https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+            "primary_url":"https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+            "pack_license":"CC0 per official MakeHuman system-assets page",
+            "zip_sha256":(root/"SYSTEM_ASSETS_ZIP_SHA256.txt").read_text().split()[0],
+            "records":records
+          }
+          (root/"DIGE_C12_SYSTEM_ASSET_MANIFEST.json").write_text(json.dumps(manifest,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(manifest,indent=2,sort_keys=True))
+          PY
+
+      - name: Upload C12 probe evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C12-SYSTEM-ASSET-PROBE-${{ github.event.pull_request.head.sha }}
+          path: |
+            /tmp/dige_c12/DIGE_C12_SYSTEM_ASSET_MANIFEST.json
+            /tmp/dige_c12/SYSTEM_ASSETS_ZIP_SHA256.txt
+            /tmp/dige_c12/SYSTEM_ASSETS_ZIP_TEST.txt
+            /tmp/dige_c12/CANDIDATE_PATHS.txt
+            /tmp/dige_c12/CANDIDATE_SHA256SUMS.txt
+            /tmp/dige_c12/CANDIDATE_SIZES.txt
+            /tmp/dige_c12/candidates/*
+          if-no-files-found: error
+          retention-days: 14
