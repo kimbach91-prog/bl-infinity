@@ -175,6 +175,9 @@ jobs:
           assert fits["eyebrow001"]["vertices"] == 124
           assert fits["eyelashes01"]["vertices"] == 250
           assert all(v["fit_algorithm"] == "MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED" for v in fits.values())
+          assert r["fit_reference"]["vertices"] >= 19158
+          assert r["fit_reference"]["body_prefix_overridden_vertices"] == 13380
+          assert r["fit_reference"]["coordinate_system"] == "BLENDER_X_DEPTH_Y_UP_Z_NORMALIZED_BODY_REFERENCED"
           assert len(r["outputs"]) == 5 and all(o["sha256"] for o in r["outputs"])
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
@@ -200,6 +203,7 @@ jobs:
             experiments/dige-v8-executor-capsule/runtime/renders/*.json
             experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
             experiments/dige-v8-executor-capsule/runtime/geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_FIT_REFERENCE.json
             experiments/dige-v8-executor-capsule/runtime/system_assets/*
             experiments/dige-v8-executor-capsule/runtime/blender_execution.log
             experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
