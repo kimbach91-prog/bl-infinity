@@ -91,13 +91,13 @@ def hair_material():
         if hasattr(h,"parametrization"):
             try: h.parametrization='MELANIN'
             except Exception: pass
-        set_input(h,"Melanin",.78)
-        set_input(h,"Melanin Redness",.18)
-        set_input(h,"Random Color",.08)
+        set_input(h,"Melanin",.93)
+        set_input(h,"Melanin Redness",.04)
+        set_input(h,"Random Color",.03)
         set_input(h,"Roughness",.28)
         set_input(h,"Radial Roughness",.34)
-        set_input(h,"Random Roughness",.12)
-        set_input(h,"Coat",.10)
+        set_input(h,"Random Roughness",.08)
+        set_input(h,"Coat",.04)
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -177,6 +177,18 @@ if bbox_extent[1] >= 0.65:
 if bbox_min[2] < -0.03 or bbox_max[2] > 1.75:
     raise RuntimeError(f"Body Z placement invalid: min={bbox_min[2]} max={bbox_max[2]}")
 
+geom=json.loads((RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json").read_text())
+if geom.get("canon_execution_manifest_sha256") != CANON_SHA256:
+    raise RuntimeError("geometry/canon manifest causal binding mismatch")
+landmarks=geom["landmarks"]
+mouth_z=landmarks["mouth_front"]["center"][2]
+eye_mid_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
+cheek_z=mouth_z+.034
+nose_bridge_z=eye_mid_z-.010
+nose_tip_z=mouth_z+.027
+chin_z=mouth_z-.038
+jaw_z=mouth_z-.026
+
 craniofacial_deform={
   "cheek_y_m":0.0045,
   "nose_bridge_y_m":0.0035,
@@ -192,27 +204,27 @@ def g2(x,z,cx,cz,sx,sz):
 for v in body.data.vertices:
     co=v.co
     # Only the forward facial surface; back/head/body vertices remain untouched.
-    if co.y <= 0.0 or co.z < 1.455 or co.z > 1.665 or abs(co.x) > .115:
+    if co.y <= 0.0 or co.z < chin_z-.035 or co.z > eye_mid_z+.085 or abs(co.x) > .120:
         continue
 
     # Cheek/malar projection with tiny natural asymmetry.
-    wl=g2(co.x,co.z,.052,1.555,.030,.030)
-    wr=g2(co.x,co.z,-.052,1.555,.030,.030)
+    wl=g2(co.x,co.z,.052,cheek_z,.031,.031)
+    wr=g2(co.x,co.z,-.052,cheek_z,.031,.031)
     co.y += craniofacial_deform["cheek_y_m"]*(wl+wr)
     co.y += craniofacial_deform["asymmetry_y_m"]*(wr-wl)
 
     # Nose bridge and tip remain bounded around the midline.
-    co.y += craniofacial_deform["nose_bridge_y_m"]*g2(co.x,co.z,0.0,1.575,.015,.030)
-    co.y += craniofacial_deform["nose_tip_y_m"]*g2(co.x,co.z,0.0,1.548,.014,.015)
+    co.y += craniofacial_deform["nose_bridge_y_m"]*g2(co.x,co.z,0.0,nose_bridge_z,.015,.030)
+    co.y += craniofacial_deform["nose_tip_y_m"]*g2(co.x,co.z,0.0,nose_tip_z,.014,.015)
 
     # Native lip volume: geometry, not a painted/floating replacement.
-    co.y += craniofacial_deform["lip_volume_y_m"]*g2(co.x,co.z,0.0,1.523,.030,.008)
+    co.y += craniofacial_deform["lip_volume_y_m"]*g2(co.x,co.z,0.0,mouth_z,.030,.008)
 
     # Chin projection.
-    co.y += craniofacial_deform["chin_y_m"]*g2(co.x,co.z,0.0,1.486,.035,.022)
+    co.y += craniofacial_deform["chin_y_m"]*g2(co.x,co.z,0.0,chin_z,.035,.022)
 
     # Mild lower-face taper from the existing canonical topology.
-    jaw_w=max(0.0,1.0-abs(co.z-1.495)/.050)
+    jaw_w=max(0.0,1.0-abs(co.z-jaw_z)/.052)
     if jaw_w>0 and abs(co.x)>.030:
         s=1.0-(1.0-craniofacial_deform["jaw_x_scale"])*jaw_w
         co.x *= s
@@ -325,56 +337,53 @@ for i in range(4500):
     z=scalp_center[2]+rz*math.cos(theta)
     front_zone=(y>-.006 and abs(x)<.078)
     side=1 if x>=0 else -1
-    if front_zone:
-        continue
-    L=random.uniform(.15,.37)
-    wave=random.uniform(-.006,.006)
+    L=random.uniform(.018,.045) if front_zone else random.uniform(.035,.095)
+    wave=random.uniform(-.0035,.0035)
     strands.append([
         (x,y,z),
-        (x*1.02+wave*.35,y-.012,z-L*.22),
-        (x*1.05+side*random.uniform(0,.008)-wave*.30,y-.025,z-L*.58),
-        (x*1.08+side*random.uniform(0,.015)+wave,y-.035,z-L)
+        (x*1.012+wave*.25,y-.006,z-L*.24),
+        (x*1.025+side*random.uniform(0,.004)-wave*.20,y-.012,z-L*.58),
+        (x*1.035+side*random.uniform(0,.007)+wave,y-.018,z-L)
     ])
-# Fine procedural hairline: sparse, tapered strands rooted on the canonical forehead surface.
-head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.020 and v.co.y>-0.02]
+# Sparse short hairline: roots use the real forehead surface, then immediately bend backward.
+head_surface=[v.co.copy() for v in body.data.vertices if v.co.z>eye_z+.018 and v.co.y>-0.02]
 def forehead_surface_y(x,z):
     best=None
     best_d=1e9
     for p in head_surface:
-        dx=(p.x-x)/.012
-        dz=(p.z-z)/.014
+        dx=(p.x-x)/.010
+        dz=(p.z-z)/.012
         d=dx*dx+dz*dz
         if d<best_d:
             best_d=d; best=p
     return (best.y if best is not None else .040)
 
 hairline=[]
-for i in range(260):
-    t=(i+.5)/260
-    x=-.076+.152*t
-    xn=x/.076
+for i in range(180):
+    t=(i+.5)/180
+    x=-.074+.148*t
+    xn=x/.074
     arch=max(0.0,1.0-xn*xn)
-    root_z=eye_z+.052+.032*arch+(random.random()-.5)*.0022
-    root_y=forehead_surface_y(x,root_z)+.00035+(random.random()-.5)*.0005
+    root_z=eye_z+.050+.026*arch
+    root_y=forehead_surface_y(x,root_z)+.00025
     side=1 if x>=0 else -1
-    jitter=(random.random()-.5)*.0022
+    jitter=(random.random()-.5)*.0012
     hairline.append([
         (x,root_y,root_z),
-        (x+side*.002+jitter,root_y-.012,root_z+.014),
-        (x+side*.005+jitter,root_y-.030,root_z+.020)
+        (x+side*.001+jitter,root_y-.006,root_z+.003),
+        (x+side*.003+jitter,root_y-.014,root_z+.005)
     ])
-curve_object("DIGE_V8_HAIRLINE",hairline,.000030,hair)
+curve_object("DIGE_V8_HAIRLINE",hairline,.000035,hair)
 
-for i in range(90):
+for i in range(120):
     phi=random.uniform(-math.pi,math.pi)
-    theta=random.uniform(.18,1.15)
+    theta=random.uniform(.20,1.18)
     x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
     y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
     z=scalp_center[2]+rz*math.cos(theta)
-    if y>.006 and abs(x)<.068:
-        continue
     side=1 if x>=0 else -1
-    strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
+    L=random.uniform(.018,.055)
+    strands.append([(x,y,z),(x+side*.002,y-.008,z+.006),(x+side*.005,y-.015,z-L)])
 curve_object("DIGE_V8_STRAND_GROOM",strands,.000060,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -528,6 +537,8 @@ receipt={
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
+ "geometry_normalization":geom.get("normalization"),
+ "hair_regime":"SHORT_CROP_SURFACE_BOUND_V1",
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
