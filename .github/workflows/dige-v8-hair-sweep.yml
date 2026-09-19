@@ -1,9 +1,6 @@
 name: DIGE V8 Hair Geometry Sweep
 
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/dige-v8-hair-sweep.yml'
   workflow_dispatch:
 
 permissions:
