@@ -51,6 +51,7 @@ jobs:
       - name: Generate V5.3 geometry from formulas
         run: |
           set -euxo pipefail
+          mkdir -p research/dige-v53/runtime
           python3 research/dige-v53/generate_geometry.py             | tee research/dige-v53/runtime/geometry_execution.json
           test -s research/dige-v53/runtime/dige_head_v53.obj
           test -s research/dige-v53/runtime/dige_body_v53.obj
