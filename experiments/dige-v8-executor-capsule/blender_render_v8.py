@@ -29,16 +29,6 @@ SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
 SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
-HAIR_REPLICAS=int(os.environ.get("DIGE_HAIR_REPLICAS","24"))
-HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.0015"))
-HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.0032"))
-HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000026"))
-if not (4 <= HAIR_REPLICAS <= 64):
-    raise RuntimeError(f"DIGE_HAIR_REPLICAS out of range: {HAIR_REPLICAS}")
-if not (0.0002 <= HAIR_LEN_MIN < HAIR_LEN_MAX <= 0.010):
-    raise RuntimeError(f"invalid hair length range: {HAIR_LEN_MIN}..{HAIR_LEN_MAX}")
-if not (0.000005 <= HAIR_BEVEL <= 0.00010):
-    raise RuntimeError(f"DIGE_HAIR_BEVEL out of range: {HAIR_BEVEL}")
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -602,10 +592,9 @@ receipt={
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
-   "hair_replicas":HAIR_REPLICAS,
-   "hair_length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
-   "hair_bevel_m":HAIR_BEVEL,
-   "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE+HAIR_SWEEPS"
+   "hair_regime":"FILTERED_GUIDE_MASS_PLUS_STRANDS_V1",
+   "hair_guide_sha256":geom["hair_guide"]["sha256"],
+   "selection_basis":"CONTROLLED_SSS+ROUGHNESS+SCALE_SWEEPS; STUBBLE_SWEEP_REJECTED; R4_FILTERED_HAIR_GUIDE_REUSED"
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
