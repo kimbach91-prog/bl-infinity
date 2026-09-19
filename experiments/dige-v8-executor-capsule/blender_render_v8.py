@@ -24,14 +24,16 @@ def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
     m.use_nodes=True
     nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
-    set_input(bs,"Base Color",(0.43,0.205,0.135,1))
+    set_input(bs,"Base Color",(0.30,0.115,0.072,1))
     set_input(bs,"IOR",1.42)
-    set_input(bs,"Subsurface Weight",0.32)
-    set_input(bs,"Subsurface Scale",0.006)
+    set_input(bs,"Subsurface Weight",0.16)
+    set_input(bs,"Subsurface Scale",0.0035)
     if hasattr(bs,"subsurface_method"):
         bs.subsurface_method='RANDOM_WALK_SKIN'
     if hasattr(bs,"distribution"):
         bs.distribution='MULTI_GGX'
+    set_input(bs,"Subsurface Radius",(1.0,.45,.20))
+    set_input(bs,"Specular IOR Level",.28)
 
     macro=nt.nodes.new("ShaderNodeTexNoise")
     macro.inputs["Scale"].default_value=5.0
@@ -39,8 +41,8 @@ def make_skin():
     rough_map=nt.nodes.new("ShaderNodeMapRange")
     rough_map.inputs["From Min"].default_value=0.0
     rough_map.inputs["From Max"].default_value=1.0
-    rough_map.inputs["To Min"].default_value=0.38
-    rough_map.inputs["To Max"].default_value=0.54
+    rough_map.inputs["To Min"].default_value=0.46
+    rough_map.inputs["To Max"].default_value=0.62
     nt.links.new(macro.outputs["Fac"],rough_map.inputs["Value"])
     nt.links.new(rough_map.outputs["Result"],bs.inputs["Roughness"])
 
@@ -58,8 +60,8 @@ def make_skin():
     nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
     nt.links.new(pscale.outputs[0],mix.inputs[0]); nt.links.new(mscale.outputs[0],mix.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.11
-    bump.inputs["Distance"].default_value=.00028
+    bump.inputs["Strength"].default_value=.075
+    bump.inputs["Distance"].default_value=.00020
     nt.links.new(mix.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m
@@ -121,13 +123,13 @@ def curve_object(name,splines,bevel,mat):
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 
 skin=make_skin()
-sclera=principled("SCLERA",(0.82,0.79,0.72),rough=.34,ior=1.38,subsurface=.04)
-iris=principled("IRIS",(0.105,0.045,0.022),rough=.24,ior=1.40)
+sclera=principled("SCLERA",(0.58,0.52,0.48),rough=.30,ior=1.376,subsurface=.02)
+iris=principled("IRIS",(0.070,0.026,0.012),rough=.32,ior=1.40)
 black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
-cornea=principled("CORNEA",(0.98,0.98,0.98),rough=.012,ior=1.376,transmission=1.0)
-lip=principled("LIP",(0.31,0.075,0.065),rough=.34,ior=1.40,subsurface=.12)
+cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
+lip=principled("LIP",(0.20,0.040,0.035),rough=.42,ior=1.40,subsurface=.05)
 hair=hair_material()
-cloth=principled("CLOTH",(0.035,0.045,0.065),rough=.58,sheen=.20)
+cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
 
 mesh_path=RUNTIME/"dige_makehuman_v8.obj"
@@ -188,23 +190,23 @@ for label,sx in (("left_eye",1),("right_eye",-1)):
     st=landmarks[label]
     helper_center=st["center"]
     mi=st["bbox_min"]; ma=st["bbox_max"]
-    rx=(ma[0]-mi[0])*.485
-    ry=(ma[1]-mi[1])*.485
-    rz=(ma[2]-mi[2])*.485
+    rx=(ma[0]-mi[0])*.405
+    ry=(ma[1]-mi[1])*.405
+    rz=(ma[2]-mi[2])*.405
     lid_key="left_upperlid" if label=="left_eye" else "right_upperlid"
     lower_key="left_lowerlid" if label=="left_eye" else "right_lowerlid"
     lid_front=max(landmarks[lid_key]["center"][1],landmarks[lower_key]["center"][1])
     eye_z=(landmarks[lid_key]["center"][2]+landmarks[lower_key]["center"][2])*.5
-    front_target=lid_front+.0012
-    center_y=front_target-ry*.99
+    front_target=lid_front+.0006
+    center_y=front_target-ry*1.08
     center=(helper_center[0],center_y,eye_z)
     uv(f"SCLERA_{sx}",center,(rx,ry,rz),sclera,48,24)
     iris_y=front_target+.00015
-    iris_r=min(rx,rz)*.42
+    iris_r=min(rx,rz)*.37
     cylinder(f"IRIS_{sx}",(center[0],iris_y,center[2]),iris_r,.00075,iris)
     cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00045,center[2]),iris_r*.34,.00065,black)
-    cornea_center=(center[0],center[1]+ry*.16,center[2])
-    uv(f"CORNEA_{sx}",cornea_center,(rx*1.012,ry*1.04,rz*1.012),cornea,48,24)
+    cornea_center=(center[0],center[1]+ry*.10,center[2])
+    uv(f"CORNEA_{sx}",cornea_center,(rx*1.008,ry*1.025,rz*1.008),cornea,48,24)
 
 # Use the native mouth topology; only assign a bounded lip material region instead of floating lip meshes.
 body.data.materials.append(lip)
@@ -215,7 +217,7 @@ for poly in body.data.polygons:
     cx=sum(p.x for p in pts)/len(pts)
     cy=sum(p.y for p in pts)/len(pts)
     cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx-mouth_center[0])<.040 and abs(cz-mouth_center[2])<.010 and cy>mouth_center[1]-.006:
+    if abs(cx-mouth_center[0])<.040 and abs(cz-mouth_center[2])<.013 and cy>mouth_center[1]-.008:
         poly.material_index=lip_index
 
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
@@ -227,8 +229,8 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
     for i in range(8):
         t=i/7
         x=ec[0] + (t-.5)*.030
-        y=max(lid[1]+.0025, ec[1]+.004)
-        z=ec[2]+.030+.003*math.sin(t*math.pi)
+        y=max(lid[1]+.0040, ec[1]+.008)
+        z=ec[2]+.026+.003*math.sin(t*math.pi)
         brow.append((x,y,z))
     brows.append(brow)
     for j in range(9):
@@ -237,14 +239,14 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
         y=max(lid[1]+.0025, ec[1]+.004)
         z=ec[2]+.0055+.0018*(1-abs(t))
         lashes.append([(x,y,z),(x+sx*.0007,y+.0028,z+.0014)])
-curve_object("DIGE_V8_BROWS",brows,.00072,black)
-curve_object("DIGE_V8_LASHES",lashes,.00022,black)
+curve_object("DIGE_V8_BROWS",brows,.0010,black)
+curve_object("DIGE_V8_LASHES",lashes,.00017,black)
 
 # Swept-back deterministic groom. Long strands are limited to side/back; frontal roots remain short.
 random.seed(20260919)
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
 hair_box=landmarks["hair_helper"]
-scalp_center=(0.0,-.026,eye_z+.047)
+scalp_center=(0.0,-.034,eye_z+.050)
 rx=min(.118,(hair_box["bbox_max"][0]-hair_box["bbox_min"][0])*.44)
 ry=min(.092,(hair_box["bbox_max"][1]-hair_box["bbox_min"][1])*.34)
 rz=.065
@@ -266,18 +268,23 @@ for i in range(2200):
         (x*1.05+side*random.uniform(0,.008),y-.025,z-L*.58),
         (x*1.08+side*random.uniform(0,.015),y-.035,z-L)
     ])
-# Sparse side-part hairline arcs keep the central face clear.
-for sx in (-1,1):
-    for j in range(55):
-        t=(j+1)/56
-        x=sx*(.030+.050*t)
-        y=-.006-.020*t
-        z=scalp_center[2]+.050-.028*t
-        strands.append([
-            (x,y,z),
-            (x+sx*.006,y-.010,z-.010),
-            (x+sx*.012,y-.020,z-.040)
-        ])
+# Fine procedural hairline uses a separate, much thinner curve object to avoid visible root spikes.
+hairline=[]
+for i in range(420):
+    t=(i+.5)/420
+    x=-.082+.164*t
+    xn=x/.082
+    arch=max(0.0,1.0-xn*xn)
+    root_y=-.002-.010*abs(xn)
+    root_z=eye_z+.070+.020*arch
+    side=1 if x>=0 else -1
+    jitter=(random.random()-.5)*.0025
+    hairline.append([
+        (x,root_y,root_z),
+        (x+side*.002+jitter,root_y-.018,root_z+.018),
+        (x+side*.005+jitter,root_y-.040,root_z+.032)
+    ])
+curve_object("DIGE_V8_HAIRLINE",hairline,.00012,hair)
 
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
@@ -289,7 +296,7 @@ for i in range(90):
         continue
     side=1 if x>=0 else -1
     strands.append([(x,y,z),(x+side*.010,y-.018,z+.010),(x+side*.027,y-.038,z-.040)])
-curve_object("DIGE_V8_STRAND_GROOM",strands,.00032,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.00026,hair)
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
 tights_path=RUNTIME/"dige_makehuman_tights_v8.obj"
@@ -309,7 +316,7 @@ tights.data.materials.append(cloth)
 bpy.context.view_layer.objects.active=tights
 bpy.ops.object.shade_smooth()
 gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsub.render_levels=1
-solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0014; solid.offset=1.0
+solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0030; solid.offset=1.0
 
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
@@ -319,14 +326,14 @@ def area(name,loc,energy,size,color):
     o=bpy.context.object; o.name=name; o.data.energy=energy; o.data.shape='DISK'; o.data.size=size; o.data.color=color
     d=Vector((0,0,1.25))-o.location; o.rotation_euler=d.to_track_quat('-Z','Y').to_euler()
     return o
-area("KEY",(2.1,2.8,2.8),620,2.3,(1.0,.88,.78))
-area("FILL",(-2.0,2.1,1.8),170,2.7,(.72,.84,1.0))
-area("RIM",(0,-2.3,2.5),260,1.6,(1.0,.72,.50))
-area("FACE",(0,1.4,1.8),90,.9,(1.0,.91,.84))
+area("KEY",(2.1,2.8,2.8),500,2.5,(1.0,.88,.78))
+area("FILL",(-2.0,2.1,1.8),110,3.0,(.72,.84,1.0))
+area("RIM",(0,-2.3,2.5),210,1.8,(1.0,.72,.50))
+area("FACE",(0,1.2,1.8),45,1.1,(1.0,.91,.84))
 
 world=bpy.context.scene.world or bpy.data.worlds.new("World"); bpy.context.scene.world=world
 world.use_nodes=True
-bg=world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=(0.012,0.014,0.020,1); bg.inputs["Strength"].default_value=.08
+bg=world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=(0.012,0.014,0.020,1); bg.inputs["Strength"].default_value=.055
 
 bpy.ops.object.camera_add(); cam=bpy.context.object; bpy.context.scene.camera=cam; cam.data.sensor_width=36
 
@@ -396,7 +403,7 @@ views=[
  ("01_FRONT50",(0,5.1,1.03),(0,0,.92),50,7.1,512,768),
  ("02_LEFT_PROFILE50",(5.1,0,1.08),(0,0,.98),50,7.1,512,768),
  ("03_THREE_QUARTER50",(3.60,3.60,1.10),(0,0,1.00),50,6.3,512,768),
- ("04_HERO85",(0,2.7,1.59),(0,.025,1.57),85,2.8,720,720),
+ ("04_HERO85",(0,1.10,1.595),(0,.030,1.580),85,4.5,900,900),
  ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,512,768)
 ]
 outputs=[]
@@ -411,8 +418,8 @@ for vid,loc,target,lens,fstop,w,h in views:
 # Controlled same-seed hero A/B: RAW multilayer EXR vs denoised PNG at identical sample count.
 hero_samples=int(os.environ.get("DIGE_SAMPLES_HERO","256"))
 hero_seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
-aim((0,2.7,1.59),(0,.025,1.57),85,2.8)
-scene.render.resolution_x=720; scene.render.resolution_y=720
+aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
+scene.render.resolution_x=900; scene.render.resolution_y=900
 scene.cycles.seed=hero_seed
 
 scene.cycles.use_denoising=False; scene.cycles.samples=hero_samples
@@ -441,7 +448,7 @@ receipt={
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.32,"subsurface_scale":0.006,"roughness_range":[0.38,0.54],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
  "provenance":{
    "source_pixels_used":False,
