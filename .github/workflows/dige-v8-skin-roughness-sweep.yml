@@ -1,9 +1,6 @@
 name: DIGE V8 Skin Roughness Sweep
 
 on:
-  pull_request:
-    paths:
-      - '.github/workflows/dige-v8-skin-roughness-sweep.yml'
   workflow_dispatch:
 
 permissions:
