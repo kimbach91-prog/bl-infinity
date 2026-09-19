@@ -31,6 +31,13 @@ SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 SKIN_ALBEDO_PATH=os.environ.get("DIGE_SKIN_ALBEDO_PATH","").strip()
 SKIN_ALBEDO_EXPECTED_SHA256=os.environ.get("DIGE_SKIN_ALBEDO_SHA256","").strip().lower()
 SKIN_ALBEDO_NAME=os.environ.get("DIGE_SKIN_ALBEDO_NAME","onlytheghosts_young_eurasian_female").strip()
+SKIN_ALBEDO_SAT=float(os.environ.get("DIGE_SKIN_ALBEDO_SAT","0.92"))
+SKIN_ALBEDO_VALUE=float(os.environ.get("DIGE_SKIN_ALBEDO_VALUE","0.74"))
+EYE_TEX_SAT=float(os.environ.get("DIGE_EYE_TEX_SAT","1.0"))
+EYE_TEX_VALUE=float(os.environ.get("DIGE_EYE_TEX_VALUE","1.0"))
+HAIR_TEX_SAT=float(os.environ.get("DIGE_HAIR_TEX_SAT","1.0"))
+HAIR_TEX_VALUE=float(os.environ.get("DIGE_HAIR_TEX_VALUE","1.0"))
+FACE_MESO_SCALE=float(os.environ.get("DIGE_FACE_MESO_SCALE","1.0"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -94,8 +101,8 @@ def make_skin():
         albedo.extension='EXTEND'
         nt.links.new(tex.outputs["UV"],albedo.inputs["Vector"])
         grade=nt.nodes.new("ShaderNodeHueSaturation")
-        grade.inputs["Saturation"].default_value=.92
-        grade.inputs["Value"].default_value=.74
+        grade.inputs["Saturation"].default_value=SKIN_ALBEDO_SAT
+        grade.inputs["Value"].default_value=SKIN_ALBEDO_VALUE
         nt.links.new(albedo.outputs["Color"],grade.inputs["Color"])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
@@ -351,7 +358,7 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
     }
 
-def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0):
+def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0):
     image_path=verify_asset(image_path,expected_sha256)
     m=bpy.data.materials.new(name); m.use_nodes=True
     nt=m.node_tree; nt.nodes.clear()
@@ -367,7 +374,11 @@ def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,aniso
     set_input(bs,"Specular IOR Level",.28)
     set_input(bs,"Anisotropic IOR Level",anisotropy)
     set_input(bs,"Coat Weight",.025)
-    nt.links.new(tex.outputs["Color"],bs.inputs["Base Color"])
+    grade=nt.nodes.new("ShaderNodeHueSaturation")
+    grade.inputs["Saturation"].default_value=sat
+    grade.inputs["Value"].default_value=value
+    nt.links.new(tex.outputs["Color"],grade.inputs["Color"])
+    nt.links.new(grade.outputs["Color"],bs.inputs["Base Color"])
     mix=nt.nodes.new("ShaderNodeMixShader")
     nt.links.new(tex.outputs["Alpha"],mix.inputs[0])
     nt.links.new(trans.outputs[0],mix.inputs[1])
@@ -389,7 +400,11 @@ def eye_texture_material(name,image_path,expected_sha256):
     set_input(base,"Roughness",.24); set_input(base,"IOR",1.376)
     set_input(base,"Specular IOR Level",.34)
     set_input(base,"Subsurface Weight",.012)
-    nt.links.new(tex.outputs["Color"],base.inputs["Base Color"])
+    eye_grade=nt.nodes.new("ShaderNodeHueSaturation")
+    eye_grade.inputs["Saturation"].default_value=EYE_TEX_SAT
+    eye_grade.inputs["Value"].default_value=EYE_TEX_VALUE
+    nt.links.new(tex.outputs["Color"],eye_grade.inputs["Color"])
+    nt.links.new(eye_grade.outputs["Color"],base.inputs["Base Color"])
     glass=nt.nodes.new("ShaderNodeBsdfGlass")
     set_input(glass,"Roughness",.012); set_input(glass,"IOR",1.376)
     mix=nt.nodes.new("ShaderNodeMixShader")
@@ -482,6 +497,9 @@ craniofacial_deform={
   "philtrum_groove_y_m":0.00065,
   "philtrum_ridge_y_m":0.00055,
 }
+# FACE_MESO_SCALE_APPLIED
+for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m"):
+    craniofacial_deform[_k] *= FACE_MESO_SCALE
 def g2(x,z,cx,cz,sx,sz):
     return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
 
@@ -678,7 +696,7 @@ hair_card_mat=alpha_card_material(
     "DIGE_C12_SHORT03_HAIR",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
-    rough=.38,ior=1.55,anisotropy=.58,
+    rough=.38,ior=1.55,anisotropy=.58,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
     "DIGE_C12_SHORT03_HAIR",
@@ -879,14 +897,21 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1",
+ "appearance_candidate":"C13_MATERIAL_RESPONSE_SWEEP_OVER_C12_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH"
+   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH",
+   "skin_albedo_saturation":SKIN_ALBEDO_SAT,
+   "skin_albedo_value":SKIN_ALBEDO_VALUE,
+   "eye_texture_saturation":EYE_TEX_SAT,
+   "eye_texture_value":EYE_TEX_VALUE,
+   "hair_texture_saturation":HAIR_TEX_SAT,
+   "hair_texture_value":HAIR_TEX_VALUE,
+   "face_meso_scale":FACE_MESO_SCALE
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
