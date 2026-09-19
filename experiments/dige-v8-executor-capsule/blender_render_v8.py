@@ -30,6 +30,7 @@ SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
 SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 SKIN_ALBEDO_PATH=os.environ.get("DIGE_SKIN_ALBEDO_PATH","").strip()
 SKIN_ALBEDO_EXPECTED_SHA256=os.environ.get("DIGE_SKIN_ALBEDO_SHA256","").strip().lower()
+SKIN_ALBEDO_NAME=os.environ.get("DIGE_SKIN_ALBEDO_NAME","onlytheghosts_young_eurasian_female").strip()
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 
 def make_skin():
@@ -58,7 +59,7 @@ def make_skin():
         "license":"CC0",
         "source_pack":"MakeHuman Skins01 CC0",
         "source_url":"https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip",
-        "asset_name":"onlytheghosts_young_eurasian_female",
+        "asset_name":SKIN_ALBEDO_NAME,
     }
 
     regional=nt.nodes.new("ShaderNodeTexNoise")
