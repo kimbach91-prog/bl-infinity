@@ -20,14 +20,19 @@ def set_input(node,name,val):
     if s is not None:
         s.default_value=val
 
+SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.16"))
+SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0035"))
+SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.46"))
+SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.62"))
+
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
     m.use_nodes=True
     nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
     set_input(bs,"Base Color",(0.30,0.115,0.072,1))
     set_input(bs,"IOR",1.42)
-    set_input(bs,"Subsurface Weight",0.16)
-    set_input(bs,"Subsurface Scale",0.0035)
+    set_input(bs,"Subsurface Weight",SKIN_SSS_WEIGHT)
+    set_input(bs,"Subsurface Scale",SKIN_SSS_SCALE)
     if hasattr(bs,"subsurface_method"):
         bs.subsurface_method='RANDOM_WALK_SKIN'
     if hasattr(bs,"distribution"):
@@ -48,8 +53,8 @@ def make_skin():
     rough_map=nt.nodes.new("ShaderNodeMapRange")
     rough_map.inputs["From Min"].default_value=0.0
     rough_map.inputs["From Max"].default_value=1.0
-    rough_map.inputs["To Min"].default_value=0.46
-    rough_map.inputs["To Max"].default_value=0.62
+    rough_map.inputs["To Min"].default_value=SKIN_ROUGH_MIN
+    rough_map.inputs["To Max"].default_value=SKIN_ROUGH_MAX
     nt.links.new(macro.outputs["Fac"],rough_map.inputs["Value"])
     nt.links.new(rough_map.outputs["Result"],bs.inputs["Roughness"])
 
@@ -94,7 +99,7 @@ def hair_material():
         set_input(h,"Melanin",.93)
         set_input(h,"Melanin Redness",.04)
         set_input(h,"Random Color",.03)
-        set_input(h,"Roughness",.28)
+        set_input(h,"Roughness",.32)
         set_input(h,"Radial Roughness",.34)
         set_input(h,"Random Roughness",.08)
         set_input(h,"Coat",.04)
@@ -318,29 +323,26 @@ for eye_key,lid_key,sx in (("left_eye","left_upperlid",1),("right_eye","right_up
 curve_object("DIGE_V8_BROWS",brow_hairs,.000045,hair)
 curve_object("DIGE_V8_LASHES",lashes,.000035,black)
 
-# Canonical-surface short crop. Roots come from the actual body head mesh, never an ellipsoid/cap proxy.
+# Canonical-surface shaved/stubble regime. Tiny fibers avoid silhouette spikes while preserving hair transport.
 random.seed(20260919)
 eye_z=(landmarks["left_eye"]["center"][2]+landmarks["right_eye"]["center"][2])*.5
 head_center=Vector((0.0,-.055,eye_z+.060))
-back=Vector((0.0,-1.0,0.0))
 up=Vector((0.0,0.0,1.0))
-
 scalp_vertices=[]
 for v in body.data.vertices:
     p=v.co.copy()
     if p.z < eye_z+.028:
         continue
-    # Reserve the central lower forehead; include crown/front hairline, sides and back.
-    if p.y>.025 and p.z<eye_z+.095 and abs(p.x)<.100:
+    if p.y>.030 and p.z<eye_z+.090 and abs(p.x)<.100:
         continue
     if abs(p.x)>.115 and p.z<eye_z+.070:
         continue
     scalp_vertices.append(p)
 if len(scalp_vertices)<120:
-    raise RuntimeError(f"surface scalp candidate count unexpectedly low: {len(scalp_vertices)}")
+    raise RuntimeError(f"stubble scalp candidate count unexpectedly low: {len(scalp_vertices)}")
 
 strands=[]
-replicas=28
+replicas=18
 for p in scalp_vertices:
     outward=(p-head_center).normalized()
     tangent=outward.cross(up)
@@ -349,44 +351,22 @@ for p in scalp_vertices:
     else:
         tangent.normalize()
     bitangent=outward.cross(tangent).normalized()
-    sweep=(outward*.32+back*.60+up*.08).normalized()
-
     for _ in range(replicas):
-        root=p+tangent*random.uniform(-.0015,.0015)+bitangent*random.uniform(-.0012,.0012)+outward*.00030
-        # Shorter at frontal/crown roots, slightly longer at side/back.
-        front=(root.y>.005 and abs(root.x)<.085)
-        L=random.uniform(.014,.030) if front else random.uniform(.022,.052)
-        bend=random.uniform(-.0030,.0030)
-        side=1 if root.x>=0 else -1
-        strands.append([
-            tuple(root),
-            tuple(root+outward*.0035),
-            tuple(root+sweep*(L*.52)+tangent*bend*.35),
-            tuple(root+sweep*L+tangent*bend+Vector((side*.0012,0,-.0010)))
-        ])
+        root=p+tangent*random.uniform(-.0014,.0014)+bitangent*random.uniform(-.0010,.0010)+outward*.00015
+        L=random.uniform(.0007,.0018)
+        lean=tangent*random.uniform(-.00025,.00025)+Vector((0,-.00015,0))
+        tip=root+outward*L+lean
+        strands.append([tuple(root),tuple(tip)])
 
-# Sparse baby hairs are also rooted on actual forehead/crown vertices.
-forehead=[p for p in scalp_vertices if p.y>.010 and p.z>eye_z+.072]
-for p in forehead:
-    outward=(p-head_center).normalized()
-    for _ in range(3):
-        root=p+outward*.00020
-        side=1 if root.x>=0 else -1
-        L=random.uniform(.008,.018)
-        strands.append([
-            tuple(root),
-            tuple(root+Vector((side*.0008,-.0035,.0018))),
-            tuple(root+Vector((side*.0025,-.008,-L)))
-        ])
-
-curve_object("DIGE_V8_STRAND_GROOM",strands,.000035,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,.000022,hair)
 hair_surface_contract={
     "candidate_vertices":len(scalp_vertices),
     "replicas_per_vertex":replicas,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000035,
+    "bevel_radius_m":0.000022,
+    "length_range_m":[0.0007,0.0018],
     "root_source":"CANONICAL_BODY_SURFACE_VERTICES",
-    "style":"SHORT_SWEPT_CROP_V3",
+    "style":"SHAVED_STUBBLE_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -541,10 +521,10 @@ receipt={
  "topology_metrics":topology,
  "craniofacial_runtime_deform":craniofacial_deform,
  "geometry_normalization":geom.get("normalization"),
- "hair_regime":"SHORT_CROP_CANONICAL_SURFACE_V3",
+ "hair_regime":"SHAVED_STUBBLE_CANONICAL_SURFACE_V1",
  "hair_surface_contract":hair_surface_contract,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.16,"subsurface_scale":0.0035,"roughness_range":[0.46,0.62],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
  "provenance":{
    "source_pixels_used":False,
