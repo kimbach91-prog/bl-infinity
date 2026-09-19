@@ -23,12 +23,22 @@ def set_input(node,name,val):
     if s is not None:
         s.default_value=val
 
-SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.16"))
+SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.35"))
 SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0035"))
 SKIN_SSS_ANISO=float(os.environ.get("DIGE_SKIN_SSS_ANISO","0.80"))
-SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.46"))
-SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.62"))
+SKIN_ROUGH_MIN=float(os.environ.get("DIGE_SKIN_ROUGH_MIN","0.30"))
+SKIN_ROUGH_MAX=float(os.environ.get("DIGE_SKIN_ROUGH_MAX","0.48"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
+HAIR_REPLICAS=int(os.environ.get("DIGE_HAIR_REPLICAS","18"))
+HAIR_LEN_MIN=float(os.environ.get("DIGE_HAIR_LEN_MIN","0.0007"))
+HAIR_LEN_MAX=float(os.environ.get("DIGE_HAIR_LEN_MAX","0.0018"))
+HAIR_BEVEL=float(os.environ.get("DIGE_HAIR_BEVEL","0.000022"))
+if not (4 <= HAIR_REPLICAS <= 64):
+    raise RuntimeError(f"DIGE_HAIR_REPLICAS out of range: {HAIR_REPLICAS}")
+if not (0.0002 <= HAIR_LEN_MIN < HAIR_LEN_MAX <= 0.010):
+    raise RuntimeError(f"invalid hair length range: {HAIR_LEN_MIN}..{HAIR_LEN_MAX}")
+if not (0.000005 <= HAIR_BEVEL <= 0.00010):
+    raise RuntimeError(f"DIGE_HAIR_BEVEL out of range: {HAIR_BEVEL}")
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -348,7 +358,7 @@ if len(scalp_vertices)<120:
     raise RuntimeError(f"stubble scalp candidate count unexpectedly low: {len(scalp_vertices)}")
 
 strands=[]
-replicas=18
+replicas=HAIR_REPLICAS
 for p in scalp_vertices:
     outward=(p-head_center).normalized()
     tangent=outward.cross(up)
@@ -359,18 +369,18 @@ for p in scalp_vertices:
     bitangent=outward.cross(tangent).normalized()
     for _ in range(replicas):
         root=p+tangent*random.uniform(-.0014,.0014)+bitangent*random.uniform(-.0010,.0010)+outward*.00015
-        L=random.uniform(.0007,.0018)
+        L=random.uniform(HAIR_LEN_MIN,HAIR_LEN_MAX)
         lean=tangent*random.uniform(-.00025,.00025)+Vector((0,-.00015,0))
         tip=root+outward*L+lean
         strands.append([tuple(root),tuple(tip)])
 
-curve_object("DIGE_V8_STRAND_GROOM",strands,.000022,hair)
+curve_object("DIGE_V8_STRAND_GROOM",strands,HAIR_BEVEL,hair)
 hair_surface_contract={
     "candidate_vertices":len(scalp_vertices),
     "replicas_per_vertex":replicas,
     "curve_count":len(strands),
-    "bevel_radius_m":0.000022,
-    "length_range_m":[0.0007,0.0018],
+    "bevel_radius_m":HAIR_BEVEL,
+    "length_range_m":[HAIR_LEN_MIN,HAIR_LEN_MAX],
     "root_source":"CANONICAL_BODY_SURFACE_VERTICES",
     "style":"SHAVED_STUBBLE_V1",
 }
