@@ -220,6 +220,54 @@ if left_eye_sha != eye_contract["left"]["compact_obj_sha256"]:
 if right_eye_sha != eye_contract["right"]["compact_obj_sha256"]:
     raise RuntimeError(f"right helper-eye hash drift: {right_eye_sha}")
 
+def emit_filtered_compact_group(group_name, filename, keep_face):
+    cur=None
+    faces=[]
+    used=set()
+    source_face_count=0
+    removed=0
+    for line in base_text.splitlines():
+        if line.startswith("g "):
+            cur=line[2:].strip()
+        elif line.startswith("f ") and cur == group_name:
+            source_face_count+=1
+            face=[int(tok.split("/")[0])-1 for tok in line.split()[1:]]
+            if keep_face(face):
+                faces.append(face)
+                used.update(face)
+            else:
+                removed+=1
+    ids=sorted(used)
+    if not ids or not faces:
+        raise RuntimeError(f"empty filtered compact group: {group_name}")
+    remap={old:i+1 for i,old in enumerate(ids)}
+    lines=[f"g {group_name}"]
+    for old in ids:
+        x,y,z=normalized[old]
+        lines.append(f"v {x:.9f} {y:.9f} {z:.9f}")
+    for face in faces:
+        lines.append("f "+" ".join(str(remap[i]) for i in face))
+    path=RUNTIME/filename
+    path.write_text("\n".join(lines)+"\n",encoding="utf-8")
+    return path,len(ids),len(faces),source_face_count,removed,hashlib.sha256(path.read_bytes()).hexdigest()
+
+def keep_hair_face(face):
+    cy=sum(normalized[i][1] for i in face)/len(face)
+    return cy <= 0.01
+
+hair_guide,hair_vertices,hair_faces,hair_source_faces,hair_removed,hair_sha=emit_filtered_compact_group(
+    "helper-hair","dige_makehuman_hair_guide_v8.obj",keep_hair_face
+)
+hair_contract=CANON["assets"]["filtered_hair_helper"]
+if hair_source_faces != hair_contract["source_faces"]:
+    raise RuntimeError(f"helper-hair source face drift: {hair_source_faces}")
+if hair_removed != hair_contract["removed_front_faces"]:
+    raise RuntimeError(f"helper-hair removed-face drift: {hair_removed}")
+if (hair_vertices,hair_faces)!=(hair_contract["retained_vertices"],hair_contract["retained_faces"]):
+    raise RuntimeError(f"filtered hair topology drift: vertices={hair_vertices} faces={hair_faces}")
+if hair_sha != hair_contract["compact_obj_sha256"]:
+    raise RuntimeError(f"filtered hair hash drift: {hair_sha}")
+
 body_ids=sorted(group_vertex_ids["body"])
 mouth_candidates=[
     normalized[i] for i in body_ids
@@ -281,6 +329,16 @@ manifest={
   "eye_helpers":{
     "left":{"group":"helper-l-eye","vertices":left_eye_vertices,"faces":left_eye_faces,"output":left_eye.name,"sha256":left_eye_sha},
     "right":{"group":"helper-r-eye","vertices":right_eye_vertices,"faces":right_eye_faces,"output":right_eye.name,"sha256":right_eye_sha}
+  },
+  "hair_guide":{
+    "group":"helper-hair",
+    "source_faces":hair_source_faces,
+    "removed_front_faces":hair_removed,
+    "vertices":hair_vertices,
+    "faces":hair_faces,
+    "output":hair_guide.name,
+    "sha256":hair_sha,
+    "filter":"centroid_y_m <= 0.01"
   },
   "landmarks":landmarks,
   "mesh_policy":CANON["mesh_policy"],
