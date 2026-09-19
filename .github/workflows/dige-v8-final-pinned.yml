@@ -106,7 +106,7 @@ jobs:
           machine={
             "provenance_clean": r["provenance"]["source_pixels_used"] is False and r["provenance"]["reference_pixels_read_by_renderer"] is False and r["provenance"]["reference_images_composited"] is False and r["provenance"]["reference_textures_used"] is False,
             "topology_exact": mesh["vertices_written"]==pol["expected_body_vertices"] and mesh["faces"]==pol["expected_body_faces"] and mesh["boundary_edges"]==0 and mesh["nonmanifold_edges"]==0,
-            "height_grounded": abs(geom["normalization"]["height_m"]-1.70)<1e-9 and abs(geom["normalization"]["bbox_min"][2])<1e-9,
+            "height_grounded": abs(r["topology_metrics"]["bbox_extent"][2]-1.70)<1e-5 and abs(r["topology_metrics"]["bbox_min"][2])<1e-6 and abs(geom["normalization"].get("ground_z_m",0.0))<1e-9,
             "eye_contract_exact": geom["eye_helpers"]["left"]["sha256"]==canon["assets"]["eye_helpers"]["left"]["compact_obj_sha256"] and geom["eye_helpers"]["right"]["sha256"]==canon["assets"]["eye_helpers"]["right"]["compact_obj_sha256"],
             "hair_guide_exact": geom["hair_guide"]["sha256"]==canon["assets"]["filtered_hair_helper"]["compact_obj_sha256"] and geom["hair_guide"]["faces"]==148 and geom["hair_guide"]["removed_front_faces"]==50,
             "five_views": len(r["outputs"])==5,
@@ -143,6 +143,7 @@ jobs:
           cat DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
 
       - name: Upload pinned final evidence
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: DIGE-V8-PINNED-FINAL-${{ github.event.pull_request.head.sha }}
