@@ -370,7 +370,7 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
     }
 
-def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0):
+def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0,spec=.28,coat=.025):
     image_path=verify_asset(image_path,expected_sha256)
     m=bpy.data.materials.new(name); m.use_nodes=True
     nt=m.node_tree; nt.nodes.clear()
@@ -383,9 +383,9 @@ def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,aniso
     trans=nt.nodes.new("ShaderNodeBsdfTransparent")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"Roughness",rough); set_input(bs,"IOR",ior)
-    set_input(bs,"Specular IOR Level",.28)
+    set_input(bs,"Specular IOR Level",spec)
     set_input(bs,"Anisotropic IOR Level",anisotropy)
-    set_input(bs,"Coat Weight",.025)
+    set_input(bs,"Coat Weight",coat)
     grade=nt.nodes.new("ShaderNodeHueSaturation")
     grade.inputs["Saturation"].default_value=sat
     grade.inputs["Value"].default_value=value
@@ -708,7 +708,7 @@ hair_card_mat=alpha_card_material(
     "DIGE_C12_SHORT03_HAIR",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
-    rough=.38,ior=1.55,anisotropy=.58,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,
+    rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
     "DIGE_C12_SHORT03_HAIR",
