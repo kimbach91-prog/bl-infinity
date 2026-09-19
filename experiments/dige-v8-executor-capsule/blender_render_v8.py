@@ -26,8 +26,8 @@ def make_skin():
     nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
     set_input(bs,"Base Color",(0.43,0.205,0.135,1))
     set_input(bs,"IOR",1.42)
-    set_input(bs,"Subsurface Weight",1.0)
-    set_input(bs,"Subsurface Scale",0.008)
+    set_input(bs,"Subsurface Weight",0.32)
+    set_input(bs,"Subsurface Scale",0.006)
     if hasattr(bs,"subsurface_method"):
         bs.subsurface_method='RANDOM_WALK_SKIN'
     if hasattr(bs,"distribution"):
@@ -160,7 +160,7 @@ if bbox_extent[1] >= 0.65:
 if bbox_min[2] < -0.03 or bbox_max[2] > 1.75:
     raise RuntimeError(f"Body Z placement invalid: min={bbox_min[2]} max={bbox_max[2]}")
 
-sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=1
+sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
 # Preserve topology metrics before subdivision
 bm=bmesh.new(); bm.from_mesh(body.data)
 nonmanifold=sum(1 for e in bm.edges if not e.is_manifold)
@@ -186,17 +186,25 @@ landmarks=geom["landmarks"]
 # Eyes: exact placement and scale derive from the canonical MakeHuman helper-eye groups.
 for label,sx in (("left_eye",1),("right_eye",-1)):
     st=landmarks[label]
-    center=st["center"]
+    helper_center=st["center"]
     mi=st["bbox_min"]; ma=st["bbox_max"]
     rx=(ma[0]-mi[0])*.485
     ry=(ma[1]-mi[1])*.485
     rz=(ma[2]-mi[2])*.485
-    uv(f"SCLERA_{sx}",tuple(center),(rx,ry,rz),sclera,48,24)
-    iris_y=center[1]+ry*.985
-    iris_r=min(rx,rz)*.43
-    cylinder(f"IRIS_{sx}",(center[0],iris_y,center[2]),iris_r,.0010,iris)
-    cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00065,center[2]),iris_r*.35,.0008,black)
-    uv(f"CORNEA_{sx}",tuple(center),(rx*1.012,ry*1.025,rz*1.012),cornea,48,24)
+    lid_key="left_upperlid" if label=="left_eye" else "right_upperlid"
+    lower_key="left_lowerlid" if label=="left_eye" else "right_lowerlid"
+    lid_front=max(landmarks[lid_key]["center"][1],landmarks[lower_key]["center"][1])
+    eye_z=(landmarks[lid_key]["center"][2]+landmarks[lower_key]["center"][2])*.5
+    front_target=lid_front+.0012
+    center_y=front_target-ry*.99
+    center=(helper_center[0],center_y,eye_z)
+    uv(f"SCLERA_{sx}",center,(rx,ry,rz),sclera,48,24)
+    iris_y=front_target+.00015
+    iris_r=min(rx,rz)*.42
+    cylinder(f"IRIS_{sx}",(center[0],iris_y,center[2]),iris_r,.00075,iris)
+    cylinder(f"PUPIL_{sx}",(center[0],iris_y+.00045,center[2]),iris_r*.34,.00065,black)
+    cornea_center=(center[0],center[1]+ry*.16,center[2])
+    uv(f"CORNEA_{sx}",cornea_center,(rx*1.012,ry*1.04,rz*1.012),cornea,48,24)
 
 # Use the native mouth topology; only assign a bounded lip material region instead of floating lip meshes.
 body.data.materials.append(lip)
@@ -207,7 +215,7 @@ for poly in body.data.polygons:
     cx=sum(p.x for p in pts)/len(pts)
     cy=sum(p.y for p in pts)/len(pts)
     cz=sum(p.z for p in pts)/len(pts)
-    if abs(cx-mouth_center[0])<.042 and abs(cz-mouth_center[2])<.018 and cy>mouth_center[1]-.012:
+    if abs(cx-mouth_center[0])<.040 and abs(cz-mouth_center[2])<.010 and cy>mouth_center[1]-.006:
         poly.material_index=lip_index
 
 # Brows + lashes anchored to the same source-derived eye and eyelid landmarks.
@@ -247,23 +255,30 @@ for i in range(2200):
     x=scalp_center[0]+rx*math.sin(theta)*math.cos(phi)
     y=scalp_center[1]+ry*math.sin(theta)*math.sin(phi)
     z=scalp_center[2]+rz*math.cos(theta)
-    front_zone=(y>.000 and abs(x)<.072)
+    front_zone=(y>-.006 and abs(x)<.078)
     side=1 if x>=0 else -1
     if front_zone:
-        L=random.uniform(.030,.065)
+        continue
+    L=random.uniform(.15,.37)
+    strands.append([
+        (x,y,z),
+        (x*1.02,y-.012,z-L*.22),
+        (x*1.05+side*random.uniform(0,.008),y-.025,z-L*.58),
+        (x*1.08+side*random.uniform(0,.015),y-.035,z-L)
+    ])
+# Sparse side-part hairline arcs keep the central face clear.
+for sx in (-1,1):
+    for j in range(55):
+        t=(j+1)/56
+        x=sx*(.030+.050*t)
+        y=-.006-.020*t
+        z=scalp_center[2]+.050-.028*t
         strands.append([
             (x,y,z),
-            (x*1.01,y-.010,z-L*.30),
-            (x*1.02+side*.0015,y-.020,z-L)
+            (x+sx*.006,y-.010,z-.010),
+            (x+sx*.012,y-.020,z-.040)
         ])
-    else:
-        L=random.uniform(.15,.37)
-        strands.append([
-            (x,y,z),
-            (x*1.02,y-.012,z-L*.22),
-            (x*1.05+side*random.uniform(0,.008),y-.025,z-L*.58),
-            (x*1.08+side*random.uniform(0,.015),y-.035,z-L)
-        ])
+
 for i in range(90):
     phi=random.uniform(-math.pi,math.pi)
     theta=random.uniform(.18,1.15)
@@ -294,7 +309,7 @@ tights.data.materials.append(cloth)
 bpy.context.view_layer.objects.active=tights
 bpy.ops.object.shade_smooth()
 gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsub.render_levels=1
-solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0010; solid.offset=1.0
+solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0014; solid.offset=1.0
 
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
@@ -426,7 +441,7 @@ receipt={
  "landmark_binding_sha256":hashlib.sha256(json.dumps(geom["landmarks"],sort_keys=True).encode()).hexdigest(),
  "topology_metrics":topology,
  "drive_compute_priors":geom["drive_compute_priors"],
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":1.0,"subsurface_scale":0.008,"roughness_range":[0.38,0.54],"micro_bump_scales":[260,850]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":0.32,"subsurface_scale":0.006,"roughness_range":[0.38,0.54],"micro_bump_scales":[260,850]},
  "hair_curve_count":len(strands),
  "provenance":{
    "source_pixels_used":False,
