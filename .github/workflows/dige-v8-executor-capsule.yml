@@ -62,8 +62,8 @@ jobs:
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
-          DIGE_SAMPLES_PREVIEW: '48'
-          DIGE_SAMPLES_HERO: '64'
+          DIGE_SAMPLES_PREVIEW: '16'
+          DIGE_SAMPLES_HERO: '24'
           DIGE_RENDER_SEED: '20260919'
           DIGE_RUNTIME_COMMIT: ${{ github.sha }}
         run: |
