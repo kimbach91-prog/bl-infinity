@@ -1,0 +1,15 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "JOB-DEUS-3D-STRUCTURE-HTML-20260920-001-S0-DESIGN",
+  "data_class": "S0_PUBLIC",
+  "objective": "Design an implementation workflow for a single-file interactive 3D HTML architecture visualization. The visualization should present a layered system with: owner intent/governance, canonical state, code/version state, verified runtime receipts, light boot and active jobs, compute routing, workers, causal/chronicle memory, verification/readback gates, and an information membrane. It must be visually legible, support orbit/zoom/select interactions, expose status/truth-boundary cues, degrade gracefully on mobile, and keep all content generic/public-safe. Do not require private IDs, private topology, raw memory, credentials, or canonical write access.",
+  "acceptance_criteria": [
+    "Propose a clear 3D spatial metaphor and hierarchy that makes system layers and directed relationships understandable.",
+    "Use a single self-contained HTML delivery approach with CDN-loaded rendering libraries allowed; include mobile/desktop interaction guidance.",
+    "Include node selection details, legend/status encoding, directed edges, filtering/focus controls, and a readable fallback when WebGL is unavailable.",
+    "Preserve truth boundaries such as configured != executed, queue accepted != executed, executed != verified done, and Drive state != runtime.",
+    "Return a workflow that can be used by a private owner session to implement and validate the artifact without exposing protected data."
+  ],
+  "falsifier": "Reject the design if it requires protected/private source content in the public packet, conflates canonical state with runtime truth, cannot express verification states, or cannot be implemented as a portable HTML file with usable 3D navigation and a non-WebGL fallback.",
+  "canonical_write": false
+}
