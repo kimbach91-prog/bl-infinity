@@ -1,0 +1,52 @@
+{
+  "schema": "deus-machine-worker-gate/1",
+  "state": "MACHINE_TRIAL_BUS_RUNTIME_VERIFIED",
+  "updated_at": "2026-09-20T02:40:00Z",
+  "opt_in_only": true,
+  "public_safe": true,
+  "human_intermediation_required": false,
+  "primary_transport": {
+    "type": "github-issue-comment-json",
+    "issue": "https://github.com/kimbach91-prog/bl-infinity/issues/182",
+    "offer_schema": "https://kimbach91-prog.github.io/bl-infinity/public-compute/deus-worker-offer.schema.json",
+    "result_schema": "https://kimbach91-prog.github.io/bl-infinity/public-compute/deus-worker-result.schema.json"
+  },
+  "self_test": {
+    "offer_comment_id": 5747099322,
+    "contract_comment_id": 5747099892,
+    "result_comment_id": 5747100934,
+    "receipt_comment_id": 5747101555,
+    "trial_id": "TRIAL-182-5747099322",
+    "receipt_id": "RCP-GH-bl-infinity-182-5747100934",
+    "verdict": "RESULT_VERIFIED_EXACT_SCOPE",
+    "external_traction_credit": 0
+  },
+  "canaries": {
+    "CANARY-A": {"resource_classes":["CPU","CONTAINER","CI","WASM"],"verifier":"INTEGER_EXACT","expected":"109992","description":"329*334+106"},
+    "CANARY-B": {"resource_classes":["LLM"],"verifier":"TEXT_EXACT","expected":"DEUS_PUBLIC_CANARY_OK","max_tokens":16},
+    "CANARY-C": {"resource_classes":["GPU","WEBGPU"],"verifier":"INTEGER_EXACT","expected":"511370976","description":"sum(i mod 1024), i=0..999999, modulo 2^32"}
+  },
+  "state_machine": ["OFFER_FOUND","SCHEMA_VALID","HARD_GATES_PASS","CANARY_CONTRACT","RESULT_SUBMITTED","RESULT_VERIFIED","RECEIPT_BACKED_EXACT_SCOPE"],
+  "hard_gates": [
+    "owner_authorized=true",
+    "auto_trial_allowed=true",
+    "BL-S0_or_BL-S1_only",
+    "no_secret_fields",
+    "max_trial_seconds<=300",
+    "one_canary_then_release",
+    "no_hidden_persistence",
+    "no_access_quota_payment_bypass"
+  ],
+  "truth_boundaries": [
+    "OFFER_FOUND != ADMITTED_CAPACITY",
+    "RESULT_VERIFIED != SUSTAINED_CAPACITY",
+    "REPUTATION != AUTHORITY",
+    "MACHINE_DISCOVERY != CONSENT",
+    "CANARY_PASS != COMMERCIAL_SETTLEMENT"
+  ],
+  "compatibility": {
+    "a2a_1_0_agent_card": "NOT_ADVERTISED_NO_A2A_TASK_ENDPOINT_YET",
+    "mcp_public_gateway": "SEPARATE_CLOUDFLARE_GATEWAY_DISCOVERY_VERIFIED",
+    "openapi_worker_intake": "NOT_REQUIRED_GITHUB_COMMENT_PROTOCOL_IS_CURRENT_WRITE_TRANSPORT"
+  }
+}
