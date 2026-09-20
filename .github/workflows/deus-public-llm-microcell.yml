@@ -1,0 +1,46 @@
+name: DEUS Public LLM Microcell S0 Canary
+
+on:
+  push:
+    branches: ["deus/public-llm-microcell-v1-20260920"]
+    paths:
+      - ".github/workflows/deus-public-llm-microcell.yml"
+      - "public-compute/public-llm-microcell-canary.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  llm-microcell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      HF_HOME: /tmp/deus-hf
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - name: Checkout exact public source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install bounded CPU inference stack
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input --upgrade pip
+          if ! python3 -c 'import torch' >/dev/null 2>&1; then
+            python3 -m pip install --disable-pip-version-check --no-input --index-url https://download.pytorch.org/whl/cpu torch
+          fi
+          python3 -m pip install --disable-pip-version-check --no-input 'transformers>=4.42,<5' 'huggingface_hub>=0.24,<1' safetensors
+          python3 - <<'PY'
+import torch, transformers, huggingface_hub
+print("DEUS_LLM_STACK="+str({"torch":torch.__version__,"transformers":transformers.__version__,"huggingface_hub":huggingface_hub.__version__}))
+PY
+
+      - name: Execute bounded public LLM microcell leaf tasks
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 public-compute/public-llm-microcell-canary.py
