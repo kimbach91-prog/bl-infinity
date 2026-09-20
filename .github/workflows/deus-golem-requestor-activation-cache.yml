@@ -53,20 +53,7 @@ jobs:
           test -n "$tag"
           test "$tag" != "$core_line"
 
-          asset_url="$(CORE_URL_LINE="$core_url_line" VARIANT="$variant" TAG="$tag" python3 - <<'PY'
-import os, re
-line = os.environ["CORE_URL_LINE"]
-m = re.search(r'_url="([^"]+)"', line)
-if not m:
-    raise SystemExit("official requestor asset URL template not found")
-url = m.group(1)
-url = (url
-       .replace('${_variant}', os.environ["VARIANT"])
-       .replace('${_ostype}', 'linux')
-       .replace('${YA_INSTALLER_CORE}', os.environ["TAG"]))
-print(url)
-PY
-          )"
+          asset_url="$(CORE_URL_LINE="$core_url_line" VARIANT="$variant" TAG="$tag" python3 -c 'import os; p=os.environ["CORE_URL_LINE"].split("\"",2); assert len(p)>=3, "official requestor asset URL template not found"; print(p[1].replace("${_variant}",os.environ["VARIANT"]).replace("${_ostype}","linux").replace("${YA_INSTALLER_CORE}",os.environ["TAG"]))')"
           case "$asset_url" in
             https://golem-releases.cdn.golem.network/yagna/golem-requestor-linux-*.tar.gz) ;;
             *) echo "unexpected official asset URL: $asset_url" >&2; exit 1 ;;
