@@ -1,0 +1,72 @@
+name: DEUS ARC Public Score P09 NET-CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-arc-public-score-p09-netci.yml'
+      - 'public_benchmark/arc3/verify_arc_public_score_receipt.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p09-independent-verification:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verifier head
+        uses: actions/checkout@v4
+        with:
+          path: current
+      - name: Checkout pinned ARC public receipt artifact
+        uses: actions/checkout@v4
+        with:
+          ref: 9f8b5ab7a2dc0bee8430414047b2dd767acd153c
+          path: source
+      - name: Verify pinned commit identity
+        shell: bash
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "9f8b5ab7a2dc0bee8430414047b2dd767acd153c"
+      - name: P09 independently verify public score receipt and scope
+        shell: bash
+        run: |
+          python current/public_benchmark/arc3/verify_arc_public_score_receipt.py \
+            --mode p09 \
+            --source-dir source/public_benchmark/arc-agi-3 \
+            --out p09-arc-public-score-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p09-arc-public-score-receipt
+          path: p09-arc-public-score-receipt.json
+
+  net-ci-quorum-corroboration:
+    needs: p09-independent-verification
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout verifier head
+        uses: actions/checkout@v4
+        with:
+          path: current
+      - name: Checkout pinned ARC public receipt artifact
+        uses: actions/checkout@v4
+        with:
+          ref: 9f8b5ab7a2dc0bee8430414047b2dd767acd153c
+          path: source
+      - name: Download independent P09 receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: p09-arc-public-score-receipt
+          path: evidence
+      - name: NET-CI corroborate source equivalence and exact scope
+        shell: bash
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "9f8b5ab7a2dc0bee8430414047b2dd767acd153c"
+          python current/public_benchmark/arc3/verify_arc_public_score_receipt.py \
+            --mode netci \
+            --source-dir source/public_benchmark/arc-agi-3 \
+            --p09 evidence/p09-arc-public-score-receipt.json \
+            --out netci-arc-public-score-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netci-arc-public-score-receipt
+          path: netci-arc-public-score-receipt.json
