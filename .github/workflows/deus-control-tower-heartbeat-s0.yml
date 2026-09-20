@@ -102,3 +102,5 @@ jobs:
           path: controller-receipt.json
           if-no-files-found: error
           retention-days: 30
+
+# DEUS_RUNTIME_CANARY_TRIGGER_20260920T1442Z
