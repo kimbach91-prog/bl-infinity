@@ -94,3 +94,5 @@ jobs:
               verdict:"AI_HORDE_RESPONSES_EXECUTOR_CANARY_PASS"
             }' | tee /tmp/receipt.json
           cat /tmp/receipt.json
+
+# current-reliability-recheck: 2026-09-20T11:05Z
