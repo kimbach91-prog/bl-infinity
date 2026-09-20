@@ -1,0 +1,141 @@
+name: ARC3 vc33 rule-derived L2 live pair search
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l2.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Derive L1 live, search L2 forward/enabler pair, verify ONLINE
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+
+          def frame(obs):
+              return np.asarray(obs.frame[-1],dtype=np.uint8)
+
+          def comps(arr,color=9):
+              mask=(arr==color);h,w=arr.shape;seen=np.zeros_like(mask,dtype=bool);out=[]
+              for y in range(h):
+                  for x in range(w):
+                      if not mask[y,x] or seen[y,x]:continue
+                      st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<w and 0<=ny<h and mask[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if len(pts)>=8:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][1],z['bbox'][0]))
+
+          def click(env,obs,xy):
+              amap={a.value:a for a in env.action_space}
+              before=frame(obs)
+              obs=env.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])})
+              after=frame(obs)
+              return obs,int(np.count_nonzero(before!=after))
+
+          def enter_l2(env):
+              obs=env.observation_space
+              b=comps(frame(obs),9)
+              if len(b)<2:raise RuntimeError('L1_EXPECTED_2_BROWN:'+json.dumps(b))
+              target=max(b,key=lambda z:z['center'][1])['center']
+              tr=[]
+              for _ in range(3):
+                  obs,ch=click(env,obs,target);tr.append({'xy':target,'changed':ch,'level':int(obs.levels_completed)})
+                  if int(obs.levels_completed)>=1:break
+              if int(obs.levels_completed)<1:raise RuntimeError('L1_RULE_REPLAY_FAILED')
+              return obs,tr
+
+          # Search role pair in NORMAL from live L2 observation.
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('NORMAL_ENV_UNAVAILABLE')
+          obs,l1=enter_l2(env)
+          brown=comps(frame(obs),9)
+          if len(brown)<4:raise RuntimeError('L2_EXPECTED_4_BROWN:'+json.dumps(brown))
+          centers=[b['center'] for b in brown]
+          found=None;attempts=[]
+          pattern=['F','F','F','E','F','E','F']
+          for fi in range(len(centers)):
+              for ei in range(len(centers)):
+                  if fi==ei:continue
+                  e=copy.deepcopy(env);o=e.observation_space;trace=[]
+                  for role in pattern:
+                      xy=centers[fi] if role=='F' else centers[ei]
+                      o,ch=click(e,o,xy)
+                      trace.append({'role':role,'xy':xy,'changed':ch,'level':int(o.levels_completed),'state':o.state.value})
+                      if int(o.levels_completed)>=2:break
+                  attempts.append({'fi':fi,'ei':ei,'final_level':int(o.levels_completed),'trace':trace})
+                  if int(o.levels_completed)>=2:
+                      found={'fi':fi,'ei':ei,'normal_trace':trace}
+                      break
+              if found:break
+          if not found:
+              print('VC33_L2_SEARCH='+json.dumps({'centers':centers,'attempts':attempts},separators=(',',':')))
+              raise RuntimeError('NO_L2_PAIR_SOLVED')
+
+          # Verify on a fresh ONLINE scorecard, deriving coordinates live again.
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          source='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-rule-l2.yml'
+          cid=oa.open_scorecard(source_url=source,tags=['DEUS','vc33','rule-derived','live-pair-search','l2'])
+          oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo,l1_online=enter_l2(oe)
+          brown2=comps(frame(oo),9);centers2=[b['center'] for b in brown2]
+          fi,ei=found['fi'],found['ei']
+          if max(fi,ei)>=len(centers2):raise RuntimeError('ONLINE_COMPONENT_INDEX_DIVERGENCE')
+          online_trace=[]
+          for role in pattern:
+              xy=centers2[fi] if role=='F' else centers2[ei]
+              oo,ch=click(oe,oo,xy)
+              online_trace.append({'role':role,'xy':xy,'changed':ch,'level':int(oo.levels_completed),'state':oo.state.value})
+              if int(oo.levels_completed)>=2:break
+          card=oa.close_scorecard(cid)
+          passed=int(oo.levels_completed)>=2
+          rec={
+              'schema':'deus/arc3-vc33-rule-derived-l2/1','result':'PASS' if passed else 'FAIL',
+              'game':'vc33','seed':0,'levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+              'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+              'l1_live_trace':l1_online,'l2_components':brown2,'forward_index':fi,'enabler_index':ei,
+              'forward_center':centers2[fi],'enabler_center':centers2[ei],'pattern':pattern,
+              'online_trace':online_trace,'normal_pair_search_attempts':len(attempts),
+              'final_frame_sha256':hashlib.sha256(frame(oo).tobytes()).hexdigest(),
+              'protocol':'PUBLIC_RULE_PRIOR_PLUS_LIVE_COMPONENT_PAIR_SEARCH',
+              'public_rule_prior':'L2 pattern is 3F,E,F,E,F; F and E identities/coordinates must be derived from live observations',
+              'external_full_route_used':False,'external_coordinates_used':False,
+              'independent_first_contact_claim':False,'rule_derived_claim':True,
+              'game_source_inspected_by_solver':False,'hidden_state_read':False,'competition_hidden_score_claim':False,
+              'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA']
+          }
+          out=Path('verification');out.mkdir()
+          (out/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('VC33_L2_RULE_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed:raise RuntimeError('L2_NOT_SOLVED_ONLINE')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-rule-derived-l2
+          path: verification/
+          retention-days: 30
