@@ -162,3 +162,4 @@ jobs:
           path: deus-root-canary-receipt.json
           if-no-files-found: error
           retention-days: 30
+\n# DEUS_ROOT_CANARY_TRIGGER_20260920T1448Z\n
