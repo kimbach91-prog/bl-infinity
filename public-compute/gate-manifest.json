@@ -1,9 +1,12 @@
 {
   "schema": "deus-compute-gate-public-market/1",
-  "state": "PUBLIC_DEMAND_SUPPLY_DISCOVERY_LIVE",
-  "updated_at": "2026-09-20T00:05:41Z",
+  "state": "PUBLIC_DEMAND_SUPPLY_AND_MACHINE_GATEWAY_DISCOVERY_LIVE",
+  "updated_at": "2026-09-20T02:21:27Z",
   "public_safe": true,
-  "default_data_classes": ["BL-S0", "BL-S1"],
+  "default_data_classes": [
+    "BL-S0",
+    "BL-S1"
+  ],
   "demand_intake": "https://github.com/kimbach91-prog/Theory-Group/issues/337",
   "supply_intake": "https://github.com/kimbach91-prog/Theory-Group/issues/338",
   "founding_canary_catalog": "https://github.com/kimbach91-prog/Theory-Group/issues/337#issuecomment-5746291507",
@@ -77,6 +80,35 @@
     "PROVIDER_ACCEPTED != DOWNSTREAM_COMPLETED",
     "RESULT_VERIFIED != SUSTAINED_CAPACITY",
     "EXPECTED_MARGIN != REALIZED_PROFIT",
-    "COMPUTE_DIVIDEND != CASH_REVENUE"
-  ]
+    "COMPUTE_DIVIDEND != CASH_REVENUE",
+    "PUBLIC_GATEWAY_RUNTIME_VERIFIED != MODEL_EXECUTOR_BOUND",
+    "MACHINE_DISCOVERY_LIVE != EXTERNAL_ADOPTER_BOUND"
+  ],
+  "machine_gateway": {
+    "state": "PUBLIC_RUNTIME_DISCOVERY_MCP_MODELS_VERIFIED_EXECUTOR_HOLD",
+    "runtime": "Cloudflare Workers",
+    "source_head": "c13cc5d573118b57fa63e1bdf77bb317293a8939",
+    "cloudflare_version": "4ef47966-b51d-4407-89c0-753e13c840c7",
+    "base_url": "https://4ef47966-theory-group.kimbach91.workers.dev",
+    "discovery": "https://4ef47966-theory-group.kimbach91.workers.dev/.well-known/deus-gateway.json",
+    "mcp": "https://4ef47966-theory-group.kimbach91.workers.dev/mcp",
+    "models": "https://4ef47966-theory-group.kimbach91.workers.dev/v1/models",
+    "responses": "https://4ef47966-theory-group.kimbach91.workers.dev/v1/responses",
+    "response_executor_bound": false,
+    "provider_execution_verified": false,
+    "cross_provider_canary": {
+      "runner": "GitHub Actions",
+      "repository": "kimbach91-prog/bl-infinity",
+      "run_id": 35483746380,
+      "job_id": 106006141476,
+      "verdict": "PASS",
+      "checks": [
+        "health",
+        "discovery",
+        "models",
+        "mcp_server_discover",
+        "responses_fail_closed"
+      ]
+    }
+  }
 }
