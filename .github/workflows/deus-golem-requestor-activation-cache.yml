@@ -39,14 +39,17 @@ jobs:
 
           variant_line="$(grep -m1 '^YA_INSTALLER_VARIANT=' /tmp/golem-as-requestor.sh || true)"
           core_line="$(grep -m1 '^YA_INSTALLER_CORE=' /tmp/golem-as-requestor.sh || true)"
-          release_base="$(grep -o -m1 'https://github.com/[^"]*/releases/download/' /tmp/golem-as-requestor.sh || true)"
+          core_url_line="$(grep -F -m1 'golem-${_variant}-${_ostype}-${YA_INSTALLER_CORE}.tar.gz' /tmp/golem-as-requestor.sh || true)"
+          release_base="$(printf '%s\n' "$core_url_line" | grep -o -m1 'https://github.com/[^"]*/releases/download/' || true)"
 
           echo "DEUS_RESOLVE_VARIANT_LINE=$variant_line"
           echo "DEUS_RESOLVE_CORE_LINE=$core_line"
+          echo "DEUS_RESOLVE_CORE_URL_LINE=$core_url_line"
           echo "DEUS_RESOLVE_RELEASE_BASE=$release_base"
           echo "DEUS_RESOLVE_INSTALLER_SHA=$installer_sha"
 
-          test "$variant_line" = 'YA_INSTALLER_VARIANT=requestor'
+          variant="$(printf '%s\n' "$variant_line" | sed -E 's/^YA_INSTALLER_VARIANT="\$\{YA_INSTALLER_VARIANT:-([^}]*)\}"$/\1/')"
+          test "$variant" = 'requestor'
           test -n "$core_line"
           tag="$(printf '%s\n' "$core_line" | sed -E 's/^YA_INSTALLER_CORE="\$\{YA_INSTALLER_CORE:-([^}]*)\}"$/\1/')"
           test -n "$tag"
