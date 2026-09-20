@@ -1,0 +1,16 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "DIGE-C18-PUBLIC-VISUAL-REPAIR-20260920-001",
+  "data_class": "S0_PUBLIC",
+  "objective": "Analyze a public-safe path-traced human-render defect after a strand-groom experiment. Observed visual defects: crown/top scalp is largely bald; dense flyaway strands sweep across both eyes and cheeks; lateral clumps balloon outward; skin is over-smooth and wax/mannequin-like; facial micro/meso structure and eye/skin contact remain weak. Baseline before the strand experiment had a fitted short hairstyle mesh with much better bulk coverage but a plastic/card-wig look. Propose the smallest robust C18 correction that combines mature production techniques rather than merely increasing strand count. Prefer a hybrid groom: fitted mesh or shell for bulk/occlusion, bounded hair curves for hairline/flyaways, scalp shadow/coverage control, and physically plausible skin/face response.",
+  "acceptance_criteria": [
+    "Identify the main causal error in the strand-groom geometry or direction field that explains bald crown plus face-crossing strands.",
+    "Propose a hybrid bulk-hair + strand strategy that preserves scalp coverage and uses curves only where they add realism.",
+    "Specify bounded changes to root mask, strand length/direction, density, shadow/occlusion and hair material that prevent eye/face intersections.",
+    "Specify a small physically plausible skin/face adjustment targeting waxy smoothness without inventing identity.",
+    "Give a five-step implementation/verification workflow suitable for a deterministic Blender Cycles A/B against the prior baseline.",
+    "Do not claim hyperreal success without a visual audit."
+  ],
+  "falsifier": "Reject the proposal if the next render still has visible bald crown/top coverage, hair crossing the eyes/central face, ballooned lateral clumps, a card-like bulk silhouette, or waxy skin. The new C18 must beat both prior baselines: C16 bulk coverage and C17 strand structure, under the same hero camera/light family.",
+  "canonical_write": false
+}
