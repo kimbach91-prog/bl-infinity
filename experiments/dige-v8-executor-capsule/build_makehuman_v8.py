@@ -79,6 +79,117 @@ for i,(x,y,z) in enumerate(verts):
     # MakeHuman: X lateral, Y vertical, Z front/back. Blender: X lateral, Y depth, Z up.
     morphed.append([x,z,y])
 
+# C27: deterministic anatomy refinement from official MakeHuman modeling targets.
+C27_OFFICIAL_ANATOMY=os.environ.get("DIGE_C27_OFFICIAL_ANATOMY","0").strip()=="1"
+C27_DATA_ROOT=os.environ.get("DIGE_C27_MAKEHUMAN_DATA","").strip()
+C27_MAKEHUMAN_COMMIT=os.environ.get("DIGE_C27_MAKEHUMAN_COMMIT","").strip()
+c27_target_receipts=[]
+if C27_OFFICIAL_ANATOMY:
+    if not C27_DATA_ROOT:
+        raise RuntimeError("C27 requires DIGE_C27_MAKEHUMAN_DATA")
+    data_root=Path(C27_DATA_ROOT).resolve()
+    if not data_root.exists():
+        raise RuntimeError(f"C27 MakeHuman data root missing: {data_root}")
+
+    macro_selected={
+        "female","young","asian","averagemuscle","averageweight","averageheight",
+        "averagecup","averagefirmness","regularproportions"
+    }
+    macro_all={
+        "male","female","baby","child","young","old","caucasian","asian","african",
+        "maxmuscle","averagemuscle","minmuscle","minweight","averageweight","maxweight",
+        "minheight","averageheight","maxheight","mincup","averagecup","maxcup",
+        "minfirmness","averagefirmness","maxfirmness",
+        "uncommonproportions","regularproportions","idealproportions"
+    }
+
+    def c27_component_key(path):
+        rel=path.relative_to(data_root)
+        tokens=[]
+        deps=[]
+        parts=list(rel.parts[:-1])+[rel.stem]
+        for part in parts:
+            for token in part.replace("_","-").replace(".","-").split("-"):
+                token=token.strip().lower()
+                if not token or token=="targets":
+                    continue
+                if token in macro_all:
+                    deps.append(token)
+                else:
+                    tokens.append(token)
+        return "-".join(tokens),deps
+
+    components=[]
+    for p in data_root.rglob("*.target"):
+        key,deps=c27_component_key(p)
+        components.append((key,deps,p))
+
+    curated=[
+        ("forehead-scale-vert-decr",0.32),
+        ("forehead-trans-backward",0.10),
+        ("eyebrows-trans-forward",0.20),
+        ("l-eye-eyefold-convex",0.20),
+        ("r-eye-eyefold-convex",0.20),
+        ("l-eye-eyefold-up",0.08),
+        ("r-eye-eyefold-up",0.08),
+        ("l-cheek-bones-incr",0.20),
+        ("r-cheek-bones-incr",0.20),
+        ("nose-scale-depth-incr",0.20),
+        ("nose-volume-incr",0.12),
+        ("mouth-upperlip-volume-incr",0.14),
+        ("mouth-lowerlip-volume-incr",0.11),
+        ("mouth-philtrum-volume-incr",0.09),
+        ("mouth-cupidsbow-incr",0.11),
+        ("chin-prominent-incr",0.09),
+        ("chin-bones-incr",0.07),
+        ("head-age-incr",0.06),
+    ]
+
+    for suffix,weight in curated:
+        matches=[row for row in components if row[0]==suffix or row[0].endswith("-"+suffix)]
+        active=[]
+        modified=set()
+        for key,deps,p in matches:
+            factor=1.0
+            for dep in deps:
+                if dep not in macro_selected:
+                    factor=0.0
+                    break
+            if factor<=0.0:
+                continue
+            raw=p.read_bytes()
+            for line in raw.decode("utf-8",errors="strict").splitlines():
+                s=line.strip()
+                if not s or s.startswith("#"):
+                    continue
+                fields=s.split()
+                if len(fields)!=4:
+                    continue
+                idx=int(fields[0])
+                if idx<0 or idx>=len(morphed):
+                    raise RuntimeError(f"C27 target index out of range {idx}: {p}")
+                dx,dy,dz=(float(fields[1]),float(fields[2]),float(fields[3]))
+                # Convert MakeHuman delta to Blender axes before normalization.
+                morphed[idx][0] += weight*factor*dx
+                morphed[idx][1] += weight*factor*dz
+                morphed[idx][2] += weight*factor*dy
+                modified.add(idx)
+            active.append({
+                "path":str(p.relative_to(data_root)).replace("\\","/"),
+                "sha256":hashlib.sha256(raw).hexdigest(),
+                "dependencies":deps,
+                "factor":factor,
+            })
+        if not active:
+            nearby=sorted({key for key,_,_ in components if suffix.split("-")[0] in key})[:20]
+            raise RuntimeError(f"C27 no active official target for {suffix}; nearby={nearby}")
+        c27_target_receipts.append({
+            "suffix":suffix,
+            "weight":weight,
+            "active_components":active,
+            "modified_vertices":len(modified),
+        })
+
 # Normalize from the actual body group, not helper/joint vertices.
 pre_group=None
 body_source_ids=set()
@@ -334,6 +445,13 @@ manifest={
     "reference_images_used":False
   },
   "morph":{"weight":MORPH_WEIGHT,"target_name":"asian-female-young"},
+  "c27_official_anatomy":{
+    "enabled":C27_OFFICIAL_ANATOMY,
+    "makehuman_commit":C27_MAKEHUMAN_COMMIT or None,
+    "data_root":C27_DATA_ROOT or None,
+    "macro_selected":sorted(macro_selected) if C27_OFFICIAL_ANATOMY else [],
+    "targets":c27_target_receipts,
+  },
   "normalization":{"height_m":TARGET_HEIGHT_M,"scale":scale,"reference_group":"body","ground_z_m":0.0,"source_bbox_min":mins,"source_bbox_max":maxs,"bbox_min":final_mins,"bbox_max":final_maxs},
   "mesh":{"source_vertices":len(normalized),"vertices_written":expected_body_vertices,"referenced_body_vertices":len(referenced_vertices),"faces":face_count,"undirected_edges":len(edge_counts),"boundary_edges":boundary_edges,"nonmanifold_edges":nonmanifold_edges,"output":out.name,"sha256":body_sha},
   "fit_reference":{"vertices":len(normalized),"output":fit_reference_path.name,"sha256":fit_reference_sha,"coordinate_system":"BLENDER_X_DEPTH_Y_UP_Z_NORMALIZED_BODY_REFERENCED"},
