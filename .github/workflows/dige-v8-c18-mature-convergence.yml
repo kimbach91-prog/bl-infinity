@@ -1,4 +1,4 @@
-name: DIGE V8 C26 Photometric Interface Finalist
+name: DIGE V8 C27 Official Anatomy Finalist
 
 on:
   pull_request:
@@ -12,11 +12,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c26-photo-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c27-anatomy-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c26-finalist:
+  c27-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -60,6 +60,19 @@ jobs:
           test -s /tmp/mpfb2/src/mpfb/data/settings/enhanced_settings.default.json
           test -s /tmp/mpfb2/src/mpfb/data/settings/eye_settings.default.json
 
+      - name: Pin official MakeHuman modeling targets
+        run: |
+          set -euxo pipefail
+          MH_COMMIT=a8bc2d54ff0ac92e78ff71431b1023eda42bf482
+          rm -rf /tmp/makehuman
+          git init /tmp/makehuman
+          git -C /tmp/makehuman remote add origin https://github.com/makehumancommunity/makehuman.git
+          git -C /tmp/makehuman fetch --depth=1 origin "$MH_COMMIT"
+          git -C /tmp/makehuman checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/makehuman rev-parse HEAD)" = "$MH_COMMIT"
+          test -s /tmp/makehuman/makehuman/data/modifiers/modeling_modifiers.json
+          test -d /tmp/makehuman/makehuman/data/targets
+
       - name: Build frozen C16 geometry
         working-directory: experiments/dige-v8-executor-capsule
         run: |
@@ -95,12 +108,12 @@ jobs:
           EOF
           test -s runtime/assets/c25_mpfb/c25_skin.mhmat
 
-      - name: Render C26 photometric interface finalist
+      - name: Render C27 official-anatomy finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c26_photo
+          DIGE_OUTPUT_TAG: c27_anatomy
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '0'
           DIGE_C19_PHOTO_LIGHTING: '0'
@@ -110,7 +123,7 @@ jobs:
           DIGE_C22_LANDMARK_GROOM: '0'
           DIGE_C22_HAIR_MASS_WARP: '0'
           DIGE_C23_CALIBRATED_EYES: '0'
-          DIGE_C23_FACE_PLANES: '1'
+          DIGE_C23_FACE_PLANES: '0'
           DIGE_C23_HAIRLINE_REPAIR: '0'
           DIGE_C24_SURFACE_EYES: '0'
           DIGE_C24_SOURCE_ALBEDO: '0'
@@ -120,6 +133,11 @@ jobs:
           DIGE_C26_PHOTOMETRIC: '1'
           DIGE_C26_SAFE_GROOM: '1'
           DIGE_C26_FIBER_GROOM: '1'
+          DIGE_C27_OFFICIAL_ANATOMY: '1'
+          DIGE_C27_MAKEHUMAN_DATA: /tmp/makehuman/makehuman/data
+          DIGE_C27_MAKEHUMAN_COMMIT: a8bc2d54ff0ac92e78ff71431b1023eda42bf482
+          DIGE_C27_SURFACE_FIBERS: '1'
+          DIGE_C27_NATIVE_INTERFACES: '1'
           DIGE_MPFB2_SRC: /tmp/mpfb2/src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
@@ -142,7 +160,7 @@ jobs:
           DIGE_EYE_TEX_VALUE: '0.64'
           DIGE_HAIR_TEX_SAT: '0.56'
           DIGE_HAIR_TEX_VALUE: '0.23'
-          DIGE_FACE_MESO_SCALE: '1.18'
+          DIGE_FACE_MESO_SCALE: '1.00'
           DIGE_SKIN_TONE_R: '0.60'
           DIGE_SKIN_TONE_G: '0.33'
           DIGE_SKIN_TONE_B: '0.22'
@@ -160,21 +178,21 @@ jobs:
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c26_photo.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c27_anatomy.log
 
-      - name: Verify C26 receipt
+      - name: Verify C27 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c26_photo")
+          root=pathlib.Path("runtime/renders/c27_anatomy")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C26_PHOTOMETRIC_INTERFACE_V1"
+          assert r["appearance_candidate"]=="C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1"
           h=r["hair_surface_contract"]
-          assert h["style"]=="C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1"
+          assert h["style"]=="C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1"
           assert h["mass_mesh_rendered"] is True
           assert h["curve_count"] >= 5000
           assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
@@ -184,7 +202,7 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C26_PHOTOMETRIC_INTERFACE_RECEIPT_V1",
+            "schema":"DIGE_C27_OFFICIAL_ANATOMY_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
@@ -228,7 +246,10 @@ jobs:
             "c26_brow_fibers":r["appearance_selection"].get("c26_brow_fibers"),
             "c26_lash_fibers":r["appearance_selection"].get("c26_lash_fibers"),
             "c26_exposure":r["appearance_selection"].get("c26_exposure"),
-            "claim_ceiling":"C26_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "c27_surface_fibers":r["appearance_selection"].get("c27_surface_fibers"),
+            "c27_native_interfaces":r["appearance_selection"].get("c27_native_interfaces"),
+            "c27_official_anatomy":r["appearance_selection"].get("c27_official_anatomy"),
+            "claim_ceiling":"C27_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
           assert summary["c25_mature_stack"] is True
           assert summary["c25_mpfb2_commit"]=="b58176c661a9680294eb75f127842cb8378e4974"
@@ -246,18 +267,25 @@ jobs:
           assert r["appearance_selection"]["c26_lash_fibers"] >= 50
           assert r["appearance_selection"]["c26_exposure"] == -0.62
           assert r["skin_model"]["subsurface_method"]=="MPFB2_ENHANCED_SSS"
-          (root/"DIGE_C26_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          assert summary["c27_surface_fibers"] is True
+          assert summary["c27_native_interfaces"] is True
+          anatomy=summary["c27_official_anatomy"]
+          assert anatomy["enabled"] is True
+          assert anatomy["makehuman_commit"]=="a8bc2d54ff0ac92e78ff71431b1023eda42bf482"
+          assert len(anatomy["targets"]) >= 16
+          assert all(t["active_components"] and t["modified_vertices"] > 0 for t in anatomy["targets"])
+          (root/"DIGE_C27_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C26 evidence
+      - name: Upload C27 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C26-PHOTO-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C27-ANATOMY-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.json
-            experiments/dige-v8-executor-capsule/runtime/c26_photo.log
+            experiments/dige-v8-executor-capsule/runtime/renders/c27_anatomy/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c27_anatomy/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c27_anatomy/*.json
+            experiments/dige-v8-executor-capsule/runtime/c27_anatomy.log
           if-no-files-found: error
           retention-days: 14
