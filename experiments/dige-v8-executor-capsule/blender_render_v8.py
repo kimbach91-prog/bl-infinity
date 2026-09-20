@@ -45,6 +45,7 @@ SKIN_TONE_MIX=float(os.environ.get("DIGE_SKIN_TONE_MIX","0.32"))
 SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.12"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
+GROOM_MODE=os.environ.get("DIGE_GROOM_MODE","C17").strip().upper()
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -846,10 +847,187 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "seed":20260920,
     }
 
-hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+
+def build_c18_strand_groom(guide_obj, surface_obj, material):
+    """
+    C18 correction: fitted short03 is an OUTER GUIDE SHELL, not a scalp-root surface.
+    Project guide samples to the evaluated body first, then grow curves from scalp roots
+    toward the guide shell. This repairs the C17 root/shell category error.
+    """
+    guide_obj.data.update()
+    rng=random.Random(20260920)
+    depsgraph=bpy.context.evaluated_depsgraph_get()
+    eval_surface=surface_obj.evaluated_get(depsgraph)
+    inv=eval_surface.matrix_world.inverted()
+    nmat=eval_surface.matrix_world.to_3x3()
+
+    projected=[]
+    region_counts={"frontal":0,"crown":0,"side":0,"back":0}
+    distances=[]
+    for idx,v in enumerate(guide_obj.data.vertices):
+        target=guide_obj.matrix_world @ v.co
+        if target.z < 1.495 or target.z > 1.715:
+            continue
+        local_target=inv @ target
+        hit,loc,normal,face_index=eval_surface.closest_point_on_mesh(
+            local_target,distance=0.18,depsgraph=depsgraph
+        )
+        if not hit:
+            continue
+        root=eval_surface.matrix_world @ loc
+        n=(nmat @ normal).normalized()
+        if n.length < 1e-8:
+            n=Vector((0,0,1))
+        shell_vec=target-root
+        dist=shell_vec.length
+        if dist < 0.0015 or dist > 0.14:
+            continue
+
+        # Admit actual scalp: upper cranium plus temple/back continuation.
+        upper=(root.z >= 1.615)
+        side_back=(root.z >= 1.50 and (abs(root.x) >= 0.055 or root.y <= -0.010))
+        if not (upper or side_back):
+            continue
+
+        projected.append((idx,root,n,target,dist,face_index))
+        distances.append(dist)
+        if target.y >= 0.0 and target.z >= 1.58:
+            region_counts["frontal"]+=1
+        if target.z >= 1.655:
+            region_counts["crown"]+=1
+        if abs(target.x) >= 0.060 and target.z >= 1.54:
+            region_counts["side"]+=1
+        if target.y <= -0.055 and target.z >= 1.54:
+            region_counts["back"]+=1
+
+    if len(projected) < 500:
+        raise RuntimeError(f"C18 projected scalp groom too sparse: {len(projected)} roots")
+
+    coverage_gate={"frontal_min":8,"crown_min":40,"side_min":50,"back_min":50}
+    coverage_pass=(
+        region_counts["frontal"] >= coverage_gate["frontal_min"] and
+        region_counts["crown"] >= coverage_gate["crown_min"] and
+        region_counts["side"] >= coverage_gate["side_min"] and
+        region_counts["back"] >= coverage_gate["back_min"]
+    )
+    if not coverage_pass:
+        raise RuntimeError(f"C18 scalp coverage gate failed: counts={region_counts} gate={coverage_gate}")
+
+    points_per_curve=9
+    strands_per_root=5
+    curve_count=len(projected)*strands_per_root
+    hair_data=bpy.data.hair_curves.new("DIGE_C18_SCALP_ROOT_STRAND_GROOM_DATA")
+    hair_data.add_curves([points_per_curve]*curve_count)
+    try:
+        hair_data.set_types(type='CATMULL_ROM')
+    except Exception:
+        pass
+    hair_data.surface=surface_obj
+    hair_data.materials.append(material)
+
+    positions=[]
+    radii=[]
+    base_radius=0.000050
+    tip_radius=0.000008
+    zaxis=Vector((0,0,1))
+    down=Vector((0,0,-1))
+
+    for root_index,root,n,target,dist,face_index in projected:
+        guide_vec=target-root
+        guide_dir=guide_vec.normalized()
+
+        t1=n.cross(zaxis)
+        if t1.length < 1e-6:
+            t1=n.cross(Vector((0,1,0)))
+        if t1.length < 1e-6:
+            t1=Vector((1,0,0))
+        t1.normalize()
+        t2=n.cross(t1)
+        if t2.length < 1e-6:
+            t2=Vector((0,1,0))
+        else:
+            t2.normalize()
+
+        tangent_flow=guide_dir - n*guide_dir.dot(n)
+        if tangent_flow.length < 1e-6:
+            tangent_flow=t2
+        else:
+            tangent_flow.normalize()
+
+        for k in range(strands_per_root):
+            j1=rng.uniform(-0.00115,0.00115)
+            j2=rng.uniform(-0.00115,0.00115)
+            root_j=root + n*0.00035 + t1*j1 + t2*j2
+            target_j=target + t1*rng.uniform(-0.0018,0.0018) + t2*rng.uniform(-0.0018,0.0018)
+
+            extension=max(0.010,min(0.026,dist*0.34))
+            end=target_j + tangent_flow*extension + down*min(0.010,dist*0.12)
+            c1=root_j + n*min(0.010,dist*0.28) + tangent_flow*min(0.010,dist*0.20)
+            c2=target_j - tangent_flow*min(0.010,dist*0.12) + down*min(0.006,dist*0.08)
+
+            phase=(root_index % 23)/23.0*math.tau
+            clump=t1*math.cos(phase)*rng.uniform(0.00015,0.00065) + t2*math.sin(phase)*rng.uniform(0.00010,0.00045)
+
+            for j in range(points_per_curve):
+                t=j/(points_per_curve-1)
+                u=1.0-t
+                p=(root_j*(u*u*u) + c1*(3*u*u*t) + c2*(3*u*t*t) + end*(t*t*t))
+                p += clump*math.sin(math.pi*t)
+                positions.extend((p.x,p.y,p.z))
+                radius=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(0.92,1.08)
+                radii.append(radius)
+
+    pos=hair_data.attributes["position"]
+    pos.data.foreach_set("vector",positions)
+    radius_attr=hair_data.attributes.get("radius")
+    if radius_attr is None:
+        radius_attr=hair_data.attributes.new("radius",'FLOAT','POINT')
+    radius_attr.data.foreach_set("value",radii)
+
+    groom=bpy.data.objects.new("DIGE_C18_SCALP_ROOT_STRAND_GROOM",hair_data)
+    bpy.context.collection.objects.link(groom)
+    guide_obj.hide_render=True
+    try:
+        guide_obj.hide_set(True)
+    except Exception:
+        pass
+
+    ds=sorted(distances)
+    median_dist=ds[len(ds)//2]
+    return groom,{
+        "root_count":len(projected),
+        "strands_per_root":strands_per_root,
+        "curve_count":curve_count,
+        "points_per_curve":points_per_curve,
+        "point_count":curve_count*points_per_curve,
+        "root_radius_m":base_radius,
+        "tip_radius_m":tip_radius,
+        "guide_mesh_rendered":False,
+        "blender_datablock":"HAIR_CURVES",
+        "curve_type":"CATMULL_ROM",
+        "surface_bound":True,
+        "root_projection":"EVALUATED_BODY_CLOSEST_POINT_SCALP",
+        "guide_role":"OUTER_STYLE_SHELL_NOT_ROOT_SURFACE",
+        "distribution":"SCALP_ROOT_PROJECTED_TO_SHORT03_GUIDE_SHELL_CUBIC_FLOW",
+        "projection_distance_m_min":min(ds),
+        "projection_distance_m_median":median_dist,
+        "projection_distance_m_max":max(ds),
+        "coverage_counts":region_counts,
+        "coverage_gate":coverage_gate,
+        "coverage_pass":coverage_pass,
+        "seed":20260920,
+    }
+
+if GROOM_MODE=="C18":
+    hair_groom,hair_curve_metrics=build_c18_strand_groom(hair_obj,body,hair)
+elif GROOM_MODE=="C17":
+    hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+else:
+    raise RuntimeError(f"Unsupported DIGE_GROOM_MODE={GROOM_MODE}")
+
 strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
-    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO_GUIDE_PLUS_BLENDER_HAIR_CURVES",
+    "root_source":("OFFICIAL_MAKEHUMAN_HM08_MHCLO_GUIDE_TO_EVALUATED_BODY_SCALP_PLUS_BLENDER_HAIR_CURVES" if GROOM_MODE=="C18" else "OFFICIAL_MAKEHUMAN_HM08_MHCLO_GUIDE_PLUS_BLENDER_HAIR_CURVES"),
     "asset_key":HAIR_ASSET_KEY,
     "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
@@ -867,7 +1045,7 @@ hair_surface_contract={
     "surface_bound":hair_curve_metrics["surface_bound"],
     "distribution":hair_curve_metrics["distribution"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
+    "style":("HAIR_CURVES_SCALP_ROOT_PROJECTED_C18_V1" if GROOM_MODE=="C18" else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1025,6 +1203,7 @@ receipt={
  "identity_bound":False,
  "render_set":RENDER_SET,
  "output_tag":OUTPUT_TAG or None,
+ "groom_mode":GROOM_MODE,
  "canon_execution_manifest_sha256":CANON_SHA256,
  "runtime_commit":os.environ.get("DIGE_RUNTIME_COMMIT") or os.environ.get("GITHUB_SHA"),
  "runner":{"name":os.environ.get("RUNNER_NAME"),"os":os.environ.get("RUNNER_OS"),"arch":os.environ.get("RUNNER_ARCH")},
@@ -1052,14 +1231,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C17_MATURE_STRAND_GROOM_OVER_C16_V1",
+ "appearance_candidate":("C18_SCALP_ROOT_PROJECTED_STRAND_GROOM_OVER_C17_V1" if GROOM_MODE=="C18" else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C16_RUNTIME_VISUAL_AUDIT_FAIL_CARD_MASS; MATURE_HAIR_CURVES_ROUTE; PRINCIPLED_HAIR; CYCLES_3D_CURVES",
+   "selection_basis":("C17_HUMAN_VISUAL_AUDIT_FAIL_ROOT_SHELL_CATEGORY_ERROR; PROJECT_GUIDE_TO_SCALP_ROOTS; PRESERVE_CYCLES_AND_PRINCIPLED_HAIR" if GROOM_MODE=="C18" else "C16_RUNTIME_VISUAL_AUDIT_FAIL_CARD_MASS; MATURE_HAIR_CURVES_ROUTE; PRINCIPLED_HAIR; CYCLES_3D_CURVES"),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
