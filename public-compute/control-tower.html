@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="description" content="DEUS Control Tower S0: bảng trạng thái công khai an toàn cho Google Sites, dùng runtime receipts thay vì giả lập daemon.">
+<title>DEUS Control Tower S0</title>
+<style>
+:root{color-scheme:dark;font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#080b10;color:#eef3fa}
+main{max-width:1040px;margin:auto;padding:28px 18px 42px}
+header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}
+h1{font-size:clamp(30px,6vw,64px);line-height:.95;letter-spacing:-.055em;margin:0}
+p{color:#9aa6b6;line-height:1.55}.tag{border:1px solid #27303c;border-radius:999px;padding:8px 11px;background:#10151d;color:#c0cad7;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:24px}
+.card{border:1px solid #202936;border-radius:18px;background:#0e131a;padding:17px;min-height:142px}
+.k{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:#758397}.v{font-size:20px;font-weight:760;margin-top:9px}.d{font-size:13px;line-height:1.45;color:#8f9bac;margin-top:7px}
+.ok{color:#9de7b1}.hold{color:#f1ce8b}.bad{color:#ffaaa4}
+.receipt{font:12px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;overflow-wrap:anywhere;background:#0a0e13;border:1px solid #1d2631;border-radius:16px;padding:15px;margin-top:16px;min-height:96px;color:#aeb9c8}
+.actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:16px}button{border:0;border-radius:12px;padding:11px 15px;font-weight:700;cursor:pointer;background:#eef3fa;color:#0b1017}
+small{display:block;color:#667488;margin-top:22px;line-height:1.55}
+</style>
+</head>
+<body>
+<main data-surface="DEUS_CONTROL_TOWER_S0">
+<header>
+  <div><h1>DEUS<br>Control Tower</h1><p>Google Sites = cockpit. Drive = canonical state. Runtime chỉ được công nhận khi có receipt từ hạ tầng thực thi.</p></div>
+  <span class="tag">S0 PUBLIC SAFE · NO CANONICAL WRITE</span>
+</header>
+<section class="grid">
+  <article class="card"><div class="k">Canonical state</div><div class="v">Google Drive</div><div class="d">Trang này không giữ canonical state và không có quyền sửa Drive.</div></article>
+  <article class="card"><div class="k">UI layer</div><div class="v">Google Sites-ready</div><div class="d">Có thể nhúng nguyên URL này vào Sites như một status cockpit.</div></article>
+  <article class="card"><div class="k">S0 heartbeat</div><div id="heartbeat" class="v hold">Checking…</div><div id="heartbeatDetail" class="d">Đọc runtime receipt từ GitHub Actions public API.</div></article>
+  <article class="card"><div class="k">Autonomous schedule</div><div id="schedule" class="v hold">Not verified yet</div><div id="scheduleDetail" class="d">Chỉ PASS khi event=schedule đã chạy thành công.</div></article>
+  <article class="card"><div class="k">Private runtime</div><div class="v hold">Cloud Run: WIF gate</div><div class="d">Không quảng bá là deployed cho tới khi có GCP principal + health/readiness/digest receipt.</div></article>
+  <article class="card"><div class="k">Truth boundary</div><div class="v">Receipt-first</div><div class="d">QUEUE_ACCEPTED ≠ EXECUTED ≠ VERIFIED_DONE.</div></article>
+</section>
+<div class="actions"><button id="refresh">Refresh receipts</button><span id="stamp" class="tag">No read yet</span></div>
+<div id="receipt" class="receipt">Waiting for public runtime evidence…</div>
+<small>Surface marker: DEUS_CONTROL_TOWER_S0. Không chứa credential, private core, private topology, owner-private memory hay execution authority.</small>
+</main>
+<script>
+const API='https://api.github.com/repos/kimbach91-prog/bl-infinity/actions/runs?per_page=100';
+const name='DEUS Control Tower Heartbeat S0';
+const hb=document.getElementById('heartbeat'),sch=document.getElementById('schedule'),
+  hbD=document.getElementById('heartbeatDetail'),schD=document.getElementById('scheduleDetail'),
+  out=document.getElementById('receipt'),stamp=document.getElementById('stamp'),btn=document.getElementById('refresh');
+function cls(el,ok){el.className='v '+(ok?'ok':'hold')}
+async function refresh(){
+ btn.disabled=true;stamp.textContent='Reading GitHub…';
+ try{
+  const r=await fetch(API,{headers:{Accept:'application/vnd.github+json'},cache:'no-store'});
+  if(!r.ok) throw new Error('GitHub API '+r.status);
+  const j=await r.json(), runs=(j.workflow_runs||[]).filter(x=>x.name===name);
+  const latest=runs[0], scheduled=runs.find(x=>x.event==='schedule'&&x.conclusion==='success');
+  if(latest){
+   const ok=latest.conclusion==='success';
+   hb.textContent=ok?'EXECUTED':'Latest: '+(latest.conclusion||latest.status);
+   cls(hb,ok);
+   hbD.textContent='run '+latest.id+' · event='+latest.event+' · '+latest.created_at;
+  }else{hb.textContent='No run receipt';cls(hb,false)}
+  if(scheduled){
+   sch.textContent='VERIFIED';cls(sch,true);
+   schD.textContent='run '+scheduled.id+' · schedule wake executed · '+scheduled.created_at;
+  }else{sch.textContent='NOT YET VERIFIED';cls(sch,false);schD.textContent='Configured schedule exists, but no successful event=schedule receipt is visible yet.'}
+  out.textContent=JSON.stringify({schema:'deus-control-tower-public-status/1',latest:latest?{id:latest.id,event:latest.event,status:latest.status,conclusion:latest.conclusion,created_at:latest.created_at,head_sha:latest.head_sha}:null,latest_successful_schedule:scheduled?{id:scheduled.id,created_at:scheduled.created_at,head_sha:scheduled.head_sha}:null,truth:'PUBLIC_RUNTIME_STATUS_ONLY_NE_CANONICAL_STATE'},null,2);
+  stamp.textContent='Read '+new Date().toISOString();
+ }catch(e){hb.textContent='READ ERROR';hb.className='v bad';out.textContent=String(e);stamp.textContent='Read failed'}
+ finally{btn.disabled=false}
+}
+btn.onclick=refresh;refresh();
+</script>
+</body>
+</html>
