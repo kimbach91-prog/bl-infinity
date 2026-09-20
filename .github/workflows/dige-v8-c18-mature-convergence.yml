@@ -9,58 +9,14 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 concurrency:
   group: dige-v8-c19-humanize-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  prep-assets:
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    steps:
-      - name: Stage mature CC0 skin and system assets once
-        run: |
-          set -euxo pipefail
-          mkdir -p staged-assets/assets staged-assets/system_assets
-          SKINPACK=/tmp/skins01_cc0.zip
-          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
-          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
-          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > staged-assets/assets/young_eurasian_female_diffuse.png
-          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  staged-assets/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
-
-          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
-          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
-          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
-          unzip -p "$SYSPACK" "hair/short03/short03.obj" > staged-assets/system_assets/short03.obj
-          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > staged-assets/system_assets/short03.mhclo
-          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > staged-assets/system_assets/short03_diffuse.png
-          unzip -p "$SYSPACK" "hair/short04/short04.obj" > staged-assets/system_assets/short04.obj
-          unzip -p "$SYSPACK" "hair/short04/short04.mhclo" > staged-assets/system_assets/short04.mhclo
-          unzip -p "$SYSPACK" "hair/short04/short04_diffuse.png" > staged-assets/system_assets/short04_diffuse.png
-          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > staged-assets/system_assets/high-poly.obj
-          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > staged-assets/system_assets/high-poly.mhclo
-          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > staged-assets/system_assets/brown_eye.png
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > staged-assets/system_assets/eyebrow001.obj
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > staged-assets/system_assets/eyebrow001.mhclo
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > staged-assets/system_assets/eyebrow001.png
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > staged-assets/system_assets/eyelashes01.obj
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > staged-assets/system_assets/eyelashes01.mhclo
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > staged-assets/system_assets/eyelashes01.png
-          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  staged-assets/system_assets/short03.obj" | sha256sum -c -
-          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  staged-assets/system_assets/short03.mhclo" | sha256sum -c -
-          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  staged-assets/system_assets/short03_diffuse.png" | sha256sum -c -
-
-      - name: Upload shared C19 asset stage
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
-        with:
-          name: DIGE-C19-MATURE-ASSETS
-          path: staged-assets/
-          if-no-files-found: error
-          retention-days: 1
-
   c19-finalist:
-    needs: prep-assets
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -97,10 +53,13 @@ jobs:
           python build_makehuman_v8.py | tee runtime/c19_geometry_execution.json
           test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
 
-      - name: Download shared C19 asset stage
+      - name: Reuse verified C18 mature asset stage
         uses: actions/download-artifact@v4
         with:
-          name: DIGE-C19-MATURE-ASSETS
+          name: DIGE-C18-MATURE-ASSETS
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35503442060
           path: experiments/dige-v8-executor-capsule/runtime
 
       - name: Verify staged C19 assets
