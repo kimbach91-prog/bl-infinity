@@ -1,0 +1,92 @@
+name: DEUS Golem Testnet Machine Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-golem-testnet-machine-canary.yml'
+      - 'public-compute/golem-testnet-canary.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golem-testnet-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      YAGNA_AUTOCONF_APPKEY: try_golem
+      YAGNA_APPKEY: try_golem
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Yagna requestor
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSf https://join.golem.network/as-requestor | bash -
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.yagna/bin" >> "$GITHUB_PATH"
+
+      - name: Start Yagna
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
+          command -v yagna
+          nohup yagna service run >/tmp/yagna.log 2>&1 &
+          echo $! >/tmp/yagna.pid
+          for i in $(seq 1 45); do
+            if yagna app-key list >/tmp/appkeys.txt 2>/dev/null; then
+              cat /tmp/appkeys.txt
+              exit 0
+            fi
+            sleep 2
+          done
+          cat /tmp/yagna.log
+          exit 1
+
+      - name: Initialize Hoodi testnet and request faucet funds
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
+          yagna payment init --sender --network hoodi | tee /tmp/payment-init.log
+          timeout 120s yagna payment fund --network hoodi | tee /tmp/payment-fund.log
+          yagna payment status --network hoodi | tee /tmp/payment-status.log
+
+      - name: Install Golem task client
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/deus-golem-canary
+          mkdir -p /tmp/deus-golem-canary
+          cd /tmp/deus-golem-canary
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund @golem-sdk/task-executor @golem-sdk/pino-logger
+          cp "$GITHUB_WORKSPACE/public-compute/golem-testnet-canary.mjs" ./canary.mjs
+
+      - name: Match provider and execute CANARY-A
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/deus-golem-canary
+          timeout 240s node ./canary.mjs 2>&1 | tee /tmp/deus-golem-canary.log
+          grep -q '"exact_match":true' /tmp/deus-golem-canary.log
+          grep -q '"payment_network":"hoodi"' /tmp/deus-golem-canary.log
+          grep -q '"real_money_spend_authorized":false' /tmp/deus-golem-canary.log
+
+      - name: Upload bounded diagnostic receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-golem-testnet-machine-canary
+          path: |
+            /tmp/deus-golem-canary.log
+            /tmp/yagna.log
+            /tmp/payment-init.log
+            /tmp/payment-fund.log
+            /tmp/payment-status.log
+          if-no-files-found: ignore
+          retention-days: 7
