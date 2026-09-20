@@ -18,7 +18,10 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
       - run: pip install datasets
-      - name: Execute public HLE text subset through disclosed MicroNet external worker
+      - name: Execute authorized HLE text subset if machine-bound HF token has gated access
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python public_benchmark/wave1/hle_public_subset_runner.py
       - uses: actions/upload-artifact@v4
         with:
