@@ -316,7 +316,7 @@ jobs:
           grep -q 'MACHINE_TRIAL_BUS_RUNTIME_VERIFIED' _site/.well-known/deus-worker-gate.json
           grep -q 'PUBLIC_COMPUTE_GATE_V1' _site/public-compute/gate.html
           grep -q 'deus-compute-gate-public-market/1' _site/public-compute/gate-manifest.json
-          grep -q 'RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006' _site/public-compute/gate-manifest.json
+          grep -q 'RCP-20260920-PUBLIC-GITHUB-ACTIONS-STRESS8-EXEC-018' _site/public-compute/gate-manifest.json
           grep -q 'PUBLIC_S0_ONLY' _site/public-compute/webgpu-s0.html
           grep -q 'DEUS_CONTROL_TOWER_S0' _site/public-compute/control-tower.html
           grep -q 'network_egress:false' _site/public-compute/webgpu-s0.html
