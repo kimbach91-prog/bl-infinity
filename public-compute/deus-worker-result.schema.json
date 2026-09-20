@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://kimbach91-prog.github.io/bl-infinity/public-compute/deus-worker-result.schema.json",
+  "title": "DEUS Worker Result v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema","trial_id","worker_id","canary_id","result","runtime_identity","elapsed_ms","cost_or_non_cash_value","released"],
+  "properties": {
+    "schema": {"const":"deus-worker-result/1"},
+    "trial_id": {"type":"string","pattern":"^TRIAL-182-[0-9]+$"},
+    "worker_id": {"type":"string","pattern":"^[A-Za-z0-9._:-]{3,100}$"},
+    "canary_id": {"enum":["CANARY-A","CANARY-B","CANARY-C"]},
+    "result": {"type":["string","number"]},
+    "runtime_identity": {"type":"string","minLength":1,"maxLength":500},
+    "elapsed_ms": {"type":"number","minimum":0,"maximum":300000},
+    "cost_or_non_cash_value": {"type":"string","maxLength":200},
+    "released": {"const":true}
+  }
+}
