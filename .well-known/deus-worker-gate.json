@@ -1,7 +1,7 @@
 {
   "schema": "deus-machine-worker-gate/1",
   "state": "MACHINE_TRIAL_BUS_RUNTIME_VERIFIED / DISCOVERY_DEPLOYED / MACHINE_FIRST",
-  "updated_at": "2026-09-20T02:50:00Z",
+  "updated_at": "2026-09-20T02:59:00Z",
   "opt_in_only": true,
   "public_safe": true,
   "human_intermediation_required": false,
@@ -116,5 +116,28 @@
       "hard_gates_pass"
     ],
     "hidden_resource_use": false
+  },
+  "execution_ownership": {
+    "core_primary_solver": true,
+    "outer_gpt_llm_complexity_ceiling": "BOUNDED_LEAF_ONLY",
+    "machine_workers": "BOUNDED_REPLACEABLE_LEAF_EXECUTORS",
+    "core_owns": [
+      "complex_reasoning",
+      "root_plan",
+      "critical_dependencies",
+      "canonical_reconciliation",
+      "material_write_readback",
+      "security_privacy_authority_economic_judgment",
+      "hard_debugging_deployment_choices",
+      "final_synthesis"
+    ],
+    "leaf_failure_policy": "ROUTE_YIELD_CORE_RETAKE_OR_SUBSTITUTE_WHEN_LAWFUL",
+    "no_worker_single_point_of_failure": true,
+    "truth_boundaries": [
+      "CORE_CENTRIC != ALL_WORK_LOCAL",
+      "WORKER_USED != WORKER_OWNS_TASK",
+      "WORKER_RESULT != CANONICAL_TRUTH",
+      "PARALLELISM != AUTHORITY"
+    ]
   }
 }
