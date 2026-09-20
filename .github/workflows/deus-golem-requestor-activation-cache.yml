@@ -37,17 +37,30 @@ jobs:
           curl -fsSL "$installer_url" -o /tmp/golem-as-requestor.sh
           installer_sha="$(sha256sum /tmp/golem-as-requestor.sh | awk '{print $1}')"
 
-          grep -q '^YA_INSTALLER_VARIANT=requestor$' /tmp/golem-as-requestor.sh
-          core_line="$(grep -m1 '^YA_INSTALLER_CORE=' /tmp/golem-as-requestor.sh)"
+          variant_line="$(grep -m1 '^YA_INSTALLER_VARIANT=' /tmp/golem-as-requestor.sh || true)"
+          core_line="$(grep -m1 '^YA_INSTALLER_CORE=' /tmp/golem-as-requestor.sh || true)"
+          release_base="$(grep -o -m1 'https://github.com/[^"]*/releases/download/' /tmp/golem-as-requestor.sh || true)"
+
+          echo "DEUS_RESOLVE_VARIANT_LINE=$variant_line"
+          echo "DEUS_RESOLVE_CORE_LINE=$core_line"
+          echo "DEUS_RESOLVE_RELEASE_BASE=$release_base"
+          echo "DEUS_RESOLVE_INSTALLER_SHA=$installer_sha"
+
+          test "$variant_line" = 'YA_INSTALLER_VARIANT=requestor'
+          test -n "$core_line"
           tag="$(printf '%s\n' "$core_line" | sed -E 's/^YA_INSTALLER_CORE="\$\{YA_INSTALLER_CORE:-([^}]*)\}"$/\1/')"
           test -n "$tag"
           test "$tag" != "$core_line"
+          test -n "$release_base"
 
           version="${tag#v}"
-          dpkg --compare-versions "$version" ge '0.17.4'
-
-          release_base="$(grep -o -m1 'https://github.com/[^"]*/releases/download/' /tmp/golem-as-requestor.sh)"
-          test -n "$release_base"
+          if dpkg --compare-versions "$version" ge '0.17.4'; then
+            hoodi_supported=true
+          else
+            hoodi_supported=false
+          fi
+          echo "DEUS_RESOLVE_TAG=$tag"
+          echo "DEUS_RESOLVE_HOODI_SUPPORTED=$hoodi_supported"
           asset="golem-requestor-linux-${tag}.tar.gz"
           asset_url="${release_base}${tag}/${asset}"
 
@@ -57,6 +70,7 @@ jobs:
           echo "asset_url=$asset_url" >> "$GITHUB_OUTPUT"
           echo "asset_id=installer-derived-${tag}" >> "$GITHUB_OUTPUT"
           echo "installer_sha256=$installer_sha" >> "$GITHUB_OUTPUT"
+          echo "hoodi_supported=$hoodi_supported" >> "$GITHUB_OUTPUT"
           echo "cache_key=golem-requestor-linux-${tag}-${installer_sha}" >> "$GITHUB_OUTPUT"
 
       - name: Restore activation artifact cache
@@ -124,11 +138,13 @@ jobs:
           ASSET: ${{ steps.release.outputs.asset }}
           ASSET_ID: ${{ steps.release.outputs.asset_id }}
           INSTALLER_SHA256: ${{ steps.release.outputs.installer_sha256 }}
+          HOODI_SUPPORTED: ${{ steps.release.outputs.hoodi_supported }}
           CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
           SHA256: ${{ steps.verify.outputs.sha256 }}
         with:
           script: |
             const cacheHit = String(process.env.CACHE_HIT || "false") === "true";
+            const hoodiSupported = String(process.env.HOODI_SUPPORTED || "false") === "true";
             const payload = {
               schema: "deus-domain-activation-receipt/1",
               domain: "GOLEM_REQUESTOR_ARTIFACT",
@@ -142,13 +158,15 @@ jobs:
               sha256: process.env.SHA256,
               cache_hit: cacheHit,
               source: "join.golem.network/as-requestor + installer-derived official release artifact",
-              minimum_hoodi_version_satisfied: true,
+              minimum_hoodi_version_satisfied: hoodiSupported,
               tos_accepted: false,
               yagna_executed: false,
               provider_contacted: false,
               capacity_credit: 0,
               economic_yield_proven: false,
-              next_gate: "explicit owner Golem TOS acceptance before install/run/network-provider canary",
+              next_gate: hoodiSupported
+                ? "explicit owner Golem TOS acceptance before install/run/network-provider canary"
+                : "current official installer artifact is cached but below documented Hoodi minimum; keep Hoodi execution HOLD until official compatible source is proven",
               truth_boundary: "ARTIFACT_CACHED != TOS_ACCEPTED != YAGNA_RUNNING != PROVIDER_EXECUTED"
             };
             const issue = context.payload.issue?.number || 182;
