@@ -59,18 +59,34 @@ jobs:
           def brown(o):
               return sorted([x for x in comps(fr(o),9,4,32)],key=lambda z:(z['bbox'][0],z['bbox'][1]))
 
-          def mixed_candidates(o):
+          def derive_blue_anchors(o):
+              # L4 public visual prior: inactive blue rectangles are color-1 components in the middle.
+              # Persist their live-derived centers so they remain clickable after blue->olive recoloring.
+              a=fr(o);xs=[]
+              for comp in comps(a,1,8,96):
+                  x0,y0,x1,y1=comp['bbox']
+                  if y0>2 and y1<61:
+                      xs.append({'kind':'blue_anchor','color':1,'area':comp['area'],
+                                 'bbox':comp['bbox'],'center':comp['center']})
+              return sorted(xs,key=lambda z:(z['center'][0],z['center'][1]))
+
+          def mixed_candidates(o,blue_anchors):
               a=fr(o);out=[];seen=set()
-              # Public prior only identifies brown instant buttons and blue/olive animated controls.
-              # Candidate identities/coordinates are always derived from the live public frame.
-              for color in (9,1,4,11,15):
-                  for c in comps(a,color,4,96):
-                      x,y=c['center']
-                      if y==0: continue
-                      k=(x,y)
-                      if k in seen: continue
-                      seen.add(k);out.append(c)
-              return sorted(out,key=lambda c:(c['color'],c['bbox'][0],c['bbox'][1],c['area']))
+              # Persist live-derived blue anchor positions across recoloring.
+              for i,b in enumerate(blue_anchors):
+                  x,y=b['center'];k=(x,y)
+                  if k not in seen:
+                      seen.add(k);out.append({'kind':'blue_anchor','anchor_index':i,
+                                              'color':int(a[y,x]),'area':b['area'],
+                                              'bbox':b['bbox'],'center':[x,y]})
+              # Brown edge buttons remain public-frame-derived each state.
+              for comp in comps(a,9,4,32):
+                  x,y=comp['center'];k=(x,y)
+                  if k in seen: continue
+                  seen.add(k);out.append({'kind':'brown','color':9,'area':comp['area'],
+                                          'bbox':comp['bbox'],'center':comp['center']})
+              return sorted(out,key=lambda z:(0 if z['kind']=='blue_anchor' else 1,
+                                               z.get('anchor_index',999),z['center'][0],z['center'][1]))
 
           def click(e,o,xy):
               amap={a.value:a for a in e.action_space}
@@ -124,13 +140,15 @@ jobs:
           if env is None: raise RuntimeError('NORMAL_ENV_UNAVAILABLE')
           o=enter_l4(env)
           if int(o.levels_completed)!=3: raise RuntimeError('L4_START_FAIL')
+          blue_anchors=derive_blue_anchors(o)
+          if not blue_anchors: raise RuntimeError('NO_BLUE_ANCHORS_DERIVED')
 
           q=deque([(copy.deepcopy(env),o,[])])
           seen={key(o)};found=None;exp=0;t0=time.monotonic();limit=300000
           no_effect=0
           while q and exp<limit and time.monotonic()-t0<600:
               e,oo,path=q.popleft()
-              cands=mixed_candidates(oo)
+              cands=mixed_candidates(oo,blue_anchors)
               for idx,c in enumerate(cands):
                   e2=copy.deepcopy(e)
                   nf,drains=act_and_drain(e2,oo,c['center']);exp+=1
@@ -147,7 +165,7 @@ jobs:
 
           search={'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,
                   'path_indices':found,'path_len':None if found is None else len(found),
-                  'no_effect_pruned':no_effect,'initial_candidates':mixed_candidates(o)}
+                  'no_effect_pruned':no_effect,'initial_candidates':mixed_candidates(o,blue_anchors),'blue_anchors':blue_anchors}
           print('VC33_L4_SEARCH='+json.dumps(search,separators=(',',':')))
           if found is None: raise RuntimeError('L4_NOT_FOUND')
 
@@ -156,10 +174,11 @@ jobs:
           cid=oa.open_scorecard(source_url=src,tags=['DEUS','vc33','observation-derived-mixed-bfs','l4'])
           oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
           if oe is None: raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
-          oo=enter_l4(oe);trace=[]
+          oo=enter_l4(oe);online_blue_anchors=derive_blue_anchors(oo);trace=[]
+          if len(online_blue_anchors)!=len(blue_anchors): raise RuntimeError('BLUE_ANCHOR_COUNT_DIVERGENCE')
           for step,item in enumerate(found,1):
               idx=int(item['idx']);expected_drains=int(item['drains'])
-              cands=mixed_candidates(oo)
+              cands=mixed_candidates(oo,online_blue_anchors)
               if idx>=len(cands): raise RuntimeError('L4_INDEX_DIVERGENCE_'+str(step))
               c=cands[idx];before=fr(oo)
               oo=click(oe,oo,c['center'])
@@ -182,7 +201,7 @@ jobs:
                'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
                'l4_path_indices':found,'l4_actions_executed':len(trace),'online_trace':trace,'search':search,
                'protocol':'PUBLIC_OBSERVATION_DERIVED_MIXED_BUTTON_BFS',
-               'public_rule_prior':'L4 is first blue-button level; brown arrangement can enable blue/olive controls; animated steps are drained only when a speculative public-frame probe detects ongoing animation; no L4 action route supplied',
+               'public_rule_prior':'L4 is first blue-button level; inactive blue rectangles are identified from the live L4 frame and their centers persist as anchors after blue->olive recoloring; brown buttons are re-derived each state; animated steps are drained only when speculative public-frame probe detects ongoing animation; no L4 action route supplied',
                'external_full_route_used':False,'external_l4_coordinates_used':False,
                'game_source_inspected_by_solver':False,'hidden_state_read':False,
                'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,
