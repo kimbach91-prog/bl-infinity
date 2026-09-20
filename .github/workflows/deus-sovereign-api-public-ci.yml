@@ -1,0 +1,77 @@
+name: DEUS Sovereign API Public Runtime CI
+
+on:
+  push:
+    branches:
+      - deus/sovereign-api-runtime-v0.1
+    paths:
+      - "public-compute/sovereign-api-v0.1/**"
+      - ".github/workflows/deus-sovereign-api-public-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deus-sovereign-api-public-v0-1
+  cancel-in-progress: false
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: public-compute/sovereign-api-v0.1
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Syntax
+        run: |
+          node --check src/server.mjs
+          node --check src/elite-packet.mjs
+          node --check src/provider-registry.mjs
+      - name: Deterministic tests
+        run: npm test
+      - name: HTTP contract smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=8787 DEUS_RUNTIME_STATE=CI_PUBLIC_MIRROR DEUS_SOURCE_REV="$GITHUB_SHA" node src/server.mjs >/tmp/deus-api.log 2>&1 &
+          pid=$!
+          trap 'kill "$pid" 2>/dev/null || true' EXIT
+          for i in {1..20}; do
+            if curl -fsS http://127.0.0.1:8787/v1/status >/tmp/status.json; then break; fi
+            sleep 0.25
+          done
+          curl -fsS http://127.0.0.1:8787/v1/providers >/tmp/providers.json
+          curl -fsS -X POST http://127.0.0.1:8787/v1/routes/plan -H 'content-type: application/json' --data '{"requires_inference":false,"data_class":"S0"}' >/tmp/route.json
+          cat >/tmp/handshake.json <<'JSON'
+          {"packet":{"version":"DEUS-ELITE-PACKET/0.1","packet_id":"ci-public-001","type":"REQUEST_PACKET","source_member_id":"ci-public","target_member_id":"deus","task_id":"ci-public-task","purpose":"Public S0 runtime contract canary","intent":"Verify bounded public handshake","data_class":"S0","auth_ref":"cap:ci:public","idempotency_key":"ci-public-idem","created_at":"2026-09-20T00:00:00Z","expires_at":"2099-09-20T00:00:00Z","source_refs":["src:ci:public"],"claims":[{"id":"c1","text":"public mirror contract"}],"exchange":{"mode":"RESULT_SWAP","offer":"receipt","request":"acceptance"},"constraints":{"max_cost":"zero-model","no_raw_private_data":true}},"router_metrics":{"relevance":0.9,"expected_information_gain":0.8,"reciprocity":0.8,"evidence_quality":0.8,"redundancy":0.1,"privacy_risk":0.1,"expected_value_gain":0.8,"marginal_cost":0.2}}
+          JSON
+          curl -fsS -X POST http://127.0.0.1:8787/v1/handshake -H 'content-type: application/json' --data-binary @/tmp/handshake.json >/tmp/handshake-response.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const s=JSON.parse(fs.readFileSync('/tmp/status.json','utf8'));
+          const p=JSON.parse(fs.readFileSync('/tmp/providers.json','utf8'));
+          const r=JSON.parse(fs.readFileSync('/tmp/route.json','utf8'));
+          const h=JSON.parse(fs.readFileSync('/tmp/handshake-response.json','utf8'));
+          if(s.service!=='DEUS_SOVEREIGN_API') throw new Error('status');
+          if(!Array.isArray(p.providers)||p.providers.length<1) throw new Error('providers');
+          if(r.plan?.code!=='ZERO_MODEL_FAST_PATH') throw new Error('route');
+          if(h.decision?.state!=='ACCEPT'||h.receipt?.secret_material_recorded!==false) throw new Error('handshake');
+          console.log(JSON.stringify({status:"PASS",source_revision:s.source_revision,providers:p.providers.length,route:r.plan.code,handshake:h.decision.code}));
+          NODE
+      - name: Docker build
+        working-directory: .
+        run: docker build -f public-compute/sovereign-api-v0.1/Dockerfile -t deus-sovereign-api:$GITHUB_SHA public-compute/sovereign-api-v0.1
+      - name: Secret artifact scan
+        shell: bash
+        run: |
+          set -euo pipefail
+          if find . -type f \( -name '.env' -o -name '*.pem' -o -name '*.key' -o -name '*.p12' -o -name '*.pfx' \) | grep -q .; then
+            echo "Forbidden credential artifact found" >&2
+            exit 1
+          fi
