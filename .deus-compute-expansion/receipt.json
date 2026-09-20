@@ -1,13 +1,13 @@
 {
   "receipt_version": "DEUS-COMPUTE-EXPANSION/2",
-  "updated_at": "2026-09-20T17:32:52Z",
+  "updated_at": "2026-09-20T17:33:26Z",
   "routes": {
     "persorai": {
       "provider": "PERSORAI",
       "endpoint": "https://persorai.com/v1/chat/completions",
       "model": "@cf/zai-org/glm-5.2",
       "http_status": 404,
-      "latency_ms": 561,
+      "latency_ms": 523,
       "exact_contract": false,
       "response_digest": "7d04f7431bbfa41a04bcc7e6b98b9de0d919756c4c671c5785c99fff45f16402",
       "provider_execution": false
@@ -15,28 +15,28 @@
     "rok": {
       "provider": "ROK",
       "endpoint": "https://rokremasteredapi.rokteam.org/v1/chat/completions",
-      "model": "default",
-      "http_status": 400,
-      "latency_ms": 371,
-      "exact_contract": false,
-      "response_digest": "c9a7904f2177d855b9fa011f994b0daf05a5a1a726461190426f342baee09080",
-      "provider_execution": false
+      "model": "rok-hermes",
+      "http_status": 200,
+      "latency_ms": 960,
+      "exact_contract": true,
+      "response_digest": "b2e692073f7e672b765284a85677977015afc69daf1c20c44e4493bea8177047",
+      "provider_execution": true
     },
     "cehpoint": {
       "provider": "CEHPOINT",
       "endpoint": "https://ai-api.cehpoint.co.in/v1/chat/completions",
       "model": "cehpoint-ai",
       "http_status": 200,
-      "latency_ms": 2061,
+      "latency_ms": 1389,
       "exact_contract": true,
-      "response_digest": "2bc839f18d0411bc8f294438ad01dc1c907d3f6cac2b2bc4177436c0a1f9f8ac",
+      "response_digest": "b758a40a8b9da2ff8f81ef34d2a2e655cbf4821bee8d237dce7a0df2bf348a0e",
       "provider_execution": true
     },
     "pollinations": {
       "provider": "POLLINATIONS_LEGACY",
       "endpoint": "https://text.pollinations.ai/{prompt}",
       "http_status": 200,
-      "latency_ms": 423,
+      "latency_ms": 372,
       "exact_contract": true,
       "response_digest": "3dc450608a6b39f1e2b7a54b6621a3d8f47b0c339154cb8f0d4b7de37a26eef3",
       "provider_execution": true
@@ -46,9 +46,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-ultra-550b",
       "http_status": 200,
-      "latency_ms": 760,
+      "latency_ms": 790,
       "exact_contract": true,
-      "response_digest": "73a393f603a4d79316fa7ed25b925bf178b05c6288f780bcadc2add8209e7fa3",
+      "response_digest": "838dd10c05c8e59b85ad2a0504cf7aa0894c808dfc70179ea91cfa9931c39231",
       "provider_execution": true
     },
     "blockrun_omni": {
@@ -56,9 +56,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
       "http_status": 200,
-      "latency_ms": 2158,
+      "latency_ms": 732,
       "exact_contract": true,
-      "response_digest": "19276a608be66954e53c43fb88686e703709c42d48df407a815e7c3ce10de1da",
+      "response_digest": "b28d6167d86da686523f9bdf73dc9c4af97b14ac48c65c50c34a97e2e47cf5c2",
       "provider_execution": true
     },
     "blockrun_code": {
@@ -66,9 +66,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "cohere/north-mini-code",
       "http_status": 200,
-      "latency_ms": 1328,
+      "latency_ms": 780,
       "exact_contract": true,
-      "response_digest": "1b2dce4b18295f5cf6d810ff6b59cf84106a5b042d327bb2ad24f846ec67146c",
+      "response_digest": "d2e9e57db281b70271c85df765600d6f425a78b9ef92afa5194773e0a3980d34",
       "provider_execution": true
     },
     "blockrun_llama_vision": {
@@ -76,9 +76,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/llama-3.2-11b-vision",
       "http_status": 200,
-      "latency_ms": 1084,
+      "latency_ms": 599,
       "exact_contract": true,
-      "response_digest": "da26e629c0b22c73520300695d2d5e1f4c5c1cebba0399843abdfa246324f8b0",
+      "response_digest": "2b409e239534830804bb98a59f1dda7686bd2335e902cd8798d3cb6ef7e79bdf",
       "provider_execution": true
     },
     "blockrun_laguna": {
@@ -86,9 +86,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "poolside/laguna-xs-2.1",
       "http_status": 200,
-      "latency_ms": 777,
+      "latency_ms": 712,
       "exact_contract": true,
-      "response_digest": "90a08ecc66aa9b85f6bd8604286a74abc211b937dac5b4e6b5a193f825d1d3d3",
+      "response_digest": "9ea242675081f2fe074b9fb28617eb2a5209bcc973ae8aa393f30ee9752747f9",
       "provider_execution": true
     }
   }
