@@ -70,8 +70,17 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
-          timeout 120s yagna payment fund >/tmp/payment-fund.log 2>&1
-          yagna payment status --network=hoodi --driver=erc20 >/tmp/payment-status.log 2>&1
+          if ! timeout 120s yagna payment fund >/tmp/payment-fund.log 2>&1; then
+            echo "DEUS_PAYMENT_FUND_FAILED"
+            tail -n 120 /tmp/payment-fund.log || true
+            yagna payment status --network=hoodi --driver=erc20 || true
+            exit 1
+          fi
+          if ! yagna payment status --network=hoodi --driver=erc20 >/tmp/payment-status.log 2>&1; then
+            echo "DEUS_PAYMENT_STATUS_FAILED"
+            tail -n 120 /tmp/payment-status.log || true
+            exit 1
+          fi
           grep -Ei 'hoodi|tGLM|GLM|total amount|amount' /tmp/payment-status.log | head -n 30 || cat /tmp/payment-status.log
 
       - name: Mark stage client
