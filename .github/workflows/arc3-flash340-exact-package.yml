@@ -1,0 +1,75 @@
+name: ARC3 exact upstream 3.40 package reconstruction
+
+on:
+  push:
+    branches: [deus/arc3-kaggle-rank-climb-20260921]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340_exact/**
+      - .github/workflows/arc3-flash340-exact-package.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Reconstruct exact Sep12 upstream full package
+        run: |
+          set -euo pipefail
+          ROOT="public_benchmark/arc3/kaggle_candidates/flash_next_340_exact"
+          TMP="/tmp/flashrepo-exact"
+          OUT="$TMP/build/deus-full"
+          mkdir -p "$TMP/scripts"
+          cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
+          cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
+          cp "$ROOT/upstream_flash_teardown_patch.py" "$TMP/scripts/flash_teardown_patch.py"
+          python "$TMP/scripts/build_flash_next_package.py" \
+            --kernel-id deusplaceholder/arc-agi3-flash-next-mtp-full \
+            --mode full \
+            --output-dir "$OUT"
+          cp -r "$OUT" "$GITHUB_WORKSPACE/flash340-exact-full-package"
+          cd "$GITHUB_WORKSPACE"
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          out=Path('flash340-exact-full-package')
+          nbs=list(out.glob('*.ipynb'))
+          assert len(nbs)==1,nbs
+          raw=nbs[0].read_bytes()
+          sha=hashlib.sha256(raw).hexdigest()
+          expected='6a141753f142ed0d683f34f9acb1ac732a6e333a193b2ad8612d66125e64d9d1'
+          meta=json.loads((out/'kernel-metadata.json').read_text())
+          rec={
+            'schema':'deus/arc3-flash340-exact-package/1',
+            'upstream_commit':'08b9e053f6e284cc06bf4d29a6eb74cfa88929c0',
+            'notebook_sha256':sha,
+            'expected_upstream_submitted_notebook_sha256':expected,
+            'exact_notebook_match':sha==expected,
+            'machine_shape':meta.get('machine_shape'),
+            'enable_gpu':meta.get('enable_gpu'),
+            'enable_internet':meta.get('enable_internet'),
+            'competition_sources':meta.get('competition_sources'),
+            'dataset_sources':meta.get('dataset_sources'),
+            'model_sources':meta.get('model_sources'),
+            'recorded_upstream_public_score':3.40,
+            'recorded_upstream_submission_id':'56170646',
+            'deus_user_score_claim':False
+          }
+          Path('flash340-exact-package-receipt.json').write_text(json.dumps(rec,indent=2))
+          print('FLASH340_EXACT_PACKAGE_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not rec['exact_notebook_match']:
+              raise SystemExit('exact notebook SHA mismatch')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flash340-exact-full-package
+          path: |
+            flash340-exact-full-package/
+            flash340-exact-package-receipt.json
+          retention-days: 30
