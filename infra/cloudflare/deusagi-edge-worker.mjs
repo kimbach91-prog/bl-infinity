@@ -1,6 +1,57 @@
 const CANONICAL_ORIGIN = 'https://deusagi.ai';
 const LEGACY_ORIGIN = 'https://kimbach91-prog.github.io';
 const LEGACY_BASE = '/bl-infinity';
+const S0_WORK_ITERATIONS = 200000;
+
+export function validateS0Nonce(value) {
+  const nonce = String(value || '').trim();
+  if (!/^[A-Za-z0-9._:-]{1,64}$/.test(nonce)) throw new Error('BAD_S0_NONCE');
+  return nonce;
+}
+
+export function computeS0Work(value, iterations = S0_WORK_ITERATIONS) {
+  const nonce = validateS0Nonce(value);
+  if (!Number.isSafeInteger(iterations) || iterations < 1 || iterations > S0_WORK_ITERATIONS) {
+    throw new Error('BAD_S0_ITERATIONS');
+  }
+  let x = 0x9e3779b9 >>> 0;
+  for (let i = 0; i < nonce.length; i++) {
+    x = Math.imul((x ^ nonce.charCodeAt(i)) >>> 0, 0x85ebca6b) >>> 0;
+    x = (x ^ (x >>> 13)) >>> 0;
+  }
+  for (let i = 0; i < iterations; i++) {
+    x = (Math.imul((x ^ i) >>> 0, 1664525) + 1013904223) >>> 0;
+    x = (x ^ (x >>> 16)) >>> 0;
+  }
+  return x.toString(16).padStart(8, '0');
+}
+
+async function computeS0Response(url) {
+  const nonce = validateS0Nonce(url.searchParams.get('nonce'));
+  const started = Date.now();
+  const result = computeS0Work(nonce);
+  const elapsedMs = Date.now() - started;
+  return Response.json({
+    schema: 'deus-cloudflare-s0-compute/1',
+    executor: 'CLOUDFLARE_WORKERS',
+    data_class: 'S0_PUBLIC',
+    nonce,
+    iterations: S0_WORK_ITERATIONS,
+    result_u32_hex: result,
+    elapsed_ms: elapsedMs,
+    canonical_write: false,
+    protected_payload: false,
+    truth: 'BOUNDED_CPU_EXECUTED_NE_GENERAL_CAPACITY_NE_CANONICAL_JOB_DONE'
+  }, {
+    headers: {
+      'cache-control': 'no-store',
+      'x-content-type-options': 'nosniff',
+      'x-deusagi-edge': 'v1',
+      'x-deus-executor': 'cloudflare-workers-s0',
+      'x-deus-data-class': 'S0'
+    }
+  });
+}
 
 const BLOCKED_PREFIXES = [
   '/.deus', '/.github', '/infra', '/runtime', '/nodes', '/tools',
@@ -97,6 +148,21 @@ export default {
     if (incoming.hostname !== 'deusagi.ai') return new Response('Not found', { status: 404 });
 
     if (incoming.pathname === '/__deusagi/status') return statusResponse();
+    if (incoming.pathname === '/__deusagi/compute-s0') {
+      if (request.method !== 'GET') {
+        return new Response('Method not allowed', { status: 405, headers: { allow: 'GET' } });
+      }
+      try {
+        return await computeS0Response(incoming);
+      } catch (error) {
+        return Response.json({
+          ok: false,
+          error: String(error?.message || 'BAD_S0_REQUEST').slice(0, 80),
+          canonical_write: false,
+          truth: 'S0_COMPUTE_REJECTED'
+        }, { status: 400, headers: { 'cache-control': 'no-store' } });
+      }
+    }
 
     const normalized = normalizePublicPath(incoming.pathname);
     if (normalized !== incoming.pathname) {

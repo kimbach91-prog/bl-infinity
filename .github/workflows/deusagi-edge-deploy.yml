@@ -92,4 +92,23 @@ jobs:
           curl -fsS --max-time 10 'https://deusagi.ai/' >/dev/null
           curl -fsS --max-time 10 'https://deusagi.ai/robots.txt' | grep -F 'deusagi.ai/sitemap.xml' >/dev/null
           curl -fsS --max-time 10 'https://deusagi.ai/sitemap.xml' | grep -F 'https://deusagi.ai/' >/dev/null
-          echo "DEUSAGI.AI root + robots + sitemap: GREEN" >> "$GITHUB_STEP_SUMMARY"
+          curl -fsS --max-time 20 -D /tmp/deusagi-compute.headers \
+            'https://deusagi.ai/__deusagi/compute-s0?nonce=DEUS_EDGE_CANARY_V1' \
+            > /tmp/deusagi-compute.json
+          python - <<'PY'
+          import json
+          with open('/tmp/deusagi-compute.json', encoding='utf-8') as f:
+              d=json.load(f)
+          assert d.get('schema') == 'deus-cloudflare-s0-compute/1'
+          assert d.get('executor') == 'CLOUDFLARE_WORKERS'
+          assert d.get('data_class') == 'S0_PUBLIC'
+          assert d.get('nonce') == 'DEUS_EDGE_CANARY_V1'
+          assert d.get('iterations') == 200000
+          assert d.get('result_u32_hex') == 'f32ebe15'
+          assert d.get('canonical_write') is False
+          assert d.get('truth') == 'BOUNDED_CPU_EXECUTED_NE_GENERAL_CAPACITY_NE_CANONICAL_JOB_DONE'
+          print('DEUS_CLOUDFLARE_NATIVE_S0_COMPUTE_RECEIPT=' + json.dumps(d, separators=(',', ':')))
+          PY
+          grep -qi '^x-deus-executor: cloudflare-workers-s0' /tmp/deusagi-compute.headers
+          grep -qi '^x-deus-data-class: S0' /tmp/deusagi-compute.headers
+          echo "DEUSAGI.AI root + robots + sitemap + native S0 compute: GREEN" >> "$GITHUB_STEP_SUMMARY"
