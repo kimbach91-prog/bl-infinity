@@ -40,12 +40,10 @@ jobs:
           variant_line="$(grep -m1 '^YA_INSTALLER_VARIANT=' /tmp/golem-as-requestor.sh || true)"
           core_line="$(grep -m1 '^YA_INSTALLER_CORE=' /tmp/golem-as-requestor.sh || true)"
           core_url_line="$(grep -F -m1 'golem-${_variant}-${_ostype}-${YA_INSTALLER_CORE}.tar.gz' /tmp/golem-as-requestor.sh || true)"
-          release_base="$(printf '%s\n' "$core_url_line" | grep -o -m1 'https://github.com/[^"]*/releases/download/' || true)"
 
           echo "DEUS_RESOLVE_VARIANT_LINE=$variant_line"
           echo "DEUS_RESOLVE_CORE_LINE=$core_line"
           echo "DEUS_RESOLVE_CORE_URL_LINE=$core_url_line"
-          echo "DEUS_RESOLVE_RELEASE_BASE=$release_base"
           echo "DEUS_RESOLVE_INSTALLER_SHA=$installer_sha"
 
           variant="$(printf '%s\n' "$variant_line" | sed -E 's/^YA_INSTALLER_VARIANT="\$\{YA_INSTALLER_VARIANT:-([^}]*)\}"$/\1/')"
@@ -54,7 +52,25 @@ jobs:
           tag="$(printf '%s\n' "$core_line" | sed -E 's/^YA_INSTALLER_CORE="\$\{YA_INSTALLER_CORE:-([^}]*)\}"$/\1/')"
           test -n "$tag"
           test "$tag" != "$core_line"
-          test -n "$release_base"
+
+          asset_url="$(CORE_URL_LINE="$core_url_line" VARIANT="$variant" TAG="$tag" python3 - <<'PY'
+import os, re
+line = os.environ["CORE_URL_LINE"]
+m = re.search(r'_url="([^"]+)"', line)
+if not m:
+    raise SystemExit("official requestor asset URL template not found")
+url = m.group(1)
+url = (url
+       .replace('${_variant}', os.environ["VARIANT"])
+       .replace('${_ostype}', 'linux')
+       .replace('${YA_INSTALLER_CORE}', os.environ["TAG"]))
+print(url)
+PY
+          )"
+          case "$asset_url" in
+            https://golem-releases.cdn.golem.network/yagna/golem-requestor-linux-*.tar.gz) ;;
+            *) echo "unexpected official asset URL: $asset_url" >&2; exit 1 ;;
+          esac
 
           version="${tag#v}"
           if dpkg --compare-versions "$version" ge '0.17.4'; then
@@ -63,9 +79,9 @@ jobs:
             hoodi_supported=false
           fi
           echo "DEUS_RESOLVE_TAG=$tag"
+          echo "DEUS_RESOLVE_ASSET_URL=$asset_url"
           echo "DEUS_RESOLVE_HOODI_SUPPORTED=$hoodi_supported"
-          asset="golem-requestor-linux-${tag}.tar.gz"
-          asset_url="${release_base}${tag}/${asset}"
+          asset="${asset_url##*/}"
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
@@ -106,7 +122,7 @@ jobs:
             "schema": "deus-golem-activation-artifact/1",
             "tag": "$TAG",
             "asset": "$ASSET",
-            "source": "github.com/golemfactory/yagna/releases",
+            "source": "golem-releases.cdn.golem.network/yagna",
             "tos_accepted": false,
             "installed": false,
             "executed": false
@@ -160,7 +176,7 @@ jobs:
               installer_sha256: process.env.INSTALLER_SHA256,
               sha256: process.env.SHA256,
               cache_hit: cacheHit,
-              source: "join.golem.network/as-requestor + installer-derived official release artifact",
+              source: "join.golem.network/as-requestor + installer-derived golem-releases.cdn.golem.network/yagna artifact",
               minimum_hoodi_version_satisfied: hoodiSupported,
               tos_accepted: false,
               yagna_executed: false,
