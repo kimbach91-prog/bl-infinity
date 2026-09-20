@@ -22,3 +22,4 @@ else:
 print(json.dumps(state,sort_keys=True))
 pathlib.Path("arc3-official-preflight-receipt.json").write_text(json.dumps(state,indent=2)+"\n")
 sys.exit(0 if state["execution_state"]=="READY_FOR_OFFICIAL_SUBMISSION_ROUTE" else 3)
+# rerun marker: verify current ARC_API_KEY repository-secret binding on fresh PR synchronize
