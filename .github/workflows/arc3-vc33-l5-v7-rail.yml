@@ -1,0 +1,213 @@
+name: ARC3 vc33 L5 v7 rail-effect search
+
+on:
+  push:
+    branches: [deus/arc3-vc33-l5-v7-rail-20260921-0600]
+    paths: [.github/workflows/arc3-vc33-l5-v7-rail.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        variant: [symbolic,drain,sequence]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Search measured brown rail with symbolic effect state
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,logging,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          VARIANT=os.environ['VARIANT']; OUT=Path('verification'); OUT.mkdir(exist_ok=True)
+          L3=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+          L4=[3,3,0,3,3,3,4,4,6,4,1,6,4,6,4,6,4,6,4,6,4]
+          RAIL=[[62,18],[62,47],[62,53],[62,30],[62,36],[62,12]]
+          CFG={
+            'symbolic':{'repeats':(1,2,3,4,5,7,9),'beam':12000,'seconds':420,'limit':320000,'suffix':7,'maxlen':34,'drain':False},
+            'drain':   {'repeats':(1,2,3,4,5,7),'beam':10000,'seconds':420,'limit':280000,'suffix':6,'maxlen':28,'drain':True},
+            'sequence':{'repeats':(1,2,3,5,8),'beam':15000,'seconds':420,'limit':360000,'suffix':10,'maxlen':40,'drain':False},
+          }[VARIANT]
+
+          def fr(o):return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:a[0,:]=0;a[-1,:]=0
+              return a
+          def key(o):return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def delta(a,b):
+              if a.shape!=b.shape:return 1.0
+              return float(np.mean(a!=b))
+          def comps(a,color,lo=1,hi=256):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                for x in range(W):
+                  if not m[y,x] or seen[y,x]:continue
+                  st=[(x,y)];seen[y,x]=1;pts=[]
+                  while st:
+                    xx,yy=st.pop();pts.append((xx,yy))
+                    for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                      if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:seen[ny,nx]=1;st.append((nx,ny))
+                  if lo<=len(pts)<=hi:
+                    xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                    out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['area']))
+          def brown(o):return sorted(comps(fr(o),9,4,32),key=lambda z:(z['bbox'][0],z['bbox'][1]))
+          def anchors(o):
+              z=[]
+              for c in comps(fr(o),1,8,128):
+                  if c['bbox'][1]>2 and c['bbox'][3]<61:z.append(c)
+              return sorted(z,key=lambda b:(b['center'][0],b['center'][1]))
+          def cands(o,A):
+              a=fr(o);z=[]
+              for i,b in enumerate(A):
+                  x,y=b['center'];z.append({'kind':'blue','anchor':i,'center':[x,y],'color':int(a[y,x])})
+              for j,b in enumerate(brown(o)):z.append({'kind':'brown','brown_rank':j,'center':b['center']})
+              return z
+          def click(e,o,xy):
+              am={a.value:a for a in e.action_space}
+              try:return e.step(am[6],data={'x':int(xy[0]),'y':int(xy[1])})
+              except Exception:return None
+          def prefix(e):
+              o=e.observation_space;b=brown(o);t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o=click(e,o,t)
+                  if int(o.levels_completed)>=1:break
+              if int(o.levels_completed)<1:raise RuntimeError('L1_FAIL')
+              b=brown(o);cs=[x['center'] for x in b];F=cs[3];E=cs[1]
+              for r in ['F','F','F','E','F','E','F']:
+                  o=click(e,o,F if r=='F' else E)
+                  if int(o.levels_completed)>=2:break
+              if int(o.levels_completed)<2:raise RuntimeError('L2_FAIL')
+              for idx in L3:
+                  b=brown(o);o=click(e,o,b[idx]['center'])
+                  if int(o.levels_completed)>=3:break
+              if int(o.levels_completed)<3:raise RuntimeError('L3_FAIL')
+              A=anchors(o)
+              for idx in L4:
+                  cc=cands(o,A);o=click(e,o,cc[idx]['center'])
+                  if int(o.levels_completed)>=4:break
+              if int(o.levels_completed)<4:raise RuntimeError('L4_FAIL')
+              return o
+          def stabilize(e,o,maxn=40):
+              drains=0;cur=o
+              while drains<maxn:
+                  ee=copy.deepcopy(e);po=ee.observation_space;nf=click(ee,po,[0,0])
+                  if nf is None or key(nf)==key(cur):break
+                  e.__dict__.clear();e.__dict__.update(ee.__dict__);cur=e.observation_space;drains+=1
+                  if int(cur.levels_completed)>=5:break
+              return cur,drains
+          def execute(e,o,idx):
+              nf=click(e,o,RAIL[idx])
+              if nf is None:return None,0
+              if CFG['drain'] and int(nf.levels_completed)<5:nf,d=stabilize(e,nf)
+              else:d=0
+              return nf,d
+          def probe(base,o4):
+              z=[];before=norm(o4)
+              for i,xy in enumerate(RAIL):
+                  ee=copy.deepcopy(base);nf=click(ee,o4,xy)
+                  if nf is None:z.append({'idx':i,'xy':xy,'valid':False});continue
+                  na=norm(nf);z.append({'idx':i,'xy':xy,'valid':True,'effect':delta(before,na),'changed':int(np.count_nonzero(before!=na)),'level':int(nf.levels_completed),'frame_hash':key(nf)})
+              return z
+          def macros():
+              out=[]
+              for i in range(len(RAIL)):
+                  for n in CFG['repeats']:out.append((i,)*n)
+              core=range(len(RAIL))
+              for i,j in itertools.permutations(core,2):
+                  out += [(i,j),(i,j,i),(i,j,i,j),(i,i,j),(i,j,j),(i,i,j,j)]
+              if VARIANT=='sequence':
+                  for i,j,k in itertools.permutations(core,3):out += [(i,j,k),(i,i,j,k),(i,j,j,k)]
+              return out
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          base=arc.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if base is None:raise RuntimeError('ENV_UNAVAILABLE')
+          o4=prefix(base);basef=norm(o4);probes=probe(base,o4)
+          immediate=[p for p in probes if p.get('valid') and p.get('level',4)>=5]
+          found=None;meta={}
+          if immediate:
+              found=[{'idx':immediate[0]['idx'],'drains':0}];meta={'result':'FOUND_PROBE','expansions':1,'seen':1,'seconds':0.0}
+          else:
+              effect={p['idx']:p.get('effect',0.0) for p in probes if p.get('valid')};t0=time.monotonic();ctr=itertools.count();exp=latent=visible=trims=0
+              z=(0,)*len(RAIL);heap=[(0.0,0,next(ctr),copy.deepcopy(base),o4,[],z,(),0)];seen={(key(o4),z,()):0};peak=1;best_base=0.0
+              MS=macros()
+              while heap and exp<CFG['limit'] and time.monotonic()-t0<CFG['seconds']:
+                  pri,plen,_,e,o,path,counts,suffix,chain=heapq.heappop(heap)
+                  if plen>CFG['maxlen']:continue
+                  ph=key(o);pa=norm(o)
+                  for m in MS:
+                      if exp>=CFG['limit'] or time.monotonic()-t0>=CFG['seconds']:break
+                      ee=copy.deepcopy(e);cur=o;actual=[];valid=True
+                      for idx in m:
+                          nf,d=execute(ee,cur,idx);exp+=1
+                          if nf is None:valid=False;break
+                          cur=nf;actual.append({'idx':idx,'drains':d})
+                          if int(cur.levels_completed)>=5:break
+                          if getattr(cur.state,'value',str(cur.state)) in ('GAME_OVER','WIN'):break
+                      if not valid or not actual:continue
+                      npth=path+actual
+                      if int(cur.levels_completed)>=5:
+                          found=npth;meta={'result':'FOUND','variant':VARIANT,'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_edges':latent,'visible_edges':visible,'trims':trims,'best_level_start_delta':best_base};break
+                      if getattr(cur.state,'value',str(cur.state)) in ('GAME_OVER','WIN'):continue
+                      nh=key(cur);na=norm(cur);sd=delta(pa,na);bd=delta(basef,na);best_base=max(best_base,bd)
+                      cc=list(counts)
+                      for a in actual:cc[a['idx']]=min(15,cc[a['idx']]+1)
+                      cc=tuple(cc);ids=tuple(a['idx'] for a in actual);ns=(suffix+ids)[-CFG['suffix']:]
+                      if nh==ph:latent+=1;nc=chain+1
+                      else:visible+=1;nc=0
+                      sk=(nh,tuple(x%8 for x in cc),ns)
+                      if len(npth)>=seen.get(sk,10**9):continue
+                      seen[sk]=len(npth);div=sum(1 for x in cc if x);prior=sum(effect.get(i,0.0) for i in ids)
+                      score=(len(npth)*0.08)+(nc*0.15)-(bd*42.0)-(sd*9.0)-(div*0.25)-(prior*3.0)-(0.02*len(set(ns)))
+                      heapq.heappush(heap,(score,len(npth),next(ctr),ee,cur,npth,cc,ns,nc));peak=max(peak,len(heap))
+                  if found is not None:break
+                  if len(heap)>CFG['beam']*2:
+                      heap=heapq.nsmallest(CFG['beam'],heap);heapq.heapify(heap);trims+=1
+              if found is None:meta={'result':'MISS','variant':VARIANT,'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_edges':latent,'visible_edges':visible,'trims':trims,'best_level_start_delta':best_base}
+
+          diag={'schema':'deus/arc3-vc33-l5-v7-rail/1','game':'vc33','variant':VARIANT,'levels_before':4,'rail':RAIL,'fresh_probes':probes,'search':meta,'path':found,'prior_effect_map_origin_run':'35540550353','external_l5_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'independent_first_contact_claim':False,'rule_derived_claim':True}
+          (OUT/'search.json').write_text(json.dumps(diag,indent=2));print('VC33_L5_V7_SEARCH='+json.dumps(diag,separators=(',',':')))
+          if found is None:raise RuntimeError('L5_V7_NOT_FOUND')
+
+          online=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-l5-v7-rail.yml'
+          cid=online.open_scorecard(source_url=src,tags=['DEUS','vc33','l5-v7',VARIANT,'rail-effect','public-development'])
+          oe=online.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=prefix(oe);trace=[]
+          for n,item in enumerate(found,1):
+              before=norm(oo);oo=click(oe,oo,RAIL[item['idx']])
+              if oo is None:raise RuntimeError('ONLINE_CLICK_FAIL')
+              for _ in range(int(item['drains'])):
+                  oo=click(oe,oo,[0,0])
+                  if oo is None:raise RuntimeError('ONLINE_DRAIN_FAIL')
+              trace.append({'step':n,'idx':item['idx'],'xy':RAIL[item['idx']],'drains':item['drains'],'changed_pixels':int(np.count_nonzero(before!=norm(oo))),'level':int(oo.levels_completed)})
+              if int(oo.levels_completed)>=5:break
+          card=online.close_scorecard(cid);passed=int(oo.levels_completed)>=5
+          rec={'schema':'deus/arc3-vc33-l5-v7-rail/1','result':'PASS' if passed else 'FAIL','game':'vc33','variant':VARIANT,'levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),'state':getattr(oo.state,'value',str(oo.state)),'scorecard_id':cid,'scorecard_score':None if card is None else card.score,'l5_path':found,'online_trace':trace,'search':meta,'protocol':'PUBLIC_RULE_DERIVED_L5_MEASURED_RAIL_EFFECT_V7','representation_delta':'compress L5 action alphabet to fresh-verified x=62 effect rail; symbolic run macros + latent count/suffix state; optional public background-frame stabilization','prior_effect_map_origin_run':'35540550353','external_full_route_used':False,'external_l5_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          (OUT/'receipt.json').write_text(json.dumps(rec,indent=2));print('VC33_L5_V7_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed:raise RuntimeError('L5_V7_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-l5-v7-${{ matrix.variant }}
+          path: verification/
+          retention-days: 30
