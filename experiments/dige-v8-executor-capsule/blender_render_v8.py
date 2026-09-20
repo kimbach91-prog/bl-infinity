@@ -906,11 +906,17 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             continue
         if abs(p.x) > .130 or p.y > .065:
             continue
-        if p.y > .025:
-            hairline_z=1.605-0.18*min(abs(p.x),.10)
-            if p.z < hairline_z:
-                continue
+        # C17.7 scalp-only root gate: reject facial/forehead roots that let
+        # strands intrude across eyes/cheeks. Keep roots behind a tighter frontal
+        # hairline and require an outward/upward scalp normal.
+        frontal_hairline_z=1.620-0.10*min(abs(p.x),.10)
+        if p.y > .000 and p.z < frontal_hairline_z:
+            continue
         n=(surface_rot @ v.normal).normalized()
+        if p.y > .000 and n.y < -0.05:
+            continue
+        if p.z < 1.585 and abs(p.x) < .085:
+            continue
         if n.length < 1e-8:
             n=Vector((0,0,1))
         scalp_candidates.append((idx,p,n))
@@ -1008,11 +1014,11 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         # Density and 44/20 population split remain frozen from C17.4/C17.5.
         # Only the authored multi-guide direction + guide-derived lift change.
         frontal=max(0.0,min(1.0,(root.y+.010)/.060))
-        envelope=max(.045,min(.078,shell_len*.62+.030))
-        if frontal > .45:
-            envelope=min(envelope,.052)
-        under_lift=max(.006,min(.016,.006+shell_lift*.25))
-        style_lift=max(.014,min(.036,.014+shell_lift*.60))
+        envelope=max(.036,min(.066,shell_len*.50+.024))
+        if frontal > .35:
+            envelope=min(envelope,.042)
+        under_lift=max(.004,min(.012,.004+shell_lift*.18))
+        style_lift=max(.010,min(.026,.010+shell_lift*.42))
 
         for k in range(strands_per_root):
             gx=k % 8
@@ -1037,6 +1043,16 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             if child_flow.length < 1e-8:
                 child_flow=field_flow.copy()
             child_flow.normalize()
+            # Prevent front-scalp strands from flowing into the face. Blend them
+            # laterally/backward while preserving authored texture-flow elsewhere.
+            front_gate=max(0.0,min(1.0,(root_j.y+.004)/.050))
+            if front_gate > 0.0:
+                safe_dir=Vector((1.0 if root_j.x >= 0 else -1.0,-0.35,0.10))
+                safe_dir=safe_dir-child_n*safe_dir.dot(child_n)
+                if safe_dir.length > 1e-8:
+                    safe_dir.normalize()
+                    child_flow=(child_flow*(1.0-0.70*front_gate)+safe_dir*(0.70*front_gate))
+                    child_flow.normalize()
             child_cross=child_n.cross(child_flow)
             if child_cross.length < 1e-8:
                 child_cross=tangent_cross.copy()
