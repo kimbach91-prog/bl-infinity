@@ -2,6 +2,8 @@ const CANONICAL_ORIGIN = 'https://deusagi.ai';
 const LEGACY_ORIGIN = 'https://kimbach91-prog.github.io';
 const LEGACY_BASE = '/bl-infinity';
 const S0_WORK_ITERATIONS = 200000;
+const DAEMON_SCHEMA = 'deus-cloudflare-daemon-heartbeat/1';
+const DAEMON_ENVELOPE_SCHEMA = 'deus-cloudflare-daemon-envelope/1';
 
 export function validateS0Nonce(value) {
   const nonce = String(value || '').trim();
@@ -51,6 +53,140 @@ async function computeS0Response(url) {
       'x-deus-data-class': 'S0'
     }
   });
+}
+
+function base64FromBytes(bytes) {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary);
+}
+
+export function decodeAeadKeyB64(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  let bytes;
+  try {
+    const binary = atob(text);
+    bytes = Uint8Array.from(binary, (ch) => ch.charCodeAt(0));
+  } catch {
+    throw new Error('BAD_AEAD_KEY_ENCODING');
+  }
+  if (bytes.length !== 32) throw new Error('BAD_AEAD_KEY_LENGTH');
+  return bytes;
+}
+
+export function validateSinkUrl(raw) {
+  const text = String(raw || '').trim();
+  if (!text) return null;
+  const url = new URL(text);
+  if (url.protocol !== 'https:') throw new Error('SINK_MUST_USE_HTTPS');
+  if (url.username || url.password) throw new Error('SINK_CREDENTIALS_IN_URL_FORBIDDEN');
+  return url.toString();
+}
+
+export function makeScheduledPayload(controller) {
+  const scheduledMs = Number(controller?.scheduledTime || Date.now());
+  const scheduledAt = new Date(scheduledMs).toISOString();
+  const cron = String(controller?.cron || 'unknown').slice(0, 80);
+  const nonce = validateS0Nonce(
+    'CF:' + scheduledAt.replace(/[^0-9TZ]/g, '').slice(0, 32)
+  );
+  return {
+    schema: DAEMON_SCHEMA,
+    executor: 'CLOUDFLARE_WORKERS',
+    data_class: 'S0_PUBLIC',
+    scheduled_at: scheduledAt,
+    cron,
+    nonce,
+    iterations: S0_WORK_ITERATIONS,
+    result_u32_hex: computeS0Work(nonce),
+    canonical_write: false,
+    protected_payload: false,
+    truth: 'SCHEDULED_HANDLER_EXECUTED_FOR_S0_HEARTBEAT_ONLY_NE_WHOLE_MICRONET_HEALTH_NE_VERIFIED_JOB_DONE'
+  };
+}
+
+export async function encryptScheduledPayload(payload, rawKey) {
+  const keyBytes = decodeAeadKeyB64(rawKey);
+  if (!keyBytes) throw new Error('AEAD_KEY_REQUIRED');
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyBytes,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  );
+  const aad = new TextEncoder().encode(
+    'DEUS_CLOUDFLARE_DAEMON_V1|' + payload.scheduled_at + '|' + payload.cron
+  );
+  const plaintext = new TextEncoder().encode(JSON.stringify(payload));
+  const encrypted = new Uint8Array(await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv, additionalData: aad, tagLength: 128 },
+    key,
+    plaintext
+  ));
+  return {
+    schema: DAEMON_ENVELOPE_SCHEMA,
+    alg: 'A256GCM',
+    iv_b64: base64FromBytes(iv),
+    ciphertext_and_tag_b64: base64FromBytes(encrypted),
+    scheduled_at_hint: payload.scheduled_at,
+    cron_hint: payload.cron,
+    data_class_hint: payload.data_class
+  };
+}
+
+async function runScheduledHeartbeat(controller, env) {
+  const payload = makeScheduledPayload(controller);
+  console.log('DEUS_CLOUDFLARE_DAEMON_LOCAL_RECEIPT ' + JSON.stringify(payload));
+
+  const sink = validateSinkUrl(env?.DEUS_DAEMON_SINK_URL);
+  if (!sink) {
+    console.log('DEUS_CLOUDFLARE_DAEMON_EGRESS_STATE ' + JSON.stringify({
+      scheduled_at: payload.scheduled_at,
+      state: 'LOCAL_ONLY_NO_SINK_CONFIGURED',
+      application_encryption: false,
+      data_class: payload.data_class
+    }));
+    return;
+  }
+
+  if (!env?.DEUS_DAEMON_AEAD_KEY_B64) {
+    console.error('DEUS_CLOUDFLARE_DAEMON_EGRESS_STATE ' + JSON.stringify({
+      scheduled_at: payload.scheduled_at,
+      state: 'BLOCKED_AEAD_KEY_NOT_CONFIGURED',
+      application_encryption: false,
+      data_class: payload.data_class
+    }));
+    return;
+  }
+
+  const envelope = await encryptScheduledPayload(payload, env.DEUS_DAEMON_AEAD_KEY_B64);
+  const response = await fetch(sink, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'user-agent': 'DEUS-Cloudflare-Daemon/1'
+    },
+    body: JSON.stringify(envelope)
+  });
+
+  const receipt = {
+    schema: 'deus-cloudflare-daemon-egress-receipt/1',
+    scheduled_at: payload.scheduled_at,
+    sink_origin: new URL(sink).origin,
+    http_status: response.status,
+    ok: response.ok,
+    application_encryption: 'AES_256_GCM',
+    plaintext_egress: false,
+    data_class: payload.data_class,
+    truth: response.ok
+      ? 'ENCRYPTED_HEARTBEAT_EGRESS_EXECUTED_NE_REMOTE_CANONICAL_WRITE'
+      : 'ENCRYPTED_HEARTBEAT_EGRESS_HTTP_FAIL'
+  };
+  console.log('DEUS_CLOUDFLARE_DAEMON_ENCRYPTED_EGRESS_RECEIPT ' + JSON.stringify(receipt));
+  if (!response.ok) throw new Error('DAEMON_SINK_HTTP_' + response.status);
 }
 
 const BLOCKED_PREFIXES = [
@@ -127,7 +263,8 @@ async function statusResponse() {
     canonical: CANONICAL_ORIGIN,
     publicOrigin: 'github-pages-legacy',
     protectedCoreExposed: false,
-    legacy
+    daemonScheduleSourceReady: true,
+    daemonEgressPolicy: 'AES_256_GCM_OR_LOCAL_ONLY'
   }, {
     status: legacy.reachable ? 200 : 503,
     headers: {
@@ -139,6 +276,10 @@ async function statusResponse() {
 }
 
 export default {
+  async scheduled(controller, env, ctx) {
+    ctx.waitUntil(runScheduledHeartbeat(controller, env));
+  },
+
   async fetch(request) {
     const incoming = new URL(request.url);
 
