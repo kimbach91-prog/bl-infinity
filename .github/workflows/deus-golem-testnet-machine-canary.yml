@@ -20,7 +20,7 @@ jobs:
       YAGNA_AUTOCONF_APPKEY: try_golem
       YAGNA_APPKEY: try_golem
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Install Yagna requestor from official Golem Python package path
         shell: bash
@@ -32,10 +32,10 @@ jobs:
           echo "$HOME/.yagna/bin" >> "$GITHUB_PATH"
           command -v yagna || {
             python3 - <<'PY'
-import shutil, sys
-print("yagna_path=", shutil.which("yagna"))
-sys.exit(1)
-PY
+            import shutil, sys
+            print("yagna_path=", shutil.which("yagna"))
+            sys.exit(1)
+            PY
           }
           echo "golem-workers package and Yagna version"
           python3 -m pip show golem-workers
@@ -91,7 +91,7 @@ PY
 
       - name: Upload bounded diagnostic receipt
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: deus-golem-testnet-machine-canary
           path: |
@@ -105,7 +105,7 @@ PY
 
       - name: Post verified Golem receipt to Machine Trial Bus
         if: success()
-        uses: actions/github-script@v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             const fs = require("fs");
@@ -129,7 +129,7 @@ PY
 
       - name: Post bounded Golem blocker to Machine Trial Bus
         if: failure()
-        uses: actions/github-script@v7
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd
         with:
           script: |
             await github.rest.issues.createComment({
