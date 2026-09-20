@@ -30,13 +30,7 @@ jobs:
           python3 -m pip install golem-workers
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           echo "$HOME/.yagna/bin" >> "$GITHUB_PATH"
-          command -v yagna || {
-            python3 - <<'PY'
-            import shutil, sys
-            print("yagna_path=", shutil.which("yagna"))
-            sys.exit(1)
-            PY
-          }
+          command -v yagna || python3 -c 'import shutil,sys; print("yagna_path=", shutil.which("yagna")); sys.exit(1)'
           echo "golem-workers package and Yagna version"
           python3 -m pip show golem-workers
           yagna --version
