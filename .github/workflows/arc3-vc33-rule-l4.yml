@@ -1,0 +1,171 @@
+name: ARC3 vc33 observation-derived L4 mixed-button BFS
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l4.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Enter L4 with DEUS-derived prefix, search mixed public buttons, verify ONLINE
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging,os,time
+          from collections import deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          L3_PATH=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              # Strip only timer/status edges from state identity; action execution uses full frame.
+              if a.shape[0]>=4:
+                  a[0,:]=0; a[-1,:]=0
+              return a
+          def key(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+
+          def comps(a,color,min_area=1,max_area=256):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                  for x in range(W):
+                      if not m[y,x] or seen[y,x]: continue
+                      st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if min_area<=len(pts)<=max_area:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'color':int(color),'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['area']))
+
+          def brown(o):
+              return sorted([x for x in comps(fr(o),9,4,32)],key=lambda z:(z['bbox'][0],z['bbox'][1]))
+
+          def mixed_candidates(o):
+              a=fr(o);out=[];seen=set()
+              # Public prior only identifies brown instant buttons and blue/olive animated controls.
+              # Candidate identities/coordinates are always derived from the live public frame.
+              for color in (9,1,4,11,15):
+                  for c in comps(a,color,4,96):
+                      x,y=c['center']
+                      if y==0: continue
+                      k=(x,y)
+                      if k in seen: continue
+                      seen.add(k);out.append(c)
+              return sorted(out,key=lambda c:(c['color'],c['bbox'][0],c['bbox'][1],c['area']))
+
+          def click(e,o,xy):
+              amap={a.value:a for a in e.action_space}
+              return e.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])})
+
+          def enter_l4(e):
+              o=e.observation_space
+              # L1
+              b=brown(o);t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o=click(e,o,t)
+                  if int(o.levels_completed)>=1: break
+              if int(o.levels_completed)<1: raise RuntimeError('L1_FAIL')
+              # L2
+              b=brown(o);c=[x['center'] for x in b];F=c[3];E=c[1]
+              for role in ['F','F','F','E','F','E','F']:
+                  o=click(e,o,F if role=='F' else E)
+                  if int(o.levels_completed)>=2: break
+              if int(o.levels_completed)<2: raise RuntimeError('L2_FAIL')
+              # L3
+              for idx in L3_PATH:
+                  b=brown(o)
+                  if idx>=len(b): raise RuntimeError('L3_INDEX_DIVERGENCE')
+                  o=click(e,o,b[idx]['center'])
+                  if int(o.levels_completed)>=3: break
+              if int(o.levels_completed)<3: raise RuntimeError('L3_FAIL')
+              return o
+
+          normal=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=normal.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('NORMAL_ENV_UNAVAILABLE')
+          o=enter_l4(env)
+          if int(o.levels_completed)!=3: raise RuntimeError('L4_START_FAIL')
+
+          q=deque([(copy.deepcopy(env),o,[])])
+          seen={key(o)};found=None;exp=0;t0=time.monotonic();limit=300000
+          no_effect=0
+          while q and exp<limit and time.monotonic()-t0<600:
+              e,oo,path=q.popleft()
+              cands=mixed_candidates(oo)
+              for idx,c in enumerate(cands):
+                  e2=copy.deepcopy(e)
+                  nf=click(e2,oo,c['center']);exp+=1
+                  if nf is None: continue
+                  p=path+[idx]
+                  if int(nf.levels_completed)>=4:
+                      found=p;break
+                  k=key(nf)
+                  if k==key(oo):
+                      no_effect+=1;continue
+                  if k not in seen:
+                      seen.add(k);q.append((e2,nf,p))
+              if found is not None: break
+
+          search={'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,
+                  'path_indices':found,'path_len':None if found is None else len(found),
+                  'no_effect_pruned':no_effect,'initial_candidates':mixed_candidates(o)}
+          print('VC33_L4_SEARCH='+json.dumps(search,separators=(',',':')))
+          if found is None: raise RuntimeError('L4_NOT_FOUND')
+
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-rule-l4.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','vc33','observation-derived-mixed-bfs','l4'])
+          oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None: raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=enter_l4(oe);trace=[]
+          for step,idx in enumerate(found,1):
+              cands=mixed_candidates(oo)
+              if idx>=len(cands): raise RuntimeError('L4_INDEX_DIVERGENCE_'+str(step))
+              c=cands[idx];before=fr(oo)
+              oo=click(oe,oo,c['center']);after=fr(oo)
+              trace.append({'step':step,'candidate_index':idx,'candidate':c,
+                            'changed_pixels':int(np.count_nonzero(before!=after)),
+                            'level':int(oo.levels_completed),'state':oo.state.value})
+              if int(oo.levels_completed)>=4: break
+          card=oa.close_scorecard(cid);passed=int(oo.levels_completed)>=4
+          rec={'schema':'deus/arc3-vc33-observation-derived-l4/1','result':'PASS' if passed else 'FAIL',
+               'game':'vc33','levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+               'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+               'l4_path_indices':found,'l4_actions_executed':len(trace),'online_trace':trace,'search':search,
+               'protocol':'PUBLIC_OBSERVATION_DERIVED_MIXED_BUTTON_BFS',
+               'public_rule_prior':'L4 is first blue-button level; brown arrangement can enable blue/olive controls; no L4 action route supplied',
+               'external_full_route_used':False,'external_l4_coordinates_used':False,
+               'game_source_inspected_by_solver':False,'hidden_state_read':False,
+               'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,
+               'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+               'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          out=Path('verification');out.mkdir()
+          (out/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('VC33_L4_RULE_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed: raise RuntimeError('L4_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-observation-derived-l4
+          path: verification/
+          retention-days: 30
