@@ -36,10 +36,10 @@ jobs:
           p=pathlib.Path("public_benchmark/wave1/OFFICIAL_ACCESS_STATE.json")
           x=json.loads(p.read_text())
           assert x["schema"]=="DEUS_WAVE1_OFFICIAL_ACCESS_STATE_V1"
-          assert x["arc_agi_3_private"]["access_state"]=="USER_ACCOUNT_RULE_ACCEPTANCE_REQUIRED"
+          assert x["arc_agi_3_private"]["access_state"]=="ARC_API_KEY_AND_KAGGLE_ACCOUNT_RULE_ACCEPTANCE_REQUIRED"
           assert x["arc_agi_3_private"]["disclosure_state"]=="UNRESOLVED_DIVERGENCE_PROTECTED_CORE_VS_OPEN_SOURCE"
-          assert x["frontiermath_erdos"]["access_state"]=="PUBLIC_SOURCE_AVAILABLE"
-          assert x["hle_rolling"]["access_state"]=="GATED_DATASET_REQUIRES_LOGGED_IN_ACCEPTANCE_AND_CONTACT_SHARE"
+          assert x["frontiermath_erdos"]["access_state"]=="PUBLIC_SOURCE_AND_EVALUATION_SCAFFOLD_AVAILABLE"
+          assert x["hle_rolling"]["access_state"]=="VERSION_SPECIFIC_DATASET_ACCESS_MUST_BE_FRESH_VERIFIED"
           assert "IMAGE_URL_MULTIMODAL_ITEMS_OR_DECLARED_RESTRICTED_SUBSET" in x["hle_rolling"]["endpoint_contract"]
           handoff={
             "schema":"DEUS_WAVE1_PRETEST_HANDOFF_V1",
