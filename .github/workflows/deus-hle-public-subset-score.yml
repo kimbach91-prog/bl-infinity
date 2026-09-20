@@ -1,0 +1,26 @@
+name: DEUS HLE Public Subset Score
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/hle_public_subset_runner.py'
+      - '.github/workflows/deus-hle-public-subset-score.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hle-public-subset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install datasets
+      - name: Execute public HLE text subset through disclosed MicroNet external worker
+        run: python public_benchmark/wave1/hle_public_subset_runner.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-hle-public-subset-score
+          path: hle-public-subset-score.json
