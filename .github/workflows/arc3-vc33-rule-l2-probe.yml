@@ -1,0 +1,89 @@
+name: ARC3 vc33 L2 live observation probe
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l2-probe.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Solve L1 from live perception then inspect L2
+        run: |
+          python - <<'PY'
+          import json, logging, hashlib
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+
+          def comps(arr, color):
+              mask=(arr==color); h,w=arr.shape; seen=np.zeros_like(mask,dtype=bool); out=[]
+              for y in range(h):
+                  for x in range(w):
+                      if not mask[y,x] or seen[y,x]: continue
+                      stack=[(x,y)]; seen[y,x]=True; pts=[]
+                      while stack:
+                          xx,yy=stack.pop(); pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<w and 0<=ny<h and mask[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=True; stack.append((nx,ny))
+                      xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
+                      out.append({
+                          'area':len(pts),
+                          'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                          'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]
+                      })
+              return sorted(out,key=lambda z:(z['bbox'][1],z['bbox'][0]))
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          card=arc.open_scorecard(
+              source_url='https://github.com/kimbach91-prog/bl-infinity',
+              tags=['DEUS','vc33','rule-derived','l2-live-probe']
+          )
+          env=arc.make('vc33',seed=0,scorecard_id=card,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('ENV_UNAVAILABLE')
+          amap={a.value:a for a in env.action_space}
+          obs=env.observation_space
+
+          # L1: derive brown components live. The lower of the two was established
+          # by fresh candidate ablation as the forward button for L1.
+          g=np.asarray(obs.frame[-1],dtype=np.uint8)
+          brown=[c for c in comps(g,9) if c['area']>=8]
+          if len(brown)<2: raise RuntimeError('L1_EXPECTED_TWO_BROWN:'+json.dumps(brown))
+          lower=max(brown,key=lambda c:c['center'][1])
+          for _ in range(3):
+              obs=env.step(amap[6],data={'x':lower['center'][0],'y':lower['center'][1]})
+          if int(obs.levels_completed)!=1:
+              raise RuntimeError('L1_REPLAY_FAILED:'+str(obs.levels_completed))
+
+          g=np.asarray(obs.frame[-1],dtype=np.uint8)
+          colors={int(c):int((g==c).sum()) for c in np.unique(g)}
+          component_map={
+              str(int(c)):comps(g,int(c))[:50]
+              for c in np.unique(g)
+              if int(c)!=0
+          }
+          result={
+              'game':'vc33','seed':0,'levels_completed':int(obs.levels_completed),
+              'state':obs.state.value,
+              'available_actions':[int(a.value) if hasattr(a,'value') else int(a) for a in (obs.available_actions or [])],
+              'frame_sha256':hashlib.sha256(g.tobytes()).hexdigest(),
+              'colors':colors,'components':component_map,
+              'l1_derived_button':lower['center'],
+              'scorecard_id':card,
+              'claim':'live L2 observation after rule-derived L1; no L2 actions yet'
+          }
+          print('VC33_L2_OBSERVATION='+json.dumps(result,separators=(',',':')))
+          arc.close_scorecard(card)
+          PY
