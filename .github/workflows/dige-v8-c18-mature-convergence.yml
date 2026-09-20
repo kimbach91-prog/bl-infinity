@@ -73,12 +73,16 @@ jobs:
           test -s /tmp/makehuman/makehuman/data/modifiers/modeling_modifiers.json
           test -d /tmp/makehuman/makehuman/data/targets
 
-      - name: Build frozen C16 geometry
+      - name: Build C27 official-anatomy geometry
         working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_C27_OFFICIAL_ANATOMY: '1'
+          DIGE_C27_MAKEHUMAN_DATA: /tmp/makehuman/makehuman/data
+          DIGE_C27_MAKEHUMAN_COMMIT: a8bc2d54ff0ac92e78ff71431b1023eda42bf482
         run: |
           set -euxo pipefail
           mkdir -p runtime/assets runtime/system_assets
-          python build_makehuman_v8.py | tee runtime/c25_geometry_execution.json
+          python build_makehuman_v8.py | tee runtime/c27_geometry_execution.json
           test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
 
       - name: Reuse verified C18 mature asset stage
