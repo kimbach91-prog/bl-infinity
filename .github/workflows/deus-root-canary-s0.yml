@@ -1,0 +1,106 @@
+name: DEUS Root Canary S0
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-root-canary-s0.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deus-root-canary-s0
+  cancel-in-progress: false
+
+jobs:
+  wikimedia-liftwing:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run Wikimedia LiftWing exact-output canary
+        shell: bash
+        env:
+          DEUS_RUN_ID: ${{ github.run_id }}
+          DEUS_SHA: ${{ github.sha }}
+          DEUS_EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, time, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          url = "https://api.wikimedia.org/service/lw/inference/v1/models/llm-qwen3-14b/openai/v1/chat/completions"
+          expected = "DEUS_WIKIMEDIA_RUNTIME_20260920_OK"
+          payload = {
+              "model": "llm-qwen3-14b",
+              "messages": [{"role": "user", "content": f"Return exactly this token and nothing else: {expected}"}],
+              "temperature": 0,
+              "max_tokens": 64,
+          }
+          body = json.dumps(payload).encode()
+          req = urllib.request.Request(
+              url,
+              data=body,
+              method="POST",
+              headers={
+                  "Content-Type": "application/json",
+                  "User-Agent": "DEUS-S0-RUNTIME-CANARY/1.0 (contact: kimbach91@gmail.com)",
+              },
+          )
+          started = time.time()
+          status = 0
+          raw = b""
+          error = None
+          try:
+              with urllib.request.urlopen(req, timeout=45) as resp:
+                  status = resp.status
+                  raw = resp.read()
+          except Exception as exc:
+              error = repr(exc)
+          elapsed_ms = round((time.time() - started) * 1000)
+          text = ""
+          parsed = None
+          if raw:
+              try:
+                  parsed = json.loads(raw.decode())
+                  text = parsed["choices"][0]["message"]["content"]
+              except Exception as exc:
+                  error = (error + "; " if error else "") + "parse=" + repr(exc)
+          receipt = {
+              "schema": "deus-provider-root-canary/1",
+              "provider": "Wikimedia LiftWing",
+              "route_id": "GRX-WIKIMEDIA-LIFTWING-001",
+              "model": "llm-qwen3-14b",
+              "event": os.environ["DEUS_EVENT"],
+              "run_id": os.environ["DEUS_RUN_ID"],
+              "source_sha": os.environ["DEUS_SHA"],
+              "observed_at": datetime.now(timezone.utc).isoformat(),
+              "http_status": status,
+              "latency_ms": elapsed_ms,
+              "response_sha256": hashlib.sha256(raw).hexdigest(),
+              "content": text,
+              "expected": expected,
+              "exact": text.strip() == expected,
+              "error": error,
+              "data_class": "S0_PUBLIC",
+              "canonical_write": False,
+              "truth": "PROVIDER_RUNTIME_CANARY_NE_CONTROLLER_CREDIT_NE_SLA",
+          }
+          Path("deus-root-canary-receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+          )
+          print("DEUS_ROOT_CANARY_RECEIPT=" + json.dumps(receipt, separators=(",", ":"), ensure_ascii=False))
+          if status != 200 or not receipt["exact"]:
+              raise SystemExit(2)
+          PY
+
+      - name: Upload typed canary receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-root-canary-s0-${{ github.run_id }}-${{ github.run_attempt }}
+          path: deus-root-canary-receipt.json
+          if-no-files-found: error
+          retention-days: 30
