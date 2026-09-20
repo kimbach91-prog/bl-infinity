@@ -1,0 +1,44 @@
+name: DEUS FrontierMath Erdos242 Hard Attempt
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-frontiermath-erdos242-hard.yml'
+      - 'public_benchmark/wave1/frontiermath_erdos242_attempt.lean'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  erdos242-hard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: epoch-research/LeanOpenProblems
+          ref: af3b82f9d2fd38bea33d59e637b6b4eff54a464c
+          path: vendor/LeanOpenProblems
+      - uses: astral-sh/setup-uv@v6
+      - name: Prepare upstream environment
+        run: |
+          cd vendor/LeanOpenProblems
+          uv sync
+      - name: Install DEUS proof attempt into upstream tree
+        run: |
+          cp public_benchmark/wave1/frontiermath_erdos242_attempt.lean vendor/LeanOpenProblems/DeusErdos242Attempt.lean
+      - name: Lean verifier
+        shell: bash
+        run: |
+          set +e
+          cd vendor/LeanOpenProblems
+          lake env lean DeusErdos242Attempt.lean > ../erdos242-lean.log 2>&1
+          rc=$?
+          cd ..
+          python - <<'PY'
+          import json,hashlib,pathlib,os
+          rc=int(os.environ.get("LEAN_RC","999"))
+          PY
+          echo "$rc" > erdos242-lean.rc
+          exit "$rc"
