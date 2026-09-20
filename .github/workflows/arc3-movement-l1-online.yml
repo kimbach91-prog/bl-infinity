@@ -1,0 +1,85 @@
+name: ARC3 movement-derived L1 online receipts
+
+on:
+  push:
+    branches: [deus/arc3-movement-l1-online-20260921]
+    paths: [.github/workflows/arc3-movement-l1-online.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [cn04, sp80]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay observation-derived L1 route ONLINE
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          game=os.environ['GAME']
+          routes={
+            'cn04':[(2,None)]*7+[(4,None)]*4+[(5,None)]*3,
+            'sp80':[(4,None),(4,None),(4,None),(5,None)],
+          }
+          route=routes[game]
+          arc=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-movement-l1-online.yml'
+          cid=arc.open_scorecard(source_url=src,tags=['DEUS',game,'public-development','movement-firstcontact','l1'])
+          env=arc.make(game,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('ENV_UNAVAILABLE')
+          amap={a.value:a for a in env.action_space}
+          obs=env.observation_space
+          before=int(obs.levels_completed)
+          t0=time.monotonic()
+          transcript=[]
+          for i,(aid,data) in enumerate(route,1):
+            if aid not in amap: raise RuntimeError('ACTION_UNAVAILABLE')
+            obs=env.step(amap[aid],data=data)
+            if obs is None: raise RuntimeError('OBS_MISSING')
+            frame=np.asarray(obs.frame[-1],dtype=np.uint8)
+            transcript.append({'i':i,'a':aid,'levels':int(obs.levels_completed),'state':obs.state.value,'frame_sha256':hashlib.sha256(frame.tobytes()).hexdigest()})
+          card=arc.close_scorecard(cid)
+          passed=int(obs.levels_completed)>before
+          receipt={
+            'schema':'deus/arc3-movement-firstcontact-l1/1',
+            'result':'PASS' if passed else 'FAIL',
+            'game':game,'scope':'LEVEL_1_ONLY',
+            'levels_before':before,'levels_completed':int(obs.levels_completed),
+            'win_levels':int(getattr(obs,'win_levels',0) or 0),
+            'state':obs.state.value,'actions_executed':len(route),
+            'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+            'route_sha256':hashlib.sha256(json.dumps(route,separators=(',',':')).encode()).hexdigest(),
+            'route_origin_run':'35524630227',
+            'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+            'online_seconds':time.monotonic()-t0,
+            'external_full_route_used':False,'game_source_inspected_by_solver':False,
+            'full_game_generalization_claim':False,'competition_hidden_score_claim':False
+          }
+          out=Path('verification');out.mkdir()
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          (out/'transcript.json').write_text(json.dumps(transcript))
+          print('DEUS_MOVEMENT_L1_ONLINE_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if not passed: raise RuntimeError('L1_REQUIRED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-movement-l1-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
