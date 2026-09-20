@@ -1,0 +1,121 @@
+name: Public S0 provider manifest audit8
+
+on:
+  push:
+    branches: ["deus/public-s0-stress8-v1-20260920"]
+    paths:
+      - ".github/workflows/public-s0-provider-manifest-audit8.yml"
+      - "public-compute/provider-public-safe-manifest.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-s0-provider-manifest-audit8
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.actor == 'kimbach91-prog'
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout public-safe manifest
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Audit provider manifest shard
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const crypto = require('crypto');
+          const shard = Number(process.env.SHARD);
+          const shardCount = 8;
+          const path = 'public-compute/provider-public-safe-manifest.json';
+          const manifest = JSON.parse(fs.readFileSync(path, 'utf8'));
+
+          if (manifest.schema !== 'deus-public-compute-safe-manifest/1') {
+            throw new Error('schema mismatch');
+          }
+          if (!Array.isArray(manifest.routes) || manifest.routes.length !== 15) {
+            throw new Error('route count mismatch');
+          }
+
+          const ids = manifest.routes.map(r => r.id);
+          if (new Set(ids).size !== ids.length) throw new Error('duplicate route id');
+
+          const forbiddenKeys = new Set([
+            'token','access_token','refresh_token','api_key','apikey','credential',
+            'credentials','private_key','secret','recovery_code','password',
+            'drive_id','document_id','spreadsheet_id'
+          ]);
+          function scanKeys(x, trail='root') {
+            if (Array.isArray(x)) return x.forEach((v,i)=>scanKeys(v, trail+'['+i+']'));
+            if (!x || typeof x !== 'object') return;
+            for (const [k,v] of Object.entries(x)) {
+              if (forbiddenKeys.has(k.toLowerCase())) throw new Error('forbidden key '+trail+'.'+k);
+              scanKeys(v, trail+'.'+k);
+            }
+          }
+          scanKeys(manifest);
+
+          if (manifest.truth_boundary?.global_physical_capacity_credit !== 0) {
+            throw new Error('global capacity credit must remain zero');
+          }
+          if (manifest.truth_boundary?.verified_economic_yield !== 0) {
+            throw new Error('verified economic yield must remain zero');
+          }
+
+          const assigned = manifest.routes.filter((_,i)=>i % shardCount === shard);
+          if (!assigned.length) throw new Error('empty shard');
+
+          for (const r of assigned) {
+            if (r.public_safe !== true) throw new Error('public_safe false '+r.id);
+            if (r.protected_core_export !== false) throw new Error('core export '+r.id);
+            if (r.canonical_write !== false) throw new Error('canonical write '+r.id);
+            if (r.economic_yield_verified !== false) throw new Error('unbacked yield '+r.id);
+            if (r.global_capacity_credit !== 0) throw new Error('unbacked capacity '+r.id);
+            if (r.data_class_ceiling !== 'BL-S0') throw new Error('data ceiling '+r.id);
+          }
+
+          const canonical = JSON.stringify(assigned);
+          const digest = crypto.createHash('sha256').update(canonical).digest('hex');
+          const receipt = {
+            schema:'deus-public-compute-provider-audit-receipt/1',
+            route_id:'PUBLIC-GITHUB-ACTIONS-PROVIDER-MANIFEST-AUDIT8',
+            state:'RESULT_VERIFIED_RUNNER_SCOPE',
+            provider:'GitHub Actions',
+            source_commit:process.env.GITHUB_SHA || null,
+            run_id:process.env.GITHUB_RUN_ID || null,
+            shard,
+            shard_count:shardCount,
+            data_class:'BL-S0',
+            manifest_route_count:manifest.routes.length,
+            assigned_route_ids:assigned.map(r=>r.id),
+            unique_route_ids:true,
+            forbidden_key_scan_pass:true,
+            public_safety_invariants_pass:true,
+            global_capacity_credit:0,
+            verified_economic_yield:0,
+            assigned_digest:digest,
+            protected_core_export:false,
+            private_memory_export:false,
+            credentials_requested:false,
+            canonical_write:false,
+            economic_yield_claim:false,
+            capacity_scope:'THIS_AUDIT_MATRIX_RUN_ONLY'
+          };
+          console.log('DEUS_PUBLIC_PROVIDER_AUDIT_RECEIPT=' + JSON.stringify(receipt));
+          NODE
