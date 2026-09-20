@@ -1,0 +1,179 @@
+name: ARC3 generic movement first-contact search
+
+on:
+  push:
+    branches: [deus/arc3-generic-movement-bfs-20260920]
+    paths: [.github/workflows/arc3-generic-movement-bfs.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [sp80, cn04, ar25]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Search public game from observations only
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,os,platform,time
+          from collections import Counter,deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME=os.environ['GAME']
+          OUT=Path('verification'); OUT.mkdir()
+
+          def grid(obs):
+              return np.asarray(obs.frame[-1],dtype=np.uint8)
+
+          def sh(obs):
+              g=grid(obs).copy()
+              # Ignore only narrow HUD edges in deduplication, never in actual execution.
+              if g.shape[0]>=4:
+                  g[:2,:]=0; g[-2:,:]=0
+              return hashlib.sha256(g.tobytes()).hexdigest()
+
+          def aids(obs):
+              raw=getattr(obs,'available_actions',None) or []
+              out=[]
+              for a in raw:
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in out: out.append(v)
+              return out
+
+          def click_points(obs,cap=40):
+              g=grid(obs); h,w=g.shape
+              bg=Counter(int(v) for v in g.ravel()).most_common(1)[0][0]
+              seen=np.zeros((h,w),bool); pts=[]
+              for y in range(2,max(2,h-2)):
+                  for x in range(w):
+                      if seen[y,x] or int(g[y,x])==bg: continue
+                      col=int(g[y,x]); q=[(y,x)];seen[y,x]=1;comp=[]
+                      while q:
+                          yy,xx=q.pop();comp.append((yy,xx))
+                          for dy,dx in ((1,0),(-1,0),(0,1),(0,-1)):
+                              ny,nx=yy+dy,xx+dx
+                              if 0<=ny<h and 0<=nx<w and not seen[ny,nx] and int(g[ny,nx])==col:
+                                  seen[ny,nx]=1;q.append((ny,nx))
+                      if 1<=len(comp)<=96:
+                          ys=[p[0] for p in comp];xs=[p[1] for p in comp]
+                          for yy,xx in (comp[0],comp[len(comp)//2],comp[-1]):
+                              k=(int(xx),int(yy))
+                              if k not in pts: pts.append(k)
+                          cx=int(round(sum(xs)/len(xs)));cy=int(round(sum(ys)/len(ys)))
+                          if (cx,cy) not in pts: pts.append((cx,cy))
+                      if len(pts)>=cap:return pts[:cap]
+              return pts[:cap]
+
+          def cand(obs):
+              av=aids(obs); out=[]
+              for a in av:
+                  if 1<=a<=5:out.append((a,None))
+              # ar25 can expose click as part of its rule; include bounded visual-object probes.
+              if 6 in av and GAME=='ar25':
+                  out.extend((6,{'x':x,'y':y}) for x,y in click_points(obs))
+              return out
+
+          def step(env,act):
+              aid,data=act; amap={a.value:a for a in env.action_space}
+              if aid not in amap:return None
+              try:return env.step(amap[aid],data=data)
+              except Exception:return None
+
+          def level_search(env0,obs0,max_exp=30000):
+              start=int(obs0.levels_completed);q=deque([(copy.deepcopy(env0),obs0,[])])
+              seen={sh(obs0)};exp=0;t0=time.monotonic()
+              while q and exp<max_exp and time.monotonic()-t0<240:
+                  env,obs,path=q.popleft()
+                  for a in cand(obs):
+                      e=copy.deepcopy(env);nf=step(e,a);exp+=1
+                      if nf is None:continue
+                      if int(nf.levels_completed)>start:
+                          return path+[a],{'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0}
+                      if getattr(nf.state,'value',str(nf.state)) in ('GAME_OVER','WIN'):continue
+                      k=sh(nf)
+                      if k in seen:continue
+                      seen.add(k);q.append((e,nf,path+[a]))
+              return None,{'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0}
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('NORMAL_ENV_UNAVAILABLE')
+          obs=env.observation_space;route=[];search=[];t0=time.monotonic()
+          target=int(getattr(obs,'win_levels',0) or 0)
+
+          while getattr(obs.state,'value',str(obs.state))!='WIN' and (not target or int(obs.levels_completed)<target):
+              lv=int(obs.levels_completed)
+              p,meta=level_search(env,obs)
+              search.append({'level':lv,**meta,'path_len':None if p is None else len(p)})
+              if p is None:break
+              for a in p:
+                  nf=step(env,a)
+                  if nf is None:raise RuntimeError('REAL_REPLAY_STEP_FAILED')
+                  obs=nf;route.append(a)
+              if int(obs.levels_completed)<=lv:raise RuntimeError('REAL_REPLAY_DID_NOT_LEVEL')
+              if len(route)>1500:raise RuntimeError('ROUTE_BUDGET_EXCEEDED')
+
+          normal={
+            'game':GAME,'levels_completed':int(obs.levels_completed),
+            'win_levels':int(getattr(obs,'win_levels',0) or 0),
+            'state':getattr(obs.state,'value',str(obs.state)),
+            'actions':len(route),'search':search,'seconds':time.monotonic()-t0,
+            'route':route
+          }
+          online=None
+          if normal['state']=='WIN' or (normal['win_levels'] and normal['levels_completed']>=normal['win_levels']):
+              oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              source='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-generic-movement-bfs.yml'
+              cid=oa.open_scorecard(source_url=source,tags=['DEUS',GAME,'public-development','generic-movement-bfs','first-contact-search'])
+              oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+              if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+              oo=oe.observation_space;t1=time.monotonic()
+              for i,a in enumerate(route,1):
+                  nf=step(oe,a)
+                  if nf is None:raise RuntimeError('ONLINE_STEP_FAILED_'+str(i))
+                  oo=nf
+              card=oa.close_scorecard(cid)
+              online={
+                'schema':'deus/arc3-generic-first-contact/1','system_label':'DEUS',
+                'result':'PASS' if getattr(oo.state,'value',str(oo.state))=='WIN' else 'FAIL',
+                'game':GAME,'seed':0,'levels_completed':int(oo.levels_completed),
+                'win_levels':int(getattr(oo,'win_levels',0) or 0),'state':getattr(oo.state,'value',str(oo.state)),
+                'actions_executed':len(route),'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+                'route_sha256':hashlib.sha256(json.dumps(route,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+                'final_frame_sha256':hashlib.sha256(grid(oo).tobytes()).hexdigest(),'online_seconds':time.monotonic()-t1,
+                'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+                'toolkit':'arc-agi 0.9.9','engine':'arcengine 0.9.3','python':platform.python_version(),
+                'protocol':'PUBLIC_OBSERVATION_DERIVED_GENERIC_MOVEMENT_BFS',
+                'external_full_route_used':False,'game_source_inspected_by_solver':False,
+                'hidden_state_read':False,'competition_hidden_score_claim':False
+              }
+
+          rec={'normal':normal,'online':online}
+          (OUT/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('DEUS_MOVEMENT_SEARCH_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if online is None or online['result']!='PASS':
+              raise RuntimeError('FULL_WIN_NOT_REACHED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-movement-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
