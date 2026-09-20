@@ -18,7 +18,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with: { python-version: '3.12' }
-      - name: ARC3 preflight must hold without account-side gates
+      - name: ARC3 preflight must hold without provider-side acceptance
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
         shell: bash
         run: |
           set +e
