@@ -1,0 +1,158 @@
+name: DEUS Golem Testnet Compute Exchange Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-golem-testnet-exchange-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golem-testnet-exchange:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Guardrails
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "S0_SYNTHETIC_ONLY=true"
+          echo "GOLEM_NETWORK=hoodi"
+          echo "REAL_MONEY=false"
+          echo "CANONICAL_WRITE=false"
+          echo "WALLET_EXPORT=false"
+
+      - name: Install Yagna requestor
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -sSf https://join.golem.network/as-requestor | bash -
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$PATH"
+          yagna --version
+
+      - name: Start ephemeral Yagna and fund testnet
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$PATH"
+          export YAGNA_AUTOCONF_APPKEY=try_golem
+          nohup yagna service run >/tmp/yagna.log 2>&1 &
+          echo $! >/tmp/yagna.pid
+          for i in $(seq 1 30); do
+            if yagna id show >/tmp/yagna-id.json 2>/dev/null; then break; fi
+            sleep 2
+          done
+          test -s /tmp/yagna-id.json
+          yagna payment init --sender --network hoodi
+          yagna payment fund --network hoodi
+          yagna payment status --network hoodi | tee /tmp/payment-before.txt
+          sha256sum /tmp/yagna-id.json /tmp/payment-before.txt
+
+      - name: Install requestor SDK
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/golem-canary
+          cd /tmp/golem-canary
+          npm init -y >/dev/null
+          npm install @golem-sdk/task-executor @golem-sdk/pino-logger >/dev/null
+
+      - name: Execute S0 exact microtask on Golem provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$PATH"
+          cd /tmp/golem-canary
+          cat > requestor.mjs <<'EOF'
+          import { TaskExecutor } from "@golem-sdk/task-executor";
+          import { pinoPrettyLogger } from "@golem-sdk/pino-logger";
+
+          const EXPECTED = "109992";
+          const started = Date.now();
+          const executor = await TaskExecutor.create({
+            logger: pinoPrettyLogger({ level: "info" }),
+            api: { key: "try_golem" },
+            payment: { network: "hoodi" },
+            demand: {
+              workload: { imageTag: "golem/node:20-alpine" },
+            },
+            market: {
+              rentHours: 0.10,
+              pricing: {
+                model: "linear",
+                maxStartPrice: 0.5,
+                maxCpuPerHourPrice: 1.0,
+                maxEnvPerHourPrice: 0.5,
+              },
+            },
+          });
+
+          try {
+            const stdout = await executor.run(async (exe) =>
+              (await exe.run("node -e 'console.log(329*334+106)'")).stdout
+            );
+            const result = String(stdout).trim();
+            if (result !== EXPECTED) {
+              throw new Error("EXACT_RESULT_MISMATCH:" + result);
+            }
+            console.log("DEUS_GOLEM_REMOTE_RESULT=" + result);
+            console.log("DEUS_GOLEM_PROVIDER_EXECUTION_PASS=true");
+            console.log("DEUS_GOLEM_LATENCY_MS=" + (Date.now() - started));
+          } finally {
+            await executor.shutdown();
+          }
+          EOF
+          set +e
+          node requestor.mjs 2>&1 | tee /tmp/golem-task.log
+          rc=${PIPESTATUS[0]}
+          set -e
+          test "$rc" -eq 0
+          grep -q 'DEUS_GOLEM_PROVIDER_EXECUTION_PASS=true' /tmp/golem-task.log
+          grep -q 'DEUS_GOLEM_REMOTE_RESULT=109992' /tmp/golem-task.log
+
+      - name: Capture testnet settlement evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$PATH"
+          sleep 12
+          yagna payment status --network hoodi | tee /tmp/payment-after.txt
+          grep -Ei 'invoice|payment|debit|accepted|paid|amount' /tmp/golem-task.log /tmp/yagna.log > /tmp/settlement-lines.txt || true
+          task_digest="$(sha256sum /tmp/golem-task.log | awk '{print $1}')"
+          before_digest="$(sha256sum /tmp/payment-before.txt | awk '{print $1}')"
+          after_digest="$(sha256sum /tmp/payment-after.txt | awk '{print $1}')"
+          settlement_digest="$(sha256sum /tmp/settlement-lines.txt | awk '{print $1}')"
+          settlement_lines="$(wc -l </tmp/settlement-lines.txt | tr -d ' ')"
+          jq -n             --arg provider "GOLEM_TESTNET"             --arg network "hoodi"             --arg task_digest "$task_digest"             --arg before_digest "$before_digest"             --arg after_digest "$after_digest"             --arg settlement_digest "$settlement_digest"             --argjson settlement_lines "$settlement_lines"             '{
+              receipt_version:"DEUS-COMPUTE-EXCHANGE-CANARY/1",
+              provider:$provider,
+              payment_network:$network,
+              data_class:"S0_SYNTHETIC_ONLY",
+              real_money:false,
+              provider_execution:true,
+              exact_result:"109992",
+              expected_result:"109992",
+              testnet_faucet_funded:true,
+              payment_status_before_digest:$before_digest,
+              payment_status_after_digest:$after_digest,
+              task_log_digest:$task_digest,
+              settlement_log_digest:$settlement_digest,
+              settlement_signal_lines:$settlement_lines,
+              settlement_proven:( $settlement_lines > 0 ),
+              canonical_write:false,
+              wallet_exported:false,
+              verdict:(if $settlement_lines > 0 then "GOLEM_TESTNET_EXECUTION_AND_SETTLEMENT_SIGNAL_PASS" else "GOLEM_TESTNET_EXECUTION_PASS_SETTLEMENT_UNPROVEN" end)
+            }' | tee /tmp/golem-exchange-receipt.json
+          cat /tmp/golem-exchange-receipt.json
+
+      - name: Ephemeral cleanup
+        if: always()
+        shell: bash
+        run: |
+          if [ -f /tmp/yagna.pid ]; then kill "$(cat /tmp/yagna.pid)" 2>/dev/null || true; fi
+          rm -f /tmp/yagna-id.json
+          echo "Ephemeral requestor stopped; no wallet key export performed."
