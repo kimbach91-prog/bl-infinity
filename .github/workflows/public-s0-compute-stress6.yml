@@ -1,0 +1,98 @@
+name: Public S0 hosted stress calibration 6
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/public-s0-compute-stress6.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: public-s0-compute-stress6
+  cancel-in-progress: false
+
+jobs:
+  shard:
+    if: github.actor == 'kimbach91-prog'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Execute deterministic BL-S0 stress shard
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const crypto = require('crypto');
+          const shard = Number(process.env.SHARD);
+          const SHARD_N = 32768;
+          const SHARD_COUNT = 6;
+          const start = shard * SHARD_N + 1;
+          const output = new Uint32Array(SHARD_N);
+          const expectedAt = (x) => (Math.imul(x >>> 0, 1664525) + 1013904223) >>> 0;
+          const t0 = Date.now();
+
+          let fnv = 2166136261 >>> 0;
+          for (let i = 0; i < SHARD_N; i++) {
+            const x = (start + i) >>> 0;
+            const v = expectedAt(x);
+            output[i] = v;
+            fnv ^= v;
+            fnv = Math.imul(fnv, 16777619) >>> 0;
+          }
+
+          const sampleIndexes = [0, 1, 17, SHARD_N - 1];
+          const sample = sampleIndexes.map(i => {
+            const x = (start + i) >>> 0;
+            const actual = output[i] >>> 0;
+            const expected = expectedAt(x);
+            if (actual !== expected) throw new Error(`sample mismatch shard=${shard} index=${i}`);
+            return [i, x, actual, expected];
+          });
+
+          const digest = crypto.createHash('sha256')
+            .update(Buffer.from(output.buffer))
+            .digest('hex');
+
+          const receipt = {
+            schema: 'public-s0-github-actions-stress-receipt/1',
+            route_id: 'PUBLIC-GITHUB-ACTIONS-CPU-S0-STRESS6',
+            state: 'RESULT_VERIFIED_RUNNER_SCOPE',
+            provider: 'GitHub Actions',
+            source_commit: process.env.GITHUB_SHA || null,
+            run_id: process.env.GITHUB_RUN_ID || null,
+            shard,
+            shard_count: SHARD_COUNT,
+            runner_os: process.env.RUNNER_OS || null,
+            runner_arch: process.env.RUNNER_ARCH || null,
+            data_class: 'BL-S0',
+            stress_level: 'FANOUT6_SAME_PER_JOB_WORKLOAD',
+            workload: {
+              kind: 'u32_lcg_transform_shard',
+              start,
+              elements: SHARD_N,
+              bytes: output.byteLength
+            },
+            sample,
+            checksum: fnv.toString(16).padStart(8, '0'),
+            result_digest: digest,
+            elapsed_ms: Date.now() - t0,
+            protected_core_export: false,
+            private_memory_export: false,
+            credentials_requested: false,
+            canonical_write: false,
+            economic_yield_claim: false,
+            provider_max_claim: false,
+            capacity_scope: 'THIS_STRESS_CALIBRATION_RUN_ONLY'
+          };
+          console.log('DEUS_PUBLIC_S0_STRESS_RECEIPT=' + JSON.stringify(receipt));
+          NODE
