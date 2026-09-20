@@ -1,0 +1,146 @@
+name: ARC3 vc33 observation-derived L3 BFS
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l3.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Derive L1/L2 live, BFS L3 from public observations, verify ONLINE
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging,os,time
+          from collections import deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def key(o):
+              a=fr(o).copy()
+              if a.shape[0]>3: a[:2,:]=0; a[-2:,:]=0
+              return hashlib.sha256(a.tobytes()).hexdigest()
+          def comps(a,color=9):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                  for x in range(W):
+                      if not m[y,x] or seen[y,x]: continue
+                      st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if len(pts)>=8:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['center'][1]))
+          def click(e,o,xy):
+              amap={a.value:a for a in e.action_space}
+              return e.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])})
+
+          def l1(e):
+              o=e.observation_space;b=comps(fr(o))
+              target=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o=click(e,o,target)
+                  if int(o.levels_completed)>=1: break
+              if int(o.levels_completed)<1: raise RuntimeError('L1_FAIL')
+              return o
+
+          def find_l2_pair(e,o):
+              centers=[b['center'] for b in comps(fr(o))]
+              patt=['F','F','F','E','F','E','F'];n=0
+              for fi in range(len(centers)):
+                  for ei in range(len(centers)):
+                      if fi==ei: continue
+                      n+=1;ee=copy.deepcopy(e);oo=ee.observation_space
+                      for role in patt:
+                          oo=click(ee,oo,centers[fi] if role=='F' else centers[ei])
+                          if int(oo.levels_completed)>=2: return fi,ei,n
+              raise RuntimeError('L2_PAIR_NOT_FOUND')
+
+          def l2(e,o,fi,ei):
+              c=[b['center'] for b in comps(fr(o))]
+              for role in ['F','F','F','E','F','E','F']:
+                  o=click(e,o,c[fi] if role=='F' else c[ei])
+                  if int(o.levels_completed)>=2: break
+              if int(o.levels_completed)<2: raise RuntimeError('L2_FAIL')
+              return o
+
+          n=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=n.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if e is None: raise RuntimeError('NORMAL_ENV_UNAVAILABLE')
+          o=l1(e);fi,ei,pair_attempts=find_l2_pair(e,o);o=l2(e,o,fi,ei)
+          if int(o.levels_completed)!=2: raise RuntimeError('L3_START_FAIL')
+
+          q=deque([(copy.deepcopy(e),o,[])])
+          seen={key(o)};found=None;exp=0;t0=time.monotonic()
+          while q and exp<150000 and time.monotonic()-t0<300:
+              ee,oo,path=q.popleft()
+              cur=comps(fr(oo))
+              for idx,b in enumerate(cur):
+                  e2=copy.deepcopy(ee);nf=click(e2,oo,b['center']);exp+=1
+                  if nf is None: continue
+                  p=path+[idx]
+                  if int(nf.levels_completed)>=3:
+                      found=p;break
+                  k=key(nf)
+                  if k not in seen:
+                      seen.add(k);q.append((e2,nf,p))
+              if found is not None: break
+
+          search={'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,
+                  'path_indices':found,'path_len':None if found is None else len(found),
+                  'pair_indices':[fi,ei],'pair_attempts':pair_attempts}
+          print('VC33_L3_SEARCH='+json.dumps(search,separators=(',',':')))
+          if found is None: raise RuntimeError('L3_NOT_FOUND')
+
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-rule-l3.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','vc33','observation-derived-bfs','l3'])
+          oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None: raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=l1(oe);oo=l2(oe,oo,fi,ei);tr=[]
+          for step,idx in enumerate(found,1):
+              cur=comps(fr(oo))
+              if idx>=len(cur): raise RuntimeError('INDEX_DIVERGENCE')
+              xy=cur[idx]['center'];before=fr(oo);oo=click(oe,oo,xy);after=fr(oo)
+              tr.append({'step':step,'idx':idx,'xy':xy,'changed':int(np.count_nonzero(before!=after)),
+                         'level':int(oo.levels_completed),'state':oo.state.value})
+              if int(oo.levels_completed)>=3: break
+          card=oa.close_scorecard(cid);passed=int(oo.levels_completed)>=3
+          rec={'schema':'deus/arc3-vc33-observation-derived-l3/1','result':'PASS' if passed else 'FAIL',
+               'game':'vc33','levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+               'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+               'l3_path_indices':found,'l3_actions_executed':len(tr),'online_trace':tr,'search':search,
+               'protocol':'PUBLIC_OBSERVATION_DERIVED_BUTTON_BFS','external_full_route_used':False,
+               'external_l3_coordinates_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,
+               'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,
+               'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+               'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          out=Path('verification');out.mkdir()
+          (out/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('VC33_L3_RULE_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed: raise RuntimeError('L3_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-observation-derived-l3
+          path: verification/
+          retention-days: 30
