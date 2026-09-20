@@ -746,25 +746,82 @@ hair_obj,hair_fit=fit_mhclo_asset(
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
 def build_c17_strand_groom(guide_obj, surface_obj, material):
+    # C17.1 repair: the fitted short03 shell is a STYLE/VOLUME GUIDE, not a root emitter.
+    # Roots must live on the scalp surface; otherwise guide-shell vertices leave the
+    # frontal/crown scalp uncovered (the C17 visual-audit scar).
     guide_obj.data.update()
+    surface_obj.data.update()
     rng=random.Random(20260920)
-    roots=[]
-    rot=guide_obj.matrix_world.to_3x3()
+
+    guide_rot=guide_obj.matrix_world.to_3x3()
+    guide_samples=[]
     for idx,v in enumerate(guide_obj.data.vertices):
-        root=guide_obj.matrix_world @ v.co
-        # Keep only the actual head-hair volume and reject low outliers.
-        if root.z < 1.495 or root.z > 1.715:
+        p=guide_obj.matrix_world @ v.co
+        if p.z < 1.495 or p.z > 1.715:
             continue
-        n=(rot @ v.normal).normalized()
+        n=(guide_rot @ v.normal).normalized()
         if n.length < 1e-8:
             n=Vector((0,0,1))
-        roots.append((idx,root,n))
-    if len(roots) < 500:
-        raise RuntimeError(f"C17 groom guide too sparse: {len(roots)} roots")
+        guide_samples.append((idx,p,n))
+    if len(guide_samples) < 500:
+        raise RuntimeError(f"C17 fitted guide too sparse: {len(guide_samples)} samples")
 
-    points_per_curve=7
-    strands_per_root=5
-    curve_count=len(roots)*strands_per_root
+    surface_rot=surface_obj.matrix_world.to_3x3()
+    scalp_candidates=[]
+    for idx,v in enumerate(surface_obj.data.vertices):
+        p=surface_obj.matrix_world @ v.co
+        # Anatomical scalp mask in the frozen C16 body frame.
+        if p.z < 1.540 or p.z > 1.706:
+            continue
+        if abs(p.x) > .130 or p.y > .065:
+            continue
+        # Preserve a human frontal/temporal hairline instead of seeding the face.
+        if p.y > .025:
+            hairline_z=1.605-0.18*min(abs(p.x),.10)
+            if p.z < hairline_z:
+                continue
+        n=(surface_rot @ v.normal).normalized()
+        if n.length < 1e-8:
+            n=Vector((0,0,1))
+        scalp_candidates.append((idx,p,n))
+    if len(scalp_candidates) < 350:
+        raise RuntimeError(f"C17 scalp mask too sparse: {len(scalp_candidates)} roots")
+
+    # Keep runtime bounded and deterministic while distributing roots across the
+    # entire scalp. Even sampling by sorted mesh index avoids stochastic holes.
+    target_roots=1400
+    if len(scalp_candidates) > target_roots:
+        roots=[]
+        for i in range(target_roots):
+            roots.append(scalp_candidates[min(len(scalp_candidates)-1,int(i*len(scalp_candidates)/target_roots))])
+    else:
+        roots=scalp_candidates
+
+    # Nearest fitted guide-shell point gives each scalp root a local style/volume
+    # target. This is the mature guide-field idea: surface roots + interpolated guide.
+    root_guides=[]
+    for root_index,root,n in roots:
+        nearest=None
+        best_d2=None
+        for guide_index,gp,gn in guide_samples:
+            d=(gp-root)
+            d2=d.length_squared
+            if best_d2 is None or d2 < best_d2:
+                best_d2=d2
+                nearest=(guide_index,gp,gn)
+        guide_index,gp,gn=nearest
+        shell=(gp-root)
+        shell_len=shell.length
+        if shell_len < 1e-6:
+            shell=n.copy()
+            shell_len=.035
+        else:
+            shell.normalize()
+        root_guides.append((root_index,root,n,guide_index,gp,gn,shell,shell_len))
+
+    points_per_curve=8
+    strands_per_root=4
+    curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
     try:
@@ -776,42 +833,50 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     positions=[]
     radii=[]
-    center=Vector((0.0,-0.025,1.595))
-    base_radius=0.000055
-    tip_radius=0.000010
-    for root_index,root,n in roots:
+    center=Vector((0.0,-0.030,1.610))
+    base_radius=0.000050
+    tip_radius=0.000009
+    for root_index,root,n,guide_index,gp,gn,shell,shell_len in root_guides:
         radial=(root-center)
         if radial.length < 1e-8:
             radial=Vector((0,0,1))
         radial.normalize()
         side=Vector((1.0 if root.x>=0 else -1.0,0.0,0.0))
         back=Vector((0.0,-1.0,0.0))
-        # Production-groom principle: preserve guide/surface flow, then let gravity and
-        # localized clumping bend the fiber. Do not shoot strands along normals.
-        crown=max(0.0,min(1.0,(root.z-1.54)/0.17))
-        base_flow=(n*(0.24+0.12*crown) + Vector((0,0,-1))*(0.52-0.20*crown) + back*0.10 + side*0.08).normalized()
-        cluster_phase=(root_index % 17)/17.0*math.tau
-        clump_bias=Vector((math.cos(cluster_phase),math.sin(cluster_phase)*0.35,-0.15)).normalized()
+        down=Vector((0.0,0.0,-1.0))
+        crown=max(0.0,min(1.0,(root.z-1.55)/0.15))
+
+        # Follow the fitted short03 shell first, then add gravity/back sweep and a
+        # small surface-normal term. This avoids both card-shell copying and spikes.
+        base_flow=(shell*.64 + down*(0.18-0.08*crown) + back*.10 + n*.06 + side*.02).normalized()
+        cluster_phase=((guide_index*31 + root_index*7) % 97)/97.0*math.tau
+        clump_bias=Vector((math.cos(cluster_phase),math.sin(cluster_phase)*.30,-.12)).normalized()
+
+        # Guide-shell distance determines local strand envelope; clamp to a short
+        # production hairstyle so sparse guide anomalies cannot create whiskers.
+        envelope=max(.040,min(.105,shell_len*1.15+.025))
         for k in range(strands_per_root):
-            jx=rng.uniform(-0.0014,0.0014)
-            jy=rng.uniform(-0.0010,0.0010)
-            jz=rng.uniform(-0.0008,0.0008)
-            root_j=root + n*0.00045 + Vector((jx,jy,jz))
-            flow=(base_flow + clump_bias*rng.uniform(0.025,0.085) + radial*rng.uniform(0.00,0.05)).normalized()
-            length=rng.uniform(0.035,0.070)*(0.88+0.28*crown)
-            lateral=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-0.30,0.20)))
+            tangent=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-.25,.25)))
+            tangent-=n*tangent.dot(n)
+            if tangent.length < 1e-8:
+                tangent=side.copy()
+            tangent.normalize()
+            root_j=root + n*0.00055 + tangent*rng.uniform(-.0012,.0012)
+            flow=(base_flow + clump_bias*rng.uniform(.018,.060) + radial*rng.uniform(.00,.035)).normalized()
+            length=envelope*rng.uniform(.88,1.12)
+            lateral=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-.20,.16)))
             if lateral.length < 1e-8:
-                lateral=side
+                lateral=side.copy()
             lateral.normalize()
-            amp=rng.uniform(0.0010,0.0038)
+            amp=rng.uniform(.0008,.0030)
             for j in range(points_per_curve):
                 t=j/(points_per_curve-1)
                 bend=math.sin(math.pi*t)
                 sag=t*t
-                p=root_j + flow*(length*t) + lateral*(amp*bend) + Vector((0,0,-length*0.12*sag))
+                # Start exactly at scalp, expand toward the guide volume, then settle.
+                p=root_j + flow*(length*t) + lateral*(amp*bend) + down*(length*.08*sag)
                 positions.extend((p.x,p.y,p.z))
-                # Physically plausible visible fiber profile: thicker root, fine tip.
-                r=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(0.90,1.10)
+                r=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(.92,1.08)
                 radii.append(r)
 
     pos=hair_data.attributes["position"]
@@ -823,15 +888,15 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     groom=bpy.data.objects.new("DIGE_C17_STRAND_GROOM",hair_data)
     bpy.context.collection.objects.link(groom)
-    # Static certification render: surface is bound for provenance and future deformation,
-    # while coordinates remain in the canonical world/body frame.
     guide_obj.hide_render=True
     try:
         guide_obj.hide_set(True)
     except Exception:
         pass
     return groom,{
-        "root_count":len(roots),
+        "root_count":len(root_guides),
+        "scalp_candidate_count":len(scalp_candidates),
+        "guide_sample_count":len(guide_samples),
         "strands_per_root":strands_per_root,
         "curve_count":curve_count,
         "points_per_curve":points_per_curve,
@@ -842,14 +907,15 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
-        "distribution":"DETERMINISTIC_GUIDE_VERTEX_INTERPOLATION_WITH_CLUSTER_BIAS",
+        "distribution":"SCALP_SURFACE_ROOTS_PLUS_NEAREST_FITTED_GUIDE_FIELD_C17_1",
+        "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
         "seed":20260920,
     }
 
 hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
 strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
-    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO_GUIDE_PLUS_BLENDER_HAIR_CURVES",
+    "root_source":"SCALP_SURFACE_ROOTS_PLUS_OFFICIAL_MAKEHUMAN_HM08_GUIDE_FIELD",
     "asset_key":HAIR_ASSET_KEY,
     "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
