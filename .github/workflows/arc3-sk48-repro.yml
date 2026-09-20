@@ -1,0 +1,168 @@
+name: ARC3 sk48 source-assisted eight-level reproduction
+
+on:
+  push:
+    branches: [deus/arc3-sk48-public-repro-20260920]
+    paths: [.github/workflows/arc3-sk48-repro.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ONLINE, NORMAL]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay public source-assisted sk48 route on current public environment
+        env:
+          REPLAY_MODE: ${{ matrix.mode }}
+        run: |
+          python - <<'PY'
+          import json, logging, hashlib, time, os, platform
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+          U,D,L,R,C = 1,2,3,4,6
+          levels = [
+            [U,U,U,R,R,R,R,L,D,D,R,L,U,R],
+            [U,U,R,R,R,R,U,L,L,U,R,R,D,D,R,U,R,L,L,U,R,R,L,L,U,R,R],
+            [U,U,U,U,R,R,R,D,D,L,D,D,R,U,U,L,U,R,D,L,U,U,U,R,D,D,D,L,U,U,U,U,R],
+            [U,U,U,R,R,U,U,L,U,L,D,L,U,L,D,R,R,R,R,R,D,L,D,L,U],
+            [U,L,R,R,R,U,R,D,L,L,L,D,D,D,L,L,R,R,R,U,R,R,R,L,L,L,D,D,R,U,U,L,L,U,U,R,R,R,R,L,L,L,L,D,L,U,U,U,L,D,D,D,R,R,L,L,U,U,U,L,R,D,D,D,R,R,U,U,L,L,U,R,R,R,R,R,R],
+            [D,R,R,R,L,D,R,R,U,(C,29,2),D,D,R,D,U,R,D,U,U,R,D,U,(C,5,32),R,R,L,(C,47,2),D,D,L,(C,5,32),R,L,L,L,(C,41,2),D,D,D,U,L,(C,5,32),D,L,D,R,(C,35,2),D],
+            [R,R,(C,29,2),D,L,D,R,R,R,D,L,R,D,L,(C,5,26),D,R,L,U,(C,35,2),U,U,L,L,D,(C,5,26),U,R,R,R,R,D,U,(C,23,2),R,D,D,D],
+            [R,R,(C,29,2),D,D,R,D,L,D,D,D,U,U,U,R,(C,5,26),R,R,R,R,D,L,L,U],
+          ]
+          disclosed_lengths = [len(x) for x in levels]
+          assert disclosed_lengths == [14,27,33,25,77,48,38,24]
+          route = []
+          for li, seq in enumerate(levels):
+              for v in seq:
+                  if isinstance(v, tuple):
+                      route.append({'a':v[0],'data':{'x':v[1],'y':v[2]},'level':li+1})
+                  else:
+                      route.append({'a':v,'level':li+1})
+          assert len(route) == 286
+          digest = lambda v: hashlib.sha256(
+              json.dumps(v, sort_keys=True, separators=(',', ':')).encode()
+          ).hexdigest()
+
+          mode = os.environ['REPLAY_MODE']
+          source_sha = os.environ['GITHUB_SHA']
+          external_source = (
+              'https://github.com/dp-web4/SAGE/blob/'
+              '4b5d26a896ebba158a63e9fd944f4e4ef8c753d8/'
+              'arc-agi-3/experiments/sk48_solve_final.py'
+          )
+          out = Path('verification'); out.mkdir()
+
+          arc = arc_agi.Arcade(operation_mode=OperationMode[mode])
+          card_id = arc.open_scorecard(
+              source_url=external_source,
+              tags=['DEUS','sk48','public-development','source-assisted-reproduction',mode.lower()],
+          )
+          env = arc.make('sk48', seed=0, scorecard_id=card_id, save_recording=False, include_frame_data=True)
+          if env is None:
+              raise RuntimeError('ENV_UNAVAILABLE')
+          amap = {a.value:a for a in env.action_space}
+          obs = env.observation_space
+          resolved_game_id = getattr(env, 'game_id', 'sk48')
+          transcript=[]; milestones=[]; before=int(obs.levels_completed)
+          started=datetime.now(timezone.utc).isoformat(); t0=time.monotonic()
+          executed=0; divergence=None
+
+          for level_index, seq in enumerate(levels):
+              target = level_index + 1
+              for v in seq:
+                  if isinstance(v, tuple):
+                      aid=v[0]; data={'x':v[1],'y':v[2]}
+                  else:
+                      aid=v; data=None
+                  if aid not in amap:
+                      divergence={'level':target,'at_action':executed+1,'reason':'ACTION_UNAVAILABLE','aid':aid}
+                      break
+                  executed += 1
+                  obs = env.step(amap[aid], data=data)
+                  if obs is None:
+                      divergence={'level':target,'at_action':executed,'reason':'OBSERVATION_MISSING'}
+                      break
+                  frame=np.asarray(obs.frame[-1],dtype=np.uint8)
+                  row={'i':executed,'action':{'a':aid,'data':data},'levels_completed':int(obs.levels_completed),'state':obs.state.value,'frame_sha256':hashlib.sha256(frame.tobytes()).hexdigest()}
+                  transcript.append(row)
+                  if int(obs.levels_completed)!=before:
+                      milestones.append(row); before=int(obs.levels_completed)
+                  if int(obs.levels_completed)>=target:
+                      break
+                  if obs.state.value=='GAME_OVER':
+                      divergence={'level':target,'at_action':executed,'reason':'GAME_OVER'}
+                      break
+              if divergence is not None:
+                  break
+              if int(obs.levels_completed)!=target:
+                  divergence={'level':target,'at_action':executed,'reason':'LEVEL_NOT_COMPLETED','levels_completed':int(obs.levels_completed)}
+                  break
+
+          replay_seconds=time.monotonic()-t0
+          passed=int(obs.levels_completed)==8 and obs.state.value=='WIN'
+          card=arc.close_scorecard(card_id)
+          final_frame_sha = transcript[-1]['frame_sha256'] if transcript else None
+          receipt={
+              'schema':'public-development-source-assisted-reproduction/1',
+              'system_label':'DEUS',
+              'result':'PASS' if passed else 'DIVERGED',
+              'requested_game':'sk48',
+              'resolved_game_id':resolved_game_id,
+              'seed':0,
+              'mode':mode,
+              'toolkit':'arc-agi 0.9.9',
+              'engine':'arcengine 0.9.3',
+              'python':platform.python_version(),
+              'source_sha':source_sha,
+              'run_id':os.environ['GITHUB_RUN_ID'],
+              'started_at':started,
+              'completed_at':datetime.now(timezone.utc).isoformat(),
+              'replay_seconds':replay_seconds,
+              'actions_executed':executed,
+              'route_actions_disclosed':len(route),
+              'per_level_disclosed_actions':disclosed_lengths,
+              'levels_completed':int(obs.levels_completed),
+              'state':obs.state.value,
+              'route_sha256':digest(route),
+              'final_frame_sha256':final_frame_sha,
+              'milestones':milestones,
+              'divergence':divergence,
+              'scorecard_id':card_id,
+              'scorecard_score':None if card is None else card.score,
+              'protocol':'PUBLIC_SOURCE_ASSISTED_ROUTE_REPRODUCTION',
+              'external_route_source':external_source,
+              'external_route_used':True,
+              'independent_solver_claim':False,
+              'official_competition_claim':False,
+              'hidden_state_read':False,
+              'game_implementation_inspected_by_deus':False,
+              'private_core_or_credentials_in_payload':False,
+          }
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          (out/'transcript.json').write_text(json.dumps(transcript,separators=(',',':')))
+          print('VERIFIED_GAME_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if not passed:
+              raise RuntimeError('EIGHT_LEVEL_WIN_REQUIRED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sk48-source-assisted-verification-${{ matrix.mode }}
+          path: verification/
+          retention-days: 30
