@@ -1,0 +1,189 @@
+name: ARC3 vc33 observation-derived L5 constrained BFS
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l5.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Enter L5 with DEUS-derived L1-L4, constrained public-frame search, verify ONLINE
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging,os,time
+          from collections import deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          L3_PATH=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+          L4_PATH=[3,3,0,3,3,3,4,4,6,4,1,6,4,6,4,6,4,6,4,6,4]
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[0,:]=0;a[-1,:]=0
+              return a
+          def key(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+
+          def comps(a,color,min_area=1,max_area=256):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                  for x in range(W):
+                      if not m[y,x] or seen[y,x]:continue
+                      st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if min_area<=len(pts)<=max_area:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'color':int(color),'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['area']))
+          def brown(o): return sorted([x for x in comps(fr(o),9,4,32)],key=lambda z:(z['bbox'][0],z['bbox'][1]))
+          def blue_anchors(o):
+              xs=[]
+              for c in comps(fr(o),1,8,128):
+                  x0,y0,x1,y1=c['bbox']
+                  if y0>2 and y1<61:
+                      xs.append({'kind':'blue_anchor','color':1,'area':c['area'],'bbox':c['bbox'],'center':c['center']})
+              return sorted(xs,key=lambda z:(z['center'][0],z['center'][1]))
+          def cands(o,anchors):
+              a=fr(o);out=[];seen=set()
+              for i,b in enumerate(anchors):
+                  x,y=b['center'];k=(x,y)
+                  if k not in seen:
+                      seen.add(k);out.append({'kind':'blue','anchor':i,'color':int(a[y,x]),'center':[x,y]})
+              for b in brown(o):
+                  x,y=b['center'];k=(x,y)
+                  if k not in seen:
+                      seen.add(k);out.append({'kind':'brown','center':[x,y]})
+              return out
+          def click(e,o,xy):
+              am={a.value:a for a in e.action_space}
+              return e.step(am[6],data={'x':int(xy[0]),'y':int(xy[1])})
+
+          def enter_l5(e):
+              o=e.observation_space
+              b=brown(o);t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o=click(e,o,t)
+                  if int(o.levels_completed)>=1:break
+              if int(o.levels_completed)<1:raise RuntimeError('L1_FAIL')
+              b=brown(o);cs=[x['center'] for x in b];F=cs[3];E=cs[1]
+              for role in ['F','F','F','E','F','E','F']:
+                  o=click(e,o,F if role=='F' else E)
+                  if int(o.levels_completed)>=2:break
+              if int(o.levels_completed)<2:raise RuntimeError('L2_FAIL')
+              for idx in L3_PATH:
+                  b=brown(o)
+                  if idx>=len(b):raise RuntimeError('L3_INDEX_DIVERGENCE')
+                  o=click(e,o,b[idx]['center'])
+                  if int(o.levels_completed)>=3:break
+              if int(o.levels_completed)<3:raise RuntimeError('L3_FAIL')
+              a4=blue_anchors(o)
+              if len(a4)<2:raise RuntimeError('L4_BLUE_ANCHORS')
+              for idx in L4_PATH:
+                  cc=cands(o,a4)
+                  if idx>=len(cc):raise RuntimeError('L4_INDEX_DIVERGENCE')
+                  o=click(e,o,cc[idx]['center'])
+                  if int(o.levels_completed)>=4:break
+              if int(o.levels_completed)<4:raise RuntimeError('L4_FAIL')
+              return o
+
+          n=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=n.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if e is None:raise RuntimeError('ENV_UNAVAILABLE')
+          o=enter_l5(e)
+          if int(o.levels_completed)!=4:raise RuntimeError('L5_START_FAIL')
+          anchors=blue_anchors(o)
+          if len(anchors)<3:raise RuntimeError('EXPECTED_3_BLUE_ANCHORS:'+json.dumps(anchors))
+
+          # Public prior: L5 requires all three blue controls, five blue activations total.
+          # Search uses no full L5 route/coordinates. Bound depth to 60 around public ~44-action difficulty.
+          q=deque([(copy.deepcopy(e),o,[],0)])
+          seen={(key(o),0)};found=None;exp=0;noeff=0;t0=time.monotonic()
+          limit=650000;deadline=1200
+          while q and exp<limit and time.monotonic()-t0<deadline:
+              ee,oo,path,blue_count=q.popleft()
+              if len(path)>=60:continue
+              cc=cands(oo,anchors)
+              # prioritize currently non-blue-colored anchors (olive/active) before brown and inactive-blue
+              order=sorted(range(len(cc)),key=lambda i:(0 if cc[i]['kind']=='blue' and cc[i]['color']!=1 else
+                                                        1 if cc[i]['kind']=='brown' else 2,i))
+              for idx in order:
+                  cand=cc[idx]
+                  e2=copy.deepcopy(ee);nf=click(e2,oo,cand['center']);exp+=1
+                  if nf is None:continue
+                  k=key(nf)
+                  if k==key(oo):
+                      noeff+=1;continue
+                  bc=blue_count+(1 if cand['kind']=='blue' else 0)
+                  if bc>5:continue
+                  item={'idx':idx,'kind':cand['kind'],'anchor':cand.get('anchor'),'color_before':cand.get('color')}
+                  p=path+[item]
+                  if int(nf.levels_completed)>=5:
+                      found=p;break
+                  sk=(k,bc)
+                  if sk not in seen:
+                      seen.add(sk);q.append((e2,nf,p,bc))
+              if found is not None:break
+
+          search={'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,
+                  'path':found,'path_len':None if found is None else len(found),
+                  'blue_activations':None if found is None else sum(1 for z in found if z['kind']=='blue'),
+                  'no_effect_pruned':noeff,'anchors':anchors}
+          print('VC33_L5_SEARCH='+json.dumps(search,separators=(',',':')))
+          if found is None:raise RuntimeError('L5_NOT_FOUND')
+
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-rule-l5.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','vc33','observation-derived-constrained-bfs','l5'])
+          oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=enter_l5(oe);online_anchors=blue_anchors(oo)
+          if len(online_anchors)!=len(anchors):raise RuntimeError('L5_ANCHOR_DIVERGENCE')
+          trace=[]
+          for step,item in enumerate(found,1):
+              cc=cands(oo,online_anchors);idx=int(item['idx'])
+              if idx>=len(cc):raise RuntimeError('L5_INDEX_DIVERGENCE_'+str(step))
+              cand=cc[idx];before=fr(oo);oo=click(oe,oo,cand['center']);after=fr(oo)
+              trace.append({'step':step,'idx':idx,'candidate':cand,'changed':int(np.count_nonzero(before!=after)),
+                            'level':int(oo.levels_completed),'state':oo.state.value})
+              if int(oo.levels_completed)>=5:break
+          card=oa.close_scorecard(cid);passed=int(oo.levels_completed)>=5
+          rec={'schema':'deus/arc3-vc33-observation-derived-l5/1','result':'PASS' if passed else 'FAIL',
+               'game':'vc33','levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+               'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+               'l5_path':found,'l5_actions_executed':len(trace),'online_trace':trace,'search':search,
+               'protocol':'PUBLIC_OBSERVATION_DERIVED_CONSTRAINED_BUTTON_BFS',
+               'public_rule_prior':'L5 uses all three blue buttons with five total blue activations; approximate 44-action public difficulty; no L5 action route supplied',
+               'external_full_route_used':False,'external_l5_coordinates_used':False,'game_source_inspected_by_solver':False,
+               'hidden_state_read':False,'independent_first_contact_claim':False,'rule_derived_claim':True,
+               'competition_hidden_score_claim':False,'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+               'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          out=Path('verification');out.mkdir();(out/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('VC33_L5_RULE_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed:raise RuntimeError('L5_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-observation-derived-l5
+          path: verification/
+          retention-days: 30
