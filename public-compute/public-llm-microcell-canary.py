@@ -5,6 +5,7 @@ from huggingface_hub import model_info
 from transformers import AutoTokenizer, AutoModelForCausalLM
 
 MODEL_ID = "HuggingFaceTB/SmolLM2-360M-Instruct"
+CANARY_REVISION = "microcell-v1.1"
 torch.set_num_threads(min(2, os.cpu_count() or 1))
 
 started = time.time()
@@ -82,6 +83,7 @@ max_rss_kib = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
 receipt = {
     "schema": "deus-public-llm-microcell-receipt/1",
+    "canary_revision": CANARY_REVISION,
     "state": "LLM_RUNTIME_VERIFIED_RUNNER_SCOPE",
     "route_id": "PUBLIC-GITHUB-ACTIONS-LLM-MICROCELL-S0",
     "provider": "GitHub Actions",
