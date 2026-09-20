@@ -1,0 +1,50 @@
+name: DEUS Control Tower Heartbeat S0
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-control-tower-heartbeat-s0.yml"
+  workflow_dispatch:
+  schedule:
+    - cron: "*/5 * * * *"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deus-control-tower-heartbeat-s0
+  cancel-in-progress: true
+
+jobs:
+  heartbeat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Emit typed heartbeat receipt
+        shell: bash
+        env:
+          DEUS_EVENT: ${{ github.event_name }}
+          DEUS_RUN_ID: ${{ github.run_id }}
+          DEUS_RUN_ATTEMPT: ${{ github.run_attempt }}
+          DEUS_REPOSITORY: ${{ github.repository }}
+          DEUS_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          receipt = {
+              "schema": "deus-control-tower-heartbeat/1",
+              "data_class": "S0_PUBLIC",
+              "event": os.environ["DEUS_EVENT"],
+              "repository": os.environ["DEUS_REPOSITORY"],
+              "source_sha": os.environ["DEUS_SHA"],
+              "run_id": os.environ["DEUS_RUN_ID"],
+              "run_attempt": os.environ["DEUS_RUN_ATTEMPT"],
+              "observed_at": datetime.now(timezone.utc).isoformat(),
+              "canonical_write": False,
+              "protected_payload": False,
+              "truth": "WAKE_EXECUTED_HEARTBEAT_ONLY_NE_JOB_EXECUTION_NE_CANONICAL_CONTINUITY"
+          }
+          print("DEUS_CONTROL_TOWER_HEARTBEAT_RECEIPT=" + json.dumps(receipt, separators=(",", ":")))
+          PY
