@@ -1,7 +1,7 @@
 {
   "schema": "deus-machine-worker-gate/1",
-  "state": "MACHINE_TRIAL_BUS_RUNTIME_VERIFIED",
-  "updated_at": "2026-09-20T02:40:00Z",
+  "state": "MACHINE_TRIAL_BUS_RUNTIME_VERIFIED / DISCOVERY_DEPLOYED / MACHINE_FIRST",
+  "updated_at": "2026-09-20T02:50:00Z",
   "opt_in_only": true,
   "public_safe": true,
   "human_intermediation_required": false,
@@ -22,11 +22,44 @@
     "external_traction_credit": 0
   },
   "canaries": {
-    "CANARY-A": {"resource_classes":["CPU","CONTAINER","CI","WASM"],"verifier":"INTEGER_EXACT","expected":"109992","description":"329*334+106"},
-    "CANARY-B": {"resource_classes":["LLM"],"verifier":"TEXT_EXACT","expected":"DEUS_PUBLIC_CANARY_OK","max_tokens":16},
-    "CANARY-C": {"resource_classes":["GPU","WEBGPU"],"verifier":"INTEGER_EXACT","expected":"511370976","description":"sum(i mod 1024), i=0..999999, modulo 2^32"}
+    "CANARY-A": {
+      "resource_classes": [
+        "CPU",
+        "CONTAINER",
+        "CI",
+        "WASM"
+      ],
+      "verifier": "INTEGER_EXACT",
+      "expected": "109992",
+      "description": "329*334+106"
+    },
+    "CANARY-B": {
+      "resource_classes": [
+        "LLM"
+      ],
+      "verifier": "TEXT_EXACT",
+      "expected": "DEUS_PUBLIC_CANARY_OK",
+      "max_tokens": 16
+    },
+    "CANARY-C": {
+      "resource_classes": [
+        "GPU",
+        "WEBGPU"
+      ],
+      "verifier": "INTEGER_EXACT",
+      "expected": "511370976",
+      "description": "sum(i mod 1024), i=0..999999, modulo 2^32"
+    }
   },
-  "state_machine": ["OFFER_FOUND","SCHEMA_VALID","HARD_GATES_PASS","CANARY_CONTRACT","RESULT_SUBMITTED","RESULT_VERIFIED","RECEIPT_BACKED_EXACT_SCOPE"],
+  "state_machine": [
+    "OFFER_FOUND",
+    "SCHEMA_VALID",
+    "HARD_GATES_PASS",
+    "CANARY_CONTRACT",
+    "RESULT_SUBMITTED",
+    "RESULT_VERIFIED",
+    "RECEIPT_BACKED_EXACT_SCOPE"
+  ],
   "hard_gates": [
     "owner_authorized=true",
     "auto_trial_allowed=true",
@@ -48,5 +81,40 @@
     "a2a_1_0_agent_card": "NOT_ADVERTISED_NO_A2A_TASK_ENDPOINT_YET",
     "mcp_public_gateway": "SEPARATE_CLOUDFLARE_GATEWAY_DISCOVERY_VERIFIED",
     "openapi_worker_intake": "NOT_REQUIRED_GITHUB_COMMENT_PROTOCOL_IS_CURRENT_WRITE_TRANSPORT"
+  },
+  "execution_rails": {
+    "github_actions": {
+      "state": "EXTERNAL_BL_S0_STRESS8_VERIFIED",
+      "receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-STRESS8-EXEC-018",
+      "jobs_completed": 8,
+      "distinct_runner_ids": 8,
+      "minimum_concurrency_observed_in_exact_run": 7,
+      "maximum_concurrency": "UNKNOWN",
+      "sustained_capacity": "UNKNOWN"
+    },
+    "cloudflare_ai_horde": {
+      "state": "PUBLIC_S0_FALLBACK_EXECUTOR_VERIFIED",
+      "base_url": "https://34e0f094-theory-group.kimbach91.workers.dev",
+      "receipt": "RCP-20260920-AUTONOMIC-S0-FALLBACK-EXECUTOR-001",
+      "data_ceiling": "BL-S0",
+      "commercial_default": false,
+      "preferred_executor_bound": false
+    },
+    "golem_hoodi_testnet": {
+      "state": "RUNTIME_RETRY_PENDING_AFTER_PRE_PROVIDER_INSTALLER_BLOCK",
+      "previous_blocker_run_id": 35484670370,
+      "real_money_spend_authorized": false,
+      "economic_yield_proven": false
+    }
+  },
+  "acquisition_policy": {
+    "machine_first": true,
+    "human_outreach_priority": "DORMANT_REFERENCE",
+    "auto_enroll_requires": [
+      "owner_authorized",
+      "auto_trial_allowed",
+      "hard_gates_pass"
+    ],
+    "hidden_resource_use": false
   }
 }
