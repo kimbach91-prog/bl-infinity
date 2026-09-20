@@ -264,7 +264,7 @@ jobs:
           cp research/human-development/kevin-nt/studio/index.html _site/research/human-development/kevin-nt/studio/
           cp deus/index.html deus/styles.css deus/app.js _site/deus/
           cp BL-CF/CONSTITUTION.md BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md _site/BL-CF/
-          cp public-compute/webgpu-s0.html _site/public-compute/
+          cp public-compute/webgpu-s0.html public-compute/gate.html public-compute/gate-manifest.json _site/public-compute/
 
       - name: Assert public books, research studio and protected-core boundary
         shell: bash
@@ -296,6 +296,11 @@ jobs:
           test -f _site/BL-CF/CONSTITUTION.md
           test -f _site/BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md
           test -f _site/public-compute/webgpu-s0.html
+          test -f _site/public-compute/gate.html
+          test -f _site/public-compute/gate-manifest.json
+          grep -q 'PUBLIC_COMPUTE_GATE_V1' _site/public-compute/gate.html
+          grep -q 'deus-compute-gate-public-market/1' _site/public-compute/gate-manifest.json
+          grep -q 'RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006' _site/public-compute/gate-manifest.json
           grep -q 'PUBLIC_S0_ONLY' _site/public-compute/webgpu-s0.html
           grep -q 'network_egress:false' _site/public-compute/webgpu-s0.html
           grep -q 'navigator.gpu' _site/public-compute/webgpu-s0.html
