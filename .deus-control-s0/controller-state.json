@@ -1,0 +1,21 @@
+{
+  "canonical_write": false,
+  "controller_action": "S0_HEARTBEAT_AND_FENCE_ADVANCE",
+  "controller_id": "github-actions-public-s0",
+  "data_class": "S0_PUBLIC",
+  "event": "push",
+  "failure_domain": "github-actions",
+  "fence_token_sha256": "b44ac9a0991a09fbca0854eb79a57c7c6c30a0b2bef41b4c8eb61cd3e1074c56",
+  "lease_until": "2026-09-20T13:46:46.304486+00:00",
+  "observed_at": "2026-09-20T13:39:46.304486+00:00",
+  "previous_seq": 0,
+  "protected_payload": false,
+  "repository": "kimbach91-prog/bl-infinity",
+  "run_attempt": "1",
+  "run_id": "35514156520",
+  "schema": "deus-controller-state/1",
+  "seq": 1,
+  "source_sha": "c2a6569bd0df4556da7c07f62f89da0f227f9eef",
+  "state_branch": "deus-control-state-s0",
+  "truth": "AUTONOMOUS_RUN_WITH_DURABLE_STATE; NOT_DEUS_CANONICAL_AUTHORITY"
+}
