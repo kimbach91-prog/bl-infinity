@@ -58,6 +58,9 @@ C21_NATURAL_DETAIL=os.environ.get("DIGE_C21_NATURAL_DETAIL","0").strip()=="1"
 C22_PHYSICAL_SKIN=os.environ.get("DIGE_C22_PHYSICAL_SKIN","0").strip()=="1"
 C22_LANDMARK_GROOM=os.environ.get("DIGE_C22_LANDMARK_GROOM","0").strip()=="1"
 C22_HAIR_MASS_WARP=os.environ.get("DIGE_C22_HAIR_MASS_WARP","0").strip()=="1"
+C23_CALIBRATED_EYES=os.environ.get("DIGE_C23_CALIBRATED_EYES","0").strip()=="1"
+C23_FACE_PLANES=os.environ.get("DIGE_C23_FACE_PLANES","0").strip()=="1"
+C23_HAIRLINE_REPAIR=os.environ.get("DIGE_C23_HAIRLINE_REPAIR","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -544,6 +547,18 @@ craniofacial_deform={
 # FACE_MESO_SCALE_APPLIED
 for _k in ("cheek_y_m","nose_bridge_y_m","nose_tip_y_m","chin_y_m","lip_volume_y_m","brow_ridge_y_m","tear_trough_y_m","nasolabial_y_m","philtrum_groove_y_m","philtrum_ridge_y_m","alar_groove_y_m","labiomental_groove_y_m","lip_corner_y_m","lower_lid_roll_y_m"):
     craniofacial_deform[_k] *= FACE_MESO_SCALE
+if C23_FACE_PLANES:
+    # C23 shifts emphasis from uniform over-scaling to photographic facial planes.
+    craniofacial_deform["cheek_y_m"] *= 1.12
+    craniofacial_deform["nose_bridge_y_m"] *= 1.22
+    craniofacial_deform["nose_tip_y_m"] *= 1.20
+    craniofacial_deform["chin_y_m"] *= 1.12
+    craniofacial_deform["brow_ridge_y_m"] *= 1.10
+    craniofacial_deform["tear_trough_y_m"] *= .90
+    craniofacial_deform["nasolabial_y_m"] *= 1.18
+    craniofacial_deform["philtrum_groove_y_m"] *= 1.15
+    craniofacial_deform["alar_groove_y_m"] *= 1.16
+    craniofacial_deform["labiomental_groove_y_m"] *= 1.15
 def g2(x,z,cx,cz,sx,sz):
     return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
 
@@ -662,6 +677,33 @@ eye_obj,eye_fit=fit_mhclo_asset(
 )
 system_asset_fits["high_poly_eyes"]=eye_fit
 
+# C23 root-cause replacement for the eye interface. C22 human audit showed that
+# the fitted high-poly eye asset remained visibly asymmetric/occluded. Keep it
+# for provenance, but hide it and build calibrated neutral eyes from live eye
+# landmarks so both globes/irises share one deterministic geometric contract.
+c23_eye_count=0
+c23_eye_contract=[]
+if C23_CALIBRATED_EYES:
+    eye_obj.hide_render=True
+    try:
+        eye_obj.hide_set(True)
+    except Exception:
+        pass
+    for eye_key in ("left_eye","right_eye"):
+        ec=landmarks[eye_key]["center"]
+        ex,ey,ez=(float(ec[0]),float(ec[1]),float(ec[2]))
+        center=(ex,ey-.0046,ez)
+        scl=uv(f"DIGE_C23_{eye_key.upper()}_SCLERA",center,(.0114,.0104,.0107),sclera,seg=64,rings=32)
+        # Front-facing iris stack. Face-forward is +Y in this pipeline.
+        side=1.0 if ex>=0 else -1.0
+        iris_y=center[1]+.01025
+        ring=cylinder(f"DIGE_C23_{eye_key.upper()}_IRIS_RING",(ex,iris_y,ez),.00555,.00024,iris_ring)
+        iri=cylinder(f"DIGE_C23_{eye_key.upper()}_IRIS",(ex,iris_y+.00018,ez),.00495,.00020,iris)
+        pup=cylinder(f"DIGE_C23_{eye_key.upper()}_PUPIL",(ex,iris_y+.00034,ez),.00210,.00018,black)
+        cor=cylinder(f"DIGE_C23_{eye_key.upper()}_CORNEA",(ex,iris_y+.00048,ez),.00585,.00020,cornea)
+        c23_eye_count+=1
+        c23_eye_contract.append({"eye":eye_key,"center":[ex,ey,ez],"sclera_center":list(center),"iris_y":iris_y})
+
 # Mouth: preserve native face topology; add only a thin, source-anchored mouth gap.
 mouth_center=landmarks["mouth_front"]["center"]
 my=mouth_center[1]+.0010
@@ -748,7 +790,10 @@ system_asset_fits["eyelashes01"]=lash_fit
 c22_brow_fiber_count=0
 c22_lash_fiber_count=0
 c22_lid_margin_curve_count=0
-if C22_LANDMARK_GROOM:
+c23_brow_fiber_count=0
+c23_lash_fiber_count=0
+c23_hairline_fiber_count=0
+if C22_LANDMARK_GROOM and not C23_CALIBRATED_EYES:
     brow_obj.hide_render=True
     lash_obj.hide_render=True
     try:
@@ -800,6 +845,55 @@ if C22_LANDMARK_GROOM:
     c22_brow_fiber_count=len(brow_fibers)
     c22_lash_fiber_count=len(lash_fibers)
     c22_lid_margin_curve_count=len(lid_margins)
+
+# C23 landmark fibers are rebuilt after replacing the eye globes so their placement
+# follows the live eye centers instead of C21/C22 hard-coded positions.
+if C23_CALIBRATED_EYES:
+    frng=random.Random(20262323)
+    brow_fibers=[]
+    lash_fibers=[]
+    for eye_key in ("left_eye","right_eye"):
+        ec=landmarks[eye_key]["center"]
+        ex,ey,ez=(float(ec[0]),float(ec[1]),float(ec[2]))
+        half_w=.0205
+        for i in range(74):
+            t=(i+frng.uniform(-.38,.38))/73.0
+            t=max(0.0,min(1.0,t))
+            x=(ex-half_w)+2*half_w*t
+            arch=math.sin(math.pi*t)
+            root=(x,ey+.0062+frng.uniform(-.00035,.00035),ez+.0195+.0054*arch+frng.uniform(-.00065,.00065))
+            outward=(1.0 if ex>=0 else -1.0)*(.0015+.0026*t)
+            dz=.0033-.0016*t+frng.uniform(-.00045,.00045)
+            brow_fibers.append([root,(root[0]+outward*.48,root[1]+.00045,root[2]+dz*.48),(root[0]+outward,root[1]+.00075,root[2]+dz)])
+        for i in range(26):
+            t=(i+.5)/26.0
+            x=(ex-half_w*.90)+2*half_w*.90*t
+            arch=math.sin(math.pi*t)
+            root=(x,ey+.0062,ez+.0025*arch+.0009)
+            sgn=1.0 if ex>=0 else -1.0
+            length=(.0015+.0023*arch)*frng.uniform(.86,1.14)
+            lash_fibers.append([root,(x+sgn*.00018,root[1]+length*.55,root[2]+length*.16),(x+sgn*.00036,root[1]+length,root[2]+length*.30)])
+    curve_object("DIGE_C23_LANDMARK_BROW_FIBERS",brow_fibers,.000082,hair)
+    curve_object("DIGE_C23_LANDMARK_LASH_FIBERS",lash_fibers,.000046,hair)
+    c23_brow_fiber_count=len(brow_fibers)
+    c23_lash_fiber_count=len(lash_fibers)
+
+    # Sparse natural hairline fibers bridge the lowered bulk mass into forehead skin.
+    hairline_fibers=[]
+    for i in range(108):
+        if frng.random() < .26:
+            continue
+        u=(i+frng.uniform(-.45,.45))/107.0
+        x=-.082+.164*u
+        temple=min(1.0,abs(x)/.082)
+        root_z=1.607+.015*(temple**1.45)+frng.uniform(-.0017,.0017)
+        root_y=.044+frng.uniform(-.0011,.0011)
+        length=frng.uniform(.007,.016)
+        side=1.0 if x>=0 else -1.0
+        dx=side*frng.uniform(-.0014,.0024)
+        hairline_fibers.append([(x,root_y,root_z),(x+dx*.35,root_y-.0035,root_z+length*.35),(x+dx*.70,root_y-.0075,root_z+length*.72),(x+dx,root_y-.0120,root_z+length)])
+    curve_object("DIGE_C23_HAIRLINE_FIBERS",hairline_fibers,.000052,hair)
+    c23_hairline_fiber_count=len(hairline_fibers)
 
 # C20 visual repair: the fitted alpha cards are still retained for provenance,
 # but explicit micro-curve brows/upper lashes provide geometric silhouette/read
@@ -884,11 +978,35 @@ hair_obj,hair_fit=fit_mhclo_asset(
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
+# C23 stronger frontal hairline placement. C22 moved the shell but the hero audit
+# still showed an oversized forehead. This second bounded pass only affects the
+# frontal short03 mass and is intentionally stronger at the center than temples.
+c23_hairline_warp_vertices=0
+if C23_HAIRLINE_REPAIR:
+    for v in hair_obj.data.vertices:
+        p=v.co
+        if p.y <= -.035 or p.z < 1.565 or p.z > 1.690 or abs(p.x) > .115:
+            continue
+        central=max(0.0,1.0-abs(p.x)/.115)
+        front=max(0.0,min(1.0,(p.y+.035)/.095))
+        crown_guard=max(0.0,min(1.0,(1.690-p.z)/.115))
+        w=(central**1.30)*(front**1.10)*crown_guard
+        if w<=0.0:
+            continue
+        p.z -= .0260*w
+        p.y += .0050*w
+        c23_hairline_warp_vertices+=1
+    hair_obj.data.update()
+    pts=[hair_obj.matrix_world @ v.co for v in hair_obj.data.vertices]
+    hair_fit["c23_hairline_warp_vertices"]=c23_hairline_warp_vertices
+    hair_fit["c23_postwarp_bbox_min"]=[min(p[i] for p in pts) for i in range(3)]
+    hair_fit["c23_postwarp_bbox_max"]=[max(p[i] for p in pts) for i in range(3)]
+
 # C22 frontal bulk-groom warp. C21 audit showed that the lawful short03 mass still
 # left an oversized forehead. This bounded deformation only affects the frontal
 # short03 shell and preserves the rest of the groom/topology.
 c22_hair_mass_warp_vertices=0
-if C22_HAIR_MASS_WARP:
+if C22_HAIR_MASS_WARP and not C23_HAIRLINE_REPAIR:
     for v in hair_obj.data.vertices:
         p=v.co
         if p.y <= -0.010 or p.z < 1.585 or p.z > 1.685 or abs(p.x) > .112:
@@ -915,7 +1033,7 @@ c21_brow_hair_count=0
 c21_lash_hair_count=0
 c21_hairline_baby_count=0
 c21_temple_flyaway_count=0
-if C21_NATURAL_DETAIL and not C22_LANDMARK_GROOM:
+if C21_NATURAL_DETAIL and not C22_LANDMARK_GROOM and not C23_HAIRLINE_REPAIR:
     nrng=random.Random(20262121)
 
     brow_hairs=[]
@@ -1467,7 +1585,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))),
+    "style":"CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1668,14 +1786,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1")))),
+ "appearance_candidate":"C23_CALIBRATED_EYES_HAIRLINE_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"))))),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB")))),
+   "selection_basis":"C23_AFTER_C22_VISUAL_FAIL: REPLACE_MISFITTING_HIGH_POLY_EYE_ASSET_WITH_CALIBRATED_LANDMARK_EYES + STRONGER_FRONTAL_BULK_HAIRLINE_PLACEMENT + LANDMARK_BROW_LASH_FIBERS + TARGETED_FACE_PLANES; PRESERVE_OBJECT_METER_SKIN" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"))))),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1711,7 +1829,16 @@ receipt={
    "c22_hair_mass_warp_vertices":c22_hair_mass_warp_vertices,
    "c22_brow_fibers":c22_brow_fiber_count,
    "c22_lash_fibers":c22_lash_fiber_count,
-   "c22_lid_margin_curves":c22_lid_margin_curve_count
+   "c22_lid_margin_curves":c22_lid_margin_curve_count,
+   "c23_calibrated_eyes":C23_CALIBRATED_EYES,
+   "c23_eye_count":c23_eye_count,
+   "c23_eye_contract":c23_eye_contract,
+   "c23_face_planes":C23_FACE_PLANES,
+   "c23_hairline_repair":C23_HAIRLINE_REPAIR,
+   "c23_hairline_warp_vertices":c23_hairline_warp_vertices,
+   "c23_brow_fibers":c23_brow_fiber_count,
+   "c23_lash_fibers":c23_lash_fiber_count,
+   "c23_hairline_fibers":c23_hairline_fiber_count
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
