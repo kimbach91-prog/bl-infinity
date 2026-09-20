@@ -67,6 +67,7 @@ jobs:
           probe_post "BLOCKRUN_CODE" "https://blockrun.ai/api/v1/chat/completions" "cohere/north-mini-code" "DEUS_BLOCKRUN_CODE_EXPANSION_OK" "" 25 > /tmp/deus-expansion/blockrun_code.json
           probe_post "BLOCKRUN_LLAMA_VISION" "https://blockrun.ai/api/v1/chat/completions" "nvidia/llama-3.2-11b-vision" "DEUS_BLOCKRUN_LLAMA_EXPANSION_OK" "" 25 > /tmp/deus-expansion/blockrun_llama.json
           probe_post "BLOCKRUN_LAGUNA" "https://blockrun.ai/api/v1/chat/completions" "poolside/laguna-xs-2.1" "DEUS_BLOCKRUN_LAGUNA_EXPANSION_OK" "" 25 > /tmp/deus-expansion/blockrun_laguna.json
+          probe_post "BLOCKRUN_LIGHTNING" "https://blockrun.ai/api/v1/chat/completions" "nvidia/nemotron-3.5-lightning" "DEUS_BLOCKRUN_LIGHTNING_OK" "" 25 > /tmp/deus-expansion/blockrun_lightning.json
 
           jq -n \
             --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
@@ -81,7 +82,8 @@ jobs:
             --slurpfile code /tmp/deus-expansion/blockrun_code.json \
             --slurpfile llama /tmp/deus-expansion/blockrun_llama.json \
             --slurpfile laguna /tmp/deus-expansion/blockrun_laguna.json \
-            '{receipt_version:"DEUS-COMPUTE-EXPANSION/3",updated_at:$updated_at,routes:{persorai:$persorai[0],rok:$rok[0],cehpoint:$cehpoint[0],cehpoint_multilingual:$cehpoint_multilingual[0],murakumo:$murakumo[0],pollinations:$pollinations[0],blockrun_ultra:$ultra[0],blockrun_omni:$omni[0],blockrun_code:$code[0],blockrun_llama_vision:$llama[0],blockrun_laguna:$laguna[0]}}' \
+            --slurpfile lightning /tmp/deus-expansion/blockrun_lightning.json \
+            '{receipt_version:"DEUS-COMPUTE-EXPANSION/3",updated_at:$updated_at,routes:{persorai:$persorai[0],rok:$rok[0],cehpoint:$cehpoint[0],cehpoint_multilingual:$cehpoint_multilingual[0],murakumo:$murakumo[0],pollinations:$pollinations[0],blockrun_ultra:$ultra[0],blockrun_omni:$omni[0],blockrun_code:$code[0],blockrun_llama_vision:$llama[0],blockrun_laguna:$laguna[0],blockrun_lightning:$lightning[0]}}' \
             | tee /tmp/deus-expansion/receipt.json
           jq -e '.receipt_version=="DEUS-COMPUTE-EXPANSION/3"' /tmp/deus-expansion/receipt.json >/dev/null
 
