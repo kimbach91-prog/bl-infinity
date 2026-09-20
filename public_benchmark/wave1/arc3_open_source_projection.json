@@ -1,0 +1,26 @@
+{
+  "schema":"DEUS_ARC3_OPEN_SOURCE_SUBMISSION_PROJECTION_V1",
+  "competition":"ARC-AGI-3 2026",
+  "economic_target_usd":850000,
+  "projection_scope":"PUBLIC_SAFE",
+  "protected_core_included":false,
+  "raw_secrets_included":false,
+  "requires_provider_receipts":[
+    "KAGGLE_COMPETITION_JOIN_AND_RULE_ACCEPTANCE",
+    "ARC_API_KEY_MACHINE_BINDING",
+    "OFFICIAL_KAGGLE_SUBMISSION_RECEIPT"
+  ],
+  "components":[
+    "public_benchmark/wave1/general_reasoning_endpoint.py",
+    "public_benchmark/wave1/deus_bench_executor_contract.json",
+    "public_benchmark/wave1/arc3_official_preflight.py",
+    "public_benchmark/wave1/arc3_official_submission_adapter.py"
+  ],
+  "truth_boundaries":[
+    "PROJECTION_READY_NEQ_ELIGIBLE",
+    "ELIGIBLE_NEQ_SUBMITTED",
+    "SUBMITTED_NEQ_SCORED",
+    "SCORED_NEQ_AWARDED",
+    "AWARDED_NEQ_SETTLED"
+  ]
+}
