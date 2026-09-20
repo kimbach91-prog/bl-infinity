@@ -1,0 +1,32 @@
+name: DEUS FrontierMath Erdos Proof Attempt
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/frontiermath_erdos_proof_attempt.py'
+      - '.github/workflows/deus-frontiermath-erdos-proof-attempt.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  erdos-proof-attempt:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: astral-sh/setup-uv@v6
+      - uses: actions/checkout@v4
+        with:
+          repository: epoch-research/LeanOpenProblems
+          ref: af3b82f9d2fd38bea33d59e637b6b4eff54a464c
+          path: vendor/LeanOpenProblems
+      - run: cd vendor/LeanOpenProblems && uv sync
+      - name: Execute attributable Lean proof attempt
+        run: python public_benchmark/wave1/frontiermath_erdos_proof_attempt.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-frontiermath-erdos-proof-attempt
+          path: frontiermath-erdos-proof-attempt.json
