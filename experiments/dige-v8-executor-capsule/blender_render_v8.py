@@ -24,62 +24,206 @@ def set_input(node,name,val):
     if s is not None:
         s.default_value=val
 
-def c25_bootstrap_mpfb2():
+def c25_mpfb_data_root():
     if not C25_MATURE_STACK:
         return None
     if not C25_MPFB2_SRC:
         raise RuntimeError("C25 requires DIGE_MPFB2_SRC")
     src=Path(C25_MPFB2_SRC).resolve()
-    if not src.exists():
-        raise RuntimeError(f"C25 MPFB2 source missing: {src}")
-    if str(src) not in sys.path:
-        sys.path.insert(0,str(src))
-    import mpfb
-    if getattr(mpfb,"MPFB_CONTEXTUAL_INFORMATION",None) is None:
-        mpfb.MPFB_CONTEXTUAL_INFORMATION={
-            "__package__":"mpfb",
-            "__package_short__":"mpfb",
-            "__file__":str(Path(mpfb.__file__).resolve()),
-        }
-    # MPFB2 is normally loaded as a Blender Extension. In this headless pinned
-    # source integration it is intentionally not installed as an extension, so
-    # LocationService's extension_path_user lookup needs a scoped compatibility
-    # root during import. Restore Blender's original function immediately after
-    # the service singleton has been initialized.
-    _orig_extension_path_user=bpy.utils.extension_path_user
-    _c25_user_root=Path("/tmp/mpfb2-runtime-user")
-    _c25_user_root.mkdir(parents=True,exist_ok=True)
-    def _c25_extension_path_user(package,*args,**kwargs):
-        if package=="mpfb":
-            return str(_c25_user_root)
-        return _orig_extension_path_user(package,*args,**kwargs)
-    bpy.utils.extension_path_user=_c25_extension_path_user
+    data=src/"mpfb"/"data"
+    if not data.exists():
+        raise RuntimeError(f"C25 MPFB2 data root missing: {data}")
+    return data
+
+def c25_socket(sockets,key):
     try:
-        from mpfb.services import NodeService, LocationService
-        from mpfb.entities.material.enhancedskinmaterial import EnhancedSkinMaterial
-    finally:
-        bpy.utils.extension_path_user=_orig_extension_path_user
-    return mpfb,NodeService,LocationService,EnhancedSkinMaterial
+        if isinstance(key,int):
+            return sockets[key]
+        return sockets.get(key)
+    except Exception:
+        return None
+
+def c25_set_default(socket,value):
+    if socket is None or not hasattr(socket,"default_value"):
+        return
+    try:
+        socket.default_value=tuple(value) if isinstance(value,list) else value
+    except Exception:
+        try:
+            socket.default_value=value
+        except Exception:
+            pass
+
+def c25_collect_groups(tree_dict,out):
+    for name,gdef in (tree_dict.get("groups") or {}).items():
+        out[name]=gdef
+        c25_collect_groups(gdef,out)
+
+def c25_reset_tree(tree):
+    for n in list(tree.nodes):
+        tree.nodes.remove(n)
+
+def c25_ensure_interface(name,gdef):
+    tree=bpy.data.node_groups.get(name)
+    if tree is None:
+        tree=bpy.data.node_groups.new(name,"ShaderNodeTree")
+    c25_reset_tree(tree)
+    # Keep the interface itself; unique C25 group names avoid stale collisions.
+    existing_in={item.name for item in tree.interface.items_tree if getattr(item,"item_type",None)=="SOCKET" and getattr(item,"in_out",None)=="INPUT"}
+    existing_out={item.name for item in tree.interface.items_tree if getattr(item,"item_type",None)=="SOCKET" and getattr(item,"in_out",None)=="OUTPUT"}
+    for iname,idef in (gdef.get("inputs") or {}).items():
+        if idef.get("create",True) is False:
+            continue
+        if iname not in existing_in:
+            s=tree.interface.new_socket(iname,in_out="INPUT",socket_type=idef["type"])
+            if "value" in idef and "Vector" not in idef["type"]:
+                c25_set_default(s,idef["value"])
+    for oname,otype in (gdef.get("outputs") or {}).items():
+        if oname not in existing_out:
+            tree.interface.new_socket(oname,in_out="OUTPUT",socket_type=otype)
+    return tree
+
+def c25_find_io_node(tree,bl_idname,name):
+    for n in tree.nodes:
+        if n.bl_idname==bl_idname:
+            n.name=name
+            return n
+    n=tree.nodes.new(bl_idname); n.name=name
+    return n
+
+def c25_update_node(node,info):
+    if info.get("type")=="ShaderNodeGroup":
+        gname=info.get("group_name") or info.get("name")
+        gt=bpy.data.node_groups.get(gname)
+        if gt is None:
+            raise RuntimeError(f"C25 missing node group {gname}")
+        node.node_tree=gt
+    if "location" in info:
+        node.location=info["location"]
+    if info.get("type")=="ShaderNodeTexImage":
+        filename=info.get("filename")
+        if filename and Path(filename).exists():
+            img=bpy.data.images.load(str(filename),check_existing=True)
+            if info.get("colorspace"):
+                try: img.colorspace_settings.name=info["colorspace"]
+                except Exception: pass
+            node.image=img
+    if info.get("type") in ("ShaderNodeMix","ShaderNodeMixRGB") and "blend_type" in info:
+        try: node.blend_type=info["blend_type"]
+        except Exception: pass
+    if info.get("type") in ("ShaderNodeMath","ShaderNodeVectorMath"):
+        if "operation" in info:
+            try: node.operation=info["operation"]
+            except Exception: pass
+        if "use_clamp" in info:
+            try: node.use_clamp=info["use_clamp"]
+            except Exception: pass
+    if info.get("type")=="ShaderNodeValToRGB" and info.get("stops"):
+        elems=node.color_ramp.elements
+        while len(elems)<len(info["stops"]):
+            elems.new(1.0)
+        for i,p in enumerate(info["stops"]):
+            elems[i].position=p
+    if info.get("type")=="ShaderNodeValue" and "value" in info:
+        node.outputs[0].default_value=info["value"]
+    for key,val in (info.get("values") or {}).items():
+        s=c25_socket(node.inputs,key)
+        c25_set_default(s,val)
+    node.name=info.get("name",node.name)
+    if "label" in info:
+        node.label=info["label"]
+
+def c25_populate_tree(tree,tree_dict):
+    c25_reset_tree(tree)
+    node_by_name={}
+    for node_name,info in (tree_dict.get("nodes") or {}).items():
+        if info.get("create",True) is False:
+            continue
+        t=info["type"]
+        if t=="NodeGroupInput":
+            n=c25_find_io_node(tree,"NodeGroupInput",node_name)
+        elif t=="NodeGroupOutput":
+            n=c25_find_io_node(tree,"NodeGroupOutput",node_name)
+        else:
+            n=tree.nodes.new(t)
+        c25_update_node(n,info)
+        node_by_name[node_name]=n
+    for link in (tree_dict.get("links") or []):
+        if link.get("disabled"):
+            continue
+        a=node_by_name.get(link.get("from_node")); b=node_by_name.get(link.get("to_node"))
+        if a is None or b is None:
+            continue
+        so=c25_socket(a.outputs,link.get("from_socket"))
+        si=c25_socket(b.inputs,link.get("to_socket"))
+        if so is None or si is None:
+            continue
+        try:
+            tree.links.new(so,si)
+        except Exception:
+            pass
+
+def c25_apply_tree(target_tree,tree_dict):
+    groups={}
+    c25_collect_groups(tree_dict,groups)
+    for name,gdef in groups.items():
+        c25_ensure_interface(name,gdef)
+    for name,gdef in groups.items():
+        c25_populate_tree(bpy.data.node_groups[name],gdef)
+    c25_populate_tree(target_tree,tree_dict)
+
+def c25_first_group(tree):
+    for n in tree.nodes:
+        if n.bl_idname=="ShaderNodeGroup":
+            return n
+    return None
+
+def c25_group_values(group):
+    out={}
+    for s in group.inputs:
+        if hasattr(s,"default_value"):
+            v=s.default_value
+            if hasattr(v,"__len__") and not isinstance(v,(str,bytes)):
+                try: out[s.name]=list(v)
+                except Exception: out[s.name]=v
+            else:
+                out[s.name]=v
+    return out
+
+def c25_set_group_values(group,settings):
+    for key,val in settings.items():
+        s=c25_socket(group.inputs,key)
+        c25_set_default(s,val)
 
 def c25_apply_mpfb_enhanced_skin(material):
-    boot=c25_bootstrap_mpfb2()
-    if boot is None:
+    if not C25_MATURE_STACK:
         return {"enabled":False}
-    mpfb,NodeService,LocationService,EnhancedSkinMaterial=boot
-    if not C25_MHMAT_PATH:
-        raise RuntimeError("C25 requires DIGE_C25_MHMAT_PATH")
-    mhmat=Path(C25_MHMAT_PATH)
-    if not mhmat.is_absolute():
-        mhmat=ROOT/mhmat
-    if not mhmat.exists():
-        raise RuntimeError(f"C25 MHMAT missing: {mhmat}")
-    enhanced=EnhancedSkinMaterial({"skin_material_type":"ENHANCED_SSS","scale_factor":"METER"})
-    enhanced.populate_from_mhmat(str(mhmat))
-    enhanced.apply_node_tree(material,group_name="DIGE_C25_MPFB_ENHANCED_SKIN")
-    group=NodeService.find_first_node_by_type_name(material.node_tree,"ShaderNodeGroup")
+    data=c25_mpfb_data_root()
+    template=(data/"node_trees"/"enhanced_skin.json").read_text(encoding="utf-8")
+    diffuse=Path(SKIN_ALBEDO_PATH)
+    if not diffuse.is_absolute():
+        diffuse=ROOT/diffuse
+    diffuse=diffuse.resolve()
+    sss=(data/"textures"/"sss.png").resolve()
+    if not diffuse.exists() or not sss.exists():
+        raise RuntimeError(f"C25 mature skin inputs missing diffuse={diffuse.exists()} sss={sss.exists()}")
+    replacements={
+        '"$group_name"':json.dumps("DIGE_C25_MPFB_ENHANCED_SKIN"),
+        '"$Roughness"':"0.45",
+        '"$has_sss"':"true",
+        '"$has_diffusetexture"':"true",
+        '"$diffusetexture_filename"':json.dumps(str(diffuse)),
+        '"$has_normalmap"':"false",
+        '"$normalmap_filename"':json.dumps(""),
+        '"$ssstexture_filename"':json.dumps(str(sss)),
+    }
+    for a,b in replacements.items():
+        template=template.replace(a,b)
+    tree_dict=json.loads(template)
+    c25_apply_tree(material.node_tree,tree_dict)
+    group=c25_first_group(material.node_tree)
     if group is None:
-        raise RuntimeError("C25 MPFB enhanced skin group missing after apply")
-    # Official MPFB2 enhanced_settings.default.json body values at pinned source.
+        raise RuntimeError("C25 MPFB enhanced skin group missing after JSON apply")
     settings={
         "Brightness":0.0,
         "Clearcoat":0.10,
@@ -92,10 +236,15 @@ def c25_apply_mpfb_enhanced_skin(material):
         "Roughness":0.45,
         "colorMixIn":(1.0,0.2,0.2,1.0),
         "colorMixInStrength":0.05,
+        "SSS strength":0.20,
+        "SSS radius scale":0.10,
+        "SSS radius R":1.0,
+        "SSS radius G":0.2,
+        "SSS radius B":0.1,
     }
-    NodeService.set_socket_default_values(group,settings)
-    values=NodeService.get_socket_default_values(group)
-    for key in ("Pore detail","Pore scale","Pore strength","Roughness"):
+    c25_set_group_values(group,settings)
+    values=c25_group_values(group)
+    for key in ("Pore detail","Pore scale","Pore strength","Roughness","SSS strength"):
         if key not in values:
             raise RuntimeError(f"C25 MPFB skin missing socket {key}")
     return {
@@ -103,26 +252,24 @@ def c25_apply_mpfb_enhanced_skin(material):
         "source":"makehumancommunity/mpfb2",
         "commit":C25_MPFB2_COMMIT or None,
         "material_model":"ENHANCED_SSS",
-        "mhmat_file":mhmat.name,
-        "group_name":group.name,
+        "integration":"PINNED_JSON_NODE_TREE",
+        "template_sha256":sha(data/"node_trees"/"enhanced_skin.json"),
+        "source_albedo_file":diffuse.name,
+        "source_albedo_sha256":sha(diffuse),
+        "group_name":group.node_tree.name if group.node_tree else group.name,
         "settings":{k:values.get(k) for k in settings},
     }
 
 def c25_apply_mpfb_procedural_eyes(material):
-    boot=c25_bootstrap_mpfb2()
-    if boot is None:
+    if not C25_MATURE_STACK:
         return {"enabled":False}
-    mpfb,NodeService,LocationService,EnhancedSkinMaterial=boot
-    p=Path(LocationService.get_mpfb_data("node_trees"))/"procedural_eyes.json"
-    if not p.exists():
-        raise RuntimeError(f"C25 procedural eyes node tree missing: {p}")
-    node_tree_dict=json.loads(p.read_text(encoding="utf-8"))
-    NodeService.apply_node_tree_from_dict(material.node_tree,node_tree_dict,True)
-    group=NodeService.find_first_node_by_type_name(material.node_tree,"ShaderNodeGroup")
+    data=c25_mpfb_data_root()
+    p=data/"node_trees"/"procedural_eyes.json"
+    tree_dict=json.loads(p.read_text(encoding="utf-8"))
+    c25_apply_tree(material.node_tree,tree_dict)
+    group=c25_first_group(material.node_tree)
     if group is None:
-        raise RuntimeError("C25 procedural eye group missing after apply")
-    # Official MPFB2 eye_settings.default.json with only iris hues shifted to a
-    # neutral brown; physical outer-layer values remain official defaults.
+        raise RuntimeError("C25 procedural eye group missing after JSON apply")
     settings={
         "Clearcoat":0.40,
         "Clearcoat Roughness":0.0,
@@ -147,8 +294,8 @@ def c25_apply_mpfb_procedural_eyes(material):
         "PupilColor":(0.0,0.0,0.0,1.0),
         "PupilSize":0.30,
     }
-    NodeService.set_socket_default_values(group,settings)
-    values=NodeService.get_socket_default_values(group)
+    c25_set_group_values(group,settings)
+    values=c25_group_values(group)
     for key in ("IrisBumpStrength","IrisToEyeWhiteRelation","OuterLayerIOR","OuterLayerTransmission","PupilSize"):
         if key not in values:
             raise RuntimeError(f"C25 MPFB eye missing socket {key}")
@@ -157,7 +304,9 @@ def c25_apply_mpfb_procedural_eyes(material):
         "source":"makehumancommunity/mpfb2",
         "commit":C25_MPFB2_COMMIT or None,
         "material_model":"PROCEDURAL_EYES",
-        "group_name":group.name,
+        "integration":"PINNED_JSON_NODE_TREE",
+        "template_sha256":sha(p),
+        "group_name":group.node_tree.name if group.node_tree else group.name,
         "settings":{k:values.get(k) for k in settings},
     }
 
