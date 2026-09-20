@@ -3,6 +3,7 @@ name: DEUS Machine Worker Trial Bot
 on:
   issue_comment:
     types: [created]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -26,7 +27,7 @@ jobs:
             const sender = String(context.payload.comment?.user?.login || "unknown");
             if (body.length > 12000) return;
 
-            const m = body.match(/\`\`\`json\\s*([\\s\\S]*?)\`\`\`/i);
+            const m = body.match(/```json\s*([\s\S]*?)```/i);
             if (!m) return;
 
             let msg;
