@@ -1,0 +1,30 @@
+name: DEUS AI Horde S0 Microtask Probe
+
+on:
+  push:
+    branches: ["deus/aihorde-s0-microtask-probe-v1-20260920"]
+    paths:
+      - ".github/workflows/deus-aihorde-s0-microtask-probe.yml"
+      - "public-compute/aihorde-s0-microtask-probe.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      BASE_URL: https://34e0f094-theory-group.kimbach91.workers.dev
+    steps:
+      - name: Checkout exact public source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Run 3 bounded sequential public S0 microtasks
+        shell: bash
+        run: |
+          set -euo pipefail
+          node public-compute/aihorde-s0-microtask-probe.mjs
