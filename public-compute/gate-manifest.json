@@ -1,7 +1,7 @@
 {
   "schema": "deus-compute-gate-public-market/1",
   "state": "MACHINE_FIRST_GATE_LIVE / PUBLIC_DISCOVERY_AND_S0_EXECUTION_VERIFIED",
-  "updated_at": "2026-09-20T02:59:00Z",
+  "updated_at": "2026-09-20T03:09:00Z",
   "public_safe": true,
   "default_data_classes": [
     "BL-S0",
@@ -122,7 +122,8 @@
       "verdict": "PAGES_DEPLOYMENT_RUNTIME_VERIFIED",
       "source_sha": "847e5541cb9353e2a2d48692b6762f4f42e31b09",
       "receipt_source": "issue182_comment_5747122638"
-    }
+    },
+    "task_feed": "https://kimbach91-prog.github.io/bl-infinity/public-compute/worker-task-feed.json"
   },
   "machine_first_policy": {
     "priority": "AUTONOMOUS_LOGIC_AND_COMPUTE_WORKERS",
@@ -153,5 +154,6 @@
       "WORKER_RESULT != CANONICAL_TRUTH",
       "PARALLELISM != AUTHORITY"
     ]
-  }
+  },
+  "machine_task_feed": "https://kimbach91-prog.github.io/bl-infinity/public-compute/worker-task-feed.json"
 }
