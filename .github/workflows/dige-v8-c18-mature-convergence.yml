@@ -1,4 +1,4 @@
-name: DIGE V8 C19 Humanization Finalist
+name: DIGE V8 C20 Visual Repair Finalist
 
 on:
   pull_request:
@@ -12,11 +12,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c19-humanize-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c20-visual-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c19-finalist:
+  c20-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -71,15 +71,16 @@ jobs:
           echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
           echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
 
-      - name: Render C19 humanization finalist
+      - name: Render C20 visual-repair finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c19_humanized
+          DIGE_OUTPUT_TAG: c20_visual
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '1'
           DIGE_C19_PHOTO_LIGHTING: '1'
+          DIGE_C20_VISUAL_REPAIR: '1'
           DIGE_HAIR_ASSET_KEY: hair_short03
           DIGE_HAIR_STRANDS_PER_ROOT: '18'
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.72'
@@ -89,49 +90,49 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
-          DIGE_SKIN_SSS_WEIGHT: '0.14'
-          DIGE_SKIN_SSS_SCALE: '0.0014'
-          DIGE_SKIN_ROUGH_MIN: '0.40'
-          DIGE_SKIN_ROUGH_MAX: '0.58'
-          DIGE_SKIN_ALBEDO_SAT: '1.06'
-          DIGE_SKIN_ALBEDO_VALUE: '0.66'
-          DIGE_EYE_TEX_SAT: '0.72'
-          DIGE_EYE_TEX_VALUE: '0.70'
-          DIGE_HAIR_TEX_SAT: '0.52'
-          DIGE_HAIR_TEX_VALUE: '0.26'
-          DIGE_FACE_MESO_SCALE: '1.62'
-          DIGE_SKIN_TONE_R: '0.72'
-          DIGE_SKIN_TONE_G: '0.50'
-          DIGE_SKIN_TONE_B: '0.40'
-          DIGE_SKIN_TONE_MIX: '0.50'
-          DIGE_SKIN_MICRO_STRENGTH: '0.25'
-          DIGE_SKIN_MESO_FREQ: '58'
-          DIGE_SKIN_PORE_FREQ: '330'
-          DIGE_SKIN_MICRO_FREQ: '1050'
-          DIGE_SKIN_BUMP_DISTANCE: '0.00022'
-          DIGE_SKIN_COAT_WEIGHT: '0.002'
-          DIGE_SKIN_COAT_ROUGHNESS: '0.38'
-          DIGE_SAMPLES_PREVIEW: '40'
-          DIGE_SAMPLES_HERO: '96'
+          DIGE_SKIN_SSS_WEIGHT: '0.10'
+          DIGE_SKIN_SSS_SCALE: '0.0012'
+          DIGE_SKIN_ROUGH_MIN: '0.43'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_ALBEDO_SAT: '0.98'
+          DIGE_SKIN_ALBEDO_VALUE: '0.48'
+          DIGE_EYE_TEX_SAT: '0.78'
+          DIGE_EYE_TEX_VALUE: '0.64'
+          DIGE_HAIR_TEX_SAT: '0.56'
+          DIGE_HAIR_TEX_VALUE: '0.23'
+          DIGE_FACE_MESO_SCALE: '1.90'
+          DIGE_SKIN_TONE_R: '0.60'
+          DIGE_SKIN_TONE_G: '0.33'
+          DIGE_SKIN_TONE_B: '0.22'
+          DIGE_SKIN_TONE_MIX: '0.60'
+          DIGE_SKIN_MICRO_STRENGTH: '0.35'
+          DIGE_SKIN_MESO_FREQ: '46'
+          DIGE_SKIN_PORE_FREQ: '260'
+          DIGE_SKIN_MICRO_FREQ: '850'
+          DIGE_SKIN_BUMP_DISTANCE: '0.00028'
+          DIGE_SKIN_COAT_WEIGHT: '0.001'
+          DIGE_SKIN_COAT_ROUGHNESS: '0.45'
+          DIGE_SAMPLES_PREVIEW: '48'
+          DIGE_SAMPLES_HERO: '112'
           DIGE_RENDER_SEED: '20260920'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c19_humanized.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c20_visual.log
 
-      - name: Verify C19 receipt
+      - name: Verify C20 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c19_humanized")
+          root=pathlib.Path("runtime/renders/c20_visual")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C19_HUMANIZED_HYBRID_SKIN_GROOM_V1"
+          assert r["appearance_candidate"]=="C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1"
           h=r["hair_surface_contract"]
-          assert h["style"]=="HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1"
+          assert h["style"]=="HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1"
           assert h["mass_mesh_rendered"] is True
           assert h["curve_count"] >= 5000
           assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
@@ -141,7 +142,7 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C19_HUMANIZATION_RECEIPT_V1",
+            "schema":"DIGE_C20_VISUAL_REPAIR_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
@@ -149,20 +150,28 @@ jobs:
             "hair_curve_metrics":r["hair_curve_metrics"],
             "skin_model":r["skin_model"],
             "appearance_selection":r["appearance_selection"],
-            "claim_ceiling":"C19_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "c20_visual_repair":r["appearance_selection"].get("c20_visual_repair"),
+            "c20_hairline_bridge_curves":r["appearance_selection"].get("c20_hairline_bridge_curves"),
+            "c20_brow_curves":r["appearance_selection"].get("c20_brow_curves"),
+            "c20_lash_curves":r["appearance_selection"].get("c20_lash_curves"),
+            "claim_ceiling":"C20_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
-          (root/"DIGE_C19_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          assert summary["c20_visual_repair"] is True
+          assert summary["c20_hairline_bridge_curves"] >= 151
+          assert summary["c20_brow_curves"] >= 14
+          assert summary["c20_lash_curves"] >= 22
+          (root/"DIGE_C20_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C19 evidence
+      - name: Upload C20 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C19-HUMANIZED-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C20-VISUAL-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c19_humanized/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c19_humanized/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c19_humanized/*.json
-            experiments/dige-v8-executor-capsule/runtime/c19_humanized.log
+            experiments/dige-v8-executor-capsule/runtime/renders/c20_visual/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c20_visual/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c20_visual/*.json
+            experiments/dige-v8-executor-capsule/runtime/c20_visual.log
           if-no-files-found: error
           retention-days: 14

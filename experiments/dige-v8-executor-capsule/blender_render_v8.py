@@ -53,6 +53,7 @@ SKIN_COAT_ROUGHNESS=float(os.environ.get("DIGE_SKIN_COAT_ROUGHNESS","0.34"))
 C18_HYBRID_BULK=os.environ.get("DIGE_C18_HYBRID_BULK","0").strip()=="1"
 C19_HUMANIZATION=os.environ.get("DIGE_C19_HUMANIZATION","0").strip()=="1"
 C19_PHOTO_LIGHTING=os.environ.get("DIGE_C19_PHOTO_LIGHTING","0").strip()=="1"
+C20_VISUAL_REPAIR=os.environ.get("DIGE_C20_VISUAL_REPAIR","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -134,7 +135,7 @@ def make_skin():
         nt.links.new(skin_tone.outputs["Color"],warm_mix.inputs[2])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
-        color_mix.inputs["Fac"].default_value=.10
+        color_mix.inputs["Fac"].default_value=.22 if C20_VISUAL_REPAIR else .10
         nt.links.new(warm_mix.outputs["Color"],color_mix.inputs[1])
         nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
         nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
@@ -665,7 +666,7 @@ mouth_line=[
     (.010,my+.0005,mz-.0004),
     (.020,my,mz)
 ]
-curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00010,mouth_dark)
+curve_object("DIGE_V8_MOUTH_GAP",[mouth_line],.00013 if C20_VISUAL_REPAIR else .00010,mouth_dark)
 
 # Thin vermilion tint uses tiny curves; native lip volume remains the geometry source.
 upper_lip=[
@@ -682,8 +683,8 @@ lower_lip=[
     (.009,my+.0005,mz-.0025),
     (.018,my+.0002,mz-.0012),
 ]
-curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00010,lip)
-curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00013,lip)
+curve_object("DIGE_V8_UPPER_LIP_TINT",[upper_lip],.00018 if C20_VISUAL_REPAIR else .00010,lip)
+curve_object("DIGE_V8_LOWER_LIP_TINT",[lower_lip],.00020 if C20_VISUAL_REPAIR else .00013,lip)
 
 # Small recessed nostril discs add depth without altering topology.
 nose_z=mouth_center[2]+.0275
@@ -734,6 +735,45 @@ lash_obj,lash_fit=fit_mhclo_asset(
 )
 system_asset_fits["eyelashes01"]=lash_fit
 
+# C20 visual repair: the fitted alpha cards are still retained for provenance,
+# but explicit micro-curve brows/upper lashes provide geometric silhouette/read
+# under hero lighting. This is bounded cosmetic geometry, not anatomy authority.
+c20_brow_curve_count=0
+c20_lash_curve_count=0
+if C20_VISUAL_REPAIR:
+    brow_splines=[]
+    for side in (-1,1):
+        xs=[.014,.023,.033,.043,.052]
+        base=[1.6080,1.6120,1.6140,1.6110,1.6055]
+        for lane in range(7):
+            dz=(lane-3)*.00042
+            dy=((lane%3)-1)*.00028
+            pts=[]
+            for x,z in zip(xs,base):
+                xx=side*x
+                pts.append((xx,.0475+dy,z+dz))
+            if side<0:
+                pts=list(reversed(pts))
+            brow_splines.append(pts)
+    curve_object("DIGE_C20_BROW_CURVES",brow_splines,.00018,hair)
+    c20_brow_curve_count=len(brow_splines)
+
+    lash_splines=[]
+    for side in (-1,1):
+        for i in range(11):
+            t=i/10.0
+            x=side*(.010+.039*t)
+            z=1.5898 + .0040*math.sin(math.pi*t)
+            y=.0435
+            # short outward/upward upper-lash strand
+            lash_splines.append([
+                (x,y,z),
+                (x+side*.00035,y+.0012,z+.0006),
+                (x+side*.00065,y+.0022,z+.0010),
+            ])
+    curve_object("DIGE_C20_UPPER_LASH_CURVES",lash_splines,.000075,hair)
+    c20_lash_curve_count=len(lash_splines)
+
 # Preserve C5 tear meniscus: it is landmark-bound and complements the high-poly eye asset.
 wetlines=[]
 for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerlid")):
@@ -777,6 +817,30 @@ hair_obj,hair_fit=fit_mhclo_asset(
     fit_vertices,hair_guide_mat,hair_asset,
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
+
+# C20 deterministic hairline bridge. The C18/C19 bulk mesh solves scalp coverage,
+# while these fine curves lower and break up the frontal edge without replacing
+# the fitted short03 groom or letting long strands sweep into the face.
+c20_hairline_curve_count=0
+if C20_VISUAL_REPAIR:
+    hairline_splines=[]
+    hrng=random.Random(20262020)
+    for i in range(151):
+        u=i/150.0
+        x=-.075 + .150*u
+        temple=abs(x)/.075
+        root_z=1.626 + .012*(temple**1.7) + hrng.uniform(-.0012,.0012)
+        root_y=.0460 + hrng.uniform(-.0008,.0008)
+        side=1.0 if x>=0 else -1.0
+        sway=hrng.uniform(-.0022,.0022)
+        hairline_splines.append([
+            (x,root_y,root_z),
+            (x+sway*.25, .0370, root_z+.007+hrng.uniform(-.001,.001)),
+            (x+sway*.70+side*.0010, .0210, root_z+.019+hrng.uniform(-.001,.001)),
+            (x+sway+side*.0018, .0030, root_z+.033+hrng.uniform(-.0015,.0015)),
+        ])
+    curve_object("DIGE_C20_HAIRLINE_BRIDGE",hairline_splines,.000060,hair)
+    c20_hairline_curve_count=len(hairline_splines)
 
 def build_c17_strand_groom(guide_obj, surface_obj, material):
     # C17.6 — authored multi-guide field.
@@ -1219,7 +1283,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"),
+    "style":"HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1250,7 +1314,13 @@ def area(name,loc,energy,size,color,target=(0,0,1.25)):
     o=bpy.context.object; o.name=name; o.data.energy=energy; o.data.shape='DISK'; o.data.size=size; o.data.color=color
     d=Vector(target)-o.location; o.rotation_euler=d.to_track_quat('-Z','Y').to_euler()
     return o
-if C19_PHOTO_LIGHTING:
+if C20_VISUAL_REPAIR:
+    face_target=(0,.020,1.575)
+    area("KEY",(1.35,1.95,2.25),300,1.20,(1.0,.90,.82),face_target)
+    area("FILL",(-1.70,2.10,1.82),28,2.40,(.80,.87,1.0),face_target)
+    area("RIM",(0,-2.10,2.35),90,1.25,(1.0,.76,.58),face_target)
+    area("DETAIL",(-1.05,1.10,1.74),42,.38,(.93,.96,1.0),face_target)
+elif C19_PHOTO_LIGHTING:
     face_target=(0,.020,1.575)
     area("KEY",(1.65,2.35,2.45),650,1.70,(1.0,.90,.82),face_target)
     area("FILL",(-1.80,2.10,1.85),55,2.60,(.78,.86,1.0),face_target)
@@ -1330,6 +1400,8 @@ scene.cycles.transmission_bounces=8
 scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
 scene.render.resolution_percentage=100
 scene.view_settings.look='AgX - Medium High Contrast'
+if C20_VISUAL_REPAIR:
+    scene.view_settings.exposure=-0.35
 vl=scene.view_layers[0]
 vl.use_pass_normal=True; vl.use_pass_z=True; vl.use_pass_diffuse_color=True
 vl.use_pass_glossy_direct=True; vl.use_pass_transmission_direct=True
@@ -1412,14 +1484,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"),
+ "appearance_candidate":"C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1")),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"),
+   "selection_basis":"C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB")),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1438,7 +1510,11 @@ receipt={
    "c19_humanization":C19_HUMANIZATION,
    "c19_photo_lighting":C19_PHOTO_LIGHTING,
    "c19_hairline_center_z":C19_HAIRLINE_CENTER_Z if C19_HUMANIZATION else None,
-   "c19_hairline_temple_rise":C19_HAIRLINE_TEMPLE_RISE if C19_HUMANIZATION else None
+   "c19_hairline_temple_rise":C19_HAIRLINE_TEMPLE_RISE if C19_HUMANIZATION else None,
+   "c20_visual_repair":C20_VISUAL_REPAIR,
+   "c20_hairline_bridge_curves":c20_hairline_curve_count,
+   "c20_brow_curves":c20_brow_curve_count,
+   "c20_lash_curves":c20_lash_curve_count
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
