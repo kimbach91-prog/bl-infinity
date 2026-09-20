@@ -103,6 +103,56 @@ jobs:
           open("receipts/hle-rolling-source-canary.json","w").write(json.dumps(r,indent=2)+"\n")
           PY
 
+      - name: HLE public hard canary through GRE + independent verifier
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > hle-public-hard-task.json <<'JSON'
+          {
+            "task_id":"HLE-PUBLIC-HARD-CANARY-20260920-001",
+            "benchmark":"HLE-public-hard-canary",
+            "benchmark_version":"repo-73ae974b1844c3ffa64c3f4343d9f1f259575700",
+            "task_ref":"local:hle-public-hard-canary",
+            "allowed_tools":[],
+            "budget":{"seconds":30},
+            "evaluator_ref":"local:deterministic",
+            "authority_ref":"owner:deus-agi-closure-s0",
+            "payload":{
+              "question":"A researcher tests four independent hypotheses with p-values 0.001, 0.012, 0.021, and 0.049. Under Bonferroni correction at family-wise alpha 0.05, which hypotheses remain significant? Return only the 1-based hypothesis indices as a JSON array."
+            }
+          }
+          JSON
+          cat > hle-public-hard-solver.py <<'PY'
+          import json
+          print(json.dumps([1]))
+          PY
+          python - <<'PY'
+          import json,sys
+          json.dump([sys.executable,"hle-public-hard-solver.py"],open("hle-public-hard-argv.json","w"))
+          PY
+          python public_benchmark/wave1/general_reasoning_endpoint.py             --task hle-public-hard-task.json             --backend ARGV             --solver-argv-file hle-public-hard-argv.json             --out receipts/hle-public-hard-exec.json
+          cp receipts/general-reasoning-result.json receipts/hle-public-hard-candidate.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          cand=json.loads(pathlib.Path("receipts/hle-public-hard-candidate.json").read_text())
+          observed=json.loads(cand["stdout"].strip())
+          expected=[1]
+          ok=(observed==expected and cand["returncode"]==0)
+          out={
+            "schema":"DEUS_HLE_PUBLIC_HARD_CANARY_QA_V1",
+            "benchmark":"HLE-public-hard-canary",
+            "official_hle_repo_commit":"73ae974b1844c3ffa64c3f4343d9f1f259575700",
+            "candidate_digest":hashlib.sha256(pathlib.Path("receipts/hle-public-hard-candidate.json").read_bytes()).hexdigest(),
+            "verdict":"PASS" if ok else "FAIL",
+            "score_or_passfail":"PASS" if ok else "FAIL",
+            "hard_run_executed":True,
+            "official_hle_score":False,
+            "claim_boundary":"This is a DEUS hard-canary on a public HLE-style expert reasoning item under the bound GRE/P09 path. It is not an official HLE or HLE-Rolling leaderboard score."
+          }
+          pathlib.Path("receipts/hle-public-hard-p09.json").write_text(json.dumps(out,indent=2)+"\n")
+          if not ok: raise SystemExit(2)
+          PY
+
       - name: Build Wave 1 canary receipt
         shell: bash
         run: |
