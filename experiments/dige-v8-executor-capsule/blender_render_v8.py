@@ -1552,11 +1552,18 @@ if C28_GNM_HEAD:
     gnm_brow_right=transformed_landmarks[22:27]
 
     gnm_skin_mat,c28_skin_contract=c28_gnm_skin_material()
+    gnm_eye_mat=bpy.data.materials.new("DIGE_C28_GNM_PROCEDURAL_EYE")
+    gnm_eye_mat.use_nodes=True
+    c28_eye_contract=c25_apply_mpfb_procedural_eyes(gnm_eye_mat) if C25_MATURE_STACK else {"enabled":False}
+    if not C25_MATURE_STACK:
+        gnm_eye_mat=eye_mat
     teeth_mat=principled("DIGE_C28_TEETH",(0.72,0.63,0.54),rough=.34,ior=1.52,subsurface=.018)
     tongue_mat=principled("DIGE_C28_TONGUE",(0.30,0.055,0.050),rough=.48,ior=1.40,subsurface=.05)
     component_material={
         "skin":gnm_skin_mat,
-        "eye_interiors":eye_mat,
+        "left_eye":gnm_eye_mat,
+        "right_eye":gnm_eye_mat,
+        "eye_interiors":gnm_eye_mat,
         "eye_exteriors":cornea,
         "upper_teeth_and_gums":teeth_mat,
         "lower_teeth_and_gums":teeth_mat,
@@ -1699,6 +1706,7 @@ if C28_GNM_HEAD:
         "lash_fibers":c28_lash_fiber_count,
         "hairline_fibers":c28_hairline_fiber_count,
         "skin_contract":c28_skin_contract,
+        "eye_contract":c28_eye_contract,
         "components":{k:len(v.data.vertices) for k,v in c28_gnm_objects.items()},
     }
 
@@ -2118,18 +2126,40 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     surface_rot=surface_obj.matrix_world.to_3x3()
     scalp_candidates=[]
+    if C28_GNM_HEAD:
+        # C28 uses a new scan-learned head topology. Derive scalp bounds from the
+        # aligned GNM contract and the measured brow/hairline instead of MakeHuman constants.
+        _c28_bbox_min=Vector(c28_gnm["aligned_bbox_min"])
+        _c28_bbox_max=Vector(c28_gnm["aligned_bbox_max"])
+        _c28_eye_mid=(Vector(c28_gnm["head_translation"]) + Vector((0,0,0)))  # provenance-only origin
+        _c28_hairline=float(c28_gnm["hairline_target_z"])
+        _c28_z_min=_c28_hairline-.010
+        _c28_z_max=float(_c28_bbox_max.z)+.004
+        _c28_x_half=max(.115,min(.155,(float(_c28_bbox_max.x)-float(_c28_bbox_min.x))*.48))
+        _c28_y_max=float(_c28_bbox_max.y)+.004
     for idx,v in enumerate(surface_obj.data.vertices):
         p=surface_obj.matrix_world @ v.co
-        if p.z < 1.540 or p.z > 1.706:
-            continue
-        if abs(p.x) > .130 or p.y > .065:
-            continue
+        if C28_GNM_HEAD:
+            if p.z < _c28_z_min or p.z > _c28_z_max:
+                continue
+            if abs(p.x) > _c28_x_half or p.y > _c28_y_max:
+                continue
+        else:
+            if p.z < 1.540 or p.z > 1.706:
+                continue
+            if abs(p.x) > .130 or p.y > .065:
+                continue
         # C19 keeps the C17.7 face-clearance scar but replaces its excessively
         # high/receded central hairline with an explicit center/temple profile.
         n=(surface_rot @ v.normal).normalized()
         if n.length < 1e-8:
             n=Vector((0,0,1))
-        if C19_HUMANIZATION:
+        if C28_GNM_HEAD:
+            # GNM root mask already starts at the measured hairline; only reject
+            # strongly face-facing normals to avoid forehead/temple intrusion.
+            if n.y < -0.16 and p.z < _c28_hairline+.018:
+                continue
+        elif C19_HUMANIZATION:
             frontal_hairline_z=C19_HAIRLINE_CENTER_Z + C19_HAIRLINE_TEMPLE_RISE*min(abs(p.x),.10)
             if p.y > .000:
                 if p.z < frontal_hairline_z:
@@ -2379,7 +2409,10 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "seed":20260920,
     }
 
-hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+groom_surface=(c28_gnm_objects.get("skin") if C28_GNM_HEAD else body)
+if groom_surface is None:
+    raise RuntimeError("C28 GNM skin surface missing for strand groom")
+hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,groom_surface,hair)
 strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
     "root_source":"SCALP_SURFACE_ROOTS_PLUS_OFFICIAL_SHORT03_UV_TEXTURE_FLOW_FIELD",
