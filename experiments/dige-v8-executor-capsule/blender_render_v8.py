@@ -59,10 +59,10 @@ def make_skin():
     if hasattr(bs,"distribution"):
         bs.distribution='MULTI_GGX'
     set_input(bs,"Subsurface Radius",(1.0,.45,.18))
-    set_input(bs,"Specular IOR Level",.30)
+    set_input(bs,"Specular IOR Level",.22)
     set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
-    set_input(bs,"Coat Weight",.012)
-    set_input(bs,"Coat Roughness",.30)
+    set_input(bs,"Coat Weight",.006)
+    set_input(bs,"Coat Roughness",.38)
 
     tex=nt.nodes.new("ShaderNodeTexCoord")
     skin_asset={
@@ -120,7 +120,7 @@ def make_skin():
         nt.links.new(skin_tone.outputs["Color"],warm_mix.inputs[2])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
-        color_mix.inputs["Fac"].default_value=.10
+        color_mix.inputs["Fac"].default_value=.16
         nt.links.new(warm_mix.outputs["Color"],color_mix.inputs[1])
         nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
         nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
@@ -733,20 +733,20 @@ if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_
 hair_asset=system_contract[HAIR_ASSET_KEY]
 hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
 hair_guide_mat=alpha_card_material(
-    f"DIGE_C17_GUIDE_{hair_label}",
+    f"DIGE_C18_BULK_{hair_label}",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
     rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
-    f"DIGE_C17_GUIDE_{hair_label}",
+    f"DIGE_C18_BULK_{hair_label}",
     system_dir/hair_asset["obj"]["runtime_name"],
     system_dir/hair_asset["mhclo"]["runtime_name"],
     fit_vertices,hair_guide_mat,hair_asset,
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
-def build_c17_strand_groom(guide_obj, surface_obj, material):
+def build_c18_hybrid_groom(guide_obj, surface_obj, material):
     # C17.6 — authored multi-guide field.
     # Scar chain:
     # C17.1 fixed guide-shell roots; C17.2/3 falsified density-only repair;
@@ -923,7 +923,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
     if len(scalp_candidates) < 350:
         raise RuntimeError(f"C17.6 scalp mask too sparse: {len(scalp_candidates)} roots")
 
-    target_roots=min(1800,len(scalp_candidates))
+    target_roots=min(900,len(scalp_candidates))
     if len(scalp_candidates) > target_roots:
         roots=[]
         for i in range(target_roots):
@@ -979,9 +979,9 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         raise RuntimeError(f"C17.6 interpolated root field too sparse: {len(root_guides)} roots")
 
     points_per_curve=8
-    strands_per_root=64
+    strands_per_root=18
     curve_count=len(root_guides)*strands_per_root
-    hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
+    hair_data=bpy.data.hair_curves.new("DIGE_C18_HYBRID_STRAND_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
     try:
         hair_data.set_types(type='CATMULL_ROM')
@@ -1014,11 +1014,13 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         # Density and 44/20 population split remain frozen from C17.4/C17.5.
         # Only the authored multi-guide direction + guide-derived lift change.
         frontal=max(0.0,min(1.0,(root.y+.010)/.060))
-        envelope=max(.036,min(.066,shell_len*.50+.024))
+        # C18 hybrid: fitted short03 carries dense bulk/occlusion; curves add only
+        # local fiber breakup and short flyaways.
+        envelope=max(.016,min(.030,shell_len*.26+.010))
         if frontal > .35:
-            envelope=min(envelope,.042)
-        under_lift=max(.004,min(.012,.004+shell_lift*.18))
-        style_lift=max(.010,min(.026,.010+shell_lift*.42))
+            envelope=min(envelope,.018)
+        under_lift=max(.0035,min(.008,.0035+shell_lift*.16))
+        style_lift=max(.005,min(.014,.005+shell_lift*.30))
 
         for k in range(strands_per_root):
             gx=k % 8
@@ -1058,19 +1060,21 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                 child_cross=tangent_cross.copy()
             child_cross.normalize()
 
-            undercoat=(k < 44)
+            undercoat=(k < 12)
             if undercoat:
-                length=rng.uniform(.024,.040)
-                lift=under_lift*rng.uniform(.90,1.10)
-                tip_clear=rng.uniform(.0010,.0020)
-                flow=(child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
-                amp=rng.uniform(.00020,.00065)
+                length=rng.uniform(.010,.018)
+                lift=under_lift*rng.uniform(.92,1.08)
+                tip_clear=rng.uniform(.0005,.0010)
+                flow=(child_flow + child_cross*rng.uniform(-.025,.025)).normalized()
+                amp=rng.uniform(.00010,.00032)
             else:
-                length=envelope*rng.uniform(.92,1.08)
+                length=envelope*rng.uniform(.90,1.06)
                 lift=style_lift*rng.uniform(.92,1.08)
-                tip_clear=rng.uniform(.0016,.0032)
-                flow=(child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
-                amp=rng.uniform(.00035,.00105)
+                tip_clear=rng.uniform(.0007,.0014)
+                flow=(child_flow + child_cross*rng.uniform(-.035,.035) + clump_bias*rng.uniform(.0005,.0025)).normalized()
+                amp=rng.uniform(.00018,.00048)
+            if root_j.y > .006:
+                length=min(length,.014)
 
             lateral=(child_cross + child_flow*rng.uniform(-.10,.10)).normalized()
             for j in range(points_per_curve):
@@ -1096,11 +1100,12 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         radius_attr=hair_data.attributes.new("radius",'FLOAT','POINT')
     radius_attr.data.foreach_set("value",radii)
 
-    groom=bpy.data.objects.new("DIGE_C17_STRAND_GROOM",hair_data)
+    groom=bpy.data.objects.new("DIGE_C18_HYBRID_STRANDS",hair_data)
     bpy.context.collection.objects.link(groom)
-    guide_obj.hide_render=True
+    # C18 hybrid keeps the fitted short03 mesh visible as dense bulk/occlusion.
+    guide_obj.hide_render=False
     try:
-        guide_obj.hide_set(True)
+        guide_obj.hide_set(False)
     except Exception:
         pass
 
@@ -1125,7 +1130,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "point_count":curve_count*points_per_curve,
         "root_radius_m":base_radius,
         "tip_radius_m":tip_radius,
-        "guide_mesh_rendered":False,
+        "guide_mesh_rendered":True,
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
@@ -1135,7 +1140,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "seed":20260920,
     }
 
-hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+hair_groom,hair_curve_metrics=build_c18_hybrid_groom(hair_obj,body,hair)
 strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
     "root_source":"SCALP_SURFACE_ROOTS_PLUS_OFFICIAL_SHORT03_UV_TEXTURE_FLOW_FIELD",
@@ -1147,7 +1152,7 @@ hair_surface_contract={
     "diffuse_sha256":hair_asset["diffuse"]["sha256"],
     "guide_vertices":hair_fit["vertices"],
     "guide_polygons":hair_fit["polygons"],
-    "mass_mesh_rendered":False,
+    "mass_mesh_rendered":True,
     "curve_count":hair_curve_metrics["curve_count"],
     "point_count":hair_curve_metrics["point_count"],
     "points_per_curve":hair_curve_metrics["points_per_curve"],
@@ -1161,7 +1166,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
+    "style":"HYBRID_SHORT03_BULK_PLUS_CURVES_C18_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1346,7 +1351,7 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C17_MATURE_STRAND_GROOM_OVER_C16_V1",
+ "appearance_candidate":"C18_HYBRID_BULK_STRAND_SKIN_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
