@@ -38,11 +38,11 @@ jobs:
           YAGNA_VERSION="$(yagna --version | awk '{print $2}')"
           echo "YAGNA_VERSION=$YAGNA_VERSION"
           python3 - "$YAGNA_VERSION" <<'PY'
-import sys
-parts = tuple(int(x) for x in sys.argv[1].split('.')[:3])
-if parts < (0, 17, 4):
-    raise SystemExit(f"Yagna {sys.argv[1]} is too old for Hoodi; require >=0.17.4")
-PY
+          import sys
+          parts = tuple(int(x) for x in sys.argv[1].split('.')[:3])
+          if parts < (0, 17, 4):
+              raise SystemExit(f"Yagna {sys.argv[1]} is too old for Hoodi; require >=0.17.4")
+          PY
 
       - name: Start bounded Yagna requestor
         shell: bash
