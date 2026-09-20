@@ -975,8 +975,11 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         root_coherences.append(fc)
         shell_lifts.append(shell_lift)
 
-    if len(root_guides) < 1200:
-        raise RuntimeError(f"C17.6 interpolated root field too sparse: {len(root_guides)} roots")
+    # C17.7 intentionally narrows the scalp mask to eliminate facial/forehead
+    # intrusion. With 64 strands/root, 350 valid scalp roots already yields
+    # >=22,400 rendered curves, so the old 1200-root gate became a false blocker.
+    if len(root_guides) < 350:
+        raise RuntimeError(f"C17.7 interpolated scalp field too sparse: {len(root_guides)} roots")
 
     points_per_curve=8
     strands_per_root=64
