@@ -41,8 +41,24 @@ def c25_bootstrap_mpfb2():
             "__package_short__":"mpfb",
             "__file__":str(Path(mpfb.__file__).resolve()),
         }
-    from mpfb.services import NodeService, LocationService
-    from mpfb.entities.material.enhancedskinmaterial import EnhancedSkinMaterial
+    # MPFB2 is normally loaded as a Blender Extension. In this headless pinned
+    # source integration it is intentionally not installed as an extension, so
+    # LocationService's extension_path_user lookup needs a scoped compatibility
+    # root during import. Restore Blender's original function immediately after
+    # the service singleton has been initialized.
+    _orig_extension_path_user=bpy.utils.extension_path_user
+    _c25_user_root=Path("/tmp/mpfb2-runtime-user")
+    _c25_user_root.mkdir(parents=True,exist_ok=True)
+    def _c25_extension_path_user(package,*args,**kwargs):
+        if package=="mpfb":
+            return str(_c25_user_root)
+        return _orig_extension_path_user(package,*args,**kwargs)
+    bpy.utils.extension_path_user=_c25_extension_path_user
+    try:
+        from mpfb.services import NodeService, LocationService
+        from mpfb.entities.material.enhancedskinmaterial import EnhancedSkinMaterial
+    finally:
+        bpy.utils.extension_path_user=_orig_extension_path_user
     return mpfb,NodeService,LocationService,EnhancedSkinMaterial
 
 def c25_apply_mpfb_enhanced_skin(material):
