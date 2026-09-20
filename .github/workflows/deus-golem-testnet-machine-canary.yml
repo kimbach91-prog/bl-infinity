@@ -22,13 +22,21 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install Yagna requestor
+      - name: Install Yagna requestor from official Golem Python package path
         shell: bash
         run: |
           set -euo pipefail
-          curl -sSf https://join.golem.network/as-requestor | bash -
+          python3 -m pip install --upgrade pip
+          python3 -m pip install golem-workers
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           echo "$HOME/.yagna/bin" >> "$GITHUB_PATH"
+          command -v yagna || {
+            python3 - <<'PY'
+import shutil, sys
+print("yagna_path=", shutil.which("yagna"))
+sys.exit(1)
+PY
+          }
 
       - name: Start Yagna
         shell: bash
