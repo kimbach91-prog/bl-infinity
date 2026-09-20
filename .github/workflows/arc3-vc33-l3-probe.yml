@@ -1,0 +1,97 @@
+name: ARC3 vc33 L3 live observation probe
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-l3-probe.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Enter L3 from DEUS rule-derived prefix and map live components/effects
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging
+          from collections import Counter
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def comps_all(a,min_area=2,max_area=400):
+              H,W=a.shape;seen=np.zeros((H,W),bool);out=[]
+              for y in range(H):
+                  for x in range(W):
+                      if seen[y,x]:continue
+                      color=int(a[y,x]);st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and not seen[ny,nx] and int(a[ny,nx])==color:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      n=len(pts)
+                      if min_area<=n<=max_area:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'color':color,'area':n,'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/n)),int(round(sum(ys)/n))],
+                                      'edge':min(xs)<=4 or max(xs)>=W-5 or min(ys)<=4 or max(ys)>=H-5})
+              return sorted(out,key=lambda z:(z['color'],z['bbox'][1],z['bbox'][0],z['area']))
+
+          def color9(o):
+              return [c for c in comps_all(fr(o),8,128) if c['color']==9]
+
+          def click(e,o,xy):
+              amap={a.value:a for a in e.action_space}
+              bef=fr(o);n=e.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])});aft=fr(n)
+              b=bef.copy();a=aft.copy();b[:2,:]=0;a[:2,:]=0
+              return n,int(np.count_nonzero(b!=a))
+
+          def prefix(e):
+              o=e.observation_space;b=color9(o)
+              t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o,_=click(e,o,t)
+                  if int(o.levels_completed)>=1:break
+              if int(o.levels_completed)<1:raise RuntimeError('L1_FAIL')
+              c=[x['center'] for x in color9(o)]
+              for role in ['F','F','F','E','F','E','F']:
+                  o,_=click(e,o,c[3] if role=='F' else c[1])
+                  if int(o.levels_completed)>=2:break
+              if int(o.levels_completed)<2:raise RuntimeError('L2_FAIL')
+              return o
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=arc.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if e is None:raise RuntimeError('ENV_UNAVAILABLE')
+          o=prefix(e);a=fr(o)
+          counts={str(int(c)):int((a==c).sum()) for c in np.unique(a)}
+          comps=comps_all(a,2,256)
+          # Probe only compact/edge-ish candidate components; preserve no-op outcomes too.
+          cands=[c for c in comps if c['edge'] and 4<=c['area']<=128 and c['bbox'][1]>=2]
+          effects=[]
+          for i,c in enumerate(cands[:80]):
+              ee=copy.deepcopy(e);oo=ee.observation_space
+              try:
+                  nn,ch=click(ee,oo,c['center'])
+                  effects.append({'i':i,'component':c,'changed_nohud':ch,
+                                  'level':int(nn.levels_completed),'state':nn.state.value,
+                                  'frame_sha256':hashlib.sha256(fr(nn).tobytes()).hexdigest()})
+              except Exception as ex:
+                  effects.append({'i':i,'component':c,'error':type(ex).__name__+':'+str(ex)[:120]})
+          rec={'game':'vc33','level':int(o.levels_completed),'state':o.state.value,
+               'shape':list(a.shape),'colors':counts,'components':comps,'candidate_effects':effects,
+               'available_actions':[int(x.value) if hasattr(x,'value') else int(x) for x in (o.available_actions or [])],
+               'frame_sha256':hashlib.sha256(a.tobytes()).hexdigest(),
+               'claim':'live observation/effect probe only; no L3 solve claim'}
+          print('VC33_L3_PROBE='+json.dumps(rec,separators=(',',':')))
+          PY
