@@ -1,0 +1,100 @@
+name: DEUS Central Golem Hoodi S0 Canary
+
+on:
+  push:
+    branches: ["deus/golem-central-testnet-canary-v1-20260920"]
+    paths:
+      - ".github/workflows/deus-central-golem-hoodi-s0.yml"
+      - "public-compute/golem-testnet-canary.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  golem-hoodi-s0:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      YAGNA_AUTOCONF_APPKEY: try_golem
+      YAGNA_APPKEY: try_golem
+    steps:
+      - name: Checkout exact public source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Install official Golem Workers/Yagna package path
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m pip install --disable-pip-version-check --no-input golem-workers
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.yagna/bin" >> "$GITHUB_PATH"
+          export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
+          python3 -m pip show golem-workers
+          command -v yagna
+          yagna --version
+
+      - name: Start bounded Yagna requestor
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
+          nohup yagna service run >/tmp/yagna.log 2>&1 &
+          echo $! >/tmp/yagna.pid
+          for i in $(seq 1 45); do
+            if yagna app-key list >/tmp/appkeys.txt 2>/dev/null; then
+              echo "YAGNA_READY"
+              cat /tmp/appkeys.txt
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "YAGNA_NOT_READY"
+          tail -n 120 /tmp/yagna.log || true
+          exit 1
+
+      - name: Initialize Hoodi sender and request testnet funds
+        shell: bash
+        run: |
+          set -euo pipefail
+          export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
+          yagna payment init --sender --network hoodi | tee /tmp/payment-init.log
+          timeout 120s yagna payment fund --network hoodi | tee /tmp/payment-fund.log
+          yagna payment status --network hoodi | tee /tmp/payment-status.log
+
+      - name: Install bounded Golem task client
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/deus-golem-central
+          mkdir -p /tmp/deus-golem-central
+          cd /tmp/deus-golem-central
+          npm init -y >/dev/null
+          npm install --no-audit --no-fund @golem-sdk/task-executor @golem-sdk/pino-logger
+          cp "$GITHUB_WORKSPACE/public-compute/golem-testnet-canary.mjs" ./canary.mjs
+
+      - name: Execute deterministic BL-S0 CANARY-A on Golem provider
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd /tmp/deus-golem-central
+          timeout 240s node ./canary.mjs 2>&1 | tee /tmp/deus-golem-canary.log
+          grep -q '"exact_match":true' /tmp/deus-golem-canary.log
+          grep -q '"payment_network":"hoodi"' /tmp/deus-golem-canary.log
+          grep -q '"real_money_spend_authorized":false' /tmp/deus-golem-canary.log
+          grep -q '"protected_core_exported":false' /tmp/deus-golem-canary.log
+          echo "DEUS_GOLEM_CENTRAL_CANARY_VERIFIED"
+
+      - name: Emit bounded failure diagnostics
+        if: failure()
+        shell: bash
+        run: |
+          echo "DEUS_GOLEM_CENTRAL_CANARY_FAILED"
+          test -f /tmp/yagna.log && tail -n 160 /tmp/yagna.log || true
+          test -f /tmp/payment-init.log && cat /tmp/payment-init.log || true
+          test -f /tmp/payment-fund.log && cat /tmp/payment-fund.log || true
+          test -f /tmp/payment-status.log && cat /tmp/payment-status.log || true
+          test -f /tmp/deus-golem-canary.log && tail -n 200 /tmp/deus-golem-canary.log || true
