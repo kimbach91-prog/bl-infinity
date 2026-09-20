@@ -1,0 +1,15 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "GPT-SITES-CLOUDRUN-CONTINUITY-DESIGN-20260920-002",
+  "data_class": "S0_PUBLIC",
+  "objective": "Return a compact production design for a Cloud Run continuity relay behind a website control UI. Website is UI only. Relay handles heartbeat, authenticated wake, idempotent job pickup and typed receipts; durable state stays external.",
+  "acceptance_criteria": [
+    "ROOT_CAUSE: one sentence under 180 chars explaining why UI/storage are not daemons.",
+    "WORKFLOW: exactly five numbered one-line steps; total under 900 chars; cover health, wake, idempotency, execute, verify receipt.",
+    "FALSIFIER: one sentence under 220 chars.",
+    "RISK: one sentence under 220 chars naming duplicate execution, stale receipt, unauthenticated wake, cold-state loss and false completion."
+  ],
+  "falsifier": "Reject if it treats website/file storage as a daemon, uses memory as durable truth, omits idempotency or receipt verification, or claims autonomous execution without an attributable request/scheduled wake.",
+  "max_output_chars": 1800,
+  "canonical_write": false
+}
