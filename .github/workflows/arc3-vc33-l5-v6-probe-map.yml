@@ -1,0 +1,219 @@
+name: ARC3 vc33 L5 v6 public effect probe map
+
+on:
+  push:
+    branches: [deus/arc3-vc33-l5-v6-probe-map-20260921]
+    paths: [.github/workflows/arc3-vc33-l5-v6-probe-map.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l5-probe-map:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Build public L5 effect map then search structural plus latent controls
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,logging,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          L3_PATH=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+          L4_PATH=[3,3,0,3,3,3,4,4,6,4,1,6,4,6,4,6,4,6,4,6,4]
+          OUT=Path('verification'); OUT.mkdir(exist_ok=True)
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[0,:]=0; a[-1,:]=0
+              return a
+          def key(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def delta_arr(a,b):
+              if a.shape!=b.shape:return 1.0
+              return float(np.mean(a!=b))
+          def comps_color(a,color,lo=1,hi=512):
+              m=(a==color); H,W=a.shape; seen=np.zeros_like(m,bool); out=[]
+              for y in range(H):
+                for x in range(W):
+                  if not m[y,x] or seen[y,x]:continue
+                  st=[(x,y)]; seen[y,x]=1; pts=[]
+                  while st:
+                    xx,yy=st.pop(); pts.append((xx,yy))
+                    for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                      if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                        seen[ny,nx]=1; st.append((nx,ny))
+                  if lo<=len(pts)<=hi:
+                    xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
+                    out.append({'color':int(color),'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return out
+          def brown(o): return sorted(comps_color(fr(o),9,4,32),key=lambda z:(z['bbox'][0],z['bbox'][1]))
+          def anchors(o):
+              z=[]
+              for c in comps_color(fr(o),1,8,128):
+                  if c['bbox'][1]>2 and c['bbox'][3]<61:z.append(c)
+              return sorted(z,key=lambda b:(b['center'][0],b['center'][1]))
+          def legacy_cands(o,A):
+              a=fr(o);z=[]
+              for i,b in enumerate(A):
+                  x,y=b['center'];z.append({'kind':'blue','anchor':i,'color':int(a[y,x]),'center':[x,y]})
+              for j,b in enumerate(brown(o)):z.append({'kind':'brown','brown_rank':j,'center':b['center']})
+              return z
+          def click(e,o,xy):
+              am={a.value:a for a in e.action_space}
+              try:return e.step(am[6],data={'x':int(xy[0]),'y':int(xy[1])})
+              except Exception:return None
+          def prefix(e):
+              o=e.observation_space
+              b=brown(o); t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                  o=click(e,o,t)
+                  if int(o.levels_completed)>=1:break
+              if int(o.levels_completed)<1:raise RuntimeError('L1_FAIL')
+              b=brown(o); cs=[x['center'] for x in b]; F=cs[3]; E=cs[1]
+              for r in ['F','F','F','E','F','E','F']:
+                  o=click(e,o,F if r=='F' else E)
+                  if int(o.levels_completed)>=2:break
+              if int(o.levels_completed)<2:raise RuntimeError('L2_FAIL')
+              for idx in L3_PATH:
+                  b=brown(o)
+                  if idx>=len(b):raise RuntimeError('L3_INDEX')
+                  o=click(e,o,b[idx]['center'])
+                  if int(o.levels_completed)>=3:break
+              if int(o.levels_completed)<3:raise RuntimeError('L3_FAIL')
+              A4=anchors(o)
+              for idx in L4_PATH:
+                  cc=legacy_cands(o,A4)
+                  if idx>=len(cc):raise RuntimeError('L4_INDEX')
+                  o=click(e,o,cc[idx]['center'])
+                  if int(o.levels_completed)>=4:break
+              if int(o.levels_completed)<4:raise RuntimeError('L4_FAIL')
+              return o
+
+          def structural_points(o):
+              a=fr(o); H,W=a.shape; pts=[]; seen=set()
+              colors=[int(x) for x in np.unique(a) if int(x)!=0]
+              for c in colors:
+                  for q in comps_color(a,c,1,512):
+                      x,y=q['center']; k=(x,y)
+                      if k not in seen:
+                          seen.add(k); pts.append({'xy':[x,y],'source':'component','color':c,'area':q['area']})
+              # Coarse lattice is public-frame probing, not source inspection.
+              for y in range(4,max(5,H-3),6):
+                  for x in range(4,max(5,W-3),6):
+                      k=(x,y)
+                      if k not in seen:
+                          seen.add(k); pts.append({'xy':[x,y],'source':'lattice','color':int(a[y,x]),'area':1})
+              return pts
+
+          def single_probe(base,o4,p):
+              ee=copy.deepcopy(base); before=norm(o4); nf=click(ee,o4,p['xy'])
+              if nf is None:return dict(p,valid=False,effect=-1.0,changed=0,level=4)
+              after=norm(nf); changed=int(np.count_nonzero(before!=after)) if before.shape==after.shape else int(after.size)
+              d=delta_arr(before,after); level=int(nf.levels_completed)
+              return dict(p,valid=True,effect=float(d),changed=changed,level=level,frame_hash=key(nf))
+
+          normal=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          base=normal.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if base is None:raise RuntimeError('ENV_UNAVAILABLE')
+          o4=prefix(base); base_frame=norm(o4)
+          raw=structural_points(o4); probes=[single_probe(base,o4,p) for p in raw]
+          immediate=[p for p in probes if p.get('level',4)>=5]
+          comp=[p for p in probes if p['source']=='component' and p.get('valid')]
+          effectful=sorted([p for p in probes if p.get('valid')],key=lambda p:(p.get('level',4),p.get('changed',0),p.get('effect',0.0)),reverse=True)
+          selected=[]; used=set()
+          # Preserve structural centers even when their first click is latent.
+          for p in comp[:24]+effectful[:24]:
+              k=tuple(p['xy'])
+              if k not in used:
+                  used.add(k); selected.append(p)
+              if len(selected)>=32:break
+          if not selected:raise RuntimeError('NO_PUBLIC_CANDIDATES')
+
+          if immediate:
+              found=[{'idx':selected.index(immediate[0]) if immediate[0] in selected else -1,'xy':immediate[0]['xy'],'repeat':1}]
+              found_env=copy.deepcopy(base); fo=click(found_env,o4,immediate[0]['xy'])
+              search_meta={'result':'FOUND_SINGLE_PROBE','probe_count':len(probes),'selected_count':len(selected),'expansions':1,'seconds':0.0}
+          else:
+              t0=time.monotonic(); ctr=itertools.count(); exp=latent=visible=trims=0; beam=9000; limit=180000
+              z=tuple(0 for _ in selected); heap=[(0.0,0,next(ctr),copy.deepcopy(base),o4,[],z,())]
+              seen={(key(o4),z,()):0}; found=None; found_env=None; fo=None; peak=1; best_base=0.0
+              macro_ids=[]
+              for i in range(len(selected)):
+                  for n in (1,2,3,5):macro_ids.append((i,n))
+              for i,j in itertools.permutations(range(min(12,len(selected))),2):macro_ids.append((i,j))
+              while heap and exp<limit and time.monotonic()-t0<900:
+                  pri,plen,_,e,o,path,counts,suffix=heapq.heappop(heap)
+                  if plen>20:continue
+                  ph=key(o); pa=norm(o)
+                  for m in macro_ids:
+                      if exp>=limit or time.monotonic()-t0>=900:break
+                      ee=copy.deepcopy(e); cur=o; seq=[]
+                      if isinstance(m[1],int) and len(m)==2 and m[0]<len(selected) and m[1] in (1,2,3,5):
+                          seq=[m[0]]*m[1]
+                      else:
+                          seq=[m[0],m[1]]
+                      valid=True; actual=[]
+                      for idx in seq:
+                          nf=click(ee,cur,selected[idx]['xy']); exp+=1
+                          if nf is None:valid=False;break
+                          cur=nf;actual.append(idx)
+                          if int(cur.levels_completed)>=5:break
+                          if getattr(cur.state,'value',str(cur.state)) in ('GAME_OVER','WIN'):break
+                      if not valid or not actual:continue
+                      npth=path+actual
+                      if int(cur.levels_completed)>=5:
+                          found=[{'idx':idx,'xy':selected[idx]['xy']} for idx in npth]; found_env=ee; fo=cur; break
+                      if getattr(cur.state,'value',str(cur.state)) in ('GAME_OVER','WIN'):continue
+                      nh=key(cur); na=norm(cur); step_d=delta_arr(pa,na); base_d=delta_arr(base_frame,na); best_base=max(best_base,base_d)
+                      cc=list(counts)
+                      for idx in actual:cc[idx]=min(9,cc[idx]+1)
+                      cc=tuple(cc); ns=(suffix+tuple(actual))[-5:]
+                      if nh==ph:latent+=1
+                      else:visible+=1
+                      sk=(nh,cc,ns)
+                      if len(npth)>=seen.get(sk,10**9):continue
+                      seen[sk]=len(npth)
+                      diversity=sum(1 for x in cc if x>0); total=sum(cc)
+                      score=(len(npth)*0.10)-(base_d*38.0)-(step_d*8.0)-(diversity*0.20)-(min(total,12)*0.05)
+                      heapq.heappush(heap,(score,len(npth),next(ctr),ee,cur,npth,cc,ns)); peak=max(peak,len(heap))
+                  if found is not None:break
+                  if len(heap)>beam*2:
+                      heap=heapq.nsmallest(beam,heap);heapq.heapify(heap);trims+=1
+              search_meta={'result':'FOUND' if found else 'MISS','probe_count':len(probes),'selected_count':len(selected),'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_edges':latent,'visible_edges':visible,'trims':trims,'best_level_start_delta':best_base}
+
+          diagnostic={'schema':'deus/arc3-vc33-l5-v6-probe-map/1','game':'vc33','levels_before':4,'probe_count':len(probes),'component_probe_count':len(comp),'selected':selected,'top_effects':effectful[:40],'search':search_meta,'path':found,'external_l5_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'independent_first_contact_claim':False,'rule_derived_claim':True}
+          (OUT/'search.json').write_text(json.dumps(diagnostic,indent=2)); print('VC33_L5_V6_SEARCH='+json.dumps(diagnostic,separators=(',',':')))
+          if not found:raise RuntimeError('L5_V6_NOT_FOUND')
+
+          online=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-l5-v6-probe-map.yml'
+          cid=online.open_scorecard(source_url=src,tags=['DEUS','vc33','l5-v6','probe-map','public-development'])
+          oe=online.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=prefix(oe); trace=[]
+          for n,item in enumerate(found,1):
+              before=norm(oo); oo=click(oe,oo,item['xy'])
+              if oo is None:raise RuntimeError('ONLINE_CLICK_FAIL_'+str(n))
+              trace.append({'step':n,'xy':item['xy'],'changed_pixels':int(np.count_nonzero(before!=norm(oo))),'level':int(oo.levels_completed)})
+              if int(oo.levels_completed)>=5:break
+          card=online.close_scorecard(cid); passed=int(oo.levels_completed)>=5
+          rec={'schema':'deus/arc3-vc33-l5-v6-probe-map/1','result':'PASS' if passed else 'FAIL','game':'vc33','levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),'state':getattr(oo.state,'value',str(oo.state)),'scorecard_id':cid,'scorecard_score':None if card is None else card.score,'l5_path':found,'online_trace':trace,'search':search_meta,'protocol':'PUBLIC_RULE_DERIVED_L5_EFFECT_PROBE_MAP_V6','representation_delta':'broad public-frame component+lattice effect probing, structural candidates retained even if first click is latent, then latent-count/suffix beam search','external_full_route_used':False,'external_l5_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          (OUT/'receipt.json').write_text(json.dumps(rec,indent=2)); print('VC33_L5_V6_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed:raise RuntimeError('L5_V6_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-l5-v6-probe-map
+          path: verification/
+          retention-days: 30
