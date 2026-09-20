@@ -1,0 +1,71 @@
+name: ARC3 Flash-Next 3.40 baseline static validation
+
+on:
+  push:
+    branches: [deus/arc3-kaggle-rank-climb-20260921]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340/**
+      - .github/workflows/arc3-flash340-static-validate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Validate vendored notebook and candidate identity
+        run: |
+          python - <<'PY'
+          import ast, hashlib, json
+          from pathlib import Path
+
+          root=Path('public_benchmark/arc3/kaggle_candidates/flash_next_340')
+          nb_path=root/'arc-agi-flash-next-mtp.ipynb'
+          raw=nb_path.read_bytes()
+          nb=json.loads(raw)
+          assert nb.get('nbformat')==4
+          code=[c for c in nb.get('cells',[]) if c.get('cell_type')=='code']
+          assert code
+          text='\n'.join(''.join(c.get('source',[])) if isinstance(c.get('source'),list) else str(c.get('source','')) for c in nb['cells'])
+          required=[
+            'RadixArk/Qwen3.8-Flash-Next-NVFP4',
+            'KAGGLE_IS_COMPETITION_RERUN',
+            'submission.parquet',
+            'TRUE_SUBMISSION',
+          ]
+          missing=[x for x in required if x not in text]
+          assert not missing, missing
+          compiled=0
+          for i,c in enumerate(code):
+            src=''.join(c.get('source',[])) if isinstance(c.get('source'),list) else str(c.get('source',''))
+            compile(src,f'cell-{i}','exec',flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+            compiled+=1
+          lic=(root/'UPSTREAM_LICENSE.txt').read_text()
+          assert 'MIT License' in lic and 'Copyright (c) 2026 Izukia' in lic
+          rec={
+            'schema':'deus/arc3-kaggle-candidate-static/1',
+            'candidate':'flash-next-mtp-upstream-340',
+            'notebook_sha256':hashlib.sha256(raw).hexdigest(),
+            'code_cells_compiled':compiled,
+            'required_markers':required,
+            'license':'MIT',
+            'source_commit':'f1b15a9af41f2557ed564ba01e11568456dd4f27',
+            'upstream_recorded_public_score':3.40,
+            'upstream_submission_id':'56170646',
+            'deus_user_score_claim':False,
+            'gpu_execution_claim':False,
+            'submission_claim':False,
+          }
+          Path('flash340-static-receipt.json').write_text(json.dumps(rec,indent=2))
+          print('FLASH340_STATIC_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flash340-static-receipt
+          path: flash340-static-receipt.json
+          retention-days: 30
