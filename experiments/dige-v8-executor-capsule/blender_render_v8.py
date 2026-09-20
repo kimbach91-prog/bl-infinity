@@ -1,4 +1,4 @@
-import bpy, bmesh, math, json, hashlib, random, os
+import bpy, bmesh, math, json, hashlib, random, os, sys
 import numpy as np
 from pathlib import Path
 from mathutils import Vector
@@ -23,6 +23,127 @@ def set_input(node,name,val):
     s=node.inputs.get(name)
     if s is not None:
         s.default_value=val
+
+def c25_bootstrap_mpfb2():
+    if not C25_MATURE_STACK:
+        return None
+    if not C25_MPFB2_SRC:
+        raise RuntimeError("C25 requires DIGE_MPFB2_SRC")
+    src=Path(C25_MPFB2_SRC).resolve()
+    if not src.exists():
+        raise RuntimeError(f"C25 MPFB2 source missing: {src}")
+    if str(src) not in sys.path:
+        sys.path.insert(0,str(src))
+    import mpfb
+    if getattr(mpfb,"MPFB_CONTEXTUAL_INFORMATION",None) is None:
+        mpfb.MPFB_CONTEXTUAL_INFORMATION={
+            "__package__":"mpfb",
+            "__package_short__":"mpfb",
+            "__file__":str(Path(mpfb.__file__).resolve()),
+        }
+    from mpfb.services import NodeService, LocationService
+    from mpfb.entities.material.enhancedskinmaterial import EnhancedSkinMaterial
+    return mpfb,NodeService,LocationService,EnhancedSkinMaterial
+
+def c25_apply_mpfb_enhanced_skin(material):
+    boot=c25_bootstrap_mpfb2()
+    if boot is None:
+        return {"enabled":False}
+    mpfb,NodeService,LocationService,EnhancedSkinMaterial=boot
+    if not C25_MHMAT_PATH:
+        raise RuntimeError("C25 requires DIGE_C25_MHMAT_PATH")
+    mhmat=Path(C25_MHMAT_PATH)
+    if not mhmat.is_absolute():
+        mhmat=ROOT/mhmat
+    if not mhmat.exists():
+        raise RuntimeError(f"C25 MHMAT missing: {mhmat}")
+    enhanced=EnhancedSkinMaterial({"skin_material_type":"ENHANCED_SSS","scale_factor":"METER"})
+    enhanced.populate_from_mhmat(str(mhmat))
+    enhanced.apply_node_tree(material,group_name="DIGE_C25_MPFB_ENHANCED_SKIN")
+    group=NodeService.find_first_node_by_type_name(material.node_tree,"ShaderNodeGroup")
+    if group is None:
+        raise RuntimeError("C25 MPFB enhanced skin group missing after apply")
+    # Official MPFB2 enhanced_settings.default.json body values at pinned source.
+    settings={
+        "Brightness":0.0,
+        "Clearcoat":0.10,
+        "Clearcoat Roughness":0.30,
+        "Contrast":0.0,
+        "Pore detail":2.0,
+        "Pore distortion":1.0,
+        "Pore scale":2500.0,
+        "Pore strength":0.20,
+        "Roughness":0.45,
+        "colorMixIn":(1.0,0.2,0.2,1.0),
+        "colorMixInStrength":0.05,
+    }
+    NodeService.set_socket_default_values(group,settings)
+    values=NodeService.get_socket_default_values(group)
+    for key in ("Pore detail","Pore scale","Pore strength","Roughness"):
+        if key not in values:
+            raise RuntimeError(f"C25 MPFB skin missing socket {key}")
+    return {
+        "enabled":True,
+        "source":"makehumancommunity/mpfb2",
+        "commit":C25_MPFB2_COMMIT or None,
+        "material_model":"ENHANCED_SSS",
+        "mhmat_file":mhmat.name,
+        "group_name":group.name,
+        "settings":{k:values.get(k) for k in settings},
+    }
+
+def c25_apply_mpfb_procedural_eyes(material):
+    boot=c25_bootstrap_mpfb2()
+    if boot is None:
+        return {"enabled":False}
+    mpfb,NodeService,LocationService,EnhancedSkinMaterial=boot
+    p=Path(LocationService.get_mpfb_data("node_trees"))/"procedural_eyes.json"
+    if not p.exists():
+        raise RuntimeError(f"C25 procedural eyes node tree missing: {p}")
+    node_tree_dict=json.loads(p.read_text(encoding="utf-8"))
+    NodeService.apply_node_tree_from_dict(material.node_tree,node_tree_dict,True)
+    group=NodeService.find_first_node_by_type_name(material.node_tree,"ShaderNodeGroup")
+    if group is None:
+        raise RuntimeError("C25 procedural eye group missing after apply")
+    # Official MPFB2 eye_settings.default.json with only iris hues shifted to a
+    # neutral brown; physical outer-layer values remain official defaults.
+    settings={
+        "Clearcoat":0.40,
+        "Clearcoat Roughness":0.0,
+        "EyeWhiteColor":(0.94,0.92,0.90,1.0),
+        "InnerLayerRoughness":0.05,
+        "IrisBumpStrength":0.30,
+        "IrisClockwiseMult":3.5,
+        "IrisFeatureScale":16.9,
+        "IrisMajorColor":(0.16,0.055,0.018,1.0),
+        "IrisMinorColor":(0.055,0.018,0.008,1.0),
+        "IrisRadialMult":0.30,
+        "IrisSection1End":0.10,
+        "IrisSection2End":0.80,
+        "IrisSection3End":0.85,
+        "IrisSection4Color":(0.020,0.010,0.006,1.0),
+        "IrisToEyeWhiteRelation":0.39,
+        "OuterLayerAlpha":1.0,
+        "OuterLayerColor":(1.0,1.0,1.0,1.0),
+        "OuterLayerIOR":1.33,
+        "OuterLayerRoughness":0.0,
+        "OuterLayerTransmission":1.0,
+        "PupilColor":(0.0,0.0,0.0,1.0),
+        "PupilSize":0.30,
+    }
+    NodeService.set_socket_default_values(group,settings)
+    values=NodeService.get_socket_default_values(group)
+    for key in ("IrisBumpStrength","IrisToEyeWhiteRelation","OuterLayerIOR","OuterLayerTransmission","PupilSize"):
+        if key not in values:
+            raise RuntimeError(f"C25 MPFB eye missing socket {key}")
+    return {
+        "enabled":True,
+        "source":"makehumancommunity/mpfb2",
+        "commit":C25_MPFB2_COMMIT or None,
+        "material_model":"PROCEDURAL_EYES",
+        "group_name":group.name,
+        "settings":{k:values.get(k) for k in settings},
+    }
 
 SKIN_SSS_WEIGHT=float(os.environ.get("DIGE_SKIN_SSS_WEIGHT","0.35"))
 SKIN_SSS_SCALE=float(os.environ.get("DIGE_SKIN_SSS_SCALE","0.0025"))
@@ -64,6 +185,11 @@ C23_HAIRLINE_REPAIR=os.environ.get("DIGE_C23_HAIRLINE_REPAIR","0").strip()=="1"
 C24_SURFACE_EYES=os.environ.get("DIGE_C24_SURFACE_EYES","0").strip()=="1"
 C24_SOURCE_ALBEDO=os.environ.get("DIGE_C24_SOURCE_ALBEDO","0").strip()=="1"
 C24_HAIRLINE_REPAIR=os.environ.get("DIGE_C24_HAIRLINE_REPAIR","0").strip()=="1"
+C25_MATURE_STACK=os.environ.get("DIGE_C25_MATURE_STACK","0").strip()=="1"
+C25_MPFB2_SRC=os.environ.get("DIGE_MPFB2_SRC","").strip()
+C25_MPFB2_COMMIT=os.environ.get("DIGE_MPFB2_COMMIT","").strip()
+C25_MHMAT_PATH=os.environ.get("DIGE_C25_MHMAT_PATH","").strip()
+C25_GROOM_CLIP=os.environ.get("DIGE_C25_GROOM_CLIP","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -501,6 +627,14 @@ body=imported_meshes[0]
 body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
+c25_mpfb_skin={"enabled":False}
+if C25_MATURE_STACK:
+    c25_mpfb_skin=c25_apply_mpfb_enhanced_skin(skin)
+    skin_asset.update({
+        "c25_mpfb2_enhanced":True,
+        "c25_mpfb2_commit":C25_MPFB2_COMMIT or None,
+        "c25_mpfb2_material_model":"ENHANCED_SSS",
+    })
 
 # Hard orientation gate before any cosmetic layer can hide an ingestion error.
 bbox_world=[body.matrix_world @ Vector(corner) for corner in body.bound_box]
@@ -625,7 +759,7 @@ for v in body.data.vertices:
         s=1.0-(1.0-craniofacial_deform["jaw_x_scale"])*jaw_w
         co.x *= s
 
-sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
+sub=body.modifiers.new("DIGE_V8_SUBDIV","SUBSURF"); sub.levels=2 if C25_MATURE_STACK else 1; sub.render_levels=3 if C25_MATURE_STACK else 2
 # Preserve topology metrics before subdivision
 bm=bmesh.new(); bm.from_mesh(body.data)
 nonmanifold=sum(1 for e in bm.edges if not e.is_manifold)
@@ -679,6 +813,9 @@ eye_obj,eye_fit=fit_mhclo_asset(
     fit_vertices,eye_mat,eye_asset,
 )
 system_asset_fits["high_poly_eyes"]=eye_fit
+c25_mpfb_eyes={"enabled":False}
+if C25_MATURE_STACK:
+    c25_mpfb_eyes=c25_apply_mpfb_procedural_eyes(eye_mat)
 
 # C23 root-cause replacement for the eye interface. C22 human audit showed that
 # the fitted high-poly eye asset remained visibly asymmetric/occluded. Keep it
@@ -686,7 +823,7 @@ system_asset_fits["high_poly_eyes"]=eye_fit
 # landmarks so both globes/irises share one deterministic geometric contract.
 c23_eye_count=0
 c23_eye_contract=[]
-if C23_CALIBRATED_EYES and not C24_SURFACE_EYES:
+if C23_CALIBRATED_EYES and not C24_SURFACE_EYES and not C25_MATURE_STACK:
     eye_obj.hide_render=True
     try:
         eye_obj.hide_set(True)
@@ -714,7 +851,7 @@ if C23_CALIBRATED_EYES and not C24_SURFACE_EYES:
 c24_eye_count=0
 c24_eye_contract=[]
 c24_lid_curve_count=0
-if C24_SURFACE_EYES:
+if C24_SURFACE_EYES and not C25_MATURE_STACK:
     eye_obj.hide_render=True
     try:
         eye_obj.hide_set(True)
@@ -896,7 +1033,7 @@ if C22_LANDMARK_GROOM and not C23_CALIBRATED_EYES:
 
 # C23 landmark fibers are rebuilt after replacing the eye globes so their placement
 # follows the live eye centers instead of C21/C22 hard-coded positions.
-if C23_CALIBRATED_EYES:
+if C23_CALIBRATED_EYES and not C25_MATURE_STACK:
     frng=random.Random(20262323)
     brow_fibers=[]
     lash_fibers=[]
@@ -1026,10 +1163,48 @@ hair_obj,hair_fit=fit_mhclo_asset(
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
+# C25 mature groom cleanup: retain the official fitted short03 bulk and its authored
+# UV flow, but remove only the low forward fringe polygons that C20-C24 proved
+# occlude the eye/temple region. Then perform one bounded frontal placement pass.
+c25_removed_fringe_faces=0
+c25_hairline_warp_vertices=0
+if C25_MATURE_STACK and C25_GROOM_CLIP:
+    bm=bmesh.new(); bm.from_mesh(hair_obj.data)
+    remove=[]
+    for face in bm.faces:
+        wc=hair_obj.matrix_world @ face.calc_center_median()
+        if wc.y > .010 and wc.z < 1.615 and abs(wc.x) < .112:
+            remove.append(face)
+    c25_removed_fringe_faces=len(remove)
+    if remove:
+        bmesh.ops.delete(bm,geom=remove,context='FACES')
+    bm.to_mesh(hair_obj.data); bm.free(); hair_obj.data.update()
+
+    for v in hair_obj.data.vertices:
+        p=v.co
+        wp=hair_obj.matrix_world @ p
+        if wp.y <= -.025 or wp.z < 1.590 or wp.z > 1.690 or abs(wp.x) > .112:
+            continue
+        central=max(0.0,1.0-abs(wp.x)/.112)
+        front=max(0.0,min(1.0,(wp.y+.025)/.080))
+        upper_guard=max(0.0,min(1.0,(1.690-wp.z)/.100))
+        w=(central**1.35)*(front**1.10)*upper_guard
+        if w<=0:
+            continue
+        p.z -= .030*w
+        p.y += .003*w
+        c25_hairline_warp_vertices+=1
+    hair_obj.data.update()
+    pts=[hair_obj.matrix_world @ v.co for v in hair_obj.data.vertices]
+    hair_fit["c25_removed_fringe_faces"]=c25_removed_fringe_faces
+    hair_fit["c25_hairline_warp_vertices"]=c25_hairline_warp_vertices
+    hair_fit["c25_postwarp_bbox_min"]=[min(p[i] for p in pts) for i in range(3)]
+    hair_fit["c25_postwarp_bbox_max"]=[max(p[i] for p in pts) for i in range(3)]
+
 # C24 frontal mass placement. C23 still left a visibly oversized forehead.
 # This pass is bounded to the forward short03 shell and lowers center more than temples.
 c24_hairline_warp_vertices=0
-if C24_HAIRLINE_REPAIR:
+if C24_HAIRLINE_REPAIR and not C25_MATURE_STACK:
     for v in hair_obj.data.vertices:
         p=v.co
         if p.y <= -.045 or p.z < 1.555 or p.z > 1.695 or abs(p.x) > .118:
@@ -1656,7 +1831,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))),
+    "style":"MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1857,14 +2032,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C24_SURFACE_EYES_SOURCE_ALBEDO_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_CALIBRATED_EYES_HAIRLINE_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1")))))),
+ "appearance_candidate":"C25_MPFB2_ENHANCED_MATURE_STACK_V1" if C25_MATURE_STACK else ("C24_SURFACE_EYES_SOURCE_ALBEDO_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_CALIBRATED_EYES_HAIRLINE_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"))))))),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C24_AFTER_C23_VISUAL_FAIL: EYE_APERTURES_CALIBRATED_TO_ACTUAL_FACE_SURFACE + SOURCE_ALBEDO_PRESERVED_WITH_MINIMAL_TINT + STRONGER_BOUNDED_FRONTAL_SHORT03_PLACEMENT; PRESERVE_OBJECT_METER_SKIN" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_AFTER_C22_VISUAL_FAIL: REPLACE_MISFITTING_HIGH_POLY_EYE_ASSET_WITH_CALIBRATED_LANDMARK_EYES + STRONGER_FRONTAL_BULK_HAIRLINE_PLACEMENT + LANDMARK_BROW_LASH_FIBERS + TARGETED_FACE_PLANES; PRESERVE_OBJECT_METER_SKIN" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB")))))),
+   "selection_basis":"C25_AFTER_C24_STOP_RULE: OFFICIAL_MPFB2_ENHANCED_SSS_AND_PROCEDURAL_EYES + ORIGINAL_CC0_SOURCE_ALBEDO + CURATED_SHORT03_FRINGE_REMOVAL + SINGLE_BOUNDED_HAIRLINE_PLACEMENT; NO_PARAMETER_SWEEP" if C25_MATURE_STACK else ("C24_AFTER_C23_VISUAL_FAIL: EYE_APERTURES_CALIBRATED_TO_ACTUAL_FACE_SURFACE + SOURCE_ALBEDO_PRESERVED_WITH_MINIMAL_TINT + STRONGER_BOUNDED_FRONTAL_SHORT03_PLACEMENT; PRESERVE_OBJECT_METER_SKIN" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_AFTER_C22_VISUAL_FAIL: REPLACE_MISFITTING_HIGH_POLY_EYE_ASSET_WITH_CALIBRATED_LANDMARK_EYES + STRONGER_FRONTAL_BULK_HAIRLINE_PLACEMENT + LANDMARK_BROW_LASH_FIBERS + TARGETED_FACE_PLANES; PRESERVE_OBJECT_METER_SKIN" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"))))))),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1916,12 +2091,19 @@ receipt={
    "c24_eye_count":c24_eye_count,
    "c24_eye_contract":c24_eye_contract,
    "c24_lid_curve_count":c24_lid_curve_count,
-   "c24_hairline_warp_vertices":c24_hairline_warp_vertices
+   "c24_hairline_warp_vertices":c24_hairline_warp_vertices,
+   "c25_mature_stack":C25_MATURE_STACK,
+   "c25_mpfb2_commit":C25_MPFB2_COMMIT or None,
+   "c25_mpfb_skin":c25_mpfb_skin,
+   "c25_mpfb_eyes":c25_mpfb_eyes,
+   "c25_groom_clip":C25_GROOM_CLIP,
+   "c25_removed_fringe_faces":c25_removed_fringe_faces,
+   "c25_hairline_warp_vertices":c25_hairline_warp_vertices
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_albedo":skin_asset,
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[SKIN_MESO_FREQ,SKIN_PORE_FREQ,SKIN_MICRO_FREQ],"bump_distance":SKIN_BUMP_DISTANCE,"coat_weight":SKIN_COAT_WEIGHT,"coat_roughness":SKIN_COAT_ROUGHNESS,"coordinate_space":skin_asset.get("coordinate_space")},
+ "skin_model":{"subsurface_method":"MPFB2_ENHANCED_SSS" if C25_MATURE_STACK else "RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT if not C25_MATURE_STACK else None,"subsurface_scale":SKIN_SSS_SCALE if not C25_MATURE_STACK else None,"subsurface_anisotropy":SKIN_SSS_ANISO if not C25_MATURE_STACK else None,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX] if not C25_MATURE_STACK else None,"micro_bump_scales":[SKIN_MESO_FREQ,SKIN_PORE_FREQ,SKIN_MICRO_FREQ] if not C25_MATURE_STACK else None,"bump_distance":SKIN_BUMP_DISTANCE if not C25_MATURE_STACK else None,"coat_weight":SKIN_COAT_WEIGHT if not C25_MATURE_STACK else None,"coat_roughness":SKIN_COAT_ROUGHNESS if not C25_MATURE_STACK else None,"coordinate_space":skin_asset.get("coordinate_space"),"c25_mpfb2":c25_mpfb_skin},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "hair_curve_metrics":hair_curve_metrics,
