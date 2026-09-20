@@ -265,7 +265,7 @@ jobs:
           cp research/human-development/kevin-nt/studio/index.html _site/research/human-development/kevin-nt/studio/
           cp deus/index.html deus/styles.css deus/app.js _site/deus/
           cp BL-CF/CONSTITUTION.md BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md _site/BL-CF/
-          cp public-compute/webgpu-s0.html public-compute/gate.html public-compute/gate-manifest.json public-compute/worker-discovery.json public-compute/deus-worker-offer.schema.json public-compute/deus-worker-result.schema.json _site/public-compute/
+          cp public-compute/webgpu-s0.html public-compute/gate.html public-compute/gate-manifest.json public-compute/worker-discovery.json public-compute/deus-worker-offer.schema.json public-compute/deus-worker-result.schema.json public-compute/worker-task-feed.json _site/public-compute/
           cp .well-known/deus-worker-gate.json _site/.well-known/
 
       - name: Assert public books, research studio and protected-core boundary
@@ -303,9 +303,12 @@ jobs:
           test -f _site/public-compute/worker-discovery.json
           test -f _site/public-compute/deus-worker-offer.schema.json
           test -f _site/public-compute/deus-worker-result.schema.json
+          test -f _site/public-compute/worker-task-feed.json
           test -f _site/.well-known/deus-worker-gate.json
           grep -q 'deus-machine-worker-gate/1' _site/public-compute/worker-discovery.json
           grep -q '"core_primary_solver": true' _site/public-compute/worker-discovery.json
+          grep -q 'deus-worker-task-feed/1' _site/public-compute/worker-task-feed.json
+          grep -q 'CANARY-A' _site/public-compute/worker-task-feed.json
           grep -q '"outer_gpt_llm_complexity_ceiling": "BOUNDED_LEAF_ONLY"' _site/.well-known/deus-worker-gate.json
           grep -q 'deus-worker-offer/1' _site/public-compute/deus-worker-offer.schema.json
           grep -q 'deus-worker-result/1' _site/public-compute/deus-worker-result.schema.json
