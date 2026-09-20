@@ -1,0 +1,173 @@
+name: ARC3 g50t L2 v6 bootstrap search
+
+on:
+  push:
+    branches: [deus/arc3-g50t-l2-v6-bootstrap-20260921-0600]
+    paths: [.github/workflows/arc3-g50t-l2-v6-bootstrap.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 32
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        variant: [effect,phase,rle]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay prior verified L1 then fresh public-observation L2 search
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME='g50t'; VARIANT=os.environ['VARIANT']; OUT=Path('verification'); OUT.mkdir(exist_ok=True)
+          L1=[4,4,4,4,4,5,2,2,2,2,2,2,2,2,2,4,4,4,4,4]
+          CFG={
+            'effect':{'repeats':(1,2,3,5,8,13,21,34,55),'beam':8000,'seconds':420,'max_exp':360000,'latent':12,'suffix':6,'base_w':44.0,'step_w':10.0},
+            'phase': {'repeats':(1,2,3,4,5,6,8,10,13,16,21,34),'beam':9000,'seconds':420,'max_exp':380000,'latent':16,'suffix':10,'base_w':34.0,'step_w':7.0},
+            'rle':   {'repeats':(1,2,3,5,7,11,17,23,31,47),'beam':10000,'seconds':420,'max_exp':400000,'latent':18,'suffix':8,'base_w':28.0,'step_w':5.0},
+          }[VARIANT]
+          ACTS=(1,2,3,4,5)
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:a[:2,:]=0;a[-2:,:]=0
+              return a
+          def fh(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def delta(a,b):
+              if a.shape!=b.shape:return 1.0
+              return float(np.mean(a!=b))
+          def bboxfrac(a,b):
+              if a.shape!=b.shape:return 1.0
+              ys,xs=np.where(a!=b)
+              if len(xs)==0:return 0.0
+              return float((xs.max()-xs.min()+1)*(ys.max()-ys.min()+1))/float(a.size)
+          def aids(o):
+              z=[]
+              for a in (getattr(o,'available_actions',None) or []):
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in z:z.append(v)
+              return z
+          def step(e,aid):
+              am={a.value:a for a in e.action_space}
+              if aid not in am:return None
+              try:return e.step(am[aid],data=None)
+              except Exception:return None
+          def apply(e,seq,target=None):
+              o=e.observation_space
+              for a in seq:
+                  o=step(e,a)
+                  if o is None:return None
+                  if target is not None and int(o.levels_completed)>=target:return o
+              return o
+          def macros(o):
+              ks=[a for a in aids(o) if a in ACTS]; out=[]
+              for a in ks:
+                  for n in CFG['repeats']:out.append((a,)*n)
+              for a,b in itertools.permutations(ks,2):
+                  if VARIANT=='effect':out += [(a,b),(a,b,a,b),(a,a,a,b),(a,b,b),(a,a,a,a,a,b)]
+                  elif VARIANT=='phase':out += [(a,b),(a,b,a),(a,b,a,b),(a,a,b),(a,b,b),(a,a,a,b,b),(a,b,b,b,a)]
+                  else:out += [(a,b),(a,a,b),(a,b,b),(a,a,a,b),(a,b,b,b),(a,a,b,b),(a,b,a,b)]
+              if VARIANT=='phase':
+                  for a,b,c in itertools.permutations(ks,3):out += [(a,b,c),(a,a,b,c),(a,b,b,c)]
+              return out
+          def run_macro(e,o,m,start):
+              cur=o; used=[]
+              for a in m:
+                  cur=step(e,a)
+                  if cur is None:return None,used,False
+                  used.append(a)
+                  if int(cur.levels_completed)>start:return cur,used,True
+                  if getattr(cur.state,'value',str(cur.state)) in ('GAME_OVER','WIN'):break
+              return cur,used,int(cur.levels_completed)>start
+
+          def search(e0,o0):
+              start=int(o0.levels_completed); base=norm(o0); t0=time.monotonic(); ctr=itertools.count(); exp=trials=latent=visible=trims=0
+              idx={a:i for i,a in enumerate(ACTS)}; z=(0,)*len(ACTS)
+              heap=[(0.0,0,next(ctr),copy.deepcopy(e0),o0,[],z,(),0)]
+              seen={(fh(o0),z,()):0}; peak=1; best_base=0.0; best_box=0.0
+              while heap and exp<CFG['max_exp'] and time.monotonic()-t0<CFG['seconds']:
+                  pri,plen,_,e,o,path,counts,suffix,chain=heapq.heappop(heap)
+                  if plen>520:continue
+                  ph=fh(o); pa=norm(o)
+                  for m in macros(o):
+                      if exp>=CFG['max_exp'] or time.monotonic()-t0>=CFG['seconds']:break
+                      ee=copy.deepcopy(e); nf,used,won=run_macro(ee,o,m,start); exp+=len(used);trials+=1
+                      if nf is None or not used:continue
+                      npth=path+used
+                      if won:
+                          return npth,{'result':'FOUND','variant':VARIANT,'expansions':exp,'macro_trials':trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent,'visible_macros':visible,'trims':trims,'best_level_start_delta':best_base,'best_bbox_fraction':best_box}
+                      if getattr(nf.state,'value',str(nf.state)) in ('GAME_OVER','WIN'):continue
+                      na=norm(nf); nh=fh(nf); sd=delta(pa,na); bd=delta(base,na); bb=bboxfrac(base,na); best_base=max(best_base,bd);best_box=max(best_box,bb)
+                      cc=list(counts)
+                      for a in used:cc[idx[a]]=min(63,cc[idx[a]]+1)
+                      cc=tuple(cc)
+                      ns=(suffix+tuple(used))[-CFG['suffix']:]
+                      if nh==ph:
+                          latent+=1; nc=chain+1
+                          if nc>CFG['latent']:continue
+                      else:
+                          visible+=1; nc=0
+                      if VARIANT=='rle': sk=(nh,tuple(x%16 for x in cc),ns)
+                      elif VARIANT=='phase': sk=(nh,tuple(min(31,x) for x in cc),ns)
+                      else: sk=(nh,tuple(min(15,x) for x in cc),ns[-4:])
+                      if len(npth)>=seen.get(sk,10**9):continue
+                      seen[sk]=len(npth)
+                      diversity=sum(1 for x in cc if x); phase_bonus=0.035*len(set(ns)); count_bonus=0.0015*sum(cc)
+                      score=(len(npth)*0.010)+(nc*0.30)-(bd*CFG['base_w'])-(sd*CFG['step_w'])-(bb*7.0)-(diversity*0.08)-phase_bonus-count_bonus
+                      heapq.heappush(heap,(score,len(npth),next(ctr),ee,nf,npth,cc,ns,nc));peak=max(peak,len(heap))
+                  if len(heap)>CFG['beam']*2:
+                      heap=heapq.nsmallest(CFG['beam'],heap);heapq.heapify(heap);trims+=1
+              return None,{'result':'MISS','variant':VARIANT,'expansions':exp,'macro_trials':trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent,'visible_macros':visible,'trims':trims,'best_level_start_delta':best_base,'best_bbox_fraction':best_box}
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('ENV_UNAVAILABLE')
+          o1=apply(env,L1,target=1)
+          if o1 is None or int(o1.levels_completed)<1:raise RuntimeError('PRIOR_L1_REPLAY_FAILED')
+          l1_used=len(L1)
+          path,meta=search(env,o1)
+          diagnostic={'schema':'deus/arc3-g50t-l2-v6-bootstrap/1','game':GAME,'variant':VARIANT,'prior_l1_route_used':True,'prior_l1_origin_run':'35534430888','prior_l1_route_sha256':hashlib.sha256(json.dumps([[a,None] for a in L1],separators=(',',':')).encode()).hexdigest(),'l2_search':meta,'l2_path':path,'independent_first_contact_claim':False,'post_l1_observation_search_claim':True,'external_l2_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False}
+          (OUT/'search.json').write_text(json.dumps(diagnostic,indent=2));print('G50T_L2_V6_SEARCH='+json.dumps(diagnostic,separators=(',',':')))
+          if path is None:raise RuntimeError('L2_NOT_FOUND')
+
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-g50t-l2-v6-bootstrap.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','g50t','l2-v6',VARIANT,'prior-l1-bootstrap','public-development'])
+          oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=apply(oe,L1,target=1)
+          if oo is None or int(oo.levels_completed)<1:raise RuntimeError('ONLINE_L1_REPLAY_FAILED')
+          used=0
+          for a in path:
+              oo=step(oe,a);used+=1
+              if oo is None:raise RuntimeError('ONLINE_L2_STEP_FAILED')
+              if int(oo.levels_completed)>=2:break
+          card=oa.close_scorecard(cid);passed=int(oo.levels_completed)>=2
+          rec={'schema':'deus/arc3-g50t-l2-v6-bootstrap/1','result':'PASS' if passed else 'FAIL','game':GAME,'variant':VARIANT,'levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),'state':getattr(oo.state,'value',str(oo.state)),'scorecard_id':cid,'scorecard_score':None if card is None else card.score,'l1_actions':l1_used,'l2_actions':used,'l2_path':path,'l2_search':meta,'protocol':'PUBLIC_PRIOR_L1_BOOTSTRAP_FRESH_L2_OBSERVATION_SEARCH_V6','prior_l1_route_used':True,'prior_l1_origin_run':'35534430888','independent_first_contact_claim':False,'post_l1_observation_search_claim':True,'external_l2_route_used':False,'external_full_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'competition_hidden_score_claim':False,'full_game_generalization_claim':False,'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          (OUT/'receipt.json').write_text(json.dumps(rec,indent=2));print('G50T_L2_V6_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed:raise RuntimeError('ONLINE_L2_VERIFY_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g50t-l2-v6-${{ matrix.variant }}
+          path: verification/
+          retention-days: 30
