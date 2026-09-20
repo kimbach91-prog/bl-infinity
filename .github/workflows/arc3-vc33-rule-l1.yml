@@ -1,0 +1,95 @@
+name: ARC3 vc33 rule-derived L1 candidate test
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l1.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  l1:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      matrix:
+        candidate: [0, 1]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Derive brown button center from observation and click three times
+        env:
+          CANDIDATE: ${{ matrix.candidate }}
+        run: |
+          python - <<'PY'
+          import json, logging, hashlib, os
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+          cand=int(os.environ['CANDIDATE'])
+          arc=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          card=arc.open_scorecard(
+              source_url='https://github.com/kimbach91-prog/bl-infinity',
+              tags=['DEUS','vc33','rule-derived','observation-only-perception','l1-candidate-'+str(cand)]
+          )
+          env=arc.make('vc33',seed=0,scorecard_id=card,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('ENV_UNAVAILABLE')
+          obs=env.observation_space
+          if not obs.available_actions or 6 not in [int(a.value) if hasattr(a,'value') else int(a) for a in obs.available_actions]:
+              raise RuntimeError('CLICK_UNAVAILABLE')
+
+          def components(arr,color):
+              mask=(arr==color); h,w=arr.shape; seen=np.zeros_like(mask,dtype=bool); out=[]
+              for y in range(h):
+                  for x in range(w):
+                      if not mask[y,x] or seen[y,x]: continue
+                      stack=[(x,y)]; seen[y,x]=True; pts=[]
+                      while stack:
+                          xx,yy=stack.pop(); pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<w and 0<=ny<h and mask[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=True; stack.append((nx,ny))
+                      xs=[p[0] for p in pts]; ys=[p[1] for p in pts]
+                      out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                  'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][1],z['bbox'][0]))
+
+          grid=np.asarray(obs.frame[-1],dtype=np.uint8)
+          brown=[c for c in components(grid,9) if c['area']>=8]
+          if len(brown)<2: raise RuntimeError('EXPECTED_TWO_BROWN_BUTTONS:'+json.dumps(brown))
+          target=brown[cand]['center']
+          amap={a.value:a for a in env.action_space}
+          transcript=[]
+          for i in range(3):
+              before=np.asarray(obs.frame[-1],dtype=np.uint8)
+              obs=env.step(amap[6],data={'x':target[0],'y':target[1]})
+              after=np.asarray(obs.frame[-1],dtype=np.uint8)
+              transcript.append({
+                  'i':i+1,'target':target,'changed_pixels':int(np.count_nonzero(before!=after)),
+                  'levels_completed':int(obs.levels_completed),'state':obs.state.value,
+                  'frame_sha256':hashlib.sha256(after.tobytes()).hexdigest()
+              })
+              if int(obs.levels_completed)>0: break
+          final=arc.close_scorecard(card)
+          receipt={
+              'protocol':'RULE_DERIVED_FROM_PUBLIC_MECHANIC_NO_ROUTE',
+              'game':'vc33','candidate':cand,'derived_button':target,
+              'brown_components':brown,'actions':len(transcript),
+              'levels_completed':int(obs.levels_completed),'state':obs.state.value,
+              'transcript':transcript,'scorecard_id':card,
+              'scorecard_score':None if final is None else final.score,
+              'external_full_route_used':False,
+              'public_rule_prior':'L1 requires repeated clicks on one brown button; button coordinates derived live from observation',
+              'independent_first_contact_claim':False,
+              'rule_derived_claim':True,
+          }
+          print('VC33_RULE_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if int(obs.levels_completed)<1:
+              raise RuntimeError('L1_NOT_SOLVED')
+          PY
