@@ -13,7 +13,7 @@ permissions:
 jobs:
   executor-canary:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 8
     env:
       HORDE_BASE: https://oai.aihorde.net
       HORDE_API_KEY: "0000000000"
@@ -26,12 +26,17 @@ jobs:
           curl -fsS "$HORDE_BASE/heartbeat" | tee /tmp/heartbeat.json
           jq -e '.message == "OK"' /tmp/heartbeat.json
 
-      - name: Pick live model
+      - name: Pick small live model
         id: model
         run: |
           set -euo pipefail
           curl -fsS "$HORDE_BASE/v1/models" | tee /tmp/models.json
-          model="$(jq -r '.data[0].id // empty' /tmp/models.json)"
+          preferred="koboldcpp/Llama-3.2-1B-Instruct"
+          if jq -e --arg id "$preferred" '.data[] | select(.id==$id and .worker_threads>0)' /tmp/models.json >/dev/null; then
+            model="$preferred"
+          else
+            model="$(jq -r '[.data[] | select(.known_to_horde==true and .worker_threads>0 and .size>0)] | sort_by(.size) | .[0].id // empty' /tmp/models.json)"
+          fi
           test -n "$model"
           echo "model=$model" >> "$GITHUB_OUTPUT"
           echo "Selected model: $model"
@@ -44,11 +49,12 @@ jobs:
           jq -n --arg model "$MODEL" '{
             model:$model,
             input:"Reply with exactly: DEUS_HORDE_CANARY_OK",
-            max_tokens:32,
-            temperature:0
+            max_tokens:16,
+            temperature:0,
+            timeout:90
           }' > /tmp/request.json
 
-          code="$(curl --max-time 240 -sS -o /tmp/response.json -w '%{http_code}'             -H "authorization: Bearer $HORDE_API_KEY"             -H 'content-type: application/json'             --data-binary @/tmp/request.json             "$HORDE_BASE/v1/responses")"
+          code="$(curl --max-time 120 -sS -o /tmp/response.json -w '%{http_code}'             -H "authorization: Bearer $HORDE_API_KEY"             -H 'content-type: application/json'             --data-binary @/tmp/request.json             "$HORDE_BASE/v1/responses")"
 
           cat /tmp/response.json
           test "$code" = "200"
@@ -62,7 +68,7 @@ jobs:
           rid="$(jq -r '.id' /tmp/response.json)"
           out_count="$(jq '.output | length' /tmp/response.json)"
           jq -n             --arg provider "AI_HORDE"             --arg base "$HORDE_BASE"             --arg model "$MODEL"             --arg response_id "$rid"             --argjson output_count "$out_count"             '{
-              receipt_version:"DEUS-S0-EXECUTOR-CANARY/1.0",
+              receipt_version:"DEUS-S0-EXECUTOR-CANARY/1.1",
               provider:$provider,
               provider_base:$base,
               auth_mode:"ANONYMOUS_PUBLIC_KEY",
