@@ -59,6 +59,8 @@ jobs:
           probe_post "PERSORAI" "https://persorai.com/v1/chat/completions" "@cf/zai-org/glm-5.2" "DEUS_PERSORAI_EXPANSION_OK" "deus-public-canary" 25 > /tmp/deus-expansion/persorai.json
           probe_post "ROK" "https://rokremasteredapi.rokteam.org/v1/chat/completions" "rok-hermes" "DEUS_ROK_EXPANSION_OK" "" 25 > /tmp/deus-expansion/rok.json
           probe_post "CEHPOINT" "https://ai-api.cehpoint.co.in/v1/chat/completions" "cehpoint-ai" "DEUS_CEHPOINT_EXPANSION_OK" "" 25 > /tmp/deus-expansion/cehpoint.json
+          probe_post "CEHPOINT_MULTILINGUAL" "https://ai-api.cehpoint.co.in/v1/chat/completions" "cehpoint-ai-multilingual" "DEUS_CEHPOINT_MULTI_OK" "" 25 > /tmp/deus-expansion/cehpoint_multilingual.json
+          probe_post "MURAKUMO" "https://api.murakumo.cloud/v1/chat/completions" "murakumo-main" "DEUS_MURAKUMO_EXPANSION_OK" "" 25 > /tmp/deus-expansion/murakumo.json
           probe_pollinations > /tmp/deus-expansion/pollinations.json
           probe_post "BLOCKRUN_ULTRA" "https://blockrun.ai/api/v1/chat/completions" "nvidia/nemotron-3-ultra-550b" "DEUS_BLOCKRUN_ULTRA_EXPANSION_OK" "" 25 > /tmp/deus-expansion/blockrun_ultra.json
           probe_post "BLOCKRUN_OMNI" "https://blockrun.ai/api/v1/chat/completions" "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning" "DEUS_BLOCKRUN_OMNI_EXPANSION_OK" "" 25 > /tmp/deus-expansion/blockrun_omni.json
@@ -71,15 +73,17 @@ jobs:
             --slurpfile persorai /tmp/deus-expansion/persorai.json \
             --slurpfile rok /tmp/deus-expansion/rok.json \
             --slurpfile cehpoint /tmp/deus-expansion/cehpoint.json \
+            --slurpfile cehpoint_multilingual /tmp/deus-expansion/cehpoint_multilingual.json \
+            --slurpfile murakumo /tmp/deus-expansion/murakumo.json \
             --slurpfile pollinations /tmp/deus-expansion/pollinations.json \
             --slurpfile ultra /tmp/deus-expansion/blockrun_ultra.json \
             --slurpfile omni /tmp/deus-expansion/blockrun_omni.json \
             --slurpfile code /tmp/deus-expansion/blockrun_code.json \
             --slurpfile llama /tmp/deus-expansion/blockrun_llama.json \
             --slurpfile laguna /tmp/deus-expansion/blockrun_laguna.json \
-            '{receipt_version:"DEUS-COMPUTE-EXPANSION/2",updated_at:$updated_at,routes:{persorai:$persorai[0],rok:$rok[0],cehpoint:$cehpoint[0],pollinations:$pollinations[0],blockrun_ultra:$ultra[0],blockrun_omni:$omni[0],blockrun_code:$code[0],blockrun_llama_vision:$llama[0],blockrun_laguna:$laguna[0]}}' \
+            '{receipt_version:"DEUS-COMPUTE-EXPANSION/3",updated_at:$updated_at,routes:{persorai:$persorai[0],rok:$rok[0],cehpoint:$cehpoint[0],cehpoint_multilingual:$cehpoint_multilingual[0],murakumo:$murakumo[0],pollinations:$pollinations[0],blockrun_ultra:$ultra[0],blockrun_omni:$omni[0],blockrun_code:$code[0],blockrun_llama_vision:$llama[0],blockrun_laguna:$laguna[0]}}' \
             | tee /tmp/deus-expansion/receipt.json
-          jq -e '.receipt_version=="DEUS-COMPUTE-EXPANSION/2"' /tmp/deus-expansion/receipt.json >/dev/null
+          jq -e '.receipt_version=="DEUS-COMPUTE-EXPANSION/3"' /tmp/deus-expansion/receipt.json >/dev/null
 
       - name: Checkout durable expansion state
         uses: actions/checkout@v4
