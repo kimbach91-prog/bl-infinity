@@ -820,7 +820,10 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         root_guides.append((root_index,root,n,guide_index,gp,gn,shell,shell_len))
 
     points_per_curve=8
-    strands_per_root=4
+    # C17.2 density repair: one scalp mesh root must emit many child fibers.
+    # 25k-class curves is still far below real human hair count, but removes the
+    # sparse porcupine regime while keeping the CPU canary bounded.
+    strands_per_root=18
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
@@ -846,35 +849,59 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         down=Vector((0.0,0.0,-1.0))
         crown=max(0.0,min(1.0,(root.z-1.55)/0.15))
 
-        # Follow the fitted short03 shell first, then add gravity/back sweep and a
-        # small surface-normal term. This avoids both card-shell copying and spikes.
-        base_flow=(shell*.64 + down*(0.18-0.08*crown) + back*.10 + n*.06 + side*.02).normalized()
-        cluster_phase=((guide_index*31 + root_index*7) % 97)/97.0*math.tau
-        clump_bias=Vector((math.cos(cluster_phase),math.sin(cluster_phase)*.30,-.12)).normalized()
+        # Mature groom principle: hair leaves the scalp approximately tangent,
+        # then gravity/back sweep shapes the strand. The fitted guide contributes a
+        # local style field, but may not turn the strand into a radial spike.
+        desired=down*.78 + back*.52 + side*.10
+        tangent_flow=desired - n*desired.dot(n)
+        if tangent_flow.length < 1e-8:
+            tangent_flow=back - n*back.dot(n)
+        if tangent_flow.length < 1e-8:
+            tangent_flow=side.copy()
+        tangent_flow.normalize()
 
-        # Guide-shell distance determines local strand envelope; clamp to a short
-        # production hairstyle so sparse guide anomalies cannot create whiskers.
-        envelope=max(.040,min(.105,shell_len*1.15+.025))
+        guide_tangent=shell - n*shell.dot(n)
+        if guide_tangent.length > 1e-8:
+            guide_tangent.normalize()
+        else:
+            guide_tangent=tangent_flow.copy()
+        base_flow=(tangent_flow*.80 + guide_tangent*.14 + n*.06).normalized()
+        tangent_cross=n.cross(tangent_flow)
+        if tangent_cross.length < 1e-8:
+            tangent_cross=side.copy()
+        tangent_cross.normalize()
+
+        cluster_phase=((guide_index*31 + root_index*7) % 97)/97.0*math.tau
+        clump_bias=Vector((math.cos(cluster_phase),math.sin(cluster_phase)*.20,-.08)).normalized()
+
+        # Short-hair envelope: denser child fibers, shorter/tangential trajectories.
+        envelope=max(.045,min(.082,shell_len*.55+.042))
         for k in range(strands_per_root):
-            tangent=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-.25,.25)))
-            tangent-=n*tangent.dot(n)
-            if tangent.length < 1e-8:
-                tangent=side.copy()
-            tangent.normalize()
-            root_j=root + n*0.00055 + tangent*rng.uniform(-.0012,.0012)
-            flow=(base_flow + clump_bias*rng.uniform(.018,.060) + radial*rng.uniform(.00,.035)).normalized()
+            root_j=(
+                root + n*0.00045
+                + tangent_flow*rng.uniform(-.0026,.0026)
+                + tangent_cross*rng.uniform(-.0026,.0026)
+            )
+            flow=(base_flow + clump_bias*rng.uniform(.008,.028)).normalized()
             length=envelope*rng.uniform(.88,1.12)
-            lateral=Vector((rng.uniform(-1,1),rng.uniform(-1,1),rng.uniform(-.20,.16)))
+            lateral=(tangent_cross*rng.uniform(-1,1) + tangent_flow*rng.uniform(-.25,.25))
             if lateral.length < 1e-8:
-                lateral=side.copy()
+                lateral=tangent_cross.copy()
             lateral.normalize()
-            amp=rng.uniform(.0008,.0030)
+            amp=rng.uniform(.0005,.0020)
+            lift=rng.uniform(.0015,.0045)
             for j in range(points_per_curve):
                 t=j/(points_per_curve-1)
                 bend=math.sin(math.pi*t)
                 sag=t*t
-                # Start exactly at scalp, expand toward the guide volume, then settle.
-                p=root_j + flow*(length*t) + lateral*(amp*bend) + down*(length*.08*sag)
+                # Hug the scalp at the root, lift into the guide volume, then settle.
+                p=(
+                    root_j
+                    + flow*(length*t)
+                    + n*(lift*bend)
+                    + lateral*(amp*bend)
+                    + down*(length*.055*sag)
+                )
                 positions.extend((p.x,p.y,p.z))
                 r=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(.92,1.08)
                 radii.append(r)
@@ -907,7 +934,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
-        "distribution":"SCALP_SURFACE_ROOTS_PLUS_NEAREST_FITTED_GUIDE_FIELD_C17_1",
+        "distribution":"SCALP_SURFACE_ROOTS_DENSE_TANGENT_GUIDE_FIELD_C17_2",
         "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
         "seed":20260920,
     }
