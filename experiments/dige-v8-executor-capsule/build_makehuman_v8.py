@@ -337,10 +337,11 @@ if (left_eye_vertices,left_eye_faces)!=(eye_contract["left"]["vertices"],eye_con
     raise RuntimeError(f"left helper-eye topology drift: vertices={left_eye_vertices} faces={left_eye_faces}")
 if (right_eye_vertices,right_eye_faces)!=(eye_contract["right"]["vertices"],eye_contract["right"]["faces"]):
     raise RuntimeError(f"right helper-eye topology drift: vertices={right_eye_vertices} faces={right_eye_faces}")
-if left_eye_sha != eye_contract["left"]["compact_obj_sha256"]:
-    raise RuntimeError(f"left helper-eye hash drift: {left_eye_sha}")
-if right_eye_sha != eye_contract["right"]["compact_obj_sha256"]:
-    raise RuntimeError(f"right helper-eye hash drift: {right_eye_sha}")
+if not C27_OFFICIAL_ANATOMY:
+    if left_eye_sha != eye_contract["left"]["compact_obj_sha256"]:
+        raise RuntimeError(f"left helper-eye hash drift: {left_eye_sha}")
+    if right_eye_sha != eye_contract["right"]["compact_obj_sha256"]:
+        raise RuntimeError(f"right helper-eye hash drift: {right_eye_sha}")
 
 def emit_filtered_compact_group(group_name, filename, keep_face):
     cur=None
@@ -387,7 +388,7 @@ if hair_removed != hair_contract["removed_front_faces"]:
     raise RuntimeError(f"helper-hair removed-face drift: {hair_removed}")
 if (hair_vertices,hair_faces)!=(hair_contract["retained_vertices"],hair_contract["retained_faces"]):
     raise RuntimeError(f"filtered hair topology drift: vertices={hair_vertices} faces={hair_faces}")
-if hair_sha != hair_contract["compact_obj_sha256"]:
+if not C27_OFFICIAL_ANATOMY and hair_sha != hair_contract["compact_obj_sha256"]:
     raise RuntimeError(f"filtered hair hash drift: {hair_sha}")
 
 body_ids=sorted(group_vertex_ids["body"])
@@ -416,7 +417,7 @@ landmarks={
 
 if tights_face_count != CANON["assets"]["garment_helper_tights"]["expected_faces"]:
     raise RuntimeError(f"garment face-count drift: expected={CANON['assets']['garment_helper_tights']['expected_faces']} got={tights_face_count}")
-if tights_sha != CANON["assets"]["garment_helper_tights"]["normalized_obj_sha256"]:
+if not C27_OFFICIAL_ANATOMY and tights_sha != CANON["assets"]["garment_helper_tights"]["normalized_obj_sha256"]:
     raise RuntimeError(f"garment normalized OBJ drift: expected={CANON['assets']['garment_helper_tights']['normalized_obj_sha256']} got={tights_sha}")
 
 final_mins=[min(v[a] for v in normalized) for a in range(3)]
@@ -472,7 +473,9 @@ manifest={
   },
   "landmarks":landmarks,
   "mesh_policy":CANON["mesh_policy"],
-  "expected_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"],
+  "expected_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"] if not C27_OFFICIAL_ANATOMY else None,
+  "baseline_body_only_normalized_obj_sha256":CANON["assets"]["candidate_body_only_normalized_obj_sha256"],
+  "c27_geometry_hash_policy":"TOPOLOGY_LOCKED_HASH_ALLOWED_TO_CHANGE_UNDER_OFFICIAL_ANATOMY_TARGETS" if C27_OFFICIAL_ANATOMY else "BASELINE_HASH_LOCKED",
   "drive_compute_priors":{
     "V6_06":{"face_ratio":0.746,"eye_ratio":0.206,"nose_ratio":0.210,"mouth_ratio":0.340,"skin_roughness":0.46,"hair_density_norm":0.9955,"grain":0.0022,"total_loss":0.008275},
     "V6C_122":{"face_wl":0.746,"eye_face":0.210,"jaw_taper":0.82,"fullbody_m":5.1,"hero_m":2.7,"total_loss":0.01876451613}
@@ -487,7 +490,7 @@ if boundary_edges != CANON["mesh_policy"]["expected_boundary_edges"]:
     raise RuntimeError(f"body boundary-edge drift: expected={CANON['mesh_policy']['expected_boundary_edges']} got={boundary_edges}")
 if nonmanifold_edges != CANON["mesh_policy"]["expected_nonmanifold_edges"]:
     raise RuntimeError(f"body non-manifold drift: expected={CANON['mesh_policy']['expected_nonmanifold_edges']} got={nonmanifold_edges}")
-if manifest["mesh"]["sha256"] != CANON["assets"]["candidate_body_only_normalized_obj_sha256"]:
+if not C27_OFFICIAL_ANATOMY and manifest["mesh"]["sha256"] != CANON["assets"]["candidate_body_only_normalized_obj_sha256"]:
     raise RuntimeError(f"body-only normalized OBJ drift: expected={CANON['assets']['candidate_body_only_normalized_obj_sha256']} got={manifest['mesh']['sha256']}")
 (RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
 print(json.dumps(manifest,sort_keys=True))
