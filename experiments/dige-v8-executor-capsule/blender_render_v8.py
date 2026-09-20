@@ -376,6 +376,11 @@ C26_SAFE_GROOM=os.environ.get("DIGE_C26_SAFE_GROOM","0").strip()=="1"
 C26_FIBER_GROOM=os.environ.get("DIGE_C26_FIBER_GROOM","0").strip()=="1"
 C27_SURFACE_FIBERS=os.environ.get("DIGE_C27_SURFACE_FIBERS","0").strip()=="1"
 C27_NATIVE_INTERFACES=os.environ.get("DIGE_C27_NATIVE_INTERFACES","0").strip()=="1"
+C28_GNM_HEAD=os.environ.get("DIGE_C28_GNM_HEAD","0").strip()=="1"
+C28_GNM_DIR=os.environ.get("DIGE_C28_GNM_DIR","runtime/gnm_c28").strip()
+C28_GNM_COMMIT=os.environ.get("DIGE_GNM_COMMIT","").strip()
+C28_HEAD_SCALE_BIAS=float(os.environ.get("DIGE_C28_HEAD_SCALE_BIAS","1.00"))
+C28_HEAD_Z_OFFSET=float(os.environ.get("DIGE_C28_HEAD_Z_OFFSET","0.000"))
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -715,6 +720,102 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
         "bbox_max":ma,
         "fit_algorithm":"MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
     }
+
+def c28_gnm_skin_material():
+    m=bpy.data.materials.new("DIGE_C28_GNM_SKIN")
+    m.use_nodes=True
+    if not C25_MATURE_STACK:
+        nt=m.node_tree; bs=nt.nodes.get("Principled BSDF")
+        set_input(bs,"Base Color",(0.42,0.20,0.13,1))
+        set_input(bs,"Roughness",.49)
+        set_input(bs,"IOR",1.42)
+        set_input(bs,"Subsurface Weight",.085)
+        set_input(bs,"Subsurface Scale",.0010)
+        if hasattr(bs,"subsurface_method"):
+            bs.subsurface_method='RANDOM_WALK_SKIN'
+        set_input(bs,"Subsurface Radius",(1.0,.42,.16))
+        set_input(bs,"Specular IOR Level",.27)
+        tex=nt.nodes.new("ShaderNodeTexCoord")
+        pore=nt.nodes.new("ShaderNodeTexNoise")
+        pore.inputs["Scale"].default_value=2400.0
+        pore.inputs["Detail"].default_value=4.0
+        pore.inputs["Roughness"].default_value=.62
+        nt.links.new(tex.outputs["Object"],pore.inputs["Vector"])
+        bump=nt.nodes.new("ShaderNodeBump")
+        bump.inputs["Strength"].default_value=.24
+        bump.inputs["Distance"].default_value=.000055
+        nt.links.new(pore.outputs["Fac"],bump.inputs["Height"])
+        nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
+        return m,{"model":"RANDOM_WALK_SKIN_OBJECT_SCALE","mpfb2":False}
+
+    data=c25_mpfb_data_root()
+    template=(data/"node_trees"/"enhanced_skin.json").read_text(encoding="utf-8")
+    replacements={
+        '"$group_name"':json.dumps("DIGE_C28_GNM_ENHANCED_SKIN"),
+        '"$Roughness"':"0.48",
+        '"$has_sss"':"false",
+        '"$has_diffusetexture"':"false",
+        '"$diffusetexture_filename"':json.dumps(""),
+        '"$has_normalmap"':"false",
+        '"$normalmap_filename"':json.dumps(""),
+        '"$ssstexture_filename"':json.dumps(""),
+    }
+    for a,b in replacements.items():
+        template=template.replace(a,b)
+    tree_dict=json.loads(template)
+    c25_apply_tree(m.node_tree,tree_dict)
+    group=c25_first_group(m.node_tree)
+    if group is None:
+        raise RuntimeError("C28 MPFB2 enhanced skin group missing")
+    settings={
+        "DiffuseColor":(0.47,0.235,0.145,1.0),
+        "Brightness":-0.02,
+        "Clearcoat":0.04,
+        "Clearcoat Roughness":0.40,
+        "Contrast":0.04,
+        "Pore detail":3.4,
+        "Pore distortion":0.85,
+        "Pore scale":2600.0,
+        "Pore strength":0.28,
+        "Roughness":0.49,
+        "colorMixIn":(0.60,0.24,0.14,1.0),
+        "colorMixInStrength":0.08,
+        "SSS strength":0.11,
+        "SSS radius scale":0.08,
+        "SSS radius R":1.0,
+        "SSS radius G":0.20,
+        "SSS radius B":0.09,
+    }
+    c25_set_group_values(group,settings)
+    values=c25_group_values(group)
+    return m,{
+        "model":"MPFB2_ENHANCED_SSS_PROCEDURAL_ALBEDO",
+        "mpfb2":True,
+        "mpfb2_commit":C25_MPFB2_COMMIT or None,
+        "settings":{k:values.get(k) for k in settings},
+    }
+
+def c28_import_component(path,name,material,scale,translation):
+    bpy.ops.wm.obj_import(
+        filepath=str(path),
+        forward_axis='Y',
+        up_axis='Z',
+        use_split_objects=False,
+        use_split_groups=False,
+    )
+    imported=[o for o in bpy.context.selected_objects if o.type=='MESH']
+    if len(imported)!=1:
+        raise RuntimeError(f"C28 expected one imported mesh for {name}, got {len(imported)}")
+    obj=imported[0]
+    obj.name=name
+    tr=Vector(translation)
+    for v in obj.data.vertices:
+        v.co=v.co*scale+tr
+    obj.data.materials.clear()
+    obj.data.materials.append(material)
+    bpy.context.view_layer.objects.active=obj
+    bpy.ops.object.shade_smooth()
+    return obj
 
 def alpha_card_material(name,image_path,expected_sha256,rough=.42,ior=1.50,anisotropy=.0,sat=1.0,value=1.0,spec=.28,coat=.025):
     image_path=verify_asset(image_path,expected_sha256)
