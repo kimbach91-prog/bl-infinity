@@ -1,4 +1,5 @@
 import bpy, bmesh, math, json, hashlib, random, os
+import numpy as np
 from pathlib import Path
 from mathutils import Vector
 
@@ -724,39 +725,446 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C16: official hm08 hair asset selected from canon-bound system pack.
+# C17: keep the exact fitted short03 asset only as a non-rendered groom guide, then
+# materialize real Blender Hair Curves. This moves the realism bottleneck from alpha-card
+# silhouette swaps to strand geometry + Principled Hair BSDF + Cycles 3D curves.
 if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_short"):
     raise RuntimeError(f"Unsupported DIGE_HAIR_ASSET_KEY={HAIR_ASSET_KEY}")
 hair_asset=system_contract[HAIR_ASSET_KEY]
 hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
-hair_card_mat=alpha_card_material(
-    f"DIGE_C16_{hair_label}",
+hair_guide_mat=alpha_card_material(
+    f"DIGE_C17_GUIDE_{hair_label}",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
     rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
-    f"DIGE_C16_{hair_label}",
+    f"DIGE_C17_GUIDE_{hair_label}",
     system_dir/hair_asset["obj"]["runtime_name"],
     system_dir/hair_asset["mhclo"]["runtime_name"],
-    fit_vertices,hair_card_mat,hair_asset,
+    fit_vertices,hair_guide_mat,hair_asset,
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
-strands=[]
+
+def build_c17_strand_groom(guide_obj, surface_obj, material):
+    # C17.6 — authored multi-guide field.
+    # Scar chain:
+    # C17.1 fixed guide-shell roots; C17.2/3 falsified density-only repair;
+    # C17.4 falsified stratified child roots + local heuristic flow;
+    # C17.5 falsified nearest outer-shell endpoint targeting.
+    #
+    # The official short03 asset already contains authored hair-flow information in
+    # its UV diffuse. C17.6 extracts local streak orientation, maps UV directions
+    # through the fitted guide-face Jacobian into 3D tangents, resolves +/- direction
+    # away from the crown, then K-neighbor interpolates that field onto true scalp
+    # roots. Density remains frozen at C17.4/C17.5 for a causal A/B.
+    guide_obj.data.update()
+    surface_obj.data.update()
+    rng=random.Random(20260920)
+
+    mesh=guide_obj.data
+    uv_layer=mesh.uv_layers.active
+    if uv_layer is None:
+        raise RuntimeError("C17.6 requires authored short03 UVs")
+
+    guide_texture_path=system_dir/hair_asset["diffuse"]["runtime_name"]
+    guide_texture_path=Path(guide_texture_path)
+    if not guide_texture_path.is_absolute():
+        guide_texture_path=ROOT/guide_texture_path
+    if not guide_texture_path.exists():
+        raise RuntimeError(f"C17.6 guide diffuse missing: {guide_texture_path}")
+    guide_texture_sha=sha(guide_texture_path)
+    if guide_texture_sha != hair_asset["diffuse"]["sha256"]:
+        raise RuntimeError(
+            f"C17.6 guide diffuse hash drift: expected={hair_asset['diffuse']['sha256']} got={guide_texture_sha}"
+        )
+
+    flow_image=bpy.data.images.load(str(guide_texture_path),check_existing=True)
+    width,height=map(int,flow_image.size)
+    if width < 64 or height < 64:
+        raise RuntimeError(f"C17.6 guide texture unexpectedly small: {width}x{height}")
+    rgba=np.empty(len(flow_image.pixels),dtype=np.float32)
+    flow_image.pixels.foreach_get(rgba)
+    rgba=rgba.reshape((height,width,4))
+    gray=(rgba[:,:,0]*0.2126 + rgba[:,:,1]*0.7152 + rgba[:,:,2]*0.0722)
+    alpha=rgba[:,:,3]
+
+    guide_rot=guide_obj.matrix_world.to_3x3()
+    guide_points=[guide_obj.matrix_world @ v.co for v in mesh.vertices]
+    top_count=max(24,len(guide_points)//10)
+    crown_points=sorted(guide_points,key=lambda p:p.z)[-top_count:]
+    crown_center=Vector((0,0,0))
+    for p in crown_points:
+        crown_center+=p
+    crown_center/=len(crown_points)
+
+    flow_samples=[]
+    coherence_values=[]
+    alpha_values=[]
+    for poly in mesh.polygons:
+        loops=list(poly.loop_indices)
+        if len(loops) < 3:
+            continue
+        uv_pts=[uv_layer.data[li].uv.copy() for li in loops]
+        uc=sum(float(t.x) for t in uv_pts)/len(uv_pts)
+        vc=sum(float(t.y) for t in uv_pts)/len(uv_pts)
+        px=int(round(max(0.0,min(1.0,uc))*(width-1)))
+        py=int(round(max(0.0,min(1.0,vc))*(height-1)))
+
+        r=5
+        x0=max(1,px-r); x1=min(width-1,px+r+1)
+        y0=max(1,py-r); y1=min(height-1,py+r+1)
+        if x1-x0 < 5 or y1-y0 < 5:
+            continue
+        patch=gray[y0:y1,x0:x1]
+        apatch=alpha[y0:y1,x0:x1]
+        gy,gx=np.gradient(patch)
+        mask=apatch > 0.05
+        if int(mask.sum()) < 12:
+            continue
+        weights=apatch[mask]
+        gxv=gx[mask]; gyv=gy[mask]
+        wsum=float(weights.sum())+1e-12
+        jxx=float((gxv*gxv*weights).sum()/wsum)
+        jyy=float((gyv*gyv*weights).sum()/wsum)
+        jxy=float((gxv*gyv*weights).sum()/wsum)
+        mean_alpha=float(weights.mean())
+        trace=jxx+jyy
+        anis=math.sqrt(max(0.0,(jxx-jyy)*(jxx-jyy)+4.0*jxy*jxy))
+        coherence=anis/(trace+1e-12)
+
+        # Blender image pixel rows follow UV bottom-up order. Gradient dominant
+        # orientation is perpendicular to the fiber line orientation.
+        theta_grad=0.5*math.atan2(2.0*jxy,jxx-jyy)
+        theta_line=theta_grad+math.pi*0.5
+        du=math.cos(theta_line)
+        dv=math.sin(theta_line)
+        if coherence < 0.20:
+            # Preserve a source-bound fallback instead of returning to hard-coded
+            # C17.3 back/down vectors.
+            du=0.0; dv=1.0
+
+        l0,l1,l2=loops[0],loops[1],loops[2]
+        vi0=mesh.loops[l0].vertex_index
+        vi1=mesh.loops[l1].vertex_index
+        vi2=mesh.loops[l2].vertex_index
+        p0=guide_obj.matrix_world @ mesh.vertices[vi0].co
+        p1=guide_obj.matrix_world @ mesh.vertices[vi1].co
+        p2=guide_obj.matrix_world @ mesh.vertices[vi2].co
+        t0=uv_layer.data[l0].uv
+        t1=uv_layer.data[l1].uv
+        t2=uv_layer.data[l2].uv
+        du1=float(t1.x-t0.x); dv1=float(t1.y-t0.y)
+        du2=float(t2.x-t0.x); dv2=float(t2.y-t0.y)
+        det=du1*dv2-dv1*du2
+        if abs(det) < 1e-10:
+            continue
+        e1=p1-p0; e2=p2-p0
+        dPdu=(e1*dv2-e2*dv1)/det
+        dPdv=(-e1*du2+e2*du1)/det
+        flow=dPdu*du+dPdv*dv
+        if flow.length < 1e-8:
+            continue
+
+        center=Vector((0,0,0))
+        for li in loops:
+            center+=guide_obj.matrix_world @ mesh.vertices[mesh.loops[li].vertex_index].co
+        center/=len(loops)
+        normal=(guide_rot @ poly.normal).normalized()
+        if normal.length < 1e-8:
+            normal=Vector((0,0,1))
+        flow=flow-normal*flow.dot(normal)
+        if flow.length < 1e-8:
+            continue
+        flow.normalize()
+
+        # Structure-tensor orientation is an unoriented line. Resolve sign by
+        # flowing away from the fitted crown over the guide surface.
+        outward=center-crown_center
+        outward=outward-normal*outward.dot(normal)
+        if outward.length > 1e-7 and flow.dot(outward) < 0:
+            flow=-flow
+
+        flow_samples.append((poly.index,center,normal,flow,coherence,mean_alpha))
+        coherence_values.append(coherence)
+        alpha_values.append(mean_alpha)
+
+    if len(flow_samples) < 500:
+        raise RuntimeError(f"C17.6 texture-flow field too sparse: {len(flow_samples)} samples")
+
+    # Vectorized KNN arrays for deterministic guide interpolation.
+    guide_centers=np.array([[s[1].x,s[1].y,s[1].z] for s in flow_samples],dtype=np.float64)
+    guide_flows=np.array([[s[3].x,s[3].y,s[3].z] for s in flow_samples],dtype=np.float64)
+    guide_coh=np.array([s[4] for s in flow_samples],dtype=np.float64)
+    guide_alpha=np.array([s[5] for s in flow_samples],dtype=np.float64)
+
+    surface_rot=surface_obj.matrix_world.to_3x3()
+    scalp_candidates=[]
+    for idx,v in enumerate(surface_obj.data.vertices):
+        p=surface_obj.matrix_world @ v.co
+        if p.z < 1.540 or p.z > 1.706:
+            continue
+        if abs(p.x) > .130 or p.y > .065:
+            continue
+        # C17.7 scalp-only root gate: reject facial/forehead roots that let
+        # strands intrude across eyes/cheeks. Keep roots behind a tighter frontal
+        # hairline and require an outward/upward scalp normal.
+        frontal_hairline_z=1.620-0.10*min(abs(p.x),.10)
+        if p.y > .000 and p.z < frontal_hairline_z:
+            continue
+        n=(surface_rot @ v.normal).normalized()
+        if p.y > .000 and n.y < -0.05:
+            continue
+        if p.z < 1.585 and abs(p.x) < .085:
+            continue
+        if n.length < 1e-8:
+            n=Vector((0,0,1))
+        scalp_candidates.append((idx,p,n))
+    if len(scalp_candidates) < 350:
+        raise RuntimeError(f"C17.6 scalp mask too sparse: {len(scalp_candidates)} roots")
+
+    target_roots=min(1800,len(scalp_candidates))
+    if len(scalp_candidates) > target_roots:
+        roots=[]
+        for i in range(target_roots):
+            roots.append(scalp_candidates[min(len(scalp_candidates)-1,int(i*len(scalp_candidates)/target_roots))])
+    else:
+        roots=scalp_candidates
+
+    k_neighbors=8
+    root_guides=[]
+    root_coherences=[]
+    shell_lifts=[]
+    for root_index,root,n in roots:
+        rv=np.array([root.x,root.y,root.z],dtype=np.float64)
+        delta=guide_centers-rv
+        d2=np.einsum('ij,ij->i',delta,delta)
+        ids=np.argpartition(d2,k_neighbors-1)[:k_neighbors]
+        ids=ids[np.argsort(d2[ids])]
+        anchor=guide_flows[ids[0]].copy()
+
+        flows=guide_flows[ids].copy()
+        dots=flows @ anchor
+        flows[dots < 0] *= -1.0
+        weights=np.exp(-d2[ids]/(2.0*.055*.055))
+        weights*=np.maximum(.12,guide_coh[ids])*np.maximum(.25,guide_alpha[ids])
+        wsum=float(weights.sum())
+        if wsum < 1e-10:
+            continue
+        f=(flows*weights[:,None]).sum(axis=0)/wsum
+        gc=(guide_centers[ids]*weights[:,None]).sum(axis=0)/wsum
+        fc=float((guide_coh[ids]*weights).sum()/wsum)
+
+        field_flow=Vector((float(f[0]),float(f[1]),float(f[2])))
+        field_flow=field_flow-n*field_flow.dot(n)
+        if field_flow.length < 1e-8:
+            field_flow=Vector((float(anchor[0]),float(anchor[1]),float(anchor[2])))
+            field_flow=field_flow-n*field_flow.dot(n)
+        if field_flow.length < 1e-8:
+            continue
+        field_flow.normalize()
+
+        guide_center=Vector((float(gc[0]),float(gc[1]),float(gc[2])))
+        shell_vec=guide_center-root
+        shell_len=max(.001,shell_vec.length)
+        shell_lift=max(.006,min(.045,abs(shell_vec.dot(n))))
+        root_guides.append((
+            root_index,root,n,int(flow_samples[int(ids[0])][0]),
+            guide_center,field_flow,shell_len,shell_lift,fc
+        ))
+        root_coherences.append(fc)
+        shell_lifts.append(shell_lift)
+
+    # C17.7 intentionally narrows the scalp mask to eliminate facial/forehead
+    # intrusion. With 64 strands/root, 350 valid scalp roots already yields
+    # >=22,400 rendered curves, so the old 1200-root gate became a false blocker.
+    if len(root_guides) < 350:
+        raise RuntimeError(f"C17.7 interpolated scalp field too sparse: {len(root_guides)} roots")
+
+    points_per_curve=8
+    strands_per_root=64
+    curve_count=len(root_guides)*strands_per_root
+    hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
+    hair_data.add_curves([points_per_curve]*curve_count)
+    try:
+        hair_data.set_types(type='CATMULL_ROM')
+    except Exception:
+        pass
+    hair_data.surface=surface_obj
+    hair_data.materials.append(material)
+
+    positions=[]
+    radii=[]
+    base_radius=0.000055
+    tip_radius=0.000011
+    down=Vector((0.0,0.0,-1.0))
+    inv_world=surface_obj.matrix_world.inverted()
+    surf_rot=surface_obj.matrix_world.to_3x3()
+
+    for root_index,root,n,guide_index,guide_center,field_flow,shell_len,shell_lift,field_coherence in root_guides:
+        tangent_flow=field_flow.copy()
+        tangent_cross=n.cross(tangent_flow)
+        if tangent_cross.length < 1e-8:
+            tangent_cross=Vector((1,0,0))
+        tangent_cross.normalize()
+
+        cluster_phase=((guide_index*31 + root_index*7) % 97)/97.0*math.tau
+        clump_bias=(tangent_cross*math.cos(cluster_phase) + tangent_flow*math.sin(cluster_phase)*.18)
+        if clump_bias.length < 1e-8:
+            clump_bias=tangent_cross.copy()
+        clump_bias.normalize()
+
+        # Density and 44/20 population split remain frozen from C17.4/C17.5.
+        # Only the authored multi-guide direction + guide-derived lift change.
+        frontal=max(0.0,min(1.0,(root.y+.010)/.060))
+        envelope=max(.036,min(.066,shell_len*.50+.024))
+        if frontal > .35:
+            envelope=min(envelope,.042)
+        under_lift=max(.004,min(.012,.004+shell_lift*.18))
+        style_lift=max(.010,min(.026,.010+shell_lift*.42))
+
+        for k in range(strands_per_root):
+            gx=k % 8
+            gy=k // 8
+            du=((gx+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
+            dv=((gy+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
+            proposed=root + tangent_flow*du + tangent_cross*dv
+            local_proposed=inv_world @ proposed
+            hit,loc_local,n_local,_poly=surface_obj.closest_point_on_mesh(local_proposed)
+            if hit:
+                root_j=surface_obj.matrix_world @ loc_local
+                child_n=(surf_rot @ n_local).normalized()
+                if root_j.z < 1.535 or root_j.z > 1.712 or root_j.y > .072:
+                    root_j=root.copy()
+                    child_n=n.copy()
+            else:
+                root_j=root.copy()
+                child_n=n.copy()
+            root_j += child_n*0.00065
+
+            child_flow=tangent_flow-child_n*tangent_flow.dot(child_n)
+            if child_flow.length < 1e-8:
+                child_flow=field_flow.copy()
+            child_flow.normalize()
+            # Prevent front-scalp strands from flowing into the face. Blend them
+            # laterally/backward while preserving authored texture-flow elsewhere.
+            front_gate=max(0.0,min(1.0,(root_j.y+.004)/.050))
+            if front_gate > 0.0:
+                safe_dir=Vector((1.0 if root_j.x >= 0 else -1.0,-0.35,0.10))
+                safe_dir=safe_dir-child_n*safe_dir.dot(child_n)
+                if safe_dir.length > 1e-8:
+                    safe_dir.normalize()
+                    child_flow=(child_flow*(1.0-0.70*front_gate)+safe_dir*(0.70*front_gate))
+                    child_flow.normalize()
+            child_cross=child_n.cross(child_flow)
+            if child_cross.length < 1e-8:
+                child_cross=tangent_cross.copy()
+            child_cross.normalize()
+
+            undercoat=(k < 44)
+            if undercoat:
+                length=rng.uniform(.024,.040)
+                lift=under_lift*rng.uniform(.90,1.10)
+                tip_clear=rng.uniform(.0010,.0020)
+                flow=(child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
+                amp=rng.uniform(.00020,.00065)
+            else:
+                length=envelope*rng.uniform(.92,1.08)
+                lift=style_lift*rng.uniform(.92,1.08)
+                tip_clear=rng.uniform(.0016,.0032)
+                flow=(child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
+                amp=rng.uniform(.00035,.00105)
+
+            lateral=(child_cross + child_flow*rng.uniform(-.10,.10)).normalized()
+            for j in range(points_per_curve):
+                t=j/(points_per_curve-1)
+                bend=math.sin(math.pi*t)
+                sag=t*t
+                p=(
+                    root_j
+                    + flow*(length*t)
+                    + child_n*(lift*bend + tip_clear*t)
+                    + lateral*(amp*bend)
+                    + down*(length*(.024 if undercoat else .036)*sag)
+                )
+                positions.extend((p.x,p.y,p.z))
+                taper=(base_radius*(1.0-t) + tip_radius*t)
+                radius=taper*rng.uniform(.94,1.06)*(0.92 if undercoat else 1.0)
+                radii.append(radius)
+
+    pos=hair_data.attributes["position"]
+    pos.data.foreach_set("vector",positions)
+    radius_attr=hair_data.attributes.get("radius")
+    if radius_attr is None:
+        radius_attr=hair_data.attributes.new("radius",'FLOAT','POINT')
+    radius_attr.data.foreach_set("value",radii)
+
+    groom=bpy.data.objects.new("DIGE_C17_STRAND_GROOM",hair_data)
+    bpy.context.collection.objects.link(groom)
+    guide_obj.hide_render=True
+    try:
+        guide_obj.hide_set(True)
+    except Exception:
+        pass
+
+    return groom,{
+        "root_count":len(root_guides),
+        "scalp_candidate_count":len(scalp_candidates),
+        "guide_sample_count":len(flow_samples),
+        "guide_mesh_vertices":len(mesh.vertices),
+        "guide_mesh_polygons":len(mesh.polygons),
+        "guide_field_version":"C17_6_SHORT03_UV_TEXTURE_FLOW_K8",
+        "guide_field_source":"OFFICIAL_MAKEHUMAN_SHORT03_DIFFUSE_STRUCTURE_TENSOR_PLUS_UV_JACOBIAN",
+        "guide_texture_sha256":guide_texture_sha,
+        "guide_texture_size":[width,height],
+        "guide_field_neighbors":k_neighbors,
+        "guide_field_mean_sample_coherence":sum(coherence_values)/len(coherence_values),
+        "guide_field_mean_root_coherence":sum(root_coherences)/len(root_coherences),
+        "guide_field_mean_alpha":sum(alpha_values)/len(alpha_values),
+        "guide_field_mean_shell_lift_m":sum(shell_lifts)/len(shell_lifts),
+        "strands_per_root":strands_per_root,
+        "curve_count":curve_count,
+        "points_per_curve":points_per_curve,
+        "point_count":curve_count*points_per_curve,
+        "root_radius_m":base_radius,
+        "tip_radius_m":tip_radius,
+        "guide_mesh_rendered":False,
+        "blender_datablock":"HAIR_CURVES",
+        "curve_type":"CATMULL_ROM",
+        "surface_bound":True,
+        "distribution":"SCALP_TEXTURE_FLOW_K8_STRATIFIED_UNDERCOAT_STYLE_C17_6",
+        "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
+        "density_frozen_from":"C17_4_C17_5",
+        "seed":20260920,
+    }
+
+hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,body,hair)
+strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
-    "root_source":"OFFICIAL_MAKEHUMAN_HM08_MHCLO",
+    "root_source":"SCALP_SURFACE_ROOTS_PLUS_OFFICIAL_SHORT03_UV_TEXTURE_FLOW_FIELD",
     "asset_key":HAIR_ASSET_KEY,
     "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
     "obj_sha256":hair_asset["obj"]["sha256"],
     "mhclo_sha256":hair_asset["mhclo"]["sha256"],
     "diffuse_sha256":hair_asset["diffuse"]["sha256"],
-    "object_vertices":hair_fit["vertices"],
-    "object_polygons":hair_fit["polygons"],
-    "uv_layers":hair_fit["uv_layers"],
-    "mass_mesh_rendered":True,
-    "curve_count":0,
-    "style":f"MHCLO_FITTED_{HAIR_ASSET_KEY.upper()}_SYSTEM_CC0_V1",
+    "guide_vertices":hair_fit["vertices"],
+    "guide_polygons":hair_fit["polygons"],
+    "mass_mesh_rendered":False,
+    "curve_count":hair_curve_metrics["curve_count"],
+    "point_count":hair_curve_metrics["point_count"],
+    "points_per_curve":hair_curve_metrics["points_per_curve"],
+    "root_radius_m":hair_curve_metrics["root_radius_m"],
+    "tip_radius_m":hair_curve_metrics["tip_radius_m"],
+    "surface_bound":hair_curve_metrics["surface_bound"],
+    "distribution":hair_curve_metrics["distribution"],
+    "guide_field_version":hair_curve_metrics["guide_field_version"],
+    "guide_field_source":hair_curve_metrics["guide_field_source"],
+    "guide_texture_sha256":hair_curve_metrics["guide_texture_sha256"],
+    "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
+    "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
+    "seed":hair_curve_metrics["seed"],
+    "style":"HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -840,6 +1248,12 @@ def configure_cycles_device(scene):
 
 scene=bpy.context.scene
 scene.render.engine='CYCLES'
+# C17 close-up hair certification uses geometric strand cylinders so radius is physical.
+try:
+    scene.render.hair_type='CYLINDER'
+    scene.render.hair_subdiv=1
+except Exception:
+    pass
 device_info=configure_cycles_device(scene)
 scene.cycles.samples=int(os.environ.get("DIGE_SAMPLES_PREVIEW","128"))
 scene.cycles.seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
@@ -935,14 +1349,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C16_HAIR_ASSET_SWEEP_OVER_C15_V1",
+ "appearance_candidate":"C17_MATURE_STRAND_GROOM_OVER_C16_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C11_SKIN_EXECUTION_PASS; C12_SYSTEM_ASSET_PROBE_PASS; OFFICIAL_MHCLO_FIT_REPLACES_PROCEDURAL_HAIR_EYE_BROW_LASH",
+   "selection_basis":"C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB",
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -965,6 +1379,8 @@ receipt={
  "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
+ "hair_curve_metrics":hair_curve_metrics,
+ "render_curve_shape":"CYLINDER",
  "provenance":{
    "source_pixels_used":False,
    "reference_pixels_read_by_renderer":False,
@@ -977,6 +1393,9 @@ receipt={
    "external_system_asset_used":True,
    "external_system_asset_pack_sha256":system_contract["pack_sha256"],
    "external_system_asset_license":system_contract["license"],
+   "external_guide_texture_flow_used":True,
+   "external_guide_texture_flow_sha256":hair_curve_metrics["guide_texture_sha256"],
+   "external_guide_texture_flow_method":hair_curve_metrics["guide_field_version"],
    "external_geometry_asset_used":True,
    "external_geometry_asset_license":"CC0-1.0",
    "image_model_calls":0,
