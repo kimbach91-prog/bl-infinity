@@ -921,35 +921,65 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             child_cross.normalize()
 
             undercoat=(k < 44)
-            if undercoat:
-                length=rng.uniform(.021,.038)
-                lift=rng.uniform(.006,.013)
-                tip_clear=rng.uniform(.0008,.0018)
-                flow=(child_flow + child_cross*rng.uniform(-.055,.055)).normalized()
-                amp=rng.uniform(.00025,.00080)
+            # The fitted short03 surface is a hidden hairstyle volume target.
+            # Undercoat follows the scalp/guide tangent; style fibers terminate
+            # around the guide shell instead of throwing arbitrary free-space tufts.
+            guide_world_dir=(gp-root_j)
+            guide_world_len=guide_world_dir.length
+            if guide_world_len > 1e-8:
+                guide_world_dir.normalize()
             else:
-                length=envelope*rng.uniform(.90,1.10)
-                lift=rng.uniform(.014,.026)
-                tip_clear=rng.uniform(.0015,.0032)
-                flow=(child_flow + child_cross*rng.uniform(-.085,.085) + clump_bias*rng.uniform(.002,.010)).normalized()
-                amp=rng.uniform(.00045,.00135)
+                guide_world_dir=child_flow.copy()
+            guide_tan=guide_world_dir-child_n*guide_world_dir.dot(child_n)
+            if guide_tan.length < 1e-8:
+                guide_tan=child_flow.copy()
+            guide_tan.normalize()
 
-            lateral=(child_cross + child_flow*rng.uniform(-.14,.14)).normalized()
-            for j in range(points_per_curve):
-                t=j/(points_per_curve-1)
-                bend=math.sin(math.pi*t)
-                sag=t*t
-                p=(
-                    root_j
-                    + flow*(length*t)
-                    + child_n*(lift*bend + tip_clear*t)
-                    + lateral*(amp*bend)
-                    + down*(length*(.030 if undercoat else .045)*sag)
+            if undercoat:
+                length=rng.uniform(.018,.032)
+                lift=rng.uniform(.0045,.0095)
+                flow=(guide_tan*.62 + child_flow*.38 + child_cross*rng.uniform(-.045,.045)).normalized()
+                amp=rng.uniform(.00020,.00065)
+                lateral=(child_cross + flow*rng.uniform(-.10,.10)).normalized()
+                for j in range(points_per_curve):
+                    t=j/(points_per_curve-1)
+                    bend=math.sin(math.pi*t)
+                    p=(
+                        root_j
+                        + flow*(length*t)
+                        + child_n*(lift*bend + .0010*t)
+                        + lateral*(amp*bend)
+                        + down*(length*.022*t*t)
+                    )
+                    positions.extend((p.x,p.y,p.z))
+                    taper=(base_radius*(1.0-t) + tip_radius*t)
+                    radii.append(taper*rng.uniform(.94,1.06)*.92)
+            else:
+                # C17.5 style fiber: reconstruct the existing short03 hairstyle
+                # volume with real curves. The guide remains hidden/non-rendered.
+                target=(
+                    gp
+                    + gn*rng.uniform(.0004,.0018)
+                    + child_cross*rng.uniform(-.0026,.0026)
+                    + guide_tan*rng.uniform(-.0020,.0020)
                 )
-                positions.extend((p.x,p.y,p.z))
-                taper=(base_radius*(1.0-t) + tip_radius*t)
-                r=taper*rng.uniform(.94,1.06)*(0.92 if undercoat else 1.0)
-                radii.append(r)
+                arc=max(.005,min(.020,max(shell_len,guide_world_len)*.32))*rng.uniform(.82,1.18)
+                lateral=child_cross*rng.uniform(-.0011,.0011)
+                phase=rng.uniform(-.35,.35)
+                for j in range(points_per_curve):
+                    t=j/(points_per_curve-1)
+                    ease=t*t*(3.0-2.0*t)
+                    bend=math.sin(math.pi*t)
+                    p=(
+                        root_j*(1.0-ease)
+                        + target*ease
+                        + child_n*(arc*bend)
+                        + lateral*(math.sin(math.pi*t+phase)*bend)
+                        + down*(.0025*t*t)
+                    )
+                    positions.extend((p.x,p.y,p.z))
+                    taper=(base_radius*(1.0-t) + tip_radius*t)
+                    radii.append(taper*rng.uniform(.94,1.06))
 
     pos=hair_data.attributes["position"]
     pos.data.foreach_set("vector",positions)
@@ -979,7 +1009,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
-        "distribution":"SCALP_SURFACE_PROJECTED_STRATIFIED_UNDERCOAT_STYLE_C17_4",
+        "distribution":"SCALP_UNDERCOAT_PLUS_HIDDEN_GUIDE_SHELL_TARGET_STYLE_C17_5",
         "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
         "seed":20260920,
     }
