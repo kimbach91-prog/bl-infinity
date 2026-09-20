@@ -19,6 +19,7 @@ jobs:
       contents: write
       pages: write
       id-token: write
+      issues: write
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -251,7 +252,7 @@ jobs:
           rm -rf _site
           mkdir -p _site/novel _site/assets/css _site/assets/js _site/books
           mkdir -p _site/research/human-development/kevin-nt/studio
-          mkdir -p _site/deus _site/BL-CF _site/public-compute
+          mkdir -p _site/deus _site/BL-CF _site/public-compute _site/.well-known
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
           cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
           cp assets/css/main.css assets/css/reader.css _site/assets/css/
@@ -264,7 +265,8 @@ jobs:
           cp research/human-development/kevin-nt/studio/index.html _site/research/human-development/kevin-nt/studio/
           cp deus/index.html deus/styles.css deus/app.js _site/deus/
           cp BL-CF/CONSTITUTION.md BL-CF/DEUS-HUMAN-OS-MEMBERSHIP-SCHEDULE.md _site/BL-CF/
-          cp public-compute/webgpu-s0.html public-compute/gate.html public-compute/gate-manifest.json _site/public-compute/
+          cp public-compute/webgpu-s0.html public-compute/gate.html public-compute/gate-manifest.json public-compute/worker-discovery.json public-compute/deus-worker-offer.schema.json public-compute/deus-worker-result.schema.json _site/public-compute/
+          cp .well-known/deus-worker-gate.json _site/.well-known/
 
       - name: Assert public books, research studio and protected-core boundary
         shell: bash
@@ -298,6 +300,14 @@ jobs:
           test -f _site/public-compute/webgpu-s0.html
           test -f _site/public-compute/gate.html
           test -f _site/public-compute/gate-manifest.json
+          test -f _site/public-compute/worker-discovery.json
+          test -f _site/public-compute/deus-worker-offer.schema.json
+          test -f _site/public-compute/deus-worker-result.schema.json
+          test -f _site/.well-known/deus-worker-gate.json
+          grep -q 'deus-machine-worker-gate/1' _site/public-compute/worker-discovery.json
+          grep -q 'deus-worker-offer/1' _site/public-compute/deus-worker-offer.schema.json
+          grep -q 'deus-worker-result/1' _site/public-compute/deus-worker-result.schema.json
+          grep -q 'MACHINE_TRIAL_BUS_RUNTIME_VERIFIED' _site/.well-known/deus-worker-gate.json
           grep -q 'PUBLIC_COMPUTE_GATE_V1' _site/public-compute/gate.html
           grep -q 'deus-compute-gate-public-market/1' _site/public-compute/gate-manifest.json
           grep -q 'RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006' _site/public-compute/gate-manifest.json
@@ -330,3 +340,28 @@ jobs:
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Post machine worker discovery deployment receipt
+        uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        with:
+          script: |
+            const base = String(process.env.PAGE_URL || "https://kimbach91-prog.github.io/bl-infinity/").replace(/\/+$/, "");
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: 182,
+              body: "\`\`\`json\\n" + JSON.stringify({
+                schema: "deus-machine-discovery-deployment/1",
+                verdict: "PAGES_DEPLOYMENT_RUNTIME_VERIFIED",
+                source_sha: context.sha,
+                base_url: base + "/",
+                discovery: base + "/public-compute/worker-discovery.json",
+                well_known: base + "/.well-known/deus-worker-gate.json",
+                offer_schema: base + "/public-compute/deus-worker-offer.schema.json",
+                result_schema: base + "/public-compute/deus-worker-result.schema.json",
+                trial_bus: "https://github.com/kimbach91-prog/bl-infinity/issues/182",
+                canonical_write: false,
+                truth_boundary: "DISCOVERY_DEPLOYED != EXTERNAL_WORKER_ADOPTED"
+              }, null, 2) + "\\n\`\`\`"
+            });
