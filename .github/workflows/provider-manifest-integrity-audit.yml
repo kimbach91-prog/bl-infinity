@@ -1,0 +1,43 @@
+name: Public S0 provider manifest integrity audit
+
+on:
+  push:
+    branches: ["deus/provider-manifest-integrity-audit-v1-20260920"]
+    paths:
+      - ".github/workflows/provider-manifest-integrity-audit.yml"
+      - "public-compute/provider-manifest-integrity-audit.mjs"
+      - "runtime/federation/config/providers.example.json"
+      - "runtime/federation/config/provider.schema.json"
+      - "runtime/federation/lib/manifest.mjs"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: provider-manifest-integrity-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.actor == 'kimbach91-prog'
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0,1,2,3,4,5,6,7]
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Checkout public source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Run bounded mechanical manifest audit
+        shell: bash
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          set -euo pipefail
+          node public-compute/provider-manifest-integrity-audit.mjs
