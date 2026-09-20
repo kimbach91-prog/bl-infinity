@@ -8,3 +8,5 @@ Recorded upstream submission: 56170646
 Recorded upstream public score: 3.40
 
 This snapshot is used only to reconstruct and verify the package. The 3.40 score remains upstream evidence until an owner-account Kaggle submission receives its own score receipt.
+
+Exact reconstruction workflow: .github/workflows/arc3-flash340-exact-package.yml
