@@ -1,0 +1,175 @@
+name: ARC3 g50t v4 macro-effect depth
+
+on:
+  push:
+    branches: [deus/arc3-g50t-depth-v4-20260921]
+    paths: [.github/workflows/arc3-g50t-depth-v4.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  depth:
+    runs-on: ubuntu-latest
+    timeout-minutes: 48
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        variant: [balanced,long,cyclic]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Multi-level public-observation macro-effect search
+        env:
+          VARIANT: ${{ matrix.variant }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME='g50t'; VARIANT=os.environ['VARIANT']; OUT=Path('verification'); OUT.mkdir(exist_ok=True)
+          CFG={
+            'balanced': {'repeats':(1,2,3,5,8,13),'latent_cap':6,'beam':3200,'seconds':240,'max_exp':180000,'delta_w':18.0},
+            'long': {'repeats':(1,2,3,5,8,13,21,34),'latent_cap':8,'beam':3600,'seconds':240,'max_exp':200000,'delta_w':15.0},
+            'cyclic': {'repeats':(1,2,3,4,5,6,8,10,13),'latent_cap':7,'beam':3600,'seconds':240,'max_exp':200000,'delta_w':20.0},
+          }[VARIANT]
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[:2,:]=0; a[-2:,:]=0
+              return a
+          def fh(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def aids(o):
+              out=[]
+              for a in (getattr(o,'available_actions',None) or []):
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in out:out.append(v)
+              return out
+          def step(e,act):
+              aid,data=act; am={a.value:a for a in e.action_space}
+              if aid not in am:return None
+              try:return e.step(am[aid],data=data)
+              except Exception:return None
+          def delta(a,b):
+              aa=norm(a);bb=norm(b)
+              if aa.shape!=bb.shape:return 1.0
+              return float(np.mean(aa!=bb))
+          def act_sig(a): return str(a[0])
+          def macro_sig(m): return '|'.join(act_sig(a) for a in m)
+          def run_macro(e,o,macro,start):
+              cur=o;used=[]
+              for act in macro:
+                  nf=step(e,act)
+                  if nf is None:return None,used,False
+                  cur=nf;used.append(act)
+                  if int(cur.levels_completed)>start:return cur,used,True
+                  st=getattr(cur.state,'value',str(cur.state))
+                  if st in ('GAME_OVER','WIN'):break
+              return cur,used,int(cur.levels_completed)>start
+          def macros(o):
+              ks=[a for a in aids(o) if 1<=a<=5 or a==7]
+              out=[]
+              for a in ks:
+                  for n in CFG['repeats']:out.append(tuple((a,None) for _ in range(n)))
+              for a,b in itertools.permutations(ks,2):
+                  A=(a,None);B=(b,None)
+                  out += [(A,B),(A,B,A,B),(A,A,A,B),(A,B,B),(A,A,A,A,A,B)]
+              if VARIANT=='cyclic' and len(ks)>=3:
+                  for a,b,c in itertools.permutations(ks,3):
+                      A=(a,None);B=(b,None);C=(c,None)
+                      out += [(A,B,C),(A,A,B,C),(A,B,B,C)]
+              return out
+          def apply_path(e,o,path,target):
+              cur=o
+              for act in path:
+                  cur=step(e,act)
+                  if cur is None:return None
+                  if int(cur.levels_completed)>=target:return cur
+              return cur
+          def search(e0,o0):
+              start=int(o0.levels_completed);t0=time.monotonic();counter=itertools.count();exp=0
+              keys=[a for a in aids(o0) if 1<=a<=5 or a==7];idx={a:i for i,a in enumerate(keys)}
+              z=tuple(0 for _ in keys);h0=fh(o0)
+              heap=[(0.0,0,next(counter),copy.deepcopy(e0),o0,[],z,(),0)]
+              seen={(h0,z,()):0};peak=1;latent=0;visible=0;trims=0;trials=0
+              while heap and exp<CFG['max_exp'] and time.monotonic()-t0<CFG['seconds']:
+                  pri,alen,_,e,o,path,counts,suffix,chain=heapq.heappop(heap)
+                  if len(path)>320:continue
+                  ph=fh(o)
+                  for macro in macros(o):
+                      if exp>=CFG['max_exp'] or time.monotonic()-t0>=CFG['seconds']:break
+                      ee=copy.deepcopy(e);nf,used,won=run_macro(ee,o,macro,start);exp+=len(used);trials+=1
+                      if nf is None or not used:continue
+                      npth=path+used
+                      if won:
+                          return npth,{'result':'FOUND','level_from':start,'level_to':int(nf.levels_completed),'expansions':exp,'macro_trials':trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent,'visible_macros':visible,'trims':trims,'variant':VARIANT}
+                      st=getattr(nf.state,'value',str(nf.state))
+                      if st in ('GAME_OVER','WIN'):continue
+                      nh=fh(nf);d=delta(o,nf);cc=list(counts)
+                      for a,_ in used:
+                          if a in idx:cc[idx[a]]=min(63,cc[idx[a]]+1)
+                      cc=tuple(cc);ms=hashlib.sha1(macro_sig(macro).encode()).hexdigest()[:10]
+                      if nh==ph:
+                          latent+=1;nc=chain+1
+                          if nc>CFG['latent_cap']:continue
+                          ns=(suffix+(ms,))[-3:]
+                      else:
+                          visible+=1;nc=0;ns=()
+                      sk=(nh,cc,ns)
+                      if len(npth)>=seen.get(sk,10**9):continue
+                      seen[sk]=len(npth)
+                      score=(len(npth)*0.010)+(nc*0.65)-(min(1.0,d)*CFG['delta_w'])+(0.0005*sum(cc))
+                      heapq.heappush(heap,(score,len(npth),next(counter),ee,nf,npth,cc,ns,nc));peak=max(peak,len(heap))
+                  if len(heap)>CFG['beam']*2:
+                      heap=heapq.nsmallest(CFG['beam'],heap);heapq.heapify(heap);trims+=1
+              return None,{'result':'MISS','level_from':start,'level_to':start,'expansions':exp,'macro_trials':trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent,'visible_macros':visible,'trims':trims,'variant':VARIANT}
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('ENV_UNAVAILABLE')
+          obs=env.observation_space;total=[];levels=[];win_levels=int(getattr(obs,'win_levels',0) or 0)
+          while int(obs.levels_completed)<win_levels:
+              before=int(obs.levels_completed);path,meta=search(env,obs);levels.append(meta)
+              if path is None:break
+              target=before+1;obs=apply_path(env,obs,path,target)
+              if obs is None or int(obs.levels_completed)<target:raise RuntimeError('REAL_APPLY_DID_NOT_LEVEL')
+              total.extend(path)
+              if getattr(obs.state,'value',str(obs.state))=='WIN':break
+              if len(total)>2200:break
+
+          normal_levels=int(obs.levels_completed);normal_state=getattr(obs.state,'value',str(obs.state))
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-g50t-depth-v4.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','g50t','depth-v4',VARIANT,'macro-effect'])
+          oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=oe.observation_space;usedn=0
+          for i,act in enumerate(total,1):
+              nf=step(oe,act)
+              if nf is None:raise RuntimeError('ONLINE_STEP_FAIL_'+str(i))
+              oo=nf;usedn=i
+              if int(oo.levels_completed)>=normal_levels:break
+          card=oa.close_scorecard(cid)
+          online_levels=int(oo.levels_completed)
+          rec={'schema':'deus/arc3-g50t-depth-v4/1','game':GAME,'variant':VARIANT,'result':'PASS' if online_levels>=normal_levels and normal_levels>=2 else 'NO_DEPTH_GAIN','normal_levels_completed':normal_levels,'online_levels_completed':online_levels,'win_levels':win_levels,'normal_state':normal_state,'online_state':getattr(oo.state,'value',str(oo.state)),'actions_executed':usedn,'total_route_len':len(total),'scorecard_id':cid,'scorecard_score':None if card is None else card.score,'route_sha256':hashlib.sha256(json.dumps(total,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'levels':levels,'protocol':'PUBLIC_MULTI_LEVEL_MACRO_EFFECT_V4','representation_delta':'repeated-action macros + compressed latent count/history carried independently per level','environment_clone_used_for_search':True,'external_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False,'competition_hidden_score_claim':False,'full_game_generalization_claim':False,'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA']}
+          (OUT/'receipt.json').write_text(json.dumps(rec,indent=2));print('G50T_DEPTH_V4_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if online_levels<normal_levels:raise RuntimeError('ONLINE_REPLAY_MISMATCH')
+          if normal_levels<2:raise RuntimeError('NO_DEPTH_GAIN')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g50t-depth-v4-${{ matrix.variant }}
+          path: verification/
+          retention-days: 30
