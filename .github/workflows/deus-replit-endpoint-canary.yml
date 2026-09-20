@@ -1,0 +1,33 @@
+name: DEUS Replit Endpoint Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-replit-endpoint-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  endpoint-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    env:
+      REPLIT_URL: https://authentic-salmon-trial--kimbach91.replit.app
+      REPLIT_DEPLOYMENT: e1a509a7-2bc9-476b-9f48-7ce529a2d764
+      REPL_ID: 67e9a438-8358-4728-8b3c-f0421c6926e0
+    steps:
+      - name: Probe deployed endpoint without trusting provider status alone
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl --max-time 30 -sS -L -D /tmp/replit.headers -o /tmp/replit.body -w '%{http_code}' "$REPLIT_URL/")"
+          test "$code" -ge 200
+          test "$code" -lt 400
+          bytes="$(wc -c < /tmp/replit.body | tr -d ' ')"
+          test "$bytes" -gt 0
+          digest="$(sha256sum /tmp/replit.body | awk '{print $1}')"
+          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{sub(/\r$/,""); sub(/^[^:]*:[[:space:]]*/,""); v=$0} END{print v}' /tmp/replit.headers)"
+          printf '%s\n' "DEUS_REPLIT_ENDPOINT_RECEIPT={\"schema\":\"deus-replit-endpoint-canary/1\",\"deployment_id\":\"$REPLIT_DEPLOYMENT\",\"repl_id\":\"$REPL_ID\",\"http_status\":$code,\"body_bytes\":$bytes,\"body_sha256\":\"$digest\",\"content_type\":\"$content_type\",\"endpoint_execution\":true,\"functional_contract_verified\":false,\"canonical_write\":false,\"truth\":\"HTTP_ENDPOINT_EXECUTED_NE_APPLICATION_FUNCTIONAL_CANARY\"}"
