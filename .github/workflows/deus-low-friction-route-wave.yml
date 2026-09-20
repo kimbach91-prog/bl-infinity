@@ -1,0 +1,93 @@
+name: DEUS Low-Friction Route Wave
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-low-friction-route-wave.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  low-friction-wave:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Probe no-account routes and emit one typed receipt
+        shell: bash
+        run: |
+          set -u
+          mkdir -p /tmp/deus-wave
+          now="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+
+          llm7_status=0; llm7_exact=false
+          start="$(date +%s%3N)"
+          curl --max-time 60 -sS -o /tmp/deus-wave/llm7.json -w '%{http_code}'             -X POST 'https://api.llm7.io/v1/chat/completions'             -H 'content-type: application/json'             --data-binary '{"model":"default","messages":[{"role":"user","content":"Public S0 canary. Reply with exactly: DEUS_LLM7_WAVE_OK"}],"temperature":0}'             > /tmp/deus-wave/llm7.code || true
+          llm7_latency="$(( $(date +%s%3N) - start ))"
+          llm7_status="$(cat /tmp/deus-wave/llm7.code 2>/dev/null || echo 0)"
+          if [ "$llm7_status" = "200" ] && grep -Fq 'DEUS_LLM7_WAVE_OK' /tmp/deus-wave/llm7.json 2>/dev/null; then llm7_exact=true; fi
+          llm7_digest="$(sha256sum /tmp/deus-wave/llm7.json 2>/dev/null | awk '{print $1}' || true)"
+
+          horde_heartbeat=false; horde_status=0; horde_exact=false; horde_model=""
+          if curl --max-time 10 -fsS 'https://oai.aihorde.net/heartbeat' -o /tmp/deus-wave/horde-heartbeat.json; then
+            if jq -e '.message=="OK"' /tmp/deus-wave/horde-heartbeat.json >/dev/null 2>&1; then horde_heartbeat=true; fi
+          fi
+          if [ "$horde_heartbeat" = "true" ] && curl --max-time 15 -fsS 'https://oai.aihorde.net/v1/models' -o /tmp/deus-wave/horde-models.json; then
+            horde_model="$(jq -r '[.data[] | select(.known_to_horde==true and .worker_threads>0 and .size>0)] | sort_by(.size) | .[0].id // empty' /tmp/deus-wave/horde-models.json)"
+            if [ -n "$horde_model" ]; then
+              jq -n --arg model "$horde_model" '{model:$model,input:"Reply with exactly: DEUS_HORDE_WAVE_OK",max_tokens:16,temperature:0,timeout:60}' >/tmp/deus-wave/horde-request.json
+              curl --max-time 90 -sS -o /tmp/deus-wave/horde.json -w '%{http_code}'                 -H 'authorization: Bearer 0000000000'                 -H 'content-type: application/json'                 --data-binary @/tmp/deus-wave/horde-request.json                 'https://oai.aihorde.net/v1/responses' > /tmp/deus-wave/horde.code || true
+              horde_status="$(cat /tmp/deus-wave/horde.code 2>/dev/null || echo 0)"
+              if [ "$horde_status" = "200" ] && grep -Fq 'DEUS_HORDE_WAVE_OK' /tmp/deus-wave/horde.json 2>/dev/null; then horde_exact=true; fi
+            fi
+          fi
+          horde_digest="$(sha256sum /tmp/deus-wave/horde.json 2>/dev/null | awk '{print $1}' || true)"
+
+          akash_status=0; akash_count=0
+          curl --max-time 60 -sS -o /tmp/deus-wave/akash.json -w '%{http_code}'             'https://console-api.akash.network/v1/providers' > /tmp/deus-wave/akash.code || true
+          akash_status="$(cat /tmp/deus-wave/akash.code 2>/dev/null || echo 0)"
+          if [ "$akash_status" = "200" ]; then
+            akash_count="$(jq 'if type=="array" then length elif .providers then (.providers|length) else 0 end' /tmp/deus-wave/akash.json 2>/dev/null || echo 0)"
+          fi
+          akash_digest="$(sha256sum /tmp/deus-wave/akash.json 2>/dev/null | awk '{print $1}' || true)"
+
+          peerwave_dns=false
+          if getent hosts api.peerwave.ai >/tmp/deus-wave/peerwave-dns.txt 2>/dev/null; then peerwave_dns=true; fi
+
+          antseed_proxy=false; antseed_models=0; antseed_version=""
+          export ANTSEED_DATA_DIR="$RUNNER_TEMP/antseed-wave"
+          mkdir -p "$ANTSEED_DATA_DIR"
+          if npm install -g @antseed/cli >/tmp/deus-wave/antseed-install.log 2>&1; then
+            antseed_version="$(antseed --version 2>/dev/null | tail -n 1 | tr -d '\r')"
+            antseed --data-dir "$ANTSEED_DATA_DIR" buyer start --router local >/tmp/deus-wave/antseed.log 2>&1 &
+            apid=$!
+            for i in $(seq 1 25); do
+              if curl --max-time 3 -fsS http://127.0.0.1:8377/v1/models -o /tmp/deus-wave/antseed-models.json; then
+                antseed_proxy=true
+                antseed_models="$(jq '.data|length' /tmp/deus-wave/antseed-models.json 2>/dev/null || echo 0)"
+                break
+              fi
+              sleep 2
+            done
+            kill "$apid" 2>/dev/null || true
+          fi
+          antseed_digest="$(sha256sum /tmp/deus-wave/antseed-models.json 2>/dev/null | awk '{print $1}' || true)"
+
+          jq -n             --arg timestamp "$now"             --argjson llm7_status "${llm7_status:-0}"             --argjson llm7_exact "$llm7_exact"             --argjson llm7_latency "$llm7_latency"             --arg llm7_digest "$llm7_digest"             --argjson horde_heartbeat "$horde_heartbeat"             --argjson horde_status "${horde_status:-0}"             --argjson horde_exact "$horde_exact"             --arg horde_model "$horde_model"             --arg horde_digest "$horde_digest"             --argjson akash_status "${akash_status:-0}"             --argjson akash_count "${akash_count:-0}"             --arg akash_digest "$akash_digest"             --argjson peerwave_dns "$peerwave_dns"             --arg antseed_version "$antseed_version"             --argjson antseed_proxy "$antseed_proxy"             --argjson antseed_models "${antseed_models:-0}"             --arg antseed_digest "$antseed_digest"             '{
+              receipt_version:"DEUS-LOW-FRICTION-ROUTE-WAVE/1",
+              timestamp:$timestamp,
+              constraints:{account_creation:false,deposit:false,paid_inference:false,seller_registration:false,stake:false,canonical_write:false,data_class:"S0_SYNTHETIC_OR_PUBLIC_DISCOVERY_ONLY"},
+              routes:{
+                llm7:{http_status:$llm7_status,exact_contract:$llm7_exact,latency_ms:$llm7_latency,digest:$llm7_digest},
+                ai_horde:{heartbeat:$horde_heartbeat,http_status:$horde_status,exact_contract:$horde_exact,model:$horde_model,digest:$horde_digest},
+                akash:{http_status:$akash_status,provider_records:$akash_count,digest:$akash_digest,workload_execution:false},
+                peerwave:{dns_resolves:$peerwave_dns,provider_execution:false},
+                antseed:{cli_version:$antseed_version,buyer_proxy_live:$antseed_proxy,model_count:$antseed_models,digest:$antseed_digest,paid_inference:false}
+              }
+            }' | tee /tmp/deus-wave/receipt.json
+
+          echo "DEUS Low-Friction Route Wave" >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/deus-wave/receipt.json >> "$GITHUB_STEP_SUMMARY"
+          jq -e '.receipt_version and .routes.llm7 and .routes.antseed' /tmp/deus-wave/receipt.json >/dev/null
