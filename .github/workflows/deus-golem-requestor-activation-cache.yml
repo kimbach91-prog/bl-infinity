@@ -28,31 +28,36 @@ jobs:
       - name: Mark resolve stage
         run: echo "RESOLVE_OFFICIAL_RELEASE" > /tmp/deus-golem-activation-stage.txt
 
-      - name: Resolve latest official Yagna requestor release
+      - name: Resolve current official requestor installer and release artifact
         id: release
         shell: bash
         run: |
           set -euo pipefail
-          api='https://api.github.com/repos/golemfactory/yagna/releases/latest'
-          curl -fsSL             -H 'Accept: application/vnd.github+json'             -H 'X-GitHub-Api-Version: 2022-11-28'             "$api" > /tmp/yagna-release.json
+          installer_url='https://join.golem.network/as-requestor'
+          curl -fsSL "$installer_url" -o /tmp/golem-as-requestor.sh
+          installer_sha="$(sha256sum /tmp/golem-as-requestor.sh | awk '{print $1}')"
 
-          tag="$(jq -r '.tag_name // empty' /tmp/yagna-release.json)"
+          grep -q '^YA_INSTALLER_VARIANT=requestor$' /tmp/golem-as-requestor.sh
+          core_line="$(grep -m1 '^YA_INSTALLER_CORE=' /tmp/golem-as-requestor.sh)"
+          tag="$(printf '%s\n' "$core_line" | sed -E 's/^YA_INSTALLER_CORE="\$\{YA_INSTALLER_CORE:-([^}]*)\}"$/\1/')"
           test -n "$tag"
+          test "$tag" != "$core_line"
+
           version="${tag#v}"
           dpkg --compare-versions "$version" ge '0.17.4'
 
+          release_base="$(grep -o -m1 'https://github.com/[^"]*/releases/download/' /tmp/golem-as-requestor.sh)"
+          test -n "$release_base"
           asset="golem-requestor-linux-${tag}.tar.gz"
-          asset_url="$(jq -r --arg n "$asset" '.assets[] | select(.name==$n) | .browser_download_url' /tmp/yagna-release.json | head -n1)"
-          asset_id="$(jq -r --arg n "$asset" '.assets[] | select(.name==$n) | .id' /tmp/yagna-release.json | head -n1)"
-          test -n "$asset_url"
-          test -n "$asset_id"
+          asset_url="${release_base}${tag}/${asset}"
 
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"
           echo "asset=$asset" >> "$GITHUB_OUTPUT"
           echo "asset_url=$asset_url" >> "$GITHUB_OUTPUT"
-          echo "asset_id=$asset_id" >> "$GITHUB_OUTPUT"
-          echo "cache_key=golem-requestor-linux-${tag}-${asset_id}" >> "$GITHUB_OUTPUT"
+          echo "asset_id=installer-derived-${tag}" >> "$GITHUB_OUTPUT"
+          echo "installer_sha256=$installer_sha" >> "$GITHUB_OUTPUT"
+          echo "cache_key=golem-requestor-linux-${tag}-${installer_sha}" >> "$GITHUB_OUTPUT"
 
       - name: Restore activation artifact cache
         id: cache
@@ -118,6 +123,7 @@ jobs:
           VERSION: ${{ steps.release.outputs.version }}
           ASSET: ${{ steps.release.outputs.asset }}
           ASSET_ID: ${{ steps.release.outputs.asset_id }}
+          INSTALLER_SHA256: ${{ steps.release.outputs.installer_sha256 }}
           CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
           SHA256: ${{ steps.verify.outputs.sha256 }}
         with:
@@ -132,9 +138,10 @@ jobs:
               version: process.env.VERSION,
               asset: process.env.ASSET,
               asset_id: process.env.ASSET_ID,
+              installer_sha256: process.env.INSTALLER_SHA256,
               sha256: process.env.SHA256,
               cache_hit: cacheHit,
-              source: "golemfactory/yagna official GitHub release",
+              source: "join.golem.network/as-requestor + installer-derived official release artifact",
               minimum_hoodi_version_satisfied: true,
               tos_accepted: false,
               yagna_executed: false,
