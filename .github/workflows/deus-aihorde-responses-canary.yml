@@ -1,0 +1,79 @@
+name: DEUS AI Horde Responses Executor Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-aihorde-responses-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  executor-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      HORDE_BASE: https://oai.aihorde.net
+      HORDE_API_KEY: "0000000000"
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Heartbeat
+        run: |
+          set -euo pipefail
+          curl -fsS "$HORDE_BASE/heartbeat" | tee /tmp/heartbeat.json
+          jq -e '.message == "OK"' /tmp/heartbeat.json
+
+      - name: Pick live model
+        id: model
+        run: |
+          set -euo pipefail
+          curl -fsS "$HORDE_BASE/v1/models" | tee /tmp/models.json
+          model="$(jq -r '.data[0].id // empty' /tmp/models.json)"
+          test -n "$model"
+          echo "model=$model" >> "$GITHUB_OUTPUT"
+          echo "Selected model: $model"
+
+      - name: Responses API synthetic S0 canary
+        env:
+          MODEL: ${{ steps.model.outputs.model }}
+        run: |
+          set -euo pipefail
+          jq -n --arg model "$MODEL" '{
+            model:$model,
+            input:"Reply with exactly: DEUS_HORDE_CANARY_OK",
+            max_tokens:32,
+            temperature:0
+          }' > /tmp/request.json
+
+          code="$(curl --max-time 240 -sS -o /tmp/response.json -w '%{http_code}'             -H "authorization: Bearer $HORDE_API_KEY"             -H 'content-type: application/json'             --data-binary @/tmp/request.json             "$HORDE_BASE/v1/responses")"
+
+          cat /tmp/response.json
+          test "$code" = "200"
+          jq -e '.id and .model and (.output | type == "array")' /tmp/response.json
+
+      - name: Emit typed receipt
+        env:
+          MODEL: ${{ steps.model.outputs.model }}
+        run: |
+          set -euo pipefail
+          rid="$(jq -r '.id' /tmp/response.json)"
+          out_count="$(jq '.output | length' /tmp/response.json)"
+          jq -n             --arg provider "AI_HORDE"             --arg base "$HORDE_BASE"             --arg model "$MODEL"             --arg response_id "$rid"             --argjson output_count "$out_count"             '{
+              receipt_version:"DEUS-S0-EXECUTOR-CANARY/1.0",
+              provider:$provider,
+              provider_base:$base,
+              auth_mode:"ANONYMOUS_PUBLIC_KEY",
+              data_class:"S0_SYNTHETIC_ONLY",
+              model:$model,
+              response_id:$response_id,
+              output_count:$output_count,
+              provider_execution:true,
+              canonical_write:false,
+              settlement:false,
+              commercial_default:false,
+              verdict:"AI_HORDE_RESPONSES_EXECUTOR_CANARY_PASS"
+            }' | tee /tmp/receipt.json
+          cat /tmp/receipt.json
