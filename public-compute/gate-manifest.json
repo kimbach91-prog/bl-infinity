@@ -1,0 +1,82 @@
+{
+  "schema": "deus-compute-gate-public-market/1",
+  "state": "PUBLIC_DEMAND_SUPPLY_DISCOVERY_LIVE",
+  "updated_at": "2026-09-20T00:05:41Z",
+  "public_safe": true,
+  "default_data_classes": ["BL-S0", "BL-S1"],
+  "demand_intake": "https://github.com/kimbach91-prog/Theory-Group/issues/337",
+  "supply_intake": "https://github.com/kimbach91-prog/Theory-Group/issues/338",
+  "founding_canary_catalog": "https://github.com/kimbach91-prog/Theory-Group/issues/337#issuecomment-5746291507",
+  "founding_provider_challenge": "https://github.com/kimbach91-prog/Theory-Group/issues/338#issuecomment-5746291760",
+  "external_route_proof": {
+    "route": "GitHub Actions hosted runner",
+    "data_class": "BL-S0",
+    "single_job_receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-S0-EXEC-005",
+    "fanout_receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006",
+    "fanout_jobs_completed": 4,
+    "minimum_concurrency_observed_in_exact_run": 3,
+    "provider_maximum_concurrency": "UNKNOWN",
+    "sustained_capacity": "UNKNOWN",
+    "economic_yield": 0
+  },
+  "counts": {
+    "external_demand": 0,
+    "external_provider_offers": 0,
+    "customers": 0,
+    "verified_compute_gmv": 0,
+    "settled_revenue": 0,
+    "realized_gate_contribution": 0
+  },
+  "provider_value_formula": {
+    "positive": [
+      "task_fit",
+      "quality",
+      "reliability",
+      "latency_fit",
+      "locality",
+      "reversibility",
+      "provider_diversity_value"
+    ],
+    "negative": [
+      "cost",
+      "privacy_risk",
+      "failure_risk",
+      "lock_in_risk"
+    ],
+    "rule": "hard_gates_override_score"
+  },
+  "incentive_ladder": [
+    {
+      "lane": "PROOF_FIRST",
+      "value": "bounded canary -> attributable receipt -> scoped reputation"
+    },
+    {
+      "lane": "RECIPROCAL_VALUE",
+      "value": "eligible public-benefit or result-swap work; no unbacked token or credit"
+    },
+    {
+      "lane": "PAID_SETTLEMENT",
+      "value": "only when exact finance/payment authority and downstream settlement receipts exist"
+    }
+  ],
+  "hard_gates": [
+    "owner_or_submitter_authority",
+    "provider_terms_and_rights",
+    "BL-S0_or_BL-S1_public_projection_only",
+    "no_credentials_or_private_keys_in_public_intake",
+    "no_hidden_installation_or_persistence",
+    "no_quota_payment_or_access_control_bypass",
+    "provider_offer_is_not_capacity_before_canary_and_receipt",
+    "demand_found_is_not_customer_or_gmv",
+    "accepted_settlement_required_before_revenue_booking"
+  ],
+  "truth_boundaries": [
+    "DEMAND_FOUND != CUSTOMER_BOUND",
+    "PROVIDER_OFFER_FOUND != ADMITTED_CAPACITY",
+    "QUOTE != GMV",
+    "PROVIDER_ACCEPTED != DOWNSTREAM_COMPLETED",
+    "RESULT_VERIFIED != SUSTAINED_CAPACITY",
+    "EXPECTED_MARGIN != REALIZED_PROFIT",
+    "COMPUTE_DIVIDEND != CASH_REVENUE"
+  ]
+}
