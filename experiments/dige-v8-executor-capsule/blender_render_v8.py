@@ -55,6 +55,9 @@ C19_HUMANIZATION=os.environ.get("DIGE_C19_HUMANIZATION","0").strip()=="1"
 C19_PHOTO_LIGHTING=os.environ.get("DIGE_C19_PHOTO_LIGHTING","0").strip()=="1"
 C20_VISUAL_REPAIR=os.environ.get("DIGE_C20_VISUAL_REPAIR","0").strip()=="1"
 C21_NATURAL_DETAIL=os.environ.get("DIGE_C21_NATURAL_DETAIL","0").strip()=="1"
+C22_PHYSICAL_SKIN=os.environ.get("DIGE_C22_PHYSICAL_SKIN","0").strip()=="1"
+C22_LANDMARK_GROOM=os.environ.get("DIGE_C22_LANDMARK_GROOM","0").strip()=="1"
+C22_HAIR_MASS_WARP=os.environ.get("DIGE_C22_HAIR_MASS_WARP","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -81,6 +84,8 @@ def make_skin():
     set_input(bs,"Coat Roughness",SKIN_COAT_ROUGHNESS)
 
     tex=nt.nodes.new("ShaderNodeTexCoord")
+    skin_vec=tex.outputs["Object"] if C22_PHYSICAL_SKIN else tex.outputs["Generated"]
+    skin_coord_space="OBJECT_METERS" if C22_PHYSICAL_SKIN else "GENERATED_NORMALIZED"
     skin_asset={
         "enabled":False,
         "file":None,
@@ -96,7 +101,7 @@ def make_skin():
     regional.inputs["Scale"].default_value=3.2
     regional.inputs["Detail"].default_value=2.4
     regional.inputs["Roughness"].default_value=.50
-    nt.links.new(tex.outputs["Generated"],regional.inputs["Vector"])
+    nt.links.new(skin_vec,regional.inputs["Vector"])
     tint=nt.nodes.new("ShaderNodeValToRGB")
     tint.color_ramp.elements[0].position=.18
     tint.color_ramp.elements[0].color=(0.92,0.86,0.83,1)
@@ -155,12 +160,12 @@ def make_skin():
     rough_macro.inputs["Scale"].default_value=6.0
     rough_macro.inputs["Detail"].default_value=3.0
     rough_macro.inputs["Roughness"].default_value=.55
-    nt.links.new(tex.outputs["Generated"],rough_macro.inputs["Vector"])
+    nt.links.new(skin_vec,rough_macro.inputs["Vector"])
     rough_micro=nt.nodes.new("ShaderNodeTexNoise")
-    rough_micro.inputs["Scale"].default_value=78.0
+    rough_micro.inputs["Scale"].default_value=650.0 if C22_PHYSICAL_SKIN else 78.0
     rough_micro.inputs["Detail"].default_value=3.0
     rough_micro.inputs["Roughness"].default_value=.62
-    nt.links.new(tex.outputs["Generated"],rough_micro.inputs["Vector"])
+    nt.links.new(skin_vec,rough_micro.inputs["Vector"])
     r1=nt.nodes.new("ShaderNodeMath"); r1.operation='MULTIPLY'; r1.inputs[1].default_value=.70
     r2=nt.nodes.new("ShaderNodeMath"); r2.operation='MULTIPLY'; r2.inputs[1].default_value=.30
     rsum=nt.nodes.new("ShaderNodeMath"); rsum.operation='ADD'
@@ -179,17 +184,17 @@ def make_skin():
     meso.inputs["Scale"].default_value=SKIN_MESO_FREQ
     meso.inputs["Detail"].default_value=5.0
     meso.inputs["Roughness"].default_value=.68
-    nt.links.new(tex.outputs["Generated"],meso.inputs["Vector"])
+    nt.links.new(skin_vec,meso.inputs["Vector"])
     pore=nt.nodes.new("ShaderNodeTexNoise")
     pore.inputs["Scale"].default_value=SKIN_PORE_FREQ
     pore.inputs["Detail"].default_value=4.0
     pore.inputs["Roughness"].default_value=.62
-    nt.links.new(tex.outputs["Generated"],pore.inputs["Vector"])
+    nt.links.new(skin_vec,pore.inputs["Vector"])
     micro=nt.nodes.new("ShaderNodeTexNoise")
     micro.inputs["Scale"].default_value=SKIN_MICRO_FREQ
     micro.inputs["Detail"].default_value=2.0
     micro.inputs["Roughness"].default_value=.58
-    nt.links.new(tex.outputs["Generated"],micro.inputs["Vector"])
+    nt.links.new(skin_vec,micro.inputs["Vector"])
     m1=nt.nodes.new("ShaderNodeMath"); m1.operation='MULTIPLY'; m1.inputs[1].default_value=.28
     m2=nt.nodes.new("ShaderNodeMath"); m2.operation='MULTIPLY'; m2.inputs[1].default_value=.50
     m3=nt.nodes.new("ShaderNodeMath"); m3.operation='MULTIPLY'; m3.inputs[1].default_value=.22
@@ -202,6 +207,7 @@ def make_skin():
     bump.inputs["Distance"].default_value=SKIN_BUMP_DISTANCE
     nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
+    skin_asset["coordinate_space"]=skin_coord_space
     return m,skin_asset
 
 def principled(name,base,rough=.45,ior=1.45,subsurface=0.0,transmission=0.0,metallic=0.0,sheen=0.0):
@@ -736,6 +742,65 @@ lash_obj,lash_fit=fit_mhclo_asset(
 )
 system_asset_fits["eyelashes01"]=lash_fit
 
+# C22 replaces the fitted alpha-card brows/lashes with landmark-anchored
+# individual fibers. The source assets remain in provenance/readback but are not
+# rendered because C21 audit showed card misfit/weak read around the eye interface.
+c22_brow_fiber_count=0
+c22_lash_fiber_count=0
+c22_lid_margin_curve_count=0
+if C22_LANDMARK_GROOM:
+    brow_obj.hide_render=True
+    lash_obj.hide_render=True
+    try:
+        brow_obj.hide_set(True); lash_obj.hide_set(True)
+    except Exception:
+        pass
+
+    lrng=random.Random(20262222)
+    brow_fibers=[]
+    lash_fibers=[]
+    lid_margins=[]
+    for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerlid")):
+        ec=landmarks[eye_key]["center"]
+        lid=landmarks[lid_key]
+        lmin=lid["bbox_min"]; lmax=lid["bbox_max"]
+        half_w=max(.015,(lmax[0]-lmin[0])*.62)
+        # Brow arch: root positions are derived from the live eye center/eyelid span.
+        for i in range(54):
+            t=(i+lrng.uniform(-.35,.35))/53.0
+            t=max(0.0,min(1.0,t))
+            x=(ec[0]-half_w*.95)+2*half_w*.95*t
+            arch=math.sin(math.pi*t)
+            root=(x,ec[1]+.0045+lrng.uniform(-.00035,.00035),ec[2]+.020+.0065*arch+lrng.uniform(-.00055,.00055))
+            direction=1.0 if t<.58 else .35
+            dx=(.0018+.0022*t)*(1.0 if ec[0] >= 0 else -1.0)*direction
+            dz=.0038-.0018*t+lrng.uniform(-.0004,.0004)
+            brow_fibers.append([root,(root[0]+dx*.5,root[1]+.0004,root[2]+dz*.5),(root[0]+dx,root[1]+.0007,root[2]+dz)])
+        # Upper lashes: short fibers follow the upper half of the eye ellipse.
+        for i in range(24):
+            t=(i+.5)/24.0
+            x=(ec[0]-half_w*.88)+2*half_w*.88*t
+            arch=math.sin(math.pi*t)
+            root=(x,ec[1]+.0035,ec[2]+.0032*arch+.0011)
+            sgn=1.0 if ec[0]>=0 else -1.0
+            length=(.0016+.0022*arch)*lrng.uniform(.88,1.12)
+            lash_fibers.append([root,(x+sgn*.00018,root[1]+length*.55,root[2]+length*.16),(x+sgn*.00034,root[1]+length,root[2]+length*.28)])
+        # Upper/lower lid margin definition, kept very thin to read contact rather than makeup.
+        upper=[]; lower=[]
+        for i in range(17):
+            t=i/16.0
+            x=(ec[0]-half_w)+2*half_w*t
+            a=math.sin(math.pi*t)
+            upper.append((x,ec[1]+.0029,ec[2]+.0036*a))
+            lower.append((x,ec[1]+.0028,ec[2]-.0029*a))
+        lid_margins.extend([upper,lower])
+    curve_object("DIGE_C22_LANDMARK_BROW_FIBERS",brow_fibers,.000060,hair)
+    curve_object("DIGE_C22_LANDMARK_LASH_FIBERS",lash_fibers,.000038,hair)
+    curve_object("DIGE_C22_LID_MARGINS",lid_margins,.000045,mouth_dark)
+    c22_brow_fiber_count=len(brow_fibers)
+    c22_lash_fiber_count=len(lash_fibers)
+    c22_lid_margin_curve_count=len(lid_margins)
+
 # C20 visual repair: the fitted alpha cards are still retained for provenance,
 # but explicit micro-curve brows/upper lashes provide geometric silhouette/read
 # under hero lighting. This is bounded cosmetic geometry, not anatomy authority.
@@ -819,6 +884,30 @@ hair_obj,hair_fit=fit_mhclo_asset(
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
+# C22 frontal bulk-groom warp. C21 audit showed that the lawful short03 mass still
+# left an oversized forehead. This bounded deformation only affects the frontal
+# short03 shell and preserves the rest of the groom/topology.
+c22_hair_mass_warp_vertices=0
+if C22_HAIR_MASS_WARP:
+    for v in hair_obj.data.vertices:
+        p=v.co
+        if p.y <= -0.010 or p.z < 1.585 or p.z > 1.685 or abs(p.x) > .112:
+            continue
+        central=max(0.0,1.0-abs(p.x)/.112)
+        front=max(0.0,min(1.0,(p.y+.010)/.075))
+        w=(central**1.55)*(front**1.25)
+        if w <= 0.0:
+            continue
+        p.z -= .0185*w
+        p.y += .0035*w
+        c22_hair_mass_warp_vertices+=1
+    hair_obj.data.update()
+    # Keep provenance metrics but refresh the actual post-warp bbox for readback.
+    pts=[hair_obj.matrix_world @ v.co for v in hair_obj.data.vertices]
+    hair_fit["c22_mass_warp_vertices"]=c22_hair_mass_warp_vertices
+    hair_fit["c22_postwarp_bbox_min"]=[min(p[i] for p in pts) for i in range(3)]
+    hair_fit["c22_postwarp_bbox_max"]=[max(p[i] for p in pts) for i in range(3)]
+
 # C21 natural-detail layer: sparse, irregular micro-hairs replace the C20
 # continuous brow arches and comb-like hairline bridge. These are deterministic
 # cosmetic strands bounded to the existing fitted anatomy/groom.
@@ -826,7 +915,7 @@ c21_brow_hair_count=0
 c21_lash_hair_count=0
 c21_hairline_baby_count=0
 c21_temple_flyaway_count=0
-if C21_NATURAL_DETAIL:
+if C21_NATURAL_DETAIL and not C22_LANDMARK_GROOM:
     nrng=random.Random(20262121)
 
     brow_hairs=[]
@@ -1378,7 +1467,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))),
+    "style":"PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1579,14 +1668,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"))),
+ "appearance_candidate":"C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1")))),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"))),
+   "selection_basis":"C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB")))),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1614,12 +1703,20 @@ receipt={
    "c21_brow_hairs":c21_brow_hair_count,
    "c21_lash_hairs":c21_lash_hair_count,
    "c21_hairline_baby_hairs":c21_hairline_baby_count,
-   "c21_temple_flyaways":c21_temple_flyaway_count
+   "c21_temple_flyaways":c21_temple_flyaway_count,
+   "c22_physical_skin":C22_PHYSICAL_SKIN,
+   "c22_skin_coordinate_space":skin_asset.get("coordinate_space"),
+   "c22_landmark_groom":C22_LANDMARK_GROOM,
+   "c22_hair_mass_warp":C22_HAIR_MASS_WARP,
+   "c22_hair_mass_warp_vertices":c22_hair_mass_warp_vertices,
+   "c22_brow_fibers":c22_brow_fiber_count,
+   "c22_lash_fibers":c22_lash_fiber_count,
+   "c22_lid_margin_curves":c22_lid_margin_curve_count
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_albedo":skin_asset,
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[SKIN_MESO_FREQ,SKIN_PORE_FREQ,SKIN_MICRO_FREQ],"bump_distance":SKIN_BUMP_DISTANCE,"coat_weight":SKIN_COAT_WEIGHT,"coat_roughness":SKIN_COAT_ROUGHNESS},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[SKIN_MESO_FREQ,SKIN_PORE_FREQ,SKIN_MICRO_FREQ],"bump_distance":SKIN_BUMP_DISTANCE,"coat_weight":SKIN_COAT_WEIGHT,"coat_roughness":SKIN_COAT_ROUGHNESS,"coordinate_space":skin_asset.get("coordinate_space")},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "hair_curve_metrics":hair_curve_metrics,

@@ -1,4 +1,4 @@
-name: DIGE V8 C21 Natural Detail Finalist
+name: DIGE V8 C22 Physical Skin Landmark Groom
 
 on:
   pull_request:
@@ -12,11 +12,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c21-natural-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c22-physical-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c21-finalist:
+  c22-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -71,17 +71,20 @@ jobs:
           echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
           echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
 
-      - name: Render C21 natural-detail finalist
+      - name: Render C22 physical-skin landmark-groom finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c21_natural
+          DIGE_OUTPUT_TAG: c22_physical
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '1'
           DIGE_C19_PHOTO_LIGHTING: '1'
           DIGE_C20_VISUAL_REPAIR: '1'
           DIGE_C21_NATURAL_DETAIL: '1'
+          DIGE_C22_PHYSICAL_SKIN: '1'
+          DIGE_C22_LANDMARK_GROOM: '1'
+          DIGE_C22_HAIR_MASS_WARP: '1'
           DIGE_HAIR_ASSET_KEY: hair_short03
           DIGE_HAIR_STRANDS_PER_ROOT: '18'
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.72'
@@ -91,49 +94,49 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
-          DIGE_SKIN_SSS_WEIGHT: '0.10'
-          DIGE_SKIN_SSS_SCALE: '0.0012'
-          DIGE_SKIN_ROUGH_MIN: '0.43'
-          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_SSS_WEIGHT: '0.085'
+          DIGE_SKIN_SSS_SCALE: '0.0011'
+          DIGE_SKIN_ROUGH_MIN: '0.42'
+          DIGE_SKIN_ROUGH_MAX: '0.59'
           DIGE_SKIN_ALBEDO_SAT: '0.98'
           DIGE_SKIN_ALBEDO_VALUE: '0.48'
           DIGE_EYE_TEX_SAT: '0.78'
           DIGE_EYE_TEX_VALUE: '0.64'
           DIGE_HAIR_TEX_SAT: '0.56'
           DIGE_HAIR_TEX_VALUE: '0.23'
-          DIGE_FACE_MESO_SCALE: '1.95'
+          DIGE_FACE_MESO_SCALE: '1.55'
           DIGE_SKIN_TONE_R: '0.60'
           DIGE_SKIN_TONE_G: '0.33'
           DIGE_SKIN_TONE_B: '0.22'
           DIGE_SKIN_TONE_MIX: '0.60'
-          DIGE_SKIN_MICRO_STRENGTH: '0.38'
-          DIGE_SKIN_MESO_FREQ: '44'
-          DIGE_SKIN_PORE_FREQ: '230'
-          DIGE_SKIN_MICRO_FREQ: '720'
-          DIGE_SKIN_BUMP_DISTANCE: '0.00030'
+          DIGE_SKIN_MICRO_STRENGTH: '0.24'
+          DIGE_SKIN_MESO_FREQ: '95'
+          DIGE_SKIN_PORE_FREQ: '2800'
+          DIGE_SKIN_MICRO_FREQ: '9000'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000065'
           DIGE_SKIN_COAT_WEIGHT: '0.001'
           DIGE_SKIN_COAT_ROUGHNESS: '0.45'
           DIGE_SAMPLES_PREVIEW: '48'
-          DIGE_SAMPLES_HERO: '128'
+          DIGE_SAMPLES_HERO: '192'
           DIGE_RENDER_SEED: '20260920'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c21_natural.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c22_physical.log
 
-      - name: Verify C21 receipt
+      - name: Verify C22 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c21_natural")
+          root=pathlib.Path("runtime/renders/c22_physical")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1"
+          assert r["appearance_candidate"]=="C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1"
           h=r["hair_surface_contract"]
-          assert h["style"]=="HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1"
+          assert h["style"]=="PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1"
           assert h["mass_mesh_rendered"] is True
           assert h["curve_count"] >= 5000
           assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
@@ -143,7 +146,7 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C21_NATURAL_DETAIL_RECEIPT_V1",
+            "schema":"DIGE_C22_PHYSICAL_SKIN_LANDMARK_GROOM_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
@@ -151,30 +154,36 @@ jobs:
             "hair_curve_metrics":r["hair_curve_metrics"],
             "skin_model":r["skin_model"],
             "appearance_selection":r["appearance_selection"],
-            "c21_natural_detail":r["appearance_selection"].get("c21_natural_detail"),
-            "c21_brow_hairs":r["appearance_selection"].get("c21_brow_hairs"),
-            "c21_lash_hairs":r["appearance_selection"].get("c21_lash_hairs"),
-            "c21_hairline_baby_hairs":r["appearance_selection"].get("c21_hairline_baby_hairs"),
-            "c21_temple_flyaways":r["appearance_selection"].get("c21_temple_flyaways"),
-            "claim_ceiling":"C21_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "c22_physical_skin":r["appearance_selection"].get("c22_physical_skin"),
+            "c22_skin_coordinate_space":r["appearance_selection"].get("c22_skin_coordinate_space"),
+            "c22_landmark_groom":r["appearance_selection"].get("c22_landmark_groom"),
+            "c22_hair_mass_warp":r["appearance_selection"].get("c22_hair_mass_warp"),
+            "c22_hair_mass_warp_vertices":r["appearance_selection"].get("c22_hair_mass_warp_vertices"),
+            "c22_brow_fibers":r["appearance_selection"].get("c22_brow_fibers"),
+            "c22_lash_fibers":r["appearance_selection"].get("c22_lash_fibers"),
+            "c22_lid_margin_curves":r["appearance_selection"].get("c22_lid_margin_curves"),
+            "claim_ceiling":"C22_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
-          assert summary["c21_natural_detail"] is True
-          assert summary["c21_brow_hairs"] >= 80
-          assert summary["c21_lash_hairs"] >= 30
-          assert summary["c21_hairline_baby_hairs"] >= 45
-          assert summary["c21_temple_flyaways"] >= 8
-          (root/"DIGE_C21_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          assert summary["c22_physical_skin"] is True
+          assert summary["c22_skin_coordinate_space"]=="OBJECT_METERS"
+          assert summary["c22_landmark_groom"] is True
+          assert summary["c22_hair_mass_warp"] is True
+          assert summary["c22_hair_mass_warp_vertices"] > 0
+          assert summary["c22_brow_fibers"] >= 100
+          assert summary["c22_lash_fibers"] >= 40
+          assert summary["c22_lid_margin_curves"] >= 4
+          (root/"DIGE_C22_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C21 evidence
+      - name: Upload C22 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C21-NATURAL-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C22-PHYSICAL-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c21_natural/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c21_natural/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c21_natural/*.json
-            experiments/dige-v8-executor-capsule/runtime/c21_natural.log
+            experiments/dige-v8-executor-capsule/runtime/renders/c22_physical/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c22_physical/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c22_physical/*.json
+            experiments/dige-v8-executor-capsule/runtime/c22_physical.log
           if-no-files-found: error
           retention-days: 14
