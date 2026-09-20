@@ -1,0 +1,40 @@
+name: DEUS FrontierMath Erdos242 Comparator Gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-frontiermath-erdos242-comparator.yml'
+      - 'public_benchmark/wave1/frontiermath_erdos242_comparator.py'
+      - 'public_benchmark/wave1/frontiermath_erdos242_attempt.lean'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  comparator-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: epoch-research/LeanOpenProblems
+          ref: af3b82f9d2fd38bea33d59e637b6b4eff54a464c
+          path: vendor/LeanOpenProblems
+      - uses: astral-sh/setup-uv@v6
+      - name: Prepare APN environment
+        run: |
+          cd vendor/LeanOpenProblems
+          uv sync
+      - name: Run production-style SandboxComparator on Erdos242 disproof claim
+        shell: bash
+        run: |
+          cp public_benchmark/wave1/frontiermath_erdos242_comparator.py vendor/LeanOpenProblems/deus_erdos242_comparator.py
+          cd vendor/LeanOpenProblems
+          uv run python deus_erdos242_comparator.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-erdos242-comparator-receipt
+          path: vendor/LeanOpenProblems/deus-erdos242-comparator-receipt.json
+          if-no-files-found: error
