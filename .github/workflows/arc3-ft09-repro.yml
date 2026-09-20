@@ -1,0 +1,184 @@
+name: ARC3 ft09 source-assisted six-level reproduction
+
+on:
+  push:
+    branches: [deus/arc3-ft09-public-repro-20260920]
+    paths: [.github/workflows/arc3-ft09-repro.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ONLINE, NORMAL]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay public source-assisted route and require six-level WIN
+        env:
+          REPLAY_MODE: ${{ matrix.mode }}
+        run: |
+          python - <<'PY'
+          import json, logging, hashlib, time, os, platform
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+
+          # Public verified route disclosed by dp-web4/SAGE.
+          # Source: arc-agi-3/experiments/ft09_replay.py @
+          # 4b5d26a896ebba158a63e9fd944f4e4ef8c753d8
+          levels = [
+              [(38,54), (38,46), (38,38), (54,46)],
+              [(22,32), (22,24), (30,48), (22,48), (22,16), (38,32), (38,24)],
+              [(38,54), (46,30), (30,22), (22,54), (22,14), (14,22), (30,6),
+               (46,38), (14,30), (30,54), (38,6), (30,38), (22,46), (22,6)],
+              [(38,48), (38,48), (46,24), (30,16), (22,48), (22,48), (38,32),
+               (30,24), (22,32), (22,32), (30,48), (30,48), (22,16), (22,16),
+               (46,16), (30,32)],
+              [(16,14), (32,38), (32,14), (24,6), (32,22), (40,38), (48,46),
+               (32,46), (40,54), (32,54), (48,38), (16,22), (32,6), (16,38),
+               (16,54), (16,30), (32,30), (48,22), (24,14), (40,46), (24,30)],
+              [(22,16), (38,16), (14,24), (22,24), (38,32), (14,32), (46,32),
+               (30,32), (46,40), (22,40), (54,40), (6,16), (6,8)],
+          ]
+          route = [
+              {'a': 6, 'data': {'x': x, 'y': y}, 'level': li + 1}
+              for li, clicks in enumerate(levels)
+              for x, y in clicks
+          ]
+          digest = lambda v: hashlib.sha256(
+              json.dumps(v, sort_keys=True, separators=(',', ':')).encode()
+          ).hexdigest()
+          assert [len(x) for x in levels] == [4, 7, 14, 16, 21, 13]
+          assert len(route) == 75
+
+          mode = os.environ['REPLAY_MODE']
+          source_sha = os.environ['GITHUB_SHA']
+          external_source = (
+              'https://github.com/dp-web4/SAGE/blob/'
+              '4b5d26a896ebba158a63e9fd944f4e4ef8c753d8/'
+              'arc-agi-3/experiments/ft09_replay.py'
+          )
+          out = Path('verification')
+          out.mkdir()
+
+          arc = arc_agi.Arcade(operation_mode=OperationMode[mode])
+          card_id = arc.open_scorecard(
+              source_url=external_source,
+              tags=[
+                  'DEUS',
+                  'ft09',
+                  'public-development',
+                  'source-assisted-reproduction',
+                  mode.lower(),
+              ],
+          )
+          env = arc.make(
+              'ft09-0d8bbf25',
+              seed=0,
+              scorecard_id=card_id,
+              save_recording=False,
+              include_frame_data=True,
+          )
+          if env is None:
+              raise RuntimeError('ENV_UNAVAILABLE')
+
+          amap = {a.value: a for a in env.action_space}
+          if 6 not in amap:
+              raise RuntimeError('CLICK_ACTION_UNAVAILABLE')
+          obs = env.observation_space
+          transcript = []
+          milestones = []
+          before = int(obs.levels_completed)
+          started = datetime.now(timezone.utc).isoformat()
+          t0 = time.monotonic()
+          executed = 0
+
+          for level_index, clicks in enumerate(levels):
+              target_level = level_index + 1
+              for x, y in clicks:
+                  executed += 1
+                  obs = env.step(amap[6], data={'x': x, 'y': y})
+                  if obs is None:
+                      raise RuntimeError('OBSERVATION_MISSING_AT_' + str(executed))
+                  frame = np.asarray(obs.frame[-1], dtype=np.uint8)
+                  row = {
+                      'i': executed,
+                      'action': {'a': 6, 'data': {'x': x, 'y': y}},
+                      'levels_completed': int(obs.levels_completed),
+                      'state': obs.state.value,
+                      'frame_sha256': hashlib.sha256(frame.tobytes()).hexdigest(),
+                  }
+                  transcript.append(row)
+                  if int(obs.levels_completed) != before:
+                      milestones.append(row)
+                      before = int(obs.levels_completed)
+                  if int(obs.levels_completed) >= target_level:
+                      break
+              if int(obs.levels_completed) != target_level:
+                  raise RuntimeError(
+                      f'LEVEL_{target_level}_NOT_COMPLETED_AFTER_SOURCE_ROUTE:'
+                      f'{obs.levels_completed}'
+                  )
+
+          replay_seconds = time.monotonic() - t0
+          passed = int(obs.levels_completed) == 6 and obs.state.value == 'WIN'
+          card = arc.close_scorecard(card_id)
+          receipt = {
+              'schema': 'public-development-source-assisted-reproduction/1',
+              'system_label': 'DEUS',
+              'result': 'PASS' if passed else 'FAIL',
+              'game_id': 'ft09-0d8bbf25',
+              'seed': 0,
+              'mode': mode,
+              'toolkit': 'arc-agi 0.9.9',
+              'engine': 'arcengine 0.9.3',
+              'python': platform.python_version(),
+              'source_sha': source_sha,
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'started_at': started,
+              'completed_at': datetime.now(timezone.utc).isoformat(),
+              'replay_seconds': replay_seconds,
+              'actions_executed': executed,
+              'route_actions_disclosed': len(route),
+              'per_level_disclosed_clicks': [len(x) for x in levels],
+              'levels_completed': int(obs.levels_completed),
+              'state': obs.state.value,
+              'route_sha256': digest(route),
+              'final_frame_sha256': transcript[-1]['frame_sha256'],
+              'milestones': milestones,
+              'scorecard_id': card_id,
+              'scorecard_score': None if card is None else card.score,
+              'protocol': 'PUBLIC_SOURCE_ASSISTED_ROUTE_REPRODUCTION',
+              'external_route_source': external_source,
+              'external_route_used': True,
+              'independent_solver_claim': False,
+              'official_competition_claim': False,
+              'hidden_state_read': False,
+              'game_implementation_inspected_by_deus': False,
+              'private_core_or_credentials_in_payload': False,
+          }
+          (out / 'receipt.json').write_text(json.dumps(receipt, indent=2))
+          (out / 'actions.json').write_text(json.dumps(transcript, separators=(',', ':')))
+          (out / 'final_frame.json').write_text(json.dumps(frame.tolist()))
+          print('VERIFIED_GAME_RECEIPT=' + json.dumps(receipt, separators=(',', ':')))
+          if not passed:
+              raise RuntimeError('SIX_LEVEL_WIN_REQUIRED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ft09-source-assisted-verification-${{ matrix.mode }}
+          path: verification/
+          retention-days: 30
