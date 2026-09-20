@@ -34,10 +34,7 @@ jobs:
             python3 -m pip install --disable-pip-version-check --no-input --index-url https://download.pytorch.org/whl/cpu torch
           fi
           python3 -m pip install --disable-pip-version-check --no-input 'transformers>=4.42,<5' 'huggingface_hub>=0.24,<1' safetensors
-          python3 - <<'PY'
-import torch, transformers, huggingface_hub
-print("DEUS_LLM_STACK="+str({"torch":torch.__version__,"transformers":transformers.__version__,"huggingface_hub":huggingface_hub.__version__}))
-PY
+          python3 -c 'import torch,transformers,huggingface_hub; print("DEUS_LLM_STACK="+str({"torch":torch.__version__,"transformers":transformers.__version__,"huggingface_hub":huggingface_hub.__version__}))'
 
       - name: Execute bounded public LLM microcell leaf tasks
         shell: bash
