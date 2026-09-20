@@ -1512,6 +1512,196 @@ hair_obj,hair_fit=fit_mhclo_asset(
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
+# C28: replace the diminishing-return MakeHuman head prior with Google GNM Head.
+# Body/camera/lighting remain fixed so this is a causal geometry-prior ablation.
+c28_gnm={"enabled":False}
+c28_gnm_objects={}
+c28_brow_fiber_count=0
+c28_lash_fiber_count=0
+c28_hairline_fiber_count=0
+c28_body_cut_z=None
+c28_hairline_delta=0.0
+c28_hairline_warp_vertices=0
+if C28_GNM_HEAD:
+    gnm_dir=Path(C28_GNM_DIR)
+    if not gnm_dir.is_absolute():
+        gnm_dir=ROOT/gnm_dir
+    manifest_path=gnm_dir/"DIGE_C28_GNM_HEAD_MANIFEST.json"
+    if not manifest_path.exists():
+        raise RuntimeError(f"C28 GNM manifest missing: {manifest_path}")
+    gm=json.loads(manifest_path.read_text(encoding="utf-8"))
+    if C28_GNM_COMMIT and gm.get("source_commit")!=C28_GNM_COMMIT:
+        raise RuntimeError(f"C28 GNM commit drift: expected={C28_GNM_COMMIT} got={gm.get('source_commit')}")
+    src_left=Vector(gm["anchors"]["left_eye_center"])
+    src_right=Vector(gm["anchors"]["right_eye_center"])
+    src_eye_mid=(src_left+src_right)*.5
+    src_dist=(src_left-src_right).length
+    tgt_left=Vector(landmarks["left_eye"]["center"])
+    tgt_right=Vector(landmarks["right_eye"]["center"])
+    tgt_eye_mid=(tgt_left+tgt_right)*.5
+    tgt_dist=(tgt_left-tgt_right).length
+    if src_dist<=1e-6 or tgt_dist<=1e-6:
+        raise RuntimeError(f"C28 invalid interocular distances src={src_dist} target={tgt_dist}")
+    head_scale=(tgt_dist/src_dist)*C28_HEAD_SCALE_BIAS
+    head_translation=tgt_eye_mid-src_eye_mid*head_scale+Vector((0,0,C28_HEAD_Z_OFFSET))
+
+    raw_lm=json.loads((gnm_dir/gm["landmarks68_file"]).read_text(encoding="utf-8"))
+    transformed_landmarks=[Vector(p)*head_scale+head_translation for p in raw_lm]
+    gnm_eye_mid=(sum(transformed_landmarks[36:42],Vector())/6 + sum(transformed_landmarks[42:48],Vector())/6)*.5
+    gnm_brow_left=transformed_landmarks[17:22]
+    gnm_brow_right=transformed_landmarks[22:27]
+
+    gnm_skin_mat,c28_skin_contract=c28_gnm_skin_material()
+    teeth_mat=principled("DIGE_C28_TEETH",(0.72,0.63,0.54),rough=.34,ior=1.52,subsurface=.018)
+    tongue_mat=principled("DIGE_C28_TONGUE",(0.30,0.055,0.050),rough=.48,ior=1.40,subsurface=.05)
+    component_material={
+        "skin":gnm_skin_mat,
+        "eye_interiors":eye_mat,
+        "eye_exteriors":cornea,
+        "upper_teeth_and_gums":teeth_mat,
+        "lower_teeth_and_gums":teeth_mat,
+        "tongue":tongue_mat,
+    }
+    for comp,rec in gm["files"].items():
+        p=gnm_dir/rec["file"]
+        if not p.exists() or sha(p)!=rec["sha256"]:
+            raise RuntimeError(f"C28 GNM component missing/hash drift: {comp}")
+        obj=c28_import_component(
+            p,
+            f"DIGE_C28_GNM_{comp.upper()}",
+            component_material.get(comp,gnm_skin_mat),
+            head_scale,
+            head_translation,
+        )
+        c28_gnm_objects[comp]=obj
+
+    gnm_bbox_min=Vector(gm["bbox_min"])*head_scale+head_translation
+    gnm_bbox_max=Vector(gm["bbox_max"])*head_scale+head_translation
+    c28_body_cut_z=float(gnm_bbox_min.z+.018)
+    bm=bmesh.new(); bm.from_mesh(body.data)
+    kill=[v for v in bm.verts if v.co.z>c28_body_cut_z]
+    if len(kill)<100:
+        raise RuntimeError(f"C28 body-head cut selected too few vertices: {len(kill)} cut_z={c28_body_cut_z}")
+    bmesh.ops.delete(bm,geom=kill,context='VERTS')
+    bm.to_mesh(body.data); bm.free(); body.data.update()
+
+    eye_obj.hide_render=True
+    brow_obj.hide_render=True
+    lash_obj.hide_render=True
+    for ob in list(bpy.data.objects):
+        if ob.name.startswith(("DIGE_V8_MOUTH_","DIGE_V8_UPPER_LIP_","DIGE_V8_LOWER_LIP_","NOSTRIL_","DIGE_V8_EYE_WETLINES","DIGE_C20_","DIGE_C21_","DIGE_C22_","DIGE_C23_","DIGE_C24_","DIGE_C26_")):
+            ob.hide_render=True
+
+    brow_top=max(p.z for p in gnm_brow_left+gnm_brow_right)
+    target_hairline_z=brow_top+.043
+    front=[]
+    for v in hair_obj.data.vertices:
+        wp=hair_obj.matrix_world@v.co
+        if wp.y>gnm_eye_mid.y-.035 and abs(wp.x-gnm_eye_mid.x)<.105 and wp.z>brow_top:
+            front.append(wp.z)
+    if len(front)<20:
+        raise RuntimeError(f"C28 insufficient frontal hair samples: {len(front)}")
+    front.sort()
+    current_hairline_z=front[max(0,int(len(front)*.06)-1)]
+    c28_hairline_delta=max(-.050,min(.012,target_hairline_z-current_hairline_z))
+    for v in hair_obj.data.vertices:
+        wp=hair_obj.matrix_world@v.co
+        if wp.y<=gnm_eye_mid.y-.050 or abs(wp.x-gnm_eye_mid.x)>.120 or wp.z<brow_top:
+            continue
+        central=max(0.0,1.0-abs(wp.x-gnm_eye_mid.x)/.120)
+        front_w=max(0.0,min(1.0,(wp.y-(gnm_eye_mid.y-.050))/.105))
+        upper_guard=max(0.0,min(1.0,(brow_top+.140-wp.z)/.140))
+        w=(central**1.25)*(front_w**1.10)*upper_guard
+        if w<=0: continue
+        v.co.z+=c28_hairline_delta*w
+        v.co.y-=.0025*max(0.0,-c28_hairline_delta/.050)*w
+        c28_hairline_warp_vertices+=1
+    hair_obj.data.update()
+
+    grng=random.Random(20262828)
+    brow_fibers=[]
+    lash_fibers=[]
+    for pts in (gnm_brow_left,gnm_brow_right):
+        ordered=sorted(pts,key=lambda p:p.x)
+        for i in range(72):
+            u=(i+grng.uniform(-.30,.30))/71.0
+            u=max(0.0,min(1.0,u))
+            seg=min(len(ordered)-2,int(u*(len(ordered)-1)))
+            lu=u*(len(ordered)-1)-seg
+            root=ordered[seg].lerp(ordered[seg+1],lu)+Vector((0,.00065,grng.uniform(-.0004,.0004)))
+            side=1.0 if root.x>=gnm_eye_mid.x else -1.0
+            length=grng.uniform(.0026,.0048)
+            brow_fibers.append([
+                root,
+                root+Vector((side*length*.25,.00035,length*.45)),
+                root+Vector((side*length*.58,.00065,length*.82)),
+            ])
+    for eye_pts in (transformed_landmarks[36:42],transformed_landmarks[42:48]):
+        ec=sum(eye_pts,Vector())/len(eye_pts)
+        upper=sorted([p for p in eye_pts if p.z>=ec.z-.0005],key=lambda p:p.x)
+        if len(upper)<2:
+            upper=sorted(eye_pts,key=lambda p:p.x)
+        for i in range(28):
+            u=(i+.5)/28.0
+            seg=min(len(upper)-2,int(u*(len(upper)-1)))
+            lu=u*(len(upper)-1)-seg
+            root=upper[seg].lerp(upper[seg+1],lu)+Vector((0,.00055,.00025))
+            side=1.0 if root.x>=gnm_eye_mid.x else -1.0
+            length=grng.uniform(.0016,.0034)
+            lash_fibers.append([
+                root,
+                root+Vector((side*.00010,length*.52,length*.14)),
+                root+Vector((side*.00022,length,length*.26)),
+            ])
+    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000060,hair)
+    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000036,hair)
+    c28_brow_fiber_count=len(brow_fibers)
+    c28_lash_fiber_count=len(lash_fibers)
+
+    baby=[]
+    for i in range(104):
+        if grng.random()<.28: continue
+        u=(i+grng.uniform(-.40,.40))/103.0
+        x=gnm_eye_mid.x-.083+.166*u
+        temple=min(1.0,abs(x-gnm_eye_mid.x)/.083)
+        z=target_hairline_z+.012*(temple**1.45)+grng.uniform(-.0017,.0017)
+        root=Vector((x,gnm_eye_mid.y+.030+grng.uniform(-.001,.001),z))
+        length=grng.uniform(.007,.015)
+        side=1.0 if x>=gnm_eye_mid.x else -1.0
+        baby.append([
+            root,
+            root+Vector((side*grng.uniform(-.0004,.0010),-.0035,length*.32)),
+            root+Vector((side*grng.uniform(-.0007,.0016),-.0080,length*.70)),
+            root+Vector((side*grng.uniform(-.0010,.0022),-.0130,length)),
+        ])
+    curve_object("DIGE_C28_GNM_HAIRLINE_FIBERS",baby,.000045,hair)
+    c28_hairline_fiber_count=len(baby)
+
+    c28_gnm={
+        "enabled":True,
+        "source_repo":gm["source_repo"],
+        "source_commit":gm["source_commit"],
+        "license":gm["license"],
+        "model":gm["model"],
+        "manifest_sha256":sha(manifest_path),
+        "head_scale":head_scale,
+        "head_translation":list(head_translation),
+        "body_cut_z":c28_body_cut_z,
+        "aligned_bbox_min":list(gnm_bbox_min),
+        "aligned_bbox_max":list(gnm_bbox_max),
+        "target_interocular_distance":tgt_dist,
+        "source_interocular_distance":src_dist,
+        "hairline_target_z":target_hairline_z,
+        "hairline_before_z":current_hairline_z,
+        "hairline_delta":c28_hairline_delta,
+        "hairline_warp_vertices":c28_hairline_warp_vertices,
+        "brow_fibers":c28_brow_fiber_count,
+        "lash_fibers":c28_lash_fiber_count,
+        "hairline_fibers":c28_hairline_fiber_count,
+        "skin_contract":c28_skin_contract,
+        "components":{k:len(v.data.vertices) for k,v in c28_gnm_objects.items()},
+    }
+
 # C26 non-destructive frontal groom repair. C25 proved that face deletion creates
 # a black temple wedge, so C26 moves vertices only: low fringe moves back/up away
 # from the eye interface while the upper frontal mass is lowered toward the brow.
