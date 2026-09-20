@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { TaskExecutor } from "@golem-sdk/task-executor";
 import { pinoPrettyLogger } from "@golem-sdk/pino-logger";
 
@@ -51,7 +52,7 @@ try {
     stats,
     truth_boundary: "TESTNET_RESULT_VERIFIED != MAINNET_CAPACITY_OR_ECONOMIC_YIELD"
   };
-  console.log("DEUS_GOLEM_RECEIPT=" + JSON.stringify(receipt));
+  fs.writeFileSync("/tmp/deus-golem-receipt.json", JSON.stringify(receipt, null, 2));\n  console.log("DEUS_GOLEM_RECEIPT=" + JSON.stringify(receipt));
   if (!receipt.exact_match) process.exitCode = 2;
 } finally {
   await executor.shutdown();
