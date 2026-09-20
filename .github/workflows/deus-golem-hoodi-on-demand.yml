@@ -36,12 +36,12 @@ jobs:
         run: |
           set -euo pipefail
           python3 -m pip install --upgrade pip
-          python3 -m pip install --no-deps --index-url https://test.pypi.org/simple 'golem-node==0.17.0'
+          python3 -m pip install --no-deps --index-url https://test.pypi.org/simple 'golem-node==0.17.4'
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
           export PATH="$HOME/.local/bin:$PATH"
           command -v yagna
           yagna --version | tee /tmp/yagna-version.txt
-          grep -Eq 'yagna 0\.17\.0' /tmp/yagna-version.txt
+          grep -Eq 'yagna 0\.17\.4' /tmp/yagna-version.txt
 
       - name: Mark stage yagna
         run: echo "START_YAGNA" > /tmp/deus-golem-stage.txt
@@ -70,13 +70,18 @@ jobs:
         run: |
           set -euo pipefail
           export PATH="$HOME/.local/bin:$HOME/.yagna/bin:$PATH"
-          if ! timeout 120s yagna payment fund >/tmp/payment-fund.log 2>&1; then
+          if ! yagna payment init --sender --network hoodi >/tmp/payment-init.log 2>&1; then
+            echo "DEUS_PAYMENT_INIT_FAILED"
+            tail -n 120 /tmp/payment-init.log || true
+            exit 1
+          fi
+          if ! timeout 120s yagna payment fund --network hoodi >/tmp/payment-fund.log 2>&1; then
             echo "DEUS_PAYMENT_FUND_FAILED"
             tail -n 120 /tmp/payment-fund.log || true
             yagna payment status --network=hoodi --driver=erc20 || true
             exit 1
           fi
-          if ! yagna payment status --network=hoodi --driver=erc20 >/tmp/payment-status.log 2>&1; then
+          if ! yagna payment status --network hoodi >/tmp/payment-status.log 2>&1; then
             echo "DEUS_PAYMENT_STATUS_FAILED"
             tail -n 120 /tmp/payment-status.log || true
             exit 1
