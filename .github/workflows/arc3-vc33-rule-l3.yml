@@ -89,8 +89,8 @@ jobs:
           if int(o.levels_completed)!=2: raise RuntimeError('L3_START_FAIL')
 
           q=deque([(copy.deepcopy(e),o,[])])
-          seen={key(o)};found=None;exp=0;t0=time.monotonic()
-          while q and exp<150000 and time.monotonic()-t0<300:
+          seen={key(o,())};found=None;exp=0;t0=time.monotonic()
+          while q and exp<500000 and time.monotonic()-t0<480:
               ee,oo,path=q.popleft()
               cur=comps(fr(oo))
               for idx,b in enumerate(cur):
