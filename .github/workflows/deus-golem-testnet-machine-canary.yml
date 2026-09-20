@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   golem-testnet-canary:
@@ -90,3 +91,47 @@ jobs:
             /tmp/payment-status.log
           if-no-files-found: ignore
           retention-days: 7
+
+      - name: Post verified Golem receipt to Machine Trial Bus
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require("fs");
+            const receipt = JSON.parse(fs.readFileSync("/tmp/deus-golem-receipt.json", "utf8"));
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: 182,
+              body: "\`\`\`json\\n" + JSON.stringify({
+                schema: "deus-external-route-receipt/1",
+                route_id: "GOLEM-HOODI-TESTNET",
+                transport: "golem-yagna-task-executor",
+                source_workflow: "DEUS Golem Testnet Machine Canary",
+                github_run_id: context.runId,
+                receipt,
+                capacity_credit: 0,
+                economic_yield_proven: false,
+                mainnet_capacity_proven: false,
+                truth_boundary: "TESTNET_RESULT_VERIFIED != MAINNET_CAPACITY_OR_ECONOMIC_YIELD"
+              }, null, 2) + "\\n\`\`\`"
+            });
+
+      - name: Post bounded Golem blocker to Machine Trial Bus
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: 182,
+              body: "\`\`\`json\\n" + JSON.stringify({
+                schema: "deus-external-route-blocker/1",
+                route_id: "GOLEM-HOODI-TESTNET",
+                source_workflow: "DEUS Golem Testnet Machine Canary",
+                github_run_id: context.runId,
+                verdict: "RUNTIME_CANARY_FAILED_BEFORE_VERIFIED_RESULT",
+                capacity_credit: 0,
+                economic_yield_proven: false,
+                next_gate: "inspect bounded workflow logs/artifact; do not infer provider rejection without provider evidence"
+              }, null, 2) + "\\n\`\`\`"
+            });
