@@ -76,6 +76,26 @@ jobs:
               amap={a.value:a for a in e.action_space}
               return e.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])})
 
+          def act_and_drain(e,o,xy,max_drain=200):
+              # Execute the click. Then SPECULATIVELY test one neutral public action on a deepcopy.
+              # If the normalized public frame changes, an animation is active: adopt the copy and
+              # continue draining until the public frame stabilizes. If not, retain the original
+              # post-click env so the speculative neutral action never consumes real search budget.
+              nf=click(e,o,xy)
+              if nf is None:
+                  return None,0
+              drains=0
+              while drains<max_drain and int(nf.levels_completed)==int(o.levels_completed):
+                  probe=copy.deepcopy(e)
+                  po=probe.observation_space
+                  pnf=click(probe,po,[0,0])
+                  if pnf is None or key(pnf)==key(nf):
+                      break
+                  e.__dict__.clear(); e.__dict__.update(probe.__dict__)
+                  nf=e.observation_space
+                  drains+=1
+              return nf,drains
+
           def enter_l4(e):
               o=e.observation_space
               # L1
@@ -113,9 +133,9 @@ jobs:
               cands=mixed_candidates(oo)
               for idx,c in enumerate(cands):
                   e2=copy.deepcopy(e)
-                  nf=click(e2,oo,c['center']);exp+=1
+                  nf,drains=act_and_drain(e2,oo,c['center']);exp+=1
                   if nf is None: continue
-                  p=path+[idx]
+                  p=path+[{'idx':idx,'drains':drains}]
                   if int(nf.levels_completed)>=4:
                       found=p;break
                   k=key(nf)
@@ -137,12 +157,22 @@ jobs:
           oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
           if oe is None: raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
           oo=enter_l4(oe);trace=[]
-          for step,idx in enumerate(found,1):
+          for step,item in enumerate(found,1):
+              idx=int(item['idx']);expected_drains=int(item['drains'])
               cands=mixed_candidates(oo)
               if idx>=len(cands): raise RuntimeError('L4_INDEX_DIVERGENCE_'+str(step))
               c=cands[idx];before=fr(oo)
-              oo=click(oe,oo,c['center']);after=fr(oo)
+              oo=click(oe,oo,c['center'])
+              if oo is None: raise RuntimeError('L4_ONLINE_CLICK_MISSING_'+str(step))
+              amap={a.value:a for a in oe.action_space}
+              actual_drains=0
+              for _ in range(expected_drains):
+                  oo=oe.step(amap[6],data={'x':0,'y':0})
+                  if oo is None: raise RuntimeError('L4_ONLINE_DRAIN_MISSING_'+str(step))
+                  actual_drains+=1
+              after=fr(oo)
               trace.append({'step':step,'candidate_index':idx,'candidate':c,
+                            'expected_drains':expected_drains,'actual_drains':actual_drains,
                             'changed_pixels':int(np.count_nonzero(before!=after)),
                             'level':int(oo.levels_completed),'state':oo.state.value})
               if int(oo.levels_completed)>=4: break
@@ -152,7 +182,7 @@ jobs:
                'state':oo.state.value,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
                'l4_path_indices':found,'l4_actions_executed':len(trace),'online_trace':trace,'search':search,
                'protocol':'PUBLIC_OBSERVATION_DERIVED_MIXED_BUTTON_BFS',
-               'public_rule_prior':'L4 is first blue-button level; brown arrangement can enable blue/olive controls; no L4 action route supplied',
+               'public_rule_prior':'L4 is first blue-button level; brown arrangement can enable blue/olive controls; animated steps are drained only when a speculative public-frame probe detects ongoing animation; no L4 action route supplied',
                'external_full_route_used':False,'external_l4_coordinates_used':False,
                'game_source_inspected_by_solver':False,'hidden_state_read':False,
                'independent_first_contact_claim':False,'rule_derived_claim':True,'competition_hidden_score_claim':False,
