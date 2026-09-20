@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/deus-cloudflare-gateway-runtime-canary.yml'
   workflow_dispatch:
+  schedule:
+    - cron: "17 * * * *"
 
 permissions:
   contents: read
@@ -19,7 +21,7 @@ jobs:
       SOURCE_HEAD: 72ffebf3fe629ab821a2e63ce17cd0bda139e3cd
       CLOUDFLARE_VERSION: 34e0f094-8037-4788-b3a3-b1c1051906b2
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Health
         run: |
