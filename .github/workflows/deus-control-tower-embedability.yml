@@ -1,0 +1,58 @@
+name: DEUS Control Tower Embedability Canary
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-control-tower-embedability.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Verify cockpit HTTP and iframe headers
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://kimbach91-prog.github.io/bl-infinity/public-compute/control-tower.html'
+          curl --silent --show-error --fail --max-time 20 -D /tmp/headers.txt -o /tmp/body.html "$URL"
+          STATUS="$(curl --silent --show-error --max-time 20 --output /dev/null --write-out '%{http_code}' "$URL")"
+          test "$STATUS" = "200"
+          grep -q 'DEUS_CONTROL_TOWER_S0' /tmp/body.html
+          python3 - <<'PY'
+          import hashlib, json, re
+          from pathlib import Path
+          raw=Path('/tmp/headers.txt').read_text(errors='replace')
+          body=Path('/tmp/body.html').read_bytes()
+          headers={}
+          for line in raw.splitlines():
+              if ':' in line:
+                  k,v=line.split(':',1)
+                  headers[k.strip().lower()]=v.strip()
+          xfo=headers.get('x-frame-options','')
+          csp=headers.get('content-security-policy','')
+          blocking_xfo=xfo.lower() in {'deny','sameorigin'}
+          fa=''
+          m=re.search(r'frame-ancestors\s+([^;]+)',csp,re.I)
+          if m: fa=m.group(1).strip()
+          blocking_csp=bool(fa and ("'none'" in fa.lower() or ("*" not in fa and "sites.google.com" not in fa.lower() and "googleusercontent.com" not in fa.lower())))
+          receipt={
+            "schema":"deus-control-tower-embedability/1",
+            "url":"https://kimbach91-prog.github.io/bl-infinity/public-compute/control-tower.html",
+            "http_status":200,
+            "x_frame_options":xfo or None,
+            "frame_ancestors":fa or None,
+            "blocking_xfo":blocking_xfo,
+            "blocking_csp":blocking_csp,
+            "body_sha256":hashlib.sha256(body).hexdigest(),
+            "embed_header_gate_pass":not (blocking_xfo or blocking_csp),
+            "truth":"HEADER_GATE_PASS_NE_GOOGLE_SITES_EMBED_EXECUTED"
+          }
+          print('DEUS_CONTROL_TOWER_EMBEDABILITY_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if blocking_xfo or blocking_csp:
+              raise SystemExit('EMBED_HEADER_GATE_BLOCKED')
+          PY
