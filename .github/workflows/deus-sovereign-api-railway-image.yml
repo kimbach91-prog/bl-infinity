@@ -1,0 +1,74 @@
+name: DEUS Sovereign API Railway Image
+
+on:
+  push:
+    branches:
+      - deus/sovereign-api-runtime-v0.1
+    paths:
+      - "public-compute/sovereign-api-v0.1/**"
+      - ".github/workflows/deus-sovereign-api-railway-image.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: deus-sovereign-api-railway-image
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pre-publish runtime checks
+        working-directory: public-compute/sovereign-api-v0.1
+        run: |
+          set -euo pipefail
+          node --check src/railway-runtime.mjs
+          npm test
+
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Build provider-native Railway image
+        run: |
+          set -euo pipefail
+          docker build             -f public-compute/sovereign-api-v0.1/Dockerfile.railway             -t ghcr.io/kimbach91-prog/deus-sovereign-api-railway:v0.1             -t ghcr.io/kimbach91-prog/deus-sovereign-api-railway:sha-${GITHUB_SHA}             public-compute/sovereign-api-v0.1
+
+      - name: Container self-test
+        run: |
+          set -euo pipefail
+          cid=$(docker run -d -p 18080:8080             -e DEUS_SOURCE_REV=48ae7811a74eb9dc9b954c40970b3427ea64f10a             -e DEUS_MIRROR_REV=${GITHUB_SHA}             ghcr.io/kimbach91-prog/deus-sovereign-api-railway:sha-${GITHUB_SHA})
+          trap 'docker rm -f "$cid" >/dev/null 2>&1 || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:18080/v1/status >/tmp/status.json; then break; fi
+            sleep 0.25
+          done
+          curl -fsS http://127.0.0.1:18080/v1/control-state >/tmp/control.json
+          python3 - <<'PY'
+          import json
+          s=json.load(open('/tmp/status.json'))
+          c=json.load(open('/tmp/control.json'))
+          assert s['service']=='DEUS_SOVEREIGN_API'
+          assert s['state']=='RAILWAY_LIVE_S0'
+          assert c['provider']=='RAILWAY'
+          assert c['role']=='PROVIDER_NATIVE_S0_CONTROLLER'
+          assert c['canonical_write'] is False
+          print(json.dumps({'status':'PASS','boot_id':c['boot_id'],'seq':c['seq'],'fence_epoch':c['fence_epoch']}))
+          PY
+
+      - name: Push image
+        run: |
+          docker push ghcr.io/kimbach91-prog/deus-sovereign-api-railway:v0.1
+          docker push ghcr.io/kimbach91-prog/deus-sovereign-api-railway:sha-${GITHUB_SHA}
+
+      - name: Verify anonymous pull surface
+        run: |
+          set -euo pipefail
+          docker logout ghcr.io
+          docker pull ghcr.io/kimbach91-prog/deus-sovereign-api-railway:v0.1
+          docker image inspect ghcr.io/kimbach91-prog/deus-sovereign-api-railway:v0.1 --format '{{json .RepoDigests}}'
