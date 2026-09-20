@@ -1,0 +1,15 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "LIGHTBOOT-HANDOFF-CANARY-20260920-001",
+  "data_class": "S0_PUBLIC",
+  "objective": "Analyze a synthetic workflow fault: a chat session spends too long doing heavy reasoning before handing work to an external compute executor. Produce the smallest robust control-plane correction that makes the chat enqueue heavy work quickly, preserves resumability across sessions, and never claims execution without a receipt.",
+  "acceptance_criteria": [
+    "Identify the root control-flow failure in one concise sentence.",
+    "Give a 5-step handoff-first workflow with a durable job id and next-action checkpoint.",
+    "State one falsifier showing the handoff did not actually occur.",
+    "Do not claim access to private state, credentials, Drive contents, or hidden runtime."
+  ],
+  "falsifier": "Fail if the answer recommends keeping heavy reasoning in the chat before dispatch, or treats configured routing as executed compute.",
+  "max_output_chars": 3000,
+  "canonical_write": false
+}
