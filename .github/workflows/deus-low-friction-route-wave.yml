@@ -44,6 +44,45 @@ jobs:
             jq -n --arg provider "$name" --arg endpoint "$url" --arg requested_model "$model" --arg status "$code" --arg digest "$digest" --argjson latency "$latency" --argjson exact "$exact"               '{provider:$provider,endpoint:$endpoint,requested_model:$requested_model,http_status:($status|tonumber),latency_ms:$latency,exact_contract:$exact,response_digest:$digest,auth_mode:"NO_AUTH_HEADER",provider_execution:($status=="200"),canonical_write:false,settlement:false}'
           }
 
+          probe_chat_bearer() {
+            name="$1"; url="$2"; model="$3"; token="$4"; bearer="$5"; timeout="$6"
+            req="/tmp/deus-wave/$name.req.json"
+            resp="/tmp/deus-wave/$name.json"
+            codefile="/tmp/deus-wave/$name.code"
+            jq -n --arg model "$model" --arg token "$token" '{model:$model,messages:[{role:"user",content:("Public S0 canary. Reply with exactly: "+$token)}],temperature:0}' > "$req"
+            start="$(date +%s%3N)"
+            curl --max-time "$timeout" -sS -o "$resp" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' -H "authorization: Bearer $bearer" --data-binary @"$req" > "$codefile" || true
+            latency="$(( $(date +%s%3N) - start ))"
+            code="$(cat "$codefile" 2>/dev/null || echo 0)"
+            exact=false
+            if [ "$code" = "200" ] && grep -Fq "$token" "$resp" 2>/dev/null; then exact=true; fi
+            digest="$(sha256sum "$resp" 2>/dev/null | awk '{print $1}' || true)"
+            jq -n --arg provider "$name" --arg endpoint "$url" --arg requested_model "$model" --arg status "$code" --arg digest "$digest" --argjson latency "$latency" --argjson exact "$exact" '{provider:$provider,endpoint:$endpoint,requested_model:$requested_model,http_status:($status|tonumber),latency_ms:$latency,exact_contract:$exact,response_digest:$digest,auth_mode:"PUBLIC_ANY_BEARER",provider_execution:($status=="200"),canonical_write:false,settlement:false}'
+          }
+
+          probe_pollinations_legacy() {
+            token="DEUS_POLLINATIONS_WAVE_OK"
+            prompt="$(python - <<'PY'
+import urllib.parse
+print(urllib.parse.quote("Public S0 canary. Reply with exactly: DEUS_POLLINATIONS_WAVE_OK", safe=""))
+PY
+)"
+            url="https://text.pollinations.ai/$prompt?model=openai&seed=42"
+            resp="/tmp/deus-wave/pollinations.json"
+            codefile="/tmp/deus-wave/pollinations.code"
+            start="$(date +%s%3N)"
+            curl --max-time 60 -L -sS -o "$resp" -w '%{http_code}' "$url" > "$codefile" || true
+            latency="$(( $(date +%s%3N) - start ))"
+            code="$(cat "$codefile" 2>/dev/null || echo 0)"
+            exact=false
+            if [ "$code" = "200" ] && grep -Fq "$token" "$resp" 2>/dev/null; then exact=true; fi
+            digest="$(sha256sum "$resp" 2>/dev/null | awk '{print $1}' || true)"
+            jq -n --arg provider "POLLINATIONS_LEGACY" --arg endpoint "https://text.pollinations.ai/{prompt}" --arg status "$code" --arg digest "$digest" --argjson latency "$latency" --argjson exact "$exact" '{provider:$provider,endpoint:$endpoint,http_status:($status|tonumber),latency_ms:$latency,exact_contract:$exact,response_digest:$digest,auth_mode:"NO_AUTH_LEGACY_PROBE",provider_execution:($status=="200"),canonical_write:false,settlement:false}'
+          }
+
+          probe_chat_bearer "PERSORAI" "https://persorai.com/v1/chat/completions" "@cf/zai-org/glm-5.2" "DEUS_PERSORAI_WAVE_OK" "deus-public-canary" 60 > /tmp/deus-wave/persorai.receipt.json
+          probe_pollinations_legacy > /tmp/deus-wave/pollinations.receipt.json
+
           probe_chat "LLM7" "https://api.llm7.io/v1/chat/completions" "default" "DEUS_LLM7_WAVE_OK" 60 > /tmp/deus-wave/llm7.receipt.json
           probe_chat "BLOCKRUN" "https://blockrun.ai/api/v1/chat/completions" "nvidia/nemotron-3.5-lightning" "DEUS_BLOCKRUN_WAVE_OK" 90 > /tmp/deus-wave/blockrun.receipt.json
           probe_chat "VIREONIX" "https://vireonix.ai/v1/chat/completions" "auto" "DEUS_VIREONIX_WAVE_OK" 90 > /tmp/deus-wave/vireonix.receipt.json
@@ -99,8 +138,8 @@ jobs:
           antseed_digest="$(sha256sum /tmp/deus-wave/antseed-models.json 2>/dev/null | awk '{print $1}' || true)"
           jq -n --arg version "$antseed_version" --argjson proxy "$antseed_proxy" --argjson count "$antseed_models" --arg digest "$antseed_digest"             '{provider:"ANTSEED",cli_version:$version,buyer_proxy_live:$proxy,model_count:$count,digest:$digest,auth_mode:"NO_CENTRAL_ACCOUNT_EPHEMERAL_NODE_IDENTITY",payment_deposit:false,paid_inference:false,seller_registration:false,stake:false,canonical_write:false}' > /tmp/deus-wave/antseed.receipt.json
 
-          jq -n             --arg timestamp "$now"             --slurpfile llm7 /tmp/deus-wave/llm7.receipt.json             --slurpfile blockrun /tmp/deus-wave/blockrun.receipt.json             --slurpfile wikimedia /tmp/deus-wave/wikimedia.receipt.json             --slurpfile vireonix /tmp/deus-wave/vireonix.receipt.json             --slurpfile animica /tmp/deus-wave/animica.receipt.json             --slurpfile horde /tmp/deus-wave/horde.receipt.json             --slurpfile akash /tmp/deus-wave/akash.receipt.json             --slurpfile peerwave /tmp/deus-wave/peerwave.receipt.json             --slurpfile antseed /tmp/deus-wave/antseed.receipt.json             '{receipt_version:"DEUS-LOW-FRICTION-ROUTE-WAVE/2",timestamp:$timestamp,constraints:{account_creation:false,deposit:false,paid_inference:false,seller_registration:false,stake:false,canonical_write:false,data_class:"S0_SYNTHETIC_OR_PUBLIC_DISCOVERY_ONLY"},routes:{llm7:$llm7[0],blockrun:$blockrun[0],wikimedia:$wikimedia[0],vireonix:$vireonix[0],animica:$animica[0],ai_horde:$horde[0],akash:$akash[0],peerwave:$peerwave[0],antseed:$antseed[0]}}' | tee /tmp/deus-wave/receipt.json
+          jq -n             --arg timestamp "$now"             --slurpfile llm7 /tmp/deus-wave/llm7.receipt.json             --slurpfile blockrun /tmp/deus-wave/blockrun.receipt.json             --slurpfile wikimedia /tmp/deus-wave/wikimedia.receipt.json             --slurpfile vireonix /tmp/deus-wave/vireonix.receipt.json             --slurpfile animica /tmp/deus-wave/animica.receipt.json             --slurpfile horde /tmp/deus-wave/horde.receipt.json             --slurpfile akash /tmp/deus-wave/akash.receipt.json             --slurpfile peerwave /tmp/deus-wave/peerwave.receipt.json             --slurpfile antseed /tmp/deus-wave/antseed.receipt.json             --slurpfile persorai /tmp/deus-wave/persorai.receipt.json             --slurpfile pollinations /tmp/deus-wave/pollinations.receipt.json             '{receipt_version:"DEUS-LOW-FRICTION-ROUTE-WAVE/3",timestamp:$timestamp,constraints:{account_creation:false,deposit:false,paid_inference:false,seller_registration:false,stake:false,canonical_write:false,data_class:"S0_SYNTHETIC_OR_PUBLIC_DISCOVERY_ONLY"},routes:{llm7:$llm7[0],blockrun:$blockrun[0],wikimedia:$wikimedia[0],vireonix:$vireonix[0],animica:$animica[0],ai_horde:$horde[0],akash:$akash[0],peerwave:$peerwave[0],antseed:$antseed[0],persorai:$persorai[0],pollinations_legacy:$pollinations[0]}}' | tee /tmp/deus-wave/receipt.json
 
-          echo "DEUS Low-Friction Route Wave v2" >> "$GITHUB_STEP_SUMMARY"
+          echo "DEUS Low-Friction Route Wave v3" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/deus-wave/receipt.json >> "$GITHUB_STEP_SUMMARY"
-          jq -e '.receipt_version=="DEUS-LOW-FRICTION-ROUTE-WAVE/2" and .routes.llm7 and .routes.blockrun and .routes.wikimedia and .routes.antseed' /tmp/deus-wave/receipt.json >/dev/null
+          jq -e '.receipt_version=="DEUS-LOW-FRICTION-ROUTE-WAVE/3" and .routes.llm7 and .routes.blockrun and .routes.wikimedia and .routes.antseed' /tmp/deus-wave/receipt.json >/dev/null
