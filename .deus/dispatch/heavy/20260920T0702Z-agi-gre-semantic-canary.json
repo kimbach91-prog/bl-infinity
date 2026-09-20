@@ -1,0 +1,16 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "AGI-GRE-SEMANTIC-CANARY-20260920-001",
+  "data_class": "S0_PUBLIC",
+  "objective": "Act as the first runnable semantic backend canary for DEUS PR180 GRE. Solve the unseen reasoning task below without web lookup or expected-answer lookup, return a concise answer plus an explicit reasoning artifact suitable for independent evaluation. TASK: A sealed system has four independent service paths A,B,C,D. Each path is available with probabilities 0.90, 0.80, 0.75, 0.60. The system succeeds if at least three paths are available. Compute the exact success probability and identify the smallest single-path reliability increase of +0.10 (capped at 1.0) that yields the largest absolute increase in system success probability. Return the new probability and improvement.",
+  "acceptance_criteria": [
+    "Return the baseline success probability as an exact decimal to at least 6 places.",
+    "Evaluate the +0.10 intervention separately for A, B, C, and D, respecting the 1.0 cap.",
+    "Identify the intervention with the largest absolute improvement and report the new success probability.",
+    "Include enough intermediate terms for an independent evaluator to recompute the result.",
+    "Do not use web lookup, hidden expected-answer lookup, private state, credentials, or canonical writes."
+  ],
+  "falsifier": "Fail if arithmetic cannot be independently recomputed, if an expected answer is looked up, if the task is delegated for independent planning, or if execution is claimed without a typed result receipt.",
+  "max_output_chars": 4000,
+  "canonical_write": false
+}
