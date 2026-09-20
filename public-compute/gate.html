@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="index,follow">
+<meta name="description" content="DEUS Compute Gate: public S0/S1 demand and provider discovery with proof-first canaries, receipt-backed routing, provider replaceability and explicit truth boundaries.">
+<link rel="canonical" href="https://kimbach91-prog.github.io/bl-infinity/public-compute/gate.html">
+<title>DEUS Compute Gate — Need compute or offer compute</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0d10;--card:#14181e;--line:#29313b;--text:#edf2f7;--muted:#aeb8c4;--ok:#9fe3b0;--accent:#9dc6ff;--warn:#ffd479}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.58 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1040px;margin:0 auto;padding:46px 22px 70px}
+h1{font-size:clamp(2.1rem,5vw,4.2rem);line-height:1.02;margin:0 0 18px}
+h2{margin-top:0}.lead{font-size:1.18rem;color:var(--muted);max-width:800px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;margin:26px 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:22px}
+.cta{display:inline-block;text-decoration:none;color:#07101d;background:var(--accent);font-weight:750;padding:11px 16px;border-radius:12px;margin:8px 8px 0 0}
+.cta.secondary{background:#d5f4dd}
+code{color:#c6ddff}.small{color:var(--muted);font-size:.93rem}.ok{color:var(--ok)}.warn{color:var(--warn)}
+ul{padding-left:20px}.proof{border-left:4px solid var(--ok)}.truth{border-left:4px solid var(--warn)}
+.kicker{letter-spacing:.12em;text-transform:uppercase;color:var(--accent);font-weight:700;font-size:.82rem}
+.stat{font-size:1.55rem;font-weight:800}.stat small{display:block;font-size:.8rem;color:var(--muted);font-weight:500}
+a{color:#b9d8ff}
+</style>
+</head>
+<body>
+<main>
+<p class="kicker">PUBLIC_COMPUTE_GATE_V1 · BL-S0 / BL-S1</p>
+<h1>Need compute?<br>Offer compute?</h1>
+<p class="lead">DEUS Compute Gate matches public-safe workloads with replaceable compute routes using explicit acceptance tests, bounded canaries and typed receipts. Providers keep their limits. Buyers keep budget and stop conditions. No secret core is required.</p>
+
+<div>
+<a class="cta" href="https://github.com/kimbach91-prog/Theory-Group/issues/337">I need compute</a>
+<a class="cta secondary" href="https://github.com/kimbach91-prog/Theory-Group/issues/338">I can offer compute</a>
+<a class="cta" href="./gate-manifest.json">Machine-readable manifest</a>
+</div>
+
+<div class="grid">
+<section class="card">
+<h2>For demand</h2>
+<ul>
+<li>One demand contract instead of manually comparing every route.</li>
+<li>Hard budget ceiling and stop condition before execution.</li>
+<li>Internal / zero-model / already-verified routes first when they satisfy acceptance.</li>
+<li>External routes ranked by task fit, quality, reliability, latency, cost, privacy and reversibility.</li>
+<li>Quote is a proposal, not a charge or allocation.</li>
+</ul>
+</section>
+<section class="card">
+<h2>For providers</h2>
+<ul>
+<li>No exclusivity.</li>
+<li>Start with one tiny S0/S1 canary.</li>
+<li>You state capacity, availability, price/reward model and exit condition.</li>
+<li>Verified work earns an attributable receipt and scoped performance evidence.</li>
+<li>Eligible no-cash lanes can use public-benefit or result-swap reciprocity.</li>
+<li>Paid work is offered only when exact settlement authority is verified.</li>
+</ul>
+</section>
+</div>
+
+<section class="card proof">
+<p class="kicker">REAL EXTERNAL ROUTE PROOF</p>
+<h2>Receipt-backed hosted runner execution exists</h2>
+<p>A GitHub Actions hosted runner completed a BL-S0 deterministic job with result readback. A follow-up fanout completed <strong>4/4 shards</strong>, with <strong>at least 3 runner jobs overlapping in that exact run</strong>.</p>
+<div class="grid">
+<div><div class="stat">1<small>verified hosted job route scope</small></div></div>
+<div><div class="stat">4/4<small>fanout shards completed</small></div></div>
+<div><div class="stat">≥3<small>concurrent jobs observed in the exact run</small></div></div>
+<div><div class="stat">0<small>verified economic yield claimed</small></div></div>
+</div>
+<p class="small">Receipts: <code>RCP-20260920-PUBLIC-GITHUB-ACTIONS-S0-EXEC-005</code> and <code>RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006</code>. Provider maximum concurrency and sustained capacity remain unknown.</p>
+</section>
+
+<section class="card">
+<p class="kicker">FOUNDING CANARIES</p>
+<h2>Prove a route without a long commitment</h2>
+<ul>
+<li><strong>CANARY-A CPU/container:</strong> compute <code>329 * 334 + 106</code>; exact result <code>109992</code>.</li>
+<li><strong>CANARY-B public LLM:</strong> return exactly <code>DEUS_PUBLIC_CANARY_OK</code>; max 16 tokens.</li>
+<li><strong>CANARY-C GPU/WebGPU:</strong> exact integer sum of <code>i mod 1024</code> for <code>i=0..999999</code>, modulo 2^32; exact result <code>511370976</code>.</li>
+</ul>
+<p><a href="https://github.com/kimbach91-prog/Theory-Group/issues/337#issuecomment-5746291507">Full canary catalog</a> · <a href="https://github.com/kimbach91-prog/Theory-Group/issues/338#issuecomment-5746291760">Founding provider challenge</a></p>
+</section>
+
+<section class="card">
+<p class="kicker">MACHINE BID LOGIC</p>
+<h2>Useful value beats provider count</h2>
+<p><code>provider_value = task_fit + quality + reliability + latency_fit + locality + reversibility + diversity_value - cost - privacy_risk - failure_risk - lock_in_risk</code></p>
+<p>Hard gates override the score. Missing authority, protected data on an ordinary public route, hidden persistence, access-control bypass or missing canary evidence means HOLD.</p>
+</section>
+
+<section class="card truth">
+<p class="kicker">TRUTH BOUNDARY</p>
+<h2>What this page does not claim</h2>
+<ul>
+<li><code>DEMAND_FOUND != CUSTOMER_BOUND</code></li>
+<li><code>PROVIDER_OFFER_FOUND != ADMITTED_CAPACITY</code></li>
+<li><code>QUOTE != GMV</code></li>
+<li><code>RESULT_VERIFIED != SUSTAINED_CAPACITY</code></li>
+<li><code>EXPECTED_MARGIN != REALIZED_PROFIT</code></li>
+<li><code>COMPUTE_DIVIDEND != CASH_REVENUE</code></li>
+</ul>
+<p class="small">Public comments are untrusted candidate data until classified. Never post credentials, wallet secrets, private keys, BL-S2+ data, protected DEUS core or private topology.</p>
+</section>
+
+<p class="small">Current public market state at publication: external demand 0; external provider offers 0; verified compute GMV 0; settled revenue 0. These numbers change only from attributable receipts.</p>
+</main>
+</body>
+</html>
