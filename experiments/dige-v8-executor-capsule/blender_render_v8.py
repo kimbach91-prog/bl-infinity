@@ -823,9 +823,10 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         root_guides.append((root_index,root,n,guide_index,gp,gn,shell,shell_len))
 
     points_per_curve=8
-    # C17.3 density repair: move from the sparse 25k canary toward a human-scale
-    # visible coverage regime while staying bounded for the CPU exact-head audit.
-    strands_per_root=48
+    # C17.4 keeps total fibers bounded but stops treating each mesh vertex as a
+    # bundle emitter. Each child root will be surface-projected after a stratified
+    # tangent-plane offset so visible density is spatial, not only numerical.
+    strands_per_root=64
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
@@ -881,39 +882,73 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             clump_bias=tangent_cross.copy()
         clump_bias.normalize()
 
-        # Short, dense hairstyle envelope. A larger normal clearance is deliberate:
-        # the C17.2 audit showed sub-pixel fibers visually disappearing against scalp.
-        envelope=max(.036,min(.060,shell_len*.42+.034))
+        # C17.4 two-population groom:
+        # 1) dense short undercoat closes scalp exposure,
+        # 2) longer style fibers create the visible silhouette.
+        # Child roots are stratified over a local patch and snapped back to the
+        # actual body surface; this removes the C17.3 "64 hairs on one vertex" scar.
+        envelope=max(.040,min(.066,shell_len*.45+.036))
+        inv_world=surface_obj.matrix_world.inverted()
+        surf_rot=surface_obj.matrix_world.to_3x3()
         for k in range(strands_per_root):
-            root_j=(
-                root + n*0.00070
-                + tangent_flow*rng.uniform(-.00135,.00135)
-                + tangent_cross*rng.uniform(-.00135,.00135)
-            )
-            flow=(base_flow + clump_bias*rng.uniform(.003,.014)).normalized()
-            length=envelope*rng.uniform(.90,1.10)
-            lateral=(tangent_cross*rng.uniform(-1,1) + tangent_flow*rng.uniform(-.18,.18))
-            if lateral.length < 1e-8:
-                lateral=tangent_cross.copy()
-            lateral.normalize()
-            amp=rng.uniform(.00035,.00125)
-            lift=rng.uniform(.0055,.0105)
-            tip_clear=rng.uniform(.0010,.0024)
+            gx=k % 8
+            gy=k // 8
+            du=((gx+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
+            dv=((gy+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
+            proposed=root + tangent_flow*du + tangent_cross*dv
+            local_proposed=inv_world @ proposed
+            hit,loc_local,n_local,_poly=surface_obj.closest_point_on_mesh(local_proposed)
+            if hit:
+                root_j=surface_obj.matrix_world @ loc_local
+                child_n=(surf_rot @ n_local).normalized()
+                # Do not let a boundary projection leak from scalp onto face/neck.
+                if root_j.z < 1.535 or root_j.z > 1.712 or root_j.y > .072:
+                    root_j=root.copy()
+                    child_n=n.copy()
+            else:
+                root_j=root.copy()
+                child_n=n.copy()
+            root_j += child_n*0.00065
+
+            # Re-project the regional direction into each child root's tangent plane.
+            child_flow=base_flow-child_n*base_flow.dot(child_n)
+            if child_flow.length < 1e-8:
+                child_flow=tangent_flow.copy()
+            child_flow.normalize()
+            child_cross=child_n.cross(child_flow)
+            if child_cross.length < 1e-8:
+                child_cross=tangent_cross.copy()
+            child_cross.normalize()
+
+            undercoat=(k < 44)
+            if undercoat:
+                length=rng.uniform(.021,.038)
+                lift=rng.uniform(.006,.013)
+                tip_clear=rng.uniform(.0008,.0018)
+                flow=(child_flow + child_cross*rng.uniform(-.055,.055)).normalized()
+                amp=rng.uniform(.00025,.00080)
+            else:
+                length=envelope*rng.uniform(.90,1.10)
+                lift=rng.uniform(.014,.026)
+                tip_clear=rng.uniform(.0015,.0032)
+                flow=(child_flow + child_cross*rng.uniform(-.085,.085) + clump_bias*rng.uniform(.002,.010)).normalized()
+                amp=rng.uniform(.00045,.00135)
+
+            lateral=(child_cross + child_flow*rng.uniform(-.14,.14)).normalized()
             for j in range(points_per_curve):
                 t=j/(points_per_curve-1)
                 bend=math.sin(math.pi*t)
                 sag=t*t
-                # Stay tangent at the root, lift clear of the scalp through mid-arc,
-                # then settle without re-entering the surface at the tip.
                 p=(
                     root_j
                     + flow*(length*t)
-                    + n*(lift*bend + tip_clear*t)
+                    + child_n*(lift*bend + tip_clear*t)
                     + lateral*(amp*bend)
-                    + down*(length*.040*sag)
+                    + down*(length*(.030 if undercoat else .045)*sag)
                 )
                 positions.extend((p.x,p.y,p.z))
-                r=(base_radius*(1.0-t) + tip_radius*t) * rng.uniform(.94,1.06)
+                taper=(base_radius*(1.0-t) + tip_radius*t)
+                r=taper*rng.uniform(.94,1.06)*(0.92 if undercoat else 1.0)
                 radii.append(r)
 
     pos=hair_data.attributes["position"]
@@ -944,7 +979,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
-        "distribution":"SCALP_SURFACE_ROOTS_REGIONAL_DENSE_GUIDE_FIELD_C17_3",
+        "distribution":"SCALP_SURFACE_PROJECTED_STRATIFIED_UNDERCOAT_STYLE_C17_4",
         "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
         "seed":20260920,
     }
