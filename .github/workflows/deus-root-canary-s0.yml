@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: deus-root-canary-s0
@@ -18,10 +18,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 3
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+
       - name: Run Wikimedia LiftWing exact-output canary
         shell: bash
         env:
           DEUS_RUN_ID: ${{ github.run_id }}
+          DEUS_RUN_ATTEMPT: ${{ github.run_attempt }}
           DEUS_SHA: ${{ github.sha }}
           DEUS_EVENT: ${{ github.event_name }}
         run: |
@@ -61,7 +67,6 @@ jobs:
               error = repr(exc)
           elapsed_ms = round((time.time() - started) * 1000)
           text = ""
-          parsed = None
           if raw:
               try:
                   parsed = json.loads(raw.decode())
@@ -75,6 +80,7 @@ jobs:
               "model": "llm-qwen3-14b",
               "event": os.environ["DEUS_EVENT"],
               "run_id": os.environ["DEUS_RUN_ID"],
+              "run_attempt": os.environ["DEUS_RUN_ATTEMPT"],
               "source_sha": os.environ["DEUS_SHA"],
               "observed_at": datetime.now(timezone.utc).isoformat(),
               "http_status": status,
@@ -95,6 +101,58 @@ jobs:
           if status != 200 or not receipt["exact"]:
               raise SystemExit(2)
           PY
+
+      - name: Persist durable canary state
+        if: always()
+        shell: bash
+        env:
+          DEUS_RUN_ID: ${{ github.run_id }}
+          DEUS_RUN_ATTEMPT: ${{ github.run_attempt }}
+          DEUS_SHA: ${{ github.sha }}
+          STATE_BRANCH: deus-root-canary-state-s0
+        run: |
+          set -euo pipefail
+          test -f deus-root-canary-receipt.json
+          git config user.name "deus-root-canary-s0[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git fetch origin "${STATE_BRANCH}:${STATE_BRANCH}" 2>/dev/null; then
+            git switch "${STATE_BRANCH}"
+          else
+            git switch --orphan "${STATE_BRANCH}"
+            git rm -rf . >/dev/null 2>&1 || true
+          fi
+
+          mkdir -p .deus-root-canary-s0
+          python3 - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          receipt = json.loads(Path("deus-root-canary-receipt.json").read_text(encoding="utf-8"))
+          state_path = Path(".deus-root-canary-s0/wikimedia-liftwing.json")
+          previous = {}
+          if state_path.exists():
+              previous = json.loads(state_path.read_text(encoding="utf-8"))
+          prev_seq = int(previous.get("seq", 0))
+          state = {
+              **receipt,
+              "seq": prev_seq + 1,
+              "previous_seq": prev_seq,
+              "state_branch": os.environ["STATE_BRANCH"],
+              "durable_state": True,
+              "truth": "PROVIDER_RUNTIME_CANARY_WITH_DURABLE_STATE_NE_CONTROLLER_CREDIT_NE_SLA",
+          }
+          state_path.write_text(json.dumps(state, indent=2, sort_keys=True, ensure_ascii=False) + "\n", encoding="utf-8")
+          print("DEUS_ROOT_CANARY_DURABLE_STATE=" + json.dumps(state, separators=(",", ":"), ensure_ascii=False))
+          PY
+
+          git add .deus-root-canary-s0/wikimedia-liftwing.json
+          if git diff --cached --quiet; then
+            echo "NO_STATE_DELTA"
+          else
+            git commit -m "canary: persist Wikimedia LiftWing S0 receipt run ${DEUS_RUN_ID}"
+            git push origin HEAD:"${STATE_BRANCH}"
+          fi
 
       - name: Upload typed canary receipt
         if: always()
