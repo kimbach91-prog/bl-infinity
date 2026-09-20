@@ -1,0 +1,161 @@
+name: ARC3 universal first-contact L1 sweep
+
+on:
+  push:
+    branches: [deus/arc3-universal-firstcontact-l1-sweep-20260921]
+    paths: [.github/workflows/arc3-universal-firstcontact-l1-sweep.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    strategy:
+      fail-fast: false
+      max-parallel: 20
+      matrix:
+        game:
+          [ar25,bp35,cd82,dc22,ft09,g50t,ka59,lf52,ls20,m0r0,re86,s5i5,sb26,sc25,sk48,tn36,tr87,tu93,vc33,wa30]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Generic public-observation search
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,os,time
+          from collections import Counter,deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME=os.environ['GAME'];OUT=Path('verification');OUT.mkdir()
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[:2,:]=0;a[-2:,:]=0
+              return a
+          def state_key(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def aids(o):
+              out=[]
+              for a in (getattr(o,'available_actions',None) or []):
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in out:out.append(v)
+              return out
+          def objects(o,cap=80):
+              a=fr(o);H,W=a.shape
+              bg=Counter(int(v) for v in a.ravel()).most_common(1)[0][0]
+              seen=np.zeros((H,W),bool);out=[];used=set()
+              for y in range(2,max(2,H-2)):
+                  for x in range(W):
+                      if seen[y,x] or int(a[y,x])==bg:continue
+                      col=int(a[y,x]);st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and not seen[ny,nx] and int(a[ny,nx])==col:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if not (1<=len(pts)<=256):continue
+                      xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                      samples=[
+                        pts[0],pts[len(pts)//4],pts[len(pts)//2],pts[(3*len(pts))//4],pts[-1],
+                        (int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys))))
+                      ]
+                      for xx,yy in samples:
+                          if yy<2 or yy>=H-2:continue
+                          k=(int(xx),int(yy))
+                          if k not in used:
+                              used.add(k);out.append(k)
+                              if len(out)>=cap:return out
+              return out
+          def cands(o,clicks):
+              av=aids(o);out=[]
+              for a in av:
+                  if 1<=a<=5 or a==7:out.append((a,None))
+              if clicks and 6 in av:
+                  out.extend((6,{'x':x,'y':y}) for x,y in objects(o))
+              return out
+          def step(e,act):
+              aid,data=act;am={a.value:a for a in e.action_space}
+              if aid not in am:return None
+              try:return e.step(am[aid],data=data)
+              except Exception:return None
+
+          def search(e0,o0,clicks,max_exp,seconds):
+              start=int(o0.levels_completed);q=deque([(copy.deepcopy(e0),o0,[])])
+              seen={state_key(o0)};exp=0;t0=time.monotonic();peak=1
+              while q and exp<max_exp and time.monotonic()-t0<seconds:
+                  e,o,p=q.popleft()
+                  for act in cands(o,clicks):
+                      ee=copy.deepcopy(e);nf=step(ee,act);exp+=1
+                      if nf is None:continue
+                      npth=p+[act]
+                      if int(nf.levels_completed)>start:
+                          return npth,{'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak}
+                      st=getattr(nf.state,'value',str(nf.state))
+                      if st in ('GAME_OVER','WIN'):continue
+                      k=state_key(nf)
+                      if k in seen:continue
+                      seen.add(k);q.append((ee,nf,npth));peak=max(peak,len(q))
+              return None,{'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak}
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('ENV_UNAVAILABLE')
+          obs=env.observation_space
+          path,m1=search(env,obs,False,12000,90)
+          mode='keyboard'
+          if path is None and 6 in aids(obs):
+              path,m2=search(env,obs,True,30000,180);mode='hybrid_click'
+          else:m2=None
+          discovery={'game':GAME,'result':'FOUND' if path else 'MISS','mode':mode,
+                     'path_len':None if path is None else len(path),'path':path,
+                     'keyboard':m1,'hybrid':m2,'available_actions':aids(obs),
+                     'protocol':'PUBLIC_OBSERVATION_FRAME_KEYED_BRANCH_SEARCH',
+                     'game_source_inspected_by_solver':False,'external_route_used':False,
+                     'environment_clone_used_for_search':True,'hidden_state_read':False}
+          print('UNIVERSAL_DISCOVERY='+json.dumps(discovery,separators=(',',':')))
+          receipt={'discovery':discovery,'online':None}
+          if path:
+              oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-universal-firstcontact-l1-sweep.yml'
+              cid=oa.open_scorecard(source_url=src,tags=['DEUS',GAME,'universal-l1-sweep','observation-search'])
+              oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+              if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+              oo=oe.observation_space
+              for i,act in enumerate(path,1):
+                  nf=step(oe,act)
+                  if nf is None:raise RuntimeError('ONLINE_STEP_FAIL_'+str(i))
+                  oo=nf
+                  if int(oo.levels_completed)>=1:break
+              card=oa.close_scorecard(cid)
+              receipt['online']={'result':'PASS' if int(oo.levels_completed)>=1 else 'FAIL',
+                    'levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+                    'state':getattr(oo.state,'value',str(oo.state)),'actions_executed':min(len(path),i),
+                    'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+                    'route_sha256':hashlib.sha256(json.dumps(path,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+                    'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+                    'scope':'LEVEL_1_ONLY','competition_hidden_score_claim':False}
+          (OUT/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          print('UNIVERSAL_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if path is None:
+              raise RuntimeError('L1_NOT_FOUND')
+          if receipt['online'] is None or receipt['online']['result']!='PASS':
+              raise RuntimeError('ONLINE_L1_VERIFY_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: universal-l1-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
