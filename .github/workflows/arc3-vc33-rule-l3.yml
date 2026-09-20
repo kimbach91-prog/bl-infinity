@@ -12,7 +12,7 @@ permissions:
 jobs:
   l3:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
@@ -29,10 +29,10 @@ jobs:
           logging.disable(logging.CRITICAL)
 
           def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
-          def key(o):
+          def key(o,suffix=()):
               a=fr(o).copy()
               if a.shape[0]>3: a[:2,:]=0; a[-2:,:]=0
-              return hashlib.sha256(a.tobytes()).hexdigest()
+              return hashlib.sha256(a.tobytes()).hexdigest()+':'+'-'.join(map(str,suffix))
           def comps(a,color=9):
               m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
               for y in range(H):
