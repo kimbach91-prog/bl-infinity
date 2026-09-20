@@ -1,22 +1,42 @@
 {
-  "receipt_version": "DEUS-COMPUTE-EXPANSION/1",
-  "updated_at": "2026-09-20T17:29:40Z",
+  "receipt_version": "DEUS-COMPUTE-EXPANSION/2",
+  "updated_at": "2026-09-20T17:32:52Z",
   "routes": {
     "persorai": {
       "provider": "PERSORAI",
       "endpoint": "https://persorai.com/v1/chat/completions",
       "model": "@cf/zai-org/glm-5.2",
       "http_status": 404,
-      "latency_ms": 566,
+      "latency_ms": 561,
       "exact_contract": false,
       "response_digest": "7d04f7431bbfa41a04bcc7e6b98b9de0d919756c4c671c5785c99fff45f16402",
       "provider_execution": false
+    },
+    "rok": {
+      "provider": "ROK",
+      "endpoint": "https://rokremasteredapi.rokteam.org/v1/chat/completions",
+      "model": "default",
+      "http_status": 400,
+      "latency_ms": 371,
+      "exact_contract": false,
+      "response_digest": "c9a7904f2177d855b9fa011f994b0daf05a5a1a726461190426f342baee09080",
+      "provider_execution": false
+    },
+    "cehpoint": {
+      "provider": "CEHPOINT",
+      "endpoint": "https://ai-api.cehpoint.co.in/v1/chat/completions",
+      "model": "cehpoint-ai",
+      "http_status": 200,
+      "latency_ms": 2061,
+      "exact_contract": true,
+      "response_digest": "2bc839f18d0411bc8f294438ad01dc1c907d3f6cac2b2bc4177436c0a1f9f8ac",
+      "provider_execution": true
     },
     "pollinations": {
       "provider": "POLLINATIONS_LEGACY",
       "endpoint": "https://text.pollinations.ai/{prompt}",
       "http_status": 200,
-      "latency_ms": 4100,
+      "latency_ms": 423,
       "exact_contract": true,
       "response_digest": "3dc450608a6b39f1e2b7a54b6621a3d8f47b0c339154cb8f0d4b7de37a26eef3",
       "provider_execution": true
@@ -26,9 +46,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-ultra-550b",
       "http_status": 200,
-      "latency_ms": 1015,
+      "latency_ms": 760,
       "exact_contract": true,
-      "response_digest": "a8c855dc04836a82fac3e57b9627fce9189d652933fcfef852b1f3f82ac0ce97",
+      "response_digest": "73a393f603a4d79316fa7ed25b925bf178b05c6288f780bcadc2add8209e7fa3",
       "provider_execution": true
     },
     "blockrun_omni": {
@@ -36,9 +56,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
       "http_status": 200,
-      "latency_ms": 522,
+      "latency_ms": 2158,
       "exact_contract": true,
-      "response_digest": "99a455ca81907b68300172101a0a02620d5575e2f68f7723c1451dc65103103c",
+      "response_digest": "19276a608be66954e53c43fb88686e703709c42d48df407a815e7c3ce10de1da",
       "provider_execution": true
     },
     "blockrun_code": {
@@ -46,9 +66,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "cohere/north-mini-code",
       "http_status": 200,
-      "latency_ms": 3697,
+      "latency_ms": 1328,
       "exact_contract": true,
-      "response_digest": "8b3dc78125fa1e3a52c9a508a29a22e4b679fde7f2419ddaa7d076baa505e3bb",
+      "response_digest": "1b2dce4b18295f5cf6d810ff6b59cf84106a5b042d327bb2ad24f846ec67146c",
       "provider_execution": true
     },
     "blockrun_llama_vision": {
@@ -56,9 +76,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/llama-3.2-11b-vision",
       "http_status": 200,
-      "latency_ms": 513,
+      "latency_ms": 1084,
       "exact_contract": true,
-      "response_digest": "3c2f264841a006c3b44b9fe46751569c5a02bbd96a95056e8799fd4502f8a459",
+      "response_digest": "da26e629c0b22c73520300695d2d5e1f4c5c1cebba0399843abdfa246324f8b0",
       "provider_execution": true
     },
     "blockrun_laguna": {
@@ -66,9 +86,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "poolside/laguna-xs-2.1",
       "http_status": 200,
-      "latency_ms": 677,
+      "latency_ms": 777,
       "exact_contract": true,
-      "response_digest": "99bba6d55783a30c346a48cb8121818734ea8982bdc6e634eb00f94636785835",
+      "response_digest": "90a08ecc66aa9b85f6bd8604286a74abc211b937dac5b4e6b5a193f825d1d3d3",
       "provider_execution": true
     }
   }
