@@ -1,0 +1,75 @@
+name: DEUS Petals + Akash Public Route Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-petals-akash-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-route-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Petals public swarm S0 inference canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          start_ms="$(date +%s%3N)"
+          code="$(curl --max-time 180 -sS -o /tmp/petals.json -w '%{http_code}' \
+            -X POST 'https://chat.petals.dev/api/v1/generate' \
+            --data-urlencode 'model=petals-team/StableBeluga2' \
+            --data-urlencode 'inputs=Public S0 canary. Reply with exactly: DEUS_PETALS_CANARY_OK' \
+            --data-urlencode 'max_new_tokens=12' \
+            --data-urlencode 'do_sample=0')"
+          end_ms="$(date +%s%3N)"
+          cat /tmp/petals.json
+          test "$code" = "200"
+          jq -e '.ok == true and (.outputs | type == "string")' /tmp/petals.json
+          sha="$(sha256sum /tmp/petals.json | awk '{print $1}')"
+          jq -n \
+            --arg provider "PETALS_PUBLIC_SWARM" \
+            --arg endpoint "https://chat.petals.dev/api/v1/generate" \
+            --arg status "$code" \
+            --arg digest "$sha" \
+            --argjson latency_ms "$((end_ms-start_ms))" \
+            '{receipt_version:"DEUS-PUBLIC-COMPUTE-CANARY/1",provider:$provider,auth_mode:"NONE",data_class:"S0_SYNTHETIC_ONLY",provider_execution:true,http_status:($status|tonumber),latency_ms:$latency_ms,response_digest:$digest,canonical_write:false,settlement:false,commercial_default:false,verdict:"PETALS_PUBLIC_SWARM_EXECUTION_PASS"}' \
+            | tee /tmp/petals-receipt.json
+
+      - name: Akash public provider-network canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          start_ms="$(date +%s%3N)"
+          code="$(curl --max-time 60 -sS -o /tmp/akash.json -w '%{http_code}' \
+            'https://console-api.akash.network/v1/providers')"
+          end_ms="$(date +%s%3N)"
+          head -c 2000 /tmp/akash.json
+          echo
+          test "$code" = "200"
+          jq -e 'type == "array" or type == "object"' /tmp/akash.json >/dev/null
+          sha="$(sha256sum /tmp/akash.json | awk '{print $1}')"
+          bytes="$(wc -c </tmp/akash.json | tr -d ' ')"
+          jq -n \
+            --arg provider "AKASH_NETWORK_DATA" \
+            --arg endpoint "https://console-api.akash.network/v1/providers" \
+            --arg status "$code" \
+            --arg digest "$sha" \
+            --argjson bytes "$bytes" \
+            --argjson latency_ms "$((end_ms-start_ms))" \
+            '{receipt_version:"DEUS-PUBLIC-DISCOVERY-CANARY/1",provider:$provider,auth_mode:"NONE",data_class:"PUBLIC_NETWORK_DATA",provider_execution:false,network_data_read:true,http_status:($status|tonumber),latency_ms:$latency_ms,response_bytes:$bytes,response_digest:$digest,canonical_write:false,settlement:false,verdict:"AKASH_PUBLIC_NETWORK_DATA_PASS"}' \
+            | tee /tmp/akash-receipt.json
+
+      - name: Consolidated truth receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n \
+            --slurpfile petals /tmp/petals-receipt.json \
+            --slurpfile akash /tmp/akash-receipt.json \
+            '{receipt_version:"DEUS-MULTI-ROUTE-CANARY/1",petals:$petals[0],akash:$akash[0],truth_boundary:"Petals proves public S0 inference execution. Akash proves unauthenticated network-data reachability only, not a paid lease or workload execution."}' \
+            | tee /tmp/deus-public-route-receipt.json
