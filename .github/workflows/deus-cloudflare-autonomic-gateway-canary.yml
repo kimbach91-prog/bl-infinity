@@ -1,0 +1,91 @@
+name: DEUS Cloudflare Autonomic Gateway Cross-Provider Canary
+
+on:
+  push:
+    branches:
+      - deus/cloudflare-autonomic-gateway-canary-20260920
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cloudflare-gateway-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      BASE_URL: https://4ef47966-theory-group.kimbach91.workers.dev
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Probe health
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$BASE_URL/healthz" | tee health.json
+          jq -e '.ok == true and .runtime == "cloudflare-workers" and .scope == "PUBLIC_S0_CANARY" and .response_executor_bound == false' health.json
+
+      - name: Probe machine discovery
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$BASE_URL/.well-known/deus-gateway.json" | tee discovery.json
+          jq -e '.machine_discoverable == true and .opt_in_only == true and .execution.response_executor_bound == false and .compatibility.mcp_protocol_version == "2026-07-28"' discovery.json
+
+      - name: Probe OpenAI-compatible model list
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS "$BASE_URL/v1/models" | tee models.json
+          jq -e '[.data[].id] | index("deus-auto") != null and index("deus-zero-model") != null' models.json
+
+      - name: Probe MCP server discover
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fsS             -H 'content-type: application/json'             -d '{"jsonrpc":"2.0","id":"mcp-canary","method":"server/discover","params":{}}'             "$BASE_URL/mcp" | tee mcp.json
+          jq -e '.jsonrpc == "2.0" and .id == "mcp-canary" and .result.protocolVersion == "2026-07-28" and .result._meta.discovery.machine_discoverable == true' mcp.json
+
+      - name: Verify responses route fails closed before executor binding
+        shell: bash
+        run: |
+          set -euo pipefail
+          code="$(curl -sS -o responses.json -w '%{http_code}'             -H 'content-type: application/json'             -d '{"model":"deus-auto","input":"runtime canary"}'             "$BASE_URL/v1/responses")"
+          cat responses.json
+          test "$code" = "503"
+          jq -e '.error.code == "RESPONSE_EXECUTOR_NOT_BOUND"' responses.json
+
+      - name: Emit typed receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          jq -n             --arg base "$BASE_URL"             --arg source_head "c13cc5d573118b57fa63e1bdf77bb317293a8939"             --arg cloudflare_version "4ef47966-b51d-4407-89c0-753e13c840c7"             '{
+              receipt_version:"DEUS-CLOUDFLARE-GATEWAY-CANARY/1.0",
+              base_url:$base,
+              source_head:$source_head,
+              cloudflare_version:$cloudflare_version,
+              checks:{
+                health:"PASS",
+                machine_discovery:"PASS",
+                models:"PASS",
+                mcp_server_discover:"PASS",
+                responses_fail_closed:"PASS"
+              },
+              provider_execution:false,
+              response_executor_bound:false,
+              canonical_write:false,
+              verdict:"PUBLIC_RUNTIME_DISCOVERY_MCP_MODELS_VERIFIED_EXECUTOR_HOLD"
+            }' | tee receipt.json
+          echo "DEUS_RUNTIME_RECEIPT=$(cat receipt.json | tr -d '
+')"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-cloudflare-autonomic-gateway-canary
+          path: |
+            health.json
+            discovery.json
+            models.json
+            mcp.json
+            responses.json
+            receipt.json
