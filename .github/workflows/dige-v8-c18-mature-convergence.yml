@@ -1,4 +1,4 @@
-name: DIGE V8 C23 Calibrated Eyes Hairline Finalist
+name: DIGE V8 C24 Surface Eyes Source Albedo Finalist
 
 on:
   pull_request:
@@ -12,11 +12,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c23-eyes-hairline-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c24-surface-eyes-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c23-finalist:
+  c24-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -71,12 +71,12 @@ jobs:
           echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
           echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
 
-      - name: Render C23 calibrated-eyes hairline finalist
+      - name: Render C24 surface-eyes source-albedo finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c23_calibrated
+          DIGE_OUTPUT_TAG: c24_surface
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '1'
           DIGE_C19_PHOTO_LIGHTING: '1'
@@ -88,6 +88,9 @@ jobs:
           DIGE_C23_CALIBRATED_EYES: '1'
           DIGE_C23_FACE_PLANES: '1'
           DIGE_C23_HAIRLINE_REPAIR: '1'
+          DIGE_C24_SURFACE_EYES: '1'
+          DIGE_C24_SOURCE_ALBEDO: '1'
+          DIGE_C24_HAIRLINE_REPAIR: '1'
           DIGE_HAIR_ASSET_KEY: hair_short03
           DIGE_HAIR_STRANDS_PER_ROOT: '18'
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.72'
@@ -97,49 +100,49 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
-          DIGE_SKIN_SSS_WEIGHT: '0.085'
-          DIGE_SKIN_SSS_SCALE: '0.0011'
-          DIGE_SKIN_ROUGH_MIN: '0.42'
-          DIGE_SKIN_ROUGH_MAX: '0.59'
-          DIGE_SKIN_ALBEDO_SAT: '0.98'
-          DIGE_SKIN_ALBEDO_VALUE: '0.48'
+          DIGE_SKIN_SSS_WEIGHT: '0.045'
+          DIGE_SKIN_SSS_SCALE: '0.0009'
+          DIGE_SKIN_ROUGH_MIN: '0.44'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_ALBEDO_SAT: '1.00'
+          DIGE_SKIN_ALBEDO_VALUE: '0.78'
           DIGE_EYE_TEX_SAT: '0.78'
           DIGE_EYE_TEX_VALUE: '0.64'
           DIGE_HAIR_TEX_SAT: '0.56'
           DIGE_HAIR_TEX_VALUE: '0.23'
-          DIGE_FACE_MESO_SCALE: '1.45'
+          DIGE_FACE_MESO_SCALE: '1.20'
           DIGE_SKIN_TONE_R: '0.60'
           DIGE_SKIN_TONE_G: '0.33'
           DIGE_SKIN_TONE_B: '0.22'
-          DIGE_SKIN_TONE_MIX: '0.60'
-          DIGE_SKIN_MICRO_STRENGTH: '0.24'
+          DIGE_SKIN_TONE_MIX: '0.08'
+          DIGE_SKIN_MICRO_STRENGTH: '0.20'
           DIGE_SKIN_MESO_FREQ: '95'
           DIGE_SKIN_PORE_FREQ: '2800'
           DIGE_SKIN_MICRO_FREQ: '9000'
-          DIGE_SKIN_BUMP_DISTANCE: '0.000065'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000055'
           DIGE_SKIN_COAT_WEIGHT: '0.001'
           DIGE_SKIN_COAT_ROUGHNESS: '0.45'
           DIGE_SAMPLES_PREVIEW: '48'
-          DIGE_SAMPLES_HERO: '256'
+          DIGE_SAMPLES_HERO: '320'
           DIGE_RENDER_SEED: '20260920'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c23_calibrated.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c24_surface.log
 
-      - name: Verify C23 receipt
+      - name: Verify C24 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c23_calibrated")
+          root=pathlib.Path("runtime/renders/c24_surface")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C23_CALIBRATED_EYES_HAIRLINE_V1"
+          assert r["appearance_candidate"]=="C24_SURFACE_EYES_SOURCE_ALBEDO_V1"
           h=r["hair_surface_contract"]
-          assert h["style"]=="CALIBRATED_EYES_FRONTAL_GROOM_C23_V1"
+          assert h["style"]=="SURFACE_EYES_SOURCE_ALBEDO_C24_V1"
           assert h["mass_mesh_rendered"] is True
           assert h["curve_count"] >= 5000
           assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
@@ -149,7 +152,7 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C23_CALIBRATED_EYES_HAIRLINE_RECEIPT_V1",
+            "schema":"DIGE_C24_SURFACE_EYES_SOURCE_ALBEDO_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
@@ -157,6 +160,12 @@ jobs:
             "hair_curve_metrics":r["hair_curve_metrics"],
             "skin_model":r["skin_model"],
             "appearance_selection":r["appearance_selection"],
+            "c24_surface_eyes":r["appearance_selection"].get("c24_surface_eyes"),
+            "c24_source_albedo":r["appearance_selection"].get("c24_source_albedo"),
+            "c24_hairline_repair":r["appearance_selection"].get("c24_hairline_repair"),
+            "c24_eye_count":r["appearance_selection"].get("c24_eye_count"),
+            "c24_lid_curve_count":r["appearance_selection"].get("c24_lid_curve_count"),
+            "c24_hairline_warp_vertices":r["appearance_selection"].get("c24_hairline_warp_vertices"),
             "c23_calibrated_eyes":r["appearance_selection"].get("c23_calibrated_eyes"),
             "c23_eye_count":r["appearance_selection"].get("c23_eye_count"),
             "c23_face_planes":r["appearance_selection"].get("c23_face_planes"),
@@ -173,30 +182,28 @@ jobs:
             "c22_brow_fibers":r["appearance_selection"].get("c22_brow_fibers"),
             "c22_lash_fibers":r["appearance_selection"].get("c22_lash_fibers"),
             "c22_lid_margin_curves":r["appearance_selection"].get("c22_lid_margin_curves"),
-            "claim_ceiling":"C23_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "claim_ceiling":"C24_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
-          assert summary["c23_calibrated_eyes"] is True
-          assert summary["c23_eye_count"] == 2
-          assert summary["c23_face_planes"] is True
-          assert summary["c23_hairline_repair"] is True
-          assert summary["c23_hairline_warp_vertices"] > 0
-          assert summary["c23_brow_fibers"] >= 140
-          assert summary["c23_lash_fibers"] >= 50
-          assert summary["c23_hairline_fibers"] >= 60
+          assert summary["c24_surface_eyes"] is True
+          assert summary["c24_source_albedo"] is True
+          assert summary["c24_hairline_repair"] is True
+          assert summary["c24_eye_count"] == 2
+          assert summary["c24_lid_curve_count"] == 4
+          assert summary["c24_hairline_warp_vertices"] > 0
           assert summary["c22_physical_skin"] is True
           assert r["skin_model"]["coordinate_space"]=="OBJECT_METERS"
-          (root/"DIGE_C23_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          (root/"DIGE_C24_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C23 evidence
+      - name: Upload C24 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C23-CALIBRATED-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C24-SURFACE-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c23_calibrated/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c23_calibrated/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c23_calibrated/*.json
-            experiments/dige-v8-executor-capsule/runtime/c23_calibrated.log
+            experiments/dige-v8-executor-capsule/runtime/renders/c24_surface/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c24_surface/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c24_surface/*.json
+            experiments/dige-v8-executor-capsule/runtime/c24_surface.log
           if-no-files-found: error
           retention-days: 14
