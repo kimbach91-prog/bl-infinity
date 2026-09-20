@@ -37,3 +37,5 @@ The current copied public 0.86 candidate is dominated by an open, reproducible p
 current user score: UNKNOWN (provider notebook version visible, no leaderboard receipt yet)
 public reproducible target: 3.40 upstream
 research targets: >3.40 only after source/runtime grounding and reproducibility checks
+
+Static validation: GitHub Actions workflow arc3-flash340-static-validate.yml is the pre-GPU integrity gate.
