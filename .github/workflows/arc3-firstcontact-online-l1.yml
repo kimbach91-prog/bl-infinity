@@ -1,0 +1,108 @@
+name: ARC3 first-contact derived L1 online receipts
+
+on:
+  push:
+    branches: [deus/arc3-firstcontact-online-l1-20260920]
+    paths: [.github/workflows/arc3-firstcontact-online-l1.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        game: [su15, r11l, lp85]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay independently discovered L1 route ONLINE
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import hashlib,json,os,platform,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          game=os.environ['GAME']
+          routes={
+            'su15':[
+              (6,{'x':8,'y':55}),(6,{'x':14,'y':49}),(6,{'x':20,'y':43}),
+              (6,{'x':26,'y':37}),(6,{'x':32,'y':31}),(6,{'x':38,'y':25}),
+              (6,{'x':44,'y':19}),
+            ],
+            'r11l':[
+              (6,{'x':38,'y':18}),(6,{'x':27,'y':59}),(6,{'x':41,'y':19}),
+            ],
+            'lp85':[
+              (6,{'x':5,'y':32}),(6,{'x':5,'y':32}),(6,{'x':5,'y':32}),
+              (6,{'x':5,'y':32}),(6,{'x':5,'y':32}),
+            ],
+          }
+          route=routes[game]
+          route_json=[{'a':a,'data':d} for a,d in route]
+          route_sha=hashlib.sha256(json.dumps(route_json,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          source_url='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-firstcontact-online-l1.yml'
+          card_id=arc.open_scorecard(source_url=source_url,tags=['DEUS',game,'public-development','first-contact-derived','l1-replay'])
+          env=arc.make(game,seed=0,scorecard_id=card_id,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('ENV_UNAVAILABLE')
+          amap={a.value:a for a in env.action_space}
+          obs=env.observation_space
+          before=int(obs.levels_completed)
+          transcript=[]
+          t0=time.monotonic()
+          for i,(aid,data) in enumerate(route,1):
+            if aid not in amap: raise RuntimeError('ACTION_UNAVAILABLE_'+str(aid))
+            obs=env.step(amap[aid],data=data)
+            if obs is None: raise RuntimeError('OBS_MISSING_'+str(i))
+            frame=np.asarray(obs.frame[-1],dtype=np.uint8)
+            transcript.append({
+              'i':i,'a':aid,'data':data,'levels_completed':int(obs.levels_completed),
+              'state':obs.state.value,'frame_sha256':hashlib.sha256(frame.tobytes()).hexdigest()
+            })
+          card=arc.close_scorecard(card_id)
+          passed=int(obs.levels_completed)>before
+          receipt={
+            'schema':'deus/arc3-firstcontact-derived-partial/1',
+            'system_label':'DEUS',
+            'result':'PASS' if passed else 'FAIL',
+            'game':game,'seed':0,'scope':'LEVEL_1_ONLY',
+            'levels_before':before,'levels_completed':int(obs.levels_completed),
+            'win_levels':int(getattr(obs,'win_levels',0) or 0),
+            'state':obs.state.value,'actions_executed':len(route),
+            'scorecard_id':card_id,'scorecard_score':None if card is None else card.score,
+            'route_sha256':route_sha,
+            'final_frame_sha256':transcript[-1]['frame_sha256'],
+            'online_seconds':time.monotonic()-t0,
+            'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+            'toolkit':'arc-agi 0.9.9','engine':'arcengine 0.9.3','python':platform.python_version(),
+            'protocol':'PUBLIC_FIRST_CONTACT_DERIVED_L1_REPLAY',
+            'route_origin_run':'35524155969',
+            'external_full_route_used':False,
+            'game_source_inspected_by_solver':False,
+            'hidden_state_read':False,
+            'full_game_generalization_claim':False,
+            'competition_hidden_score_claim':False
+          }
+          out=Path('verification');out.mkdir()
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          (out/'transcript.json').write_text(json.dumps(transcript,separators=(',',':')))
+          print('DEUS_FIRSTCONTACT_ONLINE_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if not passed: raise RuntimeError('LEVEL_1_COMPLETION_REQUIRED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-firstcontact-l1-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
