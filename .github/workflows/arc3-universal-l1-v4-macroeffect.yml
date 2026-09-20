@@ -1,0 +1,213 @@
+name: ARC3 universal L1 v4 macro-effect repair
+
+on:
+  push:
+    branches: [deus/arc3-universal-l1-v4-macroeffect-20260921]
+    paths: [.github/workflows/arc3-universal-l1-v4-macroeffect.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    strategy:
+      fail-fast: false
+      max-parallel: 13
+      matrix:
+        game: [dc22,tr87,ft09,ka59,lf52,sb26,re86,g50t,tn36,sc25,bp35,ar25,wa30]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Macro-effect public-observation L1 search
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,os,time
+          from collections import Counter
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME=os.environ['GAME']; OUT=Path('verification'); OUT.mkdir(exist_ok=True)
+          REPEATS=(1,2,3,5,8,13)
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[:2,:]=0; a[-2:,:]=0
+              return a
+          def fh(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def aids(o):
+              out=[]
+              for a in (getattr(o,'available_actions',None) or []):
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in out: out.append(v)
+              return out
+          def step(e,act):
+              aid,data=act; am={a.value:a for a in e.action_space}
+              if aid not in am:return None
+              try:return e.step(am[aid],data=data)
+              except Exception:return None
+          def delta(a,b):
+              aa=norm(a);bb=norm(b)
+              if aa.shape!=bb.shape:return 1.0
+              return float(np.mean(aa!=bb))
+          def object_points(o,cap=52):
+              a=fr(o);H,W=a.shape; bg=Counter(int(v) for v in a.ravel()).most_common(1)[0][0]
+              seen=np.zeros((H,W),bool);out=[];used=set()
+              for y in range(2,max(2,H-2)):
+                  for x in range(W):
+                      if seen[y,x] or int(a[y,x])==bg:continue
+                      col=int(a[y,x]);st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and not seen[ny,nx] and int(a[ny,nx])==col:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if not (1<=len(pts)<=768):continue
+                      xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                      samples=[(int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))),pts[0],pts[len(pts)//2],pts[-1]]
+                      for p in samples:
+                          p=(int(p[0]),int(p[1]))
+                          if p[1]<2 or p[1]>=H-2 or p in used:continue
+                          used.add(p);out.append(p)
+                          if len(out)>=cap:return out
+              return out
+          def click_points(o):
+              a=fr(o);H,W=a.shape;out=[];used=set()
+              for p in object_points(o):
+                  if p not in used:used.add(p);out.append(p)
+              # Denser negative-space lattice than v3; still public frame only.
+              for sy in (5,9):
+                  for y in range(sy,max(sy+1,H-3),10):
+                      for x in range(3,W,10):
+                          p=(x,y)
+                          if p not in used:used.add(p);out.append(p)
+                          if len(out)>=72:return out
+              return out[:72]
+          def act_sig(a):
+              aid,data=a
+              return str(aid) if not data else f"{aid}@{int(data['x'])},{int(data['y'])}"
+          def macro_sig(m): return '|'.join(act_sig(a) for a in m)
+          def run_macro(e,o,macro,start):
+              cur=o;used=[]
+              for act in macro:
+                  nf=step(e,act)
+                  if nf is None:return None,used,False
+                  cur=nf;used.append(act)
+                  if int(cur.levels_completed)>start:return cur,used,True
+                  st=getattr(cur.state,'value',str(cur.state))
+                  if st in ('GAME_OVER','WIN'):break
+              return cur,used,int(cur.levels_completed)>start
+          def keyboard_macros(o):
+              ks=[a for a in aids(o) if 1<=a<=5 or a==7]
+              out=[]
+              for a in ks:
+                  for n in REPEATS: out.append(tuple((a,None) for _ in range(n)))
+              # Alternation and short motifs explicitly model delayed counters / phase changes.
+              for a,b in itertools.permutations(ks,2):
+                  out.append(((a,None),(b,None)))
+                  out.append(((a,None),(b,None),(a,None),(b,None)))
+                  out.append(tuple([(a,None)]*3+[(b,None)]))
+              return out
+          def click_macros(o):
+              pts=click_points(o);out=[]
+              for p in pts:
+                  for n in REPEATS: out.append(tuple((6,{'x':p[0],'y':p[1]}) for _ in range(n)))
+              # Pair motifs on the most salient/earliest public-frame points only.
+              core=pts[:18]
+              for i,p in enumerate(core):
+                  for j,q in enumerate(core):
+                      if i==j:continue
+                      A=(6,{'x':p[0],'y':p[1]});B=(6,{'x':q[0],'y':q[1]})
+                      out.append((A,B));out.append((A,A,B));out.append((A,B,B));out.append((A,B,A,B))
+              # Keep keyboard controls too for mixed games.
+              for m in keyboard_macros(o):out.append(m)
+              return out
+          def bucket_counts(counts): return tuple(min(31,int(x)) for x in counts)
+
+          def search(e0,o0,seconds=420,max_exp=180000,beam=2600):
+              start=int(o0.levels_completed);t0=time.monotonic();counter=itertools.count();exp=0
+              av=aids(o0);mixed=(6 in av);keys=[a for a in av if 1<=a<=5 or a==7]
+              count_keys=(keys+[6]) if mixed else keys
+              idx={a:i for i,a in enumerate(count_keys)}
+              z=tuple(0 for _ in count_keys);h0=fh(o0)
+              heap=[(0.0,0,next(counter),copy.deepcopy(e0),o0,[],z,(),0)]
+              seen={(h0,z,()):0};peak=1;latent_macros=0;visible_macros=0;trimmed=0;macro_trials=0
+              while heap and exp<max_exp and time.monotonic()-t0<seconds:
+                  pri,alen,_,e,o,path,counts,latent_suffix,latent_chain=heapq.heappop(heap)
+                  if len(path)>220:continue
+                  parent_h=fh(o);macros=click_macros(o) if mixed else keyboard_macros(o)
+                  for macro in macros:
+                      if exp>=max_exp or time.monotonic()-t0>=seconds:break
+                      ee=copy.deepcopy(e);nf,used,won=run_macro(ee,o,macro,start);exp+=len(used);macro_trials+=1
+                      if nf is None or not used:continue
+                      npth=path+used
+                      if won:
+                          meta={'cluster':'macro_effect_mixed' if mixed else 'macro_effect_keyboard','expansions':exp,'macro_trials':macro_trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent_macros,'visible_macros':visible_macros,'trimmed':trimmed,'beam':beam,'repeat_set':list(REPEATS)}
+                          return npth,meta
+                      st=getattr(nf.state,'value',str(nf.state))
+                      if st in ('GAME_OVER','WIN'):continue
+                      nh=fh(nf);d=delta(o,nf);cc=list(counts)
+                      for a,_ in used:
+                          if a in idx:cc[idx[a]]=min(31,cc[idx[a]]+1)
+                      cc=bucket_counts(cc);ms=hashlib.sha1(macro_sig(macro).encode()).hexdigest()[:10]
+                      if nh==parent_h:
+                          latent_macros+=1;lc=latent_chain+1
+                          if lc>5:continue
+                          ls=(latent_suffix+(ms,))[-2:]
+                      else:
+                          visible_macros+=1;lc=0;ls=()
+                      sk=(nh,cc,ls)
+                      if len(npth)>=seen.get(sk,10**9):continue
+                      seen[sk]=len(npth)
+                      # Visible macro effects dominate; latent macros survive in compressed count/history representation.
+                      score=(len(npth)*0.012)+(lc*0.8)-(min(1.0,d)*18.0)+(0.0008*sum(cc))
+                      heapq.heappush(heap,(score,len(npth),next(counter),ee,nf,npth,cc,ls,lc));peak=max(peak,len(heap))
+                  if len(heap)>beam*2:
+                      heap=heapq.nsmallest(beam,heap);heapq.heapify(heap);trimmed+=1
+              meta={'cluster':'macro_effect_mixed' if mixed else 'macro_effect_keyboard','expansions':exp,'macro_trials':macro_trials,'seen':len(seen),'seconds':time.monotonic()-t0,'peak':peak,'latent_macros':latent_macros,'visible_macros':visible_macros,'trimmed':trimmed,'beam':beam,'repeat_set':list(REPEATS)}
+              return None,meta
+
+          arc=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=arc.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('ENV_UNAVAILABLE')
+          obs=env.observation_space;av=aids(obs);path,meta=search(env,obs)
+          discovery={'game':GAME,'result':'FOUND' if path else 'MISS','path_len':None if path is None else len(path),'path':path,'search':meta,'available_actions':av,'protocol':'PUBLIC_FIRST_CONTACT_MACRO_EFFECT_V4','representation_delta':'macro repeated-action effects + compressed latent count/history state; no v3 suffix enumeration','game_source_inspected_by_solver':False,'external_route_used':False,'environment_clone_used_for_search':True,'hidden_state_read':False,'independent_first_contact_claim':True,'full_game_generalization_claim':False}
+          print('V4_DISCOVERY='+json.dumps(discovery,separators=(',',':')))
+          receipt={'discovery':discovery,'online':None}
+          if path:
+              oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-universal-l1-v4-macroeffect.yml'
+              cid=oa.open_scorecard(source_url=src,tags=['DEUS',GAME,'universal-l1-v4','macro-effect'])
+              oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+              if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+              oo=oe.observation_space;usedn=0
+              for i,act in enumerate(path,1):
+                  nf=step(oe,act)
+                  if nf is None:raise RuntimeError('ONLINE_STEP_FAIL_'+str(i))
+                  oo=nf;usedn=i
+                  if int(oo.levels_completed)>=1:break
+              card=oa.close_scorecard(cid)
+              receipt['online']={'result':'PASS' if int(oo.levels_completed)>=1 else 'FAIL','levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),'state':getattr(oo.state,'value',str(oo.state)),'actions_executed':usedn,'scorecard_id':cid,'scorecard_score':None if card is None else card.score,'route_sha256':hashlib.sha256(json.dumps(path,sort_keys=True,separators=(',',':')).encode()).hexdigest(),'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],'scope':'LEVEL_1_ONLY','competition_hidden_score_claim':False}
+          (OUT/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          print('V4_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if path is None:raise RuntimeError('L1_NOT_FOUND')
+          if receipt['online'] is None or receipt['online']['result']!='PASS':raise RuntimeError('ONLINE_VERIFY_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: universal-v4-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
