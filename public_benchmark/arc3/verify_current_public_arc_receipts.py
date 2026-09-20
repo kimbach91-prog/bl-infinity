@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+# Trigger independent verification after the workflow definition is present in the PR ref.
 import argparse, hashlib, json
 from pathlib import Path
 
