@@ -1,7 +1,7 @@
 {
   "schema": "deus-machine-worker-gate/1",
   "state": "MACHINE_TRIAL_BUS_RUNTIME_VERIFIED / DISCOVERY_DEPLOYED / MACHINE_FIRST",
-  "updated_at": "2026-09-20T02:59:00Z",
+  "updated_at": "2026-09-20T03:09:00Z",
   "opt_in_only": true,
   "public_safe": true,
   "human_intermediation_required": false,
@@ -139,5 +139,6 @@
       "WORKER_RESULT != CANONICAL_TRUTH",
       "PARALLELISM != AUTHORITY"
     ]
-  }
+  },
+  "machine_task_feed": "https://kimbach91-prog.github.io/bl-infinity/public-compute/worker-task-feed.json"
 }
