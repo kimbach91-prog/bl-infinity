@@ -9,6 +9,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/deus-copilot-receptor.yml'
+      - '.deus/dispatch/heavy/**'
   repository_dispatch:
     types: [huyenco_research_delta_v1]
   schedule:
@@ -349,5 +350,183 @@ jobs:
         with:
           name: deus-copilot-receptor-${{ github.run_id }}-${{ github.run_attempt }}
           path: nervous-receptor/*.json
+          if-no-files-found: error
+          retention-days: 30
+
+
+  heavy-task:
+    name: heavy-compute-handoff-v2
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[DEUS_HEAVY_TASK]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout public BL∞ task surface
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+
+      - name: Set up Node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '22'
+
+      - name: Install current Copilot CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @github/copilot
+          copilot --version
+
+      - name: Resolve and validate latest public heavy packet
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p heavy-compute-evidence
+          python3 - <<'PY'
+          import hashlib, json, re
+          from pathlib import Path
+
+          files = sorted(Path('.deus/dispatch/heavy').glob('*.json'))
+          if not files:
+              raise SystemExit('NO_HEAVY_PACKET')
+          path = files[-1]
+          raw = path.read_text(encoding='utf-8')
+          task = json.loads(raw)
+
+          if task.get('schema') != 'deus-heavy-task/1':
+              raise SystemExit('BAD_SCHEMA')
+          task_id = str(task.get('task_id') or '')
+          if not re.fullmatch(r'[A-Za-z0-9._:-]{3,100}', task_id):
+              raise SystemExit('BAD_TASK_ID')
+          if task.get('data_class') != 'S0_PUBLIC':
+              raise SystemExit('PUBLIC_RECEPTOR_REQUIRES_S0_PUBLIC')
+          objective = str(task.get('objective') or '')
+          if not (1 <= len(objective) <= 2200):
+              raise SystemExit('BAD_OBJECTIVE')
+          criteria = task.get('acceptance_criteria')
+          if not isinstance(criteria, list) or not (1 <= len(criteria) <= 10):
+              raise SystemExit('BAD_ACCEPTANCE_CRITERIA')
+          if any(not isinstance(x,str) or not x.strip() or len(x)>600 for x in criteria):
+              raise SystemExit('BAD_ACCEPTANCE_ITEM')
+          falsifier = str(task.get('falsifier') or '')
+          if not (1 <= len(falsifier) <= 1200):
+              raise SystemExit('BAD_FALSIFIER')
+          if task.get('canonical_write') not in (False, None):
+              raise SystemExit('CANONICAL_WRITE_FORBIDDEN')
+
+          lowered = raw.lower()
+          forbidden = ['-----begin private key-----','github_pat_','ghp_','oauth','password=','api_key','recovery code']
+          if any(x in lowered for x in forbidden):
+              raise SystemExit('SECRET_SHAPED_PACKET_REJECTED')
+
+          digest = hashlib.sha256(raw.encode()).hexdigest()
+          Path('heavy-compute-evidence/task.json').write_text(raw,encoding='utf-8')
+          Path('heavy-compute-evidence/task.sha256').write_text(digest+'\n',encoding='utf-8')
+          Path('heavy-compute-evidence/task-path.txt').write_text(str(path)+'\n',encoding='utf-8')
+
+          instruction = {
+            'role':'bounded DEUS external compute leaf',
+            'rules':[
+              'Use only the supplied S0_PUBLIC task packet.',
+              'Do not claim private state, Drive access, credentials, canonical authority, background persistence, or execution you did not observe.',
+              'Return ONLY one JSON object with keys ROOT_CAUSE,WORKFLOW,FALSIFIER,RISK.',
+              'ROOT_CAUSE: <=400 chars.',
+              'WORKFLOW: exactly 5 short numbered steps in one string, <=1400 chars total.',
+              'FALSIFIER: <=500 chars.',
+              'RISK: <=500 chars.',
+              'Treat your output as candidate-only; canonical_write=false.'
+            ],
+            'task':task
+          }
+          Path('heavy-compute-evidence/prompt.txt').write_text(
+              json.dumps(instruction,ensure_ascii=False,separators=(',',':')),
+              encoding='utf-8'
+          )
+          PY
+
+      - name: Execute bounded heavy leaf
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          copilot -s             --model gpt-5-mini             --no-ask-user             --disable-builtin-mcps             --deny-tool='read,shell,write,url,memory'             -p "$(cat heavy-compute-evidence/prompt.txt)"             > heavy-compute-evidence/raw-output.json
+
+      - name: Validate and emit typed executor receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          task = json.load(open('heavy-compute-evidence/task.json',encoding='utf-8'))
+          raw = Path('heavy-compute-evidence/raw-output.json').read_text(encoding='utf-8').strip()
+          violations=[]
+          try:
+              out=json.loads(raw)
+          except Exception:
+              out={}
+              violations.append('OUTPUT_NOT_JSON')
+          required=['ROOT_CAUSE','WORKFLOW','FALSIFIER','RISK']
+          if list(out.keys()) != required:
+              violations.append('SCHEMA_MISMATCH')
+          limits={'ROOT_CAUSE':450,'WORKFLOW':1600,'FALSIFIER':550,'RISK':550}
+          if list(out.keys()) == required:
+              for k in required:
+                  if not isinstance(out[k],str) or not out[k].strip():
+                      violations.append('EMPTY_'+k)
+                  elif len(out[k])>limits[k]:
+                      violations.append('TOO_LONG_'+k)
+              if not all(f"{i}." in out.get('WORKFLOW','') for i in range(1,6)):
+                  violations.append('WORKFLOW_NOT_FIVE_STEPS')
+          accepted=not violations
+          if not accepted:
+              out={
+                'ROOT_CAUSE':'MODEL_OUTPUT_REJECTED_BY_CONTRACT',
+                'WORKFLOW':'1. Preserve packet. 2. Record violations. 3. Keep task runnable. 4. Route to another verified executor. 5. Require a new typed receipt.',
+                'FALSIFIER':'A subsequent executor must satisfy the declared schema and acceptance checks.',
+                'RISK':'No heavy result is accepted from this run.'
+              }
+          packet_sha=Path('heavy-compute-evidence/task.sha256').read_text().strip()
+          output_sha=hashlib.sha256(raw.encode()).hexdigest()
+          receipt={
+            'schema':'deus-heavy-compute-executor-receipt/2',
+            'task_id':task['task_id'],
+            'data_class':task['data_class'],
+            'carrier':'github-actions',
+            'worker':'github-copilot-cli',
+            'model_request':'gpt-5-mini',
+            'run_id':os.environ['GITHUB_RUN_ID'],
+            'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+            'sha':os.environ['GITHUB_SHA'],
+            'packet_sha256':packet_sha,
+            'output_sha256':output_sha,
+            'provider_execution':True,
+            'model_contract_accepted':accepted,
+            'violations':violations,
+            'result':out,
+            'canonical_write':False,
+            'authority_widening':False,
+            'truth_state':'EXECUTOR_CANDIDATE_ONLY' if accepted else 'EXECUTOR_OUTPUT_REJECTED',
+            'observed_at':datetime.now(timezone.utc).isoformat()
+          }
+          Path('heavy-compute-evidence/receipt.json').write_text(
+              json.dumps(receipt,ensure_ascii=False,indent=2),
+              encoding='utf-8'
+          )
+          print(json.dumps(receipt,ensure_ascii=False))
+          if not accepted:
+              raise SystemExit(3)
+          PY
+
+      - name: Upload heavy compute evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-heavy-compute-${{ github.run_id }}-${{ github.run_attempt }}
+          path: heavy-compute-evidence/*
           if-no-files-found: error
           retention-days: 30
