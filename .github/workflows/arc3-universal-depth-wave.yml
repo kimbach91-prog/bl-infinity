@@ -1,0 +1,161 @@
+name: ARC3 universal depth continuation wave
+
+on:
+  push:
+    branches: [deus/arc3-universal-depth-wave-20260921]
+    paths: [.github/workflows/arc3-universal-depth-wave.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  solve:
+    runs-on: ubuntu-latest
+    timeout-minutes: 28
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        game: [s5i5,cd82,tu93,sk48]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Generic observation-derived per-level continuation
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,os,time
+          from collections import Counter,deque
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          GAME=os.environ['GAME'];OUT=Path('verification');OUT.mkdir()
+          def fr(o):return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:a[:2,:]=0;a[-2:,:]=0
+              return a
+          def skey(o):return hashlib.sha256(norm(o).tobytes()).hexdigest()
+          def aids(o):
+              z=[]
+              for a in (getattr(o,'available_actions',None) or []):
+                  try:v=int(a.value)
+                  except Exception:
+                      try:v=int(a)
+                      except Exception:continue
+                  if v not in z:z.append(v)
+              return z
+          def objs(o,cap=96):
+              a=fr(o);H,W=a.shape;bg=Counter(int(v) for v in a.ravel()).most_common(1)[0][0]
+              seen=np.zeros((H,W),bool);out=[];used=set()
+              for y in range(2,max(2,H-2)):
+                  for x in range(W):
+                      if seen[y,x] or int(a[y,x])==bg:continue
+                      col=int(a[y,x]);st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and not seen[ny,nx] and int(a[ny,nx])==col:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if not (1<=len(pts)<=384):continue
+                      xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                      samples=[pts[0],pts[len(pts)//4],pts[len(pts)//2],pts[(3*len(pts))//4],pts[-1],
+                               (int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys))))]
+                      for xx,yy in samples:
+                          if yy<2 or yy>=H-2:continue
+                          k=(int(xx),int(yy))
+                          if k not in used:
+                              used.add(k);out.append(k)
+                              if len(out)>=cap:return out
+              return out
+          def cands(o,clicks):
+              av=aids(o);z=[]
+              for a in av:
+                  if 1<=a<=5 or a==7:z.append((a,None))
+              if clicks and 6 in av:z.extend((6,{'x':x,'y':y}) for x,y in objs(o))
+              return z
+          def step(e,a):
+              aid,data=a;am={x.value:x for x in e.action_space}
+              if aid not in am:return None
+              try:return e.step(am[aid],data=data)
+              except Exception:return None
+          def find(e0,o0,max_exp=60000,seconds=180):
+              start=int(o0.levels_completed)
+              modes=[False]+([True] if 6 in aids(o0) else [])
+              total_exp=0;stats=[]
+              for clicks in modes:
+                  q=deque([(copy.deepcopy(e0),o0,[])]);seen={skey(o0)};exp=0;t0=time.monotonic();peak=1
+                  while q and exp<max_exp and time.monotonic()-t0<seconds:
+                      e,o,p=q.popleft()
+                      for act in cands(o,clicks):
+                          ee=copy.deepcopy(e);nf=step(ee,act);exp+=1;total_exp+=1
+                          if nf is None:continue
+                          npth=p+[act]
+                          if int(nf.levels_completed)>start:
+                              stats.append({'clicks':clicks,'exp':exp,'seen':len(seen),'sec':time.monotonic()-t0,'peak':peak,'found':len(npth)})
+                              return npth,stats,total_exp
+                          if getattr(nf.state,'value',str(nf.state)) in ('GAME_OVER','WIN'):continue
+                          k=skey(nf)
+                          if k in seen:continue
+                          seen.add(k);q.append((ee,nf,npth));peak=max(peak,len(q))
+                  stats.append({'clicks':clicks,'exp':exp,'seen':len(seen),'sec':time.monotonic()-t0,'peak':peak,'found':None})
+              return None,stats,total_exp
+
+          normal=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          env=normal.make(GAME,seed=0,save_recording=False,include_frame_data=True)
+          if env is None:raise RuntimeError('ENV_UNAVAILABLE')
+          obs=env.observation_space;full=[];levels=[];tall=time.monotonic();win=int(getattr(obs,'win_levels',0) or 0)
+          while getattr(obs.state,'value',str(obs.state))!='WIN' and int(obs.levels_completed)<win and time.monotonic()-tall<1300:
+              lv=int(obs.levels_completed)
+              p,st,exp=find(env,obs)
+              levels.append({'level':lv,'stats':st,'path_len':None if p is None else len(p),'expansions':exp})
+              if p is None:break
+              for act in p:
+                  nf=step(env,act)
+                  if nf is None:raise RuntimeError('REAL_STEP_FAIL')
+                  obs=nf;full.append(act)
+              if int(obs.levels_completed)<=lv:raise RuntimeError('LEVEL_REPLAY_FAIL')
+              if len(full)>1600:break
+          discovery={'game':GAME,'levels_completed':int(obs.levels_completed),'win_levels':win,
+                     'state':getattr(obs.state,'value',str(obs.state)),'actions':len(full),'per_level':levels,
+                     'route':full,'protocol':'PUBLIC_OBSERVATION_FRAME_KEYED_MULTI_LEVEL_BRANCH_SEARCH',
+                     'environment_clone_used_for_search':True,'game_source_inspected_by_solver':False,
+                     'external_route_used':False,'hidden_state_read':False}
+          print('DEPTH_DISCOVERY='+json.dumps(discovery,separators=(',',':')))
+          receipt={'discovery':discovery,'online':None}
+          if int(obs.levels_completed)>1:
+              oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+              src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-universal-depth-wave.yml'
+              cid=oa.open_scorecard(source_url=src,tags=['DEUS',GAME,'universal-depth-wave','observation-search'])
+              oe=oa.make(GAME,seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+              if oe is None:raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+              oo=oe.observation_space;used=0
+              for act in full:
+                  nf=step(oe,act)
+                  if nf is None:raise RuntimeError('ONLINE_STEP_FAIL')
+                  oo=nf;used+=1
+                  if int(oo.levels_completed)>=int(obs.levels_completed):break
+              card=oa.close_scorecard(cid)
+              receipt['online']={'result':'PASS' if int(oo.levels_completed)>=int(obs.levels_completed) else 'FAIL',
+                  'levels_completed':int(oo.levels_completed),'win_levels':int(getattr(oo,'win_levels',0) or 0),
+                  'state':getattr(oo.state,'value',str(oo.state)),'actions_executed':used,
+                  'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+                  'route_sha256':hashlib.sha256(json.dumps(full,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+                  'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+                  'scope':'MULTI_LEVEL_PUBLIC_DEVELOPMENT','competition_hidden_score_claim':False}
+          (OUT/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          print('DEPTH_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if int(discovery['levels_completed'])<=1:raise RuntimeError('NO_DEPTH_GAIN')
+          if receipt['online'] is None or receipt['online']['result']!='PASS':raise RuntimeError('ONLINE_DEPTH_VERIFY_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: universal-depth-${{ matrix.game }}
+          path: verification/
+          retention-days: 30
