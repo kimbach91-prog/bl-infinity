@@ -44,7 +44,7 @@ jobs:
                           for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
                               if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
                                   seen[ny,nx]=1;st.append((nx,ny))
-                      if len(pts)>=8:
+                      if len(pts)>=4:
                           xs=[p[0] for p in pts];ys=[p[1] for p in pts]
                           out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
                                       'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
