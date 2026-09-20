@@ -10,3 +10,6 @@ custom_domain = true
 [[routes]]
 pattern = "www.deusagi.ai"
 custom_domain = true
+
+[triggers]
+crons = ["7,37 * * * *"]
