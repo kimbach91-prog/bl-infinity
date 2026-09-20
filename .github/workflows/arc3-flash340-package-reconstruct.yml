@@ -22,7 +22,7 @@ jobs:
           set -euo pipefail
           ROOT="public_benchmark/arc3/kaggle_candidates/flash_next_340"
           TMP="/tmp/flashrepo"
-          OUT="$GITHUB_WORKSPACE/flash340-full-package"
+          OUT="$TMP/build/deus-full"
           mkdir -p "$TMP/scripts"
           cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
           cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
@@ -31,6 +31,8 @@ jobs:
             --kernel-id deusplaceholder/arc-agi3-flash-next-mtp-full \
             --mode full \
             --output-dir "$OUT"
+          cp -r "$OUT" "$GITHUB_WORKSPACE/flash340-full-package"
+          cd "$GITHUB_WORKSPACE"
           python - <<'PY'
           import hashlib,json
           from pathlib import Path
