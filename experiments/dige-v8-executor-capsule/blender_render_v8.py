@@ -43,7 +43,17 @@ SKIN_TONE_R=float(os.environ.get("DIGE_SKIN_TONE_R","0.86"))
 SKIN_TONE_G=float(os.environ.get("DIGE_SKIN_TONE_G","0.72"))
 SKIN_TONE_B=float(os.environ.get("DIGE_SKIN_TONE_B","0.66"))
 SKIN_TONE_MIX=float(os.environ.get("DIGE_SKIN_TONE_MIX","0.32"))
-SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.12"))
+SKIN_MICRO_STRENGTH=float(os.environ.get("DIGE_SKIN_MICRO_STRENGTH","0.18"))
+SKIN_MESO_FREQ=float(os.environ.get("DIGE_SKIN_MESO_FREQ","72.0"))
+SKIN_PORE_FREQ=float(os.environ.get("DIGE_SKIN_PORE_FREQ","420.0"))
+SKIN_MICRO_FREQ=float(os.environ.get("DIGE_SKIN_MICRO_FREQ","1400.0"))
+SKIN_BUMP_DISTANCE=float(os.environ.get("DIGE_SKIN_BUMP_DISTANCE","0.00016"))
+SKIN_COAT_WEIGHT=float(os.environ.get("DIGE_SKIN_COAT_WEIGHT","0.004"))
+SKIN_COAT_ROUGHNESS=float(os.environ.get("DIGE_SKIN_COAT_ROUGHNESS","0.34"))
+C18_HYBRID_BULK=os.environ.get("DIGE_C18_HYBRID_BULK","0").strip()=="1"
+HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
+HAIR_ACCENT_LENGTH_SCALE=float(os.environ.get("DIGE_HAIR_ACCENT_LENGTH_SCALE","0.72"))
+HAIR_FRONT_SAFE_BLEND=float(os.environ.get("DIGE_HAIR_FRONT_SAFE_BLEND","0.92"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
 
@@ -61,8 +71,8 @@ def make_skin():
     set_input(bs,"Subsurface Radius",(1.0,.45,.18))
     set_input(bs,"Specular IOR Level",.30)
     set_input(bs,"Subsurface Anisotropy",SKIN_SSS_ANISO)
-    set_input(bs,"Coat Weight",.012)
-    set_input(bs,"Coat Roughness",.30)
+    set_input(bs,"Coat Weight",SKIN_COAT_WEIGHT)
+    set_input(bs,"Coat Roughness",SKIN_COAT_ROUGHNESS)
 
     tex=nt.nodes.new("ShaderNodeTexCoord")
     skin_asset={
@@ -160,17 +170,17 @@ def make_skin():
 
     # Meso / pore / micro normal remain independent from the color texture.
     meso=nt.nodes.new("ShaderNodeTexNoise")
-    meso.inputs["Scale"].default_value=115.0
+    meso.inputs["Scale"].default_value=SKIN_MESO_FREQ
     meso.inputs["Detail"].default_value=5.0
     meso.inputs["Roughness"].default_value=.68
     nt.links.new(tex.outputs["Generated"],meso.inputs["Vector"])
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=560.0
+    pore.inputs["Scale"].default_value=SKIN_PORE_FREQ
     pore.inputs["Detail"].default_value=4.0
     pore.inputs["Roughness"].default_value=.62
     nt.links.new(tex.outputs["Generated"],pore.inputs["Vector"])
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=1750.0
+    micro.inputs["Scale"].default_value=SKIN_MICRO_FREQ
     micro.inputs["Detail"].default_value=2.0
     micro.inputs["Roughness"].default_value=.58
     nt.links.new(tex.outputs["Generated"],micro.inputs["Vector"])
@@ -183,7 +193,7 @@ def make_skin():
     nt.links.new(m1.outputs[0],ma.inputs[0]); nt.links.new(m2.outputs[0],ma.inputs[1]); nt.links.new(ma.outputs[0],mb.inputs[0]); nt.links.new(m3.outputs[0],mb.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
     bump.inputs["Strength"].default_value=SKIN_MICRO_STRENGTH
-    bump.inputs["Distance"].default_value=.00012
+    bump.inputs["Distance"].default_value=SKIN_BUMP_DISTANCE
     nt.links.new(mb.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     return m,skin_asset
@@ -733,10 +743,16 @@ if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_
 hair_asset=system_contract[HAIR_ASSET_KEY]
 hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
 hair_guide_mat=alpha_card_material(
-    f"DIGE_C17_GUIDE_{hair_label}",
+    f"DIGE_C18_BULK_{hair_label}" if C18_HYBRID_BULK else f"DIGE_C17_GUIDE_{hair_label}",
     system_dir/hair_asset["diffuse"]["runtime_name"],
     hair_asset["diffuse"]["sha256"],
-    rough=.54,ior=1.55,anisotropy=.34,sat=HAIR_TEX_SAT,value=HAIR_TEX_VALUE,spec=.16,coat=.004,
+    rough=.64 if C18_HYBRID_BULK else .54,
+    ior=1.55,
+    anisotropy=.24 if C18_HYBRID_BULK else .34,
+    sat=HAIR_TEX_SAT,
+    value=HAIR_TEX_VALUE,
+    spec=.07 if C18_HYBRID_BULK else .16,
+    coat=.0 if C18_HYBRID_BULK else .004,
 )
 hair_obj,hair_fit=fit_mhclo_asset(
     f"DIGE_C17_GUIDE_{hair_label}",
@@ -982,7 +998,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         raise RuntimeError(f"C17.7 interpolated scalp field too sparse: {len(root_guides)} roots")
 
     points_per_curve=8
-    strands_per_root=64
+    strands_per_root=HAIR_STRANDS_PER_ROOT
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
@@ -1023,11 +1039,13 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         under_lift=max(.004,min(.012,.004+shell_lift*.18))
         style_lift=max(.010,min(.026,.010+shell_lift*.42))
 
+        grid=max(2,int(math.ceil(math.sqrt(strands_per_root))))
+        undercoat_count=max(1,int(round(strands_per_root*.75)))
         for k in range(strands_per_root):
-            gx=k % 8
-            gy=k // 8
-            du=((gx+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
-            dv=((gy+0.5)/8.0-.5)*.0064 + rng.uniform(-.00020,.00020)
+            gx=k % grid
+            gy=k // grid
+            du=((gx+0.5)/grid-.5)*.0050 + rng.uniform(-.00016,.00016)
+            dv=((gy+0.5)/grid-.5)*.0050 + rng.uniform(-.00016,.00016)
             proposed=root + tangent_flow*du + tangent_cross*dv
             local_proposed=inv_world @ proposed
             hit,loc_local,n_local,_poly=surface_obj.closest_point_on_mesh(local_proposed)
@@ -1054,23 +1072,24 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                 safe_dir=safe_dir-child_n*safe_dir.dot(child_n)
                 if safe_dir.length > 1e-8:
                     safe_dir.normalize()
-                    child_flow=(child_flow*(1.0-0.70*front_gate)+safe_dir*(0.70*front_gate))
+                    safe_w=max(0.0,min(0.98,HAIR_FRONT_SAFE_BLEND*front_gate))
+                    child_flow=(child_flow*(1.0-safe_w)+safe_dir*safe_w)
                     child_flow.normalize()
             child_cross=child_n.cross(child_flow)
             if child_cross.length < 1e-8:
                 child_cross=tangent_cross.copy()
             child_cross.normalize()
 
-            undercoat=(k < 44)
+            undercoat=(k < undercoat_count)
             if undercoat:
-                length=rng.uniform(.024,.040)
-                lift=under_lift*rng.uniform(.90,1.10)
+                length=rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
+                lift=under_lift*rng.uniform(.82,1.02)
                 tip_clear=rng.uniform(.0010,.0020)
                 flow=(child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
                 amp=rng.uniform(.00020,.00065)
             else:
-                length=envelope*rng.uniform(.92,1.08)
-                lift=style_lift*rng.uniform(.92,1.08)
+                length=min(.043,envelope)*rng.uniform(.78,.96)*HAIR_ACCENT_LENGTH_SCALE
+                lift=style_lift*rng.uniform(.80,1.02)
                 tip_clear=rng.uniform(.0016,.0032)
                 flow=(child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
                 amp=rng.uniform(.00035,.00105)
@@ -1085,8 +1104,17 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                     + flow*(length*t)
                     + child_n*(lift*bend + tip_clear*t)
                     + lateral*(amp*bend)
-                    + down*(length*(.024 if undercoat else .036)*sag)
+                    + down*(length*(.018 if undercoat else .026)*sag)
                 )
+                # C18 hybrid: the fitted bulk mesh owns coverage/style; curves are
+                # bounded hairline/silhouette accents. Prevent accents from sweeping
+                # into the central face even if source texture-flow is ambiguous.
+                if root_j.y > -0.002:
+                    max_forward=root_j.y+0.0045
+                    if p.y > max_forward:
+                        p.y=max_forward
+                    if abs(p.x) < .100 and p.z < 1.600:
+                        p.y=min(p.y,root_j.y-0.0015)
                 positions.extend((p.x,p.y,p.z))
                 taper=(base_radius*(1.0-t) + tip_radius*t)
                 radius=taper*rng.uniform(.94,1.06)*(0.92 if undercoat else 1.0)
@@ -1101,9 +1129,9 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     groom=bpy.data.objects.new("DIGE_C17_STRAND_GROOM",hair_data)
     bpy.context.collection.objects.link(groom)
-    guide_obj.hide_render=True
+    guide_obj.hide_render=not C18_HYBRID_BULK
     try:
-        guide_obj.hide_set(True)
+        guide_obj.hide_set(not C18_HYBRID_BULK)
     except Exception:
         pass
 
@@ -1128,7 +1156,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "point_count":curve_count*points_per_curve,
         "root_radius_m":base_radius,
         "tip_radius_m":tip_radius,
-        "guide_mesh_rendered":False,
+        "guide_mesh_rendered":C18_HYBRID_BULK,
         "blender_datablock":"HAIR_CURVES",
         "curve_type":"CATMULL_ROM",
         "surface_bound":True,
@@ -1150,7 +1178,7 @@ hair_surface_contract={
     "diffuse_sha256":hair_asset["diffuse"]["sha256"],
     "guide_vertices":hair_fit["vertices"],
     "guide_polygons":hair_fit["polygons"],
-    "mass_mesh_rendered":False,
+    "mass_mesh_rendered":hair_curve_metrics["guide_mesh_rendered"],
     "curve_count":hair_curve_metrics["curve_count"],
     "point_count":hair_curve_metrics["point_count"],
     "points_per_curve":hair_curve_metrics["points_per_curve"],
@@ -1164,7 +1192,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
+    "style":"HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1349,14 +1377,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C17_MATURE_STRAND_GROOM_OVER_C16_V1",
+ "appearance_candidate":"C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1",
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB",
+   "selection_basis":"C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB",
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1376,7 +1404,7 @@ receipt={
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
  "skin_albedo":skin_asset,
- "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[115,560,1750]},
+ "skin_model":{"subsurface_method":"RANDOM_WALK_SKIN","subsurface_weight":SKIN_SSS_WEIGHT,"subsurface_scale":SKIN_SSS_SCALE,"subsurface_anisotropy":SKIN_SSS_ANISO,"roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],"micro_bump_scales":[SKIN_MESO_FREQ,SKIN_PORE_FREQ,SKIN_MICRO_FREQ],"bump_distance":SKIN_BUMP_DISTANCE,"coat_weight":SKIN_COAT_WEIGHT,"coat_roughness":SKIN_COAT_ROUGHNESS},
  "hair_curve_count":len(strands),
  "hair_guide":geom["hair_guide"],
  "hair_curve_metrics":hair_curve_metrics,
