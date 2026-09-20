@@ -1,7 +1,7 @@
 {
   "schema": "deus-compute-gate-public-market/1",
-  "state": "PUBLIC_DEMAND_SUPPLY_AND_MACHINE_GATEWAY_DISCOVERY_LIVE",
-  "updated_at": "2026-09-20T02:21:27Z",
+  "state": "PUBLIC_DEMAND_SUPPLY_AND_MACHINE_WORKER_TRIAL_DISCOVERY_LIVE",
+  "updated_at": "2026-09-20T02:42:00Z",
   "public_safe": true,
   "default_data_classes": [
     "BL-S0",
@@ -110,5 +110,21 @@
         "responses_fail_closed"
       ]
     }
+  },
+  "machine_worker_trial_bus": {
+    "state": "RUNTIME_VERIFIED_SELF_TEST",
+    "issue": "https://github.com/kimbach91-prog/bl-infinity/issues/182",
+    "discovery": "https://kimbach91-prog.github.io/bl-infinity/public-compute/worker-discovery.json",
+    "well_known": "https://kimbach91-prog.github.io/bl-infinity/.well-known/deus-worker-gate.json",
+    "offer_schema": "https://kimbach91-prog.github.io/bl-infinity/public-compute/deus-worker-offer.schema.json",
+    "result_schema": "https://kimbach91-prog.github.io/bl-infinity/public-compute/deus-worker-result.schema.json",
+    "self_test": {
+      "trial_id": "TRIAL-182-5747099322",
+      "receipt_id": "RCP-GH-bl-infinity-182-5747100934",
+      "result_verdict": "RESULT_VERIFIED_EXACT_SCOPE",
+      "external_traction_credit": 0
+    },
+    "external_worker_offers": 0,
+    "rule": "workers self-opt-in; deterministic canary; exact-scope receipt; no hidden persistence"
   }
 }
