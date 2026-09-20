@@ -1,0 +1,159 @@
+name: ARC3 TU93 P09 NET-CI
+
+on:
+  push:
+    branches:
+      - deus/agi-tu93-p09-netci-20260921
+    paths:
+      - '.github/workflows/arc3-tu93-p09-netci.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  p09-tu93:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned ARC runtime
+        run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Download frozen TU93 solver receipt
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35526105390
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: universal-depth-tu93
+          path: source-evidence
+      - name: Independently replay frozen route in NORMAL
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          src=Path('source-evidence/receipt.json')
+          r=json.loads(src.read_text())
+          d=r['discovery']; o=r['online']; route=d['route']
+          def hroute(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          checks={
+            'game_tu93': d.get('game')=='tu93',
+            'source_win': d.get('levels_completed')==9 and d.get('win_levels')==9 and d.get('state')=='WIN',
+            'online_win': o.get('result')=='PASS' and o.get('levels_completed')==9 and o.get('win_levels')==9 and o.get('state')=='WIN',
+            'online_score100': float(o.get('scorecard_score'))==100.0,
+            'source_run_exact': str(o.get('run_id'))=='35526105390',
+            'source_sha_exact': o.get('source_sha')=='7cb4ea353fd574312222b673720f4983c211c15e',
+            'route_hash_exact': hroute(route)==o.get('route_sha256')=='57c3702d4bf79f5bfe33f37c5092431d63ecc2cee273b8ac878b585b42a00885',
+            'route_len_exact': len(route)==185==o.get('actions_executed'),
+            'no_external_route': d.get('external_route_used') is False,
+            'no_game_source_inspection': d.get('game_source_inspected_by_solver') is False,
+            'no_hidden_state': d.get('hidden_state_read') is False,
+            'clone_search_disclosed': d.get('environment_clone_used_for_search') is True,
+            'public_scope': o.get('scope')=='MULTI_LEVEL_PUBLIC_DEVELOPMENT' and o.get('competition_hidden_score_claim') is False,
+          }
+          a=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=a.make('tu93',seed=0,save_recording=False,include_frame_data=True)
+          assert e is not None
+          obs=e.observation_space
+          for aid,data in route:
+            amap={x.value:x for x in e.action_space}
+            assert aid in amap
+            obs=e.step(amap[aid],data=data)
+            assert obs is not None
+          fresh_frame=hashlib.sha256(np.asarray(obs.frame[-1],dtype=np.uint8).tobytes()).hexdigest()
+          checks['fresh_normal_win']=int(obs.levels_completed)==9 and int(getattr(obs,'win_levels',0) or 0)==9 and getattr(obs.state,'value',str(obs.state))=='WIN'
+          ok=all(checks.values())
+          out={
+            'schema':'DEUS_P09_ARC3_TU93_PUBLIC_CLOSURE_V1','verdict':'PASS' if ok else 'FAIL','checks':checks,
+            'source_receipt_sha256':hashlib.sha256(src.read_bytes()).hexdigest(),
+            'route_sha256':hroute(route),'actions':len(route),'fresh_normal_final_frame_sha256':fresh_frame,
+            'source_online_scorecard_id':o.get('scorecard_id'),'source_online_score':o.get('scorecard_score'),
+            'scope':'independent deterministic replay of a frozen public-development TU93 route in NORMAL',
+            'claim_boundary':'P09 validates the frozen public-development route and original ONLINE receipt. It is not a hidden/private Kaggle score and not unseen-game generalization.'
+          }
+          Path('p09-tu93.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print('P09_TU93='+json.dumps(out,separators=(',',':')))
+          raise SystemExit(0 if ok else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p09-tu93-public-closure
+          path: p09-tu93.json
+
+  net-ci-tu93:
+    needs: p09-tu93
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned ARC runtime
+        run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Download P09 receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: p09-tu93-public-closure
+          path: p09
+      - name: Download frozen TU93 source receipt
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35526105390
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: universal-depth-tu93
+          path: source-evidence
+      - name: Fresh ONLINE corroboration and exact-scope quorum
+        run: |
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          p=Path('p09/p09-tu93.json'); p09=json.loads(p.read_text())
+          src=Path('source-evidence/receipt.json'); base=json.loads(src.read_text()); route=base['discovery']['route']
+          def hroute(x): return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          a=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          source_url='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-tu93-p09-netci.yml'
+          cid=a.open_scorecard(source_url=source_url,tags=['DEUS','tu93','P09','NET-CI','public-development'])
+          e=a.make('tu93',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          assert e is not None
+          obs=e.observation_space
+          for aid,data in route:
+            amap={x.value:x for x in e.action_space}
+            assert aid in amap
+            obs=e.step(amap[aid],data=data)
+            assert obs is not None
+          card=a.close_scorecard(cid)
+          frame=hashlib.sha256(np.asarray(obs.frame[-1],dtype=np.uint8).tobytes()).hexdigest()
+          checks={
+            'p09_pass':p09.get('verdict')=='PASS',
+            'route_hash_equivalent':hroute(route)==p09.get('route_sha256')=='57c3702d4bf79f5bfe33f37c5092431d63ecc2cee273b8ac878b585b42a00885',
+            'fresh_online_win':int(obs.levels_completed)==9 and int(getattr(obs,'win_levels',0) or 0)==9 and getattr(obs.state,'value',str(obs.state))=='WIN',
+            'fresh_online_score100':card is not None and float(card.score)==100.0,
+            'actions_equivalent':len(route)==p09.get('actions')==185,
+            'final_frame_equivalent':frame==p09.get('fresh_normal_final_frame_sha256'),
+          }
+          ok=all(checks.values())
+          out={
+            'schema':'DEUS_NET_CI_QUORUM_ARC3_TU93_PUBLIC_CLOSURE_V1','verdict':'PASS' if ok else 'FAIL','checks':checks,
+            'p09_receipt_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),
+            'source_receipt_sha256':hashlib.sha256(src.read_bytes()).hexdigest(),
+            'route_sha256':hroute(route),'fresh_online_scorecard_id':cid,'fresh_online_score':None if card is None else card.score,
+            'fresh_online_final_frame_sha256':frame,
+            'scope':'fresh ONLINE corroboration of the same frozen TU93 public-development route after independent P09 NORMAL replay',
+            'claim_boundary':'NET-CI corroborates exact public-development route equivalence across P09 NORMAL and fresh ONLINE runtime. It does not promote TU93 to hidden/private Kaggle competition performance or an AGI claim.'
+          }
+          Path('netci-tu93.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print('NETCI_TU93='+json.dumps(out,separators=(',',':')))
+          raise SystemExit(0 if ok else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netci-tu93-public-closure
+          path: netci-tu93.json
