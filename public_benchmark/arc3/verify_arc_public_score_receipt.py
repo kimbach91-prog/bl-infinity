@@ -63,7 +63,16 @@ def verify_p09(source_dir: Path) -> dict:
     check("replay_id_exact", run.get("guid") == EXPECTED_REPLAY, checks, failures)
     check("reproduction_route_hash_exact", reproduction.get("route_sha256") == EXPECTED_ROUTE_HASH, checks, failures)
     check("reproduction_source_commit_exact", reproduction.get("source_commit") == EXPECTED_SOURCE_COMMIT, checks, failures)
-    check("claim_boundary_public_only", "not hidden" in str(opaque.get("claim_boundary", "")).lower() and "not hidden" in readme.lower(), checks, failures)
+    opaque_boundary = str(opaque.get("claim_boundary", "")).lower()
+    readme_lower = readme.lower()
+    check(
+        "claim_boundary_public_only",
+        ("not hidden" in opaque_boundary or "public-dev" in opaque_boundary)
+        and "public-development-game" in readme_lower
+        and "unseen competition environments" in readme_lower,
+        checks,
+        failures,
+    )
     check("replay_script_closes_server_scorecard", "close_scorecard" in replay and "model_dump" in replay, checks, failures)
     check("no_api_key_serialized", result.get("api_key") is None, checks, failures)
 
