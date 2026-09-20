@@ -51,6 +51,10 @@ SKIN_BUMP_DISTANCE=float(os.environ.get("DIGE_SKIN_BUMP_DISTANCE","0.00016"))
 SKIN_COAT_WEIGHT=float(os.environ.get("DIGE_SKIN_COAT_WEIGHT","0.004"))
 SKIN_COAT_ROUGHNESS=float(os.environ.get("DIGE_SKIN_COAT_ROUGHNESS","0.34"))
 C18_HYBRID_BULK=os.environ.get("DIGE_C18_HYBRID_BULK","0").strip()=="1"
+C19_HUMANIZATION=os.environ.get("DIGE_C19_HUMANIZATION","0").strip()=="1"
+C19_PHOTO_LIGHTING=os.environ.get("DIGE_C19_PHOTO_LIGHTING","0").strip()=="1"
+C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
+C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
 HAIR_ACCENT_LENGTH_SCALE=float(os.environ.get("DIGE_HAIR_ACCENT_LENGTH_SCALE","0.72"))
 HAIR_FRONT_SAFE_BLEND=float(os.environ.get("DIGE_HAIR_FRONT_SAFE_BLEND","0.92"))
@@ -693,7 +697,13 @@ brow_mat=alpha_card_material(
     "DIGE_C12_EYEBROW001",
     system_dir/brow_asset["diffuse"]["runtime_name"],
     brow_asset["diffuse"]["sha256"],
-    rough=.52,ior=1.46,anisotropy=.15,
+    rough=.58 if C19_HUMANIZATION else .52,
+    ior=1.46,
+    anisotropy=.10 if C19_HUMANIZATION else .15,
+    sat=.72 if C19_HUMANIZATION else 1.0,
+    value=.42 if C19_HUMANIZATION else 1.0,
+    spec=.10 if C19_HUMANIZATION else .28,
+    coat=.0 if C19_HUMANIZATION else .025,
 )
 brow_obj,brow_fit=fit_mhclo_asset(
     "DIGE_C12_EYEBROW001",
@@ -708,7 +718,13 @@ lash_mat=alpha_card_material(
     "DIGE_C12_EYELASHES01",
     system_dir/lash_asset["diffuse"]["runtime_name"],
     lash_asset["diffuse"]["sha256"],
-    rough=.48,ior=1.46,anisotropy=.25,
+    rough=.54 if C19_HUMANIZATION else .48,
+    ior=1.46,
+    anisotropy=.16 if C19_HUMANIZATION else .25,
+    sat=.60 if C19_HUMANIZATION else 1.0,
+    value=.30 if C19_HUMANIZATION else 1.0,
+    spec=.08 if C19_HUMANIZATION else .28,
+    coat=.0 if C19_HUMANIZATION else .025,
 )
 lash_obj,lash_fit=fit_mhclo_asset(
     "DIGE_C12_EYELASHES01",
@@ -922,19 +938,30 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             continue
         if abs(p.x) > .130 or p.y > .065:
             continue
-        # C17.7 scalp-only root gate: reject facial/forehead roots that let
-        # strands intrude across eyes/cheeks. Keep roots behind a tighter frontal
-        # hairline and require an outward/upward scalp normal.
-        frontal_hairline_z=1.620-0.10*min(abs(p.x),.10)
-        if p.y > .000 and p.z < frontal_hairline_z:
-            continue
+        # C19 keeps the C17.7 face-clearance scar but replaces its excessively
+        # high/receded central hairline with an explicit center/temple profile.
         n=(surface_rot @ v.normal).normalized()
-        if p.y > .000 and n.y < -0.05:
-            continue
-        if p.z < 1.585 and abs(p.x) < .085:
-            continue
         if n.length < 1e-8:
             n=Vector((0,0,1))
+        if C19_HUMANIZATION:
+            frontal_hairline_z=C19_HAIRLINE_CENTER_Z + C19_HAIRLINE_TEMPLE_RISE*min(abs(p.x),.10)
+            if p.y > .000:
+                if p.z < frontal_hairline_z:
+                    continue
+                if n.z < 0.06 and p.z < frontal_hairline_z+.012:
+                    continue
+                if n.y < -0.10:
+                    continue
+            if p.z < 1.575 and abs(p.x) < .085:
+                continue
+        else:
+            frontal_hairline_z=1.620-0.10*min(abs(p.x),.10)
+            if p.y > .000 and p.z < frontal_hairline_z:
+                continue
+            if p.y > .000 and n.y < -0.05:
+                continue
+            if p.z < 1.585 and abs(p.x) < .085:
+                continue
         scalp_candidates.append((idx,p,n))
     if len(scalp_candidates) < 350:
         raise RuntimeError(f"C17.6 scalp mask too sparse: {len(scalp_candidates)} roots")
@@ -1192,7 +1219,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1",
+    "style":"HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1218,15 +1245,23 @@ solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickne
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
 
-def area(name,loc,energy,size,color):
+def area(name,loc,energy,size,color,target=(0,0,1.25)):
     bpy.ops.object.light_add(type='AREA',location=loc)
     o=bpy.context.object; o.name=name; o.data.energy=energy; o.data.shape='DISK'; o.data.size=size; o.data.color=color
-    d=Vector((0,0,1.25))-o.location; o.rotation_euler=d.to_track_quat('-Z','Y').to_euler()
+    d=Vector(target)-o.location; o.rotation_euler=d.to_track_quat('-Z','Y').to_euler()
     return o
-area("KEY",(2.1,2.8,2.8),500,2.5,(1.0,.88,.78))
-area("FILL",(-2.0,2.1,1.8),110,3.0,(.72,.84,1.0))
-area("RIM",(0,-2.3,2.5),210,1.8,(1.0,.72,.50))
-area("FACE",(0,1.2,1.8),45,1.1,(1.0,.91,.84))
+if C19_PHOTO_LIGHTING:
+    face_target=(0,.020,1.575)
+    area("KEY",(1.65,2.35,2.45),650,1.70,(1.0,.90,.82),face_target)
+    area("FILL",(-1.80,2.10,1.85),55,2.60,(.78,.86,1.0),face_target)
+    area("RIM",(0,-2.20,2.40),150,1.50,(1.0,.76,.58),face_target)
+    area("FACE",(.15,1.30,1.70),10,.85,(1.0,.93,.88),face_target)
+    area("DETAIL",(-1.10,1.15,1.75),35,.45,(.92,.96,1.0),face_target)
+else:
+    area("KEY",(2.1,2.8,2.8),500,2.5,(1.0,.88,.78))
+    area("FILL",(-2.0,2.1,1.8),110,3.0,(.72,.84,1.0))
+    area("RIM",(0,-2.3,2.5),210,1.8,(1.0,.72,.50))
+    area("FACE",(0,1.2,1.8),45,1.1,(1.0,.91,.84))
 
 world=bpy.context.scene.world or bpy.data.worlds.new("World"); bpy.context.scene.world=world
 world.use_nodes=True
@@ -1377,14 +1412,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1",
+ "appearance_candidate":"C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB",
+   "selection_basis":"C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1399,7 +1434,11 @@ receipt={
    "hair_card_coat":0.004,
    "hair_card_roughness":0.54,
    "hair_card_anisotropy":0.34,
-   "hair_asset_key":HAIR_ASSET_KEY
+   "hair_asset_key":HAIR_ASSET_KEY,
+   "c19_humanization":C19_HUMANIZATION,
+   "c19_photo_lighting":C19_PHOTO_LIGHTING,
+   "c19_hairline_center_z":C19_HAIRLINE_CENTER_Z if C19_HUMANIZATION else None,
+   "c19_hairline_temple_rise":C19_HAIRLINE_TEMPLE_RISE if C19_HUMANIZATION else None
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
