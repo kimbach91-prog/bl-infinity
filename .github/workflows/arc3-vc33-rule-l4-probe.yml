@@ -1,0 +1,108 @@
+name: ARC3 vc33 L4 live component/effect probe
+
+on:
+  push:
+    branches: [deus/arc3-vc33-rule-probe-20260920]
+    paths: [.github/workflows/arc3-vc33-rule-l4-probe.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Enter L4 using DEUS-derived L1-L3 policies and map live clickable effects
+        run: |
+          python - <<'PY'
+          import copy,hashlib,json,logging
+          from collections import Counter
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          L3_PATH=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def comps(a,color,min_area=1,max_area=512):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                  for x in range(W):
+                      if not m[y,x] or seen[y,x]: continue
+                      st=[(x,y)];seen[y,x]=1;pts=[]
+                      while st:
+                          xx,yy=st.pop();pts.append((xx,yy))
+                          for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                              if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                                  seen[ny,nx]=1;st.append((nx,ny))
+                      if min_area<=len(pts)<=max_area:
+                          xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                          out.append({'color':int(color),'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                      'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['area']))
+          def brown(o):
+              return sorted([x for x in comps(fr(o),9,4,128)],key=lambda z:(z['bbox'][0],z['bbox'][1]))
+          def click(e,o,xy):
+              amap={a.value:a for a in e.action_space}
+              return e.step(amap[6],data={'x':int(xy[0]),'y':int(xy[1])})
+
+          a=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=a.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if e is None: raise RuntimeError('ENV_UNAVAILABLE')
+          o=e.observation_space
+          # L1
+          b=brown(o);t=max(b,key=lambda z:z['center'][1])['center']
+          for _ in range(3):
+              o=click(e,o,t)
+              if int(o.levels_completed)>=1:break
+          if int(o.levels_completed)<1:raise RuntimeError('L1_FAIL')
+          # L2 validated mapping by sorted brown index
+          b=brown(o);c=[x['center'] for x in b];F=c[3];E=c[1]
+          for role in ['F','F','F','E','F','E','F']:
+              o=click(e,o,F if role=='F' else E)
+              if int(o.levels_completed)>=2:break
+          if int(o.levels_completed)<2:raise RuntimeError('L2_FAIL')
+          # L3 DEUS observation-derived path indices
+          for idx in L3_PATH:
+              b=brown(o)
+              if idx>=len(b):raise RuntimeError('L3_INDEX_DIVERGENCE')
+              o=click(e,o,b[idx]['center'])
+              if int(o.levels_completed)>=3:break
+          if int(o.levels_completed)<3:raise RuntimeError('L3_FAIL')
+
+          g=fr(o);colors={int(c):int((g==c).sum()) for c in np.unique(g)}
+          all_components=[]
+          for color in np.unique(g):
+              all_components.extend(comps(g,int(color),1,256))
+          # Probe compact non-HUD components in deepcopies; retain only effects.
+          candidates=[]
+          for comp in all_components:
+              x,y=comp['center'];x0,y0,x1,y1=comp['bbox']
+              if y<=2 or y>=62: continue
+              if comp['area']>128: continue
+              ee=copy.deepcopy(e);oo=ee.observation_space
+              try:
+                  nf=click(ee,oo,[x,y])
+              except Exception:
+                  continue
+              if nf is None: continue
+              before=fr(oo);after=fr(nf)
+              changed=int(np.count_nonzero(before!=after))
+              if changed>0:
+                  candidates.append({**comp,'changed_pixels':changed,
+                                     'new_level':int(nf.levels_completed),'state':nf.state.value,
+                                     'after_sha256':hashlib.sha256(after.tobytes()).hexdigest()})
+          rec={'game':'vc33','level':int(o.levels_completed),'state':o.state.value,
+               'available_actions':[int(x.value) if hasattr(x,'value') else int(x) for x in (o.available_actions or [])],
+               'shape':list(g.shape),'frame_sha256':hashlib.sha256(g.tobytes()).hexdigest(),
+               'colors':colors,'components':all_components[:160],
+               'effect_candidates':sorted(candidates,key=lambda z:(-z['changed_pixels'],z['color'],z['center'])),
+               'claim':'live L4 public observation/effect probe; L1-L3 prefix comes only from DEUS-derived public policies'}
+          print('VC33_L4_PROBE='+json.dumps(rec,separators=(',',':')))
+          PY
