@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: false
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   low-friction-wave:
@@ -143,3 +143,34 @@ PY
           echo "DEUS Low-Friction Route Wave v3" >> "$GITHUB_STEP_SUMMARY"
           cat /tmp/deus-wave/receipt.json >> "$GITHUB_STEP_SUMMARY"
           jq -e '.receipt_version=="DEUS-LOW-FRICTION-ROUTE-WAVE/3" and .routes.llm7 and .routes.blockrun and .routes.wikimedia and .routes.antseed' /tmp/deus-wave/receipt.json >/dev/null
+
+
+      - name: Persist latest compute-wave receipt
+        uses: actions/checkout@v4
+        with:
+          ref: deus-compute-wave-state
+          fetch-depth: 1
+
+      - name: Commit durable compute-wave state
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p .deus-compute-wave
+          cp /tmp/deus-wave/receipt.json .deus-compute-wave/receipt.json
+          cp /tmp/deus-wave/*.receipt.json .deus-compute-wave/ 2>/dev/null || true
+          jq -n \
+            --arg updated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            '{updated_at:$updated_at,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha}' \
+            > .deus-compute-wave/runtime-meta.json
+          git config user.name "DEUS Compute Wave"
+          git config user.email "actions@users.noreply.github.com"
+          git add .deus-compute-wave
+          if git diff --cached --quiet; then
+            echo "No material compute-wave state change."
+          else
+            git commit -m "chore: update DEUS compute-wave runtime state [skip ci]"
+            git push origin HEAD:deus-compute-wave-state
+          fi
