@@ -33,7 +33,7 @@ jobs:
         run: |
           set -euo pipefail
           curl -fsS "$HORDE_BASE/v1/models" | tee /tmp/models.json
-          preferred="koboldcpp/Llama-3.2-1B-Instruct"
+          preferred="meta-llama/Llama-3.2-3B-Instruct"
           if jq -e --arg id "$preferred" '.data[] | select(.id==$id and .worker_threads>0)' /tmp/models.json >/dev/null; then
             model="$preferred"
           else
@@ -50,7 +50,7 @@ jobs:
           set -euo pipefail
           jq -n --arg model "$MODEL" '{
             model:$model,
-            input:"Reply with exactly: DEUS_HORDE_CANARY_OK",
+            input:"Return exactly this ASCII token and nothing else: DEUS_HORDE_CANARY_OK",
             max_tokens:16,
             temperature:0,
             timeout:90
@@ -61,6 +61,13 @@ jobs:
           cat /tmp/response.json
           test "$code" = "200"
           jq -e '.id and .model and (.output | type == "array")' /tmp/response.json
+          actual="$(jq -r '[.output[]?.content[]? | select(.type=="output_text") | .text] | join("")' /tmp/response.json | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')"
+          if test "$actual" != "DEUS_HORDE_CANARY_OK"; then
+            digest="$(printf '%s' "$actual" | sha256sum | awk '{print $1}')"
+            printf '%s\n' "DEUS_HORDE_QUALITY_BLOCKER={\"schema\":\"deus-s0-executor-quality-blocker/1\",\"provider\":\"AI_HORDE\",\"model\":\"$MODEL\",\"provider_execution\":true,\"instruction_adherence\":false,\"observed_text_sha256\":\"$digest\",\"capacity_credit\":0,\"truth\":\"PROVIDER_EXECUTED_NE_TASK_CONTRACT_PASS\"}"
+            exit 43
+          fi
+          printf '%s\n' '{"schema":"deus-s0-executor-quality/1","expected":"DEUS_HORDE_CANARY_OK","instruction_adherence":true,"truth":"EXACT_TASK_CONTRACT_PASS"}' | tee /tmp/quality.json
 
       - name: Emit typed receipt
         env:
@@ -79,6 +86,8 @@ jobs:
               response_id:$response_id,
               output_count:$output_count,
               provider_execution:true,
+              instruction_adherence:true,
+              exact_task_contract:"DEUS_HORDE_CANARY_OK",
               canonical_write:false,
               settlement:false,
               commercial_default:false,
