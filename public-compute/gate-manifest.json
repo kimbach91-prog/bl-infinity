@@ -1,7 +1,7 @@
 {
   "schema": "deus-compute-gate-public-market/1",
-  "state": "PUBLIC_DEMAND_SUPPLY_AND_MACHINE_WORKER_TRIAL_DISCOVERY_LIVE",
-  "updated_at": "2026-09-20T02:42:00Z",
+  "state": "MACHINE_FIRST_GATE_LIVE / PUBLIC_DISCOVERY_AND_S0_EXECUTION_VERIFIED",
+  "updated_at": "2026-09-20T02:50:00Z",
   "public_safe": true,
   "default_data_classes": [
     "BL-S0",
@@ -12,15 +12,16 @@
   "founding_canary_catalog": "https://github.com/kimbach91-prog/Theory-Group/issues/337#issuecomment-5746291507",
   "founding_provider_challenge": "https://github.com/kimbach91-prog/Theory-Group/issues/338#issuecomment-5746291760",
   "external_route_proof": {
-    "route": "GitHub Actions hosted runner",
+    "route": "GitHub Actions hosted runners",
     "data_class": "BL-S0",
-    "single_job_receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-S0-EXEC-005",
-    "fanout_receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-FANOUT-EXEC-006",
-    "fanout_jobs_completed": 4,
-    "minimum_concurrency_observed_in_exact_run": 3,
+    "stress8_receipt": "RCP-20260920-PUBLIC-GITHUB-ACTIONS-STRESS8-EXEC-018",
+    "stress8_jobs_completed": 8,
+    "distinct_runner_ids": 8,
+    "minimum_concurrency_observed_in_exact_run": 7,
     "provider_maximum_concurrency": "UNKNOWN",
     "sustained_capacity": "UNKNOWN",
-    "economic_yield": 0
+    "economic_yield": 0,
+    "truth_boundary": "MIN_CONCURRENCY7_THIS_RUN != PROVIDER_MAXIMUM_OR_SUSTAINED_CAPACITY"
   },
   "counts": {
     "external_demand": 0,
@@ -85,31 +86,22 @@
     "MACHINE_DISCOVERY_LIVE != EXTERNAL_ADOPTER_BOUND"
   ],
   "machine_gateway": {
-    "state": "PUBLIC_RUNTIME_DISCOVERY_MCP_MODELS_VERIFIED_EXECUTOR_HOLD",
+    "state": "PUBLIC_RUNTIME_VERIFIED / S0_FALLBACK_EXECUTOR_VERIFIED / DEUS_AUTO_PREFERRED_EXECUTOR_HOLD",
     "runtime": "Cloudflare Workers",
-    "source_head": "c13cc5d573118b57fa63e1bdf77bb317293a8939",
-    "cloudflare_version": "4ef47966-b51d-4407-89c0-753e13c840c7",
-    "base_url": "https://4ef47966-theory-group.kimbach91.workers.dev",
-    "discovery": "https://4ef47966-theory-group.kimbach91.workers.dev/.well-known/deus-gateway.json",
-    "mcp": "https://4ef47966-theory-group.kimbach91.workers.dev/mcp",
-    "models": "https://4ef47966-theory-group.kimbach91.workers.dev/v1/models",
-    "responses": "https://4ef47966-theory-group.kimbach91.workers.dev/v1/responses",
-    "response_executor_bound": false,
-    "provider_execution_verified": false,
-    "cross_provider_canary": {
-      "runner": "GitHub Actions",
-      "repository": "kimbach91-prog/bl-infinity",
-      "run_id": 35483746380,
-      "job_id": 106006141476,
-      "verdict": "PASS",
-      "checks": [
-        "health",
-        "discovery",
-        "models",
-        "mcp_server_discover",
-        "responses_fail_closed"
-      ]
-    }
+    "source_head": "72ffebf3fe629ab821a2e63ce17cd0bda139e3cd",
+    "cloudflare_version": "34e0f094-8037-4788-b3a3-b1c1051906b2",
+    "base_url": "https://34e0f094-theory-group.kimbach91.workers.dev",
+    "discovery": "https://34e0f094-theory-group.kimbach91.workers.dev/.well-known/deus-gateway.json",
+    "mcp": "https://34e0f094-theory-group.kimbach91.workers.dev/mcp",
+    "models": "https://34e0f094-theory-group.kimbach91.workers.dev/v1/models",
+    "responses": "https://34e0f094-theory-group.kimbach91.workers.dev/v1/responses",
+    "horde_s0_executor_bound": true,
+    "deus_auto_bound": false,
+    "public_s0_provider_execution_verified": true,
+    "receipt": "RCP-20260920-AUTONOMIC-S0-FALLBACK-EXECUTOR-001",
+    "provider_route": "AI_HORDE_S0",
+    "commercial_default": false,
+    "truth_boundary": "S0_FALLBACK_VERIFIED != PREFERRED_EXECUTOR_BOUND != PRIVATE_ROUTE != SLA"
   },
   "machine_worker_trial_bus": {
     "state": "RUNTIME_VERIFIED_SELF_TEST",
@@ -125,6 +117,18 @@
       "external_traction_credit": 0
     },
     "external_worker_offers": 0,
-    "rule": "workers self-opt-in; deterministic canary; exact-scope receipt; no hidden persistence"
+    "rule": "workers self-opt-in; deterministic canary; exact-scope receipt; no hidden persistence",
+    "deployment": {
+      "verdict": "PAGES_DEPLOYMENT_RUNTIME_VERIFIED",
+      "source_sha": "847e5541cb9353e2a2d48692b6762f4f42e31b09",
+      "receipt_source": "issue182_comment_5747122638"
+    }
+  },
+  "machine_first_policy": {
+    "priority": "AUTONOMOUS_LOGIC_AND_COMPUTE_WORKERS",
+    "human_outreach": "DORMANT_REFERENCE_ONLY",
+    "automated_agent_exception": "EXISTING_AUTHORIZED_AGENT_OS_BRIDGES_MAY_TRIAL",
+    "preferred_flow": "DISCOVER -> OPT_IN_OFFER -> HARD_GATES -> TINY_CANARY -> RECEIPT -> ROUTE_OPTIMIZATION -> TASK_FIT_REUSE",
+    "no_hidden_enrollment": true
   }
 }
