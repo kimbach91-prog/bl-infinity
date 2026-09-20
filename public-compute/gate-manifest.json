@@ -1,7 +1,7 @@
 {
   "schema": "deus-compute-gate-public-market/1",
   "state": "MACHINE_FIRST_GATE_LIVE / PUBLIC_DISCOVERY_AND_S0_EXECUTION_VERIFIED",
-  "updated_at": "2026-09-20T02:50:00Z",
+  "updated_at": "2026-09-20T02:59:00Z",
   "public_safe": true,
   "default_data_classes": [
     "BL-S0",
@@ -130,5 +130,28 @@
     "automated_agent_exception": "EXISTING_AUTHORIZED_AGENT_OS_BRIDGES_MAY_TRIAL",
     "preferred_flow": "DISCOVER -> OPT_IN_OFFER -> HARD_GATES -> TINY_CANARY -> RECEIPT -> ROUTE_OPTIMIZATION -> TASK_FIT_REUSE",
     "no_hidden_enrollment": true
+  },
+  "execution_ownership": {
+    "core_primary_solver": true,
+    "outer_gpt_llm_complexity_ceiling": "BOUNDED_LEAF_ONLY",
+    "machine_workers": "BOUNDED_REPLACEABLE_LEAF_EXECUTORS",
+    "core_owns": [
+      "complex_reasoning",
+      "root_plan",
+      "critical_dependencies",
+      "canonical_reconciliation",
+      "material_write_readback",
+      "security_privacy_authority_economic_judgment",
+      "hard_debugging_deployment_choices",
+      "final_synthesis"
+    ],
+    "leaf_failure_policy": "ROUTE_YIELD_CORE_RETAKE_OR_SUBSTITUTE_WHEN_LAWFUL",
+    "no_worker_single_point_of_failure": true,
+    "truth_boundaries": [
+      "CORE_CENTRIC != ALL_WORK_LOCAL",
+      "WORKER_USED != WORKER_OWNS_TASK",
+      "WORKER_RESULT != CANONICAL_TRUTH",
+      "PARALLELISM != AUTHORITY"
+    ]
   }
 }
