@@ -6,6 +6,8 @@ on:
     paths:
       - '.github/workflows/deus-aihorde-responses-canary.yml'
   workflow_dispatch:
+  schedule:
+    - cron: "37 * * * *"
 
 permissions:
   contents: read
@@ -18,7 +20,7 @@ jobs:
       HORDE_BASE: https://oai.aihorde.net
       HORDE_API_KEY: "0000000000"
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803
 
       - name: Heartbeat
         run: |
