@@ -1,0 +1,125 @@
+name: ARC3 g50t source-assisted seven-level reproduction
+
+on:
+  push:
+    branches: [deus/arc3-g50t-public-repro-20260920]
+    paths: [.github/workflows/arc3-g50t-repro.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        mode: [ONLINE, NORMAL]
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Replay public source-assisted g50t route
+        env:
+          REPLAY_MODE: ${{ matrix.mode }}
+        run: |
+          python - <<'PY'
+          import json, logging, hashlib, time, os, platform
+          from pathlib import Path
+          from datetime import datetime, timezone
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+
+          logging.disable(logging.CRITICAL)
+          MAP={'UP':1,'DOWN':2,'LEFT':3,'RIGHT':4,'UNDO':5}
+          source_solutions = {
+            0: "RIGHT RIGHT RIGHT RIGHT UNDO DOWN DOWN DOWN DOWN DOWN DOWN DOWN RIGHT RIGHT RIGHT RIGHT RIGHT",
+            1: "LEFT LEFT UNDO DOWN DOWN DOWN DOWN LEFT LEFT LEFT LEFT UP UP LEFT LEFT UNDO UP UP UP LEFT LEFT LEFT LEFT LEFT LEFT LEFT DOWN DOWN RIGHT RIGHT RIGHT",
+            2: "UP UP RIGHT RIGHT RIGHT RIGHT DOWN DOWN DOWN DOWN RIGHT UNDO UP UP RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT DOWN DOWN DOWN DOWN DOWN DOWN DOWN LEFT LEFT LEFT LEFT LEFT UNDO UP UP RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT DOWN DOWN DOWN DOWN DOWN DOWN DOWN LEFT LEFT LEFT LEFT LEFT LEFT LEFT UP UP UP RIGHT RIGHT UP UP",
+            3: "DOWN DOWN RIGHT DOWN UNDO DOWN DOWN RIGHT RIGHT UP UP RIGHT RIGHT DOWN DOWN DOWN UNDO LEFT LEFT LEFT DOWN DOWN DOWN DOWN DOWN RIGHT RIGHT RIGHT LEFT LEFT LEFT",
+            4: "UP DOWN DOWN RIGHT RIGHT RIGHT DOWN DOWN DOWN UNDO DOWN RIGHT RIGHT RIGHT UP UP RIGHT RIGHT RIGHT RIGHT RIGHT RIGHT DOWN DOWN DOWN UNDO DOWN RIGHT RIGHT RIGHT UP UP RIGHT RIGHT RIGHT DOWN DOWN DOWN DOWN DOWN RIGHT LEFT DOWN LEFT LEFT LEFT LEFT LEFT UP UP",
+            5: "LEFT LEFT UP UNDO LEFT LEFT UP LEFT LEFT UNDO LEFT LEFT DOWN LEFT LEFT LEFT LEFT UP UP LEFT LEFT LEFT DOWN DOWN DOWN DOWN DOWN RIGHT RIGHT UP DOWN LEFT LEFT UP UP UP UP UP RIGHT RIGHT RIGHT DOWN DOWN RIGHT RIGHT DOWN DOWN RIGHT RIGHT",
+            6: "DOWN UP DOWN UP DOWN UP LEFT LEFT RIGHT RIGHT DOWN DOWN RIGHT LEFT UP UP UNDO DOWN DOWN LEFT RIGHT UP UP DOWN DOWN UP UP DOWN DOWN RIGHT RIGHT UP UP UP UP LEFT UP UP RIGHT RIGHT RIGHT UNDO DOWN DOWN RIGHT RIGHT UP UP UP UP RIGHT RIGHT DOWN DOWN DOWN DOWN UP DOWN UP DOWN UP DOWN UP DOWN UP DOWN LEFT LEFT LEFT"
+          }
+          levels=[[MAP[n] for n in source_solutions[i].split()] for i in range(7)]
+          disclosed_lengths=[len(x) for x in levels]
+          route=[{'a':a,'level':li+1} for li,seq in enumerate(levels) for a in seq]
+          digest=lambda v: hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+
+          mode=os.environ['REPLAY_MODE']
+          external_source='https://github.com/dp-web4/ARC-SAGE/blob/12139884f7d111f55bb8300905900fe343a79559/arc-agi-3/experiments/g50t_solutions.json'
+          out=Path('verification'); out.mkdir()
+          arc=arc_agi.Arcade(operation_mode=OperationMode[mode])
+          card_id=arc.open_scorecard(
+              source_url=external_source,
+              tags=['DEUS','g50t','public-development','source-assisted-reproduction',mode.lower()],
+          )
+          env=arc.make('g50t',seed=0,scorecard_id=card_id,save_recording=False,include_frame_data=True)
+          if env is None: raise RuntimeError('ENV_UNAVAILABLE')
+          amap={a.value:a for a in env.action_space}
+          obs=env.observation_space
+          transcript=[]; milestones=[]; before=int(obs.levels_completed)
+          started=datetime.now(timezone.utc).isoformat(); t0=time.monotonic(); executed=0; divergence=None
+          for li,seq in enumerate(levels):
+              target=li+1
+              for aid in seq:
+                  if aid not in amap:
+                      divergence={'level':target,'at_action':executed+1,'reason':'ACTION_UNAVAILABLE','aid':aid}; break
+                  executed+=1
+                  obs=env.step(amap[aid])
+                  if obs is None:
+                      divergence={'level':target,'at_action':executed,'reason':'OBSERVATION_MISSING'}; break
+                  frame=np.asarray(obs.frame[-1],dtype=np.uint8)
+                  row={'i':executed,'a':aid,'levels_completed':int(obs.levels_completed),'state':obs.state.value,'frame_sha256':hashlib.sha256(frame.tobytes()).hexdigest()}
+                  transcript.append(row)
+                  if int(obs.levels_completed)!=before:
+                      milestones.append(row); before=int(obs.levels_completed)
+                  if int(obs.levels_completed)>=target: break
+                  if obs.state.value=='GAME_OVER':
+                      divergence={'level':target,'at_action':executed,'reason':'GAME_OVER'}; break
+              if divergence is not None: break
+              if int(obs.levels_completed)!=target:
+                  divergence={'level':target,'at_action':executed,'reason':'LEVEL_NOT_COMPLETED','levels_completed':int(obs.levels_completed)}; break
+
+          replay_seconds=time.monotonic()-t0
+          passed=int(obs.levels_completed)==7 and obs.state.value=='WIN'
+          card=arc.close_scorecard(card_id)
+          receipt={
+            'schema':'public-development-source-assisted-reproduction/1',
+            'system_label':'DEUS',
+            'result':'PASS' if passed else 'DIVERGED',
+            'requested_game':'g50t',
+            'seed':0,'mode':mode,
+            'toolkit':'arc-agi 0.9.9','engine':'arcengine 0.9.3','python':platform.python_version(),
+            'source_sha':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],
+            'started_at':started,'completed_at':datetime.now(timezone.utc).isoformat(),
+            'replay_seconds':replay_seconds,'actions_executed':executed,
+            'route_actions_disclosed':len(route),'per_level_disclosed_actions':disclosed_lengths,
+            'levels_completed':int(obs.levels_completed),'state':obs.state.value,
+            'route_sha256':digest(route),
+            'final_frame_sha256':transcript[-1]['frame_sha256'] if transcript else None,
+            'milestones':milestones,'divergence':divergence,
+            'scorecard_id':card_id,'scorecard_score':None if card is None else card.score,
+            'protocol':'PUBLIC_SOURCE_ASSISTED_ROUTE_REPRODUCTION',
+            'external_route_source':external_source,'external_route_used':True,
+            'source_metadata_total_actions_claim':311,
+            'computed_disclosed_route_actions':len(route),
+            'source_metadata_inconsistency': None if len(route)==311 else 'source total_actions differs from computed route length',
+            'independent_solver_claim':False,'official_competition_claim':False,
+            'hidden_state_read':False,'game_implementation_inspected_by_deus':False,
+            'private_core_or_credentials_in_payload':False,
+          }
+          (out/'receipt.json').write_text(json.dumps(receipt,indent=2))
+          (out/'transcript.json').write_text(json.dumps(transcript,separators=(',',':')))
+          print('VERIFIED_GAME_RECEIPT='+json.dumps(receipt,separators=(',',':')))
+          if not passed: raise RuntimeError('SEVEN_LEVEL_WIN_REQUIRED')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: g50t-source-assisted-verification-${{ matrix.mode }}
+          path: verification/
+          retention-days: 30
