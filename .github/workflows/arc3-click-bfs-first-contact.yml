@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        game: [su15, lp85, r11l]
+        game: [lp85]
     steps:
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
@@ -51,7 +51,7 @@ jobs:
               g=normalized_frame(obs)
               return hashlib.sha256(g.tobytes()).hexdigest()
 
-          def component_centroids(obs, cap=72):
+          def component_centroids(obs, cap=160):
               g=arr(obs)
               h,w=g.shape
               vals=Counter(int(x) for x in g.ravel())
@@ -75,7 +75,7 @@ jobs:
                           ys=[p[0] for p in pts]; xs=[p[1] for p in pts]
                           cx=int(round(sum(xs)/n)); cy=int(round(sum(ys)/n))
                           if 0<=cx<w and 2<=cy<h-2:
-                              comps.append((n,color,cx,cy,min(xs),max(xs),min(ys),max(ys)))
+                              comps.append((n,color,cx,cy,min(xs),max(xs),min(ys),max(ys),pts))
               # prefer compact/small interactive-looking objects
               comps.sort(key=lambda z:(z[0], z[1], z[6], z[4]))
               pts=[]; used=set()
