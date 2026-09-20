@@ -1,13 +1,13 @@
 {
-  "receipt_version": "DEUS-COMPUTE-EXPANSION/2",
-  "updated_at": "2026-09-20T17:33:26Z",
+  "receipt_version": "DEUS-COMPUTE-EXPANSION/3",
+  "updated_at": "2026-09-20T17:36:57Z",
   "routes": {
     "persorai": {
       "provider": "PERSORAI",
       "endpoint": "https://persorai.com/v1/chat/completions",
       "model": "@cf/zai-org/glm-5.2",
       "http_status": 404,
-      "latency_ms": 523,
+      "latency_ms": 733,
       "exact_contract": false,
       "response_digest": "7d04f7431bbfa41a04bcc7e6b98b9de0d919756c4c671c5785c99fff45f16402",
       "provider_execution": false
@@ -17,9 +17,9 @@
       "endpoint": "https://rokremasteredapi.rokteam.org/v1/chat/completions",
       "model": "rok-hermes",
       "http_status": 200,
-      "latency_ms": 960,
+      "latency_ms": 1022,
       "exact_contract": true,
-      "response_digest": "b2e692073f7e672b765284a85677977015afc69daf1c20c44e4493bea8177047",
+      "response_digest": "31b898f1efcec974c5aaabc85343daa172cc92d0bcc8224b2d8aeafb14f4e576",
       "provider_execution": true
     },
     "cehpoint": {
@@ -27,16 +27,36 @@
       "endpoint": "https://ai-api.cehpoint.co.in/v1/chat/completions",
       "model": "cehpoint-ai",
       "http_status": 200,
-      "latency_ms": 1389,
+      "latency_ms": 2357,
       "exact_contract": true,
-      "response_digest": "b758a40a8b9da2ff8f81ef34d2a2e655cbf4821bee8d237dce7a0df2bf348a0e",
+      "response_digest": "b4459401f27fddcc3465b473532865a9078f2d962e7d683e143928e9c0f9dac4",
       "provider_execution": true
+    },
+    "cehpoint_multilingual": {
+      "provider": "CEHPOINT_MULTILINGUAL",
+      "endpoint": "https://ai-api.cehpoint.co.in/v1/chat/completions",
+      "model": "cehpoint-ai-multilingual",
+      "http_status": 200,
+      "latency_ms": 1517,
+      "exact_contract": true,
+      "response_digest": "affe113057218dfbd2713457900474a9accbfebe7514cd7321e827e00cd69d56",
+      "provider_execution": true
+    },
+    "murakumo": {
+      "provider": "MURAKUMO",
+      "endpoint": "https://api.murakumo.cloud/v1/chat/completions",
+      "model": "murakumo-main",
+      "http_status": 410,
+      "latency_ms": 309,
+      "exact_contract": false,
+      "response_digest": "896c7ed7ee97b3f9b312b323555578776ada2ab310ffc2fa8cde992c5ee1af20",
+      "provider_execution": false
     },
     "pollinations": {
       "provider": "POLLINATIONS_LEGACY",
       "endpoint": "https://text.pollinations.ai/{prompt}",
       "http_status": 200,
-      "latency_ms": 372,
+      "latency_ms": 469,
       "exact_contract": true,
       "response_digest": "3dc450608a6b39f1e2b7a54b6621a3d8f47b0c339154cb8f0d4b7de37a26eef3",
       "provider_execution": true
@@ -46,9 +66,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-ultra-550b",
       "http_status": 200,
-      "latency_ms": 790,
+      "latency_ms": 1012,
       "exact_contract": true,
-      "response_digest": "838dd10c05c8e59b85ad2a0504cf7aa0894c808dfc70179ea91cfa9931c39231",
+      "response_digest": "9090345aeae05ae82704fa695017d635bf4594cf6cab5294814ad61ed0411573",
       "provider_execution": true
     },
     "blockrun_omni": {
@@ -56,9 +76,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
       "http_status": 200,
-      "latency_ms": 732,
+      "latency_ms": 2936,
       "exact_contract": true,
-      "response_digest": "b28d6167d86da686523f9bdf73dc9c4af97b14ac48c65c50c34a97e2e47cf5c2",
+      "response_digest": "0b3aac0232c0ea41eac4b6ecd95a5d4ac5bb9dd64c551d7b4b0d3455d3a63bfa",
       "provider_execution": true
     },
     "blockrun_code": {
@@ -66,9 +86,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "cohere/north-mini-code",
       "http_status": 200,
-      "latency_ms": 780,
+      "latency_ms": 1066,
       "exact_contract": true,
-      "response_digest": "d2e9e57db281b70271c85df765600d6f425a78b9ef92afa5194773e0a3980d34",
+      "response_digest": "6bebba33b378d4d70e9f8f72ff8cf36eccb65d25bf9f82013a07784c38c43be7",
       "provider_execution": true
     },
     "blockrun_llama_vision": {
@@ -76,9 +96,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "nvidia/llama-3.2-11b-vision",
       "http_status": 200,
-      "latency_ms": 599,
+      "latency_ms": 1031,
       "exact_contract": true,
-      "response_digest": "2b409e239534830804bb98a59f1dda7686bd2335e902cd8798d3cb6ef7e79bdf",
+      "response_digest": "96e8348e8f0298236a3b9767bc7140a42e71e403a5f56c61f0aa572d2862c5cb",
       "provider_execution": true
     },
     "blockrun_laguna": {
@@ -86,9 +106,9 @@
       "endpoint": "https://blockrun.ai/api/v1/chat/completions",
       "model": "poolside/laguna-xs-2.1",
       "http_status": 200,
-      "latency_ms": 712,
+      "latency_ms": 4322,
       "exact_contract": true,
-      "response_digest": "9ea242675081f2fe074b9fb28617eb2a5209bcc973ae8aa393f30ee9752747f9",
+      "response_digest": "dd4c69dc37330e1ce27f181aeb85fb5104057b7245c2feebb12df1cc2bfc291d",
       "provider_execution": true
     }
   }
