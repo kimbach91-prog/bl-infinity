@@ -1,4 +1,4 @@
-name: DIGE V8 C25 MPFB2 Enhanced Mature Finalist
+name: DIGE V8 C26 Photometric Interface Finalist
 
 on:
   pull_request:
@@ -12,11 +12,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c25-mpfb-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c26-photo-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c25-finalist:
+  c26-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -95,15 +95,15 @@ jobs:
           EOF
           test -s runtime/assets/c25_mpfb/c25_skin.mhmat
 
-      - name: Render C25 MPFB2 enhanced mature finalist
+      - name: Render C26 photometric interface finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c25_mpfb
+          DIGE_OUTPUT_TAG: c26_photo
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '0'
-          DIGE_C19_PHOTO_LIGHTING: '1'
+          DIGE_C19_PHOTO_LIGHTING: '0'
           DIGE_C20_VISUAL_REPAIR: '0'
           DIGE_C21_NATURAL_DETAIL: '0'
           DIGE_C22_PHYSICAL_SKIN: '0'
@@ -116,7 +116,10 @@ jobs:
           DIGE_C24_SOURCE_ALBEDO: '0'
           DIGE_C24_HAIRLINE_REPAIR: '0'
           DIGE_C25_MATURE_STACK: '1'
-          DIGE_C25_GROOM_CLIP: '1'
+          DIGE_C25_GROOM_CLIP: '0'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C26_SAFE_GROOM: '1'
+          DIGE_C26_FIBER_GROOM: '1'
           DIGE_MPFB2_SRC: /tmp/mpfb2/src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
@@ -139,7 +142,7 @@ jobs:
           DIGE_EYE_TEX_VALUE: '0.64'
           DIGE_HAIR_TEX_SAT: '0.56'
           DIGE_HAIR_TEX_VALUE: '0.23'
-          DIGE_FACE_MESO_SCALE: '1.10'
+          DIGE_FACE_MESO_SCALE: '1.18'
           DIGE_SKIN_TONE_R: '0.60'
           DIGE_SKIN_TONE_G: '0.33'
           DIGE_SKIN_TONE_B: '0.22'
@@ -157,21 +160,21 @@ jobs:
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c25_mpfb.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c26_photo.log
 
-      - name: Verify C25 receipt
+      - name: Verify C26 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c25_mpfb")
+          root=pathlib.Path("runtime/renders/c26_photo")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C25_MPFB2_ENHANCED_MATURE_STACK_V1"
+          assert r["appearance_candidate"]=="C26_PHOTOMETRIC_INTERFACE_V1"
           h=r["hair_surface_contract"]
-          assert h["style"]=="MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1"
+          assert h["style"]=="C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1"
           assert h["mass_mesh_rendered"] is True
           assert h["curve_count"] >= 5000
           assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
@@ -181,7 +184,7 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C25_MPFB2_ENHANCED_MATURE_RECEIPT_V1",
+            "schema":"DIGE_C26_PHOTOMETRIC_INTERFACE_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
@@ -217,7 +220,15 @@ jobs:
             "c25_mpfb_eyes":r["appearance_selection"].get("c25_mpfb_eyes"),
             "c25_removed_fringe_faces":r["appearance_selection"].get("c25_removed_fringe_faces"),
             "c25_hairline_warp_vertices":r["appearance_selection"].get("c25_hairline_warp_vertices"),
-            "claim_ceiling":"C25_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "c26_photometric":r["appearance_selection"].get("c26_photometric"),
+            "c26_safe_groom":r["appearance_selection"].get("c26_safe_groom"),
+            "c26_fiber_groom":r["appearance_selection"].get("c26_fiber_groom"),
+            "c26_fringe_clear_vertices":r["appearance_selection"].get("c26_fringe_clear_vertices"),
+            "c26_hairline_warp_vertices":r["appearance_selection"].get("c26_hairline_warp_vertices"),
+            "c26_brow_fibers":r["appearance_selection"].get("c26_brow_fibers"),
+            "c26_lash_fibers":r["appearance_selection"].get("c26_lash_fibers"),
+            "c26_exposure":r["appearance_selection"].get("c26_exposure"),
+            "claim_ceiling":"C26_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
           assert summary["c25_mature_stack"] is True
           assert summary["c25_mpfb2_commit"]=="b58176c661a9680294eb75f127842cb8378e4974"
@@ -225,21 +236,28 @@ jobs:
           assert summary["c25_mpfb_skin"]["material_model"]=="ENHANCED_SSS"
           assert summary["c25_mpfb_eyes"]["enabled"] is True
           assert summary["c25_mpfb_eyes"]["material_model"]=="PROCEDURAL_EYES"
-          assert summary["c25_removed_fringe_faces"] > 0
-          assert summary["c25_hairline_warp_vertices"] > 0
+          assert r["appearance_selection"]["c25_removed_fringe_faces"] == 0
+          assert r["appearance_selection"]["c26_photometric"] is True
+          assert r["appearance_selection"]["c26_safe_groom"] is True
+          assert r["appearance_selection"]["c26_fiber_groom"] is True
+          assert r["appearance_selection"]["c26_fringe_clear_vertices"] > 0
+          assert r["appearance_selection"]["c26_hairline_warp_vertices"] > 0
+          assert r["appearance_selection"]["c26_brow_fibers"] >= 140
+          assert r["appearance_selection"]["c26_lash_fibers"] >= 50
+          assert r["appearance_selection"]["c26_exposure"] == -0.62
           assert r["skin_model"]["subsurface_method"]=="MPFB2_ENHANCED_SSS"
-          (root/"DIGE_C25_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          (root/"DIGE_C26_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C25 evidence
+      - name: Upload C26 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C25-MPFB-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C26-PHOTO-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c25_mpfb/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c25_mpfb/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c25_mpfb/*.json
-            experiments/dige-v8-executor-capsule/runtime/c25_mpfb.log
+            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c26_photo/*.json
+            experiments/dige-v8-executor-capsule/runtime/c26_photo.log
           if-no-files-found: error
           retention-days: 14
