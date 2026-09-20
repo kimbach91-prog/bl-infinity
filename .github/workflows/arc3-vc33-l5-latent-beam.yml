@@ -1,0 +1,224 @@
+name: ARC3 vc33 L5 latent-aware best-first repair
+
+on:
+  push:
+    branches: [deus/arc3-vc33-l5-latent-20260921]
+    paths: [.github/workflows/arc3-vc33-l5-latent-beam.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  latent-l5:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m pip install --disable-pip-version-check 'arc-agi==0.9.9' 'arcengine==0.9.3' numpy
+      - name: Latent-aware L5 search and fresh ONLINE verification
+        run: |
+          python - <<'PY'
+          import copy,hashlib,heapq,itertools,json,logging,os,time
+          from pathlib import Path
+          import numpy as np
+          import arc_agi
+          from arc_agi import OperationMode
+          logging.disable(logging.CRITICAL)
+
+          L3_PATH=[0,2,0,2,0,4,2,0,4,2,0,4,2,0,6,6,6,6,6,6,6,6,6]
+          L4_PATH=[3,3,0,3,3,3,4,4,6,4,1,6,4,6,4,6,4,6,4,6,4]
+
+          def fr(o): return np.asarray(o.frame[-1],dtype=np.uint8)
+          def norm(o):
+              a=fr(o).copy()
+              if a.shape[0]>=4:
+                  a[0,:]=0; a[-1,:]=0
+              return a
+          def fkey(o): return hashlib.sha256(norm(o).tobytes()).hexdigest()
+
+          def comps(a,color,lo=1,hi=256):
+              m=(a==color);H,W=a.shape;seen=np.zeros_like(m,bool);out=[]
+              for y in range(H):
+                for x in range(W):
+                  if not m[y,x] or seen[y,x]: continue
+                  st=[(x,y)];seen[y,x]=1;pts=[]
+                  while st:
+                    xx,yy=st.pop();pts.append((xx,yy))
+                    for nx,ny in ((xx+1,yy),(xx-1,yy),(xx,yy+1),(xx,yy-1)):
+                      if 0<=nx<W and 0<=ny<H and m[ny,nx] and not seen[ny,nx]:
+                        seen[ny,nx]=1;st.append((nx,ny))
+                  if lo<=len(pts)<=hi:
+                    xs=[p[0] for p in pts];ys=[p[1] for p in pts]
+                    out.append({'area':len(pts),'bbox':[min(xs),min(ys),max(xs),max(ys)],
+                                'center':[int(round(sum(xs)/len(xs))),int(round(sum(ys)/len(ys)))]})
+              return sorted(out,key=lambda z:(z['bbox'][0],z['bbox'][1],z['area']))
+
+          def brown(o): return sorted(comps(fr(o),9,4,32),key=lambda z:(z['bbox'][0],z['bbox'][1]))
+          def anchors(o):
+              z=[]
+              for c in comps(fr(o),1,8,128):
+                if c['bbox'][1]>2 and c['bbox'][3]<61:
+                  z.append({'center':c['center'],'bbox':c['bbox'],'area':c['area']})
+              return sorted(z,key=lambda b:(b['center'][0],b['center'][1]))
+
+          def cands(o,A):
+              a=fr(o);z=[]
+              for i,b in enumerate(A):
+                x,y=b['center'];z.append({'kind':'blue','anchor':i,'color':int(a[y,x]),'center':[x,y]})
+              for j,b in enumerate(brown(o)):
+                z.append({'kind':'brown','brown_rank':j,'center':b['center']})
+              return z
+
+          def click(e,o,xy):
+              am={a.value:a for a in e.action_space}
+              return e.step(am[6],data={'x':int(xy[0]),'y':int(xy[1])})
+
+          def prefix(e):
+              o=e.observation_space
+              b=brown(o);t=max(b,key=lambda z:z['center'][1])['center']
+              for _ in range(3):
+                o=click(e,o,t)
+                if int(o.levels_completed)>=1: break
+              if int(o.levels_completed)<1: raise RuntimeError('L1_FAIL')
+              b=brown(o);cs=[x['center'] for x in b];F=cs[3];E=cs[1]
+              for r in ['F','F','F','E','F','E','F']:
+                o=click(e,o,F if r=='F' else E)
+                if int(o.levels_completed)>=2: break
+              if int(o.levels_completed)<2: raise RuntimeError('L2_FAIL')
+              for idx in L3_PATH:
+                b=brown(o)
+                if idx>=len(b): raise RuntimeError('L3_INDEX')
+                o=click(e,o,b[idx]['center'])
+                if int(o.levels_completed)>=3: break
+              if int(o.levels_completed)<3: raise RuntimeError('L3_FAIL')
+              A4=anchors(o)
+              for idx in L4_PATH:
+                cc=cands(o,A4)
+                if idx>=len(cc): raise RuntimeError('L4_INDEX')
+                o=click(e,o,cc[idx]['center'])
+                if int(o.levels_completed)>=4: break
+              if int(o.levels_completed)<4: raise RuntimeError('L4_FAIL')
+              return o
+
+          def semantic(c):
+              if c['kind']=='blue': return 'B'+str(c['anchor'])
+              return 'R'+str(c.get('brown_rank',-1))
+
+          def priority(o,path,press_vec,noeff,A):
+              cc=cands(o,A)
+              active=sum(1 for c in cc if c['kind']=='blue' and c.get('color')!=1)
+              used=sum(1 for v in press_vec if v>0)
+              total=sum(press_vec)
+              # Public prior is soft only: all 3 blue controls matter and ~5 effective activations were reported.
+              # Do not hard-cap at 5 because prior runs may have conflated presses with effective activations.
+              return len(path) + 2.5*max(0,3-used) + 0.7*abs(5-min(total,9)) + 0.8*noeff - 1.4*active
+
+          n=arc_agi.Arcade(operation_mode=OperationMode.NORMAL)
+          e=n.make('vc33',seed=0,save_recording=False,include_frame_data=True)
+          if e is None: raise RuntimeError('ENV_UNAVAILABLE')
+          o=prefix(e); A=anchors(o)
+          if len(A)<3: raise RuntimeError('EXPECTED_3_ANCHORS:'+json.dumps(A))
+
+          counter=itertools.count()
+          p0=(0,0,0); suffix0=(); h0=fkey(o)
+          heap=[(priority(o,[],p0,0,A),next(counter),copy.deepcopy(e),o,[],p0,suffix0,0)]
+          seen={(h0,p0,suffix0):0}
+          found=None;exp=0;latent_edges=0;maxq=1;t0=time.monotonic()
+          max_exp=300000; deadline=1000; max_depth=72
+
+          while heap and exp<max_exp and time.monotonic()-t0<deadline:
+              _,_,ee,oo,path,pv,suffix,noeff=heapq.heappop(heap)
+              if len(path)>=max_depth: continue
+              cc=cands(oo,A)
+              order=sorted(range(len(cc)),key=lambda i:(
+                  0 if cc[i]['kind']=='blue' and cc[i].get('color')!=1 else
+                  1 if cc[i]['kind']=='brown' else 2,
+                  sum(pv) if cc[i]['kind']=='brown' else pv[cc[i].get('anchor',0)],i))
+              parent=fkey(oo)
+              for idx in order:
+                cand=cc[idx]
+                e2=copy.deepcopy(ee); nf=click(e2,oo,cand['center']); exp+=1
+                if nf is None: continue
+                item={'idx':idx,'kind':cand['kind'],'anchor':cand.get('anchor'),
+                      'brown_rank':cand.get('brown_rank'),'color_before':cand.get('color')}
+                p=path+[item]
+                if int(nf.levels_completed)>=5:
+                  found=p; heap=[]; break
+                st=getattr(nf.state,'value',str(nf.state))
+                if st in ('GAME_OVER','WIN'): continue
+
+                npv=list(pv)
+                if cand['kind']=='blue':
+                  aidx=int(cand['anchor']); npv[aidx]=min(4,npv[aidx]+1)
+                npv=tuple(npv)
+                # Keep prior soft and bounded rather than exact-five pruning.
+                if sum(npv)>10: continue
+
+                child=fkey(nf)
+                if child==parent:
+                  latent_edges+=1
+                  nno=noeff+1
+                  if nno>4: continue
+                  ns=(suffix+(semantic(cand),))[-6:]
+                else:
+                  nno=0; ns=()
+
+                sk=(child,npv,ns)
+                if len(p)>=seen.get(sk,10**9): continue
+                seen[sk]=len(p)
+                heapq.heappush(heap,(priority(nf,p,npv,nno,A),next(counter),e2,nf,p,npv,ns,nno))
+                maxq=max(maxq,len(heap))
+              if found is not None: break
+
+          search={'expansions':exp,'seen':len(seen),'seconds':time.monotonic()-t0,
+                  'max_queue':maxq,'latent_edges':latent_edges,'path':found,
+                  'path_len':None if found is None else len(found),'anchors':A,
+                  'protocol':'PUBLIC_OBSERVATION_L5_LATENT_HISTORY_SOFT_PRIOR_BESTFIRST',
+                  'latent_suffix_max':6,'same_frame_streak_max':4,'soft_blue_press_cap':10,
+                  'external_l5_route_used':False,'game_source_inspected_by_solver':False,'hidden_state_read':False}
+          out=Path('verification');out.mkdir(exist_ok=True)
+          (out/'search.json').write_text(json.dumps(search,indent=2))
+          print('VC33_L5_LATENT_SEARCH='+json.dumps(search,separators=(',',':')))
+          if found is None: raise RuntimeError('L5_LATENT_NOT_FOUND')
+
+          oa=arc_agi.Arcade(operation_mode=OperationMode.ONLINE)
+          src='https://github.com/'+os.environ['GITHUB_REPOSITORY']+'/blob/'+os.environ['GITHUB_SHA']+'/.github/workflows/arc3-vc33-l5-latent-beam.yml'
+          cid=oa.open_scorecard(source_url=src,tags=['DEUS','vc33','l5-latent','public-development'])
+          oe=oa.make('vc33',seed=0,scorecard_id=cid,save_recording=False,include_frame_data=True)
+          if oe is None: raise RuntimeError('ONLINE_ENV_UNAVAILABLE')
+          oo=prefix(oe); AO=anchors(oo); trace=[]
+          for step,item in enumerate(found,1):
+              cc=cands(oo,AO); idx=int(item['idx'])
+              if idx>=len(cc): raise RuntimeError('ONLINE_INDEX_DIVERGENCE_'+str(step))
+              cand=cc[idx]; before=fr(oo); oo=click(oe,oo,cand['center']); after=fr(oo)
+              trace.append({'step':step,'idx':idx,'candidate':cand,
+                            'changed':int(np.count_nonzero(before!=after)),
+                            'level':int(oo.levels_completed),'state':getattr(oo.state,'value',str(oo.state))})
+              if int(oo.levels_completed)>=5: break
+          card=oa.close_scorecard(cid); passed=int(oo.levels_completed)>=5
+          rec={'schema':'deus/arc3-vc33-l5-latent-repair/1','result':'PASS' if passed else 'FAIL',
+               'game':'vc33','levels_completed':int(oo.levels_completed),
+               'win_levels':int(getattr(oo,'win_levels',0) or 0),
+               'state':getattr(oo.state,'value',str(oo.state)),
+               'scorecard_id':cid,'scorecard_score':None if card is None else card.score,
+               'l5_path':found,'l5_actions_executed':len(trace),'online_trace':trace,'search':search,
+               'protocol':'PUBLIC_OBSERVATION_L5_LATENT_HISTORY_SOFT_PRIOR_BESTFIRST',
+               'public_rule_prior':'all 3 blue controls relevant; approximately 5 effective activations; treated as soft prior only',
+               'external_full_route_used':False,'external_l5_route_used':False,
+               'game_source_inspected_by_solver':False,'hidden_state_read':False,
+               'independent_first_contact_claim':False,'rule_derived_claim':True,
+               'competition_hidden_score_claim':False,
+               'run_id':os.environ['GITHUB_RUN_ID'],'source_sha':os.environ['GITHUB_SHA'],
+               'final_frame_sha256':hashlib.sha256(fr(oo).tobytes()).hexdigest()}
+          (out/'receipt.json').write_text(json.dumps(rec,indent=2))
+          print('VC33_L5_LATENT_RECEIPT='+json.dumps(rec,separators=(',',':')))
+          if not passed: raise RuntimeError('L5_ONLINE_FAIL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vc33-l5-latent-repair
+          path: verification/
+          retention-days: 30
