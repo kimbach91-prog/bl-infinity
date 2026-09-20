@@ -61,6 +61,9 @@ C22_HAIR_MASS_WARP=os.environ.get("DIGE_C22_HAIR_MASS_WARP","0").strip()=="1"
 C23_CALIBRATED_EYES=os.environ.get("DIGE_C23_CALIBRATED_EYES","0").strip()=="1"
 C23_FACE_PLANES=os.environ.get("DIGE_C23_FACE_PLANES","0").strip()=="1"
 C23_HAIRLINE_REPAIR=os.environ.get("DIGE_C23_HAIRLINE_REPAIR","0").strip()=="1"
+C24_SURFACE_EYES=os.environ.get("DIGE_C24_SURFACE_EYES","0").strip()=="1"
+C24_SOURCE_ALBEDO=os.environ.get("DIGE_C24_SOURCE_ALBEDO","0").strip()=="1"
+C24_HAIRLINE_REPAIR=os.environ.get("DIGE_C24_HAIRLINE_REPAIR","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -139,12 +142,12 @@ def make_skin():
         skin_tone.outputs[0].default_value=(SKIN_TONE_R,SKIN_TONE_G,SKIN_TONE_B,1)
         warm_mix=nt.nodes.new("ShaderNodeMixRGB")
         warm_mix.blend_type='MULTIPLY'
-        warm_mix.inputs["Fac"].default_value=SKIN_TONE_MIX
+        warm_mix.inputs["Fac"].default_value=.08 if C24_SOURCE_ALBEDO else SKIN_TONE_MIX
         nt.links.new(grade.outputs["Color"],warm_mix.inputs[1])
         nt.links.new(skin_tone.outputs["Color"],warm_mix.inputs[2])
         color_mix=nt.nodes.new("ShaderNodeMixRGB")
         color_mix.blend_type='MULTIPLY'
-        color_mix.inputs["Fac"].default_value=.22 if C20_VISUAL_REPAIR else .10
+        color_mix.inputs["Fac"].default_value=.045 if C24_SOURCE_ALBEDO else (.22 if C20_VISUAL_REPAIR else .10)
         nt.links.new(warm_mix.outputs["Color"],color_mix.inputs[1])
         nt.links.new(tint.outputs["Color"],color_mix.inputs[2])
         nt.links.new(color_mix.outputs["Color"],bs.inputs["Base Color"])
@@ -683,7 +686,7 @@ system_asset_fits["high_poly_eyes"]=eye_fit
 # landmarks so both globes/irises share one deterministic geometric contract.
 c23_eye_count=0
 c23_eye_contract=[]
-if C23_CALIBRATED_EYES:
+if C23_CALIBRATED_EYES and not C24_SURFACE_EYES:
     eye_obj.hide_render=True
     try:
         eye_obj.hide_set(True)
@@ -703,6 +706,51 @@ if C23_CALIBRATED_EYES:
         cor=cylinder(f"DIGE_C23_{eye_key.upper()}_CORNEA",(ex,iris_y+.00048,ez),.00585,.00020,cornea)
         c23_eye_count+=1
         c23_eye_contract.append({"eye":eye_key,"center":[ex,ey,ez],"sclera_center":list(center),"iris_y":iris_y})
+
+# C24 surface-calibrated eyes. C23 proved that landmark centers alone were
+# insufficient because one globe remained behind the eyelid/face surface. C24
+# measures the actual local forward face surface and places a shallow eye
+# aperture directly at that surface, keeping both sides symmetric by contract.
+c24_eye_count=0
+c24_eye_contract=[]
+c24_lid_curve_count=0
+if C24_SURFACE_EYES:
+    eye_obj.hide_render=True
+    try:
+        eye_obj.hide_set(True)
+    except Exception:
+        pass
+    lid_curves=[]
+    for eye_key in ("left_eye","right_eye"):
+        ec=landmarks[eye_key]["center"]
+        ex,ey,ez=(float(ec[0]),float(ec[1]),float(ec[2]))
+        local_front=[
+            float(v.co.y) for v in body.data.vertices
+            if abs(float(v.co.x)-ex) <= .0165 and abs(float(v.co.z)-ez) <= .0105 and float(v.co.y) > 0
+        ]
+        if len(local_front) < 8:
+            raise RuntimeError(f"C24 eye surface probe too sparse for {eye_key}: {len(local_front)}")
+        surface_y=max(local_front)
+        scl_center=(ex,surface_y+.00075,ez)
+        uv(f"DIGE_C24_{eye_key.upper()}_SCLERA",scl_center,(.0118,.00105,.00545),sclera,seg=64,rings=32)
+        iris_y=surface_y+.00195
+        cylinder(f"DIGE_C24_{eye_key.upper()}_IRIS_RING",(ex,iris_y,ez),.00515,.00020,iris_ring)
+        cylinder(f"DIGE_C24_{eye_key.upper()}_IRIS",(ex,iris_y+.00018,ez),.00455,.00016,iris)
+        cylinder(f"DIGE_C24_{eye_key.upper()}_PUPIL",(ex,iris_y+.00034,ez),.00195,.00014,black)
+        cylinder(f"DIGE_C24_{eye_key.upper()}_CORNEA",(ex,iris_y+.00048,ez),.00535,.00014,cornea)
+        half_w=.0118
+        upper=[]; lower=[]
+        for i in range(19):
+            t=i/18.0
+            x=(ex-half_w)+2*half_w*t
+            a=math.sin(math.pi*t)
+            upper.append((x,surface_y+.00212,ez+.00525*a))
+            lower.append((x,surface_y+.00210,ez-.00435*a))
+        lid_curves.extend([upper,lower])
+        c24_eye_count+=1
+        c24_eye_contract.append({"eye":eye_key,"landmark_center":[ex,ey,ez],"surface_y":surface_y,"iris_y":iris_y})
+    curve_object("DIGE_C24_SURFACE_LID_MARGINS",lid_curves,.000050,mouth_dark)
+    c24_lid_curve_count=len(lid_curves)
 
 # Mouth: preserve native face topology; add only a thin, source-anchored mouth gap.
 mouth_center=landmarks["mouth_front"]["center"]
@@ -978,11 +1026,34 @@ hair_obj,hair_fit=fit_mhclo_asset(
 )
 system_asset_fits[HAIR_ASSET_KEY]=hair_fit
 
+# C24 frontal mass placement. C23 still left a visibly oversized forehead.
+# This pass is bounded to the forward short03 shell and lowers center more than temples.
+c24_hairline_warp_vertices=0
+if C24_HAIRLINE_REPAIR:
+    for v in hair_obj.data.vertices:
+        p=v.co
+        if p.y <= -.045 or p.z < 1.555 or p.z > 1.695 or abs(p.x) > .118:
+            continue
+        central=max(0.0,1.0-abs(p.x)/.118)
+        front=max(0.0,min(1.0,(p.y+.045)/.110))
+        upper_guard=max(0.0,min(1.0,(1.695-p.z)/.140))
+        w=(central**1.18)*(front**1.05)*upper_guard
+        if w<=0.0:
+            continue
+        p.z -= .0390*w
+        p.y += .0060*w
+        c24_hairline_warp_vertices+=1
+    hair_obj.data.update()
+    pts=[hair_obj.matrix_world @ v.co for v in hair_obj.data.vertices]
+    hair_fit["c24_hairline_warp_vertices"]=c24_hairline_warp_vertices
+    hair_fit["c24_postwarp_bbox_min"]=[min(p[i] for p in pts) for i in range(3)]
+    hair_fit["c24_postwarp_bbox_max"]=[max(p[i] for p in pts) for i in range(3)]
+
 # C23 stronger frontal hairline placement. C22 moved the shell but the hero audit
 # still showed an oversized forehead. This second bounded pass only affects the
 # frontal short03 mass and is intentionally stronger at the center than temples.
 c23_hairline_warp_vertices=0
-if C23_HAIRLINE_REPAIR:
+if C23_HAIRLINE_REPAIR and not C24_HAIRLINE_REPAIR:
     for v in hair_obj.data.vertices:
         p=v.co
         if p.y <= -.035 or p.z < 1.565 or p.z > 1.690 or abs(p.x) > .115:
@@ -1585,7 +1656,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))))),
+    "style":"SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -1786,14 +1857,14 @@ receipt={
  "geometry_normalization":geom.get("normalization"),
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
- "appearance_candidate":"C23_CALIBRATED_EYES_HAIRLINE_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1"))))),
+ "appearance_candidate":"C24_SURFACE_EYES_SOURCE_ALBEDO_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_CALIBRATED_EYES_HAIRLINE_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_PHYSICAL_SKIN_LANDMARK_GROOM_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_NATURAL_DETAIL_HYBRID_SKIN_GROOM_V1" if C21_NATURAL_DETAIL else ("C20_VISUAL_REPAIR_HYBRID_SKIN_GROOM_V1" if C20_VISUAL_REPAIR else ("C19_HUMANIZED_HYBRID_SKIN_GROOM_V1" if C19_HUMANIZATION else ("C18_HYBRID_MATURE_GROOM_SKIN_V1" if C18_HYBRID_BULK else "C17_MATURE_STRAND_GROOM_OVER_C16_V1")))))),
  "appearance_selection":{
    "skin_sss_weight":SKIN_SSS_WEIGHT,
    "skin_sss_scale":SKIN_SSS_SCALE,
    "skin_roughness_range":[SKIN_ROUGH_MIN,SKIN_ROUGH_MAX],
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
-   "selection_basis":"C23_AFTER_C22_VISUAL_FAIL: REPLACE_MISFITTING_HIGH_POLY_EYE_ASSET_WITH_CALIBRATED_LANDMARK_EYES + STRONGER_FRONTAL_BULK_HAIRLINE_PLACEMENT + LANDMARK_BROW_LASH_FIBERS + TARGETED_FACE_PLANES; PRESERVE_OBJECT_METER_SKIN" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB"))))),
+   "selection_basis":"C24_AFTER_C23_VISUAL_FAIL: EYE_APERTURES_CALIBRATED_TO_ACTUAL_FACE_SURFACE + SOURCE_ALBEDO_PRESERVED_WITH_MINIMAL_TINT + STRONGER_BOUNDED_FRONTAL_SHORT03_PLACEMENT; PRESERVE_OBJECT_METER_SKIN" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("C23_AFTER_C22_VISUAL_FAIL: REPLACE_MISFITTING_HIGH_POLY_EYE_ASSET_WITH_CALIBRATED_LANDMARK_EYES + STRONGER_FRONTAL_BULK_HAIRLINE_PLACEMENT + LANDMARK_BROW_LASH_FIBERS + TARGETED_FACE_PLANES; PRESERVE_OBJECT_METER_SKIN" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("C22_AFTER_C21_HUMAN_VISUAL_FAIL: PHYSICAL_OBJECT_SPACE_SKIN_SCALE + LANDMARK_ANCHORED_BROW_LASH_LID_INTERFACES + FRONTAL_BULK_GROOM_WARP; SINGLE_TARGETED_FINALIST" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("C21_AFTER_C20_BREAKTHROUGH: REPLACE_COMB_HAIRLINE_AND_DRAWN_BROWS_WITH_SPARSE_IRREGULAR_MICROHAIRS; PRESERVE_C20_SKIN_DEPTH_BASELINE" if C21_NATURAL_DETAIL else ("C20_AFTER_C19_VISUAL_FAIL: EXPLICIT_BROW_LASH_GEOMETRY + FRONTAL_HAIRLINE_BRIDGE + LOWER_EXPOSURE_DIRECTIONAL_FACE_LIGHT + STRONGER_MESO_MICRO_SKIN" if C20_VISUAL_REPAIR else ("C19_HUMANIZATION_AFTER_C18_VISUAL_FAIL: LOWER_CENTER_HAIRLINE + STRONGER_BROW_LASH_READ + FACE_TARGETED_PHOTO_LIGHTING + LOWER_SSS_HIGHER_ROUGHNESS_MULTISCALE_SKIN" if C19_HUMANIZATION else ("C18_MATURE_FIRST_HYBRID: FITTED_SHORT03_BULK_COVERAGE + BOUNDED_HAIR_CURVE_ACCENTS + FACE_CLEARANCE + SEPARATED_SKIN_CHANNELS" if C18_HYBRID_BULK else "C17_5_VISUAL_FAIL_NEAREST_SHELL_TARGET_FALSIFIED; OFFICIAL_SHORT03_UV_TEXTURE_FLOW_TO_3D_K8_FIELD; DENSITY_FROZEN_FOR_CAUSAL_AB")))))),
    "skin_albedo_saturation":SKIN_ALBEDO_SAT,
    "skin_albedo_value":SKIN_ALBEDO_VALUE,
    "eye_texture_saturation":EYE_TEX_SAT,
@@ -1838,7 +1909,14 @@ receipt={
    "c23_hairline_warp_vertices":c23_hairline_warp_vertices,
    "c23_brow_fibers":c23_brow_fiber_count,
    "c23_lash_fibers":c23_lash_fiber_count,
-   "c23_hairline_fibers":c23_hairline_fiber_count
+   "c23_hairline_fibers":c23_hairline_fiber_count,
+   "c24_surface_eyes":C24_SURFACE_EYES,
+   "c24_source_albedo":C24_SOURCE_ALBEDO,
+   "c24_hairline_repair":C24_HAIRLINE_REPAIR,
+   "c24_eye_count":c24_eye_count,
+   "c24_eye_contract":c24_eye_contract,
+   "c24_lid_curve_count":c24_lid_curve_count,
+   "c24_hairline_warp_vertices":c24_hairline_warp_vertices
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
