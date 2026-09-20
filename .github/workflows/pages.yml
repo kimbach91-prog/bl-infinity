@@ -305,6 +305,8 @@ jobs:
           test -f _site/public-compute/deus-worker-result.schema.json
           test -f _site/.well-known/deus-worker-gate.json
           grep -q 'deus-machine-worker-gate/1' _site/public-compute/worker-discovery.json
+          grep -q '"core_primary_solver": true' _site/public-compute/worker-discovery.json
+          grep -q '"outer_gpt_llm_complexity_ceiling": "BOUNDED_LEAF_ONLY"' _site/.well-known/deus-worker-gate.json
           grep -q 'deus-worker-offer/1' _site/public-compute/deus-worker-offer.schema.json
           grep -q 'deus-worker-result/1' _site/public-compute/deus-worker-result.schema.json
           grep -q 'MACHINE_TRIAL_BUS_RUNTIME_VERIFIED' _site/.well-known/deus-worker-gate.json
