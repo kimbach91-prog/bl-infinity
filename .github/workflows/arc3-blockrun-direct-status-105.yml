@@ -1,0 +1,72 @@
+name: ARC3 BlockRun direct status probe 105
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - '.github/workflows/arc3-blockrun-direct-status-105.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  status-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    steps:
+      - name: Execute one bounded calibration request and preserve exact status
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > request.json <<'JSON'
+          {"model":"nvidia/nemotron-3.5-lightning","messages":[{"role":"system","content":"You classify the magnitude of the immediate visible next-board change in a grid-world. For each user message, ALPHA and BETA are defined by the explicit changed-cell threshold in that message. Follow the threshold exactly and reply with exactly ALPHA or BETA."},{"role":"user","content":"Calibration case only: the immediate next board differs from the pre-action board in exactly 100 cells. ALPHA is the correct label. Reply exactly ALPHA."}],"temperature":0,"max_tokens":12}
+          JSON
+          set +e
+          code="$(curl --silent --show-error --max-time 30 -H 'content-type: application/json' --data-binary @request.json -o response.txt -w '%{http_code}' 'https://blockrun.ai/api/v1/chat/completions')"
+          rc=$?
+          set -e
+          printf '%s\n' "$code" > http-status.txt
+          printf '%s\n' "$rc" > curl-exit.txt
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          body=Path('response.txt').read_text(errors='replace') if Path('response.txt').exists() else ''
+          status=Path('http-status.txt').read_text().strip()
+          rc=Path('curl-exit.txt').read_text().strip()
+          content=''
+          try:
+              obj=json.loads(body)
+              content=((obj.get('choices') or [{}])[0].get('message') or {}).get('content','')
+          except Exception:
+              pass
+          receipt={
+              'schema':'deus/arc3-blockrun-direct-status-probe/1',
+              'model':'nvidia/nemotron-3.5-lightning',
+              'http_status':int(status) if status.isdigit() else None,
+              'curl_exit':int(rc) if rc.isdigit() else None,
+              'provider_execution':status=='200',
+              'content':content[:120],
+              'body_excerpt':body[:500],
+              'body_sha256':hashlib.sha256(body.encode()).hexdigest(),
+              'paired_ab_calls':0,
+              'kaggle_submission_attempted':False,
+              'submission_quota_spent':False,
+          }
+          Path('status-probe.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+          cat status-probe.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload status receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-blockrun-direct-status-105
+          path: |
+            status-probe.json
+            http-status.txt
+            curl-exit.txt
+            response.txt
+          if-no-files-found: warn
+          retention-days: 30
