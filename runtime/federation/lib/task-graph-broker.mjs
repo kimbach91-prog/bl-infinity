@@ -73,6 +73,7 @@ function topologicalOrder(nodes) {
 
 export function normalizeTaskGraph(graph = {}) {
   const graphId = requiredString(graph.graphId ?? graph.id, 'graphId');
+  const runId = requiredString(graph.runId ?? graphId, 'runId');
   if (!Array.isArray(graph.nodes) || graph.nodes.length === 0) throw new Error('graph.nodes must be a non-empty array');
   if (graph.nodes.length > MAX_GRAPH_NODES) throw new Error(`graph.nodes exceeds ${MAX_GRAPH_NODES}`);
 
@@ -89,6 +90,7 @@ export function normalizeTaskGraph(graph = {}) {
   const normalized = {
     schema: 'deus-task-graph/1',
     graphId,
+    runId,
     dataClass: String(defaults.dataClass),
     dataLocation: defaults.dataLocation,
     failClosed: graph.failClosed !== false,
@@ -101,6 +103,7 @@ export function normalizeTaskGraph(graph = {}) {
     fingerprint: sha256Json({
       schema: normalized.schema,
       graphId: normalized.graphId,
+      runId: normalized.runId,
       dataClass: normalized.dataClass,
       dataLocation: normalized.dataLocation,
       failClosed: normalized.failClosed,
@@ -127,6 +130,58 @@ export class TaskGraphBroker {
     this.graph = normalizeTaskGraph(graph);
     this.nodes = new Map(this.graph.nodes.map((node) => [node.id, node]));
     this.state = new Map(this.graph.nodes.map((node) => [node.id, initialNodeState()]));
+  }
+
+  taskIdForNode(nodeId) {
+    if (!this.nodes.has(nodeId)) throw new Error(`unknown graph node: ${nodeId}`);
+    return `${this.graph.runId}::${nodeId}`;
+  }
+
+  async restoreFromQueue(orchestrator, { now = Date.now(), sweepExpired = true } = {}) {
+    if (!orchestrator?.queue?.get) throw new Error('orchestrator.queue.get is required');
+    if (sweepExpired && typeof orchestrator.queue.sweepExpired === 'function') {
+      await orchestrator.queue.sweepExpired(now);
+    }
+    const restored = [];
+    for (const nodeId of this.graph.order) {
+      const taskId = this.taskIdForNode(nodeId);
+      const job = await orchestrator.queue.get(taskId);
+      if (!job) continue;
+
+      const taskFingerprint = job.task?.metadata?.graphFingerprint ?? null;
+      if (taskFingerprint && taskFingerprint !== this.graph.fingerprint) {
+        const error = new Error(`graph fingerprint mismatch for persisted job ${taskId}`);
+        error.code = 'FLOW_GRAPH_FINGERPRINT_MISMATCH';
+        throw error;
+      }
+
+      const state = this.state.get(nodeId);
+      state.taskId = job.id;
+      state.submittedAt = job.createdAt ?? state.submittedAt;
+
+      if (job.state === 'succeeded') {
+        const execution = job.result;
+        const result = execution && typeof execution === 'object' && Object.hasOwn(execution, 'result')
+          ? execution.result
+          : execution;
+        state.state = 'succeeded';
+        state.result = clone(result);
+        state.resultDigest = sha256Json(result);
+        state.error = null;
+        state.finishedAt = state.finishedAt ?? new Date(now).toISOString();
+      } else if (job.state === 'deadletter') {
+        state.state = 'failed';
+        state.error = clone(job.error ?? { message: 'deadletter' });
+        state.finishedAt = state.finishedAt ?? new Date(now).toISOString();
+      } else if (job.state === 'pending' || job.state === 'running') {
+        state.state = 'submitted';
+        state.error = clone(job.error ?? null);
+      }
+
+      restored.push({ nodeId, taskId: job.id, queueState: job.state, brokerState: state.state });
+    }
+    this.readyNodeIds();
+    return restored;
   }
 
   readyNodeIds() {
@@ -159,12 +214,12 @@ export class TaskGraphBroker {
     }
 
     const payload = node.injectUpstreamResults
-      ? { input: clone(node.payload), upstream, graph: { graphId: this.graph.graphId, nodeId, graphFingerprint: this.graph.fingerprint } }
+      ? { input: clone(node.payload), upstream, graph: { graphId: this.graph.graphId, runId: this.graph.runId, nodeId, graphFingerprint: this.graph.fingerprint } }
       : clone(node.payload);
 
     const dependencyFingerprint = sha256Json(upstreamDigests);
     return {
-      id: `${this.graph.graphId}::${nodeId}`,
+      id: this.taskIdForNode(nodeId),
       tenantId: 'deus',
       capability: node.capability,
       payload,
@@ -177,6 +232,7 @@ export class TaskGraphBroker {
       idempotencyKey: `graph:${this.graph.fingerprint}:node:${nodeId}:deps:${dependencyFingerprint}`,
       metadata: {
         graphId: this.graph.graphId,
+        runId: this.graph.runId,
         graphFingerprint: this.graph.fingerprint,
         nodeId,
         deps: [...node.deps],
@@ -248,6 +304,7 @@ export class TaskGraphBroker {
     return {
       schema: 'deus-task-graph-broker-snapshot/1',
       graphId: this.graph.graphId,
+      runId: this.graph.runId,
       graphFingerprint: this.graph.fingerprint,
       nodeCount: this.graph.nodes.length,
       counts,
