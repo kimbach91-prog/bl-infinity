@@ -1,0 +1,176 @@
+name: ARC3 Flash clean-room continuation hygiene contract
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/continuation_hygiene_transform.py
+      - .github/workflows/arc3-flash-continuation-hygiene-contract.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      GAME_ID: bp35-0a0ad940
+      RUNTIME_SECONDS: "1200"
+      TERMINAL_GRACE_SECONDS: "120"
+      CONCURRENCY: "1"
+      ANALYZER_TIMEOUT: "900"
+      SOURCE_NOTEBOOK_SHA256: 6cff5483a6240cfe249310778a68e58df6f164acca25e5b4504eeaade838c899
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile clean-room transformer
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/continuation_hygiene_transform.py
+
+      - name: Stage pinned Flash builder tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT="public_benchmark/arc3/kaggle_candidates/flash_next_340"
+          TMP="$RUNNER_TEMP/flash-continuation-contract"
+          mkdir -p "$TMP/scripts"
+          cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
+          cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
+          cp "$ROOT/upstream_flash_teardown_patch.py" "$TMP/scripts/flash_teardown_patch.py"
+          got="$(sha256sum "$TMP/arc-agi-flash-next-mtp.ipynb" | awk '{print $1}')"
+          test "$got" = "$SOURCE_NOTEBOOK_SHA256"
+          echo "CONT_ROOT=$TMP" >> "$GITHUB_ENV"
+
+      - name: Build matched base preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          python "$CONT_ROOT/scripts/build_flash_next_package.py" \
+            --kernel-id deusplaceholder/arc3-flash-cont-base-preflight \
+            --title "arc3 flash cont base preflight" \
+            --mode preflight \
+            --max-games 1 \
+            --game-id "$GAME_ID" \
+            --concurrency "$CONCURRENCY" \
+            --runtime-seconds "$RUNTIME_SECONDS" \
+            --terminal-grace-seconds "$TERMINAL_GRACE_SECONDS" \
+            --analyzer-timeout "$ANALYZER_TIMEOUT" \
+            --output-dir "$CONT_ROOT/build/base"
+          cp -a "$CONT_ROOT/build/base" "$CONT_ROOT/build/hygiene"
+          echo "BASE_DIR=$CONT_ROOT/build/base" >> "$GITHUB_ENV"
+          echo "HYGIENE_DIR=$CONT_ROOT/build/hygiene" >> "$GITHUB_ENV"
+
+      - name: Apply clean-room continuation transform to hygiene arm only
+        shell: bash
+        run: |
+          set -euo pipefail
+          NB="$HYGIENE_DIR/arc-agi3-qwen38-flash-next-mtp-preflight.ipynb"
+          python public_benchmark/arc3/kaggle_candidates/continuation_hygiene_transform.py \
+            --input-notebook "$NB" \
+            --output-notebook "$NB" \
+            --metadata "$HYGIENE_DIR/kernel-metadata.json" \
+            --kernel-id deusplaceholder/arc3-flash-continuation-hygiene-preflight \
+            --title "arc3 flash continuation hygiene preflight" \
+            --receipt continuation-transform-receipt.json
+
+      - name: Verify matched package contract and source-claim fence
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast, hashlib, json, os
+          from pathlib import Path
+
+          base_dir=Path(os.environ["BASE_DIR"])
+          hygiene_dir=Path(os.environ["HYGIENE_DIR"])
+          nb_name="arc-agi3-qwen38-flash-next-mtp-preflight.ipynb"
+          base_nb=json.loads((base_dir/nb_name).read_text())
+          hyg_nb=json.loads((hygiene_dir/nb_name).read_text())
+          base_meta=json.loads((base_dir/"kernel-metadata.json").read_text())
+          hyg_meta=json.loads((hygiene_dir/"kernel-metadata.json").read_text())
+
+          def code(c):
+              return "".join(c.get("source", [])) if c.get("cell_type")=="code" else ""
+          diffs=[
+              i for i,(a,b) in enumerate(zip(base_nb["cells"],hyg_nb["cells"]))
+              if a != b
+          ]
+          base_code="\n".join(code(c) for c in base_nb["cells"])
+          hyg_code="\n".join(code(c) for c in hyg_nb["cells"])
+          for label,nb in (("base",base_nb),("hygiene",hyg_nb)):
+              for i,c in enumerate(nb["cells"]):
+                  if c.get("cell_type")=="code":
+                      compile(code(c),f"{label}:cell-{i}","exec",flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
+
+          comparable_keys=(
+              "language","kernel_type","is_private","enable_gpu","enable_tpu",
+              "enable_internet","dataset_sources","competition_sources",
+              "kernel_sources","model_sources","docker_image","machine_shape",
+          )
+          checks={
+              "same_cell_count": len(base_nb["cells"])==len(hyg_nb["cells"]),
+              "exactly_one_cell_changed": len(diffs)==1,
+              "base_marker_absent": "DEUS_CONTINUATION_HYGIENE_ACTIVE" not in base_code,
+              "hygiene_marker_present": "DEUS_CONTINUATION_HYGIENE_ACTIVE" in hyg_code,
+              "same_provider_metadata": all(base_meta.get(k)==hyg_meta.get(k) for k in comparable_keys),
+              "same_code_file": base_meta.get("code_file")==hyg_meta.get("code_file"),
+              "base_is_private": base_meta.get("is_private") is True,
+              "internet_disabled": base_meta.get("enable_internet") is False,
+              "gpu_shape_same": base_meta.get("machine_shape")==hyg_meta.get("machine_shape"),
+          }
+          receipt={
+              "schema":"deus/arc3-flash-cleanroom-continuation-contract/1",
+              "source_hypothesis":{
+                  "source_repo":"canivel/kaggle",
+                  "source_commit":"c0c613391082a5209053ed108cfc2657dd7f3807",
+                  "repo_root_license":"NONE_REPORTED_BY_GITHUB",
+                  "implementation_code_copied":False,
+                  "reported_mechanism":"49 GAME_OVER episodes across 12 games; 0 idle post-game-over actions",
+                  "reported_bp35_game_over_episodes":13,
+                  "reported_levels_total":16,
+                  "reported_control_level_totals":[13,15,22],
+                  "score_lift_claimed":False,
+                  "interpretation":"HYGIENE_NONINFERIOR_SOURCE_CLAIM_ONLY",
+              },
+              "matched_contract":{
+                  "game_id":os.environ["GAME_ID"],
+                  "runtime_seconds":int(os.environ["RUNTIME_SECONDS"]),
+                  "terminal_grace_seconds":int(os.environ["TERMINAL_GRACE_SECONDS"]),
+                  "concurrency":int(os.environ["CONCURRENCY"]),
+                  "analyzer_timeout":int(os.environ["ANALYZER_TIMEOUT"]),
+                  "changed_cells":diffs,
+                  "base_notebook_sha256":hashlib.sha256((base_dir/nb_name).read_bytes()).hexdigest(),
+                  "hygiene_notebook_sha256":hashlib.sha256((hygiene_dir/nb_name).read_bytes()).hexdigest(),
+              },
+              "checks":checks,
+              "gate":"READY_FOR_AUTHENTICATED_MATCHED_HYGIENE_PREFLIGHT" if all(checks.values()) else "HOLD",
+              "truth":{
+                  "static_contract_only":True,
+                  "gpu_model_behavior_verified":False,
+                  "kaggle_auth_used":False,
+                  "provider_execution":False,
+                  "competition_submission":False,
+                  "submission_quota_spent":False,
+                  "candidate_promoted":False,
+                  "c8r2_primary_mutated":False,
+              },
+          }
+          Path("arc3-flash-continuation-hygiene-contract.json").write_text(
+              json.dumps(receipt,indent=2,sort_keys=True)+"\n"
+          )
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          assert all(checks.values()), checks
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-flash-continuation-hygiene-contract
+          path: |
+            continuation-transform-receipt.json
+            arc3-flash-continuation-hygiene-contract.json
+          if-no-files-found: error
