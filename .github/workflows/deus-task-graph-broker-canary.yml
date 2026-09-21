@@ -136,3 +136,21 @@ jobs:
           name: deus-task-graph-broker-canary-${{ github.run_id }}
           path: .deus/broker-canary/broker-canary-receipt.json
           if-no-files-found: error
+
+  railway-external:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute federation tasks on live Railway A/B workers
+        run: |
+          mkdir -p .deus/broker-canary
+          node runtime/federation/scripts/railway-live-canary.mjs | tee .deus/broker-canary/railway-live-canary.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-broker-railway-live-${{ github.run_id }}
+          path: .deus/broker-canary/railway-live-canary.json
+          if-no-files-found: error
