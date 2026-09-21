@@ -1,0 +1,42 @@
+name: DEUS OVH Anonymous S0 Canary
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-ovh-anon-s0-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Probe OVH anonymous AI Endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE='https://oai.endpoints.kepler.ai.cloud.ovh.net/v1'
+          MODEL='Meta-Llama-3_3-70B-Instruct'
+          cat >/tmp/payload.json <<'JSON'
+          {"model":"Meta-Llama-3_3-70B-Instruct","messages":[{"role":"user","content":"Reply exactly: DEUS_OVH_CANARY_OK"}],"temperature":0,"max_tokens":32,"stream":false}
+          JSON
+          CODE="$(curl -sS --max-time 90 -o /tmp/resp.json -w '%{http_code}' "$BASE/chat/completions" -H 'Content-Type: application/json' --data-binary @/tmp/payload.json)"
+          export CODE
+          python3 - <<'PY'
+          import json,hashlib,os
+          raw=open('/tmp/resp.json','rb').read()
+          code=int(os.environ['CODE'])
+          result={"schema":"deus-ovh-anon-canary/1","http_status":code,"sha256":hashlib.sha256(raw).hexdigest(),"auth":"NONE","data_class":"S0_PUBLIC"}
+          try:
+              p=json.loads(raw)
+          except Exception:
+              p={}
+          content=((p.get('choices') or [{}])[0].get('message') or {}).get('content','').strip()
+          result.update({"id":p.get("id"),"model":p.get("model"),"exact":content=="DEUS_OVH_CANARY_OK","content":content[:80],"message":p.get("message")})
+          print("DEUS_OVH_ANON_RECEIPT="+json.dumps(result,separators=(',',':')))
+          if code!=200 or content!="DEUS_OVH_CANARY_OK":
+              raise SystemExit("OVH_CANARY_NOT_PASS")
+          PY
