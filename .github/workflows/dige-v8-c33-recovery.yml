@@ -193,8 +193,8 @@ jobs:
           assert int(hs["curve_count"]) >= 350*24
           assert hs["points_per_curve"] == 12
           assert hs["root_radius_m"] < 0.00005
-          assert hs["c32_lower_central_root_count"] == 0
-          assert hs["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
+          assert hc["c32_lower_central_root_count"] == 0
+          assert hc["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
           assert r["appearance_selection"]["c33_guide_gated_groom"] is True
           assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-float(os.environ["GUIDE_DIST"])) < 1e-9
           assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
@@ -340,7 +340,8 @@ jobs:
           assert r["denoise_ab"]["search_only"] is False
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
-          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert r["hair_curve_metrics"]["c32_lower_central_root_count"] == 0
+          assert r["hair_curve_metrics"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
           assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-float(os.environ["SELECTED_GUIDE_DIST"])) < 1e-9
           assert abs(float(sel["selected_guide_dist_m"])-float(os.environ["SELECTED_GUIDE_DIST"])) < 1e-9
           summary={
