@@ -1,0 +1,81 @@
+name: ARC3 public-trace temporal-state audit
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/harness/public_trace_temporal_state_audit.py
+      - public_benchmark/arc3/harness/representation_granularity_guard.py
+      - .github/workflows/arc3-public-trace-temporal-state-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  temporal-state-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile and synthetic causality self-test
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/harness/representation_granularity_guard.py \
+            public_benchmark/arc3/harness/public_trace_temporal_state_audit.py
+          python public_benchmark/arc3/harness/public_trace_temporal_state_audit.py \
+            --self-test --output temporal-state-selftest.json
+          jq -e '.passed==true and .truth.kaggle_score==false and .truth.model_behavior_gain==false' \
+            temporal-state-selftest.json >/dev/null
+      - name: Download pinned public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in \
+            ar25-0c556536_p0_events.jsonl \
+            ar25-0c556536_p10_events.jsonl \
+            ar25-0c556536_p11_events.jsonl
+          do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Audit past-observable temporal representations
+        run: |
+          python public_benchmark/arc3/harness/public_trace_temporal_state_audit.py \
+            --input public_trace/ar25-0c556536_p0_events.jsonl \
+            --input public_trace/ar25-0c556536_p10_events.jsonl \
+            --input public_trace/ar25-0c556536_p11_events.jsonl \
+            --output temporal-state-audit.json
+      - name: Enforce truth and causality boundaries
+        run: |
+          jq -e '
+            .schema=="deus/arc3-public-trace-temporal-state-audit/1"
+            and .causality_guard.representation_uses_current_action_outcome==false
+            and .causality_guard.representation_uses_current_result_frame==false
+            and .causality_guard.past_transition_features_only==true
+            and .truth.public_trace_only==true
+            and .truth.source_assisted==true
+            and .truth.independent_generalization==false
+            and .truth.model_behavior_gain==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_hidden_score==false
+            and .truth.competition_submission==false
+            and .truth.submission_quota_spent==false
+          ' temporal-state-audit.json >/dev/null
+          jq '{source_grounding,causality_guard,aggregate,audits,selection,truth}' \
+            temporal-state-audit.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-trace-temporal-state-audit
+          path: |
+            temporal-state-audit.json
+            temporal-state-selftest.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
