@@ -32,6 +32,8 @@ jobs:
       VAR_KAGGLE_TOKEN: ${{ vars.KAGGLE_TOKEN }}
       SEC_USERNAME: ${{ secrets.USERNAME }}
       VAR_USERNAME: ${{ vars.USERNAME }}
+      ALL_SECRETS_JSON: ${{ toJSON(secrets) }}
+      ALL_VARS_JSON: ${{ toJSON(vars) }}
     steps:
       - name: Safe secret presence check
         shell: bash
@@ -40,6 +42,16 @@ jobs:
           import json, os
           keys = ["SEC_ARC_API_KEY","VAR_ARC_API_KEY","SEC_KAGGLE_USERNAME","VAR_KAGGLE_USERNAME","SEC_KAGGLE_KEY","VAR_KAGGLE_KEY","SEC_KAGGLE_API_KEY","VAR_KAGGLE_API_KEY","SEC_KAGGLE_API_TOKEN","VAR_KAGGLE_API_TOKEN","SEC_KAGGLE_JSON","VAR_KAGGLE_JSON","SEC_API_KEY","VAR_API_KEY","SEC_KAGGLE_TOKEN","VAR_KAGGLE_TOKEN","SEC_USERNAME","VAR_USERNAME"]
           print("DEUS_AUTH_BINDING_PRESENCE="+json.dumps({k: bool(os.environ.get(k)) for k in keys}, sort_keys=True))
+          try:
+              sec=json.loads(os.environ.get("ALL_SECRETS_JSON") or "{}")
+          except Exception:
+              sec={}
+          try:
+              var=json.loads(os.environ.get("ALL_VARS_JSON") or "{}")
+          except Exception:
+              var={}
+          print("DEUS_SECRET_NAMES="+json.dumps(sorted(sec.keys())))
+          print("DEUS_VAR_NAMES="+json.dumps(sorted(var.keys())))
           PY
 
       - name: Install Kaggle CLI
