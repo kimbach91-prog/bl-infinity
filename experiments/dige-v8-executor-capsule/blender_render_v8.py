@@ -765,9 +765,9 @@ def c28_gnm_skin_material():
         nt.links.new(tex.outputs["Object"],base_noise.inputs["Vector"])
         base_ramp=nt.nodes.new("ShaderNodeValToRGB")
         base_ramp.color_ramp.elements[0].position=.18
-        base_ramp.color_ramp.elements[0].color=((0.300,0.185,0.155,1) if C36_CANONICAL_APPEARANCE else ((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1)))
+        base_ramp.color_ramp.elements[0].color=((0.220,0.125,0.105,1) if C36_CANONICAL_APPEARANCE else ((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1)))
         base_ramp.color_ramp.elements[1].position=.82
-        base_ramp.color_ramp.elements[1].color=((0.480,0.315,0.270,1) if C36_CANONICAL_APPEARANCE else ((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1)))
+        base_ramp.color_ramp.elements[1].color=((0.365,0.225,0.190,1) if C36_CANONICAL_APPEARANCE else ((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1)))
         nt.links.new(base_noise.outputs["Fac"],base_ramp.inputs["Fac"])
 
         vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -2622,8 +2622,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     positions=[]
     radii=[]
-    base_radius=0.000034 if C36_CANONICAL_APPEARANCE else (0.000042 if C32_GNM_DERMAL_HAIR else 0.000055)
-    tip_radius=0.0000048 if C36_CANONICAL_APPEARANCE else (0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011)
+    base_radius=0.000046 if C36_CANONICAL_APPEARANCE else (0.000042 if C32_GNM_DERMAL_HAIR else 0.000055)
+    tip_radius=0.0000055 if C36_CANONICAL_APPEARANCE else (0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011)
     down=Vector((0.0,0.0,-1.0))
     inv_world=surface_obj.matrix_world.inverted()
     surf_rot=surface_obj.matrix_world.to_3x3()
@@ -2693,14 +2693,18 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
             undercoat=(k < undercoat_count)
             if C36_CANONICAL_APPEARANCE:
-                # Canonical reference is long, layered, dark hair. Preserve the scalp/root field
-                # but let strands transition from authored tangent flow into gravity-dominant lengths.
-                length=C36_HAIR_LENGTH_M*rng.uniform(.52,.72) if undercoat else C36_HAIR_LENGTH_M*rng.uniform(.82,1.10)
-                length=min(.44,max(.14,length))
-                lift=rng.uniform(.004,.010) if undercoat else rng.uniform(.007,.014)
+                # C36.1: short tangent undercoat owns scalp/crown coverage; outer strands
+                # preserve root flow for the first segment, then fall into long layers.
+                if undercoat:
+                    length=rng.uniform(.040,.075)
+                    lift=rng.uniform(.003,.007)
+                    amp=rng.uniform(.0008,.0024)
+                else:
+                    length=min(.44,max(.26,C36_HAIR_LENGTH_M*rng.uniform(.88,1.08)))
+                    lift=rng.uniform(.006,.012)
+                    amp=C36_HAIR_WAVE*rng.uniform(.70,1.15)
                 tip_clear=rng.uniform(.0010,.0025)
-                flow=(child_flow + child_cross*rng.uniform(-.06,.06)).normalized()
-                amp=C36_HAIR_WAVE*rng.uniform(.35,.70) if undercoat else C36_HAIR_WAVE*rng.uniform(.70,1.25)
+                flow=(child_flow + child_cross*rng.uniform(-.055,.055)).normalized()
             elif undercoat:
                 length=rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
                 lift=under_lift*rng.uniform(.78,1.08) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
@@ -2721,18 +2725,31 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                 bend=math.sin(math.pi*t)
                 sag=t*t
                 if C36_CANONICAL_APPEARANCE:
-                    side_sign=1.0 if root_j.x>=gnm_eye_mid.x else -1.0
-                    face_frame=max(0.0,min(1.0,(root_j.y+0.020)/0.060))
-                    fall=Vector((side_sign*(.13+.08*face_frame),-.10,-.985))
-                    fall.normalize()
                     wave=math.sin(math.tau*(1.15*t)+strand_phase)*bend
-                    p=(
-                        root_j
-                        + flow*(length*.16*bend)
-                        + fall*(length*t)
-                        + child_n*(lift*bend + tip_clear*t)
-                        + lateral*(amp*wave)
-                    )
+                    if undercoat:
+                        # Scalp shell: stay tangent to the head instead of immediately falling away.
+                        p=(
+                            root_j
+                            + flow*(length*t)
+                            + child_n*(lift*bend + tip_clear*t)
+                            + lateral*(amp*wave)
+                        )
+                    else:
+                        side_sign=1.0 if root_j.x>=gnm_eye_mid.x else -1.0
+                        face_frame=max(0.0,min(1.0,(root_j.y+0.020)/0.060))
+                        fall=Vector((side_sign*(.10+.07*face_frame),-.08,-.992))
+                        fall.normalize()
+                        turn=.30
+                        surf_t=min(1.0,t/turn)
+                        fall_t=max(0.0,(t-turn)/(1.0-turn))
+                        surf_len=min(.095,length*.28)
+                        p=(
+                            root_j
+                            + flow*(surf_len*surf_t)
+                            + fall*(length*.78*fall_t)
+                            + child_n*(lift*bend + tip_clear*t)
+                            + lateral*(amp*wave)
+                        )
                 else:
                     p=(
                         root_j
@@ -2809,6 +2826,28 @@ groom_surface=(c28_gnm_objects.get("skin") if C28_GNM_HEAD else body)
 if groom_surface is None:
     raise RuntimeError("C28 GNM skin surface missing for strand groom")
 hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,groom_surface,hair)
+if C36_CANONICAL_APPEARANCE:
+    brng=random.Random(20263637)
+    bangs=[]
+    for side in (-1.0,1.0):
+        for i in range(76):
+            u=(i+brng.uniform(-.25,.25))/75.0
+            u=max(0.0,min(1.0,u))
+            x=side*(.004+.070*u)
+            root_z=target_hairline_z+.006+.014*(u**1.4)+brng.uniform(-.0012,.0012)
+            root_y=gnm_eye_mid.y+.030+brng.uniform(-.0008,.0008)
+            length=brng.uniform(.105,.185)*(1.0-.18*u)
+            end_x=side*(.050+.035*u)+brng.uniform(-.003,.003)
+            end_z=root_z-length
+            end_y=root_y-.010-brng.uniform(.000,.010)
+            bangs.append([
+                (x,root_y,root_z),
+                (x+side*.008,root_y-.002,root_z-.020),
+                (side*(.030+.030*u),root_y-.006,root_z-length*.55),
+                (end_x,end_y,end_z),
+            ])
+    curve_object("DIGE_C36_CANONICAL_CURTAIN_BANGS",bangs,.000045,hair)
+    hair_curve_metrics["c36_curtain_bang_count"]=len(bangs)
 if C29_GNM_PRESENTATION:
     hair_obj.hide_render=True
     try:
@@ -2875,10 +2914,10 @@ def area(name,loc,energy,size,color,target=(0,0,1.25)):
     return o
 if C36_CANONICAL_APPEARANCE:
     face_target=(0,.010,1.585)
-    area("KEY",(1.25,1.70,2.10),260,1.85,(1.0,.92,.86),face_target)
-    area("FILL",(-1.45,1.75,1.82),62,2.65,(.90,.95,1.0),face_target)
-    area("RIM",(-.20,-1.80,2.15),72,1.45,(1.0,.82,.70),face_target)
-    area("DETAIL",(-.70,.95,1.72),28,.62,(1.0,.98,.96),face_target)
+    area("KEY",(1.35,1.80,2.12),175,1.95,(1.0,.92,.86),face_target)
+    area("FILL",(-1.55,1.85,1.82),30,2.80,(.90,.95,1.0),face_target)
+    area("RIM",(-.20,-1.80,2.15),46,1.55,(1.0,.82,.70),face_target)
+    area("DETAIL",(-.75,.95,1.72),12,.70,(1.0,.98,.96),face_target)
 elif C26_PHOTOMETRIC:
     face_target=(0,.020,1.575)
     area("KEY",(1.45,1.90,2.22),235,1.45,(1.0,.95,.90),face_target)
@@ -2972,7 +3011,7 @@ scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color
 scene.render.resolution_percentage=100
 scene.view_settings.look='AgX - Medium High Contrast'
 if C36_CANONICAL_APPEARANCE:
-    scene.view_settings.exposure=-0.10
+    scene.view_settings.exposure=-0.38
 elif C26_PHOTOMETRIC:
     scene.view_settings.exposure=-0.62
 elif C20_VISUAL_REPAIR:
