@@ -1,0 +1,97 @@
+name: ARC3 public visible continuity compaction A/B 128
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py'
+      - '.github/workflows/arc3-public-visible-continuity-compaction-ab-128.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  visible-continuity-compaction-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+      - name: Compile clean-room continuity A/B
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py
+      - name: Execute exact-model target-blind continuity A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_visible_continuity_compaction_ab_128.py \
+            --receipt "$GITHUB_WORKSPACE/public-visible-continuity-compaction-ab-128.json"
+      - name: Enforce truth boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public-visible-continuity-compaction-ab-128.json
+          sha256sum public-visible-continuity-compaction-ab-128.json > RECEIPT_SHA256SUMS_128.txt
+          jq -e '
+            .schema=="deus/arc3-visible-continuity-compaction-ab/1"
+            and .rung==128
+            and .change_kind=="VISIBLE_SELF_NOTE_CONTINUITY_COMPACTION_AB_NOT_OPAQUE_PROVIDER_STATE"
+            and .source_grounding.official_arc_prize_astra_report_date=="2026-09-03"
+            and .source_grounding.clean_room_implementation==true
+            and .source_grounding.opaque_provider_reasoning_state_available_on_this_route==false
+            and .source_grounding.opaque_provider_state_reproduction_claim==false
+            and .source_grounding.portable_visible_self_note_analogue_only==true
+            and .step_budget_per_arm==3
+            and .note_char_budget==240
+            and .truth.public_development_environment_only==true
+            and .truth.same_served_model_contract==true
+            and .truth.same_targets_probe_and_policy_budget==true
+            and .truth.same_response_contract_both_arms==true
+            and .truth.both_arms_generate_self_note==true
+            and .truth.baseline_discards_self_note==true
+            and .truth.treatment_carries_only_previous_bounded_self_note==true
+            and .truth.visible_self_note_is_fallible_working_memory_not_hidden_state==true
+            and .truth.provider_call_retries==false
+            and .truth.public_solution_trace_supplied_to_model==false
+            and .truth.game_source_read==false
+            and .truth.hidden_state_read==false
+            and .truth.target_blind==true
+            and .truth.promotion_requires_solver_behavior_gain==true
+            and .truth.efficiency_alone_cannot_promote==true
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_output_claim==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.leaderboard_score_claim==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+          ' public-visible-continuity-compaction-ab-128.json >/dev/null
+          jq '{source_grounding,summary,promotion_gate,inconclusive,truth}' \
+            public-visible-continuity-compaction-ab-128.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload behavior receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-visible-continuity-compaction-ab-128
+          path: |
+            public-visible-continuity-compaction-ab-128.json
+            RECEIPT_SHA256SUMS_128.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive execution
+        if: always()
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate // "INCONCLUSIVE_MISSING_GATE"' public-visible-continuity-compaction-ab-128.json 2>/dev/null || echo INCONCLUSIVE_MISSING_RECEIPT)"
+          case "$gate" in INCONCLUSIVE_*) exit 2;; *) exit 0;; esac
