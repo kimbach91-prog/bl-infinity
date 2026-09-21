@@ -1,0 +1,123 @@
+name: DEUS Gate Judge0 Batch Benchmark
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/deus-gate-judge0-batch-bench.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Run matched single-vs-batch Judge0 benchmark
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json, time, urllib.request
+          BASE="https://ce.judge0.com"
+          N=6
+
+          def call(method, path, body=None):
+              data=None
+              sent=0
+              headers={"Content-Type":"application/json","User-Agent":"DEUS-Gate-Bench/1"}
+              if body is not None:
+                  data=json.dumps(body,separators=(",",":")).encode()
+                  sent=len(data)
+              req=urllib.request.Request(BASE+path,data=data,headers=headers,method=method)
+              t=time.perf_counter()
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  raw=r.read()
+                  status=r.status
+              return json.loads(raw.decode()), sent, len(raw), (time.perf_counter()-t)*1000, status
+
+          langs,_,_,_,_=call("GET","/languages/")
+          py=[x for x in langs if "Python" in x.get("name","")]
+          exact=[x for x in py if "3.11.2" in x.get("name","")]
+          lang=(exact or py)[-1]
+          lid=lang["id"]
+
+          sources=[]
+          expected=[]
+          for i in range(N):
+              seed=1000+i
+              code=f"""s={seed}\nacc=0\nfor j in range(20000):\n    acc=(acc*1315423911 + (j^s)) & 0xffffffffffffffff\nprint(f'{{acc:016x}}')\n"""
+              val=0
+              for j in range(20000):
+                  val=(val*1315423911 + (j^seed)) & 0xffffffffffffffff
+              sources.append(code)
+              expected.append(f"{val:016x}")
+
+          def done(item):
+              sid=item.get("status_id")
+              if sid is None and isinstance(item.get("status"),dict): sid=item["status"].get("id")
+              return sid not in (1,2,None)
+
+          # Baseline: N independent create+poll streams.
+          b_calls=b_sent=b_recv=0
+          b_http_ms=0.0
+          b_results=[]
+          b0=time.perf_counter()
+          for src in sources:
+              obj,sent,recv,ms,status=call("POST","/submissions?base64_encoded=false&wait=false",{"source_code":src,"language_id":lid})
+              b_calls+=1;b_sent+=sent;b_recv+=recv;b_http_ms+=ms
+              tok=obj["token"]
+              while True:
+                  obj,sent,recv,ms,status=call("GET",f"/submissions/{tok}?base64_encoded=false&fields=stdout,status_id,time,memory")
+                  b_calls+=1;b_sent+=sent;b_recv+=recv;b_http_ms+=ms
+                  if done(obj):
+                      b_results.append(obj)
+                      break
+                  time.sleep(0.2)
+          b_wall=(time.perf_counter()-b0)*1000
+
+          # Gate: one batch create + batch poll.
+          g_calls=g_sent=g_recv=0
+          g_http_ms=0.0
+          g0=time.perf_counter()
+          batch={"submissions":[{"source_code":src,"language_id":lid} for src in sources]}
+          obj,sent,recv,ms,status=call("POST","/submissions/batch?base64_encoded=false",batch)
+          g_calls+=1;g_sent+=sent;g_recv+=recv;g_http_ms+=ms
+          toks=[x["token"] for x in obj]
+          while True:
+              token_csv=",".join(toks)
+              obj,sent,recv,ms,status=call("GET",f"/submissions/batch?tokens={token_csv}&base64_encoded=false&fields=token,stdout,status_id,time,memory")
+              g_calls+=1;g_sent+=sent;g_recv+=recv;g_http_ms+=ms
+              items=obj["submissions"]
+              if all(done(x) for x in items):
+                  g_results=items
+                  break
+              time.sleep(0.2)
+          g_wall=(time.perf_counter()-g0)*1000
+
+          def outs(items):
+              return [(x.get("stdout") or "").strip() for x in items]
+          b_out=outs(b_results)
+          g_out=outs(g_results)
+          exact_base=b_out==expected
+          exact_gate=g_out==expected
+          cross_equal=b_out==g_out
+
+          result={
+            "schema":"DEUS-GATE-JUDGE0-BATCH/1",
+            "n":N,
+            "language":lang,
+            "baseline":{"calls":b_calls,"wall_ms":round(b_wall,3),"http_ms":round(b_http_ms,3),"sent_body_bytes":b_sent,"recv_body_bytes":b_recv,"exact":exact_base},
+            "gate":{"calls":g_calls,"wall_ms":round(g_wall,3),"http_ms":round(g_http_ms,3),"sent_body_bytes":g_sent,"recv_body_bytes":g_recv,"exact":exact_gate},
+            "cross_equal":cross_equal,
+            "call_reduction":b_calls-g_calls,
+            "call_ratio":round(b_calls/g_calls,4) if g_calls else None,
+            "wall_gain":round(b_wall/g_wall,4) if g_wall else None,
+            "total_bytes_baseline":b_sent+b_recv,
+            "total_bytes_gate":g_sent+g_recv,
+            "byte_ratio":round((b_sent+b_recv)/(g_sent+g_recv),4) if (g_sent+g_recv) else None,
+          }
+          print("DEUS_GATE_BENCH_JSON="+json.dumps(result,separators=(",",":")))
+          if not (exact_base and exact_gate and cross_equal):
+              raise SystemExit("quality gate failed")
+          PY
