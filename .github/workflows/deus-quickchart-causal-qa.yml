@@ -1,0 +1,96 @@
+name: DEUS QuickChart Causal QA
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-quickchart-causal-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Causal QuickChart replay with exact preimage and dual render
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          python3 - <<'PY' > qa/request.json
+          import json
+          nonce="DEUS_QC_CAUSAL_QA_20260921_R1"
+          req={
+            "width":320,
+            "height":180,
+            "devicePixelRatio":1,
+            "format":"png",
+            "backgroundColor":"white",
+            "chart":{
+              "type":"bar",
+              "data":{
+                "labels":["A","B","C"],
+                "datasets":[{"label":"DEUS_QC_QA","data":[3,1,4]}]
+              },
+              "options":{
+                "animation":False,
+                "plugins":{
+                  "legend":{"display":False},
+                  "title":{"display":True,"text":nonce}
+                },
+                "scales":{"y":{"beginAtZero":True}}
+              }
+            }
+          }
+          print(json.dumps(req,separators=(',',':'),sort_keys=True))
+          PY
+          for n in 1 2; do
+            code="$(curl -fsS --max-time 45 -D "qa/headers$n.txt" -o "qa/render$n.png" -w '%{http_code}' https://quickchart.io/chart -H 'Content-Type: application/json' --data-binary @qa/request.json)"
+            test "$code" = "200"
+            printf '%s\n' "$code" > "qa/http$n.txt"
+          done
+          python3 - <<'PY'
+          import hashlib,json,pathlib,struct,time
+          def sha(p): return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
+          def png_info(p):
+            b=pathlib.Path(p).read_bytes()
+            assert b[:8] == b'\x89PNG\r\n\x1a\n'
+            w,h=struct.unpack(">II",b[16:24])
+            return len(b),w,h
+          request=pathlib.Path("qa/request.json").read_bytes()
+          r1=pathlib.Path("qa/render1.png").read_bytes()
+          r2=pathlib.Path("qa/render2.png").read_bytes()
+          b1,w1,h1=png_info("qa/render1.png")
+          b2,w2,h2=png_info("qa/render2.png")
+          assert (w1,h1)==(320,180)
+          assert (w2,h2)==(320,180)
+          assert b1>1000 and b2>1000
+          s1=hashlib.sha256(r1).hexdigest()
+          s2=hashlib.sha256(r2).hexdigest()
+          assert s1==s2, (s1,s2)
+          receipt={
+            "schema":"deus-quickchart-causal-qa/1",
+            "qa_runner":"github-hosted-ubuntu",
+            "nonce":"DEUS_QC_CAUSAL_QA_20260921_R1",
+            "request_sha256":hashlib.sha256(request).hexdigest(),
+            "render1_sha256":s1,
+            "render2_sha256":s2,
+            "dual_render_equal":True,
+            "width":w1,"height":h1,
+            "render_bytes":b1,
+            "headers1_sha256":sha("qa/headers1.txt"),
+            "headers2_sha256":sha("qa/headers2.txt"),
+            "aggregate_credit_mutation":False,
+            "truth":"CAUSAL_PREIMAGE_AND_DUAL_REPLAY_PASS_NE_FROZEN_MANIFEST_MUTATION_NE_GLOBAL_AGGREGATE_PROMOTION"
+          }
+          pathlib.Path("qa/receipt.json").write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("DEUS_QUICKCHART_QA_RECEIPT="+json.dumps(receipt,separators=(',',':')))
+          PY
+      - name: Upload exact QA custody bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-quickchart-causal-qa
+          path: qa/
+          retention-days: 30
