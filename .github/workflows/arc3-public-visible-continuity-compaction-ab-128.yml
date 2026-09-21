@@ -6,6 +6,7 @@ on:
       - deus/arc3-kaggle-rank-climb-20260921
     paths:
       - 'public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py'
+      - 'public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128_twostage.py'
       - '.github/workflows/arc3-public-visible-continuity-compaction-ab-128.yml'
   workflow_dispatch:
 
@@ -23,17 +24,18 @@ jobs:
           python-version: '3.12'
       - name: Install pinned official ARC toolkit
         run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
-      - name: Compile clean-room continuity A/B
+      - name: Compile clean-room continuity A/B and representation repair
         run: |
           python -m py_compile \
             public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
-            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py
-      - name: Execute exact-model target-blind continuity A/B
+            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py \
+            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128_twostage.py
+      - name: Execute exact-model target-blind continuity A/B with two-stage click decoding
         shell: bash
         run: |
           set -euo pipefail
           cd public_benchmark/arc3/kaggle_candidates
-          python public_visible_continuity_compaction_ab_128.py \
+          python public_visible_continuity_compaction_ab_128_twostage.py \
             --receipt "$GITHUB_WORKSPACE/public-visible-continuity-compaction-ab-128.json"
       - name: Enforce truth boundary
         if: always()
@@ -53,6 +55,11 @@ jobs:
             and .source_grounding.portable_visible_self_note_analogue_only==true
             and .step_budget_per_arm==3
             and .note_char_budget==240
+            and .representation_repair.prior_run_id==35636800270
+            and .representation_repair.repair=="TWO_STAGE_ACTION_THEN_COORDINATE_DECODING"
+            and .representation_repair.blind_retry_of_failed_policy_calls==false
+            and .representation_repair.same_protocol_both_arms==true
+            and .representation_repair.coordinate_provider_retries==false
             and .truth.public_development_environment_only==true
             and .truth.same_served_model_contract==true
             and .truth.same_targets_probe_and_policy_budget==true
@@ -68,6 +75,9 @@ jobs:
             and .truth.target_blind==true
             and .truth.promotion_requires_solver_behavior_gain==true
             and .truth.efficiency_alone_cannot_promote==true
+            and .truth.failed_branch_repaired_by_representation_change_not_blind_retry==true
+            and .truth.click_action_representation_two_stage==true
+            and .truth.coordinate_provider_retries==false
             and .truth.kaggle_data_read==false
             and .truth.kaggle_execution==false
             and .truth.kaggle_output_claim==false
@@ -77,7 +87,7 @@ jobs:
             and .truth.owner_score_claim==false
             and .truth.independent_generalization_claim==false
           ' public-visible-continuity-compaction-ab-128.json >/dev/null
-          jq '{source_grounding,summary,promotion_gate,inconclusive,truth}' \
+          jq '{source_grounding,representation_repair,summary,promotion_gate,inconclusive,truth}' \
             public-visible-continuity-compaction-ab-128.json | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Upload behavior receipt
         if: always()
