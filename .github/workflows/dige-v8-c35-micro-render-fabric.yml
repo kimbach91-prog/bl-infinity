@@ -202,7 +202,7 @@ jobs:
           assert r['sample_shard_samples']==int(os.environ['SHARD_SAMPLES'])
           assert r['sample_shard_seed']==int(os.environ['SHARD_SEED'])
           assert r['device']=='CPU'
-          assert r['hair_surface_contract']['c32_lower_central_root_count']==0
+          assert r['hair_curve_metrics']['c32_lower_central_root_count']==0
           assert r['denoise_ab']['sample_shard'] is True
           assert r['denoise_ab']['denoised'] is None
           assert len(r['outputs'])==1 and r['outputs'][0]['sample_shard'] is True
@@ -211,6 +211,7 @@ jobs:
           PY
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: DIGE-C35-SHARD-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
           path: |
