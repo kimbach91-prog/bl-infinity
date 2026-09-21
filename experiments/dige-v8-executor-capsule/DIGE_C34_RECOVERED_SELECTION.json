@@ -1,0 +1,52 @@
+{
+  "schema": "DIGE_C34_RECOVERED_SELECTION_V1",
+  "source_run_id": 35591781070,
+  "source_head_sha": "4da29679e1bb5c4e67fbb4c098a72910a366d177",
+  "resource_plan_digest": "2d53503ee2f353e3f0de03c50fa363daec70065099edf9224d140d184fe12c7d",
+  "recovery_reason": "All three render and evaluator steps succeeded; candidate artifact upload was skipped only because a later receipt assertion referenced hair_surface_contract.c32_lower_central_root_count instead of hair_curve_metrics.c32_lower_central_root_count.",
+  "candidates": [
+    {
+      "candidate_id": "d01",
+      "guide_dist_m": 0.014,
+      "job_id": 106308377025,
+      "hard_gate_pass": true,
+      "score": 91.1296799264217,
+      "central_dark_fraction": 0.020051799123650047,
+      "central_mean_luminance": 148.21841430664062,
+      "side_symmetry_delta": 0.01988324374313627
+    },
+    {
+      "candidate_id": "d02",
+      "guide_dist_m": 0.021,
+      "job_id": 106308377031,
+      "hard_gate_pass": true,
+      "score": 91.18288085735578,
+      "central_dark_fraction": 0.019970353960678276,
+      "central_mean_luminance": 148.21925354003906,
+      "side_symmetry_delta": 0.05444771978498353
+    },
+    {
+      "candidate_id": "d03",
+      "guide_dist_m": 0.028,
+      "job_id": 106308377029,
+      "hard_gate_pass": true,
+      "score": 90.40903995324103,
+      "central_dark_fraction": 0.01998664299327263,
+      "central_mean_luminance": 148.22283935546875,
+      "side_symmetry_delta": 0.08860759493670889
+    }
+  ],
+  "selected_id": "d02",
+  "selected_guide_dist_m": 0.021,
+  "selected_score": 91.18288085735578,
+  "refine_recommended": false,
+  "work_reuse": {
+    "coarse_candidates_reused_from_logs": 3,
+    "rerendered_coarse_candidates": 0,
+    "planned_dense_candidates": 7,
+    "originally_materialized_candidates": 3,
+    "avoided_from_dense_plan": 4,
+    "additional_avoided_due_recovery_reuse": 3
+  },
+  "truth_boundary": "RECOVERED_FROM_EXECUTED_RENDER_AND_EVALUATOR_LOG_RECEIPTS__NO_CANDIDATE_IMAGE_ARTIFACTS_WERE_PRESERVED__FINALIST_MUST_EXECUTE_AND_BE_VISUALLY_AUDITED"
+}
