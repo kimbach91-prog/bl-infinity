@@ -1,0 +1,294 @@
+name: DIGE V8 C36 Prebuilt Scene Micro Render Fabric
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c36-prebuilt-scene-microfabric.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/build_c36_prebuilt_scene.sh'
+      - 'experiments/dige-v8-executor-capsule/render_prebuilt_sample_shard.py'
+      - 'experiments/dige-v8-executor-capsule/compile_c35_micro_render_plan.mjs'
+      - 'experiments/dige-v8-executor-capsule/reduce_sample_shards_blender.py'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c36-prebuilt-scene-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  compile-micro-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.compile.outputs.matrix }}
+      physical_shards: ${{ steps.compile.outputs.physical_shards }}
+      plan_digest: ${{ steps.compile.outputs.plan_digest }}
+      logical_microcells: ${{ steps.compile.outputs.logical_microcells }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: compile
+        env:
+          DEUS_LOGICAL_NAMESPACE: '1000000000000'
+          DEUS_SIMUL_VCPU_LB: '28'
+          DEUS_GPU_COUNT: '0'
+          DEUS_VRAM_GIB: '0'
+          DIGE_RENDER_VCPU_PER_SHARD: '4'
+          DIGE_MAX_PHYSICAL_SHARDS: '7'
+          DIGE_FRAME_WIDTH: '900'
+          DIGE_FRAME_HEIGHT: '900'
+          DIGE_TOTAL_SAMPLES: '384'
+          DIGE_LOGICAL_PASS_COUNT: '1'
+          DIGE_BASE_SEED: '20263030'
+          DIGE_MICRO_PLAN_OUT: 'experiments/dige-v8-executor-capsule/runtime/DIGE_C36_MICRO_RENDER_PLAN.json'
+        run: |
+          set -euxo pipefail
+          node experiments/dige-v8-executor-capsule/compile_c35_micro_render_plan.mjs
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('experiments/dige-v8-executor-capsule/runtime/DIGE_C36_MICRO_RENDER_PLAN.json','utf8'));
+          if(p.logicalNamespace!=='1000000000000') throw new Error('1T namespace missing');
+          if(p.logicalMicrocells!=='311040000') throw new Error('logical microcell mismatch');
+          if(p.physicalShards!==7) throw new Error('expected7 shards');
+          if(p.matrix.reduce((s,x)=>s+x.samples,0)!==384) throw new Error('sample conservation failed');
+          console.log(JSON.stringify({verdict:'PASS',planDigest:p.planDigest,logicalMicrocells:p.logicalMicrocells,physicalShards:p.physicalShards}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C36-MICRO-PLAN-${{ github.event.pull_request.head.sha }}
+          path: experiments/dige-v8-executor-capsule/runtime/DIGE_C36_MICRO_RENDER_PLAN.json
+          if-no-files-found: error
+          retention-days: 14
+
+  build-prebuilt-scene:
+    needs: compile-micro-plan
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Reuse C34 verified shared runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+      - name: Build and pack scene exactly once
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          sh build_c36_prebuilt_scene.sh | tee runtime/c36_scene_build.log
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('runtime/c36_prebuilt')
+          r=json.loads((root/'DIGE_C36_SCENE_BUILD_RECEIPT.json').read_text())
+          assert r['state']=='SCENE_BUILD_VERIFIED'
+          assert r['scene_sha256']
+          assert (root/'DIGE_C36_PREBUILT_SCENE.blend').is_file()
+          assert r.get('c32_lower_central_root_count') in (0,None)
+          print(json.dumps({'verdict':'PASS','scene_sha256':r['scene_sha256'],'hair_curve_count':r.get('hair_curve_count')}))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C36-PREBUILT-SCENE-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/c36_prebuilt/*
+            experiments/dige-v8-executor-capsule/runtime/c36_scene_build.log
+          if-no-files-found: error
+          retention-days: 14
+
+  c36-sample-shard:
+    needs: [compile-micro-plan, build-prebuilt-scene]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        include: ${{ fromJSON(needs.compile-micro-plan.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-PREBUILT-SCENE-${{ github.event.pull_request.head.sha }}
+          path: experiments/dige-v8-executor-capsule/runtime/c36_prebuilt
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+      - name: Render sample shard from exact prebuilt scene
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_SAMPLE_SHARD_ID: ${{ matrix.id }}
+          DIGE_SAMPLE_SHARD_SAMPLES: ${{ matrix.samples }}
+          DIGE_SAMPLE_SHARD_SEED: ${{ matrix.seed }}
+          DIGE_SHARD_OUT_DIR: runtime/renders/c36_prebuilt_${{ matrix.id }}
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend --python-exit-code 1 --python render_prebuilt_sample_shard.py | tee runtime/c36_prebuilt_${{ matrix.id }}.log
+      - name: Verify shard and scene identity
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          SHARD_ID: ${{ matrix.id }}
+          SHARD_SAMPLES: ${{ matrix.samples }}
+          SHARD_SEED: ${{ matrix.seed }}
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          build=json.loads(pathlib.Path('runtime/c36_prebuilt/DIGE_C36_SCENE_BUILD_RECEIPT.json').read_text())
+          root=pathlib.Path('runtime/renders/c36_prebuilt_'+os.environ['SHARD_ID'])
+          r=json.loads((root/'DIGE_C36_SHARD_RECEIPT.json').read_text())
+          assert r['state']=='EXECUTED'
+          assert r['shard_id']==os.environ['SHARD_ID']
+          assert r['samples']==int(os.environ['SHARD_SAMPLES'])
+          assert r['seed']==int(os.environ['SHARD_SEED'])
+          assert r['scene_sha256']==build['scene_sha256']
+          assert (root/('DIGE_SAMPLE_SHARD_'+os.environ['SHARD_ID']+'.exr')).is_file()
+          print(json.dumps({'verdict':'PASS','id':r['shard_id'],'samples':r['samples'],'scene_sha256':r['scene_sha256'],'elapsed_seconds':r['elapsed_seconds']}))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DIGE-C36-SHARD-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c36_prebuilt_${{ matrix.id }}/DIGE_SAMPLE_SHARD_*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c36_prebuilt_${{ matrix.id }}/DIGE_C36_SHARD_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/c36_prebuilt_${{ matrix.id }}.log
+          if-no-files-found: error
+          retention-days: 14
+
+  reduce-prebuilt-shards:
+    needs: [compile-micro-plan, build-prebuilt-scene, c36-sample-shard]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: DIGE-C36-SHARD-*-${{ github.event.pull_request.head.sha }}
+          path: micro-shards
+          merge-multiple: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-MICRO-PLAN-${{ github.event.pull_request.head.sha }}
+          path: micro-plan
+      - uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-PREBUILT-SCENE-${{ github.event.pull_request.head.sha }}
+          path: prebuilt-scene
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+      - name: Reduce linear EXR shards
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python experiments/dige-v8-executor-capsule/reduce_sample_shards_blender.py -- --root micro-shards --out-dir experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce --expected-samples 384
+      - name: Evaluate combined preview
+        run: |
+          python -m pip install --disable-pip-version-check -q pillow numpy
+          python experiments/dige-v8-executor-capsule/evaluate_c33_candidate.py --image experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/DIGE_C35_COMBINED_PREVIEW.png --out experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/DIGE_C36_COMBINED_VISUAL_METRICS.json --candidate-id c36-prebuilt --guide-dist 0.021
+      - name: Build C36 efficiency receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/vnd.github+json" "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/jobs?per_page=100" > /tmp/jobs.json
+          python - <<'PY'
+          import json, pathlib, datetime
+          plan=json.load(open('micro-plan/DIGE_C36_MICRO_RENDER_PLAN.json'))
+          reduce=json.load(open('experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/DIGE_C35_MICRO_REDUCE_RECEIPT.json'))
+          visual=json.load(open('experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/DIGE_C36_COMBINED_VISUAL_METRICS.json'))
+          build=json.load(open('prebuilt-scene/DIGE_C36_SCENE_BUILD_RECEIPT.json'))
+          jobs=json.load(open('/tmp/jobs.json'))['jobs']
+          shard=[j for j in jobs if j['name'].startswith('c36-sample-shard')]
+          build_jobs=[j for j in jobs if j['name']=='build-prebuilt-scene']
+          if len(shard)!=7 or len(build_jobs)!=1: raise SystemExit('job topology mismatch')
+          def ts(x): return datetime.datetime.fromisoformat(x.replace('Z','+00:00')).timestamp()
+          events=[]; durations=[]
+          for j in shard:
+            s,e=ts(j['started_at']),ts(j['completed_at']); events += [(s,1),(e,-1)]; durations.append(e-s)
+          events.sort(key=lambda x:(x[0],-x[1]))
+          active=mx=0
+          for _,d in events: active+=d; mx=max(mx,active)
+          window=max(ts(j['completed_at']) for j in shard)-min(ts(j['started_at']) for j in shard)
+          bj=build_jobs[0]
+          receipt={
+            'schema':'deus-dige-prebuilt-scene-microfabric/1.0',
+            'verdict':'PASS',
+            'logicalMicrocells':plan['logicalMicrocells'],
+            'physicalShards':plan['physicalShards'],
+            'totalSamples':reduce['total_samples'],
+            'sceneSha256':build['scene_sha256'],
+            'sceneBuildJobSeconds':ts(bj['completed_at'])-ts(bj['started_at']),
+            'observedMaxShardJobOverlap':mx,
+            'sumShardJobSeconds':sum(durations),
+            'shardWallClockSeconds':window,
+            'parallelismObservationRatio':sum(durations)/window if window else None,
+            'c35BaselineSumShardJobSeconds':544,
+            'c35BaselineShardWallClockSeconds':124,
+            'sumShardJobSecondsDeltaVsC35':sum(durations)-544,
+            'shardWallClockDeltaVsC35':window-124,
+            'combinedExr':reduce['combined_exr'],
+            'combinedPng':reduce['combined_png'],
+            'combinedVisualMetrics':visual,
+            'truthBoundary':'C36_REUSES_ONE_PACKED_SCENE_ACROSS7_RENDER_SHARDS__TIMINGS_INCLUDE_RUNNER_AND_BLENDER_DOWNLOAD_OVERHEAD__DELTA_VS_C35_IS_RUN_OBSERVATION_NOT_UNIVERSAL_SPEEDUP'
+          }
+          out=pathlib.Path('experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/DIGE_C36_PREBUILT_MICROFABRIC_RECEIPT.json')
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C36-PREBUILT-MICROFABRIC-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/c36_micro_reduce/*
+            micro-plan/DIGE_C36_MICRO_RENDER_PLAN.json
+            prebuilt-scene/DIGE_C36_SCENE_BUILD_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 14
