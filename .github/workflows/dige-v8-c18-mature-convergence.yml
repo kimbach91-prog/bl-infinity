@@ -1,4 +1,4 @@
-name: DIGE V8 C31 GNM Regional Face Appearance
+name: DIGE V8 C32 Dermal Hair Refinement
 
 on:
   pull_request:
@@ -13,11 +13,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c31-gnm-face-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c32-dermal-hair-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c31-finalist:
+  c32-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
@@ -128,12 +128,12 @@ jobs:
           diffuseTexture young_eurasian_female_diffuse.png
           EOF
 
-      - name: Render C31 regional face-appearance finalist
+      - name: Render C32 dermal-hair finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c31_gnm_face
+          DIGE_OUTPUT_TAG: c32_gnm_dermal_hair
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '0'
           DIGE_C19_PHOTO_LIGHTING: '0'
@@ -162,14 +162,15 @@ jobs:
           DIGE_C29_GNM_PRESENTATION: '1'
           DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
           DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_MPFB2_SRC: /tmp/mpfb2/src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
           DIGE_HAIR_ASSET_KEY: hair_short03
-          DIGE_HAIR_STRANDS_PER_ROOT: '16'
-          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.70'
-          DIGE_HAIR_FRONT_SAFE_BLEND: '0.96'
+          DIGE_HAIR_STRANDS_PER_ROOT: '28'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.92'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.92'
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
@@ -196,24 +197,24 @@ jobs:
           DIGE_SKIN_COAT_WEIGHT: '0.001'
           DIGE_SKIN_COAT_ROUGHNESS: '0.45'
           DIGE_SAMPLES_PREVIEW: '48'
-          DIGE_SAMPLES_HERO: '320'
+          DIGE_SAMPLES_HERO: '384'
           DIGE_RENDER_SEED: '20263030'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c31_gnm_face.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c32_gnm_dermal_hair.log
 
-      - name: Verify C31 receipt
+      - name: Verify C32 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c31_gnm_face")
+          root=pathlib.Path("runtime/renders/c32_gnm_dermal_hair")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C31_GNM_REGIONAL_FACE_APPEARANCE_V1"
+          assert r["appearance_candidate"]=="C32_GNM_DERMAL_HAIR_REFINEMENT_V1"
           g=r["c28_gnm_head"]
           assert g["enabled"] is True
           assert g["source_repo"]=="google/GNM"
@@ -242,8 +243,15 @@ jobs:
           assert g["c31_mask_vertex_count"] >= 12000
           assert g["c31_wetline_count"] == 2
           assert g["c31_mouth_gap_count"] == 1
-          assert g["skin_contract"]["model"]=="C31_GNM_REGIONAL_RANDOM_WALK_SKIN"
+          assert g["skin_contract"]["model"]=="C32_GNM_DERMAL_MULTISCALE_SKIN"
           assert r["appearance_selection"]["c31_gnm_face_appearance"] is True
+          assert r["appearance_selection"]["c32_gnm_dermal_hair"] is True
+          assert r["hair_surface_contract"]["style"]=="C32_GNM_DERMAL_FIBER_GROOM_V1"
+          assert r["hair_surface_contract"]["curve_count"] >= 24000
+          assert r["hair_surface_contract"]["points_per_curve"] == 12
+          assert r["hair_surface_contract"]["root_radius_m"] < 0.00005
+          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert r["hair_surface_contract"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
           assert r["appearance_selection"]["c31_mask_vertex_count"] >= 12000
           assert r["appearance_selection"]["c31_wetline_count"] == 2
           assert r["appearance_selection"]["c31_mouth_gap_count"] == 1
@@ -252,29 +260,29 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C31_GNM_REGIONAL_FACE_APPEARANCE_RECEIPT_V1",
+            "schema":"DIGE_C32_GNM_DERMAL_HAIR_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
             "c28_gnm_head":g,
             "skin_model":r["skin_model"],
             "hair_surface_contract":r["hair_surface_contract"],
-            "claim_ceiling":"C31_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "claim_ceiling":"C32_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
-          (root/"DIGE_C31_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          (root/"DIGE_C32_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C31 evidence
+      - name: Upload C32 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C31-GNM-FACE-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C32-DERMAL-HAIR-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c31_gnm_face/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c31_gnm_face/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c31_gnm_face/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/c32_gnm_dermal_hair/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c32_gnm_dermal_hair/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c32_gnm_dermal_hair/*.json
             experiments/dige-v8-executor-capsule/runtime/gnm_c28/*.json
-            experiments/dige-v8-executor-capsule/runtime/c31_gnm_face.log
+            experiments/dige-v8-executor-capsule/runtime/c32_gnm_dermal_hair.log
             experiments/dige-v8-executor-capsule/runtime/c31_gnm_build.log
           if-no-files-found: error
           retention-days: 14
