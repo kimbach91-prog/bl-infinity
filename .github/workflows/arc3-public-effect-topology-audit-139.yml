@@ -22,15 +22,33 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Compile and self-test
+      - name: Compile and corrected adjacency self-test
         run: |
           set -euo pipefail
           python -m py_compile \
             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
             public_benchmark/arc3/kaggle_candidates/public_effect_topology_audit_139.py
           cd public_benchmark/arc3/kaggle_candidates
-          python public_effect_topology_audit_139.py --self-test \
-            --output "$GITHUB_WORKSPACE/effect-topology-selftest-139.json"
+          python - <<'PY'
+          import json
+          import public_effect_topology_audit_139 as m
+          a=[[0]*8 for _ in range(6)]
+          b=[row[:] for row in a]
+          a[2][2]=1
+          b[2][3]=1
+          r=m.analyze_transition(a,b,'RIGHT')
+          # Source and destination cells are orthogonally adjacent, therefore the
+          # binary difference mask is one connected component, not two.
+          invariants={
+              'same_shape': r['same_shape'] is True,
+              'two_changed_cells': r['changed_cells']==2,
+              'adjacent_diff_is_one_component': r['diff_components']==1,
+          }
+          d={'schema':'deus/arc3-public-effect-topology-selftest/2','rung':139,'passed':all(invariants.values()),'invariants':invariants,'record':r}
+          open('../../..//effect-topology-selftest-139.json','w').write(json.dumps(d,indent=2,sort_keys=True)+'\n')
+          assert d['passed']
+          print(json.dumps(d,sort_keys=True))
+          PY
       - name: Download exact pinned public traces
         run: |
           set -euo pipefail
