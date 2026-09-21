@@ -1,0 +1,95 @@
+name: ARC3 BlockRun free-route identity matrix 106
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - '.github/workflows/arc3-blockrun-free-route-identity-106.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  identity-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Probe bounded free-model identity matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, subprocess, time, hashlib
+          from pathlib import Path
+
+          models = [
+              'nvidia/nemotron-3.5-lightning',
+              'nvidia/nemotron-3-nano-omni-30b-a3b-reasoning',
+              'nvidia/llama-3.2-11b-vision',
+              'nvidia/nemotron-3-ultra-550b',
+          ]
+          rows=[]
+          for i, model in enumerate(models):
+              req={
+                  'model':model,
+                  'messages':[{'role':'user','content':'Reply exactly ALPHA.'}],
+                  'temperature':0,
+                  'max_tokens':8,
+              }
+              Path('request.json').write_text(json.dumps(req))
+              out=Path(f'response-{i}.txt')
+              cp=subprocess.run([
+                  'curl','--silent','--show-error','--max-time','30',
+                  '-H','content-type: application/json','--data-binary','@request.json',
+                  '-o',str(out),'-w','%{http_code}',
+                  'https://blockrun.ai/api/v1/chat/completions'
+              ],text=True,capture_output=True)
+              body=out.read_text(errors='replace') if out.exists() else ''
+              served=None; content=''
+              try:
+                  obj=json.loads(body)
+                  served=obj.get('model')
+                  content=((obj.get('choices') or [{}])[0].get('message') or {}).get('content','')
+              except Exception:
+                  pass
+              status=int(cp.stdout.strip()) if cp.stdout.strip().isdigit() else None
+              rows.append({
+                  'requested_model':model,
+                  'http_status':status,
+                  'curl_exit':cp.returncode,
+                  'served_model':served,
+                  'identity_preserved':bool(status==200 and served==model),
+                  'content':content[:80],
+                  'body_excerpt':body[:300],
+                  'body_sha256':hashlib.sha256(body.encode()).hexdigest(),
+              })
+              if i != len(models)-1:
+                  time.sleep(2.0)
+          receipt={
+              'schema':'deus/arc3-blockrun-free-route-identity/1',
+              'rows':rows,
+              'exact_identity_routes':[r['requested_model'] for r in rows if r['identity_preserved']],
+              'truth':{
+                  'provider_probe_only':True,
+                  'model_behavior_benchmark':False,
+                  'kaggle_execution':False,
+                  'kaggle_submission_attempted':False,
+                  'submission_quota_spent':False,
+              },
+          }
+          Path('identity-matrix.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+          cat identity-matrix.json >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload identity receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-blockrun-free-route-identity-106
+          path: |
+            identity-matrix.json
+            response-*.txt
+          if-no-files-found: error
+          retention-days: 30
