@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test": "node --test --test-concurrency=1 test/*.test.mjs",
+    "test": "node --test --test-force-exit --test-concurrency=1 test/*.test.mjs",
     "test:life-persistence": "node scripts/verify-life-persistence.mjs",
     "verify:life-journal": "node scripts/verify-life-journal.mjs",
     "start": "node dev-server.mjs",
