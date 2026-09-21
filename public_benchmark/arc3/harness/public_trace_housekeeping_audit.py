@@ -3,11 +3,19 @@
 
 This module tests a representation hypothesis on public action traces without
 claiming a Kaggle score or solver improvement. The hypothesis is deliberately
-narrow: high-frequency changes confined to the outer board bands can be split
-from the structural board state before a state/action key is built. We never
-silently discard the fact that a band was masked: the mask coordinates are part
-of the representation, and promotion is still subject to the existing
-representation-granularity guard.
+narrow: high-frequency changes confined to outer board bands can be separated
+from the structural core before a state/action key is built.
+
+Two encodings are audited:
+1. boundary_band_action: a diagnostic full-size mask. It preserves board shape
+   but may cost *more* characters because sentinels and mask metadata add tax.
+2. boundary_core_action: a repaired compact projection that physically omits
+   only supported boundary rows/columns while retaining their coordinates and
+   original shape. If the proposed omission would collapse the usable core, it
+   fails closed to the unmasked board.
+
+The fact that rows/columns were omitted is always part of the representation.
+Promotion is still subject to the independent representation-granularity guard.
 
 Public grounding (behavioral evidence only; no implementation copied):
 - Tufalabs/duck-harness public example-run traces, pinned at
@@ -17,8 +25,9 @@ Public grounding (behavioral evidence only; no implementation copied):
   1.624 across two passes per arm, while a state-graph layer later regressed.
 
 Those public-development results are source claims, not owner Kaggle receipts.
-This utility independently asks only whether a boundary-band representation has
-non-degenerate repeat support on pinned public traces.
+This utility independently asks only whether boundary-band/core representations
+have non-degenerate repeat support on pinned public traces and whether the core
+projection actually reduces representation footprint.
 """
 
 from __future__ import annotations
@@ -36,7 +45,6 @@ TUFA_REPO = "Tufalabs/duck-harness"
 TUFA_COMMIT = "7652836056c59e044f093e3c13ed7438c814169e"
 SONPHAM_REPO = "sonpham-org/arc-3"
 SONPHAM_MANIFEST = "harnesses/ffa7g/MANIFEST.md"
-
 
 Grid = tuple[tuple[int, ...], ...]
 
@@ -115,10 +123,23 @@ class BoundaryBandTracker:
 
 def _masked_board(grid: Grid, rows: tuple[int, ...], cols: tuple[int, ...]) -> list[list[Any]]:
     row_set, col_set = set(rows), set(cols)
-    out: list[list[Any]] = []
-    for r, src in enumerate(grid):
-        out.append(["*" if r in row_set or c in col_set else value for c, value in enumerate(src)])
-    return out
+    return [
+        ["*" if r in row_set or c in col_set else value for c, value in enumerate(src)]
+        for r, src in enumerate(grid)
+    ]
+
+
+def _core_projection(
+    grid: Grid, rows: tuple[int, ...], cols: tuple[int, ...]
+) -> tuple[list[list[int]], tuple[int, ...], tuple[int, ...]]:
+    """Return compact structural core; fail closed if omission collapses the core."""
+    row_set, col_set = set(rows), set(cols)
+    kept_rows = [r for r in range(len(grid)) if r not in row_set]
+    kept_cols = [c for c in range(len(grid[0])) if c not in col_set]
+    if len(kept_rows) < 2 or len(kept_cols) < 2:
+        return [list(row) for row in grid], (), ()
+    core = [[grid[r][c] for c in kept_cols] for r in kept_rows]
+    return core, rows, cols
 
 
 def _rep_chars(value: Any) -> int:
@@ -133,9 +154,7 @@ def load_events(path: Path) -> list[dict[str, Any]]:
         obj = json.loads(raw)
         if not isinstance(obj, dict):
             raise ValueError(f"{path}:{line_no}: JSON object required")
-        if obj.get("type") not in {"initial", "action"}:
-            continue
-        if "board" not in obj:
+        if obj.get("type") not in {"initial", "action"} or "board" not in obj:
             continue
         _as_grid(obj["board"])
         events.append(obj)
@@ -150,7 +169,9 @@ def trace_rows(events: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict
     rows: list[dict[str, Any]] = []
     raw_chars = 0
     masked_chars = 0
+    core_chars = 0
     masked_transition_count = 0
+    core_projection_count = 0
 
     prev = events[0]
     prev_grid = first
@@ -175,8 +196,18 @@ def trace_rows(events: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict
             "masked_cols": list(mask_cols),
             "action": action,
         }
+        core, omitted_rows, omitted_cols = _core_projection(prev_grid, mask_rows, mask_cols)
+        core_rep = {
+            "core": core,
+            "shape": [len(prev_grid), len(prev_grid[0])],
+            "omitted_rows": list(omitted_rows),
+            "omitted_cols": list(omitted_cols),
+            "action": action,
+        }
         if mask_rows or mask_cols:
             masked_transition_count += 1
+        if omitted_rows or omitted_cols:
+            core_projection_count += 1
 
         outcome = {
             "board_changed": bool(event.get("board_changed")),
@@ -192,11 +223,13 @@ def trace_rows(events: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict
                 "representations": {
                     "raw_board_action": raw_rep,
                     "boundary_band_action": masked_rep,
+                    "boundary_core_action": core_rep,
                 },
             }
         )
         raw_chars += _rep_chars(raw_rep)
         masked_chars += _rep_chars(masked_rep)
+        core_chars += _rep_chars(core_rep)
         tracker.observe(prev_grid, current)
         prev = event
         prev_grid = current
@@ -204,8 +237,10 @@ def trace_rows(events: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict
     return rows, {
         "transitions": len(rows),
         "masked_transitions": masked_transition_count,
+        "core_projected_transitions": core_projection_count,
         "raw_representation_chars": raw_chars,
         "boundary_band_representation_chars": masked_chars,
+        "boundary_core_representation_chars": core_chars,
     }
 
 
@@ -214,6 +249,7 @@ def audit_paths(paths: Iterable[Path]) -> dict[str, Any]:
     traces: list[dict[str, Any]] = []
     total_raw = 0
     total_masked = 0
+    total_core = 0
     for path in paths:
         rows, stats = trace_rows(load_events(path))
         stats["path"] = str(path)
@@ -221,15 +257,19 @@ def audit_paths(paths: Iterable[Path]) -> dict[str, Any]:
         all_rows.extend(rows)
         total_raw += int(stats["raw_representation_chars"])
         total_masked += int(stats["boundary_band_representation_chars"])
+        total_core += int(stats["boundary_core_representation_chars"])
 
     if not all_rows:
         raise ValueError("no transitions")
 
     raw = audit_representation(all_rows, "raw_board_action")
     masked = audit_representation(all_rows, "boundary_band_action")
-    char_ratio = total_masked / total_raw if total_raw else 1.0
+    core = audit_representation(all_rows, "boundary_core_action")
+    masked_ratio = total_masked / total_raw if total_raw else 1.0
+    core_ratio = total_core / total_raw if total_raw else 1.0
+    core_evidence = core.promotable_evidence and core_ratio < 1.0
     return {
-        "schema": "deus/arc3-public-trace-housekeeping-audit/1",
+        "schema": "deus/arc3-public-trace-housekeeping-audit/2",
         "source_grounding": {
             "public_trace_repo": TUFA_REPO,
             "public_trace_commit": TUFA_COMMIT,
@@ -250,15 +290,20 @@ def audit_paths(paths: Iterable[Path]) -> dict[str, Any]:
             "transitions": len(all_rows),
             "raw_representation_chars": total_raw,
             "boundary_band_representation_chars": total_masked,
-            "char_ratio_vs_raw": round(char_ratio, 6),
-            "char_reduction_pct": round((1.0 - char_ratio) * 100.0, 3),
+            "boundary_band_char_ratio_vs_raw": round(masked_ratio, 6),
+            "boundary_band_char_reduction_pct": round((1.0 - masked_ratio) * 100.0, 3),
+            "boundary_core_representation_chars": total_core,
+            "boundary_core_char_ratio_vs_raw": round(core_ratio, 6),
+            "boundary_core_char_reduction_pct": round((1.0 - core_ratio) * 100.0, 3),
         },
         "audits": {
             "raw_board_action": asdict(raw),
             "boundary_band_action": asdict(masked),
+            "boundary_core_action": asdict(core),
         },
         "promotion": {
-            "representation_evidence": "PASS" if masked.promotable_evidence else "HOLD",
+            "boundary_band_representation_evidence": "PASS" if masked.promotable_evidence else "HOLD",
+            "boundary_core_representation_evidence": "PASS" if core_evidence else "HOLD",
             "candidate_promotion": False,
             "reason": "public-trace representation evidence cannot establish model or Kaggle gain",
         },
@@ -267,8 +312,8 @@ def audit_paths(paths: Iterable[Path]) -> dict[str, Any]:
 
 def self_test() -> dict[str, Any]:
     # A synthetic HUD-like top-row frontier changes every turn while a player moves
-    # through the interior. The tracker may compress the supported boundary band but
-    # must never mask the interior player cells.
+    # through the interior. Compression may omit the supported boundary row but must
+    # preserve the interior player cells in the compact core.
     h = w = 12
     events: list[dict[str, Any]] = []
     board = [[0 for _ in range(w)] for _ in range(h)]
@@ -298,11 +343,15 @@ def self_test() -> dict[str, Any]:
     rows, stats = trace_rows(events)
     assert len(rows) == 18
     assert stats["masked_transitions"] > 0
+    assert stats["core_projected_transitions"] > 0
     masked = rows[-1]["representations"]["boundary_band_action"]
+    core = rows[-1]["representations"]["boundary_core_action"]
     assert 0 in masked["masked_rows"]
     assert masked["board"][6][3] != "*" and masked["board"][6][4] != "*"
+    assert 0 in core["omitted_rows"]
+    assert any(7 in row for row in core["core"])
     return {
-        "schema": "deus/arc3-public-trace-housekeeping-selftest/1",
+        "schema": "deus/arc3-public-trace-housekeeping-selftest/2",
         "passed": True,
         "stats": stats,
         "truth": {"synthetic_only": True, "kaggle_score": False, "model_behavior_gain": False},
