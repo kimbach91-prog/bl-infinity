@@ -394,6 +394,7 @@ HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16"
 HAIR_ACCENT_LENGTH_SCALE=float(os.environ.get("DIGE_HAIR_ACCENT_LENGTH_SCALE","0.72"))
 HAIR_FRONT_SAFE_BLEND=float(os.environ.get("DIGE_HAIR_FRONT_SAFE_BLEND","0.92"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
+SEARCH_ONLY=os.environ.get("DIGE_SEARCH_ONLY","0").strip()=="1"
 HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
 
 def make_skin():
@@ -2921,22 +2922,40 @@ for vid,loc,target,lens,fstop,w,h in views:
     bpy.ops.render.render(write_still=True)
     outputs.append({"view":vid,"file":p.name,"sha256":sha(p),"lens_mm":lens,"fstop":fstop,"width":w,"height":h})
 
-# Controlled same-seed hero A/B: RAW multilayer EXR vs denoised PNG at identical sample count.
+# Controlled same-seed hero evidence. Search-only C33 does not spend RAW+A/B work
+# because root-mask leakage is visible in the already-denoised preview.
 hero_samples=int(os.environ.get("DIGE_SAMPLES_HERO","256"))
 hero_seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
 aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
 scene.render.resolution_x=900; scene.render.resolution_y=900
 scene.cycles.seed=hero_seed
+if SEARCH_ONLY:
+    raw=None
+    denoised=OUT/"04_HERO85_V8.png"
+    denoise_ab={
+      "search_only":True,
+      "seed":hero_seed,
+      "samples":int(os.environ.get("DIGE_SAMPLES_PREVIEW","128")),
+      "raw_aov":None,
+      "denoised":{"file":denoised.name,"sha256":sha(denoised)}
+    }
+else:
+    scene.cycles.use_denoising=False; scene.cycles.samples=hero_samples
+    scene.render.image_settings.file_format='OPEN_EXR'; scene.render.image_settings.media_type='MULTI_LAYER_IMAGE'; scene.render.image_settings.color_depth='32'
+    raw=OUT/"04_HERO85_RAW_AOV_V8.exr"; scene.render.filepath=str(raw)
+    bpy.ops.render.render(write_still=True)
 
-scene.cycles.use_denoising=False; scene.cycles.samples=hero_samples
-scene.render.image_settings.file_format='OPEN_EXR'; scene.render.image_settings.media_type='MULTI_LAYER_IMAGE'; scene.render.image_settings.color_depth='32'
-raw=OUT/"04_HERO85_RAW_AOV_V8.exr"; scene.render.filepath=str(raw)
-bpy.ops.render.render(write_still=True)
-
-scene.cycles.use_denoising=True; scene.cycles.samples=hero_samples; scene.cycles.seed=hero_seed
-scene.render.image_settings.media_type='IMAGE'; scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
-denoised=OUT/"04_HERO85_DENOISED_V8.png"; scene.render.filepath=str(denoised)
-bpy.ops.render.render(write_still=True)
+    scene.cycles.use_denoising=True; scene.cycles.samples=hero_samples; scene.cycles.seed=hero_seed
+    scene.render.image_settings.media_type='IMAGE'; scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
+    denoised=OUT/"04_HERO85_DENOISED_V8.png"; scene.render.filepath=str(denoised)
+    bpy.ops.render.render(write_still=True)
+    denoise_ab={
+      "search_only":False,
+      "seed":hero_seed,
+      "samples":hero_samples,
+      "raw_aov":{"file":raw.name,"sha256":sha(raw)},
+      "denoised":{"file":denoised.name,"sha256":sha(denoised)}
+    }
 
 bpy.ops.wm.save_as_mainfile(filepath=str(OUT/"DIGE_V8_scene.blend"))
 receipt={
@@ -3137,7 +3156,7 @@ receipt={
    "renderer_network_calls":0
  },
  "outputs":outputs,
- "denoise_ab":{"seed":hero_seed,"samples":hero_samples,"raw_aov":{"file":raw.name,"sha256":sha(raw)},"denoised":{"file":denoised.name,"sha256":sha(denoised)}},
+ "denoise_ab":denoise_ab,
  "scene_sha256":sha(OUT/"DIGE_V8_scene.blend"),
  "evidence_boundary":{"gpu_claim_requires_actual_mode_gpu":True,"hyperreal_certified":False,"identity_bound":False},
  "claim_ceiling":"PRODUCTION_TOPOLOGY_PLUS_CYCLES_PATH_TRACED_CANDIDATE; HYPERREAL_CERTIFICATION_REQUIRES_VISUAL_AND_LHYPER_AUDIT; DEUS_IDENTITY_NOT_BOUND"
