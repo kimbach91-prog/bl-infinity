@@ -1,0 +1,105 @@
+name: ARC3 public retrodiction dominance repair 133
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_retrodiction_prefix_bind_132.py
+      - public_benchmark/arc3/kaggle_candidates/public_retrodiction_dominance_repair_133.py
+      - .github/workflows/arc3-public-retrodiction-dominance-repair-133.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  dominance-repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile and dominance semantics self-test
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_retrodiction_prefix_bind_132.py \
+            public_benchmark/arc3/kaggle_candidates/public_retrodiction_dominance_repair_133.py
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_retrodiction_dominance_repair_133.py \
+            --self-test \
+            --output "$GITHUB_WORKSPACE/retrodiction-dominance-selftest-133.json"
+      - name: Download exact pinned public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in \
+            ar25-0c556536_p0_events.jsonl \
+            ar25-0c556536_p10_events.jsonl \
+            ar25-0c556536_p11_events.jsonl
+          do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Re-execute prefix-only trace bind with repaired dominance gate
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_retrodiction_dominance_repair_133.py \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p0_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
+            --output "$GITHUB_WORKSPACE/retrodiction-public-133.json"
+      - name: Enforce repaired truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('retrodiction-public-133.json'))
+          assert d['schema'] == 'deus/arc3-public-retrodiction-prefix-bind/2'
+          assert d['rung'] == 133
+          assert d['repair']['classification_changed'] is True
+          assert d['repair']['representation_changed'] is False
+          assert d['causality_contract']['prediction_uses_future_transitions'] is False
+          assert d['truth']['source_assisted_replay'] is True
+          assert d['truth']['independent_generalization_claim'] is False
+          assert d['truth']['solver_behavior_gain_claim'] is False
+          assert d['truth']['model_execution'] is False
+          assert d['truth']['gpu_execution'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['submission_quota_spent'] is False
+          assert d['promotion']['candidate_model_promotion'] is False
+          raw=d['aggregate']['visible_board_action']
+          level=d['aggregate']['visible_board_level_action']
+          prev=d['aggregate']['visible_board_prev_effect_action']
+          assert raw['transitions'] == 823
+          assert raw['prediction_accuracy'] == 1.0
+          assert raw['wrong'] == 0
+          assert raw['final_conflict_keys'] == 0
+          assert level == raw
+          assert prev['predictions'] < raw['predictions']
+          assert d['next_gate_signal'] == 'NO_STRICT_CONTEXT_RETRODICTION_GAIN'
+          assert all(not x['strict_context_improvement'] for x in d['context_comparison'].values())
+          print(json.dumps({
+              'rung': d['rung'],
+              'next_gate_signal': d['next_gate_signal'],
+              'raw': raw,
+              'context_comparison': d['context_comparison'],
+              'truth_boundary': 'PUBLIC_PREFIX_REPLAY_ONLY_NO_MODEL_OR_KAGGLE_GAIN',
+          }, sort_keys=True))
+          PY
+      - name: Upload rung 133 receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-retrodiction-dominance-repair-133
+          path: |
+            retrodiction-public-133.json
+            retrodiction-dominance-selftest-133.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
