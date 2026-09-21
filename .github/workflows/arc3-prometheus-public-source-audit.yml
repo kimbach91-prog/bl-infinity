@@ -1,0 +1,145 @@
+name: ARC3 Prometheus pinned public-source audit
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - .github/workflows/arc3-prometheus-public-source-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout DEUS repository
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned Prometheus public source
+        uses: actions/checkout@v4
+        with:
+          repository: ZubMono/arc-prize-2026
+          ref: 0ef5e5832099005871993ce1dd8bc09f2479c17f
+          path: _upstream/prometheus
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Verify source identity and provider metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd _upstream/prometheus
+          test "$(git rev-parse HEAD)" = "0ef5e5832099005871993ce1dd8bc09f2479c17f"
+          test -f LICENSE
+          test -f arc-agi3-kaggle-agent/notebooks/kernel-metadata.json
+          jq -e '
+            .competition_sources == ["arc-prize-2026-arc-agi-3"]
+            and .enable_gpu == false
+            and .enable_tpu == false
+            and .enable_internet == false
+            and .model_sources == []
+          ' arc-agi3-kaggle-agent/notebooks/kernel-metadata.json >/dev/null
+
+      - name: Run bounded source/runtime contract tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --quiet pytest
+          cd _upstream/prometheus/arc-agi3-kaggle-agent
+          python submission/build_agent.py
+          python -m pytest -q             tests/test_build_agent.py             tests/test_no_network_smoke.py             tests/test_bl21744_gate_comparable.py             tests/test_bl22855_veredicto_de_merge.py             | tee "$RUNNER_TEMP/prometheus-pytest.txt"
+
+      - name: Emit source-grounding receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+
+          repo = Path("_upstream/prometheus")
+          root = repo / "arc-agi3-kaggle-agent"
+          metadata_path = root / "notebooks/kernel-metadata.json"
+          measurement_path = root / "tests/support/costos_medidos.py"
+          generated = root / "agent/my_agent.py"
+          test_output = (Path(os.environ["RUNNER_TEMP"]) / "prometheus-pytest.txt").read_text(errors="replace")
+          summary_line = next(
+              (line.strip() for line in reversed(test_output.splitlines()) if "passed" in line or "failed" in line),
+              "",
+          )
+          measurement = measurement_path.read_text(encoding="utf-8")
+          curve = {}
+          m = re.search(
+              r"400 acciones -> ([0-9.]+) niveles; 800 -> ([0-9.]+); 1200 -> ([0-9.]+); 1600 -> ([0-9.]+)",
+              measurement,
+          )
+          if m:
+              curve = {
+                  "400": float(m.group(1)),
+                  "800": float(m.group(2)),
+                  "1200": float(m.group(3)),
+                  "1600": float(m.group(4)),
+              }
+
+          metadata = json.loads(metadata_path.read_text())
+          receipt = {
+              "schema": "deus/arc3-prometheus-public-source-audit/1",
+              "upstream": {
+                  "repo": "ZubMono/arc-prize-2026",
+                  "commit": "0ef5e5832099005871993ce1dd8bc09f2479c17f",
+                  "license": "MIT-0",
+              },
+              "hashes": {
+                  "license_sha256": hashlib.sha256((repo / "LICENSE").read_bytes()).hexdigest(),
+                  "kernel_metadata_sha256": hashlib.sha256(metadata_path.read_bytes()).hexdigest(),
+                  "generated_agent_sha256": hashlib.sha256(generated.read_bytes()).hexdigest(),
+                  "measurement_fixture_sha256": hashlib.sha256(measurement_path.read_bytes()).hexdigest(),
+              },
+              "metadata": {
+                  "kernel_id": metadata.get("id"),
+                  "enable_gpu": metadata.get("enable_gpu"),
+                  "enable_internet": metadata.get("enable_internet"),
+                  "competition_sources": metadata.get("competition_sources"),
+                  "model_sources": metadata.get("model_sources"),
+              },
+              "tests": {
+                  "selected_pytest_exit": 0,
+                  "summary": summary_line,
+                  "build_agent_compiled": True,
+                  "no_network_smoke_in_selected_suite": True,
+                  "comparability_gate_in_selected_suite": True,
+                  "noise_aware_merge_verdict_in_selected_suite": True,
+              },
+              "source_claims": {
+                  "published_budget_curve_levels": curve,
+                  "curve_is_official_kaggle_leaderboard_score": False,
+                  "leaderboard_receipt_verified_by_this_audit": False,
+              },
+              "truth": {
+                  "public_source_and_selected_tests_verified": True,
+                  "official_kaggle_score_verified": False,
+                  "deus_reproduction_on_kaggle": False,
+                  "candidate_promoted": False,
+                  "competition_submission": False,
+                  "submission_quota_spent": False,
+              },
+          }
+          Path("arc3-prometheus-public-source-audit.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-prometheus-public-source-audit
+          path: arc3-prometheus-public-source-audit.json
+          if-no-files-found: error
