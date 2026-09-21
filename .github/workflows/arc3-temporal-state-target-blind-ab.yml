@@ -1,3 +1,4 @@
+# Target-blind public-development rung; no Kaggle side effects or submission quota.
 name: ARC3 temporal-state target-blind public-development A/B
 
 on:
