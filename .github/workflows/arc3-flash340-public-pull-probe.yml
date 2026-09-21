@@ -33,8 +33,7 @@ jobs:
           kaggle kernels pull izukia/arc-agi3-flash-next-mtp-full/1 -p exact-pull -m >pull.stdout 2>pull.stderr
           rc=$?
           set -e
-          printf '%s
-' "$rc" > pull.rc
+          printf '%s\\n' "$rc" > pull.rc
           echo "pull_rc=$rc" >> "$GITHUB_OUTPUT"
           echo "PULL_RC=$rc"
           sed -n '1,120p' pull.stdout || true
