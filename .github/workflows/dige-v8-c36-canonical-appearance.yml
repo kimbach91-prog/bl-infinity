@@ -23,7 +23,7 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - id: D
+          - id: E
             jaw: '0.88'
             eye_open: '0.76'
             eye_globe: '0.93'
@@ -62,6 +62,7 @@ jobs:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
           DIGE_SEARCH_ONLY: '1'
+          DIGE_SEARCH_DENOISE: '0'
           DIGE_OUTPUT_TAG: c36_${{ matrix.id }}
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C25_MATURE_STACK: '1'
@@ -92,8 +93,8 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
-          DIGE_SAMPLES_PREVIEW: '64'
-          DIGE_SAMPLES_HERO: '64'
+          DIGE_SAMPLES_PREVIEW: '96'
+          DIGE_SAMPLES_HERO: '96'
           DIGE_RENDER_SEED: '20263636'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
