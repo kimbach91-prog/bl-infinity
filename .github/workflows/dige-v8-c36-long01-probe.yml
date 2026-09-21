@@ -1,0 +1,62 @@
+name: DIGE C36 MakeHuman Long01 Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c36-long01-probe.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  probe-long01:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Download and verify MakeHuman CC0 system pack
+        run: |
+          set -euxo pipefail
+          URL=https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          ZIP=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 5 --retry-delay 4 "$URL" -o "$ZIP"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $ZIP" | sha256sum -c -
+          unzip -Z1 "$ZIP" | grep '^hair/long01/' | sort | tee /tmp/long01-files.txt
+          test -s /tmp/long01-files.txt
+          mkdir -p probe/long01
+          while IFS= read -r p; do
+            case "$p" in
+              *.obj|*.mhclo|*.png|*.jpg|*.mhmat)
+                unzip -p "$ZIP" "$p" > "probe/long01/$(basename "$p")"
+                ;;
+            esac
+          done < /tmp/long01-files.txt
+          find probe/long01 -type f -maxdepth 1 -print0 | sort -z | xargs -0 sha256sum | tee probe/long01/SHA256SUMS.txt
+          python - <<'PY'
+          import json, pathlib, hashlib
+          root=pathlib.Path('probe/long01')
+          files=[]
+          for p in sorted(root.iterdir()):
+              if not p.is_file() or p.name=='PROBE.json':
+                  continue
+              h=hashlib.sha256(p.read_bytes()).hexdigest()
+              files.append({'name':p.name,'sha256':h,'size':p.stat().st_size})
+          rec={
+            'schema':'DIGE_C36_LONG01_PROBE_V1',
+            'source_page':'https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html',
+            'pack_sha256':'b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107',
+            'license':'CC0',
+            'files':files,
+          }
+          (root/'PROBE.json').write_text(json.dumps(rec,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(rec,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-${{ github.event.pull_request.head.sha }}
+          path: probe/long01/
+          if-no-files-found: error
+          retention-days: 14
