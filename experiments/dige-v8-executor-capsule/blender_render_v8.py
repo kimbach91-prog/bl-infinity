@@ -405,6 +405,7 @@ HAIR_ACCENT_LENGTH_SCALE=float(os.environ.get("DIGE_HAIR_ACCENT_LENGTH_SCALE","0
 HAIR_FRONT_SAFE_BLEND=float(os.environ.get("DIGE_HAIR_FRONT_SAFE_BLEND","0.92"))
 RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 SEARCH_ONLY=os.environ.get("DIGE_SEARCH_ONLY","0").strip()=="1"
+SEARCH_DENOISE=os.environ.get("DIGE_SEARCH_DENOISE","1").strip()=="1"
 HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
 
 def make_skin():
@@ -836,17 +837,17 @@ def c28_gnm_skin_material():
         nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
         nt.links.new(bs.outputs[0],out.inputs["Surface"])
         return m,{
-            "model":"C32_GNM_DERMAL_MULTISCALE_SKIN" if C32_GNM_DERMAL_HAIR else "C31_GNM_REGIONAL_RANDOM_WALK_SKIN",
+            "model":"C36_CANONICAL_PBR_SKIN_V1" if C36_CANONICAL_APPEARANCE else ("C32_GNM_DERMAL_MULTISCALE_SKIN" if C32_GNM_DERMAL_HAIR else "C31_GNM_REGIONAL_RANDOM_WALK_SKIN"),
             "mask_attribute":"C31_FaceMask",
-            "base_color_range":[[0.245,0.082,0.042],[0.445,0.190,0.102]],
-            "lip_color":[0.42,0.075,0.068],
-            "blush_color":[0.46,0.135,0.088],
-            "roughness_range":([0.46,0.64] if C32_GNM_DERMAL_HAIR else [0.44,0.60]),
-            "subsurface_weight":0.045 if C32_GNM_DERMAL_HAIR else 0.070,
-            "subsurface_scale":0.00064 if C32_GNM_DERMAL_HAIR else 0.00082,
-            "pore_scale":2400.0 if C32_GNM_DERMAL_HAIR else 1900.0,
-            "micro_scale":9000.0 if C32_GNM_DERMAL_HAIR else 6200.0,
-            "bump_distance":0.000052 if C32_GNM_DERMAL_HAIR else 0.000070,
+            "base_color_range":([[0.220,0.125,0.105],[0.365,0.225,0.190]] if C36_CANONICAL_APPEARANCE else [[0.245,0.082,0.042],[0.445,0.190,0.102]]),
+            "lip_color":[0.30,0.060,0.065] if C36_CANONICAL_APPEARANCE else [0.42,0.075,0.068],
+            "blush_color":[0.34,0.105,0.095] if C36_CANONICAL_APPEARANCE else [0.46,0.135,0.088],
+            "roughness_range":([0.38,0.57] if C36_CANONICAL_APPEARANCE else ([0.46,0.64] if C32_GNM_DERMAL_HAIR else [0.44,0.60])),
+            "subsurface_weight":0.030 if C36_CANONICAL_APPEARANCE else (0.045 if C32_GNM_DERMAL_HAIR else 0.070),
+            "subsurface_scale":0.00090 if C36_CANONICAL_APPEARANCE else (0.00064 if C32_GNM_DERMAL_HAIR else 0.00082),
+            "pore_scale":760.0 if C36_CANONICAL_APPEARANCE else (2400.0 if C32_GNM_DERMAL_HAIR else 1900.0),
+            "micro_scale":2400.0 if C36_CANONICAL_APPEARANCE else (9000.0 if C32_GNM_DERMAL_HAIR else 6200.0),
+            "bump_distance":0.000038 if C36_CANONICAL_APPEARANCE else (0.000052 if C32_GNM_DERMAL_HAIR else 0.000070),
         }
     if C29_GNM_PRESENTATION:
         nt=m.node_tree
@@ -1932,6 +1933,26 @@ if C28_GNM_HEAD:
         c28_hairline_warp_vertices+=1
     hair_obj.data.update()
 
+    if C36_CANONICAL_APPEARANCE:
+        src=c28_gnm_objects.get("skin")
+        if src is None:
+            raise RuntimeError("C36 scalp shell requires GNM skin")
+        scalp=src.copy(); scalp.data=src.data.copy(); scalp.name="DIGE_C36_SCALP_SHADOW_SHELL"
+        bpy.context.collection.objects.link(scalp)
+        bm=bmesh.new(); bm.from_mesh(scalp.data)
+        kill=[]
+        for v in bm.verts:
+            p=v.co
+            if p.z < target_hairline_z-.006 or (p.y > gnm_eye_mid.y+.043 and p.z < target_hairline_z+.055):
+                kill.append(v)
+        bmesh.ops.delete(bm,geom=kill,context='VERTS')
+        bm.to_mesh(scalp.data); bm.free(); scalp.data.update()
+        for v in scalp.data.vertices:
+            v.co += v.normal*0.00030
+        scalp.data.update(); scalp.data.materials.clear()
+        scalp.data.materials.append(principled("DIGE_C36_SCALP_SHADOW",(0.008,0.0045,0.0032),rough=.52,ior=1.48))
+        bpy.context.view_layer.objects.active=scalp; bpy.ops.object.shade_smooth()
+
     grng=random.Random(20262828)
     brow_fibers=[]
     lash_fibers=[]
@@ -1967,8 +1988,8 @@ if C28_GNM_HEAD:
                 root+Vector((side*.00010,length*.52,length*.14)),
                 root+Vector((side*.00022,length,length*.26)),
             ])
-    facial_hair_mat=principled("DIGE_C31_FACIAL_HAIR",(0.010,0.004,0.002),rough=.40,ior=1.50) if C31_GNM_FACE_APPEARANCE else hair
-    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000082 if C31_GNM_FACE_APPEARANCE else .000060,facial_hair_mat)
+    facial_hair_mat=principled("DIGE_C31_FACIAL_HAIR",(0.006,0.0025,0.0015) if C36_CANONICAL_APPEARANCE else (0.010,0.004,0.002),rough=.34 if C36_CANONICAL_APPEARANCE else .40,ior=1.50) if C31_GNM_FACE_APPEARANCE else hair
+    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000095 if C36_CANONICAL_APPEARANCE else (.000082 if C31_GNM_FACE_APPEARANCE else .000060),facial_hair_mat)
     curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000048 if C31_GNM_FACE_APPEARANCE else .000036,facial_hair_mat)
     c28_brow_fiber_count=len(brow_fibers)
     c28_lash_fiber_count=len(lash_fibers)
@@ -3000,7 +3021,7 @@ except Exception:
 device_info=configure_cycles_device(scene)
 scene.cycles.samples=int(os.environ.get("DIGE_SAMPLES_PREVIEW","128"))
 scene.cycles.seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
-scene.cycles.use_denoising=True
+scene.cycles.use_denoising=(SEARCH_DENOISE if SEARCH_ONLY else True)
 scene.cycles.use_adaptive_sampling=True
 scene.cycles.adaptive_threshold=.015
 scene.cycles.max_bounces=12
