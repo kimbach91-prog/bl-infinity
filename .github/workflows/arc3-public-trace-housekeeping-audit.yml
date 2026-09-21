@@ -52,12 +52,13 @@ jobs:
             --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
             --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
             --output "$GITHUB_WORKSPACE/housekeeping-public-trace-audit.json"
-      - name: Enforce truth-boundary contract
+      - name: Enforce v2 truth and representation contract
         run: |
           python - <<'PY'
           import json
           p='housekeeping-public-trace-audit.json'
           d=json.load(open(p))
+          assert d['schema'] == 'deus/arc3-public-trace-housekeeping-audit/2'
           assert d['truth']['public_trace_only'] is True
           assert d['truth']['kaggle_hidden_score'] is False
           assert d['truth']['owner_score'] is False
@@ -65,20 +66,25 @@ jobs:
           assert d['truth']['model_behavior_gain'] is False
           assert d['promotion']['candidate_promotion'] is False
           assert d['aggregate']['transitions'] > 0
+          assert d['promotion']['boundary_core_representation_evidence'] == 'PASS'
+          assert d['aggregate']['boundary_core_char_ratio_vs_raw'] < 1.0
           print(json.dumps({
               'schema': d['schema'],
               'transitions': d['aggregate']['transitions'],
-              'char_ratio_vs_raw': d['aggregate']['char_ratio_vs_raw'],
-              'representation_evidence': d['promotion']['representation_evidence'],
-              'raw_status': d['audits']['raw_board_action']['status'],
-              'boundary_status': d['audits']['boundary_band_action']['status'],
+              'boundary_band_char_ratio_vs_raw': d['aggregate']['boundary_band_char_ratio_vs_raw'],
+              'boundary_core_char_ratio_vs_raw': d['aggregate']['boundary_core_char_ratio_vs_raw'],
+              'boundary_core_char_reduction_pct': d['aggregate']['boundary_core_char_reduction_pct'],
+              'raw_repeat_support_ratio': d['audits']['raw_board_action']['repeat_support_ratio'],
+              'core_repeat_support_ratio': d['audits']['boundary_core_action']['repeat_support_ratio'],
+              'core_contradiction_ratio': d['audits']['boundary_core_action']['contradictory_repeated_state_ratio'],
+              'core_status': d['audits']['boundary_core_action']['status'],
               'truth_boundary': 'PUBLIC_TRACE_ONLY_NO_KAGGLE_OR_MODEL_GAIN',
           }, sort_keys=True))
           PY
       - name: Upload audit receipt
         uses: actions/upload-artifact@v4
         with:
-          name: arc3-public-trace-housekeeping-audit
+          name: arc3-public-trace-housekeeping-audit-v2
           path: |
             housekeeping-public-trace-audit.json
             housekeeping-selftest.json
