@@ -392,6 +392,12 @@ C32_GNM_DERMAL_HAIR=os.environ.get("DIGE_C32_GNM_DERMAL_HAIR","0").strip()=="1"
 C33_GUIDE_GATED_GROOM=os.environ.get("DIGE_C33_GUIDE_GATED_GROOM","0").strip()=="1"
 C33_GUIDE_MAX_DIST=float(os.environ.get("DIGE_C33_GUIDE_MAX_DIST","0.020"))
 C33_SCALP_Z_DROP=float(os.environ.get("DIGE_C33_SCALP_Z_DROP","0.120"))
+C36_CANONICAL_APPEARANCE=os.environ.get("DIGE_C36_CANONICAL_APPEARANCE","0").strip()=="1"
+C36_JAW_TAPER=float(os.environ.get("DIGE_C36_JAW_TAPER","0.88"))
+C36_EYE_OPEN_SCALE=float(os.environ.get("DIGE_C36_EYE_OPEN_SCALE","0.76"))
+C36_EYE_GLOBE_SCALE=float(os.environ.get("DIGE_C36_EYE_GLOBE_SCALE","0.94"))
+C36_HAIR_LENGTH_M=float(os.environ.get("DIGE_C36_HAIR_LENGTH_M","0.36"))
+C36_HAIR_WAVE=float(os.environ.get("DIGE_C36_HAIR_WAVE","0.010"))
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -570,13 +576,13 @@ def hair_material():
         set_input(h,"Reflection",1.0)
         set_input(h,"Transmission",1.0)
         set_input(h,"Secondary Reflection",1.0)
-        set_input(h,"Melanin",.82 if C32_GNM_DERMAL_HAIR else .93)
-        set_input(h,"Melanin Redness",.065 if C32_GNM_DERMAL_HAIR else .04)
-        set_input(h,"Random Color",.085 if C32_GNM_DERMAL_HAIR else .03)
-        set_input(h,"Roughness",.34 if C32_GNM_DERMAL_HAIR else .28)
-        set_input(h,"Radial Roughness",.42 if C32_GNM_DERMAL_HAIR else .30)
-        set_input(h,"Random Roughness",.11 if C32_GNM_DERMAL_HAIR else .06)
-        set_input(h,"Coat",.03 if C32_GNM_DERMAL_HAIR else .02)
+        set_input(h,"Melanin",.965 if C36_CANONICAL_APPEARANCE else (.82 if C32_GNM_DERMAL_HAIR else .93))
+        set_input(h,"Melanin Redness",.018 if C36_CANONICAL_APPEARANCE else (.065 if C32_GNM_DERMAL_HAIR else .04))
+        set_input(h,"Random Color",.045 if C36_CANONICAL_APPEARANCE else (.085 if C32_GNM_DERMAL_HAIR else .03))
+        set_input(h,"Roughness",.255 if C36_CANONICAL_APPEARANCE else (.34 if C32_GNM_DERMAL_HAIR else .28))
+        set_input(h,"Radial Roughness",.35 if C36_CANONICAL_APPEARANCE else (.42 if C32_GNM_DERMAL_HAIR else .30))
+        set_input(h,"Random Roughness",.075 if C36_CANONICAL_APPEARANCE else (.11 if C32_GNM_DERMAL_HAIR else .06))
+        set_input(h,"Coat",.018 if C36_CANONICAL_APPEARANCE else (.03 if C32_GNM_DERMAL_HAIR else .02))
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -742,26 +748,26 @@ def c28_gnm_skin_material():
         out=nt.nodes.new("ShaderNodeOutputMaterial")
         bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
         set_input(bs,"IOR",1.42)
-        set_input(bs,"Specular IOR Level",.28)
-        set_input(bs,"Subsurface Weight",.045 if C32_GNM_DERMAL_HAIR else .070)
-        set_input(bs,"Subsurface Scale",.00064 if C32_GNM_DERMAL_HAIR else .00082)
-        set_input(bs,"Subsurface Radius",(1.0,.34,.12) if C32_GNM_DERMAL_HAIR else (1.0,.38,.15))
-        set_input(bs,"Coat Weight",.004 if C32_GNM_DERMAL_HAIR else .010)
-        set_input(bs,"Coat Roughness",.50 if C32_GNM_DERMAL_HAIR else .44)
+        set_input(bs,"Specular IOR Level",.34 if C36_CANONICAL_APPEARANCE else .28)
+        set_input(bs,"Subsurface Weight",.030 if C36_CANONICAL_APPEARANCE else (.045 if C32_GNM_DERMAL_HAIR else .070))
+        set_input(bs,"Subsurface Scale",.00090 if C36_CANONICAL_APPEARANCE else (.00064 if C32_GNM_DERMAL_HAIR else .00082))
+        set_input(bs,"Subsurface Radius",(1.0,.42,.20) if C36_CANONICAL_APPEARANCE else ((1.0,.34,.12) if C32_GNM_DERMAL_HAIR else (1.0,.38,.15)))
+        set_input(bs,"Coat Weight",.0 if C36_CANONICAL_APPEARANCE else (.004 if C32_GNM_DERMAL_HAIR else .010))
+        set_input(bs,"Coat Roughness",.55 if C36_CANONICAL_APPEARANCE else (.50 if C32_GNM_DERMAL_HAIR else .44))
         if hasattr(bs,"subsurface_method"):
             bs.subsurface_method='RANDOM_WALK_SKIN'
 
         tex=nt.nodes.new("ShaderNodeTexCoord")
         base_noise=nt.nodes.new("ShaderNodeTexNoise")
-        base_noise.inputs["Scale"].default_value=18.0 if C32_GNM_DERMAL_HAIR else 10.0
+        base_noise.inputs["Scale"].default_value=9.0 if C36_CANONICAL_APPEARANCE else (18.0 if C32_GNM_DERMAL_HAIR else 10.0)
         base_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
         base_noise.inputs["Roughness"].default_value=.68 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],base_noise.inputs["Vector"])
         base_ramp=nt.nodes.new("ShaderNodeValToRGB")
         base_ramp.color_ramp.elements[0].position=.18
-        base_ramp.color_ramp.elements[0].color=((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1))
+        base_ramp.color_ramp.elements[0].color=((0.300,0.185,0.155,1) if C36_CANONICAL_APPEARANCE else ((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1)))
         base_ramp.color_ramp.elements[1].position=.82
-        base_ramp.color_ramp.elements[1].color=((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1))
+        base_ramp.color_ramp.elements[1].color=((0.480,0.315,0.270,1) if C36_CANONICAL_APPEARANCE else ((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1)))
         nt.links.new(base_noise.outputs["Fac"],base_ramp.inputs["Fac"])
 
         vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -771,7 +777,7 @@ def c28_gnm_skin_material():
         nt.links.new(vc.outputs["Color"],sep.inputs["Color"])
 
         lip_color=nt.nodes.new("ShaderNodeRGB")
-        lip_color.outputs[0].default_value=(0.42,0.075,0.068,1)
+        lip_color.outputs[0].default_value=(0.30,0.060,0.065,1) if C36_CANONICAL_APPEARANCE else (0.42,0.075,0.068,1)
         lip_mix=nt.nodes.new("ShaderNodeMixRGB")
         lip_mix.blend_type='MIX'
         nt.links.new(sep.outputs["Red"],lip_mix.inputs[0])
@@ -779,7 +785,7 @@ def c28_gnm_skin_material():
         nt.links.new(lip_color.outputs[0],lip_mix.inputs[2])
 
         blush_color=nt.nodes.new("ShaderNodeRGB")
-        blush_color.outputs[0].default_value=(0.46,0.135,0.088,1)
+        blush_color.outputs[0].default_value=(0.34,0.105,0.095,1) if C36_CANONICAL_APPEARANCE else (0.46,0.135,0.088,1)
         blush_mix=nt.nodes.new("ShaderNodeMixRGB")
         blush_mix.blend_type='MIX'
         nt.links.new(sep.outputs["Green"],blush_mix.inputs[0])
@@ -788,18 +794,18 @@ def c28_gnm_skin_material():
         nt.links.new(blush_mix.outputs["Color"],bs.inputs["Base Color"])
 
         rough_noise=nt.nodes.new("ShaderNodeTexNoise")
-        rough_noise.inputs["Scale"].default_value=145.0 if C32_GNM_DERMAL_HAIR else 52.0
+        rough_noise.inputs["Scale"].default_value=68.0 if C36_CANONICAL_APPEARANCE else (145.0 if C32_GNM_DERMAL_HAIR else 52.0)
         rough_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
         rough_noise.inputs["Roughness"].default_value=.70 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],rough_noise.inputs["Vector"])
         rough_map=nt.nodes.new("ShaderNodeMapRange")
         rough_map.inputs["From Min"].default_value=0.0
         rough_map.inputs["From Max"].default_value=1.0
-        rough_map.inputs["To Min"].default_value=.46 if C32_GNM_DERMAL_HAIR else .44
-        rough_map.inputs["To Max"].default_value=.64 if C32_GNM_DERMAL_HAIR else .60
+        rough_map.inputs["To Min"].default_value=.38 if C36_CANONICAL_APPEARANCE else (.46 if C32_GNM_DERMAL_HAIR else .44)
+        rough_map.inputs["To Max"].default_value=.57 if C36_CANONICAL_APPEARANCE else (.64 if C32_GNM_DERMAL_HAIR else .60)
         nt.links.new(rough_noise.outputs["Fac"],rough_map.inputs["Value"])
-        tzone_scale=nt.nodes.new("ShaderNodeMath"); tzone_scale.operation='MULTIPLY'; tzone_scale.inputs[1].default_value=.055
-        lip_rough_scale=nt.nodes.new("ShaderNodeMath"); lip_rough_scale.operation='MULTIPLY'; lip_rough_scale.inputs[1].default_value=.070
+        tzone_scale=nt.nodes.new("ShaderNodeMath"); tzone_scale.operation='MULTIPLY'; tzone_scale.inputs[1].default_value=.040 if C36_CANONICAL_APPEARANCE else .055
+        lip_rough_scale=nt.nodes.new("ShaderNodeMath"); lip_rough_scale.operation='MULTIPLY'; lip_rough_scale.inputs[1].default_value=.085 if C36_CANONICAL_APPEARANCE else .070
         nt.links.new(sep.outputs["Blue"],tzone_scale.inputs[0])
         nt.links.new(sep.outputs["Red"],lip_rough_scale.inputs[0])
         rough_sub1=nt.nodes.new("ShaderNodeMath"); rough_sub1.operation='SUBTRACT'
@@ -809,12 +815,12 @@ def c28_gnm_skin_material():
         nt.links.new(rough_sub2.outputs[0],bs.inputs["Roughness"])
 
         pore=nt.nodes.new("ShaderNodeTexNoise")
-        pore.inputs["Scale"].default_value=2400.0 if C32_GNM_DERMAL_HAIR else 1900.0
+        pore.inputs["Scale"].default_value=760.0 if C36_CANONICAL_APPEARANCE else (2400.0 if C32_GNM_DERMAL_HAIR else 1900.0)
         pore.inputs["Detail"].default_value=5.0
         pore.inputs["Roughness"].default_value=.68
         nt.links.new(tex.outputs["Object"],pore.inputs["Vector"])
         micro=nt.nodes.new("ShaderNodeTexNoise")
-        micro.inputs["Scale"].default_value=9000.0 if C32_GNM_DERMAL_HAIR else 6200.0
+        micro.inputs["Scale"].default_value=2400.0 if C36_CANONICAL_APPEARANCE else (9000.0 if C32_GNM_DERMAL_HAIR else 6200.0)
         micro.inputs["Detail"].default_value=3.0
         micro.inputs["Roughness"].default_value=.60
         nt.links.new(tex.outputs["Object"],micro.inputs["Vector"])
@@ -824,8 +830,8 @@ def c28_gnm_skin_material():
         add=nt.nodes.new("ShaderNodeMath"); add.operation='ADD'
         nt.links.new(pscale.outputs[0],add.inputs[0]); nt.links.new(mscale.outputs[0],add.inputs[1])
         bump=nt.nodes.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value=.34 if C32_GNM_DERMAL_HAIR else .24
-        bump.inputs["Distance"].default_value=.000052 if C32_GNM_DERMAL_HAIR else .000070
+        bump.inputs["Strength"].default_value=.24 if C36_CANONICAL_APPEARANCE else (.34 if C32_GNM_DERMAL_HAIR else .24)
+        bump.inputs["Distance"].default_value=.000038 if C36_CANONICAL_APPEARANCE else (.000052 if C32_GNM_DERMAL_HAIR else .000070)
         nt.links.new(add.outputs[0],bump.inputs["Height"])
         nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
         nt.links.new(bs.outputs[0],out.inputs["Surface"])
@@ -1072,9 +1078,9 @@ def eye_texture_material(name,image_path,expected_sha256):
 bpy.ops.object.select_all(action='SELECT'); bpy.ops.object.delete(use_global=False)
 
 skin,skin_asset=make_skin()
-sclera=principled("SCLERA",(0.58,0.52,0.48),rough=.30,ior=1.376,subsurface=.02)
-iris=principled("IRIS",(0.070,0.026,0.012),rough=.32,ior=1.40)
-iris_ring=principled("IRIS_RING",(0.012,0.005,0.003),rough=.34,ior=1.40)
+sclera=principled("SCLERA",(0.30,0.27,0.25) if C36_CANONICAL_APPEARANCE else (0.58,0.52,0.48),rough=.38 if C36_CANONICAL_APPEARANCE else .30,ior=1.376,subsurface=.012 if C36_CANONICAL_APPEARANCE else .02)
+iris=principled("IRIS",(0.028,0.010,0.005) if C36_CANONICAL_APPEARANCE else (0.070,0.026,0.012),rough=.28 if C36_CANONICAL_APPEARANCE else .32,ior=1.40)
+iris_ring=principled("IRIS_RING",(0.006,0.0025,0.0018) if C36_CANONICAL_APPEARANCE else (0.012,0.005,0.003),rough=.32,ior=1.40)
 black=principled("BLACK",(0.005,0.004,0.004),rough=.28)
 cornea=principled("CORNEA",(0.92,0.92,0.92),rough=.008,ior=1.376,transmission=1.0)
 wetline=principled("EYE_WETLINE",(0.90,0.92,0.94),rough=.018,ior=1.333,transmission=1.0)
@@ -1788,6 +1794,49 @@ if C28_GNM_HEAD:
         )
         c28_gnm_objects[comp]=obj
 
+    if C36_CANONICAL_APPEARANCE:
+        skin_obj=c28_gnm_objects.get("skin")
+        if skin_obj is None:
+            raise RuntimeError("C36 missing GNM skin component")
+        eye_l=sum(transformed_landmarks[36:42],Vector())/6
+        eye_r=sum(transformed_landmarks[42:48],Vector())/6
+        eye_z=(eye_l.z+eye_r.z)*.5
+        mouth_center=sum(transformed_landmarks[48:60],Vector())/12
+        chin=transformed_landmarks[8]
+        lower_span=max(.04,eye_z-chin.z)
+        # Reference-driven V-line taper: strongest at chin/jaw, fading by the eye line.
+        for v in skin_obj.data.vertices:
+            p=v.co
+            lower=max(0.0,min(1.0,(eye_z-p.z)/lower_span))
+            taper=1.0-(1.0-C36_JAW_TAPER)*(lower**1.35)
+            p.x=gnm_eye_mid.x+(p.x-gnm_eye_mid.x)*taper
+            # Narrow vertical palpebral opening without moving the iris center.
+            for ec in (eye_l,eye_r):
+                dx=abs(p.x-ec.x); dz=abs(p.z-ec.z)
+                if dx<.031 and dz<.015 and p.y>ec.y-.026:
+                    w=(1.0-dx/.031)*(1.0-dz/.015)
+                    fac=1.0-(1.0-C36_EYE_OPEN_SCALE)*max(0.0,min(1.0,w))
+                    p.z=ec.z+(p.z-ec.z)*fac
+            # Very subtle mouth-corner lift to avoid the mannequin-flat resting line.
+            dx=abs(abs(p.x-mouth_center.x)-.020)
+            dz=abs(p.z-mouth_center.z)
+            if dx<.010 and dz<.010 and p.y>mouth_center.y-.020:
+                w=(1.0-dx/.010)*(1.0-dz/.010)
+                p.z += .0016*max(0.0,w)
+        skin_obj.data.update()
+        # Slightly reduce globe projection/size so sclera does not dominate the face.
+        for comp,pts in (("left_eye",transformed_landmarks[36:42]),("right_eye",transformed_landmarks[42:48])):
+            eye_mesh=c28_gnm_objects.get(comp)
+            if eye_mesh is None:
+                continue
+            ec=sum(pts,Vector())/len(pts)
+            for v in eye_mesh.data.vertices:
+                p=v.co
+                p.x=ec.x+(p.x-ec.x)*C36_EYE_GLOBE_SCALE
+                p.z=ec.z+(p.z-ec.z)*(C36_EYE_GLOBE_SCALE*.96)
+                p.y=ec.y+(p.y-ec.y)*.985
+            eye_mesh.data.update()
+
     if C31_GNM_FACE_APPEARANCE:
         skin_obj=c28_gnm_objects.get("skin")
         if skin_obj is None:
@@ -1834,10 +1883,10 @@ if C28_GNM_HEAD:
             ec=sum(pts,Vector())/len(pts)
             front_y=max(float(v.co.y) for v in eye_mesh.data.vertices)
             iy=front_y+.00020
-            cylinder(f"DIGE_C29_{comp.upper()}_IRIS_RING",(ec.x,iy,ec.z),.00505,.00016,iris_ring)
-            cylinder(f"DIGE_C29_{comp.upper()}_IRIS",(ec.x,iy+.00013,ec.z),.00445,.00014,iris)
-            cylinder(f"DIGE_C29_{comp.upper()}_PUPIL",(ec.x,iy+.00026,ec.z),.00185,.00012,black)
-            cylinder(f"DIGE_C29_{comp.upper()}_CORNEA",(ec.x,iy+.00039,ec.z),.00530,.00012,cornea)
+            cylinder(f"DIGE_C29_{comp.upper()}_IRIS_RING",(ec.x,iy,ec.z),.00535 if C36_CANONICAL_APPEARANCE else .00505,.00016,iris_ring)
+            cylinder(f"DIGE_C29_{comp.upper()}_IRIS",(ec.x,iy+.00013,ec.z),.00490 if C36_CANONICAL_APPEARANCE else .00445,.00014,iris)
+            cylinder(f"DIGE_C29_{comp.upper()}_PUPIL",(ec.x,iy+.00026,ec.z),.00225 if C36_CANONICAL_APPEARANCE else .00185,.00012,black)
+            cylinder(f"DIGE_C29_{comp.upper()}_CORNEA",(ec.x,iy+.00039,ec.z),.00545 if C36_CANONICAL_APPEARANCE else .00530,.00012,cornea)
             c29_iris_count+=1
 
     gnm_bbox_min=Vector(gm["bbox_min"])*head_scale+head_translation
@@ -2559,7 +2608,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         if c32_lower_central_root_count:
             raise RuntimeError(f"C32.1 lower-central face/scalp root leak: {c32_lower_central_root_count}")
 
-    points_per_curve=12 if C32_GNM_DERMAL_HAIR else 8
+    points_per_curve=16 if C36_CANONICAL_APPEARANCE else (12 if C32_GNM_DERMAL_HAIR else 8)
     strands_per_root=HAIR_STRANDS_PER_ROOT
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
@@ -2573,8 +2622,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     positions=[]
     radii=[]
-    base_radius=0.000042 if C32_GNM_DERMAL_HAIR else 0.000055
-    tip_radius=0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011
+    base_radius=0.000034 if C36_CANONICAL_APPEARANCE else (0.000042 if C32_GNM_DERMAL_HAIR else 0.000055)
+    tip_radius=0.0000048 if C36_CANONICAL_APPEARANCE else (0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011)
     down=Vector((0.0,0.0,-1.0))
     inv_world=surface_obj.matrix_world.inverted()
     surf_rot=surface_obj.matrix_world.to_3x3()
@@ -2643,7 +2692,16 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             child_cross.normalize()
 
             undercoat=(k < undercoat_count)
-            if undercoat:
+            if C36_CANONICAL_APPEARANCE:
+                # Canonical reference is long, layered, dark hair. Preserve the scalp/root field
+                # but let strands transition from authored tangent flow into gravity-dominant lengths.
+                length=C36_HAIR_LENGTH_M*rng.uniform(.52,.72) if undercoat else C36_HAIR_LENGTH_M*rng.uniform(.82,1.10)
+                length=min(.44,max(.14,length))
+                lift=rng.uniform(.004,.010) if undercoat else rng.uniform(.007,.014)
+                tip_clear=rng.uniform(.0010,.0025)
+                flow=(child_flow + child_cross*rng.uniform(-.06,.06)).normalized()
+                amp=C36_HAIR_WAVE*rng.uniform(.35,.70) if undercoat else C36_HAIR_WAVE*rng.uniform(.70,1.25)
+            elif undercoat:
                 length=rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
                 lift=under_lift*rng.uniform(.78,1.08) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
                 tip_clear=rng.uniform(.0010,.0024) if C32_GNM_DERMAL_HAIR else rng.uniform(.0010,.0020)
@@ -2662,15 +2720,29 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                 t=j/(points_per_curve-1)
                 bend=math.sin(math.pi*t)
                 sag=t*t
-                p=(
-                    root_j
-                    + flow*(length*t)
-                    + child_n*(lift*bend + tip_clear*t)
-                    + lateral*(amp*bend)
-                    + (child_cross*((.00024 if undercoat else .00058)*math.sin(math.tau*(1.35*t)+strand_phase)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
-                    + (child_n*((.00010 if undercoat else .00022)*math.sin(math.tau*(2.65*t)+strand_phase*1.73)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
-                    + down*(length*((.014 if undercoat else .022) if C32_GNM_DERMAL_HAIR else (.018 if undercoat else .026))*sag)
-                )
+                if C36_CANONICAL_APPEARANCE:
+                    side_sign=1.0 if root_j.x>=gnm_eye_mid.x else -1.0
+                    face_frame=max(0.0,min(1.0,(root_j.y+0.020)/0.060))
+                    fall=Vector((side_sign*(.13+.08*face_frame),-.10,-.985))
+                    fall.normalize()
+                    wave=math.sin(math.tau*(1.15*t)+strand_phase)*bend
+                    p=(
+                        root_j
+                        + flow*(length*.16*bend)
+                        + fall*(length*t)
+                        + child_n*(lift*bend + tip_clear*t)
+                        + lateral*(amp*wave)
+                    )
+                else:
+                    p=(
+                        root_j
+                        + flow*(length*t)
+                        + child_n*(lift*bend + tip_clear*t)
+                        + lateral*(amp*bend)
+                        + (child_cross*((.00024 if undercoat else .00058)*math.sin(math.tau*(1.35*t)+strand_phase)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
+                        + (child_n*((.00010 if undercoat else .00022)*math.sin(math.tau*(2.65*t)+strand_phase*1.73)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
+                        + down*(length*((.014 if undercoat else .022) if C32_GNM_DERMAL_HAIR else (.018 if undercoat else .026))*sag)
+                    )
                 # C18 hybrid: the fitted bulk mesh owns coverage/style; curves are
                 # bounded hairline/silhouette accents. Prevent accents from sweeping
                 # into the central face even if source texture-flow is ambiguous.
@@ -2801,7 +2873,13 @@ def area(name,loc,energy,size,color,target=(0,0,1.25)):
     o=bpy.context.object; o.name=name; o.data.energy=energy; o.data.shape='DISK'; o.data.size=size; o.data.color=color
     d=Vector(target)-o.location; o.rotation_euler=d.to_track_quat('-Z','Y').to_euler()
     return o
-if C26_PHOTOMETRIC:
+if C36_CANONICAL_APPEARANCE:
+    face_target=(0,.010,1.585)
+    area("KEY",(1.25,1.70,2.10),260,1.85,(1.0,.92,.86),face_target)
+    area("FILL",(-1.45,1.75,1.82),62,2.65,(.90,.95,1.0),face_target)
+    area("RIM",(-.20,-1.80,2.15),72,1.45,(1.0,.82,.70),face_target)
+    area("DETAIL",(-.70,.95,1.72),28,.62,(1.0,.98,.96),face_target)
+elif C26_PHOTOMETRIC:
     face_target=(0,.020,1.575)
     area("KEY",(1.45,1.90,2.22),235,1.45,(1.0,.95,.90),face_target)
     area("FILL",(-1.60,2.00,1.78),24,2.60,(.88,.93,1.0),face_target)
@@ -2828,7 +2906,7 @@ else:
 
 world=bpy.context.scene.world or bpy.data.worlds.new("World"); bpy.context.scene.world=world
 world.use_nodes=True
-bg=world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=(0.012,0.014,0.020,1); bg.inputs["Strength"].default_value=.022 if C26_PHOTOMETRIC else .055
+bg=world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=((0.030,0.020,0.018,1) if C36_CANONICAL_APPEARANCE else (0.012,0.014,0.020,1)); bg.inputs["Strength"].default_value=(.11 if C36_CANONICAL_APPEARANCE else (.022 if C26_PHOTOMETRIC else .055))
 
 bpy.ops.object.camera_add(); cam=bpy.context.object; bpy.context.scene.camera=cam; cam.data.sensor_width=36
 
@@ -2893,7 +2971,9 @@ scene.cycles.transmission_bounces=8
 scene.render.image_settings.file_format='PNG'; scene.render.image_settings.color_mode='RGB'
 scene.render.resolution_percentage=100
 scene.view_settings.look='AgX - Medium High Contrast'
-if C26_PHOTOMETRIC:
+if C36_CANONICAL_APPEARANCE:
+    scene.view_settings.exposure=-0.10
+elif C26_PHOTOMETRIC:
     scene.view_settings.exposure=-0.62
 elif C20_VISUAL_REPAIR:
     scene.view_settings.exposure=-0.35
@@ -2904,11 +2984,12 @@ if hasattr(vl,"cycles") and hasattr(vl.cycles,"use_pass_denoising_data"):
     vl.cycles.use_pass_denoising_data=True
 
 # Distances inherit the latest provider-backed Drive sweep: V6C-122 fullbody=5.1m, hero=2.7m.
+hero_view=("04_HERO85",(0,.82,1.598),(0,.010,1.585),70,3.2,900,900) if C36_CANONICAL_APPEARANCE else ("04_HERO85",(0,1.10,1.595),(0,.030,1.580),85,4.5,900,900)
 all_views=[
  ("01_FRONT50",(0,5.1,1.03),(0,0,.92),50,7.1,512,768),
  ("02_LEFT_PROFILE50",(5.1,0,1.08),(0,0,.98),50,7.1,512,768),
  ("03_THREE_QUARTER50",(3.60,3.60,1.10),(0,0,1.00),50,6.3,512,768),
- ("04_HERO85",(0,1.10,1.595),(0,.030,1.580),85,4.5,900,900),
+ hero_view,
  ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,512,768)
 ]
 if SAMPLE_SHARD_MODE:
@@ -2937,7 +3018,10 @@ for vid,loc,target,lens,fstop,w,h in views:
 # Controlled hero evidence or sample-space shard.
 hero_samples=int(os.environ.get("DIGE_SAMPLES_HERO","256"))
 hero_seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
-aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
+if C36_CANONICAL_APPEARANCE:
+    aim((0,.82,1.598),(0,.010,1.585),70,3.2)
+else:
+    aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
 scene.render.resolution_x=900; scene.render.resolution_y=900
 scene.cycles.seed=hero_seed
 if SAMPLE_SHARD_MODE:
@@ -3051,7 +3135,8 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
-   "C33_GUIDE_GATED_GROOM_SEARCH_V1" if C33_GUIDE_GATED_GROOM else
+   "C36_CANONICAL_REFERENCE_APPEARANCE_V1" if C36_CANONICAL_APPEARANCE else
+    "C33_GUIDE_GATED_GROOM_SEARCH_V1" if C33_GUIDE_GATED_GROOM else
    "C32_GNM_DERMAL_HAIR_REFINEMENT_V1" if C32_GNM_DERMAL_HAIR else
    "C31_GNM_REGIONAL_FACE_APPEARANCE_V1" if C31_GNM_FACE_APPEARANCE else
    "C30_GNM_SEMANTIC_FEMALE_ASIAN_V1" if C30_GNM_SEMANTIC_IDENTITY else
