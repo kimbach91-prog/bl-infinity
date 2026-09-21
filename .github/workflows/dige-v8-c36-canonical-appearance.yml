@@ -20,27 +20,15 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 3
+      max-parallel: 1
       matrix:
         include:
-          - id: A
-            jaw: '0.90'
-            eye_open: '0.80'
-            eye_globe: '0.95'
-            hair_length: '0.34'
-            hair_wave: '0.008'
-          - id: B
-            jaw: '0.86'
-            eye_open: '0.72'
-            eye_globe: '0.92'
-            hair_length: '0.38'
-            hair_wave: '0.012'
-          - id: C
+          - id: D
             jaw: '0.88'
             eye_open: '0.76'
             eye_globe: '0.93'
-            hair_length: '0.42'
-            hair_wave: '0.014'
+            hair_length: '0.40'
+            hair_wave: '0.012'
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
