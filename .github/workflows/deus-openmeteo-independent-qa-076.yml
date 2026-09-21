@@ -1,0 +1,89 @@
+name: DEUS OpenMeteo Independent QA 076
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-openmeteo-independent-qa-076.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  openmeteo-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run one bounded BL-S0 OpenMeteo canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT=/tmp/deus-openmeteo-076
+          mkdir -p "$OUT"
+          URL='https://api.open-meteo.com/v1/forecast?latitude=0&longitude=0&current=temperature_2m,wind_speed_10m&timezone=UTC'
+          printf '%s' "$URL" > "$OUT/request.url"
+          start_ms="$(date +%s%3N)"
+          code="$(curl --silent --show-error --fail-with-body --max-time 30 -D "$OUT/headers.txt" -o "$OUT/body.json" -w '%{http_code}' "$URL")"
+          latency_ms="$(( $(date +%s%3N) - start_ms ))"
+          test "$code" = "200"
+          jq -e '
+            (.latitude|type)=="number" and (.longitude|type)=="number" and
+            ((.latitude|abs) < 0.1) and ((.longitude|abs) < 0.1) and
+            (.generationtime_ms|type)=="number" and
+            (.current.time|type)=="string" and
+            (.current.temperature_2m|type)=="number" and
+            (.current.wind_speed_10m|type)=="number"
+          ' "$OUT/body.json" >/dev/null
+          req_sha="$(sha256sum "$OUT/request.url" | awk '{print $1}')"
+          hdr_sha="$(sha256sum "$OUT/headers.txt" | awk '{print $1}')"
+          body_sha="$(sha256sum "$OUT/body.json" | awk '{print $1}')"
+          body_bytes="$(wc -c < "$OUT/body.json" | tr -d ' ')"
+          temp="$(jq -r '.current.temperature_2m' "$OUT/body.json")"
+          wind="$(jq -r '.current.wind_speed_10m' "$OUT/body.json")"
+          current_time="$(jq -r '.current.time' "$OUT/body.json")"
+          generation_ms="$(jq -r '.generationtime_ms' "$OUT/body.json")"
+          jq -n \
+            --arg canary_id 'DEUS_OPENMETEO_QA_20260921_076' \
+            --arg url "$URL" \
+            --arg http_status "$code" \
+            --arg request_sha256 "$req_sha" \
+            --arg headers_sha256 "$hdr_sha" \
+            --arg body_sha256 "$body_sha" \
+            --arg current_time "$current_time" \
+            --arg temperature_2m "$temp" \
+            --arg wind_speed_10m "$wind" \
+            --arg generationtime_ms "$generation_ms" \
+            --argjson latency_ms "$latency_ms" \
+            --argjson body_bytes "$body_bytes" \
+            '{canary_id:$canary_id,scope:"BL-S0 public/synthetic weather current fields",url:$url,http_status:($http_status|tonumber),semantic_pass:true,current_time:$current_time,temperature_2m:($temperature_2m|tonumber),wind_speed_10m:($wind_speed_10m|tonumber),generationtime_ms:($generationtime_ms|tonumber),latency_ms:$latency_ms,body_bytes:$body_bytes,request_sha256:$request_sha256,headers_sha256:$headers_sha256,body_sha256:$body_sha256}' \
+            > "$OUT/meta.json"
+          tar -C "$OUT" -czf "$OUT/custody.tar.gz" request.url headers.txt body.json meta.json
+          bundle_sha="$(sha256sum "$OUT/custody.tar.gz" | awk '{print $1}')"
+          bundle_bytes="$(wc -c < "$OUT/custody.tar.gz" | tr -d ' ')"
+          bundle_b64="$(base64 -w0 "$OUT/custody.tar.gz")"
+          mkdir -p .deus-qa
+          jq -n \
+            --slurpfile meta "$OUT/meta.json" \
+            --arg bundle_sha256 "$bundle_sha" \
+            --argjson bundle_bytes "$bundle_bytes" \
+            --arg bundle_b64 "$bundle_b64" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg generated_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{receipt_version:"DEUS-OPENMETEO-INDEPENDENT-QA/1",generated_at:$generated_at,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,meta:$meta[0],custody_bundle_sha256:$bundle_sha256,custody_bundle_bytes:$bundle_bytes,custody_bundle_base64:$bundle_b64}' \
+            > .deus-qa/openmeteo-076.json
+          jq -e '.receipt_version=="DEUS-OPENMETEO-INDEPENDENT-QA/1" and .meta.semantic_pass==true and .meta.http_status==200' .deus-qa/openmeteo-076.json >/dev/null
+
+      - name: Persist receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'DEUS OpenMeteo QA'
+          git config user.email 'actions@users.noreply.github.com'
+          git add .deus-qa/openmeteo-076.json
+          git commit -m 'chore: persist OpenMeteo QA receipt 076 [skip ci]'
+          git push origin HEAD:main
