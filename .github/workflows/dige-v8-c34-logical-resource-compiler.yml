@@ -342,8 +342,8 @@ jobs:
           assert r["hair_surface_contract"]["curve_count"] >= 24000
           assert r["hair_surface_contract"]["points_per_curve"] == 12
           assert r["hair_surface_contract"]["root_radius_m"] < 0.00005
-          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
-          assert r["hair_surface_contract"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
+          assert r["hair_curve_metrics"]["c32_lower_central_root_count"] == 0
+          assert r["hair_curve_metrics"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
           assert r["appearance_selection"]["c31_mask_vertex_count"] >= 12000
           assert r["appearance_selection"]["c31_wetline_count"] == 2
           assert r["appearance_selection"]["c31_mouth_gap_count"] == 1
@@ -567,7 +567,7 @@ jobs:
           assert r["denoise_ab"]["search_only"] is False
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
-          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert r["hair_curve_metrics"]["c32_lower_central_root_count"] == 0
           assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-float(os.environ["SELECTED_GUIDE_DIST"])) < 1e-9
           sel=json.loads(pathlib.Path("runtime/selection/DIGE_C34_SELECTION.json").read_text())
           plan=json.loads(pathlib.Path("runtime/resource-plan/DIGE_C34_RESOURCE_PLAN.json").read_text())
@@ -603,4 +603,3 @@ jobs:
             experiments/dige-v8-executor-capsule/runtime/c34_finalist.log
           if-no-files-found: error
           retention-days: 14
-
