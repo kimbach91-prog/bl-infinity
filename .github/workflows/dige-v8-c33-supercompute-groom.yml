@@ -21,39 +21,74 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
       - name: Stage verified CC0 skin and system assets once
         run: |
           set -euxo pipefail
-          mkdir -p staged-assets/assets staged-assets/system_assets
+          mkdir -p experiments/dige-v8-executor-capsule/runtime/assets experiments/dige-v8-executor-capsule/runtime/system_assets
           SKINPACK=/tmp/skins01_cc0.zip
           curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
           echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
-          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > staged-assets/assets/young_eurasian_female_diffuse.png
-          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  staged-assets/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
 
           SYSPACK=/tmp/makehuman_system_assets_cc0.zip
           curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
           echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
-          unzip -p "$SYSPACK" "hair/short03/short03.obj" > staged-assets/system_assets/short03.obj
-          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > staged-assets/system_assets/short03.mhclo
-          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > staged-assets/system_assets/short03_diffuse.png
-          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > staged-assets/system_assets/high-poly.obj
-          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > staged-assets/system_assets/high-poly.mhclo
-          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > staged-assets/system_assets/brown_eye.png
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > staged-assets/system_assets/eyebrow001.obj
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > staged-assets/system_assets/eyebrow001.mhclo
-          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > staged-assets/system_assets/eyebrow001.png
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > staged-assets/system_assets/eyelashes01.obj
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > staged-assets/system_assets/eyelashes01.mhclo
-          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > staged-assets/system_assets/eyelashes01.png
-          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  staged-assets/system_assets/short03.obj" | sha256sum -c -
-          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  staged-assets/system_assets/short03.mhclo" | sha256sum -c -
-          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  staged-assets/system_assets/short03_diffuse.png" | sha256sum -c -
-      - name: Upload shared C33 assets
+          unzip -p "$SYSPACK" "hair/short03/short03.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03.obj
+          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03.mhclo
+          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03_diffuse.png
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/high-poly.obj
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/high-poly.mhclo
+          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/brown_eye.png
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.obj
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.png
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.obj
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.png
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  experiments/dige-v8-executor-capsule/runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  experiments/dige-v8-executor-capsule/runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  experiments/dige-v8-executor-capsule/runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+      - name: Build reusable geometry/material runtime once
+        run: |
+          set -euxo pipefail
+          MPFB_COMMIT=b58176c661a9680294eb75f127842cb8378e4974
+          rm -rf /tmp/mpfb2
+          git init /tmp/mpfb2
+          git -C /tmp/mpfb2 remote add origin https://github.com/makehumancommunity/mpfb2.git
+          git -C /tmp/mpfb2 fetch --depth=1 origin "$MPFB_COMMIT"
+          git -C /tmp/mpfb2 checkout --detach FETCH_HEAD
+          mkdir -p experiments/dige-v8-executor-capsule/runtime/shared_mpfb2_src/mpfb
+          cp -a /tmp/mpfb2/src/mpfb/data experiments/dige-v8-executor-capsule/runtime/shared_mpfb2_src/mpfb/
+
+          GNM_COMMIT=a424b5153eec9154f3dfa5ee7f214e5817918d54
+          rm -rf /tmp/GNM
+          git init /tmp/GNM
+          git -C /tmp/GNM remote add origin https://github.com/google/GNM.git
+          git -C /tmp/GNM fetch --depth=1 origin "$GNM_COMMIT"
+          git -C /tmp/GNM checkout --detach FETCH_HEAD
+          python -m pip install --disable-pip-version-check -q numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
+          python -m pip install --disable-pip-version-check -q tensorflow
+          python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
+
+          cd experiments/dige-v8-executor-capsule
+          python build_makehuman_v8.py | tee runtime/c33_shared_body_geometry_execution.json
+          DIGE_GNM_COMMIT="$GNM_COMMIT" DIGE_GNM_IDENTITY_SEED=20263030 DIGE_GNM_IDENTITY_SIGMA=0.34 DIGE_GNM_SEMANTIC_IDENTITY=1 python build_gnm_head_c28.py | tee runtime/c33_shared_gnm_build.log
+          mkdir -p runtime/assets/c25_mpfb
+          cp runtime/assets/young_eurasian_female_diffuse.png runtime/assets/c25_mpfb/young_eurasian_female_diffuse.png
+          printf 'name c25_mpfb_enhanced_skin\ndiffuseColor 1.0 1.0 1.0\ndiffuseTexture young_eurasian_female_diffuse.png\n' > runtime/assets/c25_mpfb/c25_skin.mhmat
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          test -s runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
+
+      - name: Upload shared C33 runtime
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: DIGE-C33-SHARED-ASSETS
-          path: staged-assets/
+          name: DIGE-C33-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime/
           if-no-files-found: error
           retention-days: 1
 
@@ -63,16 +98,22 @@ jobs:
     timeout-minutes: 120
     strategy:
       fail-fast: false
-      max-parallel: 4
+      max-parallel: 7
       matrix:
         include:
-          - id: tight
+          - id: d014
+            guide_dist: '0.014'
+          - id: d016
             guide_dist: '0.016'
-          - id: balanced
+          - id: d018
+            guide_dist: '0.018'
+          - id: d020
             guide_dist: '0.020'
-          - id: medium
+          - id: d022
+            guide_dist: '0.022'
+          - id: d024
             guide_dist: '0.024'
-          - id: broad
+          - id: d028
             guide_dist: '0.028'
     env:
       MATRIX_ID: ${{ matrix.id }}
@@ -103,67 +144,10 @@ jobs:
           "$BLENDER" --version
           echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
 
-      - name: Pin mature MPFB2 material runtime
-        run: |
-          set -euxo pipefail
-          MPFB_COMMIT=b58176c661a9680294eb75f127842cb8378e4974
-          rm -rf /tmp/mpfb2
-          git init /tmp/mpfb2
-          git -C /tmp/mpfb2 remote add origin https://github.com/makehumancommunity/mpfb2.git
-          git -C /tmp/mpfb2 fetch --depth=1 origin "$MPFB_COMMIT"
-          git -C /tmp/mpfb2 checkout --detach FETCH_HEAD
-          test "$(git -C /tmp/mpfb2 rev-parse HEAD)" = "$MPFB_COMMIT"
-          test -s /tmp/mpfb2/src/mpfb/data/node_trees/enhanced_skin.json
-          test -s /tmp/mpfb2/src/mpfb/data/node_trees/procedural_eyes.json
-
-      - name: Pin Google GNM high-fidelity head
-        run: |
-          set -euxo pipefail
-          GNM_COMMIT=a424b5153eec9154f3dfa5ee7f214e5817918d54
-          rm -rf /tmp/GNM
-          git init /tmp/GNM
-          git -C /tmp/GNM remote add origin https://github.com/google/GNM.git
-          git -C /tmp/GNM fetch --depth=1 origin "$GNM_COMMIT"
-          git -C /tmp/GNM checkout --detach FETCH_HEAD
-          test "$(git -C /tmp/GNM rev-parse HEAD)" = "$GNM_COMMIT"
-          test -s /tmp/GNM/LICENSE
-          test -s /tmp/GNM/gnm/shape/gnm_numpy.py
-          test -s /tmp/GNM/gnm/shape/data/versions/v3/head/gnm_head_v3.npz || true
-          python -m pip install --disable-pip-version-check -q numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
-          python -m pip install --disable-pip-version-check -q tensorflow
-          python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
-          python - <<'PY'
-          import tensorflow as tf
-          from gnm.shape import semantic_sampler
-          print("tensorflow", tf.__version__)
-          print("semantic_identity_decoder", semantic_sampler.IdentitySampler().explain_classes())
-          PY
-
-      - name: Build stable MakeHuman body
-        working-directory: experiments/dige-v8-executor-capsule
-        run: |
-          set -euxo pipefail
-          mkdir -p runtime/assets runtime/system_assets
-          python build_makehuman_v8.py | tee runtime/c31_body_geometry_execution.json
-          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
-
-      - name: Build deterministic GNM head
-        working-directory: experiments/dige-v8-executor-capsule
-        env:
-          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
-          DIGE_GNM_IDENTITY_SEED: '20263030'
-          DIGE_GNM_IDENTITY_SIGMA: '0.34'
-          DIGE_GNM_SEMANTIC_IDENTITY: '1'
-        run: |
-          set -euxo pipefail
-          python build_gnm_head_c28.py | tee runtime/c31_gnm_build.log
-          test -s runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
-          test -s runtime/gnm_c28/gnm_skin.obj
-
-      - name: Reuse shared C33 assets
+      - name: Reuse shared C33 runtime
         uses: actions/download-artifact@v4
         with:
-          name: DIGE-C33-SHARED-ASSETS
+          name: DIGE-C33-SHARED-RUNTIME
           path: experiments/dige-v8-executor-capsule/runtime
 
       - name: Verify staged assets
@@ -174,13 +158,6 @@ jobs:
           echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  runtime/system_assets/short03.obj" | sha256sum -c -
           echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
           echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
-          mkdir -p runtime/assets/c25_mpfb
-          cp runtime/assets/young_eurasian_female_diffuse.png runtime/assets/c25_mpfb/young_eurasian_female_diffuse.png
-          cat > runtime/assets/c25_mpfb/c25_skin.mhmat <<'EOF'
-          name c25_mpfb_enhanced_skin
-          diffuseColor 1.0 1.0 1.0
-          diffuseTexture young_eurasian_female_diffuse.png
-          EOF
 
       - name: Render C33 guide-gated groom candidate
         working-directory: experiments/dige-v8-executor-capsule
@@ -222,7 +199,7 @@ jobs:
           DIGE_C33_GUIDE_MAX_DIST: ${{ matrix.guide_dist }}
           DIGE_C33_SCALP_Z_DROP: '0.120'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
-          DIGE_MPFB2_SRC: /tmp/mpfb2/src
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
           DIGE_HAIR_ASSET_KEY: hair_short03
@@ -254,8 +231,8 @@ jobs:
           DIGE_SKIN_BUMP_DISTANCE: '0.000055'
           DIGE_SKIN_COAT_WEIGHT: '0.001'
           DIGE_SKIN_COAT_ROUGHNESS: '0.45'
-          DIGE_SAMPLES_PREVIEW: '32'
-          DIGE_SAMPLES_HERO: '128'
+          DIGE_SAMPLES_PREVIEW: '24'
+          DIGE_SAMPLES_HERO: '96'
           DIGE_RENDER_SEED: '20263030'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
