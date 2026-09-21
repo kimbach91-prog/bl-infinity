@@ -1,0 +1,50 @@
+name: ARC3 Kaggle machine binding probe fresh
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - .github/workflows/arc3-kaggle-machine-binding-probe-fresh.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+  KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+  KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+  KAGGLE_TOKEN: ${{ secrets.KAGGLE_TOKEN }}
+
+jobs:
+  presence-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Emit secret-presence receipt only
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          names=['KAGGLE_USERNAME','KAGGLE_KEY','KAGGLE_API_TOKEN','KAGGLE_TOKEN']
+          d={
+            'schema':'deus/arc3-kaggle-machine-binding-presence/1',
+            'presence':{k:bool(os.environ.get(k,'')) for k in names},
+            'any_machine_kaggle_binding':any(bool(os.environ.get(k,'')) for k in names),
+            'secret_values_printed':False,
+            'kaggle_network_called':False,
+            'submission_attempted':False,
+            'submission_quota_spent':False,
+          }
+          open('kaggle-machine-binding-presence.json','w').write(json.dumps(d,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(d,sort_keys=True))
+          PY
+      - name: Upload presence receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-kaggle-machine-binding-presence-fresh
+          path: kaggle-machine-binding-presence.json
+          if-no-files-found: error
+          retention-days: 7
