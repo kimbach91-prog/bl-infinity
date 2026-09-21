@@ -385,6 +385,9 @@ C29_GNM_PRESENTATION=os.environ.get("DIGE_C29_GNM_PRESENTATION","0").strip()=="1
 C30_GNM_SEMANTIC_IDENTITY=os.environ.get("DIGE_C30_GNM_SEMANTIC_IDENTITY","0").strip()=="1"
 C31_GNM_FACE_APPEARANCE=os.environ.get("DIGE_C31_GNM_FACE_APPEARANCE","0").strip()=="1"
 C32_GNM_DERMAL_HAIR=os.environ.get("DIGE_C32_GNM_DERMAL_HAIR","0").strip()=="1"
+C33_GUIDE_GATED_GROOM=os.environ.get("DIGE_C33_GUIDE_GATED_GROOM","0").strip()=="1"
+C33_GUIDE_MAX_DIST=float(os.environ.get("DIGE_C33_GUIDE_MAX_DIST","0.020"))
+C33_SCALP_Z_DROP=float(os.environ.get("DIGE_C33_SCALP_Z_DROP","0.120"))
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -2414,7 +2417,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         _c28_bbox_max=Vector(c28_gnm["aligned_bbox_max"])
         _c28_eye_mid=(Vector(c28_gnm["head_translation"]) + Vector((0,0,0)))  # provenance-only origin
         _c28_hairline=float(c28_gnm["hairline_target_z"])
-        _c28_z_min=_c28_hairline-(.105 if C32_GNM_DERMAL_HAIR else .010)
+        _c28_z_min=_c28_hairline-(C33_SCALP_Z_DROP if C33_GUIDE_GATED_GROOM else (.105 if C32_GNM_DERMAL_HAIR else .010))
         _c28_z_max=float(_c28_bbox_max.z)+.004
         _c28_x_half=max(.115,min(.155,(float(_c28_bbox_max.x)-float(_c28_bbox_min.x))*.48))
         _c28_y_max=float(_c28_bbox_max.y)+.004
@@ -2475,6 +2478,12 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             if p.y > .000 and n.y < -0.05:
                 continue
             if p.z < 1.585 and abs(p.x) < .085:
+                continue
+        if C33_GUIDE_GATED_GROOM:
+            rv=np.array([p.x,p.y,p.z],dtype=np.float64)
+            gd=guide_centers-rv
+            nearest_guide_d2=float(np.einsum("ij,ij->i",gd,gd).min())
+            if nearest_guide_d2 > C33_GUIDE_MAX_DIST*C33_GUIDE_MAX_DIST:
                 continue
         scalp_candidates.append((idx,p,n))
     if len(scalp_candidates) < 350:
@@ -2756,7 +2765,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"C32_GNM_DERMAL_FIBER_GROOM_V1" if C32_GNM_DERMAL_HAIR else ("C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))))))))))),
+    "style":"C33_GUIDE_GATED_FIBER_GROOM_V1" if C33_GUIDE_GATED_GROOM else ("C32_GNM_DERMAL_FIBER_GROOM_V1" if C32_GNM_DERMAL_HAIR else ("C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))))))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -2967,6 +2976,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C33_GUIDE_GATED_GROOM_SEARCH_V1" if C33_GUIDE_GATED_GROOM else
    "C32_GNM_DERMAL_HAIR_REFINEMENT_V1" if C32_GNM_DERMAL_HAIR else
    "C31_GNM_REGIONAL_FACE_APPEARANCE_V1" if C31_GNM_FACE_APPEARANCE else
    "C30_GNM_SEMANTIC_FEMALE_ASIAN_V1" if C30_GNM_SEMANTIC_IDENTITY else
@@ -2991,6 +3001,7 @@ receipt={
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":(
+     "C33_AFTER_C32_VISUAL_FAIL: KEEP_C32_DERMAL_MATERIAL_AND_FIBER_SHADER; ROOTS_MUST_BE_WITHIN_GUIDE_MESH_DISTANCE; SEARCH_ONLY_GUIDE_DISTANCE_IN_PARALLEL_LOW_SAMPLE; NO_FACE_ROOTS; FINAL_HIGH_SAMPLE_ONLY_AFTER_MASK_SELECTION" if C33_GUIDE_GATED_GROOM else
      "C32_AFTER_C31_VISUAL_AUDIT: KEEP_GNM_IDENTITY/CAMERA/PHOTOMETRY; REDUCE_WAXY_SSS_AND_COAT; INCREASE_MID/MICRO_DERMAL_VARIATION; EXPAND_GNM_SCALP_DOMAIN_TO_TEMPLES/SIDES; DOUBLE_FINE_STRAND_DENSITY; THINNER_RADIUS; LOWER_UNDERCOAT_RATIO; ADD_LOW_AMPLITUDE_MULTI_FREQUENCY_FIBER_VARIATION; SINGLE_TARGETED_FINALIST" if C32_GNM_DERMAL_HAIR else
      "C31_AFTER_C30_VISUAL_FAIL: KEEP_SEMANTIC_GNM_IDENTITY; ADD_GNM_LANDMARK_DRIVEN REGIONAL LIP/BLUSH/TZONE MASKS + STRONGER MULTISCALE PORE/MICRO NORMAL + FORWARD DARK BROW/LASH FIBERS + EYE WETLINES + SUBTLE MOUTH GAP; PRESERVE_CAMERA/PHOTOMETRY/GROOM" if C31_GNM_FACE_APPEARANCE else
      "C30_AFTER_C29_VISUAL_FAIL: KEEP_C29_PRESENTATION_REPAIR; REPLACE_UNCONSTRAINED_HEAD_PCA_SAMPLE_WITH_OFFICIAL_GNM_SEMANTIC_CVAE FEMALE+ASIAN IDENTITY; DETERMINISTIC_SEED; PRESERVE_GEOMETRY/PHOTOMETRY/GROOM FOR_CAUSAL_IDENTITY_ABLATION" if C30_GNM_SEMANTIC_IDENTITY else
@@ -3090,6 +3101,9 @@ receipt={
    "c30_semantic_ethnicity":c28_gnm.get("semantic_ethnicity"),
    "c31_gnm_face_appearance":C31_GNM_FACE_APPEARANCE,
    "c32_gnm_dermal_hair":C32_GNM_DERMAL_HAIR,
+   "c33_guide_gated_groom":C33_GUIDE_GATED_GROOM,
+   "c33_guide_max_dist_m":C33_GUIDE_MAX_DIST if C33_GUIDE_GATED_GROOM else None,
+   "c33_scalp_z_drop_m":C33_SCALP_Z_DROP if C33_GUIDE_GATED_GROOM else None,
    "c31_mask_vertex_count":c31_mask_vertex_count,
    "c31_wetline_count":c31_wetline_count,
    "c31_mouth_gap_count":c31_mouth_gap_count
