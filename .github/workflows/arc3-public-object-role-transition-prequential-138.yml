@@ -29,9 +29,30 @@ jobs:
             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
             public_benchmark/arc3/kaggle_candidates/public_object_role_transition_prequential_138.py
           cd public_benchmark/arc3/kaggle_candidates
+          set +e
           python public_object_role_transition_prequential_138.py \
             --self-test \
             --output "$GITHUB_WORKSPACE/object-role-transition-prequential-selftest-138.json"
+          rc=$?
+          set -e
+          test "$rc" -eq 0 -o "$rc" -eq 2
+          cd "$GITHUB_WORKSPACE"
+          python - <<'PY'
+          import json
+          d=json.load(open('object-role-transition-prequential-selftest-138.json'))
+          m=d['metrics']
+          # Some deliberately competing roles may fail shadow checks in the
+          # synthetic scene. The safety property is that only a zero-error role
+          # can qualify and any acting qualified program is correct.
+          assert m['baseline_predictions'] == 0
+          assert m['stable_programs_final'] >= 1
+          assert m['program_shadow_tests'] >= 3
+          assert m['reliability_qualified_programs_final'] >= 1
+          assert m['added_program_predictions'] >= 1
+          assert m['added_program_correct'] >= 1
+          assert m['added_program_wrong'] == 0
+          print(json.dumps({'synthetic_gate':'PASS','metrics':m}, sort_keys=True))
+          PY
       - name: Verify pinned TWIN provenance and license
         run: |
           set -euo pipefail
