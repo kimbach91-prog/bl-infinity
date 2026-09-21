@@ -6,6 +6,7 @@ on:
       - deus/arc3-kaggle-rank-climb-20260921
     paths:
       - 'public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py'
+      - 'public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_transport.py'
       - '.github/workflows/arc3-temporal-focus-target-blind-ab.yml'
   workflow_dispatch:
 
@@ -28,7 +29,8 @@ jobs:
             public_benchmark/arc3/harness/representation_granularity_guard.py \
             public_benchmark/arc3/harness/public_trace_temporal_state_audit.py \
             public_benchmark/arc3/kaggle_candidates/temporal_state_target_blind_ab.py \
-            public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py
+            public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py \
+            public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_transport.py
 
       - name: Download pinned public traces
         run: |
@@ -46,29 +48,13 @@ jobs:
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
 
       - name: Execute action-local focus same-model A/B
-        shell: bash
         run: |
-          set +e
-          final_rc=2
-          for attempt in 1 2 3
-          do
-            python public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py \
-              --input public_trace/ar25-0c556536_p0_events.jsonl \
-              --input public_trace/ar25-0c556536_p10_events.jsonl \
-              --input public_trace/ar25-0c556536_p11_events.jsonl \
-              --max-cases 8 \
-              --receipt temporal-focus-target-blind-ab.json
-            rc=$?
-            gate="$(jq -r '.promotion_gate // "MISSING"' temporal-focus-target-blind-ab.json 2>/dev/null)"
-            echo "attempt=$attempt rc=$rc gate=$gate"
-            if [ "$gate" != "INCONCLUSIVE_PROVIDER_CANARY_FAIL" ]; then
-              final_rc=$rc
-              break
-            fi
-            final_rc=$rc
-            sleep $((attempt * 2))
-          done
-          exit "$final_rc"
+          python public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_transport.py \
+            --input public_trace/ar25-0c556536_p0_events.jsonl \
+            --input public_trace/ar25-0c556536_p10_events.jsonl \
+            --input public_trace/ar25-0c556536_p11_events.jsonl \
+            --max-cases 8 \
+            --receipt temporal-focus-target-blind-ab.json
 
       - name: Enforce truth boundary and emit summary
         shell: bash
