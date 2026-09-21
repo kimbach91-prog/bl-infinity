@@ -5,6 +5,7 @@ import { CircuitBreakerBook } from './circuit.mjs';
 import { MemoryAuditLog } from './audit.mjs';
 import { LocalAdapter } from '../adapters/local.mjs';
 import { HttpWorkerAdapter } from '../adapters/http-worker.mjs';
+import { RailwayLoopAdapter } from '../adapters/railway-loop.mjs';
 import { FederationOrchestrator } from './orchestrator.mjs';
 import { BudgetGovernor } from './budget.mjs';
 import { ValuePolicyGovernor } from './value-policy.mjs';
@@ -44,6 +45,7 @@ export function createFederationRuntime({
       'cloudflare-worker': new HttpWorkerAdapter(),
       'gcp-cloud-run': new HttpWorkerAdapter(),
       'vercel-function': new HttpWorkerAdapter(),
+      'railway-loop': new RailwayLoopAdapter(),
     },
   });
   const effectiveValuePolicy = valuePolicy ?? new ValuePolicyGovernor();

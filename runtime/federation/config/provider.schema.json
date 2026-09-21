@@ -7,7 +7,7 @@
   "properties": {
     "manifestVersion": { "const": "bl-cf-provider/v1" },
     "id": { "type": "string", "pattern": "^[a-zA-Z0-9._:-]{2,128}$" },
-    "kind": { "enum": ["local", "http-worker", "cloudflare-worker", "gcp-cloud-run", "vercel-function"] },
+    "kind": { "enum": ["local", "http-worker", "cloudflare-worker", "gcp-cloud-run", "vercel-function", "railway-loop"] },
     "status": { "enum": ["enabled", "disabled"] },
     "endpoint": { "type": "string", "format": "uri" },
     "capabilities": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },

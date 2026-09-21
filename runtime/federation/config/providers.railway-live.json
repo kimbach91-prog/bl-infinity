@@ -1,0 +1,102 @@
+[
+  {
+    "manifestVersion": "bl-cf-provider/v1",
+    "id": "railway-cpu-a-live",
+    "kind": "railway-loop",
+    "status": "enabled",
+    "endpoint": "https://deus-cpu-executor-a-production.up.railway.app",
+    "capabilities": [
+      "compute.railway.loop.a"
+    ],
+    "authorization": {
+      "consentRef": "owner-directive:railway-cpu-a:20260921",
+      "grantor": "owner",
+      "grantedAt": "2026-09-21T00:00:00.000Z",
+      "expiresAt": "2027-09-21T00:00:00.000Z",
+      "allowedDataClasses": [
+        "public"
+      ],
+      "allowSideEffects": false,
+      "maxTaskCostUsd": 0
+    },
+    "limits": {
+      "maxConcurrency": 1,
+      "maxCostPerTaskUsd": 0,
+      "maxExecutionMs": 60000
+    },
+    "telemetry": {
+      "trust": 0.95,
+      "availability": 0.95,
+      "p95LatencyMs": 1500,
+      "costPerUnitUsd": 0,
+      "inFlight": 0
+    },
+    "dataPolicy": {
+      "privateDataAllowed": false,
+      "internalDataAllowed": false,
+      "retention": "none"
+    },
+    "regions": [
+      "sfo"
+    ],
+    "dataLocations": [
+      "remote-public"
+    ],
+    "tags": [
+      "railway",
+      "cpu",
+      "bounded-loop",
+      "same-provider-domain"
+    ]
+  },
+  {
+    "manifestVersion": "bl-cf-provider/v1",
+    "id": "railway-cpu-b-live",
+    "kind": "railway-loop",
+    "status": "enabled",
+    "endpoint": "https://deus-cpu-executor-b-production.up.railway.app",
+    "capabilities": [
+      "compute.railway.loop.b"
+    ],
+    "authorization": {
+      "consentRef": "owner-directive:railway-cpu-b:20260921",
+      "grantor": "owner",
+      "grantedAt": "2026-09-21T00:00:00.000Z",
+      "expiresAt": "2027-09-21T00:00:00.000Z",
+      "allowedDataClasses": [
+        "public"
+      ],
+      "allowSideEffects": false,
+      "maxTaskCostUsd": 0
+    },
+    "limits": {
+      "maxConcurrency": 2,
+      "maxCostPerTaskUsd": 0,
+      "maxExecutionMs": 60000
+    },
+    "telemetry": {
+      "trust": 0.95,
+      "availability": 0.95,
+      "p95LatencyMs": 1500,
+      "costPerUnitUsd": 0,
+      "inFlight": 0
+    },
+    "dataPolicy": {
+      "privateDataAllowed": false,
+      "internalDataAllowed": false,
+      "retention": "none"
+    },
+    "regions": [
+      "sfo"
+    ],
+    "dataLocations": [
+      "remote-public"
+    ],
+    "tags": [
+      "railway",
+      "cpu",
+      "bounded-loop",
+      "same-provider-domain"
+    ]
+  }
+]

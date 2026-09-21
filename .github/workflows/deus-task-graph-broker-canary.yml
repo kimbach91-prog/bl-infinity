@@ -1,0 +1,156 @@
+name: DEUS Task Graph Broker 7-Runner Canary
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/federation/lib/task-graph-broker.mjs'
+      - 'runtime/federation/test/task-graph-broker.test.mjs'
+      - '.github/workflows/deus-task-graph-broker-canary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  scatter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        shard: [0,1,2,3,4,5,6]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute deterministic shard
+        env:
+          SHARD: ${{ matrix.shard }}
+          WORK_PER_SHARD: '1000000'
+        run: |
+          mkdir -p .deus/broker-canary
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import os from 'node:os';
+          import crypto from 'node:crypto';
+          const shard=Number(process.env.SHARD);
+          const count=Number(process.env.WORK_PER_SHARD);
+          const start=shard*count;
+          const end=start+count;
+          const MOD=65521;
+          const startedAtMs=Date.now();
+          let checksum=0;
+          for(let i=start;i<end;i++){
+            const a=i%MOD;
+            const b=(i*3+7)%MOD;
+            checksum=(checksum + a*b) % MOD;
+          }
+          const endedAtMs=Date.now();
+          const receipt={
+            schema:'deus-task-graph-scatter-receipt/1',
+            shard,
+            range:[start,end],
+            workUnits:count,
+            checksum,
+            startedAtMs,
+            endedAtMs,
+            elapsedMs:endedAtMs-startedAtMs,
+            cpuCount:os.cpus().length,
+            totalMemoryBytes:os.totalmem(),
+            runnerName:process.env.RUNNER_NAME ?? null,
+            runnerOs:process.env.RUNNER_OS ?? null,
+            runnerArch:process.env.RUNNER_ARCH ?? null,
+          };
+          receipt.digest=crypto.createHash('sha256').update(JSON.stringify(receipt)).digest('hex');
+          fs.writeFileSync(`.deus/broker-canary/shard-${shard}.json`,JSON.stringify(receipt,null,2)+'\n');
+          console.log(JSON.stringify(receipt));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-broker-shard-${{ matrix.shard }}
+          path: .deus/broker-canary/shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+
+  reduce:
+    needs: scatter
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: deus-broker-shard-*
+          path: .deus/broker-canary
+          merge-multiple: true
+      - name: Verify and reduce all shard receipts
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import path from 'node:path';
+          import crypto from 'node:crypto';
+          const dir='.deus/broker-canary';
+          const files=fs.readdirSync(dir).filter(x=>/^shard-\d+\.json$/.test(x)).sort((a,b)=>Number(a.match(/\d+/)[0])-Number(b.match(/\d+/)[0]));
+          if(files.length!==7) throw new Error(`expected 7 shard receipts, got ${files.length}`);
+          const receipts=files.map(f=>JSON.parse(fs.readFileSync(path.join(dir,f),'utf8')));
+          for(let i=0;i<7;i++) if(receipts[i].shard!==i) throw new Error('shard ordering/identity mismatch');
+
+          const MOD=65521;
+          const total=receipts.reduce((s,r)=>s+r.workUnits,0);
+          let expected=0;
+          for(let i=0;i<total;i++){
+            const a=i%MOD;
+            const b=(i*3+7)%MOD;
+            expected=(expected + a*b) % MOD;
+          }
+          const reduced=receipts.reduce((s,r)=>(s+r.checksum)%MOD,0);
+          if(reduced!==expected) throw new Error(`reduce mismatch ${reduced} != ${expected}`);
+
+          const events=[];
+          for(const r of receipts){
+            events.push([r.startedAtMs,1]);
+            events.push([r.endedAtMs,-1]);
+          }
+          events.sort((a,b)=>a[0]-b[0] || b[1]-a[1]);
+          let active=0,maxOverlap=0;
+          for(const [,delta] of events){active+=delta;maxOverlap=Math.max(maxOverlap,active);}
+
+          const result={
+            schema:'deus-task-graph-broker-canary/1',
+            verdict:'PASS',
+            shards:7,
+            totalWorkUnits:total,
+            checksum:reduced,
+            expectedChecksum:expected,
+            observedMaxOverlap:maxOverlap,
+            totalAdvertisedCpuThreads:receipts.reduce((s,r)=>s+r.cpuCount,0),
+            totalAdvertisedMemoryBytes:receipts.reduce((s,r)=>s+r.totalMemoryBytes,0),
+            workerReceipts:receipts.map(r=>({shard:r.shard,digest:r.digest,startedAtMs:r.startedAtMs,endedAtMs:r.endedAtMs,cpuCount:r.cpuCount,totalMemoryBytes:r.totalMemoryBytes})),
+            truthBoundary:'EXACT_SCATTER_REDUCE_CANARY__OBSERVED_RUNNER_OVERLAP_ONLY__NOT_PERMANENT_SLA_OR_SINGLE_SHARED_MEMORY_MACHINE'
+          };
+          result.digest=crypto.createHash('sha256').update(JSON.stringify(result)).digest('hex');
+          fs.writeFileSync(path.join(dir,'broker-canary-receipt.json'),JSON.stringify(result,null,2)+'\n');
+          console.log(JSON.stringify(result));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-task-graph-broker-canary-${{ github.run_id }}
+          path: .deus/broker-canary/broker-canary-receipt.json
+          if-no-files-found: error
+
+  railway-external:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Execute federation tasks on live Railway A/B workers
+        run: |
+          mkdir -p .deus/broker-canary
+          node runtime/federation/scripts/railway-live-canary.mjs | tee .deus/broker-canary/railway-live-canary.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-broker-railway-live-${{ github.run_id }}
+          path: .deus/broker-canary/railway-live-canary.json
+          if-no-files-found: error
