@@ -383,6 +383,7 @@ C28_HEAD_SCALE_BIAS=float(os.environ.get("DIGE_C28_HEAD_SCALE_BIAS","1.00"))
 C28_HEAD_Z_OFFSET=float(os.environ.get("DIGE_C28_HEAD_Z_OFFSET","0.000"))
 C29_GNM_PRESENTATION=os.environ.get("DIGE_C29_GNM_PRESENTATION","0").strip()=="1"
 C30_GNM_SEMANTIC_IDENTITY=os.environ.get("DIGE_C30_GNM_SEMANTIC_IDENTITY","0").strip()=="1"
+C31_GNM_FACE_APPEARANCE=os.environ.get("DIGE_C31_GNM_FACE_APPEARANCE","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -726,6 +727,112 @@ def fit_mhclo_asset(name,obj_path,mhclo_path,fit_vertices,material,contract):
 def c28_gnm_skin_material():
     m=bpy.data.materials.new("DIGE_C28_GNM_SKIN")
     m.use_nodes=True
+    if C31_GNM_FACE_APPEARANCE:
+        nt=m.node_tree
+        nt.nodes.clear()
+        out=nt.nodes.new("ShaderNodeOutputMaterial")
+        bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
+        set_input(bs,"IOR",1.42)
+        set_input(bs,"Specular IOR Level",.28)
+        set_input(bs,"Subsurface Weight",.070)
+        set_input(bs,"Subsurface Scale",.00082)
+        set_input(bs,"Subsurface Radius",(1.0,.38,.15))
+        set_input(bs,"Coat Weight",.010)
+        set_input(bs,"Coat Roughness",.44)
+        if hasattr(bs,"subsurface_method"):
+            bs.subsurface_method='RANDOM_WALK_SKIN'
+
+        tex=nt.nodes.new("ShaderNodeTexCoord")
+        base_noise=nt.nodes.new("ShaderNodeTexNoise")
+        base_noise.inputs["Scale"].default_value=10.0
+        base_noise.inputs["Detail"].default_value=4.0
+        base_noise.inputs["Roughness"].default_value=.62
+        nt.links.new(tex.outputs["Object"],base_noise.inputs["Vector"])
+        base_ramp=nt.nodes.new("ShaderNodeValToRGB")
+        base_ramp.color_ramp.elements[0].position=.18
+        base_ramp.color_ramp.elements[0].color=(0.245,0.082,0.042,1)
+        base_ramp.color_ramp.elements[1].position=.82
+        base_ramp.color_ramp.elements[1].color=(0.445,0.190,0.102,1)
+        nt.links.new(base_noise.outputs["Fac"],base_ramp.inputs["Fac"])
+
+        vc=nt.nodes.new("ShaderNodeVertexColor")
+        vc.layer_name="C31_FaceMask"
+        sep=nt.nodes.new("ShaderNodeSeparateColor")
+        sep.mode='RGB'
+        nt.links.new(vc.outputs["Color"],sep.inputs["Color"])
+
+        lip_color=nt.nodes.new("ShaderNodeRGB")
+        lip_color.outputs[0].default_value=(0.42,0.075,0.068,1)
+        lip_mix=nt.nodes.new("ShaderNodeMixRGB")
+        lip_mix.blend_type='MIX'
+        nt.links.new(sep.outputs["Red"],lip_mix.inputs[0])
+        nt.links.new(base_ramp.outputs["Color"],lip_mix.inputs[1])
+        nt.links.new(lip_color.outputs[0],lip_mix.inputs[2])
+
+        blush_color=nt.nodes.new("ShaderNodeRGB")
+        blush_color.outputs[0].default_value=(0.46,0.135,0.088,1)
+        blush_mix=nt.nodes.new("ShaderNodeMixRGB")
+        blush_mix.blend_type='MIX'
+        nt.links.new(sep.outputs["Green"],blush_mix.inputs[0])
+        nt.links.new(lip_mix.outputs["Color"],blush_mix.inputs[1])
+        nt.links.new(blush_color.outputs[0],blush_mix.inputs[2])
+        nt.links.new(blush_mix.outputs["Color"],bs.inputs["Base Color"])
+
+        rough_noise=nt.nodes.new("ShaderNodeTexNoise")
+        rough_noise.inputs["Scale"].default_value=52.0
+        rough_noise.inputs["Detail"].default_value=4.0
+        rough_noise.inputs["Roughness"].default_value=.62
+        nt.links.new(tex.outputs["Object"],rough_noise.inputs["Vector"])
+        rough_map=nt.nodes.new("ShaderNodeMapRange")
+        rough_map.inputs["From Min"].default_value=0.0
+        rough_map.inputs["From Max"].default_value=1.0
+        rough_map.inputs["To Min"].default_value=.44
+        rough_map.inputs["To Max"].default_value=.60
+        nt.links.new(rough_noise.outputs["Fac"],rough_map.inputs["Value"])
+        tzone_scale=nt.nodes.new("ShaderNodeMath"); tzone_scale.operation='MULTIPLY'; tzone_scale.inputs[1].default_value=.055
+        lip_rough_scale=nt.nodes.new("ShaderNodeMath"); lip_rough_scale.operation='MULTIPLY'; lip_rough_scale.inputs[1].default_value=.070
+        nt.links.new(sep.outputs["Blue"],tzone_scale.inputs[0])
+        nt.links.new(sep.outputs["Red"],lip_rough_scale.inputs[0])
+        rough_sub1=nt.nodes.new("ShaderNodeMath"); rough_sub1.operation='SUBTRACT'
+        rough_sub2=nt.nodes.new("ShaderNodeMath"); rough_sub2.operation='SUBTRACT'
+        nt.links.new(rough_map.outputs["Result"],rough_sub1.inputs[0]); nt.links.new(tzone_scale.outputs[0],rough_sub1.inputs[1])
+        nt.links.new(rough_sub1.outputs[0],rough_sub2.inputs[0]); nt.links.new(lip_rough_scale.outputs[0],rough_sub2.inputs[1])
+        nt.links.new(rough_sub2.outputs[0],bs.inputs["Roughness"])
+
+        pore=nt.nodes.new("ShaderNodeTexNoise")
+        pore.inputs["Scale"].default_value=1900.0
+        pore.inputs["Detail"].default_value=5.0
+        pore.inputs["Roughness"].default_value=.68
+        nt.links.new(tex.outputs["Object"],pore.inputs["Vector"])
+        micro=nt.nodes.new("ShaderNodeTexNoise")
+        micro.inputs["Scale"].default_value=6200.0
+        micro.inputs["Detail"].default_value=3.0
+        micro.inputs["Roughness"].default_value=.60
+        nt.links.new(tex.outputs["Object"],micro.inputs["Vector"])
+        pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.70
+        mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.30
+        nt.links.new(pore.outputs["Fac"],pscale.inputs[0]); nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
+        add=nt.nodes.new("ShaderNodeMath"); add.operation='ADD'
+        nt.links.new(pscale.outputs[0],add.inputs[0]); nt.links.new(mscale.outputs[0],add.inputs[1])
+        bump=nt.nodes.new("ShaderNodeBump")
+        bump.inputs["Strength"].default_value=.24
+        bump.inputs["Distance"].default_value=.000070
+        nt.links.new(add.outputs[0],bump.inputs["Height"])
+        nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
+        nt.links.new(bs.outputs[0],out.inputs["Surface"])
+        return m,{
+            "model":"C31_GNM_REGIONAL_RANDOM_WALK_SKIN",
+            "mask_attribute":"C31_FaceMask",
+            "base_color_range":[[0.245,0.082,0.042],[0.445,0.190,0.102]],
+            "lip_color":[0.42,0.075,0.068],
+            "blush_color":[0.46,0.135,0.088],
+            "roughness_range":[0.44,0.60],
+            "subsurface_weight":0.070,
+            "subsurface_scale":0.00082,
+            "pore_scale":1900.0,
+            "micro_scale":6200.0,
+            "bump_distance":0.000070,
+        }
     if C29_GNM_PRESENTATION:
         nt=m.node_tree
         bs=nt.nodes.get("Principled BSDF")
@@ -1601,6 +1708,9 @@ c28_body_cut_z=None
 c28_hairline_delta=0.0
 c28_hairline_warp_vertices=0
 c29_iris_count=0
+c31_mask_vertex_count=0
+c31_wetline_count=0
+c31_mouth_gap_count=0
 if C28_GNM_HEAD:
     gnm_dir=Path(C28_GNM_DIR)
     if not gnm_dir.is_absolute():
@@ -1669,6 +1779,44 @@ if C28_GNM_HEAD:
         )
         c28_gnm_objects[comp]=obj
 
+    if C31_GNM_FACE_APPEARANCE:
+        skin_obj=c28_gnm_objects.get("skin")
+        if skin_obj is None:
+            raise RuntimeError("C31 missing GNM skin component")
+        attr=skin_obj.data.color_attributes.get("C31_FaceMask")
+        if attr is None:
+            attr=skin_obj.data.color_attributes.new(name="C31_FaceMask",type='FLOAT_COLOR',domain='POINT')
+        mouth_center=sum(transformed_landmarks[48:60],Vector())/12
+        mouth_left=transformed_landmarks[48]; mouth_right=transformed_landmarks[54]
+        mouth_half=max(.018,abs(mouth_left.x-mouth_right.x)*.55)
+        eye_l=sum(transformed_landmarks[36:42],Vector())/6
+        eye_r=sum(transformed_landmarks[42:48],Vector())/6
+        nose_tip=transformed_landmarks[30]
+        cheek_z=(mouth_center.z+((eye_l.z+eye_r.z)*.5))*.5
+        cheek_dx=max(.030,abs(eye_l.x-eye_r.x)*.74)
+        forehead_z=((eye_l.z+eye_r.z)*.5)+.055
+        def gmask(x,z,cx,cz,sx,sz):
+            return math.exp(-0.5*(((x-cx)/sx)**2+((z-cz)/sz)**2))
+        for v in skin_obj.data.vertices:
+            p=v.co
+            lip=min(1.0,1.18*gmask(p.x,p.z,mouth_center.x,mouth_center.z,mouth_half,.0105))
+            cheek=0.42*(
+                gmask(p.x,p.z,mouth_center.x+cheek_dx,cheek_z,.030,.032)+
+                gmask(p.x,p.z,mouth_center.x-cheek_dx,cheek_z,.030,.032)
+            )
+            nose=0.32*gmask(p.x,p.z,nose_tip.x,nose_tip.z,.019,.030)
+            eyelid=0.20*(
+                gmask(p.x,p.z,eye_l.x,eye_l.z,.025,.015)+
+                gmask(p.x,p.z,eye_r.x,eye_r.z,.025,.015)
+            )
+            blush=min(.46,cheek+nose+eyelid)
+            tzone=min(1.0,
+                .82*gmask(p.x,p.z,nose_tip.x,nose_tip.z,.018,.050)+
+                .48*gmask(p.x,p.z,0.0,forehead_z,.042,.050)
+            )
+            attr.data[v.index].color=(lip,blush,tzone,1.0)
+            c31_mask_vertex_count+=1
+
     if C29_GNM_PRESENTATION:
         for comp,pts in (("left_eye",transformed_landmarks[36:42]),("right_eye",transformed_landmarks[42:48])):
             eye_mesh=c28_gnm_objects.get(comp)
@@ -1736,7 +1884,7 @@ if C28_GNM_HEAD:
             u=max(0.0,min(1.0,u))
             seg=min(len(ordered)-2,int(u*(len(ordered)-1)))
             lu=u*(len(ordered)-1)-seg
-            root=ordered[seg].lerp(ordered[seg+1],lu)+Vector((0,.00065,grng.uniform(-.0004,.0004)))
+            root=ordered[seg].lerp(ordered[seg+1],lu)+Vector((0,.00115 if C31_GNM_FACE_APPEARANCE else .00065,grng.uniform(-.0004,.0004)))
             side=1.0 if root.x>=gnm_eye_mid.x else -1.0
             length=grng.uniform(.0026,.0048)
             brow_fibers.append([
@@ -1753,7 +1901,7 @@ if C28_GNM_HEAD:
             u=(i+.5)/28.0
             seg=min(len(upper)-2,int(u*(len(upper)-1)))
             lu=u*(len(upper)-1)-seg
-            root=upper[seg].lerp(upper[seg+1],lu)+Vector((0,.00055,.00025))
+            root=upper[seg].lerp(upper[seg+1],lu)+Vector((0,.00105 if C31_GNM_FACE_APPEARANCE else .00055,.00025))
             side=1.0 if root.x>=gnm_eye_mid.x else -1.0
             length=grng.uniform(.0016,.0034)
             lash_fibers.append([
@@ -1761,10 +1909,31 @@ if C28_GNM_HEAD:
                 root+Vector((side*.00010,length*.52,length*.14)),
                 root+Vector((side*.00022,length,length*.26)),
             ])
-    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000060,hair)
-    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000036,hair)
+    facial_hair_mat=principled("DIGE_C31_FACIAL_HAIR",(0.010,0.004,0.002),rough=.40,ior=1.50) if C31_GNM_FACE_APPEARANCE else hair
+    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000082 if C31_GNM_FACE_APPEARANCE else .000060,facial_hair_mat)
+    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000048 if C31_GNM_FACE_APPEARANCE else .000036,facial_hair_mat)
     c28_brow_fiber_count=len(brow_fibers)
     c28_lash_fiber_count=len(lash_fibers)
+    if C31_GNM_FACE_APPEARANCE:
+        wet_splines=[]
+        for eye_pts in (transformed_landmarks[36:42],transformed_landmarks[42:48]):
+            ec=sum(eye_pts,Vector())/len(eye_pts)
+            lower=sorted(eye_pts,key=lambda p:(p.z,p.x))[:4]
+            lower=sorted(lower,key=lambda p:p.x)
+            wet_splines.append([Vector((p.x,p.y+.00105,p.z-.00010)) for p in lower])
+        curve_object("DIGE_C31_GNM_EYE_WETLINES",wet_splines,.000038,wetline)
+        c31_wetline_count=len(wet_splines)
+        mc=sum(transformed_landmarks[48:60],Vector())/12
+        ml=transformed_landmarks[48]; mr=transformed_landmarks[54]
+        mouth_line=[
+            Vector((ml.x,mc.y+.00125,mc.z)),
+            Vector(((ml.x+mc.x)*.5,mc.y+.00135,mc.z-.00015)),
+            Vector((mc.x,mc.y+.00138,mc.z-.00022)),
+            Vector(((mr.x+mc.x)*.5,mc.y+.00135,mc.z-.00015)),
+            Vector((mr.x,mc.y+.00125,mc.z)),
+        ]
+        curve_object("DIGE_C31_GNM_MOUTH_GAP",[mouth_line],.000045,mouth_dark)
+        c31_mouth_gap_count=1
 
     baby=[]
     for i in range(104):
@@ -1814,6 +1983,10 @@ if C28_GNM_HEAD:
         "eye_contract":c28_eye_contract,
         "c29_presentation":C29_GNM_PRESENTATION,
         "c29_calibrated_iris_count":c29_iris_count,
+        "c31_face_appearance":C31_GNM_FACE_APPEARANCE,
+        "c31_mask_vertex_count":c31_mask_vertex_count,
+        "c31_wetline_count":c31_wetline_count,
+        "c31_mouth_gap_count":c31_mouth_gap_count,
         "components":{k:len(v.data.vertices) for k,v in c28_gnm_objects.items()},
     }
 
@@ -2764,6 +2937,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C31_GNM_REGIONAL_FACE_APPEARANCE_V1" if C31_GNM_FACE_APPEARANCE else
    "C30_GNM_SEMANTIC_FEMALE_ASIAN_V1" if C30_GNM_SEMANTIC_IDENTITY else
    "C29_GNM_PRESENTATION_REPAIR_V1" if C29_GNM_PRESENTATION else
    "C28_GNM_HIGH_FIDELITY_HEAD_V1" if C28_GNM_HEAD else
@@ -2786,6 +2960,7 @@ receipt={
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":(
+     "C31_AFTER_C30_VISUAL_FAIL: KEEP_SEMANTIC_GNM_IDENTITY; ADD_GNM_LANDMARK_DRIVEN REGIONAL LIP/BLUSH/TZONE MASKS + STRONGER MULTISCALE PORE/MICRO NORMAL + FORWARD DARK BROW/LASH FIBERS + EYE WETLINES + SUBTLE MOUTH GAP; PRESERVE_CAMERA/PHOTOMETRY/GROOM" if C31_GNM_FACE_APPEARANCE else
      "C30_AFTER_C29_VISUAL_FAIL: KEEP_C29_PRESENTATION_REPAIR; REPLACE_UNCONSTRAINED_HEAD_PCA_SAMPLE_WITH_OFFICIAL_GNM_SEMANTIC_CVAE FEMALE+ASIAN IDENTITY; DETERMINISTIC_SEED; PRESERVE_GEOMETRY/PHOTOMETRY/GROOM FOR_CAUSAL_IDENTITY_ABLATION" if C30_GNM_SEMANTIC_IDENTITY else
      "C29_AFTER_C28_VISUAL_FAIL: KEEP_GNM_GEOMETRY; REPLACE_BROKEN_HEAD_MATERIAL_WITH_DIRECT_RANDOM_WALK_PROCEDURAL_SKIN; HIDE_SHORT03_BULK_MESH; RENDER_STRAND_GROOM_ONLY; CALIBRATED_IRIS_PUPIL_CORNEA_STACKS; PRESERVE_C26_PHOTOMETRY" if C29_GNM_PRESENTATION else
      "C28_AFTER_C27_VISUAL_FAIL: APACHE2_SCAN_LEARNED_GOOGLE_GNM_HEAD + INTERNAL_EYES_TEETH_TONGUE + EYE_ALIGNED_BODY_FIT + ADAPTIVE_HAIRLINE + GNM_LANDMARK_FIBERS; PRESERVE_C26_PHOTOMETRY" if C28_GNM_HEAD else
@@ -2880,7 +3055,11 @@ receipt={
    "c30_gnm_semantic_identity":C30_GNM_SEMANTIC_IDENTITY,
    "c30_identity_source":c28_gnm.get("identity_source"),
    "c30_semantic_gender":c28_gnm.get("semantic_gender"),
-   "c30_semantic_ethnicity":c28_gnm.get("semantic_ethnicity")
+   "c30_semantic_ethnicity":c28_gnm.get("semantic_ethnicity"),
+   "c31_gnm_face_appearance":C31_GNM_FACE_APPEARANCE,
+   "c31_mask_vertex_count":c31_mask_vertex_count,
+   "c31_wetline_count":c31_wetline_count,
+   "c31_mouth_gap_count":c31_mouth_gap_count
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
