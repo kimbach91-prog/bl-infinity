@@ -1,0 +1,78 @@
+name: ARC3 adaptive lossless scene public cross-game audit
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene.py'
+      - 'public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene_audit.py'
+      - '.github/workflows/arc3-adaptive-lossless-scene-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile clean-room representation audit
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/segmentation_target_blind_ab.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene_audit.py
+      - name: Download three distinct public Schema game traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p schema_public
+          base='https://huggingface.co/datasets/schema-harness/arc-agi-3-schema-traces/resolve/main/gpt_5_6_sol'
+          declare -A traces=(
+            [bp35]='gpt_5_6_sol_max_bp35'
+            [sp80]='gpt_5_6_sol_max_sp80'
+            [wa30]='gpt_5_6_sol_xhigh_wa30'
+          )
+          for game in bp35 sp80 wa30; do
+            d="${traces[$game]}"
+            curl --fail --location --retry 3 --silent --show-error "$base/$d/events.jsonl?download=true" -o "schema_public/${game}.jsonl"
+            test -s "schema_public/${game}.jsonl"
+          done
+          sha256sum schema_public/*.jsonl | sort > schema_public/SHA256SUMS.txt
+      - name: Execute lossless non-expansion audit
+        run: |
+          python public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene_audit.py \
+            --input schema_public/bp35.jsonl \
+            --input schema_public/sp80.jsonl \
+            --input schema_public/wa30.jsonl \
+            --receipt adaptive-lossless-scene-audit.json
+      - name: Enforce truth boundary
+        shell: bash
+        run: |
+          jq -e '
+            .schema=="deus/arc3-adaptive-lossless-scene-audit/1"
+            and .invariants.lossless_board_roundtrip_all_cases==true
+            and .invariants.level_action_preserved_all_cases==true
+            and .invariants.adaptive_payload_never_exceeds_raw_chars==true
+            and .invariants.future_outcome_read_for_representation==false
+            and .truth.public_trace_only==true
+            and .truth.model_behavior_test==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+          ' adaptive-lossless-scene-audit.json >/dev/null
+          jq '{distinct_games,games,aggregate,invariants,truth}' adaptive-lossless-scene-audit.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-adaptive-lossless-scene-audit
+          path: |
+            adaptive-lossless-scene-audit.json
+            schema_public/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
