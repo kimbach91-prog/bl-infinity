@@ -1,0 +1,90 @@
+name: ARC3 public effect-memory rollout A/B 115
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_effect_memory_rollout_ab_v2.py'
+      - '.github/workflows/arc3-public-effect-memory-rollout-ab-115.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-effect-memory-ab-v2:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+
+      - name: Compile causal-memory solver A/B v2
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_multiframe_probe.py \
+            public_benchmark/arc3/kaggle_candidates/animation_delta_signature.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/public_animation_action_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_effect_memory_rollout_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_effect_memory_rollout_ab_v2.py
+
+      - name: Execute exact-model public effect-memory rollout A/B v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_effect_memory_rollout_ab_v2.py \
+            --receipt "$GITHUB_WORKSPACE/public-effect-memory-rollout-ab-v2.json"
+
+      - name: Enforce public-development truth and promotion boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public-effect-memory-rollout-ab-v2.json
+          sha256sum public-effect-memory-rollout-ab-v2.json > RECEIPT_SHA256SUMS_115.txt
+          jq -e '
+            .schema=="deus/arc3-public-effect-memory-rollout-ab/2"
+            and .truth.public_development_environment_only==true
+            and .truth.same_exact_final_frame_contract_between_arms==true
+            and .truth.effect_memory_additive_only==true
+            and .truth.effect_memory_uses_observed_same_run_history_only==true
+            and .truth.executed_no_observation_is_solver_path_outcome_not_provider_failure==true
+            and .truth.observation_survival_alone_cannot_promote==true
+            and .truth.promotion_requires_level_gain_or_equal_positive_gain_efficiency==true
+            and .truth.game_source_read==false
+            and .truth.hidden_state_read==false
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+          ' public-effect-memory-rollout-ab-v2.json >/dev/null
+          jq '{summary,promotion_gate,inconclusive,truth}' public-effect-memory-rollout-ab-v2.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload behavior receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-effect-memory-rollout-ab-115
+          path: |
+            public-effect-memory-rollout-ab-v2.json
+            RECEIPT_SHA256SUMS_115.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail closed on inconclusive behavior execution
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' public-effect-memory-rollout-ab-v2.json)"
+          case "$gate" in
+            INCONCLUSIVE_*) exit 2 ;;
+            *) exit 0 ;;
+          esac
