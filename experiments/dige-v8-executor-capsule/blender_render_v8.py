@@ -388,6 +388,48 @@ C32_GNM_DERMAL_HAIR=os.environ.get("DIGE_C32_GNM_DERMAL_HAIR","0").strip()=="1"
 C33_GUIDE_GATED_GROOM=os.environ.get("DIGE_C33_GUIDE_GATED_GROOM","0").strip()=="1"
 C33_GUIDE_MAX_DIST=float(os.environ.get("DIGE_C33_GUIDE_MAX_DIST","0.020"))
 C33_SCALP_Z_DROP=float(os.environ.get("DIGE_C33_SCALP_Z_DROP","0.120"))
+C35_REALISM=os.environ.get("DIGE_C35_REALISM","0").strip()=="1"
+C35_SKIN_PROFILE=os.environ.get("DIGE_C35_SKIN_PROFILE","baseline").strip().lower()
+C35_HAIR_PROFILE=os.environ.get("DIGE_C35_HAIR_PROFILE","baseline").strip().lower()
+
+C35_SKIN_PROFILES={
+ "baseline":{"sss_weight":.045,"sss_scale":.00064,"rough_min":.46,"rough_max":.64,"base_scale":18.0,"rough_scale":145.0,
+             "base_lo":(0.205,0.073,0.048,1),"base_hi":(0.395,0.176,0.118,1),
+             "meso_scale":None,"pore_scale":2400.0,"micro_scale":9000.0,"meso_w":0.0,"pore_w":.58,"micro_w":.42,
+             "bump_strength":.34,"bump_distance":.000052,"coat":.004,"coat_rough":.50,"detail_w":22.0},
+ "skin_soft":{"sss_weight":.030,"sss_scale":.00055,"rough_min":.44,"rough_max":.62,"base_scale":22.0,"rough_scale":90.0,
+             "base_lo":(0.190,0.085,0.060,1),"base_hi":(0.360,0.180,0.115,1),
+             "meso_scale":60.0,"pore_scale":900.0,"micro_scale":3000.0,"meso_w":.22,"pore_w":.58,"micro_w":.20,
+             "bump_strength":.36,"bump_distance":.000055,"coat":.002,"coat_rough":.52,"detail_w":45.0},
+ "skin_balanced":{"sss_weight":.022,"sss_scale":.00045,"rough_min":.42,"rough_max":.61,"base_scale":24.0,"rough_scale":70.0,
+             "base_lo":(0.180,0.082,0.058,1),"base_hi":(0.340,0.170,0.110,1),
+             "meso_scale":50.0,"pore_scale":700.0,"micro_scale":2400.0,"meso_w":.25,"pore_w":.55,"micro_w":.20,
+             "bump_strength":.42,"bump_distance":.000065,"coat":.001,"coat_rough":.54,"detail_w":55.0},
+ "skin_strong":{"sss_weight":.016,"sss_scale":.00038,"rough_min":.44,"rough_max":.64,"base_scale":26.0,"rough_scale":55.0,
+             "base_lo":(0.170,0.080,0.058,1),"base_hi":(0.330,0.165,0.108,1),
+             "meso_scale":42.0,"pore_scale":560.0,"micro_scale":1900.0,"meso_w":.28,"pore_w":.54,"micro_w":.18,
+             "bump_strength":.48,"bump_distance":.000075,"coat":.0005,"coat_rough":.56,"detail_w":70.0},
+}
+C35_HAIR_PROFILES={
+ "baseline":{"melanin":.82,"redness":.065,"random_color":.085,"rough":.34,"radial":.42,"random_rough":.11,"coat":.03,
+             "points":12,"strands":24,"base_radius":.000042,"tip_radius":.0000065,"undercoat_ratio":.58,
+             "under_len_mult":1.0,"style_len_mult":1.0,"lift_mult":1.0,"amp_mult":1.0,"flyaway_fraction":0.0},
+ "hair_volume":{"melanin":.96,"redness":.020,"random_color":.040,"rough":.38,"radial":.46,"random_rough":.08,"coat":.015,
+             "points":16,"strands":16,"base_radius":.000034,"tip_radius":.0000045,"undercoat_ratio":.36,
+             "under_len_mult":1.02,"style_len_mult":1.45,"lift_mult":1.35,"amp_mult":1.20,"flyaway_fraction":.05},
+ "hair_fiber":{"melanin":.98,"redness":.010,"random_color":.020,"rough":.42,"radial":.52,"random_rough":.06,"coat":.010,
+             "points":16,"strands":20,"base_radius":.000030,"tip_radius":.0000040,"undercoat_ratio":.30,
+             "under_len_mult":.96,"style_len_mult":1.30,"lift_mult":1.50,"amp_mult":1.40,"flyaway_fraction":.10},
+ "hair_airy":{"melanin":.94,"redness":.025,"random_color":.050,"rough":.36,"radial":.46,"random_rough":.09,"coat":.012,
+             "points":18,"strands":14,"base_radius":.000032,"tip_radius":.0000042,"undercoat_ratio":.25,
+             "under_len_mult":.92,"style_len_mult":1.65,"lift_mult":1.60,"amp_mult":1.50,"flyaway_fraction":.14},
+}
+if C35_SKIN_PROFILE not in C35_SKIN_PROFILES:
+    raise RuntimeError(f"Unknown DIGE_C35_SKIN_PROFILE={C35_SKIN_PROFILE}")
+if C35_HAIR_PROFILE not in C35_HAIR_PROFILES:
+    raise RuntimeError(f"Unknown DIGE_C35_HAIR_PROFILE={C35_HAIR_PROFILE}")
+C35_SKIN=C35_SKIN_PROFILES[C35_SKIN_PROFILE]
+C35_HAIR=C35_HAIR_PROFILES[C35_HAIR_PROFILE]
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -566,13 +608,13 @@ def hair_material():
         set_input(h,"Reflection",1.0)
         set_input(h,"Transmission",1.0)
         set_input(h,"Secondary Reflection",1.0)
-        set_input(h,"Melanin",.82 if C32_GNM_DERMAL_HAIR else .93)
-        set_input(h,"Melanin Redness",.065 if C32_GNM_DERMAL_HAIR else .04)
-        set_input(h,"Random Color",.085 if C32_GNM_DERMAL_HAIR else .03)
-        set_input(h,"Roughness",.34 if C32_GNM_DERMAL_HAIR else .28)
-        set_input(h,"Radial Roughness",.42 if C32_GNM_DERMAL_HAIR else .30)
-        set_input(h,"Random Roughness",.11 if C32_GNM_DERMAL_HAIR else .06)
-        set_input(h,"Coat",.03 if C32_GNM_DERMAL_HAIR else .02)
+        set_input(h,"Melanin",C35_HAIR["melanin"] if C35_REALISM else (.82 if C32_GNM_DERMAL_HAIR else .93))
+        set_input(h,"Melanin Redness",C35_HAIR["redness"] if C35_REALISM else (.065 if C32_GNM_DERMAL_HAIR else .04))
+        set_input(h,"Random Color",C35_HAIR["random_color"] if C35_REALISM else (.085 if C32_GNM_DERMAL_HAIR else .03))
+        set_input(h,"Roughness",C35_HAIR["rough"] if C35_REALISM else (.34 if C32_GNM_DERMAL_HAIR else .28))
+        set_input(h,"Radial Roughness",C35_HAIR["radial"] if C35_REALISM else (.42 if C32_GNM_DERMAL_HAIR else .30))
+        set_input(h,"Random Roughness",C35_HAIR["random_rough"] if C35_REALISM else (.11 if C32_GNM_DERMAL_HAIR else .06))
+        set_input(h,"Coat",C35_HAIR["coat"] if C35_REALISM else (.03 if C32_GNM_DERMAL_HAIR else .02))
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -739,25 +781,25 @@ def c28_gnm_skin_material():
         bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
         set_input(bs,"IOR",1.42)
         set_input(bs,"Specular IOR Level",.28)
-        set_input(bs,"Subsurface Weight",.045 if C32_GNM_DERMAL_HAIR else .070)
-        set_input(bs,"Subsurface Scale",.00064 if C32_GNM_DERMAL_HAIR else .00082)
-        set_input(bs,"Subsurface Radius",(1.0,.34,.12) if C32_GNM_DERMAL_HAIR else (1.0,.38,.15))
-        set_input(bs,"Coat Weight",.004 if C32_GNM_DERMAL_HAIR else .010)
-        set_input(bs,"Coat Roughness",.50 if C32_GNM_DERMAL_HAIR else .44)
+        set_input(bs,"Subsurface Weight",C35_SKIN["sss_weight"] if C35_REALISM else (.045 if C32_GNM_DERMAL_HAIR else .070))
+        set_input(bs,"Subsurface Scale",C35_SKIN["sss_scale"] if C35_REALISM else (.00064 if C32_GNM_DERMAL_HAIR else .00082))
+        set_input(bs,"Subsurface Radius",(1.0,.31,.10) if C35_REALISM else ((1.0,.34,.12) if C32_GNM_DERMAL_HAIR else (1.0,.38,.15)))
+        set_input(bs,"Coat Weight",C35_SKIN["coat"] if C35_REALISM else (.004 if C32_GNM_DERMAL_HAIR else .010))
+        set_input(bs,"Coat Roughness",C35_SKIN["coat_rough"] if C35_REALISM else (.50 if C32_GNM_DERMAL_HAIR else .44))
         if hasattr(bs,"subsurface_method"):
             bs.subsurface_method='RANDOM_WALK_SKIN'
 
         tex=nt.nodes.new("ShaderNodeTexCoord")
         base_noise=nt.nodes.new("ShaderNodeTexNoise")
-        base_noise.inputs["Scale"].default_value=18.0 if C32_GNM_DERMAL_HAIR else 10.0
+        base_noise.inputs["Scale"].default_value=C35_SKIN["base_scale"] if C35_REALISM else (18.0 if C32_GNM_DERMAL_HAIR else 10.0)
         base_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
         base_noise.inputs["Roughness"].default_value=.68 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],base_noise.inputs["Vector"])
         base_ramp=nt.nodes.new("ShaderNodeValToRGB")
         base_ramp.color_ramp.elements[0].position=.18
-        base_ramp.color_ramp.elements[0].color=((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1))
+        base_ramp.color_ramp.elements[0].color=(C35_SKIN["base_lo"] if C35_REALISM else ((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1)))
         base_ramp.color_ramp.elements[1].position=.82
-        base_ramp.color_ramp.elements[1].color=((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1))
+        base_ramp.color_ramp.elements[1].color=(C35_SKIN["base_hi"] if C35_REALISM else ((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1)))
         nt.links.new(base_noise.outputs["Fac"],base_ramp.inputs["Fac"])
 
         vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -784,15 +826,15 @@ def c28_gnm_skin_material():
         nt.links.new(blush_mix.outputs["Color"],bs.inputs["Base Color"])
 
         rough_noise=nt.nodes.new("ShaderNodeTexNoise")
-        rough_noise.inputs["Scale"].default_value=145.0 if C32_GNM_DERMAL_HAIR else 52.0
+        rough_noise.inputs["Scale"].default_value=C35_SKIN["rough_scale"] if C35_REALISM else (145.0 if C32_GNM_DERMAL_HAIR else 52.0)
         rough_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
         rough_noise.inputs["Roughness"].default_value=.70 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],rough_noise.inputs["Vector"])
         rough_map=nt.nodes.new("ShaderNodeMapRange")
         rough_map.inputs["From Min"].default_value=0.0
         rough_map.inputs["From Max"].default_value=1.0
-        rough_map.inputs["To Min"].default_value=.46 if C32_GNM_DERMAL_HAIR else .44
-        rough_map.inputs["To Max"].default_value=.64 if C32_GNM_DERMAL_HAIR else .60
+        rough_map.inputs["To Min"].default_value=C35_SKIN["rough_min"] if C35_REALISM else (.46 if C32_GNM_DERMAL_HAIR else .44)
+        rough_map.inputs["To Max"].default_value=C35_SKIN["rough_max"] if C35_REALISM else (.64 if C32_GNM_DERMAL_HAIR else .60)
         nt.links.new(rough_noise.outputs["Fac"],rough_map.inputs["Value"])
         tzone_scale=nt.nodes.new("ShaderNodeMath"); tzone_scale.operation='MULTIPLY'; tzone_scale.inputs[1].default_value=.055
         lip_rough_scale=nt.nodes.new("ShaderNodeMath"); lip_rough_scale.operation='MULTIPLY'; lip_rough_scale.inputs[1].default_value=.070
@@ -805,38 +847,52 @@ def c28_gnm_skin_material():
         nt.links.new(rough_sub2.outputs[0],bs.inputs["Roughness"])
 
         pore=nt.nodes.new("ShaderNodeTexNoise")
-        pore.inputs["Scale"].default_value=2400.0 if C32_GNM_DERMAL_HAIR else 1900.0
+        pore.inputs["Scale"].default_value=C35_SKIN["pore_scale"] if C35_REALISM else (2400.0 if C32_GNM_DERMAL_HAIR else 1900.0)
         pore.inputs["Detail"].default_value=5.0
         pore.inputs["Roughness"].default_value=.68
         nt.links.new(tex.outputs["Object"],pore.inputs["Vector"])
         micro=nt.nodes.new("ShaderNodeTexNoise")
-        micro.inputs["Scale"].default_value=9000.0 if C32_GNM_DERMAL_HAIR else 6200.0
+        micro.inputs["Scale"].default_value=C35_SKIN["micro_scale"] if C35_REALISM else (9000.0 if C32_GNM_DERMAL_HAIR else 6200.0)
         micro.inputs["Detail"].default_value=3.0
         micro.inputs["Roughness"].default_value=.60
         nt.links.new(tex.outputs["Object"],micro.inputs["Vector"])
-        pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.58 if C32_GNM_DERMAL_HAIR else .70
-        mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.42 if C32_GNM_DERMAL_HAIR else .30
+        pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=C35_SKIN["pore_w"] if C35_REALISM else (.58 if C32_GNM_DERMAL_HAIR else .70)
+        mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=C35_SKIN["micro_w"] if C35_REALISM else (.42 if C32_GNM_DERMAL_HAIR else .30)
         nt.links.new(pore.outputs["Fac"],pscale.inputs[0]); nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
         add=nt.nodes.new("ShaderNodeMath"); add.operation='ADD'
         nt.links.new(pscale.outputs[0],add.inputs[0]); nt.links.new(mscale.outputs[0],add.inputs[1])
+        height_out=add.outputs[0]
+        if C35_REALISM and C35_SKIN["meso_scale"] is not None:
+            meso=nt.nodes.new("ShaderNodeTexNoise")
+            meso.inputs["Scale"].default_value=C35_SKIN["meso_scale"]
+            meso.inputs["Detail"].default_value=4.0
+            meso.inputs["Roughness"].default_value=.66
+            nt.links.new(tex.outputs["Object"],meso.inputs["Vector"])
+            meso_scale=nt.nodes.new("ShaderNodeMath"); meso_scale.operation='MULTIPLY'; meso_scale.inputs[1].default_value=C35_SKIN["meso_w"]
+            nt.links.new(meso.outputs["Fac"],meso_scale.inputs[0])
+            add2=nt.nodes.new("ShaderNodeMath"); add2.operation='ADD'
+            nt.links.new(add.outputs[0],add2.inputs[0]); nt.links.new(meso_scale.outputs[0],add2.inputs[1])
+            height_out=add2.outputs[0]
         bump=nt.nodes.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value=.34 if C32_GNM_DERMAL_HAIR else .24
-        bump.inputs["Distance"].default_value=.000052 if C32_GNM_DERMAL_HAIR else .000070
-        nt.links.new(add.outputs[0],bump.inputs["Height"])
+        bump.inputs["Strength"].default_value=C35_SKIN["bump_strength"] if C35_REALISM else (.34 if C32_GNM_DERMAL_HAIR else .24)
+        bump.inputs["Distance"].default_value=C35_SKIN["bump_distance"] if C35_REALISM else (.000052 if C32_GNM_DERMAL_HAIR else .000070)
+        nt.links.new(height_out,bump.inputs["Height"])
         nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
         nt.links.new(bs.outputs[0],out.inputs["Surface"])
         return m,{
-            "model":"C32_GNM_DERMAL_MULTISCALE_SKIN" if C32_GNM_DERMAL_HAIR else "C31_GNM_REGIONAL_RANDOM_WALK_SKIN",
+            "model":("C35_GNM_REALISM_SKIN" if C35_REALISM else ("C32_GNM_DERMAL_MULTISCALE_SKIN" if C32_GNM_DERMAL_HAIR else "C31_GNM_REGIONAL_RANDOM_WALK_SKIN")),
+            "c35_profile":C35_SKIN_PROFILE if C35_REALISM else None,
             "mask_attribute":"C31_FaceMask",
             "base_color_range":[[0.245,0.082,0.042],[0.445,0.190,0.102]],
             "lip_color":[0.42,0.075,0.068],
             "blush_color":[0.46,0.135,0.088],
             "roughness_range":([0.46,0.64] if C32_GNM_DERMAL_HAIR else [0.44,0.60]),
-            "subsurface_weight":0.045 if C32_GNM_DERMAL_HAIR else 0.070,
-            "subsurface_scale":0.00064 if C32_GNM_DERMAL_HAIR else 0.00082,
-            "pore_scale":2400.0 if C32_GNM_DERMAL_HAIR else 1900.0,
-            "micro_scale":9000.0 if C32_GNM_DERMAL_HAIR else 6200.0,
-            "bump_distance":0.000052 if C32_GNM_DERMAL_HAIR else 0.000070,
+            "subsurface_weight":C35_SKIN["sss_weight"] if C35_REALISM else (0.045 if C32_GNM_DERMAL_HAIR else 0.070),
+            "subsurface_scale":C35_SKIN["sss_scale"] if C35_REALISM else (0.00064 if C32_GNM_DERMAL_HAIR else 0.00082),
+            "meso_scale":C35_SKIN["meso_scale"] if C35_REALISM else None,
+            "pore_scale":C35_SKIN["pore_scale"] if C35_REALISM else (2400.0 if C32_GNM_DERMAL_HAIR else 1900.0),
+            "micro_scale":C35_SKIN["micro_scale"] if C35_REALISM else (9000.0 if C32_GNM_DERMAL_HAIR else 6200.0),
+            "bump_distance":C35_SKIN["bump_distance"] if C35_REALISM else (0.000052 if C32_GNM_DERMAL_HAIR else 0.000070),
         }
     if C29_GNM_PRESENTATION:
         nt=m.node_tree
@@ -2555,8 +2611,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         if c32_lower_central_root_count:
             raise RuntimeError(f"C32.1 lower-central face/scalp root leak: {c32_lower_central_root_count}")
 
-    points_per_curve=12 if C32_GNM_DERMAL_HAIR else 8
-    strands_per_root=HAIR_STRANDS_PER_ROOT
+    points_per_curve=(C35_HAIR["points"] if C35_REALISM else (12 if C32_GNM_DERMAL_HAIR else 8))
+    strands_per_root=(C35_HAIR["strands"] if C35_REALISM else HAIR_STRANDS_PER_ROOT)
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
     hair_data.add_curves([points_per_curve]*curve_count)
@@ -2569,8 +2625,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     positions=[]
     radii=[]
-    base_radius=0.000042 if C32_GNM_DERMAL_HAIR else 0.000055
-    tip_radius=0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011
+    base_radius=(C35_HAIR["base_radius"] if C35_REALISM else (0.000042 if C32_GNM_DERMAL_HAIR else 0.000055))
+    tip_radius=(C35_HAIR["tip_radius"] if C35_REALISM else (0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011))
     down=Vector((0.0,0.0,-1.0))
     inv_world=surface_obj.matrix_world.inverted()
     surf_rot=surface_obj.matrix_world.to_3x3()
@@ -2598,7 +2654,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         style_lift=max(.010,min(.026,.010+shell_lift*.42))
 
         grid=max(2,int(math.ceil(math.sqrt(strands_per_root))))
-        undercoat_count=max(1,int(round(strands_per_root*(.58 if C32_GNM_DERMAL_HAIR else .75))))
+        undercoat_ratio=(C35_HAIR["undercoat_ratio"] if C35_REALISM else (.58 if C32_GNM_DERMAL_HAIR else .75))
+        undercoat_count=max(1,int(round(strands_per_root*undercoat_ratio)))
         for k in range(strands_per_root):
             gx=k % grid
             gy=k // grid
@@ -2640,17 +2697,21 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
             undercoat=(k < undercoat_count)
             if undercoat:
-                length=rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
-                lift=under_lift*rng.uniform(.78,1.08) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
+                length=(rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE*(C35_HAIR["under_len_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
+                lift=(under_lift*rng.uniform(.78,1.08)*(C35_HAIR["lift_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
                 tip_clear=rng.uniform(.0010,.0024) if C32_GNM_DERMAL_HAIR else rng.uniform(.0010,.0020)
                 flow=(child_flow + child_cross*rng.uniform(-.065,.065)).normalized() if C32_GNM_DERMAL_HAIR else (child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
-                amp=rng.uniform(.00028,.00088) if C32_GNM_DERMAL_HAIR else rng.uniform(.00020,.00065)
+                amp=(rng.uniform(.00028,.00088)*(C35_HAIR["amp_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else rng.uniform(.00020,.00065)
             else:
-                length=min(.058,envelope*1.12)*rng.uniform(.82,1.14)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else min(.043,envelope)*rng.uniform(.78,.96)*HAIR_ACCENT_LENGTH_SCALE
-                lift=style_lift*rng.uniform(.76,1.12) if C32_GNM_DERMAL_HAIR else style_lift*rng.uniform(.80,1.02)
-                tip_clear=rng.uniform(.0016,.0042) if C32_GNM_DERMAL_HAIR else rng.uniform(.0016,.0032)
-                flow=(child_flow + child_cross*rng.uniform(-.095,.095) + clump_bias*rng.uniform(.002,.012)).normalized() if C32_GNM_DERMAL_HAIR else (child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
-                amp=rng.uniform(.00050,.00155) if C32_GNM_DERMAL_HAIR else rng.uniform(.00035,.00105)
+                length=(min(.090,envelope*1.55)*rng.uniform(.82,1.18)*HAIR_ACCENT_LENGTH_SCALE*(C35_HAIR["style_len_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else min(.043,envelope)*rng.uniform(.78,.96)*HAIR_ACCENT_LENGTH_SCALE
+                lift=(style_lift*rng.uniform(.76,1.18)*(C35_HAIR["lift_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else style_lift*rng.uniform(.80,1.02)
+                tip_clear=rng.uniform(.0016,.0048) if C32_GNM_DERMAL_HAIR else rng.uniform(.0016,.0032)
+                flow=(child_flow + child_cross*rng.uniform(-.13,.13) + clump_bias*rng.uniform(.002,.016)).normalized() if C32_GNM_DERMAL_HAIR else (child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
+                amp=(rng.uniform(.00050,.00175)*(C35_HAIR["amp_mult"] if C35_REALISM else 1.0)) if C32_GNM_DERMAL_HAIR else rng.uniform(.00035,.00105)
+                if C35_REALISM and C35_HAIR["flyaway_fraction"]>0 and rng.random()<C35_HAIR["flyaway_fraction"]:
+                    length*=rng.uniform(1.15,1.55)
+                    lift*=rng.uniform(1.15,1.50)
+                    amp*=rng.uniform(1.4,2.2)
 
             lateral=(child_cross + child_flow*rng.uniform(-.14,.14)).normalized() if C32_GNM_DERMAL_HAIR else (child_cross + child_flow*rng.uniform(-.10,.10)).normalized()
             strand_phase=cluster_phase + k*0.713
@@ -2712,6 +2773,9 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "guide_field_mean_alpha":sum(alpha_values)/len(alpha_values),
         "guide_field_mean_shell_lift_m":sum(shell_lifts)/len(shell_lifts),
         "strands_per_root":strands_per_root,
+        "c35_realism":C35_REALISM,
+        "c35_hair_profile":C35_HAIR_PROFILE if C35_REALISM else None,
+        "c35_undercoat_ratio":undercoat_ratio if C35_REALISM else None,
         "curve_count":curve_count,
         "points_per_curve":points_per_curve,
         "point_count":curve_count*points_per_curve,
@@ -2802,7 +2866,7 @@ if C26_PHOTOMETRIC:
     area("KEY",(1.45,1.90,2.22),235,1.45,(1.0,.95,.90),face_target)
     area("FILL",(-1.60,2.00,1.78),24,2.60,(.88,.93,1.0),face_target)
     area("RIM",(0,-2.10,2.28),58,1.35,(1.0,.88,.78),face_target)
-    area("DETAIL",(-.95,1.10,1.72),22,.46,(.96,.98,1.0),face_target)
+    area("DETAIL",(-.95,1.10,1.72),(C35_SKIN["detail_w"] if C35_REALISM and C35_SKIN_PROFILE!="baseline" else 22),(.30 if C35_REALISM and C35_SKIN_PROFILE!="baseline" else .46),(.96,.98,1.0),face_target)
 elif C20_VISUAL_REPAIR:
     face_target=(0,.020,1.575)
     area("KEY",(1.35,1.95,2.25),300,1.20,(1.0,.90,.82),face_target)
@@ -2995,6 +3059,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C35_SKIN_HAIR_REALISM_V1" if C35_REALISM else
    "C33_GUIDE_GATED_GROOM_SEARCH_V1" if C33_GUIDE_GATED_GROOM else
    "C32_GNM_DERMAL_HAIR_REFINEMENT_V1" if C32_GNM_DERMAL_HAIR else
    "C31_GNM_REGIONAL_FACE_APPEARANCE_V1" if C31_GNM_FACE_APPEARANCE else
@@ -3020,6 +3085,7 @@ receipt={
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":(
+     "C35_AFTER_C34_HUMAN_VISUAL_FAIL: C34_TOPOLOGY_ROOT_GATE_PRESERVED; DECOMPOSE SKIN_AND_HAIR_CAUSAL_SEARCH; LOWER_VISIBLE_SKIN_FREQUENCIES_PLUS_RAKING_DETAIL_LIGHT; REDUCE_HAIR_UNDERCOAT/CAP_DENSITY; INCREASE_STYLE_LENGTH/LIFT/FIBER_SEPARATION; FINAL_COMBINES_INDEPENDENT_WINNERS" if C35_REALISM else
      "C33_AFTER_C32_VISUAL_FAIL: KEEP_C32_DERMAL_MATERIAL_AND_FIBER_SHADER; ROOTS_MUST_BE_WITHIN_GUIDE_MESH_DISTANCE; SEARCH_ONLY_GUIDE_DISTANCE_IN_PARALLEL_LOW_SAMPLE; NO_FACE_ROOTS; FINAL_HIGH_SAMPLE_ONLY_AFTER_MASK_SELECTION" if C33_GUIDE_GATED_GROOM else
      "C32_AFTER_C31_VISUAL_AUDIT: KEEP_GNM_IDENTITY/CAMERA/PHOTOMETRY; REDUCE_WAXY_SSS_AND_COAT; INCREASE_MID/MICRO_DERMAL_VARIATION; EXPAND_GNM_SCALP_DOMAIN_TO_TEMPLES/SIDES; DOUBLE_FINE_STRAND_DENSITY; THINNER_RADIUS; LOWER_UNDERCOAT_RATIO; ADD_LOW_AMPLITUDE_MULTI_FREQUENCY_FIBER_VARIATION; SINGLE_TARGETED_FINALIST" if C32_GNM_DERMAL_HAIR else
      "C31_AFTER_C30_VISUAL_FAIL: KEEP_SEMANTIC_GNM_IDENTITY; ADD_GNM_LANDMARK_DRIVEN REGIONAL LIP/BLUSH/TZONE MASKS + STRONGER MULTISCALE PORE/MICRO NORMAL + FORWARD DARK BROW/LASH FIBERS + EYE WETLINES + SUBTLE MOUTH GAP; PRESERVE_CAMERA/PHOTOMETRY/GROOM" if C31_GNM_FACE_APPEARANCE else
@@ -3123,6 +3189,11 @@ receipt={
    "c33_guide_gated_groom":C33_GUIDE_GATED_GROOM,
    "c33_guide_max_dist_m":C33_GUIDE_MAX_DIST if C33_GUIDE_GATED_GROOM else None,
    "c33_scalp_z_drop_m":C33_SCALP_Z_DROP if C33_GUIDE_GATED_GROOM else None,
+   "c35_realism":C35_REALISM,
+   "c35_skin_profile":C35_SKIN_PROFILE if C35_REALISM else None,
+   "c35_hair_profile":C35_HAIR_PROFILE if C35_REALISM else None,
+   "c35_skin_settings":C35_SKIN if C35_REALISM else None,
+   "c35_hair_settings":C35_HAIR if C35_REALISM else None,
    "c31_mask_vertex_count":c31_mask_vertex_count,
    "c31_wetline_count":c31_wetline_count,
    "c31_mouth_gap_count":c31_mouth_gap_count
