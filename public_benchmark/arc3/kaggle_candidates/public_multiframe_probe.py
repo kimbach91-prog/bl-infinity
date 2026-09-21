@@ -22,15 +22,31 @@ HERE = Path(__file__).resolve().parents[2] / "arc-agi-3"
 ROUTE_PATH = HERE / "route.json"
 
 
+def normalize_frame(v: Any) -> Any:
+    """Convert toolkit/numpy wrappers into stable plain nested lists."""
+    tolist = getattr(v, "tolist", None)
+    if callable(tolist):
+        return tolist()
+    if isinstance(v, tuple):
+        return [normalize_frame(x) for x in v]
+    if isinstance(v, list):
+        return [normalize_frame(x) for x in v]
+    return v
+
+
 def stable_hash(v: Any) -> str:
-    return hashlib.sha256(json.dumps(v, separators=(",", ":"), sort_keys=False).encode("utf-8")).hexdigest()
+    plain = normalize_frame(v)
+    return hashlib.sha256(json.dumps(plain, separators=(",", ":"), sort_keys=False).encode("utf-8")).hexdigest()
 
 
 def is_grid(v: Any) -> bool:
+    v = normalize_frame(v)
     return isinstance(v, list) and bool(v) and all(isinstance(r, list) for r in v)
 
 
 def changed_cells(a: Any, b: Any) -> int | None:
+    a = normalize_frame(a)
+    b = normalize_frame(b)
     if not (is_grid(a) and is_grid(b)) or len(a) != len(b):
         return None
     total = 0
@@ -45,8 +61,6 @@ def frame_list(observation: Any) -> list[Any]:
     frames = getattr(observation, "frame", None)
     if frames is None:
         return []
-    # Official FrameData.frame is a list of 2-D frame arrays. Be defensive
-    # around alternate pydantic/list wrappers while preserving exact ordering.
     if isinstance(frames, list):
         return frames
     try:
