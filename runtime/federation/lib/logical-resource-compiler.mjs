@@ -92,6 +92,81 @@ function decideMaterialization(stage,vector){
   };
 }
 
+function positiveBigInt(value,name){
+  try{
+    const x=typeof value==='bigint'?value:BigInt(String(value));
+    if(x<=0n) throw new Error();
+    return x;
+  }catch{throw new Error(name+' must be a positive integer');}
+}
+
+export function compileLogicalMicrocellShards({
+  taskId,
+  logicalUnits,
+  resourceVector,
+  logicalNamespace=ONE_T_LOGICAL_NAMESPACE,
+  vcpuPerCpuShard=4,
+  maxPhysicalShards=64,
+  gpuShardsPerVerifiedGpu=1,
+  minPhysicalShards=1,
+  seedBase=0,
+  seedStride=104729,
+  metadata={},
+}={}){
+  const id=String(taskId??'').trim();
+  if(!id) throw new Error('taskId required');
+  const units=positiveBigInt(logicalUnits,'logicalUnits');
+  const namespace=positiveBigInt(logicalNamespace,'logicalNamespace');
+  if(units>namespace) throw new Error('logicalUnits exceed logicalNamespace');
+  const vector=normalizeResourceVector(resourceVector);
+  const cpuPer=Math.max(1,Math.trunc(nn(vcpuPerCpuShard,'vcpuPerCpuShard')));
+  const maxShards=Math.max(1,Math.trunc(nn(maxPhysicalShards,'maxPhysicalShards')));
+  const minShards=Math.max(1,Math.trunc(nn(minPhysicalShards,'minPhysicalShards')));
+  const gpuPer=Math.max(0,Math.trunc(nn(gpuShardsPerVerifiedGpu,'gpuShardsPerVerifiedGpu')));
+  const cpuCapacity=Math.max(0,Math.floor(vector.provenSimultaneousVcpuLowerBound/cpuPer));
+  const gpuCapacity=(vector.verifiedGpuCount>0&&vector.verifiedVramGiB>0)
+    ? Math.max(0,Math.floor(vector.verifiedGpuCount*gpuPer))
+    : 0;
+  const executionCapacity=Math.max(1,cpuCapacity+gpuCapacity);
+  const unitBound=units>BigInt(maxShards)?maxShards:Number(units);
+  const physicalShards=Math.max(minShards,Math.min(maxShards,executionCapacity,unitBound));
+  const base=units/BigInt(physicalShards);
+  const rem=units%BigInt(physicalShards);
+  const shards=[];
+  let assigned=0n;
+  for(let i=0;i<physicalShards;i++){
+    const shardUnits=base+(BigInt(i)<rem?1n:0n);
+    assigned+=shardUnits;
+    shards.push(Object.freeze({
+      id:'shard-'+String(i+1).padStart(3,'0'),
+      index:i,
+      logicalUnits:shardUnits.toString(),
+      execution:i<gpuCapacity?'GPU':'CPU',
+      seed:Number(seedBase)+i*Number(seedStride),
+      virtualRoles:Object.freeze(i<gpuCapacity?['vCPU','vRAM','vGPU','vVRAM']:['vCPU','vRAM']),
+    }));
+  }
+  if(assigned!==units) throw new Error('logical shard partition mismatch');
+  const payload={
+    schema:'deus-logical-microcell-coalescer/1.0',
+    compilerVersion:LOGICAL_RESOURCE_COMPILER_VERSION,
+    taskId:id,
+    logicalNamespace:namespace.toString(),
+    logicalUnits:units.toString(),
+    resourceVector:vector,
+    vcpuPerCpuShard:cpuPer,
+    cpuShardCapacity:cpuCapacity,
+    gpuShardCapacity:gpuCapacity,
+    executionCapacity,
+    physicalShards,
+    coalescingFactor:Number(units)/physicalShards,
+    shards,
+    metadata:clone(metadata),
+    truthBoundary:'LOGICAL_MICROCELLS_ARE_IR_WORK_STATE_UNITS__PHYSICAL_SHARDS_ARE_BOUNDED_BY_VERIFIED_RESOURCE_CAPACITY_AND_OVERHEAD__LOGICAL_UNITS_NE_PHYSICAL_CORES_OR_JOBS',
+  };
+  return Object.freeze({...payload,planDigest:sha256Json(payload)});
+}
+
 export function compileLogicalResourcePlan({
   taskId,
   stages,
