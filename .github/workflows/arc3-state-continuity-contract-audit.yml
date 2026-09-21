@@ -26,9 +26,19 @@ jobs:
           UPSTREAM_COMMIT="249c1b6843ff14bfc38ce1709070c171b98c6676"
           URL="https://raw.githubusercontent.com/arcprize/arc-agi-3-benchmarking/${UPSTREAM_COMMIT}/docs/runtime-state.md"
           curl --fail --location --retry 3 "$URL" -o /tmp/runtime-state.md
-          grep -F "accepts a provisional state only after it parses a valid action" /tmp/runtime-state.md
-          grep -F "A retry therefore starts from the same last accepted state" /tmp/runtime-state.md
-          grep -F "Harness summary compaction" /tmp/runtime-state.md
+          python - <<'PY'
+          from pathlib import Path
+          text = " ".join(Path("/tmp/runtime-state.md").read_text(encoding="utf-8").split())
+          required = [
+              "accepts a provisional state only after it parses a valid action",
+              "A retry therefore starts from the same last accepted state",
+              "Harness summary compaction",
+          ]
+          missing = [item for item in required if item not in text]
+          if missing:
+              raise SystemExit(f"missing upstream contract markers: {missing}")
+          print("upstream runtime-state markers: PASS")
+          PY
           sha256sum /tmp/runtime-state.md | tee upstream-runtime-state.sha256
 
       - name: Compile and test bounded continuity representation
@@ -48,7 +58,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib, json, os
+          import json, os
           from pathlib import Path
 
           selftest = json.loads(Path("state-continuity-selftest.json").read_text())
