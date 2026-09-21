@@ -27,7 +27,7 @@ class ObjectNode:
     color: int
     area: int
     bbox: tuple[int, int, int, int]
-    centroid_x2: tuple[int, int]
+    bbox_center_x2: tuple[int, int]
     shape_key: str
     color_shape_key: str
 
@@ -36,7 +36,7 @@ class ObjectNode:
             "c": self.color,
             "a": self.area,
             "b": self.bbox,
-            "p2": self.centroid_x2,
+            "p2": self.bbox_center_x2,
             "s": self.shape_key,
             "cs": self.color_shape_key,
         }
@@ -107,7 +107,7 @@ def _node(color: int, cells: Iterable[tuple[int, int]]) -> ObjectNode:
         color=color,
         area=len(pts),
         bbox=(min_r, min_c, max_r, max_c),
-        centroid_x2=(2 * sum(r for r, _ in pts), 2 * sum(c for _, c in pts)),
+        bbox_center_x2=(min_r + max_r, min_c + max_c),
         shape_key=shape_key,
         color_shape_key=_digest((color, norm)),
     )
