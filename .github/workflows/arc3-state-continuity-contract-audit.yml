@@ -1,0 +1,84 @@
+name: ARC3 State Continuity Contract Audit
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/state_continuity_contract.py
+      - .github/workflows/arc3-state-continuity-contract-audit.yml
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Pin public ARC harness contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          UPSTREAM_COMMIT="249c1b6843ff14bfc38ce1709070c171b98c6676"
+          URL="https://raw.githubusercontent.com/arcprize/arc-agi-3-benchmarking/${UPSTREAM_COMMIT}/docs/runtime-state.md"
+          curl --fail --location --retry 3 "$URL" -o /tmp/runtime-state.md
+          grep -F "accepts a provisional state only after it parses a valid action" /tmp/runtime-state.md
+          grep -F "A retry therefore starts from the same last accepted state" /tmp/runtime-state.md
+          grep -F "Harness summary compaction" /tmp/runtime-state.md
+          sha256sum /tmp/runtime-state.md | tee upstream-runtime-state.sha256
+
+      - name: Compile and test bounded continuity representation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/state_continuity_contract.py
+          python public_benchmark/arc3/kaggle_candidates/state_continuity_contract.py \
+            --self-test \
+            --receipt state-continuity-selftest.json
+
+      - name: Emit audit receipt
+        shell: bash
+        env:
+          RUN_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          selftest = json.loads(Path("state-continuity-selftest.json").read_text())
+          upstream_digest = Path("upstream-runtime-state.sha256").read_text().split()[0]
+          receipt = {
+              "status": "PASS" if selftest.get("status") == "PASS" else "FAIL",
+              "github_sha": os.environ.get("RUN_SHA"),
+              "github_run_id": os.environ.get("RUN_ID"),
+              "upstream": {
+                  "repo": "arcprize/arc-agi-3-benchmarking",
+                  "commit": "249c1b6843ff14bfc38ce1709070c171b98c6676",
+                  "runtime_state_sha256": upstream_digest,
+              },
+              "representation": "local_bounded_continuity_v1",
+              "verified_properties": selftest.get("checks", {}),
+              "truth_boundary": "CPU_CONTRACT_TEST_ONLY_NO_MODEL_EXECUTION_NO_HIDDEN_KAGGLE_SCORE_NO_SUBMISSION",
+          }
+          Path("state-continuity-audit-receipt.json").write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n")
+          if receipt["status"] != "PASS":
+              raise SystemExit(1)
+          PY
+          cat state-continuity-audit-receipt.json
+
+      - name: Upload audit receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-state-continuity-contract-audit
+          path: |
+            state-continuity-selftest.json
+            state-continuity-audit-receipt.json
+            upstream-runtime-state.sha256
+          if-no-files-found: error
+          retention-days: 30
