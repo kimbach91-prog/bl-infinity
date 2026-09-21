@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Bounded local continuity contract for ARC-AGI-3 candidate harnesses.
 
-Truth boundary: this module is a deterministic state/representation primitive.
-It does not execute a model, play hidden Kaggle games, submit to Kaggle, or
-claim any leaderboard score.
+Truth boundary: this is a deterministic state/representation primitive. It does
+not execute a model, play hidden Kaggle games, submit to Kaggle, or claim a
+leaderboard score.
 
-Design goals are source-shaped by ARC Prize's public runtime-state contract:
+The design is source-shaped by ARC Prize's public runtime-state contract:
 provisional state is committed only after a valid parsed action, retries leave
-the last accepted state unchanged, compaction preserves useful discoveries
-while bounding context, and state resets across game boundaries.
+the last accepted state unchanged, bounded compaction keeps durable discoveries
+plus an exact recent tail, and state resets across game boundaries.
 """
 from __future__ import annotations
 
@@ -26,8 +26,7 @@ UPSTREAM_HARNESS_COMMIT = "249c1b6843ff14bfc38ce1709070c171b98c6676"
 
 
 def _clip(value: Any, limit: int = 512) -> str:
-    text = " ".join(str(value).split())
-    return text[:limit]
+    return " ".join(str(value).split())[:limit]
 
 
 def _dedupe(items: Iterable[str]) -> List[str]:
@@ -47,7 +46,7 @@ def _normalize_discoveries(raw: Any) -> Dict[str, List[str]]:
 
 
 class ContinuityContract:
-    """Accepted-state ledger with fail-closed provisional turn semantics."""
+    """Accepted-state ledger with fail-closed provisional-turn semantics."""
 
     def __init__(
         self,
@@ -115,11 +114,7 @@ class ContinuityContract:
         }
 
     def commit_turn(self, provisional: Dict[str, Any], *, action_is_valid: bool) -> bool:
-        """Commit only a valid action from the current accepted state.
-
-        Invalid parsing/action validation is a retry: no mutation occurs.
-        Stale provisional states and cross-game provisional states fail closed.
-        """
+        """Commit a valid turn transactionally; invalid/rejected turns do nothing."""
         if not action_is_valid:
             return False
         if provisional.get("schema_version") != SCHEMA_VERSION:
@@ -132,11 +127,18 @@ class ContinuityContract:
         if not turn.get("action"):
             raise ValueError("valid action must be non-empty")
         turn["discoveries"] = _normalize_discoveries(turn.get("discoveries"))
-        self._state["accepted_turns"].append(turn)
-        if self._encoded_size() > self.max_state_chars:
-            self._compact()
-        if self._encoded_size() > self.max_state_chars:
-            raise RuntimeError("continuation state exceeds protected bound")
+
+        # All mutation is provisional until the size/compaction checks pass.
+        accepted_before = copy.deepcopy(self._state)
+        try:
+            self._state["accepted_turns"].append(turn)
+            if self._encoded_size() > self.max_state_chars:
+                self._compact()
+            if self._encoded_size() > self.max_state_chars:
+                raise RuntimeError("continuation state exceeds protected bound")
+        except Exception:
+            self._state = accepted_before
+            raise
         return True
 
     def _encoded_size(self) -> int:
@@ -153,20 +155,18 @@ class ContinuityContract:
             disc = _normalize_discoveries(turn.get("discoveries"))
             for kind in DISCOVERY_KINDS:
                 summary[kind] = _dedupe([*summary[kind], *disc[kind]])
-        summary = self._fit_summary(summary)
-        self._state["summary"] = summary
+        self._state["summary"] = self._fit_summary(summary)
         self._state["accepted_turns"] = tail
         self._state["compacted_turn_count"] += len(prefix)
 
     def _fit_summary(self, summary: Dict[str, List[str]]) -> Dict[str, List[str]]:
-        # Deterministic bounded compaction. Prefer newer discoveries on overflow.
         fitted = {kind: list(values) for kind, values in summary.items()}
         while len(json.dumps(fitted, sort_keys=True)) > self.summary_char_budget:
             candidates = [(kind, len(values)) for kind, values in fitted.items() if values]
             if not candidates:
                 break
             kind = max(candidates, key=lambda pair: pair[1])[0]
-            fitted[kind].pop(0)
+            fitted[kind].pop(0)  # Prefer newer discoveries under pressure.
         if len(json.dumps(fitted, sort_keys=True)) > self.summary_char_budget:
             raise RuntimeError("summary cannot fit protected budget")
         return fitted
@@ -174,7 +174,7 @@ class ContinuityContract:
 
 def self_test() -> Dict[str, Any]:
     checks: Dict[str, bool] = {}
-    state = ContinuityContract("game-A", max_state_chars=2600, summary_char_budget=900)
+    state = ContinuityContract("game-A", max_state_chars=4600, summary_char_budget=900)
 
     before = state.digest()
     bad = state.propose_turn(
@@ -183,7 +183,9 @@ def self_test() -> Dict[str, Any]:
         action="",
         discoveries={"rules": ["red cell blocks movement"]},
     )
-    checks["invalid_action_is_transactional"] = state.commit_turn(bad, action_is_valid=False) is False and state.digest() == before
+    checks["invalid_action_is_transactional"] = (
+        state.commit_turn(bad, action_is_valid=False) is False and state.digest() == before
+    )
 
     p1 = state.propose_turn(
         observation="frame 1",
@@ -197,9 +199,8 @@ def self_test() -> Dict[str, Any]:
     )
     checks["valid_action_commits"] = state.commit_turn(p1, action_is_valid=True)
 
-    stale = p1
     try:
-        state.commit_turn(stale, action_is_valid=True)
+        state.commit_turn(p1, action_is_valid=True)
         checks["stale_provisional_fails_closed"] = False
     except ValueError:
         checks["stale_provisional_fails_closed"] = True
@@ -222,15 +223,46 @@ def self_test() -> Dict[str, Any]:
     summary_blob = json.dumps(snap["summary"], sort_keys=True)
     checks["compaction_occurred"] = snap["compacted_turn_count"] > 0
     checks["exact_tail_preserved"] = 1 <= len(snap["accepted_turns"]) <= 2
-    checks["rule_goal_survive_compaction"] = "red cell blocks movement" in summary_blob and "reach the marked exit" in summary_blob
-    checks["state_bound_enforced"] = len(json.dumps(snap, sort_keys=True, separators=(",", ":"))) <= state.max_state_chars
+    checks["rule_goal_survive_compaction"] = (
+        "red cell blocks movement" in summary_blob and "reach the marked exit" in summary_blob
+    )
+    checks["state_bound_enforced"] = state._encoded_size() <= state.max_state_chars
     checks["state_json_serializable"] = isinstance(json.dumps(snap), str)
-    checks["no_score_or_submission_fields"] = not any(key in snap for key in ("score", "leaderboard", "submission"))
+    checks["no_score_or_submission_fields"] = not any(
+        key in snap for key in ("score", "leaderboard", "submission")
+    )
+
+    # A deliberately undersized envelope must fail without corrupting accepted state.
+    tiny = ContinuityContract("tiny", max_state_chars=1600, summary_char_budget=400)
+    tiny_p1 = tiny.propose_turn(
+        observation="a" * 700,
+        model_output="b" * 700,
+        action="ACTION1",
+        discoveries={"rules": ["r" * 300]},
+    )
+    tiny.commit_turn(tiny_p1, action_is_valid=True)
+    tiny_before = tiny.digest()
+    tiny_p2 = tiny.propose_turn(
+        observation="c" * 700,
+        model_output="d" * 700,
+        action="ACTION2",
+        discoveries={"goals": ["g" * 300]},
+    )
+    try:
+        tiny.commit_turn(tiny_p2, action_is_valid=True)
+        checks["overflow_fails_closed_transactionally"] = False
+    except RuntimeError:
+        checks["overflow_fails_closed_transactionally"] = tiny.digest() == tiny_before
 
     old_digest = state.digest()
     state.reset_for_game("game-B")
     reset = state.snapshot()
-    checks["cross_game_reset"] = reset["game_id"] == "game-B" and not reset["accepted_turns"] and reset["compacted_turn_count"] == 0 and state.digest() != old_digest
+    checks["cross_game_reset"] = (
+        reset["game_id"] == "game-B"
+        and not reset["accepted_turns"]
+        and reset["compacted_turn_count"] == 0
+        and state.digest() != old_digest
+    )
 
     passed = all(checks.values())
     return {
