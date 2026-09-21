@@ -32,3 +32,15 @@
 - Static integrity run 35545265115: PASS; 8 code cells compile; notebook sha256 6cff5483a6240cfe249310778a68e58df6f164acca25e5b4504eeaade838c899.
 - Full Kaggle package reconstruction run 35545340036: launched; exact package receipt pending.
 - After package validation, next provider gate is Kaggle authentication/upload under the owner identity, then RTX Pro 6000 full run, audit, exact-version competition submit, leaderboard readback.
+
+
+## Same-model representation gate — run 35561324335
+
+- Provider/model: BlockRun / `nvidia/nemotron-3.5-lightning`.
+- Scope: 8 public synthetic ARC-like fixtures, paired `raw_ascii` vs clean-room `object_graph`, same model/output contract; no Kaggle hidden data.
+- Provider execution: 16/16 paired calls completed, plus canary PASS; no provider failures.
+- `raw_ascii`: 2/8 correct (25%), 67,128 prompt chars total, mean latency 1,245.8 ms.
+- `object_graph`: 1/8 correct (12.5%), 3,854 prompt chars total, mean latency 1,545.0 ms.
+- Promotion gate: **NO_PROMOTION**. Compression is materially better, but bounded model-behavior accuracy regressed; object-graph is not promoted into the candidate path from this receipt.
+- Truth boundary: no competition submission, no submission quota spent, no leaderboard score observed.
+- Runtime artifact: `10621634755`, digest `sha256:09403322453fc8e631f7f2c0b446b52a5b75b0cbdee50836ddd162c4471c5489`.
