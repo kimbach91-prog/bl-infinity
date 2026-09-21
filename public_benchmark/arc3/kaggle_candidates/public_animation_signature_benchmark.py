@@ -19,6 +19,7 @@ from arc_agi import OperationMode
 from animation_delta_signature import compact_json, encode_animation, plain
 from public_multiframe_probe import frame_list
 
+BENCHMARK_REV = "112"
 TARGETS = (("sp80", 5), ("bp35", 3), ("wa30", 1))
 
 
@@ -58,6 +59,7 @@ def main() -> int:
     total_sig = sum(int(r["signature_chars"]) for r in rich)
     receipt = {
         "schema": "deus/arc3-public-animation-signature-benchmark/1",
+        "benchmark_rev": BENCHMARK_REV,
         "toolkit": "arc-agi==0.9.9",
         "targets": [{"game_id": g, "action_id": a} for g, a in TARGETS],
         "results": rows,
