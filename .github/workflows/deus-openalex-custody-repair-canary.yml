@@ -1,0 +1,95 @@
+name: DEUS OpenAlex Custody Repair Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-openalex-custody-repair-canary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  openalex-custody-repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Capture one bounded OpenAlex S0 execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/openalex-custody
+          url='https://api.openalex.org/works/W2626778328'
+          printf '%s\n' "$url" > /tmp/openalex-custody/request-url.txt
+          printf '%s\n' 'GET' > /tmp/openalex-custody/request-method.txt
+          observed_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          code="$(curl --http1.1 --max-time 30 -sS -D /tmp/openalex-custody/headers.raw -o /tmp/openalex-custody/body.json -w '%{http_code}' \
+            -H 'accept: application/json' \
+            -H 'user-agent: DEUS-OpenAlex-Custody-Repair/1.0 (public S0 QA canary)' \
+            "$url")"
+          test "$code" = '200'
+          python3 - <<'PY'
+          import json
+          p='/tmp/openalex-custody/body.json'
+          d=json.load(open(p,encoding='utf-8'))
+          assert d.get('id') == 'https://openalex.org/W2626778328'
+          assert d.get('title') == 'Attention Is All You Need'
+          assert isinstance(d.get('publication_year'), int)
+          assert isinstance(d.get('type'), str) and d.get('type')
+          out={
+            'id':d.get('id'),
+            'doi':d.get('doi'),
+            'title':d.get('title'),
+            'publication_year':d.get('publication_year'),
+            'type':d.get('type'),
+          }
+          json.dump(out,open('/tmp/openalex-custody/semantic.json','w',encoding='utf-8'),ensure_ascii=False,sort_keys=True,separators=(',',':'))
+          PY
+          request_sha="$(sha256sum /tmp/openalex-custody/request-url.txt | awk '{print $1}')"
+          headers_sha="$(sha256sum /tmp/openalex-custody/headers.raw | awk '{print $1}')"
+          body_sha="$(sha256sum /tmp/openalex-custody/body.json | awk '{print $1}')"
+          semantic_sha="$(sha256sum /tmp/openalex-custody/semantic.json | awk '{print $1}')"
+          jq -n \
+            --arg observed_at "$observed_at" \
+            --arg status "$code" \
+            --arg request_sha256 "$request_sha" \
+            --arg headers_sha256 "$headers_sha" \
+            --arg body_sha256 "$body_sha" \
+            --arg semantic_sha256 "$semantic_sha" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            '{schema:"deus-openalex-custody-repair/1",observed_at:$observed_at,http_status:($status|tonumber),request_sha256:$request_sha256,headers_sha256:$headers_sha256,body_sha256:$body_sha256,semantic_sha256:$semantic_sha256,github_run_id:$run_id,github_run_attempt:$run_attempt,source_sha:$source_sha,scope:"BL-S0_PUBLIC_SYNTHETIC",aggregate_credit:0}' \
+            > /tmp/openalex-custody/metadata.json
+          tar --sort=name --mtime='UTC 2026-09-22' --owner=0 --group=0 --numeric-owner -C /tmp/openalex-custody \
+            -czf /tmp/openalex-custody-bundle.tar.gz body.json headers.raw metadata.json request-method.txt request-url.txt semantic.json
+          sha256sum /tmp/openalex-custody-bundle.tar.gz > /tmp/openalex-custody-bundle.sha256
+          base64 -w0 /tmp/openalex-custody-bundle.tar.gz > /tmp/openalex-custody-bundle.b64
+          python3 - <<'PY'
+          import base64, gzip, hashlib, io, json, tarfile
+          raw=open('/tmp/openalex-custody-bundle.tar.gz','rb').read()
+          b64=open('/tmp/openalex-custody-bundle.b64','rt',encoding='ascii').read()
+          assert base64.b64decode(b64,validate=True)==raw
+          with tarfile.open(fileobj=io.BytesIO(raw),mode='r:gz') as tf:
+            names=sorted(tf.getnames())
+            assert names==sorted(['body.json','headers.raw','metadata.json','request-method.txt','request-url.txt','semantic.json'])
+            body=tf.extractfile('body.json').read()
+            d=json.loads(body)
+            assert d['id']=='https://openalex.org/W2626778328'
+            assert d['title']=='Attention Is All You Need'
+          print('BUNDLE_SHA256='+hashlib.sha256(raw).hexdigest())
+          print('BUNDLE_BYTES='+str(len(raw)))
+          print('B64_CHARS='+str(len(b64)))
+          PY
+      - name: Upload exact custody artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-openalex-custody-repair
+          path: |
+            /tmp/openalex-custody-bundle.tar.gz
+            /tmp/openalex-custody-bundle.sha256
+            /tmp/openalex-custody-bundle.b64
+            /tmp/openalex-custody/metadata.json
+            /tmp/openalex-custody/semantic.json
+          if-no-files-found: error
+          retention-days: 7
