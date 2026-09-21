@@ -10,6 +10,10 @@ SAMPLE_SHARD_MODE=os.environ.get("DIGE_SAMPLE_SHARD_MODE","0").strip()=="1"
 SAMPLE_SHARD_ID=os.environ.get("DIGE_SAMPLE_SHARD_ID","").strip()
 SAMPLE_SHARD_SAMPLES=int(os.environ.get("DIGE_SAMPLE_SHARD_SAMPLES","0") or "0")
 SAMPLE_SHARD_SEED=int(os.environ.get("DIGE_SAMPLE_SHARD_SEED",os.environ.get("DIGE_RENDER_SEED","20260919")))
+SCENE_BUILD_ONLY=os.environ.get("DIGE_SCENE_BUILD_ONLY","0").strip()=="1"
+SCENE_BUILD_OUT=Path(os.environ.get("DIGE_SCENE_BUILD_OUT",str(RUNTIME/"DIGE_C36_PREBUILT_SCENE.blend")))
+if not SCENE_BUILD_OUT.is_absolute():
+    SCENE_BUILD_OUT=(ROOT/SCENE_BUILD_OUT).resolve()
 OUT=RUNTIME/"renders"
 if OUTPUT_TAG:
     OUT=OUT/OUTPUT_TAG
@@ -2902,6 +2906,41 @@ vl.use_pass_normal=True; vl.use_pass_z=True; vl.use_pass_diffuse_color=True
 vl.use_pass_glossy_direct=True; vl.use_pass_transmission_direct=True
 if hasattr(vl,"cycles") and hasattr(vl.cycles,"use_pass_denoising_data"):
     vl.cycles.use_pass_denoising_data=True
+
+if SCENE_BUILD_ONLY:
+    aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
+    scene.render.resolution_x=900
+    scene.render.resolution_y=900
+    SCENE_BUILD_OUT.parent.mkdir(parents=True,exist_ok=True)
+    try:
+        bpy.ops.file.pack_all()
+    except Exception as _pack_error:
+        print(json.dumps({"event":"DIGE_C36_PACK_WARNING","error":str(_pack_error)}))
+    bpy.ops.wm.save_as_mainfile(filepath=str(SCENE_BUILD_OUT))
+    build_receipt={
+      "schema":"dige-c36-prebuilt-scene/1",
+      "state":"SCENE_BUILD_VERIFIED",
+      "scene_file":SCENE_BUILD_OUT.name,
+      "scene_sha256":sha(SCENE_BUILD_OUT),
+      "blender_version":bpy.app.version_string,
+      "engine":"CYCLES",
+      "device":device_info["actual_mode"],
+      "device_info":device_info,
+      "resolution":[900,900],
+      "camera_lens_mm":85,
+      "camera_fstop":4.5,
+      "runtime_commit":os.environ.get("DIGE_RUNTIME_COMMIT") or os.environ.get("GITHUB_SHA"),
+      "canon_execution_manifest_sha256":CANON_SHA256,
+      "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
+      "hair_style":hair_surface_contract["style"],
+      "hair_curve_count":hair_surface_contract.get("curve_count"),
+      "c32_lower_central_root_count":hair_surface_contract.get("c32_lower_central_root_count"),
+      "truth_boundary":"SCENE_BUILD_ONLY_SAVES_ONE_PACKED_DETERMINISTIC_SCENE_FOR_REUSE_BY_MULTIPLE_RENDER_SHARDS__NO_RENDER_SAMPLES_EXECUTED_IN_THIS_STEP"
+    }
+    build_receipt_path=SCENE_BUILD_OUT.parent/"DIGE_C36_SCENE_BUILD_RECEIPT.json"
+    build_receipt_path.write_text(json.dumps(build_receipt,indent=2,sort_keys=True)+"\n")
+    print(json.dumps(build_receipt,sort_keys=True))
+    raise SystemExit(0)
 
 # Distances inherit the latest provider-backed Drive sweep: V6C-122 fullbody=5.1m, hero=2.7m.
 all_views=[
