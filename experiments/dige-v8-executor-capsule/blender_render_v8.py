@@ -2414,7 +2414,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         _c28_bbox_max=Vector(c28_gnm["aligned_bbox_max"])
         _c28_eye_mid=(Vector(c28_gnm["head_translation"]) + Vector((0,0,0)))  # provenance-only origin
         _c28_hairline=float(c28_gnm["hairline_target_z"])
-        _c28_z_min=_c28_hairline-(.135 if C32_GNM_DERMAL_HAIR else .010)
+        _c28_z_min=_c28_hairline-(.105 if C32_GNM_DERMAL_HAIR else .010)
         _c28_z_max=float(_c28_bbox_max.z)+.004
         _c28_x_half=max(.115,min(.155,(float(_c28_bbox_max.x)-float(_c28_bbox_min.x))*.48))
         _c28_y_max=float(_c28_bbox_max.y)+.004
@@ -2436,10 +2436,27 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         if n.length < 1e-8:
             n=Vector((0,0,1))
         if C28_GNM_HEAD:
-            # GNM root mask already starts at the measured hairline; only reject
-            # strongly face-facing normals to avoid forehead/temple intrusion.
-            if n.y < -0.16 and p.z < _c28_hairline+.018:
-                continue
+            if C32_GNM_DERMAL_HAIR:
+                # C32.1: lower roots are permitted only on the temple/side/back
+                # scalp. Expanding Z alone admitted forehead/face vertices in the
+                # first C32 render, producing strands across the eyes/nose/mouth.
+                # Keep the measured frontal hairline, but fail closed for lower
+                # central/front-facing vertices.
+                lower_root=(p.z < _c28_hairline-.004)
+                if lower_root:
+                    side_or_back=(abs(p.x) >= .070 or p.y <= -.030)
+                    if not side_or_back:
+                        continue
+                    if p.y > -.010 and n.y > .05:
+                        continue
+                elif n.y > .72 and p.z < _c28_hairline+.010:
+                    # Near the frontal hairline, preserve edge roots but reject
+                    # strongly face-facing forehead samples.
+                    continue
+            else:
+                # Pre-C32 gate retained for reproducibility.
+                if n.y < -0.16 and p.z < _c28_hairline+.018:
+                    continue
         elif C19_HUMANIZATION:
             frontal_hairline_z=C19_HAIRLINE_CENTER_Z + C19_HAIRLINE_TEMPLE_RISE*min(abs(p.x),.10)
             if p.y > .000:
@@ -2520,6 +2537,13 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
     # >=22,400 rendered curves, so the old 1200-root gate became a false blocker.
     if len(root_guides) < 350:
         raise RuntimeError(f"C17.7 interpolated scalp field too sparse: {len(root_guides)} roots")
+    c32_lower_central_root_count=0
+    if C32_GNM_DERMAL_HAIR:
+        for _ri,_root,_n,*_rest in root_guides:
+            if _root.z < _c28_hairline-.004 and abs(_root.x) < .070 and _root.y > -.030:
+                c32_lower_central_root_count += 1
+        if c32_lower_central_root_count:
+            raise RuntimeError(f"C32.1 lower-central face/scalp root leak: {c32_lower_central_root_count}")
 
     points_per_curve=12 if C32_GNM_DERMAL_HAIR else 8
     strands_per_root=HAIR_STRANDS_PER_ROOT
@@ -2691,6 +2715,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "coverage_mask":"SCALP_Z1P540_1P706_YLE0P065_FRONTAL_HAIRLINE",
         "density_frozen_from":"C17_4_C17_5",
         "seed":20260920,
+        "c32_lower_central_root_count":c32_lower_central_root_count if C32_GNM_DERMAL_HAIR else None,
+        "c32_root_domain":"MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2" if C32_GNM_DERMAL_HAIR else None,
     }
 
 groom_surface=(c28_gnm_objects.get("skin") if C28_GNM_HEAD else body)
