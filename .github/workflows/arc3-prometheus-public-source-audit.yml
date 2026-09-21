@@ -92,15 +92,15 @@ jobs:
           measurement = measurement_path.read_text(encoding="utf-8")
           curve = {}
           m = re.search(
-              r"400 acciones -> ([0-9.]+) niveles; 800 -> ([0-9.]+); 1200 -> ([0-9.]+); 1600 -> ([0-9.]+)",
+              r"400 acciones -> ([0-9]+[.,][0-9]+) niveles; 800 -> ([0-9]+[.,][0-9]+); 1200 -> ([0-9]+[.,][0-9]+); 1600 -> ([0-9]+[.,][0-9]+)",
               measurement,
           )
           if m:
               curve = {
-                  "400": float(m.group(1)),
-                  "800": float(m.group(2)),
-                  "1200": float(m.group(3)),
-                  "1600": float(m.group(4)),
+                  "400": float(m.group(1).replace(",", ".")),
+                  "800": float(m.group(2).replace(",", ".")),
+                  "1200": float(m.group(3).replace(",", ".")),
+                  "1600": float(m.group(4).replace(",", ".")),
               }
 
           metadata = json.loads(metadata_path.read_text())
