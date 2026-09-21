@@ -1,0 +1,26 @@
+{
+  "receipt_version": "DEUS-OPENMETEO-INDEPENDENT-QA/1",
+  "generated_at": "2026-09-21T16:53:40Z",
+  "run_id": "35628490794",
+  "run_attempt": "1",
+  "source_sha": "356562458eecdb9dd27b6f724662e2edec702181",
+  "meta": {
+    "canary_id": "DEUS_OPENMETEO_QA_20260921_076",
+    "scope": "BL-S0 public/synthetic weather current fields",
+    "url": "https://api.open-meteo.com/v1/forecast?latitude=0&longitude=0&current=temperature_2m,wind_speed_10m&timezone=UTC",
+    "http_status": 200,
+    "semantic_pass": true,
+    "current_time": "2026-09-21T16:45",
+    "temperature_2m": 24.9,
+    "wind_speed_10m": 23.3,
+    "generationtime_ms": 0.0514984130859375,
+    "latency_ms": 738,
+    "body_bytes": 365,
+    "request_sha256": "8a19bb16811eef17cd0e09304e77b061c51c2caf6ea19ed10f0aa42cf3873bfe",
+    "headers_sha256": "957b2101dcf5b88a558eb3a6be49ec25877c7eb63decc82f107215cdd687bab4",
+    "body_sha256": "c68e4dd01203b25208eb31274d61747526de64e1f94ca339fca4adc3c0dc940f"
+  },
+  "custody_bundle_sha256": "6ee6294ac54a247dea0810817421eb8405a7d896433c230c80ddf79f2847ecd0",
+  "custody_bundle_bytes": 929,
+  "custody_bundle_base64": "H4sIAAAAAAAAA+2XyW7kNhCG+9yA34HQYU69cNXSgREkHiMBEo8ncM9ZoMiSW3E3pUiUJx3D7zTPkCcLqfbSXgKfbCMIv4uEYpGlBf/PYgt/9NDZWd+uR68FdsSc+ytJBNm/DpAYj4iggtMYc8pGmNAE4xHCr/ZEe/SdlS1Co7Y3Btp/z3tp/D/KytqmW8znsqlmdQNmugEL9UzVm/klmZd1C0p29vu1tJXtNRziD+vanN/eq75twdhDC5sGWmn7FnK6mXytjM67BkDnBG8+2GoDf9UGDr8sj977fQMPWYHU0HYz+6d9tRov6Z8ytqd/7vUfcxr0/xb8vFx+npMZQRRjdPrLwfijtLBAJ7WZIErQGTRuhMaIxAvBFhyjn06WB+Oj2lin++ly27hk2TTrSjmHqM3896423yG1km0H9rC35TQ9GC9baboS2umxUbWuzPnCZfTmAvSwlAHl5y7QBUAzlevqEg7GB+P3/jT/C4pab2f+p71ijZf0L4R4rH9GRdD/W3AV3W7t0QLPMBOEZyzlk+humx/ik+gcjN/hnU79dp5vuiHu01NOGE5FxhIxiXqr8rosnfjzDlRttM+bRLctQLSInIFE94FcFkULl9Ww8t0orOHyJjIUv+kz8t5U1i14NUx32VVXpzEmbkblDKm9lGsXvK3rijxoS9zQ39+OXPhhe+LCF5v5Krq+K7NXwHvfFGdTSpbOAbl4UCnD+GkNymfZ0xKUzdj19Xv/7Gdw7Z58Z/0TRvET/eOg/zfhaoxQpKSR7TavdLRA0cfjL2f56efjTyfHy+PT/Lcfci8CnFGS4ySOJn5Cp9xZwSf/+Ov0DKOmL1wDMO+2xq7AVgp9BenuWnQjKFRWsPaK9HPdSdPPfOuDx664r5q7P257ZyO+59m9DmykszWVN7Lzcdv2MAzc+s7ODdAzduCzHlsAGjzAjzy2AeR9YBh5xk7RM37qU90nAKO2u5yEpUPQ79t5sbXggyzeZba7w3zerSQVsX/gVJKsKEicEgJQkkRpDDhjmEOSFDgmShBFlSxjcImgCS6xlJyqkqUJK0q4+Wq7Q8LeuplICkow0aoURZpKIVIomIwL4BkoKtIkUQkUMdOgVEpLghNKhNI6TpNCFjy6f4n7RVWcAtfayR+zggqK/ZqEJlzHJOGJoLGGmAMpM64kY1mpJJdaMYW1yjguo/F1aBoDgUAgEAgEAoFAIBAIBAKBQCAQcPwDJy0hrwAoAAA="
+}
