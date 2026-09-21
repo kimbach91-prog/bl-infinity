@@ -56,6 +56,18 @@ pgtest('two control planes share principal quota and enforce tenant/scope bounda
   assert.equal(healthBody.scopedControlPrincipals, 2);
   assert.deepEqual(healthBody.publicReadScopes, []);
 
+  const readiness = await fetch(`${a.base}/readyz`);
+  assert.equal(readiness.status, 503);
+  const readinessBody = await readiness.json();
+  assert.equal(readinessBody.ready, false);
+  assert.equal(readinessBody.startupDurability, 'POSTGRES_WRITE_VERIFIED');
+  assert.deepEqual(readinessBody.driveBridge, {
+    process: 'ALIVE',
+    bridge: 'CREDENTIAL_GATE',
+    ready: false,
+    lastSuccessAt: null,
+  });
+
   const anonymousProviders = await getJson(a.base, '/providers');
   assert.equal(anonymousProviders.response.status, 401);
   assert.equal(anonymousProviders.body.error, 'unauthorized');

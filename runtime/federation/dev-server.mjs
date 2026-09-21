@@ -102,6 +102,23 @@ const server = http.createServer(async (req, res) => {
       driveBridge: driveBridgeRuntime.snapshot(),
     });
 
+    if (req.method === 'GET' && req.url === '/readyz') {
+      const driveBridge = driveBridgeRuntime.snapshot();
+      const databaseReady = stateBackend === 'postgres' && startupDurabilityReceipt.state === 'POSTGRES_WRITE_VERIFIED';
+      const ready = databaseReady && driveBridge.ready === true;
+      return send(res, ready ? 200 : 503, {
+        ready,
+        sourceRev: startupDurabilityReceipt.sourceRev,
+        startupDurability: startupDurabilityReceipt.state,
+        driveBridge: {
+          process: driveBridge.process,
+          bridge: driveBridge.bridge,
+          ready: driveBridge.ready,
+          lastSuccessAt: driveBridge.lastSuccessAt,
+        },
+      });
+    }
+
     if (req.method === 'GET' && req.url === '/drive-bridge/status') {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       return send(res, 200, driveBridgeRuntime.snapshot());
