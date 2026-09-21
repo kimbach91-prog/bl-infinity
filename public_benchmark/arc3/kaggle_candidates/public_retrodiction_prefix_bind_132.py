@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Rung 132: bind the retrodiction verifier to real pinned public ARC-AGI-3 traces.
 
-This is a CPU-only, clean-room public-trace audit.  It does not call a model,
-Kaggle, or a competition endpoint.  Each prediction is made from a prefix of
+This is a CPU-only, clean-room public-trace audit. It does not call a model,
+Kaggle, or a competition endpoint. Each prediction is made from a prefix of
 already-observed transitions only; the current transition outcome is revealed
 only after the prediction/abstention decision has been recorded.
 
@@ -17,7 +17,7 @@ import argparse
 import copy
 import hashlib
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Callable
 
@@ -166,7 +166,6 @@ def audit_trace(events: list[dict[str, Any]], rep_fn: Callable[[dict[str, Any], 
             metrics.predictions += 1
             expected_digest = next(iter(seen))
             expected_board = exemplar[(k, expected_digest)]
-            # Check both digest and full board so a hash is never treated as proof by itself.
             if expected_digest == actual_digest and expected_board == actual_board:
                 metrics.correct += 1
             else:
@@ -179,7 +178,7 @@ def audit_trace(events: list[dict[str, Any]], rep_fn: Callable[[dict[str, Any], 
         pre = event
 
     metrics.final_unique_keys = len(table)
-    metrics.final_repeated_keys = sum(1 for k, n in counts.items() if n > 1)
+    metrics.final_repeated_keys = sum(1 for _, n in counts.items() if n > 1)
     metrics.final_conflict_keys = sum(1 for outcomes in table.values() if len(outcomes) > 1)
     metrics.repeated_transition_support = sum(n for n in counts.values() if n > 1)
     return metrics.finalize()
@@ -275,18 +274,13 @@ def run(paths: list[Path]) -> dict[str, Any]:
 
 
 def self_test() -> dict[str, Any]:
-    # Same visible board/action has two hidden regimes.  Level is an explicitly
-    # visible pre-action context signal and must resolve the alias without future data.
     a = [[1, 0, 0]]
     b = [[0, 1, 0]]
     c = [[0, 0, 1]]
-    events: list[dict[str, Any]] = [{"type": "initial", "board": a, "level": 1}]
-    # Repeat board A/RIGHT twice at each visible level, with level-specific outcome.
+    events: list[dict[str, Any]] = []
     for level, out in ((1, b), (1, b), (2, c), (2, c), (1, b), (2, c)):
-        events.append({"type": "action", "board": out, "level": level, "action_display": "RIGHT"})
         events.append({"type": "initial", "board": a, "level": level})
-    # Drop trailing reset; parser/auditor accepts interspersed initial events.
-    events = events[:-1]
+        events.append({"type": "action", "board": out, "level": level, "action_display": "RIGHT"})
     raw = audit_trace(events, rep_raw)
     level = audit_trace(events, rep_level)
     invariants = {
