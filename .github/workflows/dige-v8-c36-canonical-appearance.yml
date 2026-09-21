@@ -1,0 +1,180 @@
+name: DIGE V8 C36 Canonical Appearance Search
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c36-canonical-appearance.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c36-canonical-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  c36-search:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        include:
+          - id: G
+            jaw: '0.88'
+            eye_open: '0.68'
+            eye_globe: '0.90'
+            hair_length: '0.40'
+            hair_wave: '0.012'
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Reuse C34 verified runtime assets
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 authored prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Verify long01 exact bytes
+        run: |
+          set -euxo pipefail
+          cd experiments/dige-v8-executor-capsule/runtime/system_assets
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  long01.mhclo" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  long01.mhmat" | sha256sum -c -
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
+
+      - name: Rebind deterministic body geometry to current canonical manifest
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python build_makehuman_v8.py | tee runtime/c36_geometry_canon_rebind.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          root=pathlib.Path('.')
+          canon=(root/'DIGE_CANON_EXECUTION_MANIFEST.json').read_bytes()
+          expected=hashlib.sha256(canon).hexdigest()
+          geom=json.loads((root/'runtime/DIGE_V8_GEOMETRY_MANIFEST.json').read_text())
+          assert geom['canon_execution_manifest_sha256']==expected
+          assert (root/'runtime/dige_makehuman_v8.obj').is_file()
+          print(json.dumps({'verdict':'PASS','canon_sha256':expected,'body_obj_sha256':hashlib.sha256((root/'runtime/dige_makehuman_v8.obj').read_bytes()).hexdigest()}))
+          PY
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Render C36 canonical appearance candidate
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '1'
+          DIGE_SEARCH_DENOISE: '0'
+          DIGE_OUTPUT_TAG: c36_${{ matrix.id }}
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_C36_CANONICAL_APPEARANCE: '1'
+          DIGE_C36_JAW_TAPER: ${{ matrix.jaw }}
+          DIGE_C36_EYE_OPEN_SCALE: ${{ matrix.eye_open }}
+          DIGE_C36_EYE_GLOBE_SCALE: ${{ matrix.eye_globe }}
+          DIGE_C36_HAIR_LENGTH_M: ${{ matrix.hair_length }}
+          DIGE_C36_HAIR_WAVE: ${{ matrix.hair_wave }}
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_long01
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SAMPLES_PREVIEW: '96'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20263636'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c36_${{ matrix.id }}.log
+
+      - name: Verify C36 receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          CAND: ${{ matrix.id }}
+        run: |
+          python - <<'PY'
+          import json,os,pathlib
+          root=pathlib.Path('runtime/renders/c36_'+os.environ['CAND'])
+          r=json.loads((root/'DIGE_V8_RENDER_RECEIPT.json').read_text())
+          assert r['appearance_candidate']=='C36_CANONICAL_REFERENCE_APPEARANCE_V1'
+          assert r['device']=='CPU'
+          assert r['hair_curve_metrics']['c32_lower_central_root_count']==0
+          assert r['hair_surface_contract']['asset_key']=='hair_long01'
+          assert r['hair_surface_contract']['obj_sha256']=='7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c'
+          assert r['hair_surface_contract']['mhclo_sha256']=='94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646'
+          assert r['hair_surface_contract']['diffuse_sha256']=='e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c'
+          assert 'HAIR_LONG01' in r['hair_surface_contract']['guide_field_version']
+          assert r['hair_surface_contract']['style']=='C36_LONG01_AUTHORED_FLOW_STRAND_GROOM_V1'
+          assert len(r['outputs'])==1 and r['outputs'][0]['sha256']
+          assert r['denoise_ab']['search_only'] is True
+          summary={
+            'schema':'DIGE_C36_CANONICAL_SEARCH_RECEIPT_V1',
+            'candidate':os.environ['CAND'],
+            'hero':r['outputs'][0],
+            'hair_curve_metrics':r['hair_curve_metrics'],
+            'skin_contract':r['c28_gnm_head']['skin_contract'],
+            'appearance_selection':r['appearance_selection'],
+            'truth_boundary':'CANONICAL_REFERENCE_USED_FOR_HUMAN_TARGET_AUDIT_ONLY__REFERENCE_PIXELS_NOT_READ_BY_RENDERER__HUMAN_VISUAL_SELECTION_REQUIRED'
+          }
+          (root/'DIGE_C36_SUMMARY.json').write_text(json.dumps(summary,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DIGE-C36-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c36_${{ matrix.id }}/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c36_${{ matrix.id }}/*.json
+            experiments/dige-v8-executor-capsule/runtime/c36_${{ matrix.id }}.log
+          if-no-files-found: error
+          retention-days: 14

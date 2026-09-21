@@ -183,7 +183,45 @@
           "sha256": "0bef7fc0e403db5a40fabb2111ebfa6f7e8158e204c6e56b8da98e9ef527846e"
         }
       },
-      "hair_default_key": "hair_short03"
+      "hair_default_key": "hair_short03",
+      "hair_long01": {
+        "tags": [
+          "MakeHuman",
+          "Long",
+          "Female",
+          "CC0"
+        ],
+        "obj": {
+          "runtime_name": "long01.obj",
+          "zip_path": "hair/long01/long01.obj",
+          "sha256": "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c",
+          "vertices": 3239,
+          "faces": 2054,
+          "uvs": 3314
+        },
+        "mhclo": {
+          "runtime_name": "long01.mhclo",
+          "zip_path": "hair/long01/long01.mhclo",
+          "sha256": "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646"
+        },
+        "diffuse": {
+          "runtime_name": "long01_diffuse.png",
+          "zip_path": "hair/long01/long01_diffuse.png",
+          "sha256": "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c"
+        },
+        "material": {
+          "runtime_name": "long01.mhmat",
+          "zip_path": "hair/long01/long01.mhmat",
+          "sha256": "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760"
+        },
+        "probe": {
+          "run_id": 35605124719,
+          "artifact_id": 10643136521,
+          "artifact_digest": "sha256:0c8032fff8c36a6c59d04bfd237332e1a6d285c6d7ac8d77df360f53cfc270f4",
+          "drive_custody_id": "11KQ6u4FXJMdPdD30WFiFPMzYdMThxFZr",
+          "state": "HASH_VERIFIED_CC0"
+        }
+      }
     }
   },
   "policy": {
