@@ -1,0 +1,73 @@
+name: DEUS Rust Playground Causal QA
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-rust-playground-causal-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Replay Rust Playground with exact code preimage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          cat > qa/code.rs <<'RS'
+          fn main() {
+              let nonce = "DEUS_RUST_CAUSAL_QA_20260921_R1";
+              println!("{}", nonce);
+              println!("{}", 6 * 7);
+          }
+          RS
+          python3 - <<'PY' > qa/request.json
+          import json, pathlib
+          code=pathlib.Path("qa/code.rs").read_text()
+          req={"channel":"stable","mode":"debug","edition":"2024","crateType":"bin","tests":False,"code":code}
+          print(json.dumps(req,separators=(',',':'),sort_keys=True))
+          PY
+          code="$(curl -fsS --max-time 60 -D qa/headers.txt -o qa/response.json -w '%{http_code}' https://play.rust-lang.org/execute -H 'Content-Type: application/json' --data-binary @qa/request.json)"
+          test "$code" = "200"
+          python3 - <<'PY'
+          import json, hashlib, pathlib
+          request=pathlib.Path("qa/request.json").read_bytes()
+          source=pathlib.Path("qa/code.rs").read_bytes()
+          response=pathlib.Path("qa/response.json").read_bytes()
+          p=json.loads(response)
+          assert p.get("success") is True, p
+          stdout=p.get("stdout") or ""
+          stderr=p.get("stderr") or ""
+          lines=[x.strip() for x in stdout.splitlines() if x.strip()]
+          assert lines == ["DEUS_RUST_CAUSAL_QA_20260921_R1","42"], lines
+          receipt={
+            "schema":"deus-rust-playground-causal-qa/1",
+            "qa_runner":"github-hosted-ubuntu",
+            "provider":"Rust Playground",
+            "endpoint":"https://play.rust-lang.org/execute",
+            "nonce":"DEUS_RUST_CAUSAL_QA_20260921_R1",
+            "code_sha256":hashlib.sha256(source).hexdigest(),
+            "request_sha256":hashlib.sha256(request).hexdigest(),
+            "response_sha256":hashlib.sha256(response).hexdigest(),
+            "headers_sha256":hashlib.sha256(pathlib.Path("qa/headers.txt").read_bytes()).hexdigest(),
+            "http_status":200,
+            "success":True,
+            "stdout_lines":lines,
+            "stderr_empty":stderr=="",
+            "aggregate_credit_mutation":False,
+            "truth":"CAUSAL_PREIMAGE_AND_INDEPENDENT_REPLAY_PASS_NE_FROZEN_MANIFEST_MUTATION_NE_GLOBAL_AGGREGATE_PROMOTION"
+          }
+          pathlib.Path("qa/receipt.json").write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("DEUS_RUST_QA_RECEIPT="+json.dumps(receipt,separators=(',',':')))
+          PY
+      - name: Upload exact Rust QA custody bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-rust-playground-causal-qa
+          path: qa/
+          retention-days: 30
