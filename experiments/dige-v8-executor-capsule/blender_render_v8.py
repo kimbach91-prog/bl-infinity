@@ -1095,7 +1095,7 @@ set_input(hm_bs,"Specular IOR Level",.22)
 set_input(hm_bs,"Coat Weight",.10)
 set_input(hm_bs,"Coat Roughness",.30)
 set_input(hm_bs,"Anisotropic IOR Level",.35)
-cloth=principled("CLOTH",(0.020,0.026,0.040),rough=.72,sheen=.12)
+cloth=principled("CLOTH",(0.62,0.56,0.50) if C36_CANONICAL_APPEARANCE else (0.020,0.026,0.040),rough=.78 if C36_CANONICAL_APPEARANCE else .72,sheen=.18 if C36_CANONICAL_APPEARANCE else .12)
 floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
 
 mesh_path=RUNTIME/"dige_makehuman_v8.obj"
@@ -1803,6 +1803,7 @@ if C28_GNM_HEAD:
         eye_r=sum(transformed_landmarks[42:48],Vector())/6
         eye_z=(eye_l.z+eye_r.z)*.5
         mouth_center=sum(transformed_landmarks[48:60],Vector())/12
+        mouth_half=max(.014,abs(transformed_landmarks[48].x-transformed_landmarks[54].x)*.50)
         chin=transformed_landmarks[8]
         lower_span=max(.04,eye_z-chin.z)
         # Reference-driven V-line taper: strongest at chin/jaw, fading by the eye line.
@@ -1818,6 +1819,12 @@ if C28_GNM_HEAD:
                     w=(1.0-dx/.031)*(1.0-dz/.015)
                     fac=1.0-(1.0-C36_EYE_OPEN_SCALE)*max(0.0,min(1.0,w))
                     p.z=ec.z+(p.z-ec.z)*fac
+            # Canonical target has a smaller, softer mouth than the current GNM sample.
+            mdx=abs(p.x-mouth_center.x); mdz=abs(p.z-mouth_center.z)
+            if mdx < mouth_half*1.18 and mdz < .015 and p.y > mouth_center.y-.022:
+                mw=max(0.0,(1.0-mdx/(mouth_half*1.18))*(1.0-mdz/.015))
+                p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-.055*mw)
+                p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-.25*mw)
             # Very subtle mouth-corner lift to avoid the mannequin-flat resting line.
             dx=abs(abs(p.x-mouth_center.x)-.020)
             dz=abs(p.z-mouth_center.z)
@@ -1932,26 +1939,6 @@ if C28_GNM_HEAD:
         v.co.y-=.0025*max(0.0,-c28_hairline_delta/.050)*w
         c28_hairline_warp_vertices+=1
     hair_obj.data.update()
-
-    if C36_CANONICAL_APPEARANCE:
-        src=c28_gnm_objects.get("skin")
-        if src is None:
-            raise RuntimeError("C36 scalp shell requires GNM skin")
-        scalp=src.copy(); scalp.data=src.data.copy(); scalp.name="DIGE_C36_SCALP_SHADOW_SHELL"
-        bpy.context.collection.objects.link(scalp)
-        bm=bmesh.new(); bm.from_mesh(scalp.data)
-        kill=[]
-        for v in bm.verts:
-            p=v.co
-            if p.z < target_hairline_z-.006 or (p.y > gnm_eye_mid.y+.043 and p.z < target_hairline_z+.055):
-                kill.append(v)
-        bmesh.ops.delete(bm,geom=kill,context='VERTS')
-        bm.to_mesh(scalp.data); bm.free(); scalp.data.update()
-        for v in scalp.data.vertices:
-            v.co += v.normal*0.00030
-        scalp.data.update(); scalp.data.materials.clear()
-        scalp.data.materials.append(principled("DIGE_C36_SCALP_SHADOW",(0.008,0.0045,0.0032),rough=.52,ior=1.48))
-        bpy.context.view_layer.objects.active=scalp; bpy.ops.object.shade_smooth()
 
     grng=random.Random(20262828)
     brow_fibers=[]
@@ -2672,7 +2659,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         style_lift=max(.010,min(.026,.010+shell_lift*.42))
 
         grid=max(2,int(math.ceil(math.sqrt(strands_per_root))))
-        undercoat_count=max(1,int(round(strands_per_root*(.58 if C32_GNM_DERMAL_HAIR else .75))))
+        undercoat_count=max(1,int(round(strands_per_root*(.45 if C36_CANONICAL_APPEARANCE else (.58 if C32_GNM_DERMAL_HAIR else .75)))))
+        midlayer_count=max(undercoat_count+1,int(round(strands_per_root*.78))) if C36_CANONICAL_APPEARANCE else undercoat_count
         for k in range(strands_per_root):
             gx=k % grid
             gy=k // grid
@@ -2713,19 +2701,24 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
             child_cross.normalize()
 
             undercoat=(k < undercoat_count)
+            midlayer=(C36_CANONICAL_APPEARANCE and k >= undercoat_count and k < midlayer_count)
+            outerlayer=(C36_CANONICAL_APPEARANCE and k >= midlayer_count)
             if C36_CANONICAL_APPEARANCE:
-                # C36.1: short tangent undercoat owns scalp/crown coverage; outer strands
-                # preserve root flow for the first segment, then fall into long layers.
+                # C36.3 three-population strand field: real strand density owns coverage.
                 if undercoat:
-                    length=rng.uniform(.040,.075)
-                    lift=rng.uniform(.003,.007)
-                    amp=rng.uniform(.0008,.0024)
+                    length=rng.uniform(.055,.095)
+                    lift=rng.uniform(.004,.010)
+                    amp=rng.uniform(.0010,.0030)
+                elif midlayer:
+                    length=rng.uniform(.14,.24)
+                    lift=rng.uniform(.007,.015)
+                    amp=C36_HAIR_WAVE*rng.uniform(.55,.90)
                 else:
-                    length=min(.44,max(.26,C36_HAIR_LENGTH_M*rng.uniform(.88,1.08)))
-                    lift=rng.uniform(.006,.012)
-                    amp=C36_HAIR_WAVE*rng.uniform(.70,1.15)
-                tip_clear=rng.uniform(.0010,.0025)
-                flow=(child_flow + child_cross*rng.uniform(-.055,.055)).normalized()
+                    length=min(.44,max(.32,C36_HAIR_LENGTH_M*rng.uniform(.90,1.06)))
+                    lift=rng.uniform(.008,.016)
+                    amp=C36_HAIR_WAVE*rng.uniform(.75,1.20)
+                tip_clear=rng.uniform(.0010,.0030)
+                flow=(child_flow + child_cross*rng.uniform(-.065,.065)).normalized()
             elif undercoat:
                 length=rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
                 lift=under_lift*rng.uniform(.78,1.08) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
@@ -2748,7 +2741,6 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                 if C36_CANONICAL_APPEARANCE:
                     wave=math.sin(math.tau*(1.15*t)+strand_phase)*bend
                     if undercoat:
-                        # Scalp shell: stay tangent to the head instead of immediately falling away.
                         p=(
                             root_j
                             + flow*(length*t)
@@ -2758,19 +2750,25 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                     else:
                         side_sign=1.0 if root_j.x>=gnm_eye_mid.x else -1.0
                         face_frame=max(0.0,min(1.0,(root_j.y+0.020)/0.060))
-                        fall=Vector((side_sign*(.10+.07*face_frame),-.08,-.992))
+                        fall=Vector((side_sign*(.09+.06*face_frame),-.07,-.994))
                         fall.normalize()
-                        turn=.30
+                        turn=.44 if midlayer else .32
                         surf_t=min(1.0,t/turn)
                         fall_t=max(0.0,(t-turn)/(1.0-turn))
-                        surf_len=min(.095,length*.28)
+                        surf_len=min(.125,length*(.42 if midlayer else .27))
                         p=(
                             root_j
                             + flow*(surf_len*surf_t)
-                            + fall*(length*.78*fall_t)
+                            + fall*(length*(.58 if midlayer else .78)*fall_t)
                             + child_n*(lift*bend + tip_clear*t)
                             + lateral*(amp*wave)
                         )
+                        # Long/mid strands may frame the face but must not sweep across
+                        # the central eyes/nose/mouth region.
+                        if p.z < gnm_eye_mid.z+.035 and abs(p.x-gnm_eye_mid.x) < .073:
+                            sgn=1.0 if root_j.x>=gnm_eye_mid.x else -1.0
+                            p.x=gnm_eye_mid.x+sgn*(.073+.010*min(1.0,t))
+                            p.y=min(p.y,root_j.y-.0015)
                 else:
                     p=(
                         root_j
@@ -2927,6 +2925,10 @@ solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickne
 
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
+if C36_CANONICAL_APPEARANCE:
+    backdrop_mat=principled("DIGE_C36_WARM_BACKDROP",(0.10,0.060,0.045),rough=.92,ior=1.40)
+    bpy.ops.mesh.primitive_plane_add(size=5.0,location=(0,-1.25,1.45),rotation=(math.radians(90),0,0))
+    backdrop=bpy.context.object; backdrop.name="DIGE_C36_WARM_BACKDROP"; backdrop.data.materials.append(backdrop_mat)
 
 def area(name,loc,energy,size,color,target=(0,0,1.25)):
     bpy.ops.object.light_add(type='AREA',location=loc)
