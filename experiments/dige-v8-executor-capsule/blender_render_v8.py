@@ -6,6 +6,10 @@ from mathutils import Vector
 ROOT=Path(__file__).resolve().parent
 RUNTIME=ROOT/"runtime"
 OUTPUT_TAG=os.environ.get("DIGE_OUTPUT_TAG","").strip()
+SAMPLE_SHARD_MODE=os.environ.get("DIGE_SAMPLE_SHARD_MODE","0").strip()=="1"
+SAMPLE_SHARD_ID=os.environ.get("DIGE_SAMPLE_SHARD_ID","").strip()
+SAMPLE_SHARD_SAMPLES=int(os.environ.get("DIGE_SAMPLE_SHARD_SAMPLES","0") or "0")
+SAMPLE_SHARD_SEED=int(os.environ.get("DIGE_SAMPLE_SHARD_SEED",os.environ.get("DIGE_RENDER_SEED","20260919")))
 OUT=RUNTIME/"renders"
 if OUTPUT_TAG:
     OUT=OUT/OUTPUT_TAG
@@ -2907,7 +2911,15 @@ all_views=[
  ("04_HERO85",(0,1.10,1.595),(0,.030,1.580),85,4.5,900,900),
  ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,512,768)
 ]
-if RENDER_SET=="FULL":
+if SAMPLE_SHARD_MODE:
+    if RENDER_SET!="HERO_ONLY":
+        raise RuntimeError("DIGE sample-shard mode supports HERO_ONLY only")
+    if SAMPLE_SHARD_SAMPLES <= 0:
+        raise RuntimeError("DIGE_SAMPLE_SHARD_SAMPLES must be > 0")
+    if not SAMPLE_SHARD_ID:
+        raise RuntimeError("DIGE_SAMPLE_SHARD_ID required in sample-shard mode")
+    views=[]
+elif RENDER_SET=="FULL":
     views=all_views
 elif RENDER_SET=="HERO_ONLY":
     views=[v for v in all_views if v[0]=="04_HERO85"]
@@ -2922,18 +2934,57 @@ for vid,loc,target,lens,fstop,w,h in views:
     bpy.ops.render.render(write_still=True)
     outputs.append({"view":vid,"file":p.name,"sha256":sha(p),"lens_mm":lens,"fstop":fstop,"width":w,"height":h})
 
-# Controlled same-seed hero evidence. Search-only C33 does not spend RAW+A/B work
-# because root-mask leakage is visible in the already-denoised preview.
+# Controlled hero evidence or sample-space shard.
 hero_samples=int(os.environ.get("DIGE_SAMPLES_HERO","256"))
 hero_seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
 aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
 scene.render.resolution_x=900; scene.render.resolution_y=900
 scene.cycles.seed=hero_seed
-if SEARCH_ONLY:
+if SAMPLE_SHARD_MODE:
+    # Micro-render shards are independent Monte-Carlo estimates of the same
+    # full-frame integrand. Keep them linear, non-denoised and non-adaptive;
+    # reducer performs sample-count weighted accumulation before any display transform.
+    scene.cycles.use_denoising=False
+    scene.cycles.use_adaptive_sampling=False
+    scene.cycles.samples=SAMPLE_SHARD_SAMPLES
+    scene.cycles.seed=SAMPLE_SHARD_SEED
+    scene.render.image_settings.media_type='IMAGE'
+    scene.render.image_settings.file_format='OPEN_EXR'
+    scene.render.image_settings.color_mode='RGBA'
+    scene.render.image_settings.color_depth='32'
+    raw=OUT/f"DIGE_SAMPLE_SHARD_{SAMPLE_SHARD_ID}.exr"
+    scene.render.filepath=str(raw)
+    bpy.ops.render.render(write_still=True)
+    outputs.append({
+      "view":"04_HERO85",
+      "file":raw.name,
+      "sha256":sha(raw),
+      "lens_mm":85,
+      "fstop":4.5,
+      "width":900,
+      "height":900,
+      "sample_shard":True,
+      "shard_id":SAMPLE_SHARD_ID,
+      "samples":SAMPLE_SHARD_SAMPLES,
+      "seed":SAMPLE_SHARD_SEED,
+    })
+    denoised=None
+    denoise_ab={
+      "search_only":False,
+      "sample_shard":True,
+      "shard_id":SAMPLE_SHARD_ID,
+      "seed":SAMPLE_SHARD_SEED,
+      "samples":SAMPLE_SHARD_SAMPLES,
+      "raw_aov":{"file":raw.name,"sha256":sha(raw)},
+      "denoised":None,
+      "reducer_contract":"SAMPLE_COUNT_WEIGHTED_LINEAR_EXR_ACCUMULATION_BEFORE_DENOISE"
+    }
+elif SEARCH_ONLY:
     raw=None
     denoised=OUT/"04_HERO85_V8.png"
     denoise_ab={
       "search_only":True,
+      "sample_shard":False,
       "seed":hero_seed,
       "samples":int(os.environ.get("DIGE_SAMPLES_PREVIEW","128")),
       "raw_aov":None,
@@ -2951,6 +3002,7 @@ else:
     bpy.ops.render.render(write_still=True)
     denoise_ab={
       "search_only":False,
+      "sample_shard":False,
       "seed":hero_seed,
       "samples":hero_samples,
       "raw_aov":{"file":raw.name,"sha256":sha(raw)},
@@ -2966,6 +3018,10 @@ receipt={
  "identity_bound":False,
  "render_set":RENDER_SET,
  "output_tag":OUTPUT_TAG or None,
+ "sample_shard_mode":SAMPLE_SHARD_MODE,
+ "sample_shard_id":SAMPLE_SHARD_ID or None,
+ "sample_shard_samples":SAMPLE_SHARD_SAMPLES if SAMPLE_SHARD_MODE else None,
+ "sample_shard_seed":SAMPLE_SHARD_SEED if SAMPLE_SHARD_MODE else None,
  "canon_execution_manifest_sha256":CANON_SHA256,
  "runtime_commit":os.environ.get("DIGE_RUNTIME_COMMIT") or os.environ.get("GITHUB_SHA"),
  "runner":{"name":os.environ.get("RUNNER_NAME"),"os":os.environ.get("RUNNER_OS"),"arch":os.environ.get("RUNNER_ARCH")},
