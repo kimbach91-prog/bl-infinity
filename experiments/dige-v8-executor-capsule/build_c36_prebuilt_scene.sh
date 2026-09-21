@@ -1,0 +1,116 @@
+#!/bin/sh
+set -eu
+: "${BLENDER:?BLENDER is required}"
+
+export DIGE_CYCLES_DEVICE=CPU
+export DIGE_RENDER_SET=HERO_ONLY
+export DIGE_SEARCH_ONLY=0
+export DIGE_OUTPUT_TAG=c36_scene_build
+export DIGE_C18_HYBRID_BULK=1
+export DIGE_C19_HUMANIZATION=0
+export DIGE_C19_PHOTO_LIGHTING=0
+export DIGE_C20_VISUAL_REPAIR=0
+export DIGE_C21_NATURAL_DETAIL=0
+export DIGE_C22_PHYSICAL_SKIN=0
+export DIGE_C22_LANDMARK_GROOM=0
+export DIGE_C22_HAIR_MASS_WARP=0
+export DIGE_C23_CALIBRATED_EYES=0
+export DIGE_C23_FACE_PLANES=0
+export DIGE_C23_HAIRLINE_REPAIR=0
+export DIGE_C24_SURFACE_EYES=0
+export DIGE_C24_SOURCE_ALBEDO=0
+export DIGE_C24_HAIRLINE_REPAIR=0
+export DIGE_C25_MATURE_STACK=1
+export DIGE_C25_GROOM_CLIP=0
+export DIGE_C26_PHOTOMETRIC=1
+export DIGE_C26_SAFE_GROOM=0
+export DIGE_C26_FIBER_GROOM=0
+export DIGE_C27_SURFACE_FIBERS=0
+export DIGE_C27_NATIVE_INTERFACES=0
+export DIGE_C28_GNM_HEAD=1
+export DIGE_C28_GNM_DIR=runtime/gnm_c28
+export DIGE_C28_HEAD_SCALE_BIAS=1.00
+export DIGE_C28_HEAD_Z_OFFSET=0.000
+export DIGE_C29_GNM_PRESENTATION=1
+export DIGE_C30_GNM_SEMANTIC_IDENTITY=1
+export DIGE_C31_GNM_FACE_APPEARANCE=1
+export DIGE_C32_GNM_DERMAL_HAIR=1
+export DIGE_C33_GUIDE_GATED_GROOM=1
+export DIGE_C33_GUIDE_MAX_DIST=0.021
+export DIGE_C33_SCALP_Z_DROP=0.120
+export DIGE_GNM_COMMIT=a424b5153eec9154f3dfa5ee7f214e5817918d54
+export DIGE_MPFB2_SRC=runtime/shared_mpfb2_src
+export DIGE_MPFB2_COMMIT=b58176c661a9680294eb75f127842cb8378e4974
+export DIGE_C25_MHMAT_PATH=runtime/assets/c25_mpfb/c25_skin.mhmat
+export DIGE_HAIR_ASSET_KEY=hair_short03
+export DIGE_HAIR_STRANDS_PER_ROOT=24
+export DIGE_HAIR_ACCENT_LENGTH_SCALE=0.88
+export DIGE_HAIR_FRONT_SAFE_BLEND=0.94
+export DIGE_SKIN_ALBEDO_PATH=runtime/assets/young_eurasian_female_diffuse.png
+export DIGE_SKIN_ALBEDO_SHA256=e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+export DIGE_SKIN_ALBEDO_NAME=onlytheghosts_young_eurasian_female
+export DIGE_SKIN_SSS_WEIGHT=0.045
+export DIGE_SKIN_SSS_SCALE=0.0009
+export DIGE_SKIN_ROUGH_MIN=0.44
+export DIGE_SKIN_ROUGH_MAX=0.62
+export DIGE_SKIN_ALBEDO_SAT=1.00
+export DIGE_SKIN_ALBEDO_VALUE=1.00
+export DIGE_EYE_TEX_SAT=0.78
+export DIGE_EYE_TEX_VALUE=0.64
+export DIGE_HAIR_TEX_SAT=0.56
+export DIGE_HAIR_TEX_VALUE=0.23
+export DIGE_FACE_MESO_SCALE=1.00
+export DIGE_SKIN_TONE_R=0.60
+export DIGE_SKIN_TONE_G=0.33
+export DIGE_SKIN_TONE_B=0.22
+export DIGE_SKIN_TONE_MIX=0.08
+export DIGE_SKIN_MICRO_STRENGTH=0.20
+export DIGE_SKIN_MESO_FREQ=95
+export DIGE_SKIN_PORE_FREQ=2800
+export DIGE_SKIN_MICRO_FREQ=9000
+export DIGE_SKIN_BUMP_DISTANCE=0.000055
+export DIGE_SKIN_COAT_WEIGHT=0.001
+export DIGE_SKIN_COAT_ROUGHNESS=0.45
+export DIGE_RENDER_SEED=20263030
+export DIGE_SAMPLES_PREVIEW=1
+export DIGE_SAMPLES_HERO=1
+export DIGE_RUNTIME_COMMIT="${GITHUB_SHA:-unknown}"
+
+mkdir -p runtime/c36_prebuilt
+"$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c36_scene_builder_renderer.log
+SOURCE=runtime/renders/c36_scene_build/DIGE_V8_scene.blend
+RECEIPT=runtime/renders/c36_scene_build/DIGE_V8_RENDER_RECEIPT.json
+test -s "$SOURCE"
+test -s "$RECEIPT"
+cp "$SOURCE" runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend
+python - <<'PY'
+import hashlib, json, pathlib
+root=pathlib.Path('runtime')
+scene=root/'c36_prebuilt'/'DIGE_C36_PREBUILT_SCENE.blend'
+src=json.loads((root/'renders'/'c36_scene_build'/'DIGE_V8_RENDER_RECEIPT.json').read_text())
+receipt={
+  'schema':'dige-c36-prebuilt-scene/1',
+  'state':'SCENE_BUILD_VERIFIED',
+  'scene_file':scene.name,
+  'scene_sha256':hashlib.sha256(scene.read_bytes()).hexdigest(),
+  'source_renderer_receipt_sha256':hashlib.sha256((root/'renders'/'c36_scene_build'/'DIGE_V8_RENDER_RECEIPT.json').read_bytes()).hexdigest(),
+  'blender_version':src.get('blender_version'),
+  'engine':src.get('engine'),
+  'device':src.get('device'),
+  'resolution':[900,900],
+  'camera_lens_mm':85,
+  'camera_fstop':4.5,
+  'runtime_commit':src.get('runtime_commit'),
+  'canon_execution_manifest_sha256':src.get('canon_execution_manifest_sha256'),
+  'geometry_manifest_sha256':src.get('geometry_manifest_sha256'),
+  'hair_style':src.get('hair_surface_contract',{}).get('style'),
+  'hair_curve_count':src.get('hair_surface_contract',{}).get('curve_count'),
+  'c32_lower_central_root_count':src.get('hair_curve_metrics',{}).get('c32_lower_central_root_count'),
+  'builder_probe_samples':1,
+  'truth_boundary':'SCENE_SNAPSHOT_WAS_CREATED_ONCE_FROM_THE_SAME_DETERMINISTIC_RENDERER_WITH_1_SAMPLE_PROBE_OUTPUTS_THEN_REUSED_BY_RENDER_SHARDS__PROBE_RENDER_IS_SETUP_VALIDATION_NOT_FINAL_COMPUTE'
+}
+(root/'c36_prebuilt'/'DIGE_C36_SCENE_BUILD_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+print(json.dumps(receipt,sort_keys=True))
+PY
+test -s runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend
+test -s runtime/c36_prebuilt/DIGE_C36_SCENE_BUILD_RECEIPT.json
