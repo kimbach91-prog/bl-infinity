@@ -1,0 +1,543 @@
+name: DIGE V8 C34 Logical Resource Compiled Adaptive Search
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c34-logical-resource-compiler.yml'\n      - 'runtime/federation/lib/logical-resource-compiler.mjs'\n      - 'experiments/dige-v8-executor-capsule/compile_c34_resource_plan.mjs'\n      - 'experiments/dige-v8-executor-capsule/reduce_c34_candidates.py'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/evaluate_c34_candidate.py'
+      - 'experiments/dige-v8-executor-capsule/reduce_c34_candidates.py'
+      - 'experiments/dige-v8-executor-capsule/build_gnm_head_c28.py'
+      - 'experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c34-logical-resource-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prep-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Stage verified CC0 skin and system assets once
+        run: |
+          set -euxo pipefail
+          mkdir -p experiments/dige-v8-executor-capsule/runtime/assets experiments/dige-v8-executor-capsule/runtime/system_assets
+          SKINPACK=/tmp/skins01_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
+          unzip -p "$SYSPACK" "hair/short03/short03.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03.obj
+          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03.mhclo
+          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/short03_diffuse.png
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/high-poly.obj
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/high-poly.mhclo
+          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/brown_eye.png
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.obj
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyebrow001.png
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.obj
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > experiments/dige-v8-executor-capsule/runtime/system_assets/eyelashes01.png
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  experiments/dige-v8-executor-capsule/runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  experiments/dige-v8-executor-capsule/runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  experiments/dige-v8-executor-capsule/runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+      - name: Build reusable geometry/material runtime once
+        run: |
+          set -euxo pipefail
+          MPFB_COMMIT=b58176c661a9680294eb75f127842cb8378e4974
+          rm -rf /tmp/mpfb2
+          git init /tmp/mpfb2
+          git -C /tmp/mpfb2 remote add origin https://github.com/makehumancommunity/mpfb2.git
+          git -C /tmp/mpfb2 fetch --depth=1 origin "$MPFB_COMMIT"
+          git -C /tmp/mpfb2 checkout --detach FETCH_HEAD
+          mkdir -p experiments/dige-v8-executor-capsule/runtime/shared_mpfb2_src/mpfb
+          cp -a /tmp/mpfb2/src/mpfb/data experiments/dige-v8-executor-capsule/runtime/shared_mpfb2_src/mpfb/
+
+          GNM_COMMIT=a424b5153eec9154f3dfa5ee7f214e5817918d54
+          rm -rf /tmp/GNM
+          git init /tmp/GNM
+          git -C /tmp/GNM remote add origin https://github.com/google/GNM.git
+          git -C /tmp/GNM fetch --depth=1 origin "$GNM_COMMIT"
+          git -C /tmp/GNM checkout --detach FETCH_HEAD
+          python -m pip install --disable-pip-version-check -q numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
+          python -m pip install --disable-pip-version-check -q tensorflow
+          python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
+
+          cd experiments/dige-v8-executor-capsule
+          python build_makehuman_v8.py | tee runtime/c34_shared_body_geometry_execution.json
+          DIGE_GNM_COMMIT="$GNM_COMMIT" DIGE_GNM_IDENTITY_SEED=20263030 DIGE_GNM_IDENTITY_SIGMA=0.34 DIGE_GNM_SEMANTIC_IDENTITY=1 python build_gnm_head_c28.py | tee runtime/c34_shared_gnm_build.log
+          mkdir -p runtime/assets/c25_mpfb
+          cp runtime/assets/young_eurasian_female_diffuse.png runtime/assets/c25_mpfb/young_eurasian_female_diffuse.png
+          printf 'name c25_mpfb_enhanced_skin\ndiffuseColor 1.0 1.0 1.0\ndiffuseTexture young_eurasian_female_diffuse.png\n' > runtime/assets/c25_mpfb/c25_skin.mhmat
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          test -s runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
+
+      - name: Upload shared C34 runtime
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime/
+          if-no-files-found: error
+          retention-days: 1
+
+  c34-groom-search:
+    needs: [compile-resource-plan, prep-assets]
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include: ${{ fromJSON(needs.compile-resource-plan.outputs.matrix) }}
+    env:
+      MATRIX_ID: ${{ matrix.id }}
+      GUIDE_DIST: ${{ matrix.guide_dist }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact head
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Reuse shared C34 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+
+      - name: Verify staged assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+
+      - name: Render C34 guide-gated groom candidate
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: ${{ needs.compile-resource-plan.outputs.runtime_device }}
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '1'
+          DIGE_OUTPUT_TAG: c34_${{ matrix.id }}
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C19_HUMANIZATION: '0'
+          DIGE_C19_PHOTO_LIGHTING: '0'
+          DIGE_C20_VISUAL_REPAIR: '0'
+          DIGE_C21_NATURAL_DETAIL: '0'
+          DIGE_C22_PHYSICAL_SKIN: '0'
+          DIGE_C22_LANDMARK_GROOM: '0'
+          DIGE_C22_HAIR_MASS_WARP: '0'
+          DIGE_C23_CALIBRATED_EYES: '0'
+          DIGE_C23_FACE_PLANES: '0'
+          DIGE_C23_HAIRLINE_REPAIR: '0'
+          DIGE_C24_SURFACE_EYES: '0'
+          DIGE_C24_SOURCE_ALBEDO: '0'
+          DIGE_C24_HAIRLINE_REPAIR: '0'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C25_GROOM_CLIP: '0'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C26_SAFE_GROOM: '0'
+          DIGE_C26_FIBER_GROOM: '0'
+          DIGE_C27_SURFACE_FIBERS: '0'
+          DIGE_C27_NATIVE_INTERFACES: '0'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C28_HEAD_SCALE_BIAS: '1.00'
+          DIGE_C28_HEAD_Z_OFFSET: '0.000'
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C34_GUIDE_MAX_DIST: ${{ matrix.guide_dist }}
+          DIGE_C34_SCALP_Z_DROP: '0.120'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_short03
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.88'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.94'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SKIN_SSS_WEIGHT: '0.045'
+          DIGE_SKIN_SSS_SCALE: '0.0009'
+          DIGE_SKIN_ROUGH_MIN: '0.44'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_ALBEDO_SAT: '1.00'
+          DIGE_SKIN_ALBEDO_VALUE: '1.00'
+          DIGE_EYE_TEX_SAT: '0.78'
+          DIGE_EYE_TEX_VALUE: '0.64'
+          DIGE_HAIR_TEX_SAT: '0.56'
+          DIGE_HAIR_TEX_VALUE: '0.23'
+          DIGE_FACE_MESO_SCALE: '1.00'
+          DIGE_SKIN_TONE_R: '0.60'
+          DIGE_SKIN_TONE_G: '0.33'
+          DIGE_SKIN_TONE_B: '0.22'
+          DIGE_SKIN_TONE_MIX: '0.08'
+          DIGE_SKIN_MICRO_STRENGTH: '0.20'
+          DIGE_SKIN_MESO_FREQ: '95'
+          DIGE_SKIN_PORE_FREQ: '2800'
+          DIGE_SKIN_MICRO_FREQ: '9000'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000055'
+          DIGE_SKIN_COAT_WEIGHT: '0.001'
+          DIGE_SKIN_COAT_ROUGHNESS: '0.45'
+          DIGE_SAMPLES_PREVIEW: '24'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20263030'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c34_${{ matrix.id }}.log
+
+      - name: Evaluate C34 fixed-camera visual gates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python -m pip install --disable-pip-version-check -q pillow numpy
+          python evaluate_c34_candidate.py \
+            --image "runtime/renders/c34_${MATRIX_ID}/04_HERO85_V8.png" \
+            --out "runtime/renders/c34_${MATRIX_ID}/DIGE_C33_VISUAL_METRICS.json" \
+            --candidate-id "${MATRIX_ID}" \
+            --guide-dist "${GUIDE_DIST}"
+
+      - name: Verify C34 search receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, os
+          root=pathlib.Path("runtime/renders/c34_"+os.environ["MATRIX_ID"])
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+          assert r["render_set"]=="HERO_ONLY"
+          assert r["appearance_candidate"]=="C33_GUIDE_GATED_GROOM_SEARCH_V1"
+          g=r["c28_gnm_head"]
+          assert g["enabled"] is True
+          assert g["source_repo"]=="google/GNM"
+          assert g["source_commit"]=="a424b5153eec9154f3dfa5ee7f214e5817918d54"
+          assert g["license"]=="Apache-2.0"
+          assert "skin" in g["components"]
+          assert g["brow_fibers"] >= 140
+          assert g["lash_fibers"] >= 50
+          assert g["hairline_fibers"] >= 60
+          assert g["hairline_warp_vertices"] > 0
+          assert g["c29_presentation"] is True
+          assert g["c29_calibrated_iris_count"] == 2
+          assert g["identity_source"]=="SEMANTIC_CVAE"
+          assert g["semantic_identity_enabled"] is True
+          assert g["semantic_gender"]=="FEMALE"
+          assert g["semantic_ethnicity"]=="ASIAN"
+          assert r["hair_surface_contract"]["mass_mesh_rendered"] is False
+          assert r["appearance_selection"]["c29_gnm_presentation"] is True
+          assert r["appearance_selection"]["c29_bulk_hair_hidden"] is True
+          assert r["appearance_selection"]["c29_calibrated_iris_count"] == 2
+          assert r["appearance_selection"]["c30_gnm_semantic_identity"] is True
+          assert r["appearance_selection"]["c30_identity_source"]=="SEMANTIC_CVAE"
+          assert r["appearance_selection"]["c30_semantic_gender"]=="FEMALE"
+          assert r["appearance_selection"]["c30_semantic_ethnicity"]=="ASIAN"
+          assert g["c31_face_appearance"] is True
+          assert g["c31_mask_vertex_count"] >= 12000
+          assert g["c31_wetline_count"] == 2
+          assert g["c31_mouth_gap_count"] == 1
+          assert g["skin_contract"]["model"]=="C32_GNM_DERMAL_MULTISCALE_SKIN"
+          assert r["appearance_selection"]["c31_gnm_face_appearance"] is True
+          assert r["appearance_selection"]["c32_gnm_dermal_hair"] is True
+          assert r["appearance_selection"]["c33_guide_gated_groom"] is True
+          assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-float(os.environ["GUIDE_DIST"])) < 1e-9
+          assert r["hair_surface_contract"]["style"]=="C33_GUIDE_GATED_FIBER_GROOM_V1"
+          assert r["hair_surface_contract"]["curve_count"] >= 24000
+          assert r["hair_surface_contract"]["points_per_curve"] == 12
+          assert r["hair_surface_contract"]["root_radius_m"] < 0.00005
+          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert r["hair_surface_contract"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
+          assert r["appearance_selection"]["c31_mask_vertex_count"] >= 12000
+          assert r["appearance_selection"]["c31_wetline_count"] == 2
+          assert r["appearance_selection"]["c31_mouth_gap_count"] == 1
+          assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
+          assert r["denoise_ab"]["search_only"] is True
+          assert r["denoise_ab"]["raw_aov"] is None
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["evidence_boundary"]["hyperreal_certified"] is False
+          summary={
+            "schema":"DIGE_C33_GUIDE_GATED_GROOM_RECEIPT_V1",
+            "approved_sha":os.environ["APPROVED_SHA"],
+            "hero_sha256":r["outputs"][0]["sha256"],
+            "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
+            "c28_gnm_head":g,
+            "skin_model":r["skin_model"],
+            "hair_surface_contract":r["hair_surface_contract"],
+            "claim_ceiling":"C34_SEARCH_EXECUTED; HUMAN_VISUAL_SELECTION_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+          }
+          (root/"DIGE_C34_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - name: Upload C34 candidate evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C34-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_${{ matrix.id }}/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_${{ matrix.id }}/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_${{ matrix.id }}/*.json
+            experiments/dige-v8-executor-capsule/runtime/gnm_c28/*.json
+            experiments/dige-v8-executor-capsule/runtime/c34_${{ matrix.id }}.log
+            experiments/dige-v8-executor-capsule/runtime/c31_gnm_build.log
+          if-no-files-found: error
+          retention-days: 14
+
+  reduce-c33:
+    needs: c33-groom-search
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    outputs:
+      selected_id: ${{ steps.reduce.outputs.selected_id }}
+      selected_guide_dist: ${{ steps.reduce.outputs.selected_guide_dist }}
+      selected_score: ${{ steps.reduce.outputs.selected_score }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Download all C34 candidate artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: DIGE-C34-*-${{ github.event.pull_request.head.sha }}
+          path: candidate-artifacts
+          merge-multiple: false
+
+      - id: reduce
+        name: Reduce candidates to one finalist
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python reduce_c34_candidates.py \
+            --root "../../../candidate-artifacts" \
+            --out "../../../DIGE_C34_SELECTION.json"
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          d=json.load(open("../../../DIGE_C34_SELECTION.json"))
+          print("selected_id="+str(d.get("selected_id") or ""))
+          print("selected_guide_dist="+str(d.get("selected_guide_dist_m") or ""))
+          print("selected_score="+str(d.get("selected_score") or ""))
+          PY
+
+      - name: Upload C34 selection receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: DIGE-C34-SELECTION-${{ github.event.pull_request.head.sha }}
+          path: DIGE_C34_SELECTION.json
+          if-no-files-found: error
+          retention-days: 14
+
+  c33-finalist:
+    needs: [prep-assets, reduce-c33]
+    if: needs.reduce-c33.outputs.selected_guide_dist != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Reuse shared C34 runtime
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+
+      - name: Download selected C34 receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SELECTION-${{ github.event.pull_request.head.sha }}
+          path: experiments/dige-v8-executor-capsule/runtime/selection
+
+      - name: Download C34 logical resource plan
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-RESOURCE-PLAN-${{ github.event.pull_request.head.sha }}
+          path: experiments/dige-v8-executor-capsule/runtime/resource-plan
+
+      - name: Render one C34 high-sample finalist
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: ${{ needs.compile-resource-plan.outputs.runtime_device }}
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '0'
+          DIGE_OUTPUT_TAG: c34_finalist
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C19_HUMANIZATION: '0'
+          DIGE_C19_PHOTO_LIGHTING: '0'
+          DIGE_C20_VISUAL_REPAIR: '0'
+          DIGE_C21_NATURAL_DETAIL: '0'
+          DIGE_C22_PHYSICAL_SKIN: '0'
+          DIGE_C22_LANDMARK_GROOM: '0'
+          DIGE_C22_HAIR_MASS_WARP: '0'
+          DIGE_C23_CALIBRATED_EYES: '0'
+          DIGE_C23_FACE_PLANES: '0'
+          DIGE_C23_HAIRLINE_REPAIR: '0'
+          DIGE_C24_SURFACE_EYES: '0'
+          DIGE_C24_SOURCE_ALBEDO: '0'
+          DIGE_C24_HAIRLINE_REPAIR: '0'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C25_GROOM_CLIP: '0'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C26_SAFE_GROOM: '0'
+          DIGE_C26_FIBER_GROOM: '0'
+          DIGE_C27_SURFACE_FIBERS: '0'
+          DIGE_C27_NATIVE_INTERFACES: '0'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C28_HEAD_SCALE_BIAS: '1.00'
+          DIGE_C28_HEAD_Z_OFFSET: '0.000'
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C34_GUIDE_MAX_DIST: ${{ needs.reduce-c33.outputs.selected_guide_dist }}
+          DIGE_C34_SCALP_Z_DROP: '0.120'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_short03
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.88'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.94'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SKIN_SSS_WEIGHT: '0.045'
+          DIGE_SKIN_SSS_SCALE: '0.0009'
+          DIGE_SKIN_ROUGH_MIN: '0.44'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_ALBEDO_SAT: '1.00'
+          DIGE_SKIN_ALBEDO_VALUE: '1.00'
+          DIGE_EYE_TEX_SAT: '0.78'
+          DIGE_EYE_TEX_VALUE: '0.64'
+          DIGE_HAIR_TEX_SAT: '0.56'
+          DIGE_HAIR_TEX_VALUE: '0.23'
+          DIGE_FACE_MESO_SCALE: '1.00'
+          DIGE_SKIN_TONE_R: '0.60'
+          DIGE_SKIN_TONE_G: '0.33'
+          DIGE_SKIN_TONE_B: '0.22'
+          DIGE_SKIN_TONE_MIX: '0.08'
+          DIGE_SKIN_MICRO_STRENGTH: '0.20'
+          DIGE_SKIN_MESO_FREQ: '95'
+          DIGE_SKIN_PORE_FREQ: '2800'
+          DIGE_SKIN_MICRO_FREQ: '9000'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000055'
+          DIGE_SKIN_COAT_WEIGHT: '0.001'
+          DIGE_SKIN_COAT_ROUGHNESS: '0.45'
+          DIGE_SAMPLES_PREVIEW: '64'
+          DIGE_SAMPLES_HERO: '384'
+          DIGE_RENDER_SEED: '20263030'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c34_finalist.log
+
+      - name: Verify C34 finalist receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          SELECTED_GUIDE_DIST: ${{ needs.reduce-c33.outputs.selected_guide_dist }}
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, os, pathlib
+          root=pathlib.Path("runtime/renders/c34_finalist")
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          assert r["appearance_candidate"]=="C33_GUIDE_GATED_GROOM_SEARCH_V1"
+          assert r["denoise_ab"]["search_only"] is False
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-float(os.environ["SELECTED_GUIDE_DIST"])) < 1e-9
+          sel=json.loads(pathlib.Path("runtime/selection/DIGE_C34_SELECTION.json").read_text())
+          plan=json.loads(pathlib.Path("runtime/resource-plan/DIGE_C34_RESOURCE_PLAN.json").read_text())
+          summary={
+            "schema":"DIGE_C34_FINALIST_RECEIPT_V1",
+            "selected_id":sel["selected_id"],
+            "selected_guide_dist_m":sel["selected_guide_dist_m"],
+            "selected_score":sel["selected_score"],
+            "resource_plan_digest":plan["plan"]["planDigest"],
+            "resource_execution_mode":plan["runtimeDevice"],
+            "planned_search_avoided_candidates":plan["plan"]["optimization"]["avoidedCandidates"],
+            "runtime_commit":r["runtime_commit"],
+            "hero_sha256":r["outputs"][0]["sha256"],
+            "raw_aov_sha256":r["denoise_ab"]["raw_aov"]["sha256"],
+            "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
+            "hair_surface_contract":r["hair_surface_contract"],
+            "skin_contract":r["c28_gnm_head"]["skin_contract"],
+            "claim_ceiling":"C34_FINALIST_EXECUTED; DIRECT_HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+          }
+          (root/"DIGE_C34_FINALIST_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - name: Upload C34 finalist evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: DIGE-C34-FINALIST-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_finalist/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_finalist/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_finalist/*.json
+            experiments/dige-v8-executor-capsule/runtime/selection/*.json
+            experiments/dige-v8-executor-capsule/runtime/c34_finalist.log
+          if-no-files-found: error
+          retention-days: 14
+
