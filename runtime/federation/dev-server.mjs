@@ -13,6 +13,8 @@ import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
 import { openPostgresFederationState } from './lib/postgres-state.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-readiness.mjs';
+import { loadGoogleServiceAccount, createServiceAccountTokenSource } from './lib/google-service-account.mjs';
+import { GoogleSheetsCanonicalBridge } from './bridge/drive-machine-bridge.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -66,6 +68,9 @@ const heartbeatPreAuthLimiter = new TokenBucketLimiter({
   refillPerSecond: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_PER_SECOND', 1),
 });
 
+const startupDurabilityReceipt = await recordStartupDurability();
+const driveBridgeRuntime = createDriveBridgeRuntime();
+
 const server = http.createServer(async (req, res) => {
   setCommonHeaders(res);
   try {
@@ -93,7 +98,19 @@ const server = http.createServer(async (req, res) => {
       providers: runtime.registry.list().length,
       search: search.stats(),
       signedManifestsRequired: requireSignedManifests,
+      startupDurability: startupDurabilityReceipt,
+      driveBridge: driveBridgeRuntime.snapshot(),
     });
+
+    if (req.method === 'GET' && req.url === '/drive-bridge/status') {
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
+      return send(res, 200, driveBridgeRuntime.snapshot());
+    }
+
+    if (req.method === 'POST' && req.url === '/drive-bridge/reconcile') {
+      const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
+      return send(res, 200, await driveBridgeRuntime.reconcile());
+    }
 
     if (req.method === 'GET' && req.url === '/providers') {
       const access = authorizeRead(req, res, 'provider:read'); if (!access) return;
@@ -248,8 +265,19 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
-  console.log(`BL federation control plane listening on http://${host}:${port}`);
+  console.log(JSON.stringify({
+    event:'DEUS_FEDERATION_STARTUP_RECEIPT',
+    url:`http://${host}:${port}`,
+    stateBackend,
+    rateLimitBackend,
+    startupDurability:startupDurabilityReceipt,
+    driveBridge:driveBridgeRuntime.snapshot(),
+    deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
+    serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
+  }));
   if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
+  void driveBridgeRuntime.reconcile();
+  driveBridgeRuntime.start();
 });
 let shuttingDown = false;
 for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
@@ -315,12 +343,95 @@ async function loadDurableState(budget) {
 function shutdown(signal) {
   if (shuttingDown) return;
   shuttingDown = true;
+  driveBridgeRuntime.stop();
   server.close(async () => {
     try { await durableState?.close?.(); }
     catch (error) { console.error(`state shutdown failed after ${signal}: ${error.message}`); process.exitCode = 1; }
     finally { process.exit(); }
   });
 }
+async function recordStartupDurability() {
+  const core={
+    schema:'deus-federation-startup-durability/1',
+    stateBackend,
+    deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
+    serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
+    sourceRev:process.env.DEUS_SOURCE_REV ?? null,
+    ts:new Date().toISOString(),
+  };
+  if(stateBackend!=='postgres'){
+    return {...core,state:'NON_POSTGRES',auditCountBefore:null,auditCountAfter:null,auditHash:null};
+  }
+  const before=await durableState.pool.query('SELECT COUNT(*)::bigint AS count FROM federation_audit');
+  const record=await runtime.audit.append('runtime.startup',core);
+  const after=await durableState.pool.query('SELECT COUNT(*)::bigint AS count FROM federation_audit');
+  return {
+    ...core,
+    state:'POSTGRES_WRITE_VERIFIED',
+    auditCountBefore:Number(before.rows[0].count),
+    auditCountAfter:Number(after.rows[0].count),
+    auditHash:record.hash,
+    truthBoundary:'PROVES_THIS_RUNTIME_CONNECTED_TO_POSTGRES_AND_COMMITTED_ONE_HASH_CHAINED_AUDIT_ROW__CROSS_REDEPLOY_DURABILITY_REQUIRES_NEXT_STARTUP_COUNT_TO_INCLUDE_PRIOR_ROW__PITR_NOT_PROVEN',
+  };
+}
+
+function createDriveBridgeRuntime(){
+  const intervalMs=Math.max(60_000,Number(process.env.DEUS_DRIVE_BRIDGE_INTERVAL_MS||300_000));
+  let timer=null;
+  let bridge=null;
+  let state={
+    schema:'deus-drive-bridge-runtime/1',
+    process:'ALIVE',
+    bridge:'CREDENTIAL_GATE',
+    ready:false,
+    lastAttemptAt:null,
+    lastSuccessAt:null,
+    lastError:null,
+    receipt:null,
+  };
+  try{
+    const credentials=loadGoogleServiceAccount();
+    if(credentials){
+      bridge=new GoogleSheetsCanonicalBridge({
+        spreadsheetId:process.env.DEUS_LIVEBUS_SPREADSHEET_ID||'1pVtDbKFGECbogSR0-nrVDEecF8xQNelCux6GFUEmVrQ',
+        tokenSource:createServiceAccountTokenSource({credentials}),
+        canonicalReadRange:'10_LIGHT_BOOT!A2:O2',
+        heartbeatRange:'54_MACHINE_BRIDGE_HEALTH!A:H',
+        instanceId:process.env.RAILWAY_SERVICE_ID||`federation-${process.pid}`,
+      });
+      state={...state,bridge:'INITIALIZING'};
+    }
+  }catch(error){
+    state={...state,bridge:'CREDENTIAL_INVALID',lastError:error.message};
+  }
+  async function reconcile(){
+    state={...state,lastAttemptAt:new Date().toISOString()};
+    if(!bridge) return structuredClone(state);
+    try{
+      const receipt=await bridge.verifyReadWrite({receiptRef:process.env.DEUS_DRIVE_BRIDGE_RECEIPT_REF||''});
+      state={...state,bridge:'LIVE',ready:true,lastSuccessAt:new Date().toISOString(),lastError:null,receipt};
+    }catch(error){
+      state={
+        ...state,
+        bridge:error.status===401||error.status===403?'AUTH_OR_SHARE_GATE':'IO_DEGRADED',
+        ready:false,
+        lastError:error.message,
+      };
+    }
+    return structuredClone(state);
+  }
+  return {
+    snapshot:()=>structuredClone(state),
+    reconcile,
+    start(){
+      if(timer||!bridge) return;
+      timer=setInterval(()=>{void reconcile();},intervalMs);
+      timer.unref?.();
+    },
+    stop(){if(timer){clearInterval(timer);timer=null;}},
+  };
+}
+
 async function loadProviders() {
   if (process.env.BL_PROVIDERS_JSON) {
     const parsed = JSON.parse(process.env.BL_PROVIDERS_JSON);
