@@ -1,4 +1,4 @@
-name: DIGE V8 C29 GNM Presentation Repair
+name: DIGE V8 C30 GNM Semantic Female Asian Identity
 
 on:
   pull_request:
@@ -13,11 +13,11 @@ permissions:
   actions: read
 
 concurrency:
-  group: dige-v8-c29-gnm-presentation-${{ github.event.pull_request.head.sha }}
+  group: dige-v8-c30-gnm-semantic-${{ github.event.pull_request.head.sha }}
   cancel-in-progress: false
 
 jobs:
-  c29-finalist:
+  c30-finalist:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
@@ -72,26 +72,34 @@ jobs:
           test -s /tmp/GNM/LICENSE
           test -s /tmp/GNM/gnm/shape/gnm_numpy.py
           test -s /tmp/GNM/gnm/shape/data/versions/v3/head/gnm_head_v3.npz || true
-          python -m pip install --disable-pip-version-check -q             numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
+          python -m pip install --disable-pip-version-check -q numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
+          python -m pip install --disable-pip-version-check -q tensorflow
           python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
+          python - <<'PY'
+          import tensorflow as tf
+          from gnm.shape import semantic_sampler
+          print("tensorflow", tf.__version__)
+          print("semantic_identity_decoder", semantic_sampler.IdentitySampler().explain_classes())
+          PY
 
       - name: Build stable MakeHuman body
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           mkdir -p runtime/assets runtime/system_assets
-          python build_makehuman_v8.py | tee runtime/c29_body_geometry_execution.json
+          python build_makehuman_v8.py | tee runtime/c30_body_geometry_execution.json
           test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
 
       - name: Build deterministic GNM head
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
-          DIGE_GNM_IDENTITY_SEED: '20262828'
+          DIGE_GNM_IDENTITY_SEED: '20263030'
           DIGE_GNM_IDENTITY_SIGMA: '0.34'
+          DIGE_GNM_SEMANTIC_IDENTITY: '1'
         run: |
           set -euxo pipefail
-          python build_gnm_head_c28.py | tee runtime/c28_gnm_build.log
+          python build_gnm_head_c28.py | tee runtime/c30_gnm_build.log
           test -s runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
           test -s runtime/gnm_c28/gnm_skin.obj
 
@@ -120,12 +128,12 @@ jobs:
           diffuseTexture young_eurasian_female_diffuse.png
           EOF
 
-      - name: Render C29 GNM presentation finalist
+      - name: Render C30 semantic GNM finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
-          DIGE_OUTPUT_TAG: c29_gnm_presentation
+          DIGE_OUTPUT_TAG: c30_gnm_semantic
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C19_HUMANIZATION: '0'
           DIGE_C19_PHOTO_LIGHTING: '0'
@@ -152,6 +160,7 @@ jobs:
           DIGE_C28_HEAD_SCALE_BIAS: '1.00'
           DIGE_C28_HEAD_Z_OFFSET: '0.000'
           DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_MPFB2_SRC: /tmp/mpfb2/src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
@@ -187,23 +196,23 @@ jobs:
           DIGE_SKIN_COAT_ROUGHNESS: '0.45'
           DIGE_SAMPLES_PREVIEW: '48'
           DIGE_SAMPLES_HERO: '320'
-          DIGE_RENDER_SEED: '20260920'
+          DIGE_RENDER_SEED: '20263030'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
           set -euxo pipefail
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c29_gnm_presentation.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c30_gnm_semantic.log
 
-      - name: Verify C29 receipt
+      - name: Verify C30 receipt
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python - <<'PY'
           import json, pathlib, os
-          root=pathlib.Path("runtime/renders/c29_gnm_presentation")
+          root=pathlib.Path("runtime/renders/c30_gnm_semantic")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
           assert r["render_set"]=="HERO_ONLY"
-          assert r["appearance_candidate"]=="C29_GNM_PRESENTATION_REPAIR_V1"
+          assert r["appearance_candidate"]=="C30_GNM_SEMANTIC_FEMALE_ASIAN_V1"
           g=r["c28_gnm_head"]
           assert g["enabled"] is True
           assert g["source_repo"]=="google/GNM"
@@ -217,38 +226,46 @@ jobs:
           assert g["c29_presentation"] is True
           assert g["c29_calibrated_iris_count"] == 2
           assert g["skin_contract"]["model"]=="C29_PROCEDURAL_RANDOM_WALK_SKIN"
+          assert g["identity_source"]=="SEMANTIC_CVAE"
+          assert g["semantic_identity_enabled"] is True
+          assert g["semantic_gender"]=="FEMALE"
+          assert g["semantic_ethnicity"]=="ASIAN"
           assert r["hair_surface_contract"]["mass_mesh_rendered"] is False
           assert r["appearance_selection"]["c29_gnm_presentation"] is True
           assert r["appearance_selection"]["c29_bulk_hair_hidden"] is True
           assert r["appearance_selection"]["c29_calibrated_iris_count"] == 2
+          assert r["appearance_selection"]["c30_gnm_semantic_identity"] is True
+          assert r["appearance_selection"]["c30_identity_source"]=="SEMANTIC_CVAE"
+          assert r["appearance_selection"]["c30_semantic_gender"]=="FEMALE"
+          assert r["appearance_selection"]["c30_semantic_ethnicity"]=="ASIAN"
           assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
           assert r["denoise_ab"]["raw_aov"]["sha256"]
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C29_GNM_PRESENTATION_REPAIR_RECEIPT_V1",
+            "schema":"DIGE_C30_GNM_SEMANTIC_IDENTITY_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
             "c28_gnm_head":g,
             "skin_model":r["skin_model"],
             "hair_surface_contract":r["hair_surface_contract"],
-            "claim_ceiling":"C29_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "claim_ceiling":"C30_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
-          (root/"DIGE_C29_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          (root/"DIGE_C30_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
           PY
 
-      - name: Upload C29 evidence
+      - name: Upload C30 evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: DIGE-C29-GNM-PRESENTATION-${{ github.event.pull_request.head.sha }}
+          name: DIGE-C30-GNM-SEMANTIC-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/c29_gnm_presentation/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/c29_gnm_presentation/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/c29_gnm_presentation/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/c30_gnm_semantic/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c30_gnm_semantic/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c30_gnm_semantic/*.json
             experiments/dige-v8-executor-capsule/runtime/gnm_c28/*.json
-            experiments/dige-v8-executor-capsule/runtime/c29_gnm_presentation.log
-            experiments/dige-v8-executor-capsule/runtime/c28_gnm_build.log
+            experiments/dige-v8-executor-capsule/runtime/c30_gnm_semantic.log
+            experiments/dige-v8-executor-capsule/runtime/c30_gnm_build.log
           if-no-files-found: error
           retention-days: 14
