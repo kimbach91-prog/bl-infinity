@@ -15,7 +15,7 @@ class FakeOrchestrator {
   }
 }
 
-function complete(orchestrator, taskId, result, now = 100) {
+function complete(orchestrator, taskId, result, now = Date.now()) {
   const claim = orchestrator.queue.claim('worker', ['compute.echo', 'reduce.pick', 'final.render'], { now, leaseMs: 1000 });
   assert.equal(claim.id, taskId);
   orchestrator.queue.complete(taskId, claim.lease.token, { result });
@@ -55,13 +55,14 @@ test('materializes independent roots together and unlocks reducer only after all
   assert.equal(broker.snapshot().counts.submitted, 2);
   assert.deepEqual(broker.snapshot().ready, []);
 
-  complete(orchestrator, 'render-search::c1', { score: 1 }, 100);
-  await broker.refresh(orchestrator, { now: 110 });
+  const t0=Date.now()+10;
+  complete(orchestrator, 'render-search::c1', { score: 1 }, t0);
+  await broker.refresh(orchestrator, { now: t0+10 });
   assert.equal(broker.snapshot().counts.succeeded, 1);
   assert.deepEqual(broker.snapshot().ready, []);
 
-  complete(orchestrator, 'render-search::c2', { score: 2 }, 120);
-  const advanced = await broker.advance(orchestrator, { now: 130 });
+  complete(orchestrator, 'render-search::c2', { score: 2 }, t0+20);
+  const advanced = await broker.advance(orchestrator, { now: t0+30 });
   assert.deepEqual(advanced.submitted.map((x) => x.nodeId), ['reduce']);
   const reducerTask = orchestrator.submitted.at(-1).task;
   assert.deepEqual(reducerTask.payload.upstream.c1, { score: 1 });
@@ -78,9 +79,10 @@ test('fail-closed graph blocks downstream nodes after deadletter', async () => {
     ],
   });
   await broker.materializeReady(orchestrator);
-  const claim = orchestrator.queue.claim('worker', ['compute.echo'], { now: 1, leaseMs: 100 });
-  orchestrator.queue.fail(claim.id, claim.lease.token, new Error('boom'), { terminal: true, now: 2 });
-  await broker.refresh(orchestrator, { now: 3 });
+  const now=Date.now()+10;
+  const claim = orchestrator.queue.claim('worker', ['compute.echo'], { now, leaseMs: 100 });
+  orchestrator.queue.fail(claim.id, claim.lease.token, new Error('boom'), { terminal: true, now: now+1 });
+  await broker.refresh(orchestrator, { now: now+2 });
   const snap = broker.snapshot();
   assert.equal(snap.states.a.state, 'failed');
   assert.equal(snap.states.b.state, 'blocked');
@@ -102,7 +104,7 @@ test('scatter-reduce compiler emits a stable bounded graph instead of materializ
   });
   assert.equal(graph.nodes.length, 9);
   assert.equal(graph.nodes.filter((n) => n.tags.includes('scatter')).length, 7);
-  assert.deepEqual(graph.nodes.find((n) => n.id === 'visual-gate').deps.sort(), Array.from({ length: 7 }, (_, i) => `candidate-${i + 1}`));
+  assert.deepEqual([...graph.nodes.find((n) => n.id === 'visual-gate').deps].sort(), Array.from({ length: 7 }, (_, i) => `candidate-${i + 1}`));
   assert.equal(graph.fingerprint.length, 64);
 });
 
@@ -116,8 +118,9 @@ test('task idempotency changes when dependency results change', async () => {
     ],
   });
   await broker.materializeReady(orchestrator);
-  complete(orchestrator, 'digest-test::a', { x: 1 }, 10);
-  await broker.refresh(orchestrator, { now: 20 });
+  const now2=Date.now()+10;
+  complete(orchestrator, 'digest-test::a', { x: 1 }, now2);
+  await broker.refresh(orchestrator, { now: now2+10 });
   const first = broker.buildTask('b').idempotencyKey;
 
   const broker2 = new TaskGraphBroker({
