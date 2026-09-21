@@ -265,6 +265,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(port, host, () => {
+  console.log(`BL federation control plane listening on http://${host}:${port}`);
   console.log(JSON.stringify({
     event:'DEUS_FEDERATION_STARTUP_RECEIPT',
     url:`http://${host}:${port}`,
