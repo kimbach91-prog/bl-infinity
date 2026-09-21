@@ -26,14 +26,13 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import importlib.util
           import json
           from pathlib import Path
+          import sys
 
-          path = Path('public_benchmark/arc3/kaggle_candidates/object_graph_representation.py')
-          spec = importlib.util.spec_from_file_location('ogr', path)
-          mod = importlib.util.module_from_spec(spec)
-          spec.loader.exec_module(mod)
+          module_dir = Path('public_benchmark/arc3/kaggle_candidates').resolve()
+          sys.path.insert(0, str(module_dir))
+          import object_graph_representation as mod
 
           def blank():
               return [[0 for _ in range(64)] for _ in range(64)]
