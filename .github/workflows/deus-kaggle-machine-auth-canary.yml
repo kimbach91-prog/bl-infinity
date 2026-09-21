@@ -26,13 +26,19 @@ jobs:
       VAR_KAGGLE_API_TOKEN: ${{ vars.KAGGLE_API_TOKEN }}
       SEC_KAGGLE_JSON: ${{ secrets.KAGGLE_JSON }}
       VAR_KAGGLE_JSON: ${{ vars.KAGGLE_JSON }}
+      SEC_API_KEY: ${{ secrets.API_KEY }}
+      VAR_API_KEY: ${{ vars.API_KEY }}
+      SEC_KAGGLE_TOKEN: ${{ secrets.KAGGLE_TOKEN }}
+      VAR_KAGGLE_TOKEN: ${{ vars.KAGGLE_TOKEN }}
+      SEC_USERNAME: ${{ secrets.USERNAME }}
+      VAR_USERNAME: ${{ vars.USERNAME }}
     steps:
       - name: Safe secret presence check
         shell: bash
         run: |
           python - <<'PY'
           import json, os
-          keys = ["SEC_ARC_API_KEY","VAR_ARC_API_KEY","SEC_KAGGLE_USERNAME","VAR_KAGGLE_USERNAME","SEC_KAGGLE_KEY","VAR_KAGGLE_KEY","SEC_KAGGLE_API_KEY","VAR_KAGGLE_API_KEY","SEC_KAGGLE_API_TOKEN","VAR_KAGGLE_API_TOKEN","SEC_KAGGLE_JSON","VAR_KAGGLE_JSON"]
+          keys = ["SEC_ARC_API_KEY","VAR_ARC_API_KEY","SEC_KAGGLE_USERNAME","VAR_KAGGLE_USERNAME","SEC_KAGGLE_KEY","VAR_KAGGLE_KEY","SEC_KAGGLE_API_KEY","VAR_KAGGLE_API_KEY","SEC_KAGGLE_API_TOKEN","VAR_KAGGLE_API_TOKEN","SEC_KAGGLE_JSON","VAR_KAGGLE_JSON","SEC_API_KEY","VAR_API_KEY","SEC_KAGGLE_TOKEN","VAR_KAGGLE_TOKEN","SEC_USERNAME","VAR_USERNAME"]
           print("DEUS_AUTH_BINDING_PRESENCE="+json.dumps({k: bool(os.environ.get(k)) for k in keys}, sort_keys=True))
           PY
 
@@ -50,6 +56,12 @@ jobs:
           KAGGLE_API_KEY="${SEC_KAGGLE_API_KEY:-${VAR_KAGGLE_API_KEY:-}}"
           KAGGLE_API_TOKEN="${SEC_KAGGLE_API_TOKEN:-${VAR_KAGGLE_API_TOKEN:-}}"
           KAGGLE_JSON="${SEC_KAGGLE_JSON:-${VAR_KAGGLE_JSON:-}}"
+          GENERIC_API_KEY="${SEC_API_KEY:-${VAR_API_KEY:-}}"
+          GENERIC_KAGGLE_TOKEN="${SEC_KAGGLE_TOKEN:-${VAR_KAGGLE_TOKEN:-}}"
+          GENERIC_USERNAME="${SEC_USERNAME:-${VAR_USERNAME:-}}"
+          if [ -z "${KAGGLE_API_TOKEN:-}" ] && [ -n "${GENERIC_KAGGLE_TOKEN:-}" ]; then KAGGLE_API_TOKEN="$GENERIC_KAGGLE_TOKEN"; fi
+          if [ -z "${KAGGLE_API_TOKEN:-}" ] && [ -n "${GENERIC_API_KEY:-}" ]; then KAGGLE_API_TOKEN="$GENERIC_API_KEY"; fi
+          if [ -z "${KAGGLE_USERNAME:-}" ] && [ -n "${GENERIC_USERNAME:-}" ]; then KAGGLE_USERNAME="$GENERIC_USERNAME"; fi
           if [ -n "${KAGGLE_JSON:-}" ]; then
             printf '%s' "$KAGGLE_JSON" > "$HOME/.kaggle/kaggle.json"
             chmod 600 "$HOME/.kaggle/kaggle.json"
