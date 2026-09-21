@@ -1,5 +1,6 @@
 name: ARC3 public Schema trace structure inspect
 
+# Public cross-game trace format inspection; no outcome-based selection.
 on:
   push:
     branches:
