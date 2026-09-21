@@ -11,6 +11,7 @@ on:
       - public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_flash_teardown_patch.py
       - public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_audit_flash_output.py
       - public_benchmark/arc3/kaggle_candidates/flash_next_340/arc-agi-flash-next-mtp.ipynb
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340/agent_state_ab_request.json
   workflow_dispatch:
     inputs:
       operation:
@@ -28,12 +29,12 @@ on:
         description: Authorized private Kaggle owner/slug for the BASE preflight arm
         required: true
         type: string
-        default: replace-me/arc3-flash-base-preflight
+        default: replace-me/arc-agi3-flash-next-mtp-base-preflight
       overlay_kernel_ref:
         description: Authorized private Kaggle owner/slug for the AGENT-STATE preflight arm
         required: true
         type: string
-        default: replace-me/arc3-flash-agent-state-preflight
+        default: replace-me/arc-agi3-flash-next-mtp-state-preflight
       kernel_version:
         description: Exact positive Kaggle version for readback operations
         required: true
@@ -46,7 +47,7 @@ permissions:
 env:
   AB_GAME_ID: tr87-cd924810
   AB_CONCURRENCY: "1"
-  AB_RUNTIME_SECONDS: "1800"
+  AB_RUNTIME_SECONDS: "1200"
   AB_TERMINAL_GRACE_SECONDS: "120"
   AB_ANALYZER_TIMEOUT: "900"
   BASE_SOURCE_NOTEBOOK_SHA256: 6cff5483a6240cfe249310778a68e58df6f164acca25e5b4504eeaade838c899
@@ -61,6 +62,25 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Verify canonical bounded A/B request parity
+        shell: bash
+        run: |
+          set -euo pipefail
+          REQ="public_benchmark/arc3/kaggle_candidates/flash_next_340/agent_state_ab_request.json"
+          jq -e \
+            --arg game "$AB_GAME_ID" \
+            --argjson runtime "$AB_RUNTIME_SECONDS" \
+            --argjson concurrency "$AB_CONCURRENCY" \
+            --argjson grace "$AB_TERMINAL_GRACE_SECONDS" \
+            --argjson analyzer "$AB_ANALYZER_TIMEOUT" \
+            '.schema=="deus/arc3-flash-agent-state-ab-request/1"
+             and .operation=="dry_run"
+             and .game_id==$game
+             and .runtime_seconds==$runtime
+             and .concurrency==$concurrency
+             and .terminal_grace_seconds==$grace
+             and .analyzer_timeout==$analyzer' "$REQ" >/dev/null
 
       - name: Stage identical builder source for both arms
         shell: bash
