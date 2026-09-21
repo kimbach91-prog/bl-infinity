@@ -1,0 +1,159 @@
+name: ARC3 NOOA representation audit
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - '.github/workflows/arc3-nooa-representation-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout owner branch
+        uses: actions/checkout@v4
+
+      - name: Pin public upstreams
+        shell: bash
+        run: |
+          set -euo pipefail
+          NOOA_SHA=d4d46f78ae0eeaed7d18a466196601e8d16bc101
+          DREAM_SHA=bffef22f3e50fb7dcd6b2dc20005e6986e1479e9
+
+          git init /tmp/nooa >/dev/null
+          git -C /tmp/nooa remote add origin https://github.com/NVIDIA-NeMo/labs-OO-Agents.git
+          git -C /tmp/nooa fetch --depth=1 origin "$NOOA_SHA"
+          git -C /tmp/nooa checkout --detach FETCH_HEAD >/dev/null
+
+          git init /tmp/dream >/dev/null
+          git -C /tmp/dream remote add origin https://github.com/NVIDIA/dream-team.git
+          git -C /tmp/dream fetch --depth=1 origin "$DREAM_SHA"
+          git -C /tmp/dream checkout --detach FETCH_HEAD >/dev/null
+
+          test "$(git -C /tmp/nooa rev-parse HEAD)" = "$NOOA_SHA"
+          test "$(git -C /tmp/dream rev-parse HEAD)" = "$DREAM_SHA"
+
+      - name: Static executable source audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import ast, hashlib, json, pathlib, re
+
+          nooa = pathlib.Path('/tmp/nooa')
+          dream = pathlib.Path('/tmp/dream')
+          skill = nooa / 'examples/arc_agi_3/skills/interactive-game-solver/SKILL.md'
+          harness = nooa / 'examples/arc_agi_3/harness.py'
+          solver = nooa / 'examples/arc_agi_3/solver_agent.py'
+          required = [skill, harness, solver]
+          for p in required:
+              if not p.exists():
+                  raise SystemExit(f'missing required upstream source: {p}')
+
+          skill_text = skill.read_text(encoding='utf-8')
+          markers = {
+              'latent_encode': 'encode(grid) -> z' in skill_text,
+              'dynamics_predict': "predict(z, action) -> z'" in skill_text,
+              'prediction_error_refinement': 'Retrodict each turn' in skill_text and 'mismatch' in skill_text,
+              'latent_search': 'BFS / greedy / best-first' in skill_text,
+              'cross_level_memory': 'Long-Term Memory' in skill_text,
+              'batched_actions': 'submit_actions' in skill_text,
+          }
+          if not all(markers.values()):
+              raise SystemExit(f'world-model representation markers incomplete: {markers}')
+
+          parsed = {}
+          for p in [harness, solver]:
+              src = p.read_text(encoding='utf-8')
+              ast.parse(src, filename=str(p))
+              parsed[str(p.relative_to(nooa))] = {
+                  'bytes': len(src.encode()),
+                  'sha256': hashlib.sha256(src.encode()).hexdigest(),
+              }
+
+          # DreamTeam is an independent representation lineage: multi-agent + shared world model.
+          dream_readme = dream / 'README.md'
+          dtext = dream_readme.read_text(encoding='utf-8') if dream_readme.exists() else ''
+          dream_markers = {
+              'arc3': bool(re.search(r'ARC[- ]?AGI[- ]?3', dtext, re.I)),
+              'world_model': bool(re.search(r'world model', dtext, re.I)),
+              'multi_agent': bool(re.search(r'multi[- ]agent|multiple agents|specialized agents', dtext, re.I)),
+          }
+          if not dream_markers['arc3'] or not dream_markers['world_model']:
+              raise SystemExit(f'DreamTeam source markers incomplete: {dream_markers}')
+
+          py_candidates = sorted(dream.rglob('*.py'))
+          parsed_count = 0
+          syntax_failures = []
+          for p in py_candidates:
+              rel = str(p.relative_to(dream))
+              if any(x in rel for x in ('/.venv/', '/venv/', '/site-packages/')):
+                  continue
+              try:
+                  ast.parse(p.read_text(encoding='utf-8'), filename=str(p))
+                  parsed_count += 1
+              except (SyntaxError, UnicodeDecodeError) as e:
+                  syntax_failures.append({'path': rel, 'error': str(e)})
+          if syntax_failures:
+              raise SystemExit(f'DreamTeam syntax failures: {syntax_failures[:3]}')
+
+          lines = skill_text.splitlines()
+          substantive = [ln for ln in lines if ln.strip() and not ln.lstrip().startswith('---')]
+          report = {
+              'schema': 'deus.arc3.nooa-representation-audit.v1',
+              'truth_scope': {
+                  'source_runtime_grounded': True,
+                  'hidden_kaggle_score': False,
+                  'owner_score': False,
+                  'submission_candidate_promoted': False,
+                  'submission_quota_spent': False,
+              },
+              'upstreams': {
+                  'nooa': {
+                      'repo': 'NVIDIA-NeMo/labs-OO-Agents',
+                      'commit': 'd4d46f78ae0eeaed7d18a466196601e8d16bc101',
+                      'skill_path': str(skill.relative_to(nooa)),
+                      'skill_sha256': hashlib.sha256(skill_text.encode()).hexdigest(),
+                      'skill_total_lines': len(lines),
+                      'skill_substantive_lines': len(substantive),
+                      'representation_markers': markers,
+                      'python_ast_verified': parsed,
+                  },
+                  'dream_team': {
+                      'repo': 'NVIDIA/dream-team',
+                      'commit': 'bffef22f3e50fb7dcd6b2dc20005e6986e1479e9',
+                      'readme_markers': dream_markers,
+                      'python_files_ast_parsed': parsed_count,
+                  },
+              },
+              'representation_decision': {
+                  'repair_direction': 'compressed latent encode -> learned/explicit predict -> prediction-error refinement -> latent-space search -> cross-level memory',
+                  'why_now': 'changes solver representation after LoRA/model-swap and state-graph regressions; avoids blind retry',
+                  'promotion_state': 'CPU_SOURCE_RUNTIME_GROUNDED_ONLY',
+                  'next_gate': 'implement bounded adapter against the existing public ARC harness, then compare on fixed public games/action budgets; GPU model-behavior required before Kaggle package promotion',
+              },
+          }
+          out = pathlib.Path('arc3-nooa-representation-audit.json')
+          out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(out.read_text())
+          PY
+
+      - name: Compile NOOA ARC Python surface
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q /tmp/nooa/examples/arc_agi_3
+
+      - name: Upload audit receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-nooa-representation-audit
+          path: arc3-nooa-representation-audit.json
+          if-no-files-found: error
+          retention-days: 90
