@@ -23,7 +23,7 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - id: F
+          - id: G
             jaw: '0.88'
             eye_open: '0.68'
             eye_globe: '0.90'
@@ -43,6 +43,24 @@ jobs:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 authored prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Verify long01 exact bytes
+        run: |
+          set -euxo pipefail
+          cd experiments/dige-v8-executor-capsule/runtime/system_assets
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  long01.mhclo" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  long01.mhmat" | sha256sum -c -
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
 
       - name: Resolve Blender 5.2.2
         run: |
@@ -86,10 +104,10 @@ jobs:
           DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
-          DIGE_HAIR_ASSET_KEY: hair_short03
+          DIGE_HAIR_ASSET_KEY: hair_long01
           DIGE_HAIR_STRANDS_PER_ROOT: '24'
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
-          DIGE_HAIR_FRONT_SAFE_BLEND: '0.88'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
@@ -113,6 +131,12 @@ jobs:
           assert r['appearance_candidate']=='C36_CANONICAL_REFERENCE_APPEARANCE_V1'
           assert r['device']=='CPU'
           assert r['hair_curve_metrics']['c32_lower_central_root_count']==0
+          assert r['hair_surface_contract']['asset_key']=='hair_long01'
+          assert r['hair_surface_contract']['obj_sha256']=='7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c'
+          assert r['hair_surface_contract']['mhclo_sha256']=='94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646'
+          assert r['hair_surface_contract']['diffuse_sha256']=='e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c'
+          assert 'HAIR_LONG01' in r['hair_surface_contract']['guide_field_version']
+          assert r['hair_surface_contract']['style']=='C36_LONG01_AUTHORED_FLOW_STRAND_GROOM_V1'
           assert len(r['outputs'])==1 and r['outputs'][0]['sha256']
           assert r['denoise_ab']['search_only'] is True
           summary={
