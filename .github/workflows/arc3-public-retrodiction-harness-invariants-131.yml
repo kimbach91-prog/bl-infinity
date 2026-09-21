@@ -1,0 +1,77 @@
+name: ARC3 public retrodiction harness invariants 131
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_retrodiction_harness_invariants_131.py'
+      - '.github/workflows/arc3-public-retrodiction-harness-invariants-131.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  retrodiction-invariants:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile clean-room harness
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_retrodiction_harness_invariants_131.py
+
+      - name: Execute deterministic invariant suite
+        run: |
+          python public_benchmark/arc3/kaggle_candidates/public_retrodiction_harness_invariants_131.py \
+            --receipt public-retrodiction-harness-invariants-131.json
+
+      - name: Enforce truth boundary and invariants
+        run: |
+          set -euo pipefail
+          sha256sum public-retrodiction-harness-invariants-131.json > RECEIPT_SHA256SUMS_131.txt
+          jq -e '
+            .schema=="deus/arc3-public-retrodiction-harness-invariants/1"
+            and .rung==131
+            and .execution_class=="CPU_DETERMINISTIC_HARNESS_ONLY"
+            and .source_grounding.clean_room_implementation==true
+            and .source_grounding.upstream_code_imported==false
+            and .source_grounding.upstream_code_copied==false
+            and .all_invariants_pass==true
+            and .promotion_gate=="HARNESS_INVARIANTS_VERIFIED"
+            and .invariants.correct_full_history_accepts==true
+            and .invariants.wrong_hypothesis_rejected==true
+            and .invariants.suffix_fit_does_not_override_full_history==true
+            and .invariants.observational_aliasing_detected==true
+            and .invariants.single_outcome_mutations_rejected==true
+            and .truth.solver_behavior_gain_claim==false
+            and .truth.model_execution==false
+            and .truth.gpu_execution==false
+            and .truth.public_game_execution==false
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_output_claim==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.leaderboard_score_claim==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+            and .truth.award_or_settlement_claim==false
+          ' public-retrodiction-harness-invariants-131.json >/dev/null
+          jq '{source_grounding,history_digest,invariants,promotion_gate,truth}' \
+            public-retrodiction-harness-invariants-131.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload harness receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-retrodiction-harness-invariants-131
+          path: |
+            public-retrodiction-harness-invariants-131.json
+            RECEIPT_SHA256SUMS_131.txt
+          if-no-files-found: error
+          retention-days: 30
