@@ -23,10 +23,10 @@ jobs:
       max-parallel: 1
       matrix:
         include:
-          - id: E
+          - id: F
             jaw: '0.88'
-            eye_open: '0.76'
-            eye_globe: '0.93'
+            eye_open: '0.68'
+            eye_globe: '0.90'
             hair_length: '0.40'
             hair_wave: '0.012'
     steps:
@@ -87,7 +87,7 @@ jobs:
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
           DIGE_HAIR_ASSET_KEY: hair_short03
-          DIGE_HAIR_STRANDS_PER_ROOT: '12'
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
           DIGE_HAIR_FRONT_SAFE_BLEND: '0.88'
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
