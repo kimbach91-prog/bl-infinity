@@ -1,0 +1,13 @@
+{
+  "schema": "deus/arc3-flash-agent-state-ab-request/1",
+  "operation": "dry_run",
+  "game_id": "tr87-cd924810",
+  "runtime_seconds": 1200,
+  "terminal_grace_seconds": 120,
+  "concurrency": 1,
+  "analyzer_timeout": 900,
+  "base_kernel_ref": "replace-me/arc-agi3-flash-next-mtp-base-preflight",
+  "state_kernel_ref": "replace-me/arc-agi3-flash-next-mtp-state-preflight",
+  "base_kernel_version": 0,
+  "state_kernel_version": 0
+}
