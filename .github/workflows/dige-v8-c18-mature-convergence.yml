@@ -250,6 +250,8 @@ jobs:
           assert r["hair_surface_contract"]["curve_count"] >= 24000
           assert r["hair_surface_contract"]["points_per_curve"] == 12
           assert r["hair_surface_contract"]["root_radius_m"] < 0.00005
+          assert r["hair_surface_contract"]["c32_lower_central_root_count"] == 0
+          assert r["hair_surface_contract"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
           assert r["appearance_selection"]["c31_mask_vertex_count"] >= 12000
           assert r["appearance_selection"]["c31_wetline_count"] == 2
           assert r["appearance_selection"]["c31_mouth_gap_count"] == 1
