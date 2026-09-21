@@ -1,0 +1,102 @@
+name: ARC3 OpenWorld source-free replay audit 127
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/openworld_sourcefree_replay_audit_127.py'
+      - '.github/workflows/arc3-openworld-sourcefree-replay-audit-127.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-assisted-replay-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+
+      - name: Compile clean-room replay auditor
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/openworld_sourcefree_replay_audit_127.py
+
+      - name: Fetch pinned public archive and license
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/openworld-127
+          base='https://raw.githubusercontent.com/quome-cloud/openworld/e8248685e4f682dd6587e1af6296733cf3838a59'
+          curl --fail --location --silent --show-error \
+            "$base/LICENSE" \
+            -o /tmp/openworld-127/LICENSE
+          curl --fail --location --silent --show-error \
+            "$base/experiments/results/arc3_fullgame_sourcefree_fable.json" \
+            -o /tmp/openworld-127/arc3_fullgame_sourcefree_fable.json
+          test -s /tmp/openworld-127/LICENSE
+          test -s /tmp/openworld-127/arc3_fullgame_sourcefree_fable.json
+          grep -q 'Apache License' /tmp/openworld-127/LICENSE
+          sha256sum /tmp/openworld-127/LICENSE /tmp/openworld-127/arc3_fullgame_sourcefree_fable.json \
+            | tee OPENWORLD_SOURCE_SHA256SUMS_127.txt
+
+      - name: Execute full 25-game source-assisted replay audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python public_benchmark/arc3/kaggle_candidates/openworld_sourcefree_replay_audit_127.py \
+            --archive /tmp/openworld-127/arc3_fullgame_sourcefree_fable.json \
+            --receipt openworld-sourcefree-replay-audit-127.json
+
+      - name: Enforce truth boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s openworld-sourcefree-replay-audit-127.json
+          sha256sum openworld-sourcefree-replay-audit-127.json > RECEIPT_SHA256SUMS_127.txt
+          jq -e '
+            .schema=="deus/arc3-openworld-sourcefree-replay-audit/1"
+            and .rung==127
+            and .change_kind=="PUBLIC_SOURCE_ASSISTED_RUNTIME_REPRODUCIBILITY_AUDIT"
+            and .source.upstream=="quome-cloud/openworld@e8248685e4f682dd6587e1af6296733cf3838a59"
+            and .source.archive_path=="experiments/results/arc3_fullgame_sourcefree_fable.json"
+            and .source.declared_license=="Apache-2.0"
+            and .source.upstream_implementation_imported==false
+            and .source.upstream_implementation_copied==false
+            and .source.archive_data_consumed==true
+            and .truth.public_development_environment_only==true
+            and .truth.source_assisted_replay==true
+            and .truth.independent_generalization_claim==false
+            and .truth.solver_behavior_gain_claim==false
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_output_claim==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.leaderboard_score_claim==false
+            and .truth.owner_score_claim==false
+            and .truth.award_or_settlement_claim==false
+            and .truth.promotion_allowed==false
+          ' openworld-sourcefree-replay-audit-127.json >/dev/null
+          jq '{source,summary,promotion_gate,archive_contract_errors,truth}' \
+            openworld-sourcefree-replay-audit-127.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload audit receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-openworld-sourcefree-replay-audit-127
+          path: |
+            openworld-sourcefree-replay-audit-127.json
+            RECEIPT_SHA256SUMS_127.txt
+            OPENWORLD_SOURCE_SHA256SUMS_127.txt
+          if-no-files-found: error
+          retention-days: 30
