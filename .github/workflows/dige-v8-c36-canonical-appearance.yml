@@ -62,6 +62,22 @@ jobs:
           echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
           echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
 
+      - name: Rebind deterministic body geometry to current canonical manifest
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python build_makehuman_v8.py | tee runtime/c36_geometry_canon_rebind.json
+          python - <<'PY'
+          import json,hashlib,pathlib
+          root=pathlib.Path('.')
+          canon=(root/'DIGE_CANON_EXECUTION_MANIFEST.json').read_bytes()
+          expected=hashlib.sha256(canon).hexdigest()
+          geom=json.loads((root/'runtime/DIGE_V8_GEOMETRY_MANIFEST.json').read_text())
+          assert geom['canon_execution_manifest_sha256']==expected
+          assert (root/'runtime/dige_makehuman_v8.obj').is_file()
+          print(json.dumps({'verdict':'PASS','canon_sha256':expected,'body_obj_sha256':hashlib.sha256((root/'runtime/dige_makehuman_v8.obj').read_bytes()).hexdigest()}))
+          PY
+
       - name: Resolve Blender 5.2.2
         run: |
           set -euxo pipefail
