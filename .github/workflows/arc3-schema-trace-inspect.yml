@@ -1,0 +1,63 @@
+name: ARC3 public Schema trace structure inspect
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - '.github/workflows/arc3-schema-trace-inspect.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download three distinct public Schema traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p schema_public
+          base='https://huggingface.co/datasets/schema-harness/arc-agi-3-schema-traces/resolve/main/gpt_5_6_sol'
+          for d in gpt_5_6_sol_max_bp35 gpt_5_6_sol_max_sp80 gpt_5_6_sol_xhigh_wa30; do
+            curl --fail --location --retry 3 --silent --show-error "$base/$d/events.jsonl?download=true" -o "schema_public/${d}.jsonl"
+            test -s "schema_public/${d}.jsonl"
+          done
+          sha256sum schema_public/*.jsonl > schema_public/SHA256SUMS.txt
+      - name: Inspect action event structure without extracting outcomes
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, glob, pathlib
+          out={}
+          for fp in sorted(glob.glob('schema_public/*.jsonl')):
+              kinds={}; samples=[]
+              with open(fp,encoding='utf-8') as f:
+                  for line in f:
+                      if not line.strip(): continue
+                      e=json.loads(line)
+                      k=str(e.get('kind'))
+                      kinds[k]=kinds.get(k,0)+1
+                      if k=='action_taken' and len(samples)<3:
+                          def shape(v):
+                              if isinstance(v,list):
+                                  return {'type':'list','len':len(v),'item_type':type(v[0]).__name__ if v else None,'nested_len':len(v[0]) if v and isinstance(v[0],list) else None}
+                              if isinstance(v,dict): return {'type':'dict','keys':sorted(v.keys())}
+                              return {'type':type(v).__name__,'value_excerpt':str(v)[:120]}
+                          samples.append({key:shape(val) for key,val in e.items()})
+              out[pathlib.Path(fp).stem]={'kinds':kinds,'action_samples':samples}
+          pathlib.Path('schema-trace-inspect.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,indent=2,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-schema-trace-inspect
+          path: |
+            schema-trace-inspect.json
+            schema_public/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
