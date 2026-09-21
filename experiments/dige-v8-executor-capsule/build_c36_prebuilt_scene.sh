@@ -5,8 +5,6 @@ set -eu
 export DIGE_CYCLES_DEVICE=CPU
 export DIGE_RENDER_SET=HERO_ONLY
 export DIGE_SEARCH_ONLY=0
-export DIGE_SCENE_BUILD_ONLY=1
-export DIGE_SCENE_BUILD_OUT=runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend
 export DIGE_OUTPUT_TAG=c36_scene_build
 export DIGE_C18_HYBRID_BULK=1
 export DIGE_C19_HUMANIZATION=0
@@ -74,9 +72,45 @@ export DIGE_SKIN_BUMP_DISTANCE=0.000055
 export DIGE_SKIN_COAT_WEIGHT=0.001
 export DIGE_SKIN_COAT_ROUGHNESS=0.45
 export DIGE_RENDER_SEED=20263030
+export DIGE_SAMPLES_PREVIEW=1
+export DIGE_SAMPLES_HERO=1
 export DIGE_RUNTIME_COMMIT="${GITHUB_SHA:-unknown}"
 
 mkdir -p runtime/c36_prebuilt
-"$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py
+"$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c36_scene_builder_renderer.log
+SOURCE=runtime/renders/c36_scene_build/DIGE_V8_scene.blend
+RECEIPT=runtime/renders/c36_scene_build/DIGE_V8_RENDER_RECEIPT.json
+test -s "$SOURCE"
+test -s "$RECEIPT"
+cp "$SOURCE" runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend
+python - <<'PY'
+import hashlib, json, pathlib
+root=pathlib.Path('runtime')
+scene=root/'c36_prebuilt'/'DIGE_C36_PREBUILT_SCENE.blend'
+src=json.loads((root/'renders'/'c36_scene_build'/'DIGE_V8_RENDER_RECEIPT.json').read_text())
+receipt={
+  'schema':'dige-c36-prebuilt-scene/1',
+  'state':'SCENE_BUILD_VERIFIED',
+  'scene_file':scene.name,
+  'scene_sha256':hashlib.sha256(scene.read_bytes()).hexdigest(),
+  'source_renderer_receipt_sha256':hashlib.sha256((root/'renders'/'c36_scene_build'/'DIGE_V8_RENDER_RECEIPT.json').read_bytes()).hexdigest(),
+  'blender_version':src.get('blender_version'),
+  'engine':src.get('engine'),
+  'device':src.get('device'),
+  'resolution':[900,900],
+  'camera_lens_mm':85,
+  'camera_fstop':4.5,
+  'runtime_commit':src.get('runtime_commit'),
+  'canon_execution_manifest_sha256':src.get('canon_execution_manifest_sha256'),
+  'geometry_manifest_sha256':src.get('geometry_manifest_sha256'),
+  'hair_style':src.get('hair_surface_contract',{}).get('style'),
+  'hair_curve_count':src.get('hair_surface_contract',{}).get('curve_count'),
+  'c32_lower_central_root_count':src.get('hair_curve_metrics',{}).get('c32_lower_central_root_count'),
+  'builder_probe_samples':1,
+  'truth_boundary':'SCENE_SNAPSHOT_WAS_CREATED_ONCE_FROM_THE_SAME_DETERMINISTIC_RENDERER_WITH_1_SAMPLE_PROBE_OUTPUTS_THEN_REUSED_BY_RENDER_SHARDS__PROBE_RENDER_IS_SETUP_VALIDATION_NOT_FINAL_COMPUTE'
+}
+(root/'c36_prebuilt'/'DIGE_C36_SCENE_BUILD_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+print(json.dumps(receipt,sort_keys=True))
+PY
 test -s runtime/c36_prebuilt/DIGE_C36_PREBUILT_SCENE.blend
 test -s runtime/c36_prebuilt/DIGE_C36_SCENE_BUILD_RECEIPT.json
