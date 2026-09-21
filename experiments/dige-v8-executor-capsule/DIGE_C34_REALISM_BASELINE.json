@@ -1,0 +1,111 @@
+{
+  "schema": "DIGE_C34_REALISM_BASELINE_V1",
+  "source_run_id": 35592489820,
+  "source_artifact_id": 10635322234,
+  "denoised_sha256": "10c65d993dfce1703a3d9486b95fbb598add8872ec28d4e796db1afc51395763",
+  "image_size": [
+    900,
+    900
+  ],
+  "human_visual_verdict": "FAIL",
+  "human_visual_findings": {
+    "skin": "waxy/flat; pore and meso structure not perceptually resolved at HERO85",
+    "hair": "face-root leak fixed, but hair still reads as cap/halo rather than separated natural fibers",
+    "auto_gate_limitation": "central-dark/symmetry gate passes but does not certify skin/hair realism"
+  },
+  "fixed_rois": {
+    "forehead": [
+      360,
+      330,
+      540,
+      390
+    ],
+    "cheekL": [
+      305,
+      440,
+      390,
+      575
+    ],
+    "cheekR": [
+      510,
+      440,
+      595,
+      575
+    ],
+    "hairTop": [
+      260,
+      205,
+      640,
+      345
+    ],
+    "hairL": [
+      230,
+      300,
+      330,
+      565
+    ],
+    "hairR": [
+      570,
+      300,
+      670,
+      565
+    ]
+  },
+  "metrics": {
+    "forehead": {
+      "lum_mean": 0.6359906793,
+      "lum_std": 0.0555825606,
+      "high_rms": 0.00456675934,
+      "mid_rms": 0.00976849068,
+      "grad_mean": 0.00505200867,
+      "grad_p90": 0.00793241244,
+      "rgb_std_mean": 0.0556681454
+    },
+    "cheekL": {
+      "lum_mean": 0.5298036933,
+      "lum_std": 0.2023494393,
+      "high_rms": 0.00888004992,
+      "mid_rms": 0.0291513447,
+      "grad_mean": 0.00966423471,
+      "grad_p90": 0.0133696171,
+      "rgb_std_mean": 0.2072462589
+    },
+    "cheekR": {
+      "lum_mean": 0.4010840952,
+      "lum_std": 0.2058695704,
+      "high_rms": 0.00673954003,
+      "mid_rms": 0.0196616314,
+      "grad_mean": 0.00923749804,
+      "grad_p90": 0.0123153031,
+      "rgb_std_mean": 0.2106590718
+    },
+    "hairTop": {
+      "lum_mean": 0.2238019854,
+      "lum_std": 0.2102142423,
+      "high_rms": 0.00643311488,
+      "mid_rms": 0.0177662931,
+      "grad_mean": 0.0107398368,
+      "grad_p90": 0.0303796642,
+      "rgb_std_mean": 0.2141018957
+    },
+    "hairL": {
+      "lum_mean": 0.1239094436,
+      "lum_std": 0.1603257954,
+      "high_rms": 0.00619688304,
+      "mid_rms": 0.0234911777,
+      "grad_mean": 0.00889993086,
+      "grad_p90": 0.021065807,
+      "rgb_std_mean": 0.1625311226
+    },
+    "hairR": {
+      "lum_mean": 0.0760747343,
+      "lum_std": 0.1020443588,
+      "high_rms": 0.00442731334,
+      "mid_rms": 0.0149162086,
+      "grad_mean": 0.00642545335,
+      "grad_p90": 0.0163024496,
+      "rgb_std_mean": 0.1039496437
+    }
+  },
+  "truth_boundary": "FIXED_CAMERA_C34_BASELINE_FOR_RELATIVE_REALISM_OPTIMIZATION__NOT_UNIVERSAL_PHOTOREALISM_METRIC"
+}
