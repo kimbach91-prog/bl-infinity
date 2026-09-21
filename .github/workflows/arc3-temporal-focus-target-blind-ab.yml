@@ -46,13 +46,29 @@ jobs:
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
 
       - name: Execute action-local focus same-model A/B
+        shell: bash
         run: |
-          python public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py \
-            --input public_trace/ar25-0c556536_p0_events.jsonl \
-            --input public_trace/ar25-0c556536_p10_events.jsonl \
-            --input public_trace/ar25-0c556536_p11_events.jsonl \
-            --max-cases 8 \
-            --receipt temporal-focus-target-blind-ab.json
+          set +e
+          final_rc=2
+          for attempt in 1 2 3
+          do
+            python public_benchmark/arc3/kaggle_candidates/temporal_focus_target_blind_ab.py \
+              --input public_trace/ar25-0c556536_p0_events.jsonl \
+              --input public_trace/ar25-0c556536_p10_events.jsonl \
+              --input public_trace/ar25-0c556536_p11_events.jsonl \
+              --max-cases 8 \
+              --receipt temporal-focus-target-blind-ab.json
+            rc=$?
+            gate="$(jq -r '.promotion_gate // "MISSING"' temporal-focus-target-blind-ab.json 2>/dev/null)"
+            echo "attempt=$attempt rc=$rc gate=$gate"
+            if [ "$gate" != "INCONCLUSIVE_PROVIDER_CANARY_FAIL" ]; then
+              final_rc=$rc
+              break
+            fi
+            final_rc=$rc
+            sleep $((attempt * 2))
+          done
+          exit "$final_rc"
 
       - name: Enforce truth boundary and emit summary
         shell: bash
