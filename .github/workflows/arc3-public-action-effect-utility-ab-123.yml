@@ -1,0 +1,91 @@
+name: ARC3 public action-effect utility A/B 123
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_action_effect_utility_ab.py'
+      - '.github/workflows/arc3-public-action-effect-utility-ab-123.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-action-effect-utility-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+      - name: Compile routing A/B
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_multiframe_probe.py \
+            public_benchmark/arc3/kaggle_candidates/animation_delta_signature.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/public_animation_action_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_effect_memory_rollout_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_effect_utility_ab.py
+      - name: Execute exact-model action-effect utility A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_action_effect_utility_ab.py --receipt "$GITHUB_WORKSPACE/public-action-effect-utility-ab.json"
+      - name: Enforce truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public-action-effect-utility-ab.json
+          sha256sum public-action-effect-utility-ab.json > RECEIPT_SHA256SUMS_123.txt
+          jq -e '
+            .schema=="deus/arc3-public-action-effect-utility-ab/1"
+            and .source_grounding.guided_random.upstream_ref=="GameDevGitHub/GuidedRandomAgent@d8bfe547e5446eabcf710040cdcfdac78491b7c8"
+            and .source_grounding.guided_random.license=="MIT"
+            and .source_grounding.khub.upstream_ref=="khub-ai/arc-agi-3@de41a93e3a4557db24702fceddb2409c7bc06afd"
+            and .source_grounding.khub.license=="MIT-0"
+            and .source_grounding.clean_room_implementation==true
+            and .truth.public_development_environment_only==true
+            and .truth.same_exact_current_visible_frame_contract_between_arms==true
+            and .truth.no_new_frame_is_explicit_not_zero_effect==true
+            and .truth.last_visible_frame_carry_forward_is_shared_between_arms==true
+            and .truth.same_served_model_contract==true
+            and .truth.same_targets_probe_and_policy_budget==true
+            and .truth.candidate_uses_same_run_visible_outcomes_only==true
+            and .truth.candidate_changes_decision_routing_not_pixel_geometry==true
+            and .truth.soft_demotion_never_hard_bans_legal_action==true
+            and .truth.unknown_no_new_frame_never_counts_as_negative_effect==true
+            and .truth.provider_call_retries==false
+            and .truth.promotion_requires_solver_behavior_gain==true
+            and .truth.equal_positive_promotion_requires_strictly_nondominated_efficiency==true
+            and .truth.game_source_read==false
+            and .truth.hidden_state_read==false
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+          ' public-action-effect-utility-ab.json >/dev/null
+          jq '{source_grounding,summary,promotion_gate,inconclusive,truth}' public-action-effect-utility-ab.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload behavior receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-action-effect-utility-ab-123
+          path: |
+            public-action-effect-utility-ab.json
+            RECEIPT_SHA256SUMS_123.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive execution
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' public-action-effect-utility-ab.json)"
+          case "$gate" in INCONCLUSIVE_*) exit 2;; *) exit 0;; esac
