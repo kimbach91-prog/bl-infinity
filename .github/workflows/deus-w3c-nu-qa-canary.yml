@@ -1,0 +1,83 @@
+name: DEUS W3C Nu QA Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-w3c-nu-qa-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  w3c-nu-qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run one bounded BL-S0 W3C Nu validation canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-w3c-nu
+          nonce="DEUS_W3C_NU_QA_${GITHUB_RUN_ID}_${GITHUB_RUN_ATTEMPT}"
+          cat > /tmp/deus-w3c-nu/input.html <<HTML
+          <!doctype html>
+          <html lang="en">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>${nonce}</title>
+          </head>
+          <body><main><h1>${nonce}</h1><p>42</p></main></body>
+          </html>
+          HTML
+
+          url='https://validator.w3.org/nu/?out=json'
+          code="$({ curl -sS --max-time 25 -A 'DEUS-Compute-Gate-S0-QA/1.0' \
+            -D /tmp/deus-w3c-nu/headers.txt \
+            -o /tmp/deus-w3c-nu/body.json \
+            -w '%{http_code}' \
+            -X POST "$url" \
+            -H 'content-type: text/html; charset=utf-8' \
+            --data-binary @/tmp/deus-w3c-nu/input.html; } || true)"
+
+          input_sha="$(sha256sum /tmp/deus-w3c-nu/input.html | awk '{print $1}')"
+          headers_sha="$(sha256sum /tmp/deus-w3c-nu/headers.txt | awk '{print $1}')"
+          body_sha="$(sha256sum /tmp/deus-w3c-nu/body.json | awk '{print $1}')"
+          input_bytes="$(wc -c < /tmp/deus-w3c-nu/input.html | tr -d ' ')"
+          headers_bytes="$(wc -c < /tmp/deus-w3c-nu/headers.txt | tr -d ' ')"
+          body_bytes="$(wc -c < /tmp/deus-w3c-nu/body.json | tr -d ' ')"
+          errors=-1
+          infos=-1
+          if jq -e '.messages | type == "array"' /tmp/deus-w3c-nu/body.json >/dev/null 2>&1; then
+            errors="$(jq '[.messages[] | select(.type=="error")] | length' /tmp/deus-w3c-nu/body.json)"
+            infos="$(jq '[.messages[] | select(.type=="info")] | length' /tmp/deus-w3c-nu/body.json)"
+          fi
+
+          jq -n \
+            --arg receipt_version 'DEUS-W3C-NU-QA/1' \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --arg nonce "$nonce" \
+            --arg endpoint "$url" \
+            --arg http_status "$code" \
+            --arg input_sha "$input_sha" \
+            --arg headers_sha "$headers_sha" \
+            --arg body_sha "$body_sha" \
+            --argjson input_bytes "$input_bytes" \
+            --argjson headers_bytes "$headers_bytes" \
+            --argjson body_bytes "$body_bytes" \
+            --argjson errors "$errors" \
+            --argjson infos "$infos" \
+            '{receipt_version:$receipt_version,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,nonce:$nonce,endpoint:$endpoint,http_status:($http_status|tonumber),input_sha256:$input_sha,headers_sha256:$headers_sha,body_sha256:$body_sha,input_bytes:$input_bytes,headers_bytes:$headers_bytes,body_bytes:$body_bytes,error_count:$errors,info_count:$infos,semantic_pass:(($http_status=="200") and ($errors==0))}' \
+            | tee /tmp/deus-w3c-nu/receipt.json
+
+          echo "DEUS_W3C_INPUT_B64=$(base64 -w0 /tmp/deus-w3c-nu/input.html)"
+          echo "DEUS_W3C_HEADERS_B64=$(base64 -w0 /tmp/deus-w3c-nu/headers.txt)"
+          echo "DEUS_W3C_BODY_B64=$(base64 -w0 /tmp/deus-w3c-nu/body.json)"
+          echo "DEUS_W3C_RECEIPT_B64=$(base64 -w0 /tmp/deus-w3c-nu/receipt.json)"
+
+          test "$code" = "200"
+          test "$errors" = "0"
