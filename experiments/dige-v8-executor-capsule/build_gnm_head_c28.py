@@ -10,6 +10,7 @@ import numpy as np
 
 from gnm.shape import gnm_landmarks
 from gnm.shape import gnm_numpy
+from gnm.shape import semantic_sampler
 
 ROOT = Path(__file__).resolve().parent
 RUNTIME = ROOT / "runtime" / "gnm_c28"
@@ -18,6 +19,7 @@ RUNTIME.mkdir(parents=True, exist_ok=True)
 GNM_COMMIT = os.environ.get("DIGE_GNM_COMMIT", "").strip()
 IDENTITY_SEED = int(os.environ.get("DIGE_GNM_IDENTITY_SEED", "20262828"))
 IDENTITY_SIGMA = float(os.environ.get("DIGE_GNM_IDENTITY_SIGMA", "0.34"))
+SEMANTIC_IDENTITY = os.environ.get("DIGE_GNM_SEMANTIC_IDENTITY", "0").strip() == "1"
 
 def sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -33,15 +35,33 @@ gnm = gnm_numpy.GNM.from_local(
 
 rng = np.random.default_rng(IDENTITY_SEED)
 identity = np.zeros(gnm.identity_dim, dtype=np.float32)
-# Only randomize the head-shape block. Keep eyeball and dental identity blocks
-# neutral on the first causal C28 pass so the visual delta primarily tests the
-# scan-learned head prior rather than a broad stochastic identity search.
 head_identity_dim = min(170, gnm.identity_dim)
-identity[:head_identity_dim] = np.clip(
-    rng.normal(0.0, IDENTITY_SIGMA, size=head_identity_dim),
-    -0.90,
-    0.90,
-).astype(np.float32)
+identity_source = "HEAD_PCA_GAUSSIAN"
+semantic_gender = None
+semantic_ethnicity = None
+if SEMANTIC_IDENTITY:
+    sampler = semantic_sampler.IdentitySampler()
+    identity = sampler.sample_identity(
+        semantic_sampler.Gender.FEMALE,
+        semantic_sampler.Ethnicity.ASIAN,
+        num_samples=1,
+        rng=rng,
+        verbose=False,
+    )[0].astype(np.float32)
+    if identity.shape != (gnm.identity_dim,):
+        raise RuntimeError(f"Unexpected semantic identity shape: {identity.shape}")
+    # Keep the learned semantic sample inside the documented GNM typical range.
+    identity = np.clip(identity, -2.75, 2.75).astype(np.float32)
+    identity_source = "SEMANTIC_CVAE"
+    semantic_gender = "FEMALE"
+    semantic_ethnicity = "ASIAN"
+else:
+    # C28 baseline: randomized head-shape block, neutral eyes/dental identity.
+    identity[:head_identity_dim] = np.clip(
+        rng.normal(0.0, IDENTITY_SIGMA, size=head_identity_dim),
+        -0.90,
+        0.90,
+    ).astype(np.float32)
 
 expression = np.zeros(gnm.expression_dim, dtype=np.float32)
 rotations = np.zeros((gnm.num_joints, 3), dtype=np.float32)
@@ -180,8 +200,12 @@ manifest = {
     "identity_bound": False,
     "identity_seed": IDENTITY_SEED,
     "identity_sigma": IDENTITY_SIGMA,
+    "identity_source": identity_source,
+    "semantic_identity_enabled": SEMANTIC_IDENTITY,
+    "semantic_gender": semantic_gender,
+    "semantic_ethnicity": semantic_ethnicity,
     "identity_dim": int(gnm.identity_dim),
-    "head_identity_dim_randomized": int(head_identity_dim),
+    "head_identity_dim_randomized": int(head_identity_dim) if not SEMANTIC_IDENTITY else 0,
     "expression_dim": int(gnm.expression_dim),
     "num_vertices": int(gnm.num_vertices),
     "num_triangles": int(len(triangles)),
