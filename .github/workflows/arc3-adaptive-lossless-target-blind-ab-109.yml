@@ -1,0 +1,107 @@
+name: ARC3 adaptive lossless target-blind cross-game A/B 109
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/adaptive_lossless_target_blind_ab.py'
+      - '.github/workflows/arc3-adaptive-lossless-target-blind-ab-109.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  target-blind-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile target-blind adaptive harness
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/temporal_state_target_blind_ab.py \
+            public_benchmark/arc3/kaggle_candidates/segmentation_target_blind_ab.py \
+            public_benchmark/arc3/kaggle_candidates/segmentation_cross_game_target_blind_ab.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_scene.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v2.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_target_blind_ab.py
+
+      - name: Download three distinct public Schema traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p schema_public
+          base='https://huggingface.co/datasets/schema-harness/arc-agi-3-schema-traces/resolve/main/gpt_5_6_sol'
+          declare -A traces=(
+            [bp35]='gpt_5_6_sol_max_bp35'
+            [sp80]='gpt_5_6_sol_max_sp80'
+            [wa30]='gpt_5_6_sol_xhigh_wa30'
+          )
+          for game in bp35 sp80 wa30; do
+            d="${traces[$game]}"
+            curl --fail --location --retry 3 --silent --show-error "$base/$d/events.jsonl?download=true" -o "schema_public/${game}.jsonl"
+            test -s "schema_public/${game}.jsonl"
+          done
+          sha256sum schema_public/*.jsonl | sort > schema_public/SHA256SUMS.txt
+
+      - name: Execute identity-grounded target-blind paired A/B
+        run: |
+          python public_benchmark/arc3/kaggle_candidates/adaptive_lossless_target_blind_ab.py \
+            --input schema_public/bp35.jsonl \
+            --input schema_public/sp80.jsonl \
+            --input schema_public/wa30.jsonl \
+            --cases-per-game 4 \
+            --receipt adaptive-lossless-target-blind-ab.json
+
+      - name: Enforce truth boundary and emit summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s adaptive-lossless-target-blind-ab.json
+          sha256sum adaptive-lossless-target-blind-ab.json > RECEIPT_SHA256SUMS.txt
+          jq -e '
+            .schema=="deus/arc3-adaptive-lossless-target-blind-ab/1"
+            and .selection.outcome_used_for_case_selection==false
+            and .selection.outcome_used_for_prompt==false
+            and .selection.distinct_game_count>=3
+            and .truth.fixed_target_declared_before_case_selection==true
+            and .truth.target_blind_public_development_behavior==true
+            and .truth.source_assisted_replay==false
+            and .truth.independent_generalization_claim==false
+            and .truth.transition_model_proxy_not_full_solver==true
+            and .truth.provider_model_identity_verified==true
+            and .truth.provider_execution_is_not_kaggle_execution==true
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.owner_score_claim==false
+          ' adaptive-lossless-target-blind-ab.json >/dev/null
+          jq '{selection,identity,arms,per_game,cross_game_comparison,promotion_gate,truth}' adaptive-lossless-target-blind-ab.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reproducibility receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-adaptive-lossless-target-blind-ab-109
+          path: |
+            adaptive-lossless-target-blind-ab.json
+            RECEIPT_SHA256SUMS.txt
+            schema_public/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail closed on inconclusive execution
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' adaptive-lossless-target-blind-ab.json)"
+          case "$gate" in
+            INCONCLUSIVE_*) exit 2 ;;
+            *) exit 0 ;;
+          esac
