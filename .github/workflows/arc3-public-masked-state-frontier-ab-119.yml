@@ -1,0 +1,81 @@
+name: ARC3 public masked-state frontier A/B 119
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_masked_state_frontier_ab.py'
+      - '.github/workflows/arc3-public-masked-state-frontier-ab-119.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-masked-state-frontier-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+      - name: Compile masked-state frontier A/B
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_multiframe_probe.py \
+            public_benchmark/arc3/kaggle_candidates/animation_delta_signature.py \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/public_animation_action_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_effect_memory_rollout_ab.py \
+            public_benchmark/arc3/kaggle_candidates/public_masked_state_frontier_ab.py
+      - name: Execute exact-model public masked-state frontier A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_masked_state_frontier_ab.py --receipt "$GITHUB_WORKSPACE/public-masked-state-frontier-ab.json"
+      - name: Enforce truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public-masked-state-frontier-ab.json
+          sha256sum public-masked-state-frontier-ab.json > RECEIPT_SHA256SUMS_119.txt
+          jq -e '
+            .schema=="deus/arc3-public-masked-state-frontier-ab/1"
+            and .source_grounding.upstream_ref=="shloksah/arc-agi-3-agent@7dccef15650fa00ef1db1c21cc7279adcf4a9e2a"
+            and .source_grounding.license=="MIT-0"
+            and .truth.public_development_environment_only==true
+            and .truth.same_exact_current_frame_contract_between_arms==true
+            and .truth.same_recent_effect_memory_contract_between_arms==true
+            and .truth.masked_key_not_claimed_as_hidden_state_identity==true
+            and .truth.source_license_verified_mit0==true
+            and .truth.behavior_or_efficiency_without_positive_level_gain_cannot_promote==true
+            and .truth.game_source_read==false
+            and .truth.hidden_state_read==false
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+          ' public-masked-state-frontier-ab.json >/dev/null
+          jq '{source_grounding,summary,promotion_gate,inconclusive,truth}' public-masked-state-frontier-ab.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload behavior receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-masked-state-frontier-ab-119
+          path: |
+            public-masked-state-frontier-ab.json
+            RECEIPT_SHA256SUMS_119.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive execution
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' public-masked-state-frontier-ab.json)"
+          case "$gate" in INCONCLUSIVE_*) exit 2;; *) exit 0;; esac
