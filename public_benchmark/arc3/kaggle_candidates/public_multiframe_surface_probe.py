@@ -18,9 +18,12 @@ from arc_agi import OperationMode
 
 from public_multiframe_probe import changed_cells, frame_list, stable_hash
 
+# Fixed before this execution. bp35 ACTION3 replaces the invalid ACTION1 only
+# because the prior contract probe showed its advertised action space is
+# {3,4,6,7}; no post-action outcome was used to select ACTION3.
 TARGETS = (
     ("sp80", 5),
-    ("bp35", 1),
+    ("bp35", 3),
     ("wa30", 1),
 )
 
