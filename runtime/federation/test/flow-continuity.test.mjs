@@ -28,19 +28,21 @@ test('coordinator restart restores succeeded work and does not rerun completed u
   };
   const queue = new MemoryLeaseQueue();
   const orch = new FakeOrchestrator(queue);
+  const t0=Date.now()+10;
   const first = new TaskGraphBroker(graph);
-  await first.materializeReady(orch, { now: 1000 });
-  const prep = queue.claim('worker-a', ['compute.echo'], { now: 1001, leaseMs: 100 });
+  await first.materializeReady(orch, { now: t0 });
+  const prep = queue.claim('worker-a', ['compute.echo'], { now: t0+1, leaseMs: 100 });
+  assert.ok(prep);
   queue.complete(prep.id, prep.lease.token, { result: { artifact: 'prep-ok' } });
 
   const restarted = new TaskGraphBroker(graph);
   const supervisor = new FlowContinuitySupervisor({ broker: restarted, orchestrator: orch });
-  const recovered = await supervisor.recover({ now: 1010 });
+  const recovered = await supervisor.recover({ now: t0+10 });
   assert.equal(recovered.snapshot.states.prep.state, 'succeeded');
   assert.deepEqual(recovered.recoveryPlan.keep, ['prep']);
   assert.deepEqual(recovered.snapshot.ready, ['final']);
 
-  const dispatch = await supervisor.dispatchReady({ now: 1011 });
+  const dispatch = await supervisor.dispatchReady({ now: t0+11 });
   assert.deepEqual(dispatch.submitted.map((x) => x.nodeId), ['final']);
   assert.equal(queue.list().filter((j) => j.id === 'flow-run-1::prep').length, 1);
 });
