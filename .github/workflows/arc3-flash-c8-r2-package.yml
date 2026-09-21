@@ -27,7 +27,7 @@ jobs:
           set -euo pipefail
           ROOT="public_benchmark/arc3/kaggle_candidates/flash_next_340"
           TMP="$RUNNER_TEMP/flash-c8-r2"
-          OUT="$GITHUB_WORKSPACE/flash-c8-r2-full-package"
+          OUT="$TMP/build/flash-c8-r2-full-package"
           mkdir -p "$TMP/scripts"
           cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
           cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
@@ -39,6 +39,8 @@ jobs:
             --full-runtime-seconds 7200 \
             --title "arc agi3 flash next mtp c8 full r2" \
             --output-dir "$OUT"
+          rm -rf "$GITHUB_WORKSPACE/flash-c8-r2-full-package"
+          cp -r "$OUT" "$GITHUB_WORKSPACE/flash-c8-r2-full-package"
       - name: Verify candidate invariants and write immutable receipt
         shell: bash
         run: |
