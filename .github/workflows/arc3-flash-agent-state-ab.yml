@@ -25,16 +25,16 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 12
     outputs:
-      operation: ${ steps.request.outputs.operation }}
-      game_id: ${ steps.request.outputs.game_id }}
-      runtime_seconds: ${ steps.request.outputs.runtime_seconds }}
-      terminal_grace_seconds: ${ steps.request.outputs.terminal_grace_seconds }}
-      concurrency: ${ steps.request.outputs.concurrency }}
-      analyzer_timeout: ${ steps.request.outputs.analyzer_timeout }}
-      base_kernel_ref: ${ steps.request.outputs.base_kernel_ref }}
-      state_kernel_ref: ${ steps.request.outputs.state_kernel_ref }}
-      base_kernel_version: ${ steps.request.outputs.base_kernel_version }}
-      state_kernel_version: ${ steps.request.outputs.state_kernel_version }}
+      operation: ${{ steps.request.outputs.operation }}
+      game_id: ${{ steps.request.outputs.game_id }}
+      runtime_seconds: ${{ steps.request.outputs.runtime_seconds }}
+      terminal_grace_seconds: ${{ steps.request.outputs.terminal_grace_seconds }}
+      concurrency: ${{ steps.request.outputs.concurrency }}
+      analyzer_timeout: ${{ steps.request.outputs.analyzer_timeout }}
+      base_kernel_ref: ${{ steps.request.outputs.base_kernel_ref }}
+      state_kernel_ref: ${{ steps.request.outputs.state_kernel_ref }}
+      base_kernel_version: ${{ steps.request.outputs.base_kernel_version }}
+      state_kernel_version: ${{ steps.request.outputs.state_kernel_version }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -91,11 +91,11 @@ jobs:
       - name: Build base and state packages with identical bounded settings
         shell: bash
         env:
-          GAME_ID: ${ steps.request.outputs.game_id }}
-          RUNTIME: ${ steps.request.outputs.runtime_seconds }}
-          GRACE: ${ steps.request.outputs.terminal_grace_seconds }}
-          CONCURRENCY: ${ steps.request.outputs.concurrency }}
-          ANALYZER: ${ steps.request.outputs.analyzer_timeout }}
+          GAME_ID: ${{ steps.request.outputs.game_id }}
+          RUNTIME: ${{ steps.request.outputs.runtime_seconds }}
+          GRACE: ${{ steps.request.outputs.terminal_grace_seconds }}
+          CONCURRENCY: ${{ steps.request.outputs.concurrency }}
+          ANALYZER: ${{ steps.request.outputs.analyzer_timeout }}
         run: |
           set -euo pipefail
           BASE="$AB_TMP/build/base"
@@ -109,11 +109,11 @@ jobs:
         id: verify
         shell: bash
         env:
-          GAME_ID: ${ steps.request.outputs.game_id }}
-          RUNTIME: ${ steps.request.outputs.runtime_seconds }}
-          GRACE: ${ steps.request.outputs.terminal_grace_seconds }}
-          CONCURRENCY: ${ steps.request.outputs.concurrency }}
-          ANALYZER: ${ steps.request.outputs.analyzer_timeout }}
+          GAME_ID: ${{ steps.request.outputs.game_id }}
+          RUNTIME: ${{ steps.request.outputs.runtime_seconds }}
+          GRACE: ${{ steps.request.outputs.terminal_grace_seconds }}
+          CONCURRENCY: ${{ steps.request.outputs.concurrency }}
+          ANALYZER: ${{ steps.request.outputs.analyzer_timeout }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -197,22 +197,22 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
-      OPERATION: ${ needs.contract.outputs.operation }}
-      GAME_ID: ${ needs.contract.outputs.game_id }}
-      RUNTIME: ${ needs.contract.outputs.runtime_seconds }}
-      GRACE: ${ needs.contract.outputs.terminal_grace_seconds }}
-      CONCURRENCY: ${ needs.contract.outputs.concurrency }}
-      ANALYZER: ${ needs.contract.outputs.analyzer_timeout }}
-      BASE_KERNEL_REF: ${ needs.contract.outputs.base_kernel_ref }}
-      STATE_KERNEL_REF: ${ needs.contract.outputs.state_kernel_ref }}
-      BASE_KERNEL_VERSION: ${ needs.contract.outputs.base_kernel_version }}
-      STATE_KERNEL_VERSION: ${ needs.contract.outputs.state_kernel_version }}
-      SEC_KAGGLE_USERNAME: ${ secrets.KAGGLE_USERNAME }}
-      VAR_KAGGLE_USERNAME: ${ vars.KAGGLE_USERNAME }}
-      SEC_KAGGLE_KEY: ${ secrets.KAGGLE_KEY }}
-      VAR_KAGGLE_KEY: ${ vars.KAGGLE_KEY }}
-      SEC_KAGGLE_API_TOKEN: ${ secrets.KAGGLE_API_TOKEN }}
-      VAR_KAGGLE_API_TOKEN: ${ vars.KAGGLE_API_TOKEN }}
+      OPERATION: ${{ needs.contract.outputs.operation }}
+      GAME_ID: ${{ needs.contract.outputs.game_id }}
+      RUNTIME: ${{ needs.contract.outputs.runtime_seconds }}
+      GRACE: ${{ needs.contract.outputs.terminal_grace_seconds }}
+      CONCURRENCY: ${{ needs.contract.outputs.concurrency }}
+      ANALYZER: ${{ needs.contract.outputs.analyzer_timeout }}
+      BASE_KERNEL_REF: ${{ needs.contract.outputs.base_kernel_ref }}
+      STATE_KERNEL_REF: ${{ needs.contract.outputs.state_kernel_ref }}
+      BASE_KERNEL_VERSION: ${{ needs.contract.outputs.base_kernel_version }}
+      STATE_KERNEL_VERSION: ${{ needs.contract.outputs.state_kernel_version }}
+      SEC_KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      VAR_KAGGLE_USERNAME: ${{ vars.KAGGLE_USERNAME }}
+      SEC_KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      VAR_KAGGLE_KEY: ${{ vars.KAGGLE_KEY }}
+      SEC_KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      VAR_KAGGLE_API_TOKEN: ${{ vars.KAGGLE_API_TOKEN }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
