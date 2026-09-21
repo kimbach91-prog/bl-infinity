@@ -1,8 +1,16 @@
 #!/usr/bin/env python3
-import argparse, json, math
+import argparse, json, math, subprocess, sys
 from pathlib import Path
 from PIL import Image
-import numpy as np
+
+try:
+    import numpy as np
+except ModuleNotFoundError:
+    subprocess.check_call([
+        sys.executable, "-m", "pip", "install",
+        "--disable-pip-version-check", "-q", "numpy"
+    ])
+    import numpy as np
 
 def load_rgb(path):
     return np.asarray(Image.open(path).convert("RGB"), dtype=np.float32)
