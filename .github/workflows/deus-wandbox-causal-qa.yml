@@ -1,0 +1,82 @@
+name: DEUS Wandbox Causal QA
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-wandbox-causal-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Replay Wandbox stable compiler with exact preimage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          cat > qa/code.py <<'PYCODE'
+          import hashlib
+          nonce = "DEUS_WANDBOX_CAUSAL_QA_20260921_R1"
+          print(nonce)
+          print(hashlib.sha256(nonce.encode()).hexdigest())
+          PYCODE
+          python3 - <<'PY' > qa/request.json
+          import json, pathlib
+          code=pathlib.Path("qa/code.py").read_text()
+          req={
+            "compiler":"cpython-3.13.8",
+            "code":code,
+            "save":False,
+            "stdin":"",
+            "compiler-option-raw":"",
+            "runtime-option-raw":""
+          }
+          print(json.dumps(req,separators=(',',':'),sort_keys=True))
+          PY
+          status="$(curl -fsS --max-time 60 -D qa/headers.txt -o qa/response.json -w '%{http_code}' https://wandbox.org/api/compile.json -H 'Content-Type: application/json' --data-binary @qa/request.json)"
+          test "$status" = "200"
+          python3 - <<'PY'
+          import json,hashlib,pathlib
+          source=pathlib.Path("qa/code.py").read_bytes()
+          request=pathlib.Path("qa/request.json").read_bytes()
+          response=pathlib.Path("qa/response.json").read_bytes()
+          headers=pathlib.Path("qa/headers.txt").read_bytes()
+          p=json.loads(response)
+          nonce="DEUS_WANDBOX_CAUSAL_QA_20260921_R1"
+          expected_sha=hashlib.sha256(nonce.encode()).hexdigest()
+          out=(p.get("program_output") or "").strip().splitlines()
+          status_value=str(p.get("status"))
+          assert status_value=="0", p
+          assert out==[nonce,expected_sha], out
+          receipt={
+            "schema":"deus-wandbox-causal-qa/1",
+            "qa_runner":"github-hosted-ubuntu",
+            "provider":"Wandbox",
+            "compiler":"cpython-3.13.8",
+            "nonce":nonce,
+            "code_sha256":hashlib.sha256(source).hexdigest(),
+            "request_sha256":hashlib.sha256(request).hexdigest(),
+            "response_sha256":hashlib.sha256(response).hexdigest(),
+            "headers_sha256":hashlib.sha256(headers).hexdigest(),
+            "http_status":200,
+            "wandbox_status":status_value,
+            "stdout_lines":out,
+            "compiler_error":p.get("compiler_error") or "",
+            "program_error":p.get("program_error") or "",
+            "aggregate_credit_mutation":False,
+            "truth":"CAUSAL_PREIMAGE_AND_INDEPENDENT_REPLAY_PASS_NE_FROZEN_MANIFEST_MUTATION_NE_GLOBAL_AGGREGATE_PROMOTION"
+          }
+          pathlib.Path("qa/receipt.json").write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("DEUS_WANDBOX_QA_RECEIPT="+json.dumps(receipt,separators=(',',':')))
+          PY
+      - name: Upload exact Wandbox QA custody bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-wandbox-causal-qa
+          path: qa/
+          retention-days: 30
