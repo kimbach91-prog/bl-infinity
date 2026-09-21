@@ -1,0 +1,85 @@
+name: DEUS Go Playground Causal QA
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-go-playground-causal-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Replay official Go Playground with exact source and request preimage
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p qa
+          cat > qa/main.go <<'GO'
+          package main
+
+          import (
+              "crypto/sha256"
+              "fmt"
+          )
+
+          func main() {
+              nonce := "DEUS_GO_CAUSAL_QA_20260921_R1"
+              fmt.Println(nonce)
+              fmt.Printf("%x\n", sha256.Sum256([]byte(nonce)))
+          }
+          GO
+          python3 - <<'PY'
+          from pathlib import Path
+          from urllib.parse import urlencode
+          src=Path("qa/main.go").read_text()
+          form=urlencode([("version","2"),("body",src),("withVet","true")])
+          Path("qa/request-form.txt").write_text(form)
+          PY
+          code="$(curl -fsS --max-time 60 -D qa/headers.txt -o qa/response.json -w '%{http_code}' https://go.dev/_/compile -H 'Content-Type: application/x-www-form-urlencoded' --data-binary @qa/request-form.txt)"
+          test "$code" = "200"
+          python3 - <<'PY'
+          import hashlib,json,pathlib
+          source=pathlib.Path("qa/main.go").read_bytes()
+          request=pathlib.Path("qa/request-form.txt").read_bytes()
+          response=pathlib.Path("qa/response.json").read_bytes()
+          headers=pathlib.Path("qa/headers.txt").read_bytes()
+          p=json.loads(response)
+          errors=p.get("Errors") or ""
+          assert errors=="", errors
+          events=p.get("Events") or []
+          stdout="".join(str(e.get("Message") or "") for e in events if e.get("Kind")=="stdout")
+          nonce="DEUS_GO_CAUSAL_QA_20260921_R1"
+          expected_sha=hashlib.sha256(nonce.encode()).hexdigest()
+          lines=[x.strip() for x in stdout.splitlines() if x.strip()]
+          assert lines==[nonce,expected_sha], lines
+          receipt={
+            "schema":"deus-go-playground-causal-qa/1",
+            "qa_runner":"github-hosted-ubuntu",
+            "provider":"Go Playground",
+            "endpoint":"https://go.dev/_/compile",
+            "nonce":nonce,
+            "source_sha256":hashlib.sha256(source).hexdigest(),
+            "request_sha256":hashlib.sha256(request).hexdigest(),
+            "response_sha256":hashlib.sha256(response).hexdigest(),
+            "headers_sha256":hashlib.sha256(headers).hexdigest(),
+            "http_status":200,
+            "errors_empty":True,
+            "event_count":len(events),
+            "stdout_lines":lines,
+            "aggregate_credit_mutation":False,
+            "truth":"CAUSAL_PREIMAGE_AND_INDEPENDENT_REPLAY_PASS_NE_FROZEN_MANIFEST_MUTATION_NE_GLOBAL_AGGREGATE_PROMOTION"
+          }
+          pathlib.Path("qa/receipt.json").write_text(json.dumps(receipt,sort_keys=True,indent=2)+"\n")
+          print("DEUS_GO_QA_RECEIPT="+json.dumps(receipt,separators=(',',':')))
+          PY
+      - name: Upload exact Go QA custody bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-go-playground-causal-qa
+          path: qa/
+          retention-days: 30
