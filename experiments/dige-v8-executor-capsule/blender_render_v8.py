@@ -382,6 +382,7 @@ C28_GNM_COMMIT=os.environ.get("DIGE_GNM_COMMIT","").strip()
 C28_HEAD_SCALE_BIAS=float(os.environ.get("DIGE_C28_HEAD_SCALE_BIAS","1.00"))
 C28_HEAD_Z_OFFSET=float(os.environ.get("DIGE_C28_HEAD_Z_OFFSET","0.000"))
 C29_GNM_PRESENTATION=os.environ.get("DIGE_C29_GNM_PRESENTATION","0").strip()=="1"
+C30_GNM_SEMANTIC_IDENTITY=os.environ.get("DIGE_C30_GNM_SEMANTIC_IDENTITY","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -1791,6 +1792,10 @@ if C28_GNM_HEAD:
         "license":gm["license"],
         "model":gm["model"],
         "manifest_sha256":sha(manifest_path),
+        "identity_source":gm.get("identity_source"),
+        "semantic_identity_enabled":gm.get("semantic_identity_enabled"),
+        "semantic_gender":gm.get("semantic_gender"),
+        "semantic_ethnicity":gm.get("semantic_ethnicity"),
         "head_scale":head_scale,
         "head_translation":list(head_translation),
         "body_cut_z":c28_body_cut_z,
@@ -2759,6 +2764,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C30_GNM_SEMANTIC_FEMALE_ASIAN_V1" if C30_GNM_SEMANTIC_IDENTITY else
    "C29_GNM_PRESENTATION_REPAIR_V1" if C29_GNM_PRESENTATION else
    "C28_GNM_HIGH_FIDELITY_HEAD_V1" if C28_GNM_HEAD else
    "C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else
@@ -2780,6 +2786,7 @@ receipt={
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":(
+     "C30_AFTER_C29_VISUAL_FAIL: KEEP_C29_PRESENTATION_REPAIR; REPLACE_UNCONSTRAINED_HEAD_PCA_SAMPLE_WITH_OFFICIAL_GNM_SEMANTIC_CVAE FEMALE+ASIAN IDENTITY; DETERMINISTIC_SEED; PRESERVE_GEOMETRY/PHOTOMETRY/GROOM FOR_CAUSAL_IDENTITY_ABLATION" if C30_GNM_SEMANTIC_IDENTITY else
      "C29_AFTER_C28_VISUAL_FAIL: KEEP_GNM_GEOMETRY; REPLACE_BROKEN_HEAD_MATERIAL_WITH_DIRECT_RANDOM_WALK_PROCEDURAL_SKIN; HIDE_SHORT03_BULK_MESH; RENDER_STRAND_GROOM_ONLY; CALIBRATED_IRIS_PUPIL_CORNEA_STACKS; PRESERVE_C26_PHOTOMETRY" if C29_GNM_PRESENTATION else
      "C28_AFTER_C27_VISUAL_FAIL: APACHE2_SCAN_LEARNED_GOOGLE_GNM_HEAD + INTERNAL_EYES_TEETH_TONGUE + EYE_ALIGNED_BODY_FIT + ADAPTIVE_HAIRLINE + GNM_LANDMARK_FIBERS; PRESERVE_C26_PHOTOMETRY" if C28_GNM_HEAD else
      "C27_AFTER_C26_VISUAL_FAIL: OFFICIAL_MAKEHUMAN_ANATOMY_TARGETS + SURFACE_ANCHORED_FIBER_GROOM + SUBTLE_NATIVE_MOUTH_INTERFACES; PRESERVE_C26_MPFB2_PHOTOMETRY" if C27_SURFACE_FIBERS else
@@ -2869,7 +2876,11 @@ receipt={
    "c28_gnm_contract":c28_gnm,
    "c29_gnm_presentation":C29_GNM_PRESENTATION,
    "c29_calibrated_iris_count":c29_iris_count,
-   "c29_bulk_hair_hidden":bool(C29_GNM_PRESENTATION)
+   "c29_bulk_hair_hidden":bool(C29_GNM_PRESENTATION),
+   "c30_gnm_semantic_identity":C30_GNM_SEMANTIC_IDENTITY,
+   "c30_identity_source":c28_gnm.get("identity_source"),
+   "c30_semantic_gender":c28_gnm.get("semantic_gender"),
+   "c30_semantic_ethnicity":c28_gnm.get("semantic_ethnicity")
  },
  "scalp_shadow_polygons":scalp_shadow_polygons,
  "drive_compute_priors":geom["drive_compute_priors"],
