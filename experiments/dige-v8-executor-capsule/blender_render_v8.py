@@ -384,6 +384,7 @@ C28_HEAD_Z_OFFSET=float(os.environ.get("DIGE_C28_HEAD_Z_OFFSET","0.000"))
 C29_GNM_PRESENTATION=os.environ.get("DIGE_C29_GNM_PRESENTATION","0").strip()=="1"
 C30_GNM_SEMANTIC_IDENTITY=os.environ.get("DIGE_C30_GNM_SEMANTIC_IDENTITY","0").strip()=="1"
 C31_GNM_FACE_APPEARANCE=os.environ.get("DIGE_C31_GNM_FACE_APPEARANCE","0").strip()=="1"
+C32_GNM_DERMAL_HAIR=os.environ.get("DIGE_C32_GNM_DERMAL_HAIR","0").strip()=="1"
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -561,13 +562,13 @@ def hair_material():
         set_input(h,"Reflection",1.0)
         set_input(h,"Transmission",1.0)
         set_input(h,"Secondary Reflection",1.0)
-        set_input(h,"Melanin",.93)
-        set_input(h,"Melanin Redness",.04)
-        set_input(h,"Random Color",.03)
-        set_input(h,"Roughness",.28)
-        set_input(h,"Radial Roughness",.30)
-        set_input(h,"Random Roughness",.06)
-        set_input(h,"Coat",.02)
+        set_input(h,"Melanin",.82 if C32_GNM_DERMAL_HAIR else .93)
+        set_input(h,"Melanin Redness",.065 if C32_GNM_DERMAL_HAIR else .04)
+        set_input(h,"Random Color",.085 if C32_GNM_DERMAL_HAIR else .03)
+        set_input(h,"Roughness",.34 if C32_GNM_DERMAL_HAIR else .28)
+        set_input(h,"Radial Roughness",.42 if C32_GNM_DERMAL_HAIR else .30)
+        set_input(h,"Random Roughness",.11 if C32_GNM_DERMAL_HAIR else .06)
+        set_input(h,"Coat",.03 if C32_GNM_DERMAL_HAIR else .02)
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -734,25 +735,25 @@ def c28_gnm_skin_material():
         bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
         set_input(bs,"IOR",1.42)
         set_input(bs,"Specular IOR Level",.28)
-        set_input(bs,"Subsurface Weight",.070)
-        set_input(bs,"Subsurface Scale",.00082)
-        set_input(bs,"Subsurface Radius",(1.0,.38,.15))
-        set_input(bs,"Coat Weight",.010)
-        set_input(bs,"Coat Roughness",.44)
+        set_input(bs,"Subsurface Weight",.045 if C32_GNM_DERMAL_HAIR else .070)
+        set_input(bs,"Subsurface Scale",.00064 if C32_GNM_DERMAL_HAIR else .00082)
+        set_input(bs,"Subsurface Radius",(1.0,.34,.12) if C32_GNM_DERMAL_HAIR else (1.0,.38,.15))
+        set_input(bs,"Coat Weight",.004 if C32_GNM_DERMAL_HAIR else .010)
+        set_input(bs,"Coat Roughness",.50 if C32_GNM_DERMAL_HAIR else .44)
         if hasattr(bs,"subsurface_method"):
             bs.subsurface_method='RANDOM_WALK_SKIN'
 
         tex=nt.nodes.new("ShaderNodeTexCoord")
         base_noise=nt.nodes.new("ShaderNodeTexNoise")
-        base_noise.inputs["Scale"].default_value=10.0
-        base_noise.inputs["Detail"].default_value=4.0
-        base_noise.inputs["Roughness"].default_value=.62
+        base_noise.inputs["Scale"].default_value=18.0 if C32_GNM_DERMAL_HAIR else 10.0
+        base_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
+        base_noise.inputs["Roughness"].default_value=.68 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],base_noise.inputs["Vector"])
         base_ramp=nt.nodes.new("ShaderNodeValToRGB")
         base_ramp.color_ramp.elements[0].position=.18
-        base_ramp.color_ramp.elements[0].color=(0.245,0.082,0.042,1)
+        base_ramp.color_ramp.elements[0].color=((0.205,0.073,0.048,1) if C32_GNM_DERMAL_HAIR else (0.245,0.082,0.042,1))
         base_ramp.color_ramp.elements[1].position=.82
-        base_ramp.color_ramp.elements[1].color=(0.445,0.190,0.102,1)
+        base_ramp.color_ramp.elements[1].color=((0.395,0.176,0.118,1) if C32_GNM_DERMAL_HAIR else (0.445,0.190,0.102,1))
         nt.links.new(base_noise.outputs["Fac"],base_ramp.inputs["Fac"])
 
         vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -779,15 +780,15 @@ def c28_gnm_skin_material():
         nt.links.new(blush_mix.outputs["Color"],bs.inputs["Base Color"])
 
         rough_noise=nt.nodes.new("ShaderNodeTexNoise")
-        rough_noise.inputs["Scale"].default_value=52.0
-        rough_noise.inputs["Detail"].default_value=4.0
-        rough_noise.inputs["Roughness"].default_value=.62
+        rough_noise.inputs["Scale"].default_value=145.0 if C32_GNM_DERMAL_HAIR else 52.0
+        rough_noise.inputs["Detail"].default_value=5.0 if C32_GNM_DERMAL_HAIR else 4.0
+        rough_noise.inputs["Roughness"].default_value=.70 if C32_GNM_DERMAL_HAIR else .62
         nt.links.new(tex.outputs["Object"],rough_noise.inputs["Vector"])
         rough_map=nt.nodes.new("ShaderNodeMapRange")
         rough_map.inputs["From Min"].default_value=0.0
         rough_map.inputs["From Max"].default_value=1.0
-        rough_map.inputs["To Min"].default_value=.44
-        rough_map.inputs["To Max"].default_value=.60
+        rough_map.inputs["To Min"].default_value=.46 if C32_GNM_DERMAL_HAIR else .44
+        rough_map.inputs["To Max"].default_value=.64 if C32_GNM_DERMAL_HAIR else .60
         nt.links.new(rough_noise.outputs["Fac"],rough_map.inputs["Value"])
         tzone_scale=nt.nodes.new("ShaderNodeMath"); tzone_scale.operation='MULTIPLY'; tzone_scale.inputs[1].default_value=.055
         lip_rough_scale=nt.nodes.new("ShaderNodeMath"); lip_rough_scale.operation='MULTIPLY'; lip_rough_scale.inputs[1].default_value=.070
@@ -800,38 +801,38 @@ def c28_gnm_skin_material():
         nt.links.new(rough_sub2.outputs[0],bs.inputs["Roughness"])
 
         pore=nt.nodes.new("ShaderNodeTexNoise")
-        pore.inputs["Scale"].default_value=1900.0
+        pore.inputs["Scale"].default_value=2400.0 if C32_GNM_DERMAL_HAIR else 1900.0
         pore.inputs["Detail"].default_value=5.0
         pore.inputs["Roughness"].default_value=.68
         nt.links.new(tex.outputs["Object"],pore.inputs["Vector"])
         micro=nt.nodes.new("ShaderNodeTexNoise")
-        micro.inputs["Scale"].default_value=6200.0
+        micro.inputs["Scale"].default_value=9000.0 if C32_GNM_DERMAL_HAIR else 6200.0
         micro.inputs["Detail"].default_value=3.0
         micro.inputs["Roughness"].default_value=.60
         nt.links.new(tex.outputs["Object"],micro.inputs["Vector"])
-        pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.70
-        mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.30
+        pscale=nt.nodes.new("ShaderNodeMath"); pscale.operation='MULTIPLY'; pscale.inputs[1].default_value=.58 if C32_GNM_DERMAL_HAIR else .70
+        mscale=nt.nodes.new("ShaderNodeMath"); mscale.operation='MULTIPLY'; mscale.inputs[1].default_value=.42 if C32_GNM_DERMAL_HAIR else .30
         nt.links.new(pore.outputs["Fac"],pscale.inputs[0]); nt.links.new(micro.outputs["Fac"],mscale.inputs[0])
         add=nt.nodes.new("ShaderNodeMath"); add.operation='ADD'
         nt.links.new(pscale.outputs[0],add.inputs[0]); nt.links.new(mscale.outputs[0],add.inputs[1])
         bump=nt.nodes.new("ShaderNodeBump")
-        bump.inputs["Strength"].default_value=.24
-        bump.inputs["Distance"].default_value=.000070
+        bump.inputs["Strength"].default_value=.34 if C32_GNM_DERMAL_HAIR else .24
+        bump.inputs["Distance"].default_value=.000052 if C32_GNM_DERMAL_HAIR else .000070
         nt.links.new(add.outputs[0],bump.inputs["Height"])
         nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
         nt.links.new(bs.outputs[0],out.inputs["Surface"])
         return m,{
-            "model":"C31_GNM_REGIONAL_RANDOM_WALK_SKIN",
+            "model":"C32_GNM_DERMAL_MULTISCALE_SKIN" if C32_GNM_DERMAL_HAIR else "C31_GNM_REGIONAL_RANDOM_WALK_SKIN",
             "mask_attribute":"C31_FaceMask",
             "base_color_range":[[0.245,0.082,0.042],[0.445,0.190,0.102]],
             "lip_color":[0.42,0.075,0.068],
             "blush_color":[0.46,0.135,0.088],
-            "roughness_range":[0.44,0.60],
-            "subsurface_weight":0.070,
-            "subsurface_scale":0.00082,
-            "pore_scale":1900.0,
-            "micro_scale":6200.0,
-            "bump_distance":0.000070,
+            "roughness_range":([0.46,0.64] if C32_GNM_DERMAL_HAIR else [0.44,0.60]),
+            "subsurface_weight":0.045 if C32_GNM_DERMAL_HAIR else 0.070,
+            "subsurface_scale":0.00064 if C32_GNM_DERMAL_HAIR else 0.00082,
+            "pore_scale":2400.0 if C32_GNM_DERMAL_HAIR else 1900.0,
+            "micro_scale":9000.0 if C32_GNM_DERMAL_HAIR else 6200.0,
+            "bump_distance":0.000052 if C32_GNM_DERMAL_HAIR else 0.000070,
         }
     if C29_GNM_PRESENTATION:
         nt=m.node_tree
@@ -2413,7 +2414,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         _c28_bbox_max=Vector(c28_gnm["aligned_bbox_max"])
         _c28_eye_mid=(Vector(c28_gnm["head_translation"]) + Vector((0,0,0)))  # provenance-only origin
         _c28_hairline=float(c28_gnm["hairline_target_z"])
-        _c28_z_min=_c28_hairline-.010
+        _c28_z_min=_c28_hairline-(.135 if C32_GNM_DERMAL_HAIR else .010)
         _c28_z_max=float(_c28_bbox_max.z)+.004
         _c28_x_half=max(.115,min(.155,(float(_c28_bbox_max.x)-float(_c28_bbox_min.x))*.48))
         _c28_y_max=float(_c28_bbox_max.y)+.004
@@ -2520,7 +2521,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
     if len(root_guides) < 350:
         raise RuntimeError(f"C17.7 interpolated scalp field too sparse: {len(root_guides)} roots")
 
-    points_per_curve=8
+    points_per_curve=12 if C32_GNM_DERMAL_HAIR else 8
     strands_per_root=HAIR_STRANDS_PER_ROOT
     curve_count=len(root_guides)*strands_per_root
     hair_data=bpy.data.hair_curves.new("DIGE_C17_STRAND_GROOM_DATA")
@@ -2534,8 +2535,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
     positions=[]
     radii=[]
-    base_radius=0.000055
-    tip_radius=0.000011
+    base_radius=0.000042 if C32_GNM_DERMAL_HAIR else 0.000055
+    tip_radius=0.0000065 if C32_GNM_DERMAL_HAIR else 0.000011
     down=Vector((0.0,0.0,-1.0))
     inv_world=surface_obj.matrix_world.inverted()
     surf_rot=surface_obj.matrix_world.to_3x3()
@@ -2563,7 +2564,7 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         style_lift=max(.010,min(.026,.010+shell_lift*.42))
 
         grid=max(2,int(math.ceil(math.sqrt(strands_per_root))))
-        undercoat_count=max(1,int(round(strands_per_root*.75)))
+        undercoat_count=max(1,int(round(strands_per_root*(.58 if C32_GNM_DERMAL_HAIR else .75))))
         for k in range(strands_per_root):
             gx=k % grid
             gy=k // grid
@@ -2605,19 +2606,20 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
 
             undercoat=(k < undercoat_count)
             if undercoat:
-                length=rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
-                lift=under_lift*rng.uniform(.82,1.02)
-                tip_clear=rng.uniform(.0010,.0020)
-                flow=(child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
-                amp=rng.uniform(.00020,.00065)
+                length=rng.uniform(.018,.034)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else rng.uniform(.015,.027)*HAIR_ACCENT_LENGTH_SCALE
+                lift=under_lift*rng.uniform(.78,1.08) if C32_GNM_DERMAL_HAIR else under_lift*rng.uniform(.82,1.02)
+                tip_clear=rng.uniform(.0010,.0024) if C32_GNM_DERMAL_HAIR else rng.uniform(.0010,.0020)
+                flow=(child_flow + child_cross*rng.uniform(-.065,.065)).normalized() if C32_GNM_DERMAL_HAIR else (child_flow + child_cross*rng.uniform(-.040,.040)).normalized()
+                amp=rng.uniform(.00028,.00088) if C32_GNM_DERMAL_HAIR else rng.uniform(.00020,.00065)
             else:
-                length=min(.043,envelope)*rng.uniform(.78,.96)*HAIR_ACCENT_LENGTH_SCALE
-                lift=style_lift*rng.uniform(.80,1.02)
-                tip_clear=rng.uniform(.0016,.0032)
-                flow=(child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
-                amp=rng.uniform(.00035,.00105)
+                length=min(.058,envelope*1.12)*rng.uniform(.82,1.14)*HAIR_ACCENT_LENGTH_SCALE if C32_GNM_DERMAL_HAIR else min(.043,envelope)*rng.uniform(.78,.96)*HAIR_ACCENT_LENGTH_SCALE
+                lift=style_lift*rng.uniform(.76,1.12) if C32_GNM_DERMAL_HAIR else style_lift*rng.uniform(.80,1.02)
+                tip_clear=rng.uniform(.0016,.0042) if C32_GNM_DERMAL_HAIR else rng.uniform(.0016,.0032)
+                flow=(child_flow + child_cross*rng.uniform(-.095,.095) + clump_bias*rng.uniform(.002,.012)).normalized() if C32_GNM_DERMAL_HAIR else (child_flow + child_cross*rng.uniform(-.060,.060) + clump_bias*rng.uniform(.0015,.0075)).normalized()
+                amp=rng.uniform(.00050,.00155) if C32_GNM_DERMAL_HAIR else rng.uniform(.00035,.00105)
 
-            lateral=(child_cross + child_flow*rng.uniform(-.10,.10)).normalized()
+            lateral=(child_cross + child_flow*rng.uniform(-.14,.14)).normalized() if C32_GNM_DERMAL_HAIR else (child_cross + child_flow*rng.uniform(-.10,.10)).normalized()
+            strand_phase=cluster_phase + k*0.713
             for j in range(points_per_curve):
                 t=j/(points_per_curve-1)
                 bend=math.sin(math.pi*t)
@@ -2627,7 +2629,9 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
                     + flow*(length*t)
                     + child_n*(lift*bend + tip_clear*t)
                     + lateral*(amp*bend)
-                    + down*(length*(.018 if undercoat else .026)*sag)
+                    + (child_cross*((.00024 if undercoat else .00058)*math.sin(math.tau*(1.35*t)+strand_phase)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
+                    + (child_n*((.00010 if undercoat else .00022)*math.sin(math.tau*(2.65*t)+strand_phase*1.73)*bend) if C32_GNM_DERMAL_HAIR else Vector((0,0,0)))
+                    + down*(length*((.014 if undercoat else .022) if C32_GNM_DERMAL_HAIR else (.018 if undercoat else .026))*sag)
                 )
                 # C18 hybrid: the fitted bulk mesh owns coverage/style; curves are
                 # bounded hairline/silhouette accents. Prevent accents from sweeping
@@ -2726,7 +2730,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))))))),
+    "style":"C32_GNM_DERMAL_FIBER_GROOM_V1" if C32_GNM_DERMAL_HAIR else ("C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1"))))))))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
@@ -2937,6 +2941,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C32_GNM_DERMAL_HAIR_REFINEMENT_V1" if C32_GNM_DERMAL_HAIR else
    "C31_GNM_REGIONAL_FACE_APPEARANCE_V1" if C31_GNM_FACE_APPEARANCE else
    "C30_GNM_SEMANTIC_FEMALE_ASIAN_V1" if C30_GNM_SEMANTIC_IDENTITY else
    "C29_GNM_PRESENTATION_REPAIR_V1" if C29_GNM_PRESENTATION else
@@ -2960,6 +2965,7 @@ receipt={
    "hair_regime":hair_surface_contract["style"],
    "hair_guide_sha256":geom["hair_guide"]["sha256"],
    "selection_basis":(
+     "C32_AFTER_C31_VISUAL_AUDIT: KEEP_GNM_IDENTITY/CAMERA/PHOTOMETRY; REDUCE_WAXY_SSS_AND_COAT; INCREASE_MID/MICRO_DERMAL_VARIATION; EXPAND_GNM_SCALP_DOMAIN_TO_TEMPLES/SIDES; DOUBLE_FINE_STRAND_DENSITY; THINNER_RADIUS; LOWER_UNDERCOAT_RATIO; ADD_LOW_AMPLITUDE_MULTI_FREQUENCY_FIBER_VARIATION; SINGLE_TARGETED_FINALIST" if C32_GNM_DERMAL_HAIR else
      "C31_AFTER_C30_VISUAL_FAIL: KEEP_SEMANTIC_GNM_IDENTITY; ADD_GNM_LANDMARK_DRIVEN REGIONAL LIP/BLUSH/TZONE MASKS + STRONGER MULTISCALE PORE/MICRO NORMAL + FORWARD DARK BROW/LASH FIBERS + EYE WETLINES + SUBTLE MOUTH GAP; PRESERVE_CAMERA/PHOTOMETRY/GROOM" if C31_GNM_FACE_APPEARANCE else
      "C30_AFTER_C29_VISUAL_FAIL: KEEP_C29_PRESENTATION_REPAIR; REPLACE_UNCONSTRAINED_HEAD_PCA_SAMPLE_WITH_OFFICIAL_GNM_SEMANTIC_CVAE FEMALE+ASIAN IDENTITY; DETERMINISTIC_SEED; PRESERVE_GEOMETRY/PHOTOMETRY/GROOM FOR_CAUSAL_IDENTITY_ABLATION" if C30_GNM_SEMANTIC_IDENTITY else
      "C29_AFTER_C28_VISUAL_FAIL: KEEP_GNM_GEOMETRY; REPLACE_BROKEN_HEAD_MATERIAL_WITH_DIRECT_RANDOM_WALK_PROCEDURAL_SKIN; HIDE_SHORT03_BULK_MESH; RENDER_STRAND_GROOM_ONLY; CALIBRATED_IRIS_PUPIL_CORNEA_STACKS; PRESERVE_C26_PHOTOMETRY" if C29_GNM_PRESENTATION else
@@ -3057,6 +3063,7 @@ receipt={
    "c30_semantic_gender":c28_gnm.get("semantic_gender"),
    "c30_semantic_ethnicity":c28_gnm.get("semantic_ethnicity"),
    "c31_gnm_face_appearance":C31_GNM_FACE_APPEARANCE,
+   "c32_gnm_dermal_hair":C32_GNM_DERMAL_HAIR,
    "c31_mask_vertex_count":c31_mask_vertex_count,
    "c31_wetline_count":c31_wetline_count,
    "c31_mouth_gap_count":c31_mouth_gap_count
