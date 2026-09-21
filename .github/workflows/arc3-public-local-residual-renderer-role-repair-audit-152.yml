@@ -1,0 +1,97 @@
+name: ARC3 public local residual renderer role repair audit 152
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py
+      - public_benchmark/arc3/kaggle_candidates/public_object_role_transition_prequential_138.py
+      - public_benchmark/arc3/kaggle_candidates/public_unique_component_motion_audit_140.py
+      - public_benchmark/arc3/kaggle_candidates/public_residual_shape_canonical_audit_145.py
+      - public_benchmark/arc3/kaggle_candidates/public_residual_action_mobility_selector_audit_149.py
+      - public_benchmark/arc3/kaggle_candidates/public_residual_placement_reconstruction_audit_150.py
+      - public_benchmark/arc3/kaggle_candidates/public_local_residual_renderer_audit_151.py
+      - public_benchmark/arc3/kaggle_candidates/public_local_residual_renderer_role_repair_audit_152.py
+      - .github/workflows/arc3-public-local-residual-renderer-role-repair-audit-152.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-residual-renderer-role-repair-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_role_transition_prequential_138.py \
+            public_benchmark/arc3/kaggle_candidates/public_unique_component_motion_audit_140.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_shape_canonical_audit_145.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_action_mobility_selector_audit_149.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_placement_reconstruction_audit_150.py \
+            public_benchmark/arc3/kaggle_candidates/public_local_residual_renderer_audit_151.py \
+            public_benchmark/arc3/kaggle_candidates/public_local_residual_renderer_role_repair_audit_152.py
+      - name: Download exact pinned public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in \
+            ar25-0c556536_p0_events.jsonl \
+            ar25-0c556536_p10_events.jsonl \
+            ar25-0c556536_p11_events.jsonl
+          do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute role-repaired local residual renderer diagnostic
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_local_residual_renderer_role_repair_audit_152.py \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p0_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
+            --output "$GITHUB_WORKSPACE/local-residual-renderer-role-repair-public-152.json"
+      - name: Enforce diagnostic truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('local-residual-renderer-role-repair-public-152.json'))
+          assert d['schema']=='deus/arc3-public-local-residual-renderer-role-repair-audit/1'
+          assert d['rung']==152
+          assert d['diagnostic_gate']=='LOCAL_RESIDUAL_RENDERER_ROLE_REPAIR_CHARACTERIZED'
+          assert d['aggregate']['trace_count']==3
+          assert d['aggregate']['eligible_transitions']>0
+          assert all(x['semantic_wrong']==0 for x in d['aggregate']['renderers'].values())
+          t=d['truth']
+          assert t['renderer_inputs_available_pre_outcome'] is True
+          assert t['semantic_prediction_prior_only'] is True
+          assert t['renderer_prediction_prior_only'] is True
+          assert t['current_targets_ingested_after_prediction'] is True
+          assert t['full_frame_prediction_claim'] is False
+          assert t['solver_behavior_gain_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['submission_quota_spent'] is False
+          print(json.dumps({'rung':152,'eligible':d['aggregate']['eligible_transitions'],'best_hard_zero_renderer':d['aggregate']['best_zero_error_p0_p10_renderer'],'renderers':d['aggregate']['renderers'],'truth':'PUBLIC_ROLE_REPAIRED_LOCAL_RENDERER_DIAGNOSTIC_ONLY'},sort_keys=True))
+          PY
+      - name: Upload rung 152 diagnostic receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-local-residual-renderer-role-repair-audit-152
+          path: |
+            local-residual-renderer-role-repair-public-152.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
