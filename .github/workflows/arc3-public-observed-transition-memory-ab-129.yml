@@ -1,0 +1,110 @@
+name: ARC3 public observed transition memory A/B 129
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/public_observed_transition_memory_ab_129.py'
+      - '.github/workflows/arc3-public-observed-transition-memory-ab-129.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  observed-transition-memory-ab:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pinned official ARC toolkit
+        run: pip install --disable-pip-version-check 'arc-agi==0.9.9'
+
+      - name: Compile clean-room observed-transition A/B
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/adaptive_lossless_behavior_ab_v3_identity.py \
+            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128.py \
+            public_benchmark/arc3/kaggle_candidates/public_visible_continuity_compaction_ab_128_twostage.py \
+            public_benchmark/arc3/kaggle_candidates/public_observed_transition_memory_ab_129.py
+
+      - name: Execute exact-model target-blind observed-transition A/B
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_observed_transition_memory_ab_129.py \
+            --receipt "$GITHUB_WORKSPACE/public-observed-transition-memory-ab-129.json"
+
+      - name: Enforce truth boundary
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s public-observed-transition-memory-ab-129.json
+          sha256sum public-observed-transition-memory-ab-129.json > RECEIPT_SHA256SUMS_129.txt
+          jq -e '
+            .schema=="deus/arc3-public-observed-transition-memory-ab/1"
+            and .rung==129
+            and .change_kind=="DETERMINISTIC_OBSERVED_TRANSITION_MEMORY_AB"
+            and .source_grounding.clean_room_implementation==true
+            and .source_grounding.upstream_implementation_imported==false
+            and .source_grounding.upstream_implementation_copied==false
+            and .step_budget_per_arm==6
+            and .memory_char_budget==420
+            and .representation_change_from_rung128.rung128_result=="VALID_NO_PROMOTION"
+            and .representation_change_from_rung128.model_authored_self_note_carried==false
+            and .representation_change_from_rung128.blind_retry_of_rung128_calls==false
+            and .representation_change_from_rung128.two_stage_click_representation_preserved==true
+            and .representation_change_from_rung128.provider_retries==false
+            and .truth.public_development_environment_only==true
+            and .truth.same_served_model_contract==true
+            and .truth.same_targets_probe_and_policy_budget==true
+            and .truth.same_response_contract_both_arms==true
+            and .truth.model_authored_note_carried_by_either_arm==false
+            and .truth.treatment_memory_derived_only_from_observed_runtime_transition==true
+            and .truth.game_source_read==false
+            and .truth.hidden_state_read==false
+            and .truth.public_solution_trace_supplied_to_model==false
+            and .truth.future_outcome_used_in_prompt==false
+            and .truth.target_blind==true
+            and .truth.provider_call_retries==false
+            and .truth.failed_prior_mechanism_changed_representation_not_blind_retry==true
+            and .truth.promotion_requires_solver_behavior_gain==true
+            and .truth.efficiency_alone_cannot_promote==true
+            and .truth.kaggle_data_read==false
+            and .truth.kaggle_execution==false
+            and .truth.kaggle_output_claim==false
+            and .truth.kaggle_submission_attempted==false
+            and .truth.submission_quota_spent==false
+            and .truth.leaderboard_score_claim==false
+            and .truth.owner_score_claim==false
+            and .truth.independent_generalization_claim==false
+            and .truth.award_or_settlement_claim==false
+          ' public-observed-transition-memory-ab-129.json >/dev/null
+          jq '{source_grounding,representation_change_from_rung128,summary,promotion_gate,inconclusive,truth}' \
+            public-observed-transition-memory-ab-129.json | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload behavior receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-observed-transition-memory-ab-129
+          path: |
+            public-observed-transition-memory-ab-129.json
+            RECEIPT_SHA256SUMS_129.txt
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Fail closed on inconclusive execution
+        if: always()
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate // "INCONCLUSIVE_MISSING_GATE"' public-observed-transition-memory-ab-129.json 2>/dev/null || echo INCONCLUSIVE_MISSING_RECEIPT)"
+          case "$gate" in INCONCLUSIVE_*) exit 2;; *) exit 0;; esac
