@@ -1,0 +1,232 @@
+name: DIGE V8 C34 Final-Only Recovery
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c34-final-recovery.yml'
+      - 'experiments/dige-v8-executor-capsule/DIGE_C34_RECOVERED_SELECTION.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c34-final-recovery-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  final-recovery:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify recovered selection and prior resource plan identity
+        run: |
+          set -euxo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const s=JSON.parse(fs.readFileSync('experiments/dige-v8-executor-capsule/DIGE_C34_RECOVERED_SELECTION.json','utf8'));
+          if(s.selected_id!=='d02') throw new Error('unexpected recovered selection');
+          if(Math.abs(s.selected_guide_dist_m-0.021)>1e-12) throw new Error('guide distance mismatch');
+          if(s.refine_recommended!==false) throw new Error('recovery should not refine interior winner');
+          if(s.resource_plan_digest!=='2d53503ee2f353e3f0de03c50fa363daec70065099edf9224d140d184fe12c7d') throw new Error('plan digest mismatch');
+          if(s.candidates.length!==3 || !s.candidates.every(x=>x.hard_gate_pass)) throw new Error('candidate evidence incomplete');
+          console.log(JSON.stringify({verdict:'PASS',selected:s.selected_id,guideDist:s.selected_guide_dist_m,score:s.selected_score,reuse:s.work_reuse}));
+          NODE
+
+      - name: Reuse shared C34 runtime from prior successful prep
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Reuse compiler resource-plan receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-RESOURCE-PLAN-4da29679e1bb5c4e67fbb4c098a72910a366d177
+          path: experiments/dige-v8-executor-capsule/runtime/resource-plan
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Verify reused runtime and plan
+        run: |
+          set -euxo pipefail
+          test -s experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          test -s experiments/dige-v8-executor-capsule/runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
+          test -s experiments/dige-v8-executor-capsule/runtime/resource-plan/DIGE_C34_RESOURCE_PLAN.json
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const p=JSON.parse(fs.readFileSync('experiments/dige-v8-executor-capsule/runtime/resource-plan/DIGE_C34_RESOURCE_PLAN.json','utf8'));
+          if(p.plan.planDigest!=='2d53503ee2f353e3f0de03c50fa363daec70065099edf9224d140d184fe12c7d') throw new Error('resource plan mismatch');
+          if(p.runtimeDevice!=='CPU') throw new Error('recovery must preserve compiled CPU fallback');
+          if(p.plan.resourceVector.verifiedGpuCount!==0 || p.plan.resourceVector.verifiedVramGiB!==0) throw new Error('unexpected accelerator credit');
+          NODE
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Render exactly one recovered C34 finalist
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '0'
+          DIGE_OUTPUT_TAG: c34_recovery_finalist
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C19_HUMANIZATION: '0'
+          DIGE_C19_PHOTO_LIGHTING: '0'
+          DIGE_C20_VISUAL_REPAIR: '0'
+          DIGE_C21_NATURAL_DETAIL: '0'
+          DIGE_C22_PHYSICAL_SKIN: '0'
+          DIGE_C22_LANDMARK_GROOM: '0'
+          DIGE_C22_HAIR_MASS_WARP: '0'
+          DIGE_C23_CALIBRATED_EYES: '0'
+          DIGE_C23_FACE_PLANES: '0'
+          DIGE_C23_HAIRLINE_REPAIR: '0'
+          DIGE_C24_SURFACE_EYES: '0'
+          DIGE_C24_SOURCE_ALBEDO: '0'
+          DIGE_C24_HAIRLINE_REPAIR: '0'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C25_GROOM_CLIP: '0'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C26_SAFE_GROOM: '0'
+          DIGE_C26_FIBER_GROOM: '0'
+          DIGE_C27_SURFACE_FIBERS: '0'
+          DIGE_C27_NATIVE_INTERFACES: '0'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C28_HEAD_SCALE_BIAS: '1.00'
+          DIGE_C28_HEAD_Z_OFFSET: '0.000'
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_short03
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.88'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.94'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SKIN_SSS_WEIGHT: '0.045'
+          DIGE_SKIN_SSS_SCALE: '0.0009'
+          DIGE_SKIN_ROUGH_MIN: '0.44'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_ALBEDO_SAT: '1.00'
+          DIGE_SKIN_ALBEDO_VALUE: '1.00'
+          DIGE_EYE_TEX_SAT: '0.78'
+          DIGE_EYE_TEX_VALUE: '0.64'
+          DIGE_HAIR_TEX_SAT: '0.56'
+          DIGE_HAIR_TEX_VALUE: '0.23'
+          DIGE_FACE_MESO_SCALE: '1.00'
+          DIGE_SKIN_TONE_R: '0.60'
+          DIGE_SKIN_TONE_G: '0.33'
+          DIGE_SKIN_TONE_B: '0.22'
+          DIGE_SKIN_TONE_MIX: '0.08'
+          DIGE_SKIN_MICRO_STRENGTH: '0.20'
+          DIGE_SKIN_MESO_FREQ: '95'
+          DIGE_SKIN_PORE_FREQ: '2800'
+          DIGE_SKIN_MICRO_FREQ: '9000'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000055'
+          DIGE_SKIN_COAT_WEIGHT: '0.001'
+          DIGE_SKIN_COAT_ROUGHNESS: '0.45'
+          DIGE_SAMPLES_PREVIEW: '64'
+          DIGE_SAMPLES_HERO: '384'
+          DIGE_RENDER_SEED: '20263030'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c34_recovery_finalist.log
+
+      - name: Evaluate recovered finalist
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python -m pip install --disable-pip-version-check -q pillow numpy
+          python evaluate_c33_candidate.py \
+            --image "runtime/renders/c34_recovery_finalist/04_HERO85_V8.png" \
+            --out "runtime/renders/c34_recovery_finalist/DIGE_C34_FINAL_VISUAL_METRICS.json" \
+            --candidate-id "d02-final" \
+            --guide-dist "0.021"
+
+      - name: Verify final runtime, topology, resource-plan and visual gates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path("runtime/renders/c34_recovery_finalist")
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          m=json.loads((root/"DIGE_C34_FINAL_VISUAL_METRICS.json").read_text())
+          sel=json.loads(pathlib.Path("DIGE_C34_RECOVERED_SELECTION.json").read_text())
+          plan=json.loads(pathlib.Path("runtime/resource-plan/DIGE_C34_RESOURCE_PLAN.json").read_text())
+          assert r["appearance_candidate"]=="C33_GUIDE_GATED_GROOM_SEARCH_V1"
+          assert r["device"]=="CPU" and r["device_info"]["actual_mode"]=="CPU"
+          assert r["denoise_ab"]["search_only"] is False
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["hair_curve_metrics"]["c32_lower_central_root_count"] == 0
+          assert r["hair_curve_metrics"]["c32_root_domain"]=="MEASURED_HAIRLINE_PLUS_TEMPLE_SIDE_BACK_ONLY_V2"
+          assert abs(r["appearance_selection"]["c33_guide_max_dist_m"]-sel["selected_guide_dist_m"]) < 1e-9
+          assert m["hard_gate_pass"] is True
+          assert plan["plan"]["planDigest"]==sel["resource_plan_digest"]
+          summary={
+            "schema":"DIGE_C34_FINAL_RECOVERY_RECEIPT_V1",
+            "selected_id":sel["selected_id"],
+            "selected_guide_dist_m":sel["selected_guide_dist_m"],
+            "selected_score_from_coarse":sel["selected_score"],
+            "final_visual_metrics":m,
+            "resource_plan_digest":plan["plan"]["planDigest"],
+            "resource_execution_mode":plan["runtimeDevice"],
+            "planned_search_avoided_candidates":plan["plan"]["optimization"]["avoidedCandidates"],
+            "coarse_renders_reused_from_logs":sel["work_reuse"]["coarse_candidates_reused_from_logs"],
+            "coarse_rerenders_in_recovery":sel["work_reuse"]["rerendered_coarse_candidates"],
+            "runtime_commit":r["runtime_commit"],
+            "hero_sha256":r["outputs"][0]["sha256"],
+            "raw_aov_sha256":r["denoise_ab"]["raw_aov"]["sha256"],
+            "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
+            "hair_curve_metrics":r["hair_curve_metrics"],
+            "skin_contract":r["c28_gnm_head"]["skin_contract"],
+            "claim_ceiling":"C34_FINAL_RECOVERY_EXECUTED; AUTOMATIC_VISUAL_GATE_PASS; DIRECT_HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+          }
+          (root/"DIGE_C34_FINAL_RECOVERY_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - name: Upload C34 final recovery evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C34-FINAL-RECOVERY-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_recovery_finalist/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_recovery_finalist/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c34_recovery_finalist/*.json
+            experiments/dige-v8-executor-capsule/runtime/resource-plan/*.json
+            experiments/dige-v8-executor-capsule/DIGE_C34_RECOVERED_SELECTION.json
+            experiments/dige-v8-executor-capsule/runtime/c34_recovery_finalist.log
+          if-no-files-found: error
+          retention-days: 14
