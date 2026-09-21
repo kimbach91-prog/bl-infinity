@@ -1,0 +1,58 @@
+name: DEUS PyPI Independent QA
+
+on:
+  push:
+    paths:
+      - ".github/workflows/deus-pypi-independent-qa.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qa:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Independently replay PyPI idna 3.10 metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL='https://pypi.org/pypi/idna/3.10/json'
+          printf '%s' "$URL" > /tmp/request.txt
+          CODE="$(curl -fsS --max-time 45 -D /tmp/headers.txt -o /tmp/body.json -w '%{http_code}' "$URL" -H 'User-Agent: DEUS-Independent-QA-PyPI/1.0')"
+          test "$CODE" = "200"
+          python3 - <<'PY'
+          import json, hashlib, pathlib
+          request=pathlib.Path('/tmp/request.txt').read_bytes()
+          body=pathlib.Path('/tmp/body.json').read_bytes()
+          p=json.loads(body)
+          info=p.get('info') or {}
+          urls=p.get('urls') or []
+          vulns=p.get('vulnerabilities') or []
+          assert info.get('name') == 'idna', info.get('name')
+          assert info.get('version') == '3.10', info.get('version')
+          assert len(urls) >= 1
+          digests=[((u.get('digests') or {}).get('sha256')) for u in urls]
+          expected_artifact='946d195a0d259cbba61165e88e65941f16e9b36ea6ddb97f00452bae8b1287d3'
+          assert expected_artifact in digests, digests
+          body_sha=hashlib.sha256(body).hexdigest()
+          receipt={
+            "schema":"deus-pypi-independent-qa/1",
+            "qa_runner":"github-hosted-ubuntu",
+            "request_url":"https://pypi.org/pypi/idna/3.10/json",
+            "request_sha256":hashlib.sha256(request).hexdigest(),
+            "http_status":200,
+            "name":info["name"],
+            "version":info["version"],
+            "url_count":len(urls),
+            "expected_artifact_sha_present":True,
+            "vulnerability_count":len(vulns),
+            "body_sha256":body_sha,
+            "original_custody_body_sha256":"f15071fb9e391d76f70954e75f61df172c2e6656a3199c9ddf1d39d9705b597e",
+            "body_same_as_custody":body_sha=="f15071fb9e391d76f70954e75f61df172c2e6656a3199c9ddf1d39d9705b597e",
+            "aggregate_credit_mutation":False,
+            "truth":"INDEPENDENT_QA_SEMANTIC_PASS_WITH_MUTATION_DETECTION_NE_GLOBAL_AGGREGATE_PROMOTION"
+          }
+          print("DEUS_PYPI_QA_RECEIPT="+json.dumps(receipt,separators=(',',':')))
+          PY
