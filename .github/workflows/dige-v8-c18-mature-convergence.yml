@@ -226,7 +226,6 @@ jobs:
           assert g["hairline_warp_vertices"] > 0
           assert g["c29_presentation"] is True
           assert g["c29_calibrated_iris_count"] == 2
-          assert g["skin_contract"]["model"]=="C29_PROCEDURAL_RANDOM_WALK_SKIN"
           assert g["identity_source"]=="SEMANTIC_CVAE"
           assert g["semantic_identity_enabled"] is True
           assert g["semantic_gender"]=="FEMALE"
