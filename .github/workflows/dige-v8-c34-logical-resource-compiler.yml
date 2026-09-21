@@ -3,10 +3,12 @@ name: DIGE V8 C34 Logical Resource Compiled Adaptive Search
 on:
   pull_request:
     paths:
-      - '.github/workflows/dige-v8-c34-logical-resource-compiler.yml'\n      - 'runtime/federation/lib/logical-resource-compiler.mjs'\n      - 'experiments/dige-v8-executor-capsule/compile_c34_resource_plan.mjs'\n      - 'experiments/dige-v8-executor-capsule/reduce_c34_candidates.py'
-      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
-      - 'experiments/dige-v8-executor-capsule/evaluate_c34_candidate.py'
+      - '.github/workflows/dige-v8-c34-logical-resource-compiler.yml'
+      - 'runtime/federation/lib/logical-resource-compiler.mjs'
+      - 'experiments/dige-v8-executor-capsule/compile_c34_resource_plan.mjs'
       - 'experiments/dige-v8-executor-capsule/reduce_c34_candidates.py'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/evaluate_c33_candidate.py'
       - 'experiments/dige-v8-executor-capsule/build_gnm_head_c28.py'
       - 'experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json'
 
@@ -19,7 +21,61 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  compile-resource-plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      matrix: ${{ steps.compile.outputs.matrix }}
+      runtime_device: ${{ steps.compile.outputs.runtime_device }}
+      plan_digest: ${{ steps.compile.outputs.plan_digest }}
+      avoided_candidates: ${{ steps.compile.outputs.avoided_candidates }}
+      avoided_fraction: ${{ steps.compile.outputs.avoided_fraction }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - id: compile
+        name: Compile DIGE logical resources into physical placement
+        env:
+          DEUS_VCPU_EQ: '48'
+          DEUS_SIMUL_VCPU_LB: '28'
+          DEUS_HOST_RAM_GIB: '125'
+          DEUS_GPU_COUNT: '0'
+          DEUS_VRAM_GIB: '0'
+          DEUS_RESOURCE_SNAPSHOT_SOURCE: 'LiveBus:38_UNIFIED_RESOURCE_KERNEL@2026-09-21T10:51Z'
+          DIGE_RESOURCE_PLAN_OUT: 'experiments/dige-v8-executor-capsule/runtime/DIGE_C34_RESOURCE_PLAN.json'
+        run: |
+          set -euxo pipefail
+          node experiments/dige-v8-executor-capsule/compile_c34_resource_plan.mjs
+          test -s experiments/dige-v8-executor-capsule/runtime/DIGE_C34_RESOURCE_PLAN.json
+      - name: Verify compiler plan truth boundaries
+        run: |
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          const r=JSON.parse(fs.readFileSync('experiments/dige-v8-executor-capsule/runtime/DIGE_C34_RESOURCE_PLAN.json','utf8'));
+          if(r.plan.logicalNamespace!=='1000000000000') throw new Error('1T namespace missing');
+          if(r.plan.resourceVector.verifiedGpuCount!==0 || r.plan.resourceVector.verifiedVramGiB!==0) throw new Error('unexpected GPU credit');
+          if(r.runtimeDevice!=='CPU') throw new Error('GPU0 snapshot must compile to CPU fallback');
+          if(r.matrix.length!==3) throw new Error('coarse3 plan expected');
+          if(r.plan.optimization.avoidedCandidates!==4) throw new Error('expected 4 avoided search renders');
+          const final=r.plan.stages.find(x=>x.id==='final-render');
+          if(!final.placement.virtualRoles.includes('vGPU') || !final.placement.virtualRoles.includes('vVRAM')) throw new Error('logical accelerator roles missing');
+          if(final.placement.execution!=='CPU_FALLBACK') throw new Error('final render should fall back to CPU');
+          console.log(JSON.stringify({verdict:'PASS',planDigest:r.plan.planDigest,matrix:r.matrix,runtimeDevice:r.runtimeDevice,optimization:r.plan.optimization}));
+          NODE
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: DIGE-C34-RESOURCE-PLAN-${{ github.event.pull_request.head.sha }}
+          path: experiments/dige-v8-executor-capsule/runtime/DIGE_C34_RESOURCE_PLAN.json
+          if-no-files-found: error
+          retention-days: 14
+
   prep-assets:
+    needs: compile-resource-plan
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -78,8 +134,8 @@ jobs:
           python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
 
           cd experiments/dige-v8-executor-capsule
-          python build_makehuman_v8.py | tee runtime/c34_shared_body_geometry_execution.json
-          DIGE_GNM_COMMIT="$GNM_COMMIT" DIGE_GNM_IDENTITY_SEED=20263030 DIGE_GNM_IDENTITY_SIGMA=0.34 DIGE_GNM_SEMANTIC_IDENTITY=1 python build_gnm_head_c28.py | tee runtime/c34_shared_gnm_build.log
+          python build_makehuman_v8.py | tee runtime/c33_shared_body_geometry_execution.json
+          DIGE_GNM_COMMIT="$GNM_COMMIT" DIGE_GNM_IDENTITY_SEED=20263030 DIGE_GNM_IDENTITY_SIGMA=0.34 DIGE_GNM_SEMANTIC_IDENTITY=1 python build_gnm_head_c28.py | tee runtime/c33_shared_gnm_build.log
           mkdir -p runtime/assets/c25_mpfb
           cp runtime/assets/young_eurasian_female_diffuse.png runtime/assets/c25_mpfb/young_eurasian_female_diffuse.png
           printf 'name c25_mpfb_enhanced_skin\ndiffuseColor 1.0 1.0 1.0\ndiffuseTexture young_eurasian_female_diffuse.png\n' > runtime/assets/c25_mpfb/c25_skin.mhmat
@@ -147,7 +203,7 @@ jobs:
           echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
           echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
 
-      - name: Render C34 guide-gated groom candidate
+      - name: Render C34 compiler-selected groom candidate
         working-directory: experiments/dige-v8-executor-capsule
         env:
           DIGE_CYCLES_DEVICE: ${{ needs.compile-resource-plan.outputs.runtime_device }}
@@ -184,8 +240,8 @@ jobs:
           DIGE_C31_GNM_FACE_APPEARANCE: '1'
           DIGE_C32_GNM_DERMAL_HAIR: '1'
           DIGE_C33_GUIDE_GATED_GROOM: '1'
-          DIGE_C34_GUIDE_MAX_DIST: ${{ matrix.guide_dist }}
-          DIGE_C34_SCALP_Z_DROP: '0.120'
+          DIGE_C33_GUIDE_MAX_DIST: ${{ matrix.guide_dist }}
+          DIGE_C33_SCALP_Z_DROP: '0.120'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
@@ -232,7 +288,7 @@ jobs:
         run: |
           set -euxo pipefail
           python -m pip install --disable-pip-version-check -q pillow numpy
-          python evaluate_c34_candidate.py \
+          python evaluate_c33_candidate.py \
             --image "runtime/renders/c34_${MATRIX_ID}/04_HERO85_V8.png" \
             --out "runtime/renders/c34_${MATRIX_ID}/DIGE_C33_VISUAL_METRICS.json" \
             --candidate-id "${MATRIX_ID}" \
@@ -297,14 +353,14 @@ jobs:
           assert r["denoise_ab"]["denoised"]["sha256"]
           assert r["evidence_boundary"]["hyperreal_certified"] is False
           summary={
-            "schema":"DIGE_C33_GUIDE_GATED_GROOM_RECEIPT_V1",
+            "schema":"DIGE_C34_COMPILER_SEARCH_RECEIPT_V1",
             "approved_sha":os.environ["APPROVED_SHA"],
             "hero_sha256":r["outputs"][0]["sha256"],
             "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
             "c28_gnm_head":g,
             "skin_model":r["skin_model"],
             "hair_surface_contract":r["hair_surface_contract"],
-            "claim_ceiling":"C34_SEARCH_EXECUTED; HUMAN_VISUAL_SELECTION_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+            "claim_ceiling":"C34_COMPILER_SEARCH_EXECUTED; HUMAN_VISUAL_SELECTION_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
           }
           (root/"DIGE_C34_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
@@ -324,8 +380,8 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  reduce-c33:
-    needs: c33-groom-search
+  reduce-c34:
+    needs: [compile-resource-plan, c34-groom-search]
     runs-on: ubuntu-latest
     timeout-minutes: 20
     outputs:
@@ -345,6 +401,12 @@ jobs:
           path: candidate-artifacts
           merge-multiple: false
 
+      - name: Download C34 resource plan
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-RESOURCE-PLAN-${{ github.event.pull_request.head.sha }}
+          path: plan-artifact
+
       - id: reduce
         name: Reduce candidates to one finalist
         working-directory: experiments/dige-v8-executor-capsule
@@ -352,6 +414,7 @@ jobs:
           set -euxo pipefail
           python reduce_c34_candidates.py \
             --root "../../../candidate-artifacts" \
+            --plan "../../../plan-artifact/DIGE_C34_RESOURCE_PLAN.json" \
             --out "../../../DIGE_C34_SELECTION.json"
           python - <<'PY' >> "$GITHUB_OUTPUT"
           import json
@@ -369,9 +432,9 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  c33-finalist:
-    needs: [prep-assets, reduce-c33]
-    if: needs.reduce-c33.outputs.selected_guide_dist != ''
+  c34-finalist:
+    needs: [compile-resource-plan, prep-assets, reduce-c34]
+    if: needs.reduce-c34.outputs.selected_guide_dist != ''
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
@@ -413,7 +476,7 @@ jobs:
       - name: Render one C34 high-sample finalist
         working-directory: experiments/dige-v8-executor-capsule
         env:
-          DIGE_CYCLES_DEVICE: ${{ needs.compile-resource-plan.outputs.runtime_device }}
+          DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: HERO_ONLY
           DIGE_SEARCH_ONLY: '0'
           DIGE_OUTPUT_TAG: c34_finalist
@@ -447,8 +510,8 @@ jobs:
           DIGE_C31_GNM_FACE_APPEARANCE: '1'
           DIGE_C32_GNM_DERMAL_HAIR: '1'
           DIGE_C33_GUIDE_GATED_GROOM: '1'
-          DIGE_C34_GUIDE_MAX_DIST: ${{ needs.reduce-c33.outputs.selected_guide_dist }}
-          DIGE_C34_SCALP_Z_DROP: '0.120'
+          DIGE_C33_GUIDE_MAX_DIST: ${{ needs.reduce-c34.outputs.selected_guide_dist }}
+          DIGE_C33_SCALP_Z_DROP: '0.120'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
@@ -493,7 +556,7 @@ jobs:
       - name: Verify C34 finalist receipt
         working-directory: experiments/dige-v8-executor-capsule
         env:
-          SELECTED_GUIDE_DIST: ${{ needs.reduce-c33.outputs.selected_guide_dist }}
+          SELECTED_GUIDE_DIST: ${{ needs.reduce-c34.outputs.selected_guide_dist }}
         run: |
           set -euxo pipefail
           python - <<'PY'
