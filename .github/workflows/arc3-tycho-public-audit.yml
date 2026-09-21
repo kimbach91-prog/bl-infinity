@@ -1,0 +1,100 @@
+name: ARC3 Tycho public-source audit
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - .github/workflows/arc3-tycho-public-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-tycho-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Fetch pinned public Tycho source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone https://github.com/NIMI-research/Tycho.git /tmp/tycho
+          git -C /tmp/tycho checkout f68912a764372ead0a610db2e1c011d41ce5197e
+          test "$(git -C /tmp/tycho rev-parse HEAD)" = "f68912a764372ead0a610db2e1c011d41ce5197e"
+
+      - name: Run credential-free Tycho validation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e '/tmp/tycho[dev]'
+          make -C /tmp/tycho validate PYTHON=python
+
+      - name: Audit public evaluation artifacts and emit scoped receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib
+          root = pathlib.Path('/tmp/tycho')
+          p = root / 'artifacts' / 'evaluation_integrity.json'
+          raw = p.read_bytes()
+          data = json.loads(raw)
+          selected = data.get('selected_policy_runs', {})
+          sol = selected.get('GPT-5.6 Sol', {})
+          opus = selected.get('Opus 5', {})
+          assert data.get('schema') == 'tycho.public_evaluation_integrity'
+          assert sol.get('games') == 25 and float(sol.get('mean_rhae')) == 100.0
+          assert opus.get('games') == 25 and float(opus.get('mean_rhae')) == 100.0
+          assert sol.get('closed_competition_replay') is True
+          assert sol.get('scorecard_equal_submission_trace') is True
+          receipt = {
+              'schema': 'deus.arc3.public_harness_audit.v1',
+              'source_repo': 'NIMI-research/Tycho',
+              'source_commit': 'f68912a764372ead0a610db2e1c011d41ce5197e',
+              'license': 'Apache-2.0',
+              'credential_free_validate_passed': True,
+              'evaluation_integrity_sha256': hashlib.sha256(raw).hexdigest(),
+              'public_selected_runs': {
+                  'GPT-5.6 Sol': {
+                      'games': sol.get('games'),
+                      'mean_rhae': sol.get('mean_rhae'),
+                      'scorecard_id': sol.get('scorecard_id'),
+                      'submission_trace_sha256': sol.get('submission_trace_sha256'),
+                  },
+                  'Opus 5': {
+                      'games': opus.get('games'),
+                      'mean_rhae': opus.get('mean_rhae'),
+                      'scorecard_id': opus.get('scorecard_id'),
+                      'submission_trace_sha256': opus.get('submission_trace_sha256'),
+                  },
+              },
+              'truth_scope': {
+                  'public_25_only': True,
+                  'hidden_kaggle_score_claim': False,
+                  'owner_score_claim': False,
+                  'kaggle_offline_model_route_verified': False,
+                  'submission_attempted': False,
+              },
+              'promotion_gate': 'Adapt mechanisms to competition-clean local/offline model path and verify bounded public runtime gain before packaging or Kaggle submission.'
+          }
+          out = pathlib.Path('public_benchmark/arc3/kaggle_candidates/tycho_public_audit_receipt.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-tycho-public-audit
+          path: public_benchmark/arc3/kaggle_candidates/tycho_public_audit_receipt.json
+          if-no-files-found: error
