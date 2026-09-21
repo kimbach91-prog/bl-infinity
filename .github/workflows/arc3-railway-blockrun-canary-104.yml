@@ -16,26 +16,41 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 5
     steps:
-      - name: Call fixed Railway canary endpoint
+      - name: Call fixed Railway canary endpoint and preserve response
+        id: probe
         shell: bash
         run: |
-          set -euo pipefail
+          set +e
           url='https://deus-railway-controller-production.up.railway.app/arc3-blockrun-canary-104'
           code="$(curl --silent --show-error --location --max-time 60 -o railway-blockrun-canary-104.json -w '%{http_code}' "$url")"
+          curl_rc=$?
+          set -e
           printf '%s\n' "$code" > railway-http-status.txt
-          test "$code" = '200'
-          jq -e '.probe=="ARC3_BLOCKRUN_CANARY_104" and (.upstream_status|type)=="number" and (.provider_execution|type)=="boolean"' railway-blockrun-canary-104.json >/dev/null
-          jq '{probe,upstream_status,provider_execution,content,body_excerpt,error}' railway-blockrun-canary-104.json | tee -a "$GITHUB_STEP_SUMMARY"
+          printf '%s\n' "$curl_rc" > railway-curl-exit.txt
+          echo "railway_http_status=$code" | tee -a "$GITHUB_STEP_SUMMARY"
+          echo "curl_exit=$curl_rc" | tee -a "$GITHUB_STEP_SUMMARY"
+          if test -s railway-blockrun-canary-104.json; then
+            cat railway-blockrun-canary-104.json | head -c 1000 | tee railway-body-excerpt.txt | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            : > railway-blockrun-canary-104.json
+            : > railway-body-excerpt.txt
+          fi
       - name: Upload exact distinct-egress receipt
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: arc3-railway-blockrun-canary-104
           path: |
             railway-blockrun-canary-104.json
             railway-http-status.txt
+            railway-curl-exit.txt
+            railway-body-excerpt.txt
           if-no-files-found: error
           retention-days: 30
-      - name: Fail closed unless upstream executed and calibration label matches
+      - name: Validate shape and fail closed unless upstream executed
         shell: bash
         run: |
+          code="$(cat railway-http-status.txt)"
+          test "$code" = '200'
+          jq -e '.probe=="ARC3_BLOCKRUN_CANARY_104" and (.upstream_status|type)=="number" and (.provider_execution|type)=="boolean"' railway-blockrun-canary-104.json >/dev/null
           jq -e '.upstream_status==200 and .provider_execution==true and ((.content // "")|ascii_upcase|contains("ALPHA"))' railway-blockrun-canary-104.json >/dev/null
