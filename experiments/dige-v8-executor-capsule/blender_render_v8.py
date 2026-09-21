@@ -407,6 +407,7 @@ RENDER_SET=os.environ.get("DIGE_RENDER_SET","FULL").strip().upper()
 SEARCH_ONLY=os.environ.get("DIGE_SEARCH_ONLY","0").strip()=="1"
 SEARCH_DENOISE=os.environ.get("DIGE_SEARCH_DENOISE","1").strip()=="1"
 HAIR_ASSET_KEY=os.environ.get("DIGE_HAIR_ASSET_KEY",CANON["assets"]["system_assets_c12"].get("hair_default_key","hair_short03")).strip()
+HAIR_LONG_PRIOR=(HAIR_ASSET_KEY=="hair_long01")
 
 def make_skin():
     m=bpy.data.materials.new("DIGE_V8_SKIN")
@@ -1686,10 +1687,10 @@ for eye_key,lid_key in (("left_eye","left_lowerlid"),("right_eye","right_lowerli
     wetlines.append(pts)
 curve_object("DIGE_V8_EYE_WETLINES",wetlines,.00016,wetline)
 
-# C17: keep the exact fitted short03 asset only as a non-rendered groom guide, then
-# materialize real Blender Hair Curves. This moves the realism bottleneck from alpha-card
-# silhouette swaps to strand geometry + Principled Hair BSDF + Cycles 3D curves.
-if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_short"):
+# C17+: keep an exact verified MakeHuman hair asset as a non-rendered groom guide, then
+# materialize real Blender Hair Curves. The guide asset contributes authored UV/flow prior;
+# strand geometry and Principled Hair BSDF own final rendering.
+if HAIR_ASSET_KEY not in system_contract or not HAIR_ASSET_KEY.startswith("hair_"):
     raise RuntimeError(f"Unsupported DIGE_HAIR_ASSET_KEY={HAIR_ASSET_KEY}")
 hair_asset=system_contract[HAIR_ASSET_KEY]
 hair_label=HAIR_ASSET_KEY.replace("hair_","").upper()
@@ -2814,8 +2815,8 @@ def build_c17_strand_groom(guide_obj, surface_obj, material):
         "guide_sample_count":len(flow_samples),
         "guide_mesh_vertices":len(mesh.vertices),
         "guide_mesh_polygons":len(mesh.polygons),
-        "guide_field_version":"C17_6_SHORT03_UV_TEXTURE_FLOW_K8",
-        "guide_field_source":"OFFICIAL_MAKEHUMAN_SHORT03_DIFFUSE_STRUCTURE_TENSOR_PLUS_UV_JACOBIAN",
+        "guide_field_version":f"C17_6_{HAIR_ASSET_KEY.upper()}_UV_TEXTURE_FLOW_K8",
+        "guide_field_source":f"OFFICIAL_MAKEHUMAN_{HAIR_ASSET_KEY.upper()}_DIFFUSE_STRUCTURE_TENSOR_PLUS_UV_JACOBIAN",
         "guide_texture_sha256":guide_texture_sha,
         "guide_texture_size":[width,height],
         "guide_field_neighbors":k_neighbors,
@@ -2845,7 +2846,7 @@ groom_surface=(c28_gnm_objects.get("skin") if C28_GNM_HEAD else body)
 if groom_surface is None:
     raise RuntimeError("C28 GNM skin surface missing for strand groom")
 hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,groom_surface,hair)
-if C36_CANONICAL_APPEARANCE:
+if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR:
     brng=random.Random(20263637)
     bangs=[]
     for side in (-1.0,1.0):
@@ -2877,7 +2878,7 @@ if C29_GNM_PRESENTATION:
     hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
 hair_surface_contract={
-    "root_source":"SCALP_SURFACE_ROOTS_PLUS_OFFICIAL_SHORT03_UV_TEXTURE_FLOW_FIELD",
+    "root_source":f"SCALP_SURFACE_ROOTS_PLUS_{HAIR_ASSET_KEY.upper()}_UV_TEXTURE_FLOW_FIELD",
     "asset_key":HAIR_ASSET_KEY,
     "asset":HAIR_ASSET_KEY.replace("hair_",""),
     "asset_tags":hair_asset["tags"],
@@ -2900,7 +2901,7 @@ hair_surface_contract={
     "guide_field_neighbors":hair_curve_metrics["guide_field_neighbors"],
     "guide_field_mean_root_coherence":hair_curve_metrics["guide_field_mean_root_coherence"],
     "seed":hair_curve_metrics["seed"],
-    "style":"C33_GUIDE_GATED_FIBER_GROOM_V1" if C33_GUIDE_GATED_GROOM else ("C32_GNM_DERMAL_FIBER_GROOM_V1" if C32_GNM_DERMAL_HAIR else ("C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))))))))),
+    "style":"C36_LONG01_AUTHORED_FLOW_STRAND_GROOM_V1" if (C36_CANONICAL_APPEARANCE and HAIR_LONG_PRIOR) else ("C33_GUIDE_GATED_FIBER_GROOM_V1" if C33_GUIDE_GATED_GROOM else ("C32_GNM_DERMAL_FIBER_GROOM_V1" if C32_GNM_DERMAL_HAIR else ("C29_GNM_STRAND_ONLY_PRESENTATION_V1" if C29_GNM_PRESENTATION else ("C27_OFFICIAL_ANATOMY_SURFACE_FIBERS_V1" if C27_SURFACE_FIBERS else ("C26_MPFB2_PHOTOMETRIC_SAFE_GROOM_V1" if C26_PHOTOMETRIC else ("MPFB2_ENHANCED_SKIN_EYES_CURATED_SHORT03_C25_V1" if C25_MATURE_STACK else ("SURFACE_EYES_SOURCE_ALBEDO_C24_V1" if (C24_SURFACE_EYES or C24_SOURCE_ALBEDO or C24_HAIRLINE_REPAIR) else ("CALIBRATED_EYES_FRONTAL_GROOM_C23_V1" if (C23_CALIBRATED_EYES or C23_HAIRLINE_REPAIR or C23_FACE_PLANES) else ("PHYSICAL_SKIN_LANDMARK_GROOM_C22_V1" if (C22_PHYSICAL_SKIN or C22_LANDMARK_GROOM or C22_HAIR_MASS_WARP) else ("HYBRID_BULK_PLUS_NATURAL_MICROHAIRS_C21_V1" if C21_NATURAL_DETAIL else ("HYBRID_BULK_PLUS_MICRO_HAIRLINE_BROW_CURVES_C20_V1" if C20_VISUAL_REPAIR else ("HYBRID_BULK_PLUS_HAIRLINE_CURVES_C19_V1" if C19_HUMANIZATION else ("HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1" if C18_HYBRID_BULK else "HAIR_CURVES_GUIDE_INTERPOLATED_C17_V1")))))))))))),
 }
 
 # Fitted garment proxy from the deterministic canonical MakeHuman helper-tights group.
