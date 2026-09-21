@@ -1,0 +1,77 @@
+name: ARC3 Flash340 public exact-source pull probe
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - .github/workflows/arc3-flash340-public-pull-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pull:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Kaggle CLI
+        run: python -m pip install --disable-pip-version-check --quiet kaggle
+      - name: Read-only public kernel source pull
+        id: pull
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -uo pipefail
+          mkdir -p exact-pull
+          set +e
+          kaggle kernels pull izukia/arc-agi3-flash-next-mtp-full/1 -p exact-pull -m >pull.stdout 2>pull.stderr
+          rc=$?
+          set -e
+          printf '%s
+' "$rc" > pull.rc
+          echo "pull_rc=$rc" >> "$GITHUB_OUTPUT"
+          echo "PULL_RC=$rc"
+          sed -n '1,120p' pull.stdout || true
+          sed -n '1,120p' pull.stderr || true
+      - name: Hash any retrieved notebook
+        if: always()
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib,json
+          from pathlib import Path
+          files=sorted(p for p in Path("exact-pull").rglob("*") if p.is_file())
+          nbs=[p for p in files if p.suffix==".ipynb"]
+          rows=[]
+          for p in files:
+              rows.append({"path":str(p),"sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"bytes":p.stat().st_size})
+          receipt={
+              "schema":"deus/arc3-flash340-public-pull-probe/1",
+              "target":"izukia/arc-agi3-flash-next-mtp-full/1",
+              "pull_rc":int(Path("pull.rc").read_text().strip()),
+              "files":rows,
+              "notebook_count":len(nbs),
+              "expected_submitted_notebook_sha256":"6a141753f142ed0d683f34f9acb1ac732a6e333a193b2ad8612d66125e64d9d1",
+              "exact_match":any(hashlib.sha256(p.read_bytes()).hexdigest()=="6a141753f142ed0d683f34f9acb1ac732a6e333a193b2ad8612d66125e64d9d1" for p in nbs),
+              "truth":{"auth_supplied":False,"kernel_push":False,"kernel_run":False,"submission":False,"quota_spent":False},
+          }
+          Path("flash340-public-pull-receipt.json").write_text(json.dumps(receipt,indent=2)+"\n")
+          print(json.dumps(receipt,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: flash340-public-pull-probe
+          path: |
+            flash340-public-pull-receipt.json
+            pull.stdout
+            pull.stderr
+            pull.rc
+            exact-pull/
+          if-no-files-found: warn
