@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
   compileLogicalResourcePlan,
+  compileLogicalMicrocellShards,
   compileDigeC34Plan,
   compileDigeC34RecoveryPlan,
   recompileWithSolvedStageReuse,
@@ -116,4 +117,51 @@ test('non-cacheable final render cannot be silently reused',()=>{
       'final-render':{fingerprintMatched:true,evidenceRef:'fake',reuseKind:'RESULT'},
     },
   }),/not declared reusable/);
+});
+
+
+test('microcell coalescer turns 311,040,000 DIGE sample-pixels into seven bounded CPU shards with current resource vector',()=>{
+  const p=compileLogicalMicrocellShards({
+    taskId:'DIGE-C35-MICRO',
+    logicalUnits:311_040_000n,
+    resourceVector:current,
+    logicalNamespace:ONE_T_LOGICAL_NAMESPACE,
+    vcpuPerCpuShard:4,
+    maxPhysicalShards:7,
+    seedBase:20263030,
+    seedStride:104729,
+  });
+  assert.equal(p.logicalUnits,'311040000');
+  assert.equal(p.physicalShards,7);
+  assert.equal(p.cpuShardCapacity,7);
+  assert.equal(p.gpuShardCapacity,0);
+  assert.equal(p.shards.reduce((sum,x)=>sum+BigInt(x.logicalUnits),0n),311_040_000n);
+  assert.equal(new Set(p.shards.map(x=>x.seed)).size,7);
+  assert.ok(p.shards.every(x=>x.execution==='CPU'));
+  assert.ok(Math.abs(p.coalescingFactor-(311_040_000/7))<1e-9);
+});
+
+test('microcell coalescer assigns verified GPU shard slots before CPU slots without inventing GPU credit',()=>{
+  const p=compileLogicalMicrocellShards({
+    taskId:'mixed',
+    logicalUnits:1000n,
+    resourceVector:{...current,verifiedGpuCount:2,verifiedVramGiB:48},
+    vcpuPerCpuShard:4,
+    maxPhysicalShards:9,
+    gpuShardsPerVerifiedGpu:1,
+  });
+  assert.equal(p.cpuShardCapacity,7);
+  assert.equal(p.gpuShardCapacity,2);
+  assert.equal(p.physicalShards,9);
+  assert.deepEqual(p.shards.slice(0,2).map(x=>x.execution),['GPU','GPU']);
+  assert.ok(p.shards.slice(2).every(x=>x.execution==='CPU'));
+});
+
+test('microcell coalescer rejects logical work larger than namespace',()=>{
+  assert.throws(()=>compileLogicalMicrocellShards({
+    taskId:'overflow',
+    logicalUnits:1_000_000_000_001n,
+    logicalNamespace:ONE_T_LOGICAL_NAMESPACE,
+    resourceVector:current,
+  }),/exceed logicalNamespace/);
 });
