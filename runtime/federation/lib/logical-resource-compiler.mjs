@@ -1,6 +1,6 @@
 import { sha256Json } from './canonical.mjs';
 
-export const LOGICAL_RESOURCE_COMPILER_VERSION='deus-logical-resource-compiler/1.0';
+export const LOGICAL_RESOURCE_COMPILER_VERSION='deus-logical-resource-compiler/1.1';
 export const ONE_T_LOGICAL_NAMESPACE='1000000000000';
 
 function nn(value,name,allowNull=false){
@@ -153,6 +153,135 @@ export function compileLogicalResourcePlan({
     truthBoundary:'LOGICAL_ROLES_ARE_COMPILATION_ABSTRACTIONS__PHYSICAL_CPU_GPU_RAM_VRAM_CREDIT_REQUIRES_RUNTIME_RECEIPTS__LOGICAL_NAMESPACE_NE_PHYSICAL_HARDWARE',
   };
   return Object.freeze({...payload,planDigest:sha256Json(payload)});
+}
+
+
+function normalizeSolvedStageEvidence(value, stageId){
+  if(!value || typeof value!=='object' || Array.isArray(value)) throw new Error(`solvedStages.${stageId} must be an object`);
+  if(value.fingerprintMatched!==true) throw new Error(`solvedStages.${stageId} requires fingerprintMatched=true`);
+  const evidenceRef=String(value.evidenceRef??'').trim();
+  if(!evidenceRef) throw new Error(`solvedStages.${stageId}.evidenceRef required`);
+  const reuseKind=String(value.reuseKind??'RESULT').toUpperCase();
+  if(!['RESULT','ARTIFACT','METRIC','RECEIPT'].includes(reuseKind)) throw new Error(`invalid reuseKind for ${stageId}`);
+  return Object.freeze({
+    fingerprintMatched:true,
+    evidenceRef,
+    resultDigest:value.resultDigest==null?null:String(value.resultDigest),
+    artifactDigest:value.artifactDigest==null?null:String(value.artifactDigest),
+    reuseKind,
+    note:value.note==null?null:String(value.note),
+  });
+}
+
+export function recompileWithSolvedStageReuse(plan,{
+  solvedStages={},
+  reuseScope='EXACT_PLAN_INPUT_ENVIRONMENT_RESULT_CONTRACT',
+  metadata={},
+}={}){
+  if(!plan || typeof plan!=='object' || !Array.isArray(plan.stages) || !plan.planDigest) throw new Error('compiled plan with planDigest required');
+  if(!solvedStages || typeof solvedStages!=='object' || Array.isArray(solvedStages)) throw new Error('solvedStages must be an object map');
+
+  const stageIds=new Set(plan.stages.map(s=>s.id));
+  for(const id of Object.keys(solvedStages)) if(!stageIds.has(id)) throw new Error(`unknown solved stage ${id}`);
+
+  const normalizedEvidence=new Map(
+    Object.entries(solvedStages).map(([id,value])=>[id,normalizeSolvedStageEvidence(value,id)])
+  );
+
+  const stages=plan.stages.map(stage=>{
+    const evidence=normalizedEvidence.get(stage.id);
+    if(!evidence) return clone(stage);
+    if(stage.cacheable!==true && stage.reusableState!==true) {
+      throw new Error(`stage ${stage.id} is not declared reusable/cacheable`);
+    }
+    const execution=evidence.reuseKind==='ARTIFACT'?'REUSE_VERIFIED_ARTIFACT':'REUSE_VERIFIED_RESULT';
+    return {
+      ...clone(stage),
+      placement:{
+        ...clone(stage.placement),
+        state:'REUSED',
+        execution,
+        memoryMaterialization:'REUSED_VERIFIED_STATE',
+        gpuPromotionGate:null,
+      },
+      reuse:{
+        ...evidence,
+        reuseScope:String(reuseScope),
+        originalPlanDigest:plan.planDigest,
+      },
+    };
+  });
+
+  const summary={
+    stages:stages.length,
+    reused:stages.filter(x=>x.placement.state==='REUSED').length,
+    ready:stages.filter(x=>x.placement.state==='READY').length,
+    hold:stages.filter(x=>x.placement.state==='HOLD').length,
+    cpu:stages.filter(x=>x.placement.execution==='CPU').length,
+    cpuFallback:stages.filter(x=>x.placement.execution==='CPU_FALLBACK').length,
+    gpu:stages.filter(x=>x.placement.execution==='GPU').length,
+    logicalOnly:stages.filter(x=>x.placement.execution==='LOGICAL_ONLY').length,
+    physicalStagesRemaining:stages.filter(x=>!String(x.placement.execution).startsWith('REUSE_') && x.placement.state!=='HOLD' && x.placement.execution!=='LOGICAL_ONLY').length,
+  };
+
+  const payload={
+    schema:'deus-logical-resource-recompile/1.0',
+    compilerVersion:LOGICAL_RESOURCE_COMPILER_VERSION,
+    originalPlanDigest:plan.planDigest,
+    taskId:plan.taskId,
+    dataClass:plan.dataClass,
+    logicalNamespace:plan.logicalNamespace,
+    taskLogicalUnits:plan.taskLogicalUnits,
+    resourceVector:clone(plan.resourceVector),
+    stages,
+    optimization:clone(plan.optimization),
+    summary,
+    reuseScope:String(reuseScope),
+    metadata:{...clone(plan.metadata??{}),...clone(metadata??{})},
+    truthBoundary:'REUSE_REQUIRES_EXACT_FINGERPRINT_MATCH_AND_EVIDENCE_REF__REUSED_LOGICAL_STAGE_NE_NEW_PHYSICAL_EXECUTION__PHYSICAL_CREDIT_REMAINS_RECEIPT_GATED',
+  };
+  return Object.freeze({...payload,planDigest:sha256Json(payload)});
+}
+
+export function compileDigeC34RecoveryPlan(resourceVector,{
+  originalPlan=null,
+  selectedCandidateId='candidate-02',
+  selectionEvidenceRef,
+  prepArtifactRef,
+  candidateEvidenceRefs={},
+  visualGateEvidenceRef,
+}={}){
+  const base=originalPlan??compileDigeC34Plan(resourceVector);
+  const candidateIds=['candidate-01','candidate-02','candidate-03'];
+  const solved={
+    'prep-runtime':{
+      fingerprintMatched:true,
+      evidenceRef:String(prepArtifactRef||''),
+      reuseKind:'ARTIFACT',
+      note:'Reuse verified shared runtime instead of rebuilding immutable assets/geometry.'
+    },
+    ...Object.fromEntries(candidateIds.map(id=>[id,{
+      fingerprintMatched:true,
+      evidenceRef:String(candidateEvidenceRefs[id]||''),
+      reuseKind:'METRIC',
+      note:'Reuse executed low-sample render/evaluator result; candidate image is not required by final render.'
+    }])),
+    'visual-gate':{
+      fingerprintMatched:true,
+      evidenceRef:String(visualGateEvidenceRef||selectionEvidenceRef||''),
+      reuseKind:'RESULT',
+      note:`Reuse visual selection ${selectedCandidateId}; no coarse rerender.`
+    },
+  };
+  for(const [id,e] of Object.entries(solved)) if(!e.evidenceRef) throw new Error(`recovery evidence missing for ${id}`);
+  return recompileWithSolvedStageReuse(base,{
+    solvedStages:solved,
+    metadata:{
+      recoveryMode:'FINAL_ONLY_AFTER_VERIFIED_COARSE_REUSE',
+      selectedCandidateId,
+      selectionEvidenceRef:String(selectionEvidenceRef||''),
+    },
+  });
 }
 
 export function compileDigeC34Plan(resourceVector,{
