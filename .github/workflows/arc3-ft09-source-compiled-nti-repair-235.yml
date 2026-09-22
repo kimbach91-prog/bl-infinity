@@ -1,0 +1,85 @@
+name: ARC3 ft09 source-compiled NTi repair 235
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nti_repair_235.py
+      - .github/workflows/arc3-ft09-source-compiled-nti-repair-235.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-ft09-source-compiled-nti:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile harness
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_visible_local_234.py             public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nti_repair_235.py
+      - name: Fetch pinned source and traces
+        run: |
+          set -euo pipefail
+          mkdir -p source public_trace
+          curl --fail --location --retry 3 --silent --show-error             'https://raw.githubusercontent.com/axobase001/arc-agi-games/41b87fe1ea8d9819a44eea35172ffe28d6c5ffe6/ft09/0d8bbf25/ft09.py'             -o source/ft09.py
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum source/ft09.py > source/SHA256SUMS.txt
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile source to static spec
+        run: |
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates           python public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nti_repair_235.py             compile --source source/ft09.py --output r235-ft09-mechanism-spec.json
+      - name: Delete source before inference
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r235-ft09-mechanism-spec.json'))
+          assert d['schema']=='deus/arc3-ft09-observation-mechanism-spec/1'
+          assert d['source_commit']=='41b87fe1ea8d9819a44eea35172ffe28d6c5ffe6'
+          assert all(d['semantic_checks'].values())
+          assert d['truth']['source_ast_parsed_not_imported'] is True
+          PY
+          rm -f source/ft09.py
+          test ! -e source/ft09.py
+      - name: Execute observation-only NTi repair audit
+        run: |
+          set -euo pipefail
+          test ! -e source/ft09.py
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates           python public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nti_repair_235.py             evaluate --spec r235-ft09-mechanism-spec.json "${args[@]}" --output r235-ft09-source-compiled-nti-repair.json
+      - name: Verify truth boundary and repair falsifier
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r235-ft09-source-compiled-nti-repair.json'))
+          assert d['schema']=='deus/arc3-ft09-source-compiled-nti-repair-audit/1'
+          t=d['truth']
+          assert t['evaluate_stage_does_not_read_or_execute_source'] is True
+          assert t['observation_only_local_operator'] is True
+          assert t['nti_mask_inferred_from_visible_pixels_only'] is True
+          assert t['palette_inferred_from_visible_observation_only'] is True
+          assert t['trace_level_metadata_not_used_for_local_transition'] is True
+          assert t['independent_generalization_claim'] is False
+          assert d['decision']['source_assisted_expert_promotion'] is False
+          print(json.dumps({'train':d['p0_p9_source_assisted_validation'],'dev':d['p10_p19_reused_development_only'],'decision':d['decision']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r235-ft09-source-compiled-nti-repair
+          path: |
+            r235-ft09-mechanism-spec.json
+            r235-ft09-source-compiled-nti-repair.json
+            source/SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
