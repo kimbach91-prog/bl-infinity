@@ -39,10 +39,20 @@ jobs:
           body="$(tr -d '\r\n ' < /tmp/deus-mathjs/body.txt)"
           body_sha="$(sha256sum /tmp/deus-mathjs/body.txt | awk '{print $1}')"
           exact=false
-          if [ "$code" = "200" ] && [ "$body" = "$expected" ]; then exact=true; fi
+          if [ "$code" = "200" ]; then
+            exact="$(python3 - <<'PY' "$body" "$expected"
+          from decimal import Decimal, InvalidOperation
+          import sys
+          try:
+              print('true' if Decimal(sys.argv[1]) == Decimal(sys.argv[2]) else 'false')
+          except InvalidOperation:
+              print('false')
+          PY
+          )"
+          fi
 
           jq -n \
-            --arg receipt_version "DEUS-MATHJS-PUBLIC-CANARY/1" \
+            --arg receipt_version "DEUS-MATHJS-PUBLIC-CANARY/2" \
             --arg provider "MATHJS_WEB_SERVICE" \
             --arg endpoint "https://api.mathjs.org/v4/" \
             --arg expression "$expr" \
