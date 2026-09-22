@@ -1,0 +1,59 @@
+name: DEUS wsrv.nl Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-wsrv-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  wsrv-public-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Execute bounded public image transform canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-wsrv
+          URL='https://wsrv.nl/?url=wsrv.nl/lichtenstein.jpg&w=64&h=64&fit=cover&output=png'
+          start=$(date +%s%3N)
+          curl -L --max-time 30 -sS -D /tmp/deus-wsrv/headers.txt -o /tmp/deus-wsrv/body.png -w '%{http_code}' "$URL" > /tmp/deus-wsrv/http_code.txt
+          latency=$(( $(date +%s%3N) - start ))
+          code=$(cat /tmp/deus-wsrv/http_code.txt)
+          python3 - <<'PY'
+          import hashlib, json, pathlib, struct
+          p=pathlib.Path('/tmp/deus-wsrv/body.png')
+          b=p.read_bytes()
+          if b[:8] != b'\x89PNG\r\n\x1a\n': raise SystemExit('not png')
+          w,h=struct.unpack('>II', b[16:24])
+          receipt={
+            'schema':'deus-wsrv-public-canary/1',
+            'provider':'wsrv.nl',
+            'scope':'BL-S0 public/synthetic image resize+format transform',
+            'http_status':int(pathlib.Path('/tmp/deus-wsrv/http_code.txt').read_text()),
+            'width':w,'height':h,'bytes':len(b),
+            'body_sha256':hashlib.sha256(b).hexdigest(),
+            'exact_contract':(w==64 and h==64),
+            'auth_used':False,
+            'incremental_spend_observed':0
+          }
+          pathlib.Path('/tmp/deus-wsrv/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True))
+          print(json.dumps(receipt,sort_keys=True))
+          if receipt['http_status']!=200 or not receipt['exact_contract']:
+            raise SystemExit('wsrv contract failed')
+          PY
+          echo "$latency" > /tmp/deus-wsrv/latency_ms.txt
+          sha256sum /tmp/deus-wsrv/* | tee /tmp/deus-wsrv/file-sha256.txt
+
+      - name: Upload exact canary custody
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-wsrv-public-canary
+          path: /tmp/deus-wsrv/
+          if-no-files-found: error
+          retention-days: 7
