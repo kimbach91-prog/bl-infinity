@@ -1,0 +1,26 @@
+{
+  "schema": "dige-c41-native-eye-scalp-cover/1",
+  "candidate": "C41_HHIR_NATIVE_EYE_SCALP_COVER_V1",
+  "parent": "C40_HHIR_HYPERREAL_SCALP_BOUND_UPDO_V1",
+  "reason": "C40 runtime passed but visual audit failed: bald/high hairline, black geometric iris overlays, waxy/flat GNM face, helper-tights collar contaminating close-up.",
+  "mechanism_deltas": [
+    "Use native GNM eyeball mesh with MPFB2 procedural eye material; disable geometric iris/pupil/cornea overlays.",
+    "Lower source-level GNM hairline from brow+43mm to brow+28mm.",
+    "Add dense scalp-bound short undercoat plus distributed gather and rounded bun.",
+    "Apply visible-scale pore/roughness/SSS tuning to the actual GNM face material rather than the unused body material.",
+    "Hide helper-tights only for the HERO_ONLY face diagnostic.",
+    "Use fixed 85mm f/4 camera with lower fill for stronger facial depth."
+  ],
+  "frozen_truth": [
+    "no reference pixels read or composited",
+    "image_model_calls=0",
+    "CPU renderer unless fresh GPU allocation receipt exists",
+    "runtime PASS != visual PASS"
+  ],
+  "visual_gate": [
+    "hairline visibly covers frontal scalp without curtain walls or fan singularity",
+    "eyes read as embedded eyeballs, not floating black discs",
+    "skin shows plausible roughness/material response rather than plastic smoothness",
+    "no helper-garment collar in face diagnostic"
+  ]
+}
