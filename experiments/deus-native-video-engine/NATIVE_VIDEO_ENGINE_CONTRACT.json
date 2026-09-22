@@ -39,8 +39,9 @@
     "width": 360,
     "height": 640,
     "duration_seconds": 4,
-    "render_engine": "BLENDER_EEVEE_NEXT",
-    "audio": "none"
+    "audio": "none",
+    "render_engine_request": "BLENDER_EEVEE_NEXT",
+    "render_engine_runtime_alias": "BLENDER_EEVEE"
   },
   "acceptance": [
     "blend_scene_opened",
@@ -53,5 +54,5 @@
     "external_image_generation_calls_zero",
     "external_video_generation_calls_zero"
   ],
-  "truth_boundary": "CONFIGURED_NE_EXECUTED__EXECUTED_NE_VERIFIED_DONE"
+  "truth_boundary": "CONFIGURED_NE_EXECUTED__RUNTIME_ENGINE_ENUM_MUST_BE_OBSERVED__EXECUTED_NE_VERIFIED_DONE"
 }
