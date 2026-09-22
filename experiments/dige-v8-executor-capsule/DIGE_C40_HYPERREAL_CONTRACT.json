@@ -1,0 +1,39 @@
+{
+  "schema": "dige-c40-hyperreal-contract/1",
+  "candidate": "C40_HHIR_HYPERREAL_SCALP_BOUND_UPDO_V1",
+  "parent": "C39_HHIR_HYPERREAL_UPDO_V1",
+  "baseline_receipt": {
+    "run_id": 35704619399,
+    "direct_wall_seconds": 302,
+    "hhir_c39_wall_seconds": 85,
+    "structural_hhir_pass": true,
+    "visual_verdict": "FAIL"
+  },
+  "scars": [
+    "C39 bun rendered as box/fan singularity",
+    "C39 scalp undercoverage/bald read",
+    "skin remains waxy/plastic",
+    "eyes remain doll-like",
+    "C39 preview camera intended 85mm but emitted 70mm"
+  ],
+  "delta_only": [
+    "actual GNM scalp-rooted gather curves",
+    "distributed rounded bun loops with de-correlated targets",
+    "hairline-rooted micro fringe and sparse flyaways",
+    "lower SSS/coat and higher roughness/pore response",
+    "larger iris/cornea with narrower eye aperture",
+    "85mm/f3.6 camera fixed before preview render"
+  ],
+  "frozen_truth": [
+    "no reference-pixel compositing",
+    "image_model_calls=0",
+    "renderer_network_calls=0",
+    "CPU only unless fresh GPU receipt says otherwise",
+    "runtime pass does not certify hyperreal visual quality"
+  ],
+  "promotion_gate": {
+    "runtime": "typed receipt + artifact + lens85 + c40 groom metrics + no face/scalp root leak",
+    "visual": "direct image audit must improve scalp coverage/bun shape/eye read/skin response versus C39",
+    "full_multiview": "only after hero visual gate passes"
+  }
+}
