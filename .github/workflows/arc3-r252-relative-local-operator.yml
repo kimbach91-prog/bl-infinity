@@ -1,0 +1,123 @@
+name: ARC3 R252 re86 relative local operator
+
+on:
+  push:
+    branches:
+      - deus/r252-relative-local-operator-20260923
+    paths:
+      - .github/workflows/arc3-r252-relative-local-operator.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-r252-re86:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout DEUS candidate
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned public traces
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile R252
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py \
+            public_benchmark/arc3/kaggle_candidates/public_relative_local_operator_gate_252.py
+
+      - name: Stage exact re86 p0-p19 pinned public traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          game='re86-8af5384d'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute R252 bounded source-free operator gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
+          test "${#args[@]}" -eq 20
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_relative_local_operator_gate_252.py \
+            "${args[@]}" --output r252-re86-relative-local-operator.json \
+            2>r252-runtime.txt | tee r252-stdout.txt
+
+      - name: Verify R252 truth boundary and result schema
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r252-re86-relative-local-operator.json').read_text())
+          assert d['schema']=='deus/arc3-r252-relative-local-operator/1'
+          assert d['aggregate']['game_count']==1
+          assert list(d['games'])==['re86-8af5384d']
+          t=d['truth']
+          assert t['public_trace_only'] is True
+          assert t['game_source_read'] is False
+          assert t['selection_uses_p0_p9_only'] is True
+          assert t['p10_p19_never_updates_selection_or_model'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['competition_submission'] is False
+          assert t['submission_quota_spent'] is False
+          assert t['owner_score_claim'] is False
+          h=d['games']['re86-8af5384d']['heldout']
+          verdict='PASS_NONDOMINATED_PUBLIC_OFFLINE' if d['non_dominated_source_side_gain'] else 'NO_PROMOTION'
+          Path('r252-verdict.json').write_text(json.dumps({
+            'verdict':verdict,
+            'candidate_predictions':h.get('candidate_predictions',0),
+            'candidate_correct':h.get('candidate_correct',0),
+            'candidate_wrong':h.get('candidate_wrong',0),
+            'selected_by_action':d['games']['re86-8af5384d']['selected_by_action'],
+            'truth_lane':'PUBLIC_OFFLINE_PUBLIC_DEVELOPMENT'
+          },indent=2,sort_keys=True)+'\n')
+          print(Path('r252-verdict.json').read_text())
+          PY
+          sha256sum \
+            r252-re86-relative-local-operator.json \
+            r252-verdict.json \
+            r252-runtime.txt \
+            r252-stdout.txt \
+            public_trace/SHA256SUMS.txt > R252_SHA256SUMS.txt
+
+      - name: Upload R252 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: r252-re86-relative-local-operator
+          path: |
+            r252-re86-relative-local-operator.json
+            r252-verdict.json
+            r252-runtime.txt
+            r252-stdout.txt
+            R252_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
