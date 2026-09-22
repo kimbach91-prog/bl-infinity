@@ -415,6 +415,10 @@ class Handler(BaseHTTPRequestHandler):
         if parsed.path in ("/health","/video-v2-status"):
             body=json.dumps(state,sort_keys=True).encode()
             self.send_response(200); self.send_header("content-type","application/json"); self.send_header("content-length",str(len(body))); self.end_headers(); self.wfile.write(body); return
+        if parsed.path == "/video-v2-kaggle-logs":
+            logs=run([KAGGLE,"kernels","logs",I2V_KERNEL],timeout=180)
+            body=json.dumps(logs,sort_keys=True).encode()
+            self.send_response(200); self.send_header("content-type","application/json"); self.send_header("content-length",str(len(body))); self.end_headers(); self.wfile.write(body); return
         if parsed.path == "/video-v2-artifact":
             if not cap_ok(self.path) or not state.get("i2v_artifact_ready"):
                 self.send_response(404); self.end_headers(); return
