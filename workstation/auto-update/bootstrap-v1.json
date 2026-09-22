@@ -1,0 +1,14 @@
+{
+  "schema": "deus-workstation-auto-update-bootstrap/1",
+  "version": "1.0.0",
+  "artifact_sha256": "6c4bac7ce00b73646c83a3503fa967b15604f7a1d34ebef92723827648b4b3d2",
+  "drive_file_id": "1vzplLl3xAT7Qyt-THxtLJpYkKvpBEMsE",
+  "drive_folder_id": "14nK5JbhjoGInV3c1_RBRaq5ORlW4lPsC",
+  "drive_channel": "77_WORKSTATION_UPDATE_CHANNEL",
+  "runtime_manifest_endpoint": "/runtime/workstation/update-manifest",
+  "runtime_ack_endpoint": "/runtime/workstation/update-ack",
+  "runtime_source_rev": "1ad21b6cd87ea76195d829d67ee6fd71ead8054c",
+  "arbitrary_remote_shell": false,
+  "release_ref_format": "github_raw_bundle|owner/repo|COMMIT_SHA|base/path",
+  "truth_boundary": "Drive declares desired release; GitHub commit+hashes define versioned code; Windows self-test and runtime ACK prove execution."
+}
