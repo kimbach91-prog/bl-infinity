@@ -1,0 +1,66 @@
+name: ARC3 TU93 symbolic lattice planner 198
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_tu93_symbolic_lattice_planner_198.py
+      - .github/workflows/arc3-tu93-symbolic-lattice-198.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tu93-symbolic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_tu93_symbolic_lattice_planner_198.py
+      - name: Download TU93 p0-p19
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="tu93-0768757b_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute symbolic parser + BFS verifier
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/tu93-0768757b_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tu93_symbolic_lattice_planner_198.py             "${args[@]}" --output tu93-r198.json
+      - name: Verify truth
+        if: always()
+        run: |
+          if [ -s tu93-r198.json ]; then
+            python - <<'PY'
+          import json
+          d=json.load(open('tu93-r198.json'))
+          t=d['truth']
+          assert t['train_free_deterministic_parser'] is True
+          assert t['preaction_only_outcome_prediction'] is True
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'rung':198,'gate':d['diagnostic_gate'],'classifier':{k:v for k,v in d['transition_classifier'].items() if k not in ('per_trace','mismatch_examples')},'planner':d['planner'],'mismatches':d['transition_classifier']['mismatch_examples'][:10]},sort_keys=True))
+          PY
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-tu93-r198
+          path: |
+            tu93-r198.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: warn
+          retention-days: 30
