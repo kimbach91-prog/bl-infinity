@@ -1,4 +1,4 @@
-name: ARC3 Milestone 2 publication gate
+name: ARC3 Milestone 2 publication gate\n# gate revision 3: schema declaration repaired
 
 on:
   push:
