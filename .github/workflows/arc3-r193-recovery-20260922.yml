@@ -1,0 +1,71 @@
+name: ARC3 V5 R193 cancelled-lane recovery
+
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths: [.github/workflows/arc3-r193-recovery-20260922.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        game:
+          - ls20-9607627b
+          - sb26-7fbdac44
+          - bp35-0a0ad940
+          - g50t-5849a774
+          - lf52-271a04aa
+          - m0r0-492f87ba
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile R193 stack
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py             public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py             public_benchmark/arc3/kaggle_candidates/public_v5_state_conditioned_operator_193.py
+      - name: Download pinned traces
+        env: {GAME: ${{ matrix.game }}}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute recovered R193 lane
+        env: {GAME: ${{ matrix.game }}}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_v5_state_conditioned_operator_193.py             --game "$GAME" "${args[@]}" --output "r193-${GAME}.json"
+      - name: Verify
+        env: {GAME: ${{ matrix.game }}}
+        run: |
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME'];d=json.load(open(f'r193-{g}.json'))
+          t=d['truth']
+          assert t['inner_selection_uses_only_p0_p9'] is True
+          assert t['heldout_p10_p19_never_updates_programs_or_router'] is True
+          print(json.dumps({'game':g,'depth':d['inner']['selected_depth'],'heldout':d['heldout']['all']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r193-recovery-${{ matrix.game }}
+          path: |
+            r193-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
