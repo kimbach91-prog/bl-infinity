@@ -3,14 +3,16 @@ import { BudgetGovernor } from './budget.mjs';
 import { MemoryResultCache } from './cache.mjs';
 import { ContributionLedger } from './ledger.mjs';
 import { ValuePolicyGovernor } from './value-policy.mjs';
+import { chooseComputeTier } from './resource-envelope.mjs';
 
 export class FederationOrchestrator {
-  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null, allowedStateDataClasses = null, valuePolicy = new ValuePolicyGovernor(), treasury = null } = {}) {
+  constructor({ registry, executor, queue = new MemoryLeaseQueue(), budget = new BudgetGovernor(), resourceEnvelope = null, cache = new MemoryResultCache(), ledger = new ContributionLedger(), audit = null, allowedStateDataClasses = null, valuePolicy = new ValuePolicyGovernor(), treasury = null } = {}) {
     if (!registry || !executor) throw new Error('registry and executor are required');
     this.registry = registry;
     this.executor = executor;
     this.queue = queue;
     this.budget = budget;
+    this.resourceEnvelope = resourceEnvelope;
     this.cache = cache;
     this.ledger = ledger;
     this.audit = audit;
@@ -37,6 +39,8 @@ export class FederationOrchestrator {
       throw error;
     }
 
+    if (this.resourceEnvelope && task.computeEnvelope) this.#ensureResourceTask(task);
+
     const effective = { ...options };
     if (!admission.legacy) effective.priority = admission.priority;
     if (task.sideEffect === true && !(task.idempotencyKey && task.retrySafe === true)) effective.maxAttempts = 1;
@@ -49,6 +53,7 @@ export class FederationOrchestrator {
       strategicReinvestmentRequested: admission.strategicReinvestmentRequested ?? admission.commonBenefitRequested ?? false,
       commonBenefitRequested: admission.commonBenefitRequested ?? false,
       derivedPriority: admission.legacy ? null : admission.priority,
+      computeEnvelope: task.computeEnvelope ? true : false,
     });
     return { ...enqueued, admission };
   }
@@ -65,14 +70,46 @@ export class FederationOrchestrator {
         const value = { ...structuredClone(cached.value), cache: { hit: true, key: cached.key } };
         await this.queue.complete(job.id, token, value);
         await this.audit?.append('task.cache-hit', { taskId: task.id, cacheKey: cached.key });
+        this.#closeResourceTask(task, 'cache-hit');
         return { job: await this.queue.get(job.id), execution: value, cacheHit: true };
       }
       const estimated = Number(task.estimatedCostUsd ?? 0);
       const tenantId = task.tenantId ?? 'default';
+      if (this.resourceEnvelope && task.computeEnvelope) this.#ensureResourceTask(task);
       const execution = await this.executor.execute(task, {
-        providerGuard: async (provider) => this.budget.reserve({ amountUsd: estimated, tenantId, providerId: provider.id, taskId: task.id }),
-        onProviderSuccess: async ({ guard }) => { if (guard?.reservation?.id) await this.budget.commit(guard.reservation.id, estimated); },
-        onProviderFailure: async ({ guard }) => { if (guard?.reservation?.id) await this.budget.release(guard.reservation.id, 'execution-failed'); },
+        providerGuard: async (provider) => {
+          let resourceReservation = null;
+          if (this.resourceEnvelope && task.computeEnvelope) {
+            const tier = task.computeTier ?? chooseComputeTier(task.computeRouting ?? {}).tier;
+            const resourceEstimate = estimateResources(task, provider);
+            const resourceVerdict = this.resourceEnvelope.authorize(task.id, resourceEstimate, {
+              tier,
+              explicitHpcAuthorization: task.explicitHpcAuthorization === true,
+            });
+            if (!resourceVerdict.ok) return resourceVerdict;
+            resourceReservation = resourceVerdict.reservation;
+          }
+
+          const budgetVerdict = await this.budget.reserve({ amountUsd: estimated, tenantId, providerId: provider.id, taskId: task.id });
+          if (!budgetVerdict.ok) {
+            if (resourceReservation?.id) this.resourceEnvelope.release(resourceReservation.id, 'usd-budget-rejected');
+            return budgetVerdict;
+          }
+          return {
+            ok: true,
+            reservation: budgetVerdict.reservation,
+            budgetReservation: budgetVerdict.reservation,
+            resourceReservation,
+          };
+        },
+        onProviderSuccess: async ({ guard }) => {
+          if (guard?.budgetReservation?.id) await this.budget.commit(guard.budgetReservation.id, estimated);
+          if (guard?.resourceReservation?.id) this.resourceEnvelope.commit(guard.resourceReservation.id, guard.resourceReservation.estimate);
+        },
+        onProviderFailure: async ({ guard }) => {
+          if (guard?.budgetReservation?.id) await this.budget.release(guard.budgetReservation.id, 'execution-failed');
+          if (guard?.resourceReservation?.id) this.resourceEnvelope.release(guard.resourceReservation.id, 'execution-failed');
+        },
       });
       await this.cache.set(task, execution, { ttlMs: task.cacheTtlMs });
       const provider = this.registry.get(execution.providerId);
@@ -103,6 +140,7 @@ export class FederationOrchestrator {
         status: 'succeeded',
       });
       await this.queue.complete(job.id, token, execution);
+      this.#closeResourceTask(task, 'completed');
       return { job: await this.queue.get(job.id), execution, cacheHit: false };
     } catch (error) {
       for (const attempt of error.attempts ?? []) {
@@ -137,6 +175,7 @@ export class FederationOrchestrator {
     return {
       queue: { pending: pending.length, running: running.length, succeeded: succeeded.length, deadletter: deadletter.length },
       budget,
+      resourceEnvelope: this.resourceEnvelope?.snapshot?.() ?? null,
       cache,
       ledger,
       circuits: this.executor.circuit?.snapshot?.() ?? {},
@@ -145,6 +184,52 @@ export class FederationOrchestrator {
       treasury: this.treasury?.snapshot?.() ?? null,
     };
   }
+
+  #ensureResourceTask(task) {
+    try {
+      return this.resourceEnvelope.taskSnapshot(task.id);
+    } catch (error) {
+      if (!String(error?.message ?? '').startsWith('unknown task:')) throw error;
+    }
+    const envelope = task.computeEnvelope ?? {};
+    return this.resourceEnvelope.openTask({
+      taskId: task.id,
+      tenantId: task.tenantId ?? 'default',
+      purpose: envelope.purpose ?? task.capability,
+      authority: envelope.authority ?? task.authority ?? null,
+      dataResidency: envelope.dataResidency ?? (task.dataLocation ? [task.dataLocation] : []),
+      limits: envelope.limits ?? {},
+      tierCeiling: envelope.tierCeiling ?? 'T4',
+      assuranceLevel: envelope.assuranceLevel ?? 'medium',
+      catastrophicRiskClass: envelope.catastrophicRiskClass ?? 0,
+    });
+  }
+
+  #closeResourceTask(task, reason) {
+    if (!(this.resourceEnvelope && task.computeEnvelope)) return;
+    try {
+      const snapshot = this.resourceEnvelope.taskSnapshot(task.id);
+      if (snapshot.state === 'open') this.resourceEnvelope.closeTask(task.id, reason);
+    } catch {
+      // Runtime completion must not be converted into failure only because optional envelope cleanup was already completed elsewhere.
+    }
+  }
+}
+
+function estimateResources(task, provider) {
+  const workUnits = Number(task.estimatedWorkUnits ?? 0);
+  const rawProviderEnergy = provider.telemetry?.energyPerUnitJoules;
+  const providerEnergyPerUnit = rawProviderEnergy == null || rawProviderEnergy === '' ? null : Number(rawProviderEnergy);
+  const derivedEnergy = Number.isFinite(workUnits) && workUnits > 0 && providerEnergyPerUnit != null && Number.isFinite(providerEnergyPerUnit) && providerEnergyPerUnit >= 0
+    ? workUnits * providerEnergyPerUnit
+    : 0;
+  return {
+    energyJoules: Number(task.estimatedEnergyJoules ?? derivedEnergy),
+    costUsd: Number(task.estimatedCostUsd ?? 0),
+    acceleratorSeconds: Number(task.estimatedAcceleratorSeconds ?? 0),
+    tokens: Number(task.estimatedTokens ?? 0),
+    wallTimeMs: Number(task.estimatedWallTimeMs ?? provider.telemetry?.p95LatencyMs ?? 0),
+  };
 }
 
 function byteSize(value) {
