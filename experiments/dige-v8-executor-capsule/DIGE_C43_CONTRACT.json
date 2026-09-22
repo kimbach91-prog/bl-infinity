@@ -1,0 +1,56 @@
+{
+  "schema": "dige-c43-tangential-groom/1",
+  "candidate": "C43_HHIR_TANGENTIAL_GROOM_V1",
+  "parent": "C42_HHIR_GEOMETRY_EYE_EDGE_HAIRLINE_V1",
+  "parent_runtime": {
+    "run_id": 35715860544,
+    "wall_seconds": 145,
+    "runtime_pass": true,
+    "visual_pass": false
+  },
+  "parent_visual": {
+    "improved": [
+      "embedded iris/pupil readable",
+      "helper collar removed",
+      "skin response more visible than C41",
+      "scalp coverage maintained"
+    ],
+    "failed": [
+      "frontal gather strands form vertical comb lines",
+      "hairline still looks synthetic",
+      "face still below hyperreal detail threshold"
+    ]
+  },
+  "mechanism_deltas": [
+    "Keep C42 topology-independent generated-coordinate native eye but reduce pupil/iris normalized radius.",
+    "Undercoat follows scalp-tangential backward/upward vector instead of pulling toward bun.",
+    "Primary gather roots are forbidden from the immediate frontal hairline band.",
+    "Gather curves follow scalp tangent for first ~4.6 cm before turning toward bun.",
+    "Hairline edge fibers are halved and thinned; they sweep backward/up instead of downward.",
+    "Skin visible-scale pore/micro response is increased slightly while SSS is reduced."
+  ],
+  "truth_boundaries": [
+    "no reference pixels read/composited",
+    "no image model calls",
+    "CPU-only until fresh GPU receipt",
+    "runtime structural pass != hyperreal visual pass",
+    "C39 3.55x runtime result remains workload-specific"
+  ],
+  "runtime_gate": {
+    "candidate": "C43_HHIR_TANGENTIAL_GROOM_V1",
+    "eye_integration": "GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_RADIAL_IRIS_NO_UV_NO_OVERLAY",
+    "scalp_min": 650,
+    "gather_pool_min": 350,
+    "primary_min": 350,
+    "bun_curves": 520,
+    "lens_mm": 85,
+    "fstop": 4
+  },
+  "visual_gate": [
+    "frontal hairline no longer forms vertical comb bars",
+    "scalp edge reads as continuous groom, not dots/stubble",
+    "eye proportion remains plausible after smaller iris/pupil",
+    "skin material response remains improved or better",
+    "no new face-crossing or baldness regression"
+  ]
+}
