@@ -29,7 +29,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile
-        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_transition_morphology_diag_253.py public_benchmark/arc3/kaggle_candidates/public_temporal_delta_diag_258.py
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_temporal_delta_diag_258.py
       - name: Stage g50t p0-p9 only
         shell: bash
         run: |
@@ -72,3 +72,5 @@ jobs:
             public_trace/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+
+# trigger-r258-repaired-harness
