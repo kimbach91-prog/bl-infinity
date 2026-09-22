@@ -1,0 +1,88 @@
+name: ARC3 ft09 compiled observation mechanism 234
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py
+      - .github/workflows/arc3-ft09-compiled-observation-mechanism-234.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-and-evaluate-ft09-mechanism:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install compile-only public runtime
+        run: python -m pip install --disable-pip-version-check --quiet 'arc-agi==0.9.3'
+      - name: Fetch pinned MIT source and public traces
+        run: |
+          set -euo pipefail
+          mkdir -p source public_trace
+          curl --fail --location --retry 3 --silent --show-error             'https://raw.githubusercontent.com/axobase001/arc-agi-games/41b87fe1ea8d9819a44eea35172ffe28d6c5ffe6/ft09/0d8bbf25/ft09.py'             -o source/ft09.py
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum source/ft09.py > source/SHA256SUMS.txt
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile source to static manifest
+        run: |
+          set -euo pipefail
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py             compile --source source/ft09.py --output r234-ft09-compiled-manifest.json
+      - name: Create clean evaluator venv without arcengine
+        run: |
+          python -m venv /tmp/r234eval
+          /tmp/r234eval/bin/python - <<'PY'
+          try:
+              import arcengine
+              raise SystemExit("clean evaluator unexpectedly has arcengine")
+          except ModuleNotFoundError:
+              print("R234_EVAL_NO_ARCENGINE=true")
+          PY
+      - name: Evaluate standalone manifest-only mechanism
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          /tmp/r234eval/bin/python public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py             evaluate --manifest r234-ft09-compiled-manifest.json "${args[@]}"             --output r234-ft09-compiled-mechanism-eval.json
+      - name: Verify truth boundary
+        run: |
+          /tmp/r234eval/bin/python - <<'PY'
+          import json
+          m=json.load(open('r234-ft09-compiled-manifest.json'))
+          d=json.load(open('r234-ft09-compiled-mechanism-eval.json'))
+          assert m['schema']=='deus/arc3-ft09-compiled-observation-mechanism/1'
+          assert d['schema']=='deus/arc3-ft09-compiled-observation-mechanism-eval/1'
+          assert m['truth']['source_runtime_required_at_inference'] is False
+          t=d['truth']
+          assert t['evaluator_imports_game_source'] is False
+          assert t['evaluator_requires_arcengine'] is False
+          assert t['evaluator_requires_internet'] is False
+          assert t['public_trace_outcomes_do_not_update_manifest'] is True
+          assert t['independent_generalization_claim'] is False
+          assert d['decision']['solver_promotion'] is False
+          assert d['decision']['kaggle_packaging'] is False
+          print(json.dumps({
+            'manifest_levels':len(m['levels']),
+            'aggregate':d['aggregate'],
+            'branches':d['branches'],
+            'abstain':d['abstain_reasons'],
+            'gate':d['source_assisted_zero_wrong_transition_gate'],
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r234-ft09-compiled-observation-mechanism
+          path: |
+            r234-ft09-compiled-manifest.json
+            r234-ft09-compiled-mechanism-eval.json
+            source/SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
