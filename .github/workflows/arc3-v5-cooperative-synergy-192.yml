@@ -6,6 +6,9 @@ on:
       - deus/arc3-remaining14-coverage-20260922
     paths:
       - public_benchmark/arc3/kaggle_candidates/public_v5_cooperative_synergy_arbiter_192.py
+      - public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py
       - .github/workflows/arc3-v5-cooperative-synergy-192.yml
   workflow_dispatch:
 
