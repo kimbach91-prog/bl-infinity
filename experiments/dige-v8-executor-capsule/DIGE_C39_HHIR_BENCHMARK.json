@@ -1,0 +1,103 @@
+{
+  "schema": "dige-hhir-hyperreal-benchmark/1",
+  "benchmark_id": "DIGE_C39_HHIR_HYPERREAL_AB_V1",
+  "objective": "Test whether DEUS heterogeneous representation/HHIR produces a cleaner causal repair path for the current DiGe hyperreal workload than the direct C36/G continuation, while producing a new source-level hyperreal candidate.",
+  "frozen_task": {
+    "target": "C38 coherent human realism with believable face/eyelids, source-level bun/updo groom, skin material response, fixed camera, no reference-pixel reuse",
+    "baseline": "C36_G_LONG01 direct continuation",
+    "candidate": "C39_HHIR_HYPERREAL_UPDO_V1",
+    "renderer": "Blender 5.2.2 / Cycles / CPU",
+    "preview_samples": 96
+  },
+  "hhir_graph": [
+    {
+      "id": "GEOMETRY_FACE",
+      "lane": "graph+numeric",
+      "inputs": [
+        "GNM landmarks",
+        "body geometry"
+      ],
+      "invariants": [
+        "same subject",
+        "no 2D face patch"
+      ],
+      "output": "face/eyelid geometry contract"
+    },
+    {
+      "id": "EYE_INTERFACE",
+      "lane": "geometry+material",
+      "inputs": [
+        "eye landmarks",
+        "cornea/iris stack"
+      ],
+      "invariants": [
+        "reduced sclera",
+        "wetline preserved"
+      ],
+      "output": "eye interface"
+    },
+    {
+      "id": "SKIN_PBR",
+      "lane": "material+stochastic",
+      "inputs": [
+        "MPFB2 mature graph",
+        "CC0 albedo"
+      ],
+      "invariants": [
+        "source provenance",
+        "lighting-dependent response"
+      ],
+      "output": "scale-separated skin response"
+    },
+    {
+      "id": "GROOM_UPDO",
+      "lane": "graph+procedural geometry",
+      "inputs": [
+        "scalp/hairline geometry"
+      ],
+      "invariants": [
+        "no long01 final-style curtain",
+        "face clearance",
+        "bun coherent"
+      ],
+      "output": "primary gather + bun + fringe + flyaways"
+    },
+    {
+      "id": "CAMERA",
+      "lane": "projective numeric",
+      "inputs": [
+        "subject origin",
+        "face target"
+      ],
+      "invariants": [
+        "same fixed lens per arm except declared candidate lens"
+      ],
+      "output": "85mm candidate camera"
+    },
+    {
+      "id": "VERIFY",
+      "lane": "deterministic receipt+human visual gate",
+      "inputs": [
+        "render receipt",
+        "PNG"
+      ],
+      "invariants": [
+        "runtime pass != hyperreal pass",
+        "no reference pixels"
+      ],
+      "output": "structural verdict + visual gate"
+    }
+  ],
+  "known_scars_to_avoid": [
+    "C36_F short03 curtain/ring failure",
+    "C36_G long01 rigid side-wall/pigtail mass",
+    "waxy/flat skin",
+    "doll-like eye interface",
+    "heuristic score promoted over direct visual audit"
+  ],
+  "promotion": {
+    "structural": "HHIR arm executes with typed subsystem contract, no known hard invariant violation, receipt and artifact complete",
+    "visual": "manual/direct image audit must show material improvement; otherwise no hyperreal promotion",
+    "claim_ceiling": "STRUCTURAL_HHIR_BENCHMARK_ONLY until direct visual audit passes"
+  }
+}
