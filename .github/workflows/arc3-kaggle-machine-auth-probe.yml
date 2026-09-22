@@ -65,3 +65,5 @@ jobs:
             kaggle-readonly.err
           if-no-files-found: warn
           retention-days: 14
+
+# fresh non-secret binding probe trigger 2026-09-22
