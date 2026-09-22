@@ -1,0 +1,74 @@
+name: DEUS QuickChart Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-quickchart-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quickchart-public-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Execute bounded BL-S0 QuickChart render canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/deus-quickchart
+          mkdir -p "$out"
+          nonce="DEUSQC-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          jq -n --arg nonce "$nonce" '{width:240,height:120,format:"png",backgroundColor:"white",chart:{type:"bar",data:{labels:["A","B","C"],datasets:[{label:$nonce,data:[3,1,4]}]},options:{plugins:{legend:{display:true}},animation:false}}}' > "$out/request.json"
+          start_ms=$(date +%s%3N)
+          status=$(curl --max-time 25 -sS -D "$out/headers.txt" -o "$out/body.png" -w '%{http_code}' \
+            -H 'content-type: application/json' \
+            --data-binary @"$out/request.json" \
+            https://quickchart.io/chart)
+          end_ms=$(date +%s%3N)
+          latency_ms=$((end_ms-start_ms))
+          req_sha=$(sha256sum "$out/request.json" | awk '{print $1}')
+          body_sha=$(sha256sum "$out/body.png" | awk '{print $1}')
+          headers_sha=$(sha256sum "$out/headers.txt" | awk '{print $1}')
+          bytes=$(wc -c < "$out/body.png" | tr -d ' ')
+          content_type=$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{gsub("\r",""); sub(/^[^:]+:[[:space:]]*/,""); print; exit}' "$out/headers.txt")
+          python - "$out/body.png" "$out/png_meta.json" <<'PY'
+          import json, struct, sys
+          p, out = sys.argv[1], sys.argv[2]
+          b = open(p,'rb').read()
+          ok_sig = b.startswith(b'\x89PNG\r\n\x1a\n')
+          width = height = None
+          if ok_sig and len(b) >= 24 and b[12:16] == b'IHDR':
+              width, height = struct.unpack('>II', b[16:24])
+          meta = {'png_signature': ok_sig, 'width': width, 'height': height}
+          open(out,'w').write(json.dumps(meta,separators=(',',':')))
+          if not (ok_sig and width == 240 and height == 120):
+              raise SystemExit('PNG semantic verification failed')
+          PY
+          jq -n \
+            --arg receipt_version 'DEUS-QUICKCHART-PUBLIC-CANARY/1' \
+            --arg provider 'QuickChart' \
+            --arg endpoint 'https://quickchart.io/chart' \
+            --arg scope 'BL-S0 public synthetic chart rendering' \
+            --arg nonce "$nonce" \
+            --arg status "$status" \
+            --arg content_type "$content_type" \
+            --arg req_sha "$req_sha" \
+            --arg headers_sha "$headers_sha" \
+            --arg body_sha "$body_sha" \
+            --argjson bytes "$bytes" \
+            --argjson latency_ms "$latency_ms" \
+            --slurpfile png "$out/png_meta.json" \
+            '{receipt_version:$receipt_version,provider:$provider,endpoint:$endpoint,scope:$scope,nonce:$nonce,http_status:($status|tonumber),content_type:$content_type,latency_ms:$latency_ms,body_bytes:$bytes,request_sha256:$req_sha,headers_sha256:$headers_sha,body_sha256:$body_sha,png:$png[0],useful_execution:(($status=="200") and ($png[0].png_signature==true) and ($png[0].width==240) and ($png[0].height==120))}' > "$out/receipt.json"
+          cat "$out/receipt.json"
+          jq -e '.useful_execution==true and .http_status==200' "$out/receipt.json" >/dev/null
+      - name: Upload exact canary custody bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-quickchart-public-canary-${{ github.run_id }}
+          path: /tmp/deus-quickchart/
+          if-no-files-found: error
+          retention-days: 7
