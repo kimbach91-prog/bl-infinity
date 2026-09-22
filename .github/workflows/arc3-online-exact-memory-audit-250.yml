@@ -1,0 +1,85 @@
+name: ARC3 online exact memory audit 250
+on:
+  push:
+    branches: [deus/arc3-oy1-source-audit-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_online_exact_memory_audit_250.py
+      - .github/workflows/arc3-online-exact-memory-audit-250.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-r250:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_online_exact_memory_audit_250.py
+      - name: Stage exact 25x20 pinned public traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          games=(
+            ar25-0c556536 bp35-0a0ad940 cd82-fb555c5d cn04-2fe56bfb dc22-fdcac232
+            ft09-0d8bbf25 g50t-5849a774 ka59-38d34dbb lf52-271a04aa lp85-305b61c3
+            ls20-9607627b m0r0-492f87ba r11l-495a7899 re86-8af5384d s5i5-18d95033
+            sb26-7fbdac44 sc25-635fd71a sk48-d8078629 sp80-589a99af su15-1944f8ab
+            tn36-ef4dde99 tr87-cd924810 tu93-0768757b vc33-5430563c wa30-ee6fef47
+          )
+          for game in "${games[@]}"; do
+            for p in $(seq 0 19); do
+              f="${game}_p${p}_events.jsonl"
+              src="upstream-duck/example-run/artifacts/$f"
+              test -s "$src"
+              cp "$src" "public_trace/$f"
+            done
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 500
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R250
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_online_exact_memory_audit_250.py "${args[@]}" --output r250-online-exact-memory-audit.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r250-online-exact-memory-audit.json'))
+          assert d['schema']=='deus/arc3-r250-online-exact-memory-audit/1'
+          t=d['truth']
+          assert t['game_source_read'] is False
+          assert t['upstream_oy_game_results_imported'] is False
+          assert t['upstream_oy_action_logs_imported'] is False
+          assert t['remote_inference_called'] is False
+          assert t['paid_api_called'] is False
+          assert t['p10_p19_future_outcomes_used_for_prediction'] is False
+          assert t['online_updates_after_scoring_only'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert d['promotion']['solver_promotion'] is False
+          assert d['promotion']['kaggle_packaging'] is False
+          print(json.dumps({'aggregate':d['aggregate'],'promotion':d['promotion']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r250-online-exact-memory-audit
+          path: |
+            r250-online-exact-memory-audit.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
