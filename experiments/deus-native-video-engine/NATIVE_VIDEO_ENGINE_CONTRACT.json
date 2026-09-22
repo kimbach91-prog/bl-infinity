@@ -35,13 +35,15 @@
       "root_spin",
       "root_lean"
     ],
-    "fps": 12,
-    "width": 360,
-    "height": 640,
+    "fps": 2,
+    "width": 180,
+    "height": 320,
     "duration_seconds": 4,
     "audio": "none",
     "render_engine_request": "BLENDER_EEVEE_NEXT",
-    "render_engine_runtime_alias": "BLENDER_EEVEE"
+    "render_engine_runtime_alias": "BLENDER_EEVEE",
+    "frame_count": 8,
+    "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY"
   },
   "acceptance": [
     "blend_scene_opened",
