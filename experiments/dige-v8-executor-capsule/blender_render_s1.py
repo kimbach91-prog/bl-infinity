@@ -1474,6 +1474,29 @@ body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
 
+def s1_refine_body_form(obj):
+    if not S1_ENDOGENOUS:
+        return 0
+    moved=0
+    for v in obj.data.vertices:
+        p=v.co
+        x=float(p.x); z=float(p.z)
+        if abs(x)>.36:
+            continue
+        waist=math.exp(-0.5*((z-1.08)/.14)**2)
+        hip=math.exp(-0.5*((z-.91)/.15)**2)
+        thigh=math.exp(-0.5*((z-.68)/.17)**2)
+        shoulder=math.exp(-0.5*((z-1.38)/.12)**2)
+        sx=1.0-.045*waist+.055*hip+.026*thigh-.015*shoulder
+        p.x*=sx
+        if .72<z<1.02 and abs(x)<.30:
+            p.y*=1.025
+        moved+=1
+    obj.data.update()
+    return moved
+
+s1_body_form_vertices=s1_refine_body_form(body)
+
 def s1_relax_arms(obj):
     if not S1_ENDOGENOUS:
         return 0
@@ -2247,6 +2270,21 @@ if C28_GNM_HEAD:
             if dx<.010 and dz<.010 and p.y>mouth_center.y-.020:
                 w=(1.0-dx/.010)*(1.0-dz/.010)
                 p.z += .0016*max(0.0,w)
+        if S1_ENDOGENOUS:
+            cheek_z_s1=(eye_z+mouth_center.z)*.5
+            for v in skin_obj.data.vertices:
+                p=v.co
+                # Fuller youthful cheek plane without changing the semantic identity seed.
+                cheek_w=math.exp(-0.5*((p.z-cheek_z_s1)/.036)**2)*max(0.0,1.0-abs(p.x)/.095)
+                if abs(p.x)>.020:
+                    p.x=gnm_eye_mid.x+(p.x-gnm_eye_mid.x)*(1.0+.032*cheek_w)
+                # Shorten the long lower-face read while preserving mouth/eye anchors.
+                if p.z < mouth_center.z-.010 and p.z > chin.z-.020:
+                    t=max(0.0,min(1.0,(mouth_center.z-p.z)/max(.025,mouth_center.z-chin.z)))
+                    p.z += .012*(t**1.25)
+                # Soften chin projection very slightly.
+                chin_w=math.exp(-0.5*(((p.x-gnm_eye_mid.x)/.032)**2+((p.z-chin.z)/.024)**2))
+                p.y -= .0014*chin_w
         skin_obj.data.update()
         # Slightly reduce globe projection/size so sclera does not dominate the face.
         for comp,pts in (("left_eye",transformed_landmarks[36:42]),("right_eye",transformed_landmarks[42:48])):
@@ -3656,6 +3694,7 @@ if S1_ENDOGENOUS:
         "leggings_polygons":len(leggings.data.polygons),
         "source":"RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL",
         "material":"PROCEDURAL_GRAY_FABRIC_PBR",
+        "body_form_vertices_refined":s1_body_form_vertices,
         "body_arm_vertices_relaxed":s1_arm_vertices,
         "tights_arm_vertices_relaxed":s1_tights_arm_vertices,
         "midriff_gap_m":0.055,
