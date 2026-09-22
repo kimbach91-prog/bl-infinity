@@ -1,4 +1,5 @@
 name: ARC3 action conditional Markov gate 247 matrix
+# trigger: matrix-parallel-v1
 on:
   push:
     branches: [deus/arc3-remaining14-coverage-20260922]
