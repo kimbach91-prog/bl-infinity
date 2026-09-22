@@ -354,13 +354,16 @@ def i2v_loop():
         emit("deus_video_v2_input_fetched", drive_file_id=INPUT_DRIVE_FILE_ID, bytes=len(ref), sha256=hashlib.sha256(ref).hexdigest())
         root = build_i2v_kernel(ref)
         exists, old_status = kernel_exists(I2V_KERNEL)
-        should_push = not exists
         if exists:
             old_txt=(old_status["stdout"]+"\n"+old_status["stderr"]).upper()
             emit("deus_video_v2_i2v_existing_kernel", kernel=I2V_KERNEL, status=old_status)
             if "ERROR" in old_txt or "CANCEL" in old_txt:
-                should_push=True
-        if should_push:
+                logs=run([KAGGLE,"kernels","logs",I2V_KERNEL],timeout=180)
+                state["error"]="i2v_existing_runtime_error"
+                state["i2v_status"]=old_status
+                emit("deus_video_v2_i2v_error",logs=logs)
+                return
+        else:
             push = run([KAGGLE,"kernels","push","-p",str(root),"--timeout","7200","--accelerator","gpu"],timeout=600)
             emit("deus_video_v2_i2v_push",kernel=I2V_KERNEL,ok=push["ok"],stdout=push["stdout"],stderr=push["stderr"])
             if not push["ok"]:
@@ -369,9 +372,6 @@ def i2v_loop():
             st=run([KAGGLE,"kernels","status",I2V_KERNEL],timeout=90); state["i2v_status"]=st
             txt=(st["stdout"]+"\n"+st["stderr"]).upper()
             emit("deus_video_v2_i2v_poll",kernel=I2V_KERNEL,ok=st["ok"],stdout=st["stdout"],stderr=st["stderr"])
-            if st["ok"] and "RUNNING" in txt:
-                live=run([KAGGLE,"kernels","logs",I2V_KERNEL],timeout=180)
-                emit("deus_video_v2_i2v_live_logs",kernel=I2V_KERNEL,ok=live["ok"],stdout=live["stdout"][-12000:],stderr=live["stderr"][-4000:])
             if st["ok"] and "COMPLETE" in txt:
                 got=fetch_kernel_output(I2V_KERNEL,I2V_OUT)
                 emit("deus_video_v2_i2v_output_download",kernel=I2V_KERNEL,ok=got["ok"],stdout=got["stdout"],stderr=got["stderr"])
