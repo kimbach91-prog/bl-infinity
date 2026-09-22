@@ -62,6 +62,22 @@ export class GoogleSheetsCanonicalBridge {
     };
   }
 
+  async appendRows({range,rows}){
+    const target=required(range,'range');
+    if(!Array.isArray(rows)||rows.length<1||rows.length>100) throw new Error('rows must contain between 1 and 100 rows');
+    if(rows.some((row)=>!Array.isArray(row)||row.length<1||row.length>100)) throw new Error('each appended row must contain between 1 and 100 cells');
+    const values=rows.map((row)=>row.map((cell)=>cell==null?'':cell));
+    const url=`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.spreadsheetId)}/values/${encodeURIComponent(target)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
+    const body=await this.#request(url,{method:'POST',body:JSON.stringify({values})});
+    return {
+      rows:values,
+      updatedRange:body.updates?.updatedRange??null,
+      updatedRows:Number(body.updates?.updatedRows??0),
+      updatedColumns:Number(body.updates?.updatedColumns??0),
+      digest:digest(values),
+    };
+  }
+
   async appendHeartbeat({state='LIVE',receiptRef='',note=''}={}){
     const nowIso=new Date(this.clock()).toISOString();
     const row=[
@@ -74,12 +90,11 @@ export class GoogleSheetsCanonicalBridge {
       process.env.RAILWAY_SERVICE_ID||'',
       process.env.RAILWAY_DEPLOYMENT_ID||'',
     ];
-    const url=`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.spreadsheetId)}/values/${encodeURIComponent(this.heartbeatRange)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
-    const body=await this.#request(url,{method:'POST',body:JSON.stringify({values:[row]})});
+    const append=await this.appendRows({range:this.heartbeatRange,rows:[row]});
     return {
       row,
-      updatedRange:body.updates?.updatedRange??null,
-      updatedRows:Number(body.updates?.updatedRows??0),
+      updatedRange:append.updatedRange,
+      updatedRows:append.updatedRows,
       digest:digest(row),
     };
   }

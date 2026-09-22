@@ -66,6 +66,15 @@ pgtest('two control planes share principal quota and enforce tenant/scope bounda
     bridge: 'CREDENTIAL_GATE',
     ready: false,
     lastSuccessAt: null,
+    observer: {
+      enabled: false,
+      state: 'DISABLED',
+      ready: true,
+      lastAttemptAt: null,
+      lastSuccessAt: null,
+      lastError: null,
+      receipt: null,
+    },
   });
 
   const anonymousProviders = await getJson(a.base, '/providers');

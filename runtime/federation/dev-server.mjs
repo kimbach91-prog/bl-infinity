@@ -15,6 +15,7 @@ import { openPostgresFederationState } from './lib/postgres-state.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-readiness.mjs';
 import { loadGoogleServiceAccount, createServiceAccountTokenSource } from './lib/google-service-account.mjs';
 import { GoogleSheetsCanonicalBridge } from './bridge/drive-machine-bridge.mjs';
+import { BoundedCanonicalObserver } from './bridge/canonical-observer-worker.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -115,6 +116,7 @@ const server = http.createServer(async (req, res) => {
           bridge: driveBridge.bridge,
           ready: driveBridge.ready,
           lastSuccessAt: driveBridge.lastSuccessAt,
+          observer: driveBridge.observer,
         },
       });
     }
@@ -395,8 +397,11 @@ async function recordStartupDurability() {
 
 function createDriveBridgeRuntime(){
   const intervalMs=Math.max(60_000,Number(process.env.DEUS_DRIVE_BRIDGE_INTERVAL_MS||300_000));
+  const observerEnabled=process.env.DEUS_AUTONOMOUS_OBSERVER_ENABLED==='true';
   let timer=null;
   let bridge=null;
+  let observer=null;
+  let inFlight=null;
   let state={
     schema:'deus-drive-bridge-runtime/1',
     process:'ALIVE',
@@ -406,6 +411,15 @@ function createDriveBridgeRuntime(){
     lastSuccessAt:null,
     lastError:null,
     receipt:null,
+    observer:{
+      enabled:observerEnabled,
+      state:observerEnabled?'CREDENTIAL_GATE':'DISABLED',
+      ready:!observerEnabled,
+      lastAttemptAt:null,
+      lastSuccessAt:null,
+      lastError:null,
+      receipt:null,
+    },
   };
   try{
     const credentials=loadGoogleServiceAccount();
@@ -417,14 +431,32 @@ function createDriveBridgeRuntime(){
         heartbeatRange:'54_MACHINE_BRIDGE_HEALTH!A:H',
         instanceId:process.env.RAILWAY_SERVICE_ID||`federation-${process.pid}`,
       });
+      if(observerEnabled){
+        observer=new BoundedCanonicalObserver({
+          bridge,
+          instanceId:process.env.RAILWAY_SERVICE_ID||`federation-${process.pid}`,
+          sourceRev:process.env.DEUS_SOURCE_REV||'unknown-rev',
+          activeJobScanMaxRows:positiveEnvInt('DEUS_AUTONOMOUS_OBSERVER_JOB_SCAN_ROWS',250,2000),
+          checkpointScanMaxRows:positiveEnvInt('DEUS_AUTONOMOUS_OBSERVER_CHECKPOINT_SCAN_ROWS',500,5000),
+        });
+      }
       state={...state,bridge:'INITIALIZING'};
+      if(observer) state={...state,observer:{...state.observer,state:'INITIALIZING'}};
     }
   }catch(error){
-    state={...state,bridge:'CREDENTIAL_INVALID',lastError:error.message};
+    state={
+      ...state,
+      bridge:'CREDENTIAL_INVALID',
+      lastError:error.message,
+      observer:{...state.observer,state:observerEnabled?'CREDENTIAL_INVALID':'DISABLED',ready:!observerEnabled,lastError:observerEnabled?error.message:null},
+    };
   }
-  async function reconcile(){
+  async function reconcileOnce(){
     state={...state,lastAttemptAt:new Date().toISOString()};
-    if(!bridge) return structuredClone(state);
+    if(!bridge){
+      state={...state,ready:false};
+      return structuredClone(state);
+    }
     try{
       const receipt=await bridge.verifyReadWrite({receiptRef:process.env.DEUS_DRIVE_BRIDGE_RECEIPT_REF||''});
       state={...state,bridge:'LIVE',ready:true,lastSuccessAt:new Date().toISOString(),lastError:null,receipt};
@@ -435,8 +467,40 @@ function createDriveBridgeRuntime(){
         ready:false,
         lastError:error.message,
       };
+      if(observerEnabled){
+        state={...state,observer:{...state.observer,state:'BLOCKED_BY_BRIDGE',ready:false,lastError:'drive bridge reconcile failed'}};
+      }
+      return structuredClone(state);
+    }
+    if(observerEnabled){
+      const attemptedAt=new Date().toISOString();
+      state={...state,observer:{...state.observer,lastAttemptAt:attemptedAt}};
+      if(!observer){
+        state={...state,ready:false,observer:{...state.observer,state:'UNAVAILABLE',ready:false,lastError:'observer was not initialized'}};
+        return structuredClone(state);
+      }
+      try{
+        const receipt=await observer.runOnce();
+        state={
+          ...state,
+          ready:true,
+          observer:{...state.observer,state:receipt.state,ready:true,lastSuccessAt:new Date().toISOString(),lastError:null,receipt},
+        };
+      }catch(error){
+        state={
+          ...state,
+          ready:false,
+          observer:{...state.observer,state:'DEGRADED',ready:false,lastError:error.message,receipt:null},
+        };
+      }
     }
     return structuredClone(state);
+  }
+  async function reconcile(){
+    if(inFlight) return structuredClone(await inFlight);
+    inFlight=reconcileOnce();
+    try{return structuredClone(await inFlight);}
+    finally{inFlight=null;}
   }
   return {
     snapshot:()=>structuredClone(state),
