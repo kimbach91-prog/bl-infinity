@@ -102,7 +102,7 @@ def main():
         obj.matrix_world = mw
 
     fps = args.fps
-    end = max(8, int(round(args.seconds * fps)))
+    end = max(6, int(round(args.seconds * fps)))
     scene.frame_start = 1
     scene.frame_end = end
     scene.render.fps = fps
@@ -134,12 +134,15 @@ def main():
     base_loc = root.location.copy()
     zero_rot = root.rotation_euler.copy()
 
-    f_hold = max(2, int(0.45 * fps))
-    f_bounce = max(f_hold + 1, int(0.75 * fps))
-    f_settle = max(f_bounce + 1, int(1.00 * fps))
+    # Normalize timing to the bounded proof frame count so the canary can stay sparse
+    # without pushing keyframes outside scene.frame_end.
+    f_hold = max(1, int(round(0.12 * end)))
+    f_bounce = max(f_hold + 1, int(round(0.28 * end)))
+    f_settle = max(f_bounce + 1, int(round(0.40 * end)))
     f_spin_start = f_settle
-    f_spin_end = max(f_spin_start + 2, int(3.15 * fps))
-    f_lean = max(f_spin_end + 1, int(3.55 * fps))
+    f_spin_end = max(f_spin_start + 1, int(round(0.72 * end)))
+    f_spin_end = min(f_spin_end, max(f_spin_start + 1, end - 2))
+    f_lean = min(end - 1, max(f_spin_end + 1, int(round(0.88 * end))))
 
     key(root, 1, location=base_loc, rotation=zero_rot)
     key(root, f_hold, location=base_loc, rotation=zero_rot)
