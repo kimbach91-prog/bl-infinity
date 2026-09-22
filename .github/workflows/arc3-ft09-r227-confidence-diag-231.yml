@@ -1,0 +1,50 @@
+name: ARC3 ft09 R227 confidence diagnostic 231
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_r227_confidence_diag_231.py
+      - .github/workflows/arc3-ft09-r227-confidence-diag-231.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose-r227-confidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_ft09_r227_confidence_diag_231.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute confidence diagnostic
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates python public_benchmark/arc3/kaggle_candidates/public_ft09_r227_confidence_diag_231.py "${args[@]}" --output r231-ft09-r227-confidence-diagnostic.json
+      - name: Verify diagnostic truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r231-ft09-r227-confidence-diagnostic.json'))
+          assert d['schema']=='deus/arc3-ft09-r227-confidence-diagnostic/1'
+          t=d['truth'];assert t['p10_p19_status']=='PUBLIC_DEVELOPMENT_REUSED_NOT_INDEPENDENT_HELDOUT';assert t['outcome_assisted_diagnostic'] is True
+          assert t['predictor_promotion'] is False;assert t['gate_selection_for_promotion'] is False;assert t['kaggle_execution'] is False
+          print(json.dumps({'population':d['population'],'wrong_rows':d['wrong_rows'],'best_zero_wrong_gates':d['best_zero_wrong_gates'][:10]},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r231-ft09-r227-confidence-diagnostic
+          path: |
+            r231-ft09-r227-confidence-diagnostic.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
