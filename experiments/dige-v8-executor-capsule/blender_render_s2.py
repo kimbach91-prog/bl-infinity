@@ -3478,7 +3478,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         pass
     hrng=random.Random(20264141)
     brow_top=max(p.z for p in (gnm_brow_left+gnm_brow_right))
-    hairline=(min(float(c28_gnm["hairline_target_z"])-.012,brow_top+.010) if S2_1_HYPERREAL else min(float(c28_gnm["hairline_target_z"]),brow_top+(.016 if S1_ENDOGENOUS else (.020 if C44_FOLLICLE_FLOW else .029))))
+    hairline=(min(float(c28_gnm["aligned_bbox_max"][2])-.060,brow_top+.055) if S2_2_SURFACE_INTEGRATION else (min(float(c28_gnm["hairline_target_z"])-.012,brow_top+.010) if S2_1_HYPERREAL else min(float(c28_gnm["hairline_target_z"]),brow_top+(.016 if S1_ENDOGENOUS else (.020 if C44_FOLLICLE_FLOW else .029)))))
     bbox_max=Vector(c28_gnm["aligned_bbox_max"])
     eye_center=sum(transformed_landmarks[36:48],Vector())/12
     bun_center=Vector((0.0, eye_center.y-.066, min(float(bbox_max.z)+.003, hairline+.094)))
@@ -3498,7 +3498,10 @@ if C41_HYPERREAL_NATIVE_EYE:
         if n.z < -.34:
             continue
         # Forehead-facing vertices are not scalp roots near the frontal boundary.
-        if p.y > eye_center.y+.012 and p.z < edge_z+.018 and n.y > .42:
+        if S2_2_SURFACE_INTEGRATION:
+            if p.y > eye_center.y-.004 and p.z < edge_z+.030 and n.y > .20:
+                continue
+        elif p.y > eye_center.y+.012 and p.z < edge_z+.018 and n.y > .42:
             continue
         scalp.append((v.index,p,n,edge_z))
         if p.y > eye_center.y-.018 and p.z <= edge_z+.012:
@@ -3668,7 +3671,7 @@ if C41_HYPERREAL_NATIVE_EYE:
 
     c41_groom_metrics={
         "enabled":True,
-        "style":("S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1" if S2_1_HYPERREAL else ("S2_LAYERED_VECTOR_FIELD_UPDO_V1" if S2_ANATOMY_DYNAMICS else ("S1_LAYERED_SCALP_BUN_GROOM_V1" if S1_ENDOGENOUS else ("C44_FOLLICLE_FLOW_GEOMETRY_EYE_V1" if C44_FOLLICLE_FLOW else "C43_TANGENTIAL_SCALP_FLOW_GEOMETRY_EYE_V1")))),
+        "style":("S2_2_ANATOMICAL_HAIRLINE_SURFACE_INTEGRATION_V1" if S2_2_SURFACE_INTEGRATION else ("S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1" if S2_1_HYPERREAL else ("S2_LAYERED_VECTOR_FIELD_UPDO_V1" if S2_ANATOMY_DYNAMICS else ("S1_LAYERED_SCALP_BUN_GROOM_V1" if S1_ENDOGENOUS else ("C44_FOLLICLE_FLOW_GEOMETRY_EYE_V1" if C44_FOLLICLE_FLOW else "C43_TANGENTIAL_SCALP_FLOW_GEOMETRY_EYE_V1"))))),
         "hairline_z":hairline,
         "scalp_candidate_count":len(scalp),
         "undercoat_curves":len(undercoat),
@@ -3720,7 +3723,9 @@ if C29_GNM_PRESENTATION:
     hair_curve_metrics["guide_mesh_rendered"]=False
     hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
-if S2_1_HYPERREAL:
+if S2_2_SURFACE_INTEGRATION:
+    hair_style_label="S2_2_ANATOMICAL_HAIRLINE_SURFACE_INTEGRATION_V1"
+elif S2_1_HYPERREAL:
     hair_style_label="S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1"
 elif S2_ANATOMY_DYNAMICS:
     hair_style_label="S2_LAYERED_VECTOR_FIELD_UPDO_V1"
