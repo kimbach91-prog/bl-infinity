@@ -369,6 +369,9 @@ def i2v_loop():
             st=run([KAGGLE,"kernels","status",I2V_KERNEL],timeout=90); state["i2v_status"]=st
             txt=(st["stdout"]+"\n"+st["stderr"]).upper()
             emit("deus_video_v2_i2v_poll",kernel=I2V_KERNEL,ok=st["ok"],stdout=st["stdout"],stderr=st["stderr"])
+            if st["ok"] and "RUNNING" in txt:
+                live=run([KAGGLE,"kernels","logs",I2V_KERNEL],timeout=180)
+                emit("deus_video_v2_i2v_live_logs",kernel=I2V_KERNEL,ok=live["ok"],stdout=live["stdout"][-12000:],stderr=live["stderr"][-4000:])
             if st["ok"] and "COMPLETE" in txt:
                 got=fetch_kernel_output(I2V_KERNEL,I2V_OUT)
                 emit("deus_video_v2_i2v_output_download",kernel=I2V_KERNEL,ok=got["ok"],stdout=got["stdout"],stderr=got["stderr"])
