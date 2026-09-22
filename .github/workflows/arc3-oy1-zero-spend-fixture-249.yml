@@ -1,0 +1,101 @@
+name: ARC3 OY1 zero-spend fixture audit 249
+on:
+  push:
+    branches: [deus/arc3-oy1-source-audit-20260922]
+    paths:
+      - .github/workflows/arc3-oy1-zero-spend-fixture-249.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-oy1-r249:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: OYLabsAI/arc-agi-3-api-harness
+          ref: 0c7848dafeb4d7969279b5f193af71112404309a
+          path: upstream-oy1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify release identity first
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1
+          python3 -B tools/verify_release.py | tee ../r249-release-verifier.log
+      - name: Install hash-locked Linux dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1/harness
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r requirements-linux.lock
+      - name: Run zero-secret check
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1/harness
+          python -m arc_harness.api_run check --plan plans/pilot.json | tee ../../r249-check.log
+      - name: Run synthetic fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1/harness
+          rm -rf /tmp/oy-fixtures
+          python -m arc_harness.api_run fixture --plan plans/pilot.json --output /tmp/oy-fixtures | tee ../../r249-fixture.log
+      - name: Run regression suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1/harness
+          python -m pytest -q | tee ../../r249-pytest.log
+      - name: Build audit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,pathlib,subprocess
+          root=pathlib.Path('upstream-oy1')
+          def sha(p):
+            h=hashlib.sha256();h.update(p.read_bytes());return h.hexdigest()
+          commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
+          assert commit=='0c7848dafeb4d7969279b5f193af71112404309a'
+          files=['r249-release-verifier.log','r249-check.log','r249-fixture.log','r249-pytest.log']
+          for f in files: assert pathlib.Path(f).is_file()
+          out={
+            'schema':'deus/arc3-r249-oy1-zero-spend-fixture/1',
+            'source_commit':commit,
+            'log_sha256':{f:sha(pathlib.Path(f)) for f in files},
+            'truth':{
+              'hash_locked_dependencies':True,
+              'release_verifier_executed':True,
+              'synthetic_fixture_only':True,
+              'remote_inference_called':False,
+              'paid_api_called':False,
+              'arc_live_api_called':False,
+              'owner_kaggle_execution':False,
+              'competition_submission':False,
+              'leaderboard_score_receipt':False,
+              'public_or_hidden_score_claim':False,
+              'solver_promotion':False
+            },
+            'next_gate':'extract prediction-checked history/memory mechanisms for matched source-free compatibility test'
+          }
+          pathlib.Path('r249-oy1-zero-spend-fixture.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r249-oy1-zero-spend-fixture
+          path: |
+            r249-oy1-zero-spend-fixture.json
+            r249-release-verifier.log
+            r249-check.log
+            r249-fixture.log
+            r249-pytest.log
+          if-no-files-found: error
+          retention-days: 30
