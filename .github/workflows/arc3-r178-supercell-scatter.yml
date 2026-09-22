@@ -1,0 +1,166 @@
+name: ARC3 R178 supercell scatter object-region
+
+on:
+  push:
+    branches:
+      - deus/arc3-r178-supercell-scatter-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_object_region_family_178.py
+      - .github/workflows/arc3-r178-supercell-scatter.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download pinned public traces once
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in ar25-0c556536_p0_events.jsonl ar25-0c556536_p10_events.jsonl ar25-0c556536_p11_events.jsonl; do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r178-pinned-traces
+          path: public_trace
+          if-no-files-found: error
+          retention-days: 7
+
+  scatter:
+    needs: prep
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        family:
+          - component
+          - component_prev
+          - component_run
+          - component_phase
+          - region_patch
+          - region_prev
+          - hybrid
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          name: arc3-r178-pinned-traces
+          path: public_trace
+      - name: Compile family shard
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_fullboard_translation_program_160.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_world_overlay_renderer_172.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_family_sweep_175.py \
+            public_benchmark/arc3/kaggle_candidates/public_temporal_path_patch_177.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_family_178.py
+      - name: Execute object-region shard
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_object_region_family_178.py \
+            --family "${{ matrix.family }}" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p0_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
+            --output "$GITHUB_WORKSPACE/r178-${{ matrix.family }}.json"
+      - name: Enforce shard truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json
+          p=glob.glob('r178-*.json')
+          assert len(p)==1
+          d=json.load(open(p[0]))
+          assert d['rung']==178
+          assert d['schema']=='deus/arc3-public-object-region-family/1'
+          t=d['truth']
+          assert t['current_prediction_uses_preaction_and_prior_history_only'] is True
+          assert t['current_outcome_used_only_for_scoring_and_post_prediction_learning'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['submission_quota_spent'] is False
+          assert t['logical_supercell_is_not_physical_worker_count'] is True
+          print(json.dumps({'family':d['family'],'gate':d['diagnostic_gate'],'aggregate':d['aggregate']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r178-${{ matrix.family }}
+          path: r178-${{ matrix.family }}.json
+          if-no-files-found: error
+          retention-days: 30
+
+  reduce:
+    needs: scatter
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r178-*
+          path: gathered
+          merge-multiple: true
+      - name: Reduce typed family receipts
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json,hashlib
+          rows=[]
+          for p in sorted(glob.glob('gathered/r178-*.json')):
+              d=json.load(open(p))
+              a=d['aggregate']
+              rows.append({
+                'family':d['family'],
+                'gate':d['diagnostic_gate'],
+                'strict':bool(a['strict_p0_p10_gain']),
+                'raw_correct':a['raw_correct'],
+                'raw_wrong':a['raw_wrong'],
+                'near4':a['near4'],
+                'near16':a['near16'],
+                'cell_errors':a['cell_errors'],
+                'qualified_correct':a['qualified_correct'],
+                'qualified_wrong':a['qualified_wrong'],
+                'per_trace_qualified_correct':a['per_trace_qualified_correct'],
+                'per_trace_qualified_wrong':a['per_trace_qualified_wrong'],
+              })
+          assert len(rows)==7, rows
+          ranked=sorted(rows,key=lambda x:(not x['strict'],-x['raw_correct'],-x['near4'],x['cell_errors'],x['family']))
+          out={
+            'schema':'deus/arc3-r178-supercell-scatter-reduction/1',
+            'rung':178,
+            'logical_namespace_ceiling':1000000000000,
+            'materialized_hot_shards':7,
+            'physical_worker_claim':False,
+            'ranked':ranked,
+            'strict_candidates':[x['family'] for x in rows if x['strict']],
+            'best':ranked[0]['family'],
+            'promotion_ready':any(x['strict'] for x in rows),
+            'truth':'PREQUENTIAL_PUBLIC_SOURCE_ASSISTED_ONLY',
+          }
+          b=(json.dumps(out,sort_keys=True,indent=2)+'\n').encode()
+          open('r178-reduction.json','wb').write(b)
+          print(json.dumps({**out,'sha256':hashlib.sha256(b).hexdigest()},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r178-supercell-reduction
+          path: r178-reduction.json
+          if-no-files-found: error
+          retention-days: 30
