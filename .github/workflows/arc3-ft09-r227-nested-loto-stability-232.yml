@@ -1,0 +1,68 @@
+name: ARC3 ft09 R227 nested LOTO stability 232
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_r227_nested_loto_stability_232.py
+      - .github/workflows/arc3-ft09-r227-nested-loto-stability-232.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-ft09-r227-nested:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_ft09_r227_nested_loto_stability_232.py             public_benchmark/arc3/kaggle_candidates/public_ft09_coarse_local_target_gate_227.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute nested LOTO stability audit
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates           python public_benchmark/arc3/kaggle_candidates/public_ft09_r227_nested_loto_stability_232.py             "${args[@]}" --output r232-ft09-r227-nested-loto-stability.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r232-ft09-r227-nested-loto-stability.json'))
+          assert d['schema']=='deus/arc3-ft09-r227-nested-loto-stability/1'
+          t=d['truth']
+          assert t['nested_outer_holdout_excluded_from_inner_selection_and_fit'] is True
+          assert t['family_and_support_selected_inside_each_outer_fold'] is True
+          assert t['p10_p19_status']=='PUBLIC_DEVELOPMENT_REUSED_NOT_INDEPENDENT_HELDOUT'
+          assert t['p10_p19_not_used_for_selection_or_methodology_gate'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['predictor_promotion'] is False
+          assert t['kaggle_execution'] is False
+          print(json.dumps({
+            'outer':d['nested_outer']['aggregate_outer'],
+            'selected_counts':d['nested_outer']['selected_config_counts'],
+            'final':d['final_source_assisted_config'],
+            'gate':d['methodology_stability_gate_pass'],
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r232-ft09-r227-nested-loto-stability
+          path: |
+            r232-ft09-r227-nested-loto-stability.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
