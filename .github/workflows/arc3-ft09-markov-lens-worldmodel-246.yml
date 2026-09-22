@@ -1,0 +1,60 @@
+name: ARC3 FT09 source-free Markov lens world-model 246
+on:
+  push:
+    branches: [deus/arc-r246-markov-worldmodel-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_markov_lens_worldmodel_246.py
+      - .github/workflows/arc3-ft09-markov-lens-worldmodel-246.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile bounded source-free adapter
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python -m py_compile public_executable_world_model_134.py public_ft09_full_frame_composer_212.py public_ft09_low_confidence_goal_manifold_veto_225.py public_ft09_markov_lens_worldmodel_246.py
+      - name: Download pinned public FT09 traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R246
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH="$GITHUB_WORKSPACE/public_benchmark/arc3/kaggle_candidates" python public_benchmark/arc3/kaggle_candidates/public_ft09_markov_lens_worldmodel_246.py "${args[@]}" --output r246-ft09-markov-worldmodel.json
+      - name: Verify truth boundary and bounded gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r246-ft09-markov-worldmodel.json'))
+          assert d['schema']=='deus/arc3-ft09-markov-lens-worldmodel/1'
+          t=d['truth']
+          assert t['source_free_game_runtime'] is True
+          assert t['p10_p19_reused_public_development'] is True
+          assert t['heldout_never_updates_adapter'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['competition_submission'] is False
+          assert t['leaderboard_score_claim'] is False
+          assert t['submission_quota_spent'] is False
+          print(json.dumps({'chosen':d['selection']['chosen'],'adapter':d['frozen_adapter'],'held':d['reused_public_development_p10_p19']['metrics'],'gate':d['reused_public_development_p10_p19']['strict_zero_wrong_gain_vs_r225']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r246-ft09-markov-lens-worldmodel
+          path: |
+            r246-ft09-markov-worldmodel.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
