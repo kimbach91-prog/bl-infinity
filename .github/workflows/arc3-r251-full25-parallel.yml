@@ -1,0 +1,168 @@
+name: ARC3 R251 full25 parallel public sweep
+
+on:
+  push:
+    branches:
+      - deus/r251-action-markov-optimized-20260923
+    paths:
+      - .github/workflows/arc3-r251-full25-parallel.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-r251-full25:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout DEUS candidate
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned public traces
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile R251
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py
+
+      - name: Stage exact 25x20 pinned public traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          games=(
+            ar25-0c556536 bp35-0a0ad940 cd82-fb555c5d cn04-2fe56bfb dc22-fdcac232
+            ft09-0d8bbf25 g50t-5849a774 ka59-38d34dbb lf52-271a04aa lp85-305b61c3
+            ls20-9607627b m0r0-492f87ba r11l-495a7899 re86-8af5384d s5i5-18d95033
+            sb26-7fbdac44 sc25-635fd71a sk48-d8078629 sp80-589a99af su15-1944f8ab
+            tn36-ef4dde99 tr87-cd924810 tu93-0768757b vc33-5430563c wa30-ee6fef47
+          )
+          printf '%s\n' "${games[@]}" > games.txt
+          for game in "${games[@]}"; do
+            for p in $(seq 0 19); do
+              f="${game}_p${p}_events.jsonl"
+              src="upstream-duck/example-run/artifacts/$f"
+              test -s "$src"
+              cp "$src" "public_trace/$f"
+            done
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 500
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute R251 once per game with bounded heterogeneous CPU parallelism
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p per_game runtime stdout
+          run_game() {
+            game="$1"
+            args=()
+            for f in public_trace/${game}_p*_events.jsonl; do args+=(--input "$f"); done
+            test "${#args[@]}" -eq 20
+            /usr/bin/time -v python \
+              public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py \
+              "${args[@]}" --output "per_game/${game}.json" \
+              2>"runtime/${game}.txt" >"stdout/${game}.txt"
+          }
+          export -f run_game
+          export PATH
+          # Four workers is bounded, deterministic at the result layer, and avoids
+          # repeating the prior sequential 45-minute timeout scar.
+          xargs -a games.txt -n1 -P4 bash -c 'run_game "$0"'
+          test "$(find per_game -name '*.json' | wc -l)" -eq 25
+
+      - name: Aggregate and verify exact full25 truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from collections import Counter
+          from pathlib import Path
+
+          files=sorted(Path('per_game').glob('*.json'))
+          assert len(files)==25,len(files)
+          agg=Counter(); games={}; gain=[]
+          truth_fields=(
+            'public_trace_only','game_source_read','selection_uses_p0_p9_only',
+            'p10_p19_never_updates_selection_or_model','independent_generalization_claim',
+            'kaggle_execution','submission_quota_spent','owner_score_claim'
+          )
+          for p in files:
+            d=json.loads(p.read_text())
+            assert d['schema']=='deus/arc3-r251-action-conditional-markov-optimized/1'
+            assert d['aggregate']['game_count']==1
+            assert len(d['games'])==1
+            g=next(iter(d['games']))
+            games[g]=d['games'][g]
+            a=d['aggregate']
+            for k in ('transitions','exact_baseline','baseline_abstain','candidate_predictions','candidate_correct','candidate_wrong'):
+              agg[k]+=int(a.get(k,0) or 0)
+            if d['games'][g]['gain']: gain.append(g)
+            t=d['truth']
+            assert t['public_trace_only'] is True
+            assert t['game_source_read'] is False
+            assert t['selection_uses_p0_p9_only'] is True
+            assert t['p10_p19_never_updates_selection_or_model'] is True
+            assert t['independent_generalization_claim'] is False
+            assert t['kaggle_execution'] is False
+            assert t['submission_quota_spent'] is False
+            assert t['owner_score_claim'] is False
+          p=agg['candidate_predictions']; opp=agg['baseline_abstain']
+          aggregate={**dict(agg),
+            'candidate_accuracy':round(agg['candidate_correct']/p,6) if p else None,
+            'candidate_coverage_of_baseline_abstain':round(p/opp,6) if opp else 0.0,
+            'gain_games':sorted(gain),'gain_game_count':len(gain),'game_count':len(games)}
+          nondominated=bool(p>0 and agg['candidate_wrong']==0 and agg['candidate_correct']>0)
+          out={
+            'schema':'deus/arc3-r251-full25-parallel-public-sweep/1',
+            'rung':251,
+            'execution':{'per_game_processes':25,'parallelism':4,'deterministic_result_layer':True},
+            'aggregate':aggregate,'games':games,
+            'non_dominated_source_side_gain':nondominated,
+            'promotion':{'integration_candidate':nondominated,'solver_promotion':False,'kaggle_packaging':False},
+            'truth':{
+              'public_trace_only':True,'game_source_read':False,
+              'selection_uses_p0_p9_only':True,'p10_p19_never_updates_selection_or_model':True,
+              'p10_p19_status':'PUBLIC_DEVELOPMENT_REUSED_NOT_INDEPENDENT_HELDOUT',
+              'independent_generalization_claim':False,'kaggle_execution':False,
+              'competition_submission':False,'submission_quota_spent':False,'owner_score_claim':False,
+              'r247_timeout_not_retried_full25':True,
+              'r251_sc25_equivalence_anchor':'run35795359324/artifact10723468712'
+            }
+          }
+          Path('r251-full25-aggregate.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'aggregate':aggregate,'nondominated':nondominated},sort_keys=True))
+          PY
+          sha256sum per_game/*.json > PER_GAME_SHA256SUMS.txt
+          sha256sum r251-full25-aggregate.json PER_GAME_SHA256SUMS.txt public_trace/SHA256SUMS.txt > R251_FULL25_SHA256SUMS.txt
+
+      - name: Upload R251 full25 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: r251-full25-parallel-public-sweep
+          path: |
+            r251-full25-aggregate.json
+            per_game/*.json
+            runtime/*.txt
+            stdout/*.txt
+            PER_GAME_SHA256SUMS.txt
+            R251_FULL25_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
