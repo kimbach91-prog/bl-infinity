@@ -19,7 +19,8 @@ def parse_args():
     p.add_argument("--seconds", type=float, default=4.0)
     p.add_argument("--width", type=int, default=360)
     p.add_argument("--height", type=int, default=640)
-    p.add_argument("--engine", default="BLENDER_EEVEE_NEXT")
+    p.add_argument("--engine", default="BLENDER_EEVEE")
+    p.add_argument("--proof-lite", action="store_true")
     return p.parse_args(argv)
 
 
@@ -89,6 +90,29 @@ def main():
     chars = character_objects(body)
     if body not in chars or len(chars) < 1:
         raise RuntimeError("NATIVE_VIDEO_CHARACTER_SET_EMPTY")
+
+    proof_lite_hidden = []
+    proof_material_override = False
+    if args.proof_lite:
+        # Architectural proof only: keep the canonical S2 body geometry but remove
+        # expensive appearance systems from the render. This does NOT certify
+        # production appearance, hair, cloth, or full material fidelity.
+        for obj in list(bpy.context.scene.objects):
+            if obj == body or obj == scene.camera or obj.type in {"CAMERA", "LIGHT"}:
+                continue
+            if obj.type in {"MESH", "CURVE", "SURFACE", "META", "FONT"}:
+                obj.hide_render = True
+                proof_lite_hidden.append(obj.name)
+        mat = bpy.data.materials.new("DEUS_NATIVE_VIDEO_PROOF_MAT")
+        mat.use_nodes = True
+        bsdf = mat.node_tree.nodes.get("Principled BSDF")
+        if bsdf:
+            bsdf.inputs["Base Color"].default_value = (0.55, 0.57, 0.62, 1.0)
+            bsdf.inputs["Roughness"].default_value = 0.62
+        body.data.materials.clear()
+        body.data.materials.append(mat)
+        proof_material_override = True
+        chars = [body]
 
     root = bpy.data.objects.new("DEUS_NATIVE_VIDEO_ROOT", None)
     scene.collection.objects.link(root)
@@ -179,7 +203,9 @@ def main():
         "frame_start": scene.frame_start,
         "frame_end": scene.frame_end,
         "fps": fps,
-        "resolution": [args.width, args.height]
+        "resolution": [args.width, args.height],
+        "proof_lite": args.proof_lite,
+        "proof_lite_hidden_count": len(proof_lite_hidden)
     }, sort_keys=True))
 
     bpy.ops.render.render(animation=True)
@@ -202,6 +228,10 @@ def main():
         "character_root": root.name,
         "character_object_count": len(chars),
         "character_objects": [o.name for o in chars],
+        "proof_lite": args.proof_lite,
+        "proof_lite_hidden_objects": proof_lite_hidden,
+        "proof_material_override": proof_material_override,
+        "appearance_quality_certified": False if args.proof_lite else None,
         "operators": {
             "root_bounce": "EXECUTED",
             "root_spin": "EXECUTED",
@@ -219,7 +249,11 @@ def main():
         "duration_seconds_nominal": end / fps,
         "external_image_generation_calls": 0,
         "external_video_generation_calls": 0,
-        "truth_boundary": "FRAMES_RENDERED__MP4_ENCODE_AND_PROBE_PENDING"
+        "truth_boundary": (
+            "PROOF_LITE_ROOT_MOTION_FRAMES_RENDERED__PRODUCTION_APPEARANCE_NOT_PROVEN__MP4_ENCODE_PENDING"
+            if args.proof_lite else
+            "FRAMES_RENDERED__MP4_ENCODE_AND_PROBE_PENDING"
+        )
     }
     (outdir / "DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json").write_text(
         json.dumps(receipt, indent=2, sort_keys=True) + "\n"
