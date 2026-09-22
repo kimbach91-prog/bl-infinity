@@ -62,11 +62,11 @@ jobs:
           set -euo pipefail
           args=()
           for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
-          test "${#args[@]}" -eq 20
+          test "${#args[@]}" -eq 40
           /usr/bin/time -v python \
             public_benchmark/arc3/kaggle_candidates/public_relative_local_operator_gate_252.py \
             "${args[@]}" --output r252-re86-relative-local-operator.json \
-            2>r252-runtime.txt | tee r252-stdout.txt
+            2> >(tee r252-runtime.txt >&2) | tee r252-stdout.txt
 
       - name: Verify R252 truth boundary and result schema
         shell: bash
@@ -122,4 +122,4 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-# trigger-existing-workflow: r252-bounded-run
+# trigger-existing-workflow: r252-bounded-run-v2
