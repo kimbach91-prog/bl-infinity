@@ -110,15 +110,25 @@ def object_key(board):
             objs.append((int(color),len(pts),min(rs),min(cs),max(rs)-min(rs)+1,max(cs)-min(cs)+1))
     return tuple(sorted(objs))
 
+_LENS_CACHE:dict[tuple[str,str],Any]={}
+
 def lens(name:str,board):
-    if name=="palette": return palette(board)
-    if name=="meter": return meter(board)
-    if name=="symmetry": return symmetry(board)
-    if name=="regions": return regions(board)
-    if name=="objects": return object_key(board)
-    if name=="composite":
-        return (palette(board),meter(board),symmetry(board),regions(board),object_key(board))
-    raise KeyError(name)
+    # Pure perception memoization only: same frame + same lens => same key.
+    # This changes runtime cost, never model selection, support, or scoring.
+    cache_key=(name,digest(board))
+    if cache_key in _LENS_CACHE:
+        return _LENS_CACHE[cache_key]
+    if name=="palette": value=palette(board)
+    elif name=="meter": value=meter(board)
+    elif name=="symmetry": value=symmetry(board)
+    elif name=="regions": value=regions(board)
+    elif name=="objects": value=object_key(board)
+    elif name=="composite":
+        value=(lens("palette",board),lens("meter",board),lens("symmetry",board),lens("regions",board),lens("objects",board))
+    else:
+        raise KeyError(name)
+    _LENS_CACHE[cache_key]=value
+    return value
 
 def transitions(paths:list[Path])->list[dict]:
     out=[]
