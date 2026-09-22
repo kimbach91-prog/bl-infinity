@@ -95,6 +95,7 @@ const server = http.createServer(async (req, res) => {
       providerSyncMode,
       providerSync: providerSynchronizer?.status?.() ?? null,
       directWorkerHeartbeat: Boolean(providerStore),
+      workstationReceiptApi: 'deus-workstation-benchmark/1',
       stateAllowedDataClasses: allowedStateDataClasses,
       providers: runtime.registry.list().length,
       search: search.stats(),
