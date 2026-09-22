@@ -1,0 +1,78 @@
+name: ARC3 R256 re86 dynamic-component history diagnostic
+
+on:
+  push:
+    branches:
+      - deus/r256-re86-dynamic-component-diag-20260923
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-r256-re86:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout pinned public trace source
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_dynamic_component_history_diag_256.py
+      - name: Stage exact re86 p0-p9 public traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="re86-8af5384d_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R256 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
+          test "${#args[@]}" -eq 20
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_dynamic_component_history_diag_256.py "${args[@]}" --output r256-re86-dynamic-component-diag.json 2> >(tee r256-runtime.txt >&2) | tee r256-stdout.txt
+      - name: Verify truth boundary and digest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r256-re86-dynamic-component-diag.json').read_text())
+          assert d['schema']=='deus/arc3-r256-dynamic-component-history-diagnostic/1'
+          t=d['truth']
+          assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read']
+          assert not t['kaggle_execution'] and not t['competition_submission'] and not t['owner_score_claim']
+          Path('r256-verdict.json').write_text(json.dumps({'verdict':d['overall']['verdict'],'scope':'p0-p9_public_development_only'},indent=2)+'\n')
+          PY
+          sha256sum r256-re86-dynamic-component-diag.json r256-verdict.json r256-runtime.txt r256-stdout.txt public_trace/SHA256SUMS.txt > R256_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r256-re86-dynamic-component-diag
+          path: |
+            r256-re86-dynamic-component-diag.json
+            r256-verdict.json
+            r256-runtime.txt
+            r256-stdout.txt
+            R256_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
