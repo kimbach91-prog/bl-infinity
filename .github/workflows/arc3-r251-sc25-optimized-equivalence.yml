@@ -1,0 +1,113 @@
+name: ARC3 R251 optimized sc25 equivalence
+
+on:
+  push:
+    branches:
+      - deus/r251-action-markov-optimized-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py
+      - .github/workflows/arc3-r251-sc25-optimized-equivalence.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-r251-sc25:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout DEUS candidate
+        uses: actions/checkout@v4
+
+      - name: Checkout pinned public traces
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py
+
+      - name: Stage exact sc25 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          game='sc25-635fd71a'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute optimized R251 sc25
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py \
+            "${args[@]}" --output r251-sc25.json \
+            2>r251-runtime.txt | tee r251-stdout.txt
+
+      - name: Assert semantic equivalence to verified R250 anchor
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r251-sc25.json'))
+          a=d['aggregate']
+          expected={
+            'transitions':1657,
+            'exact_baseline':181,
+            'baseline_abstain':1476,
+            'candidate_predictions':21,
+            'candidate_correct':21,
+            'candidate_wrong':0,
+          }
+          for k,v in expected.items():
+            assert a.get(k)==v,(k,a.get(k),v)
+          g=d['games']['sc25-635fd71a']
+          assert g['selected_by_action']=={'RESET':'regions'},g['selected_by_action']
+          assert d['non_dominated_source_side_gain'] is True
+          t=d['truth']
+          assert t['game_source_read'] is False
+          assert t['selection_uses_p0_p9_only'] is True
+          assert t['p10_p19_never_updates_selection_or_model'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['submission_quota_spent'] is False
+          print(json.dumps({'equivalent_to_r250':True,'aggregate':a,'selected':g['selected_by_action']},sort_keys=True))
+          PY
+          sha256sum r251-sc25.json r251-runtime.txt public_trace/SHA256SUMS.txt > R251_SHA256SUMS.txt
+
+      - name: Upload R251 sc25 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: r251-sc25-optimized-equivalence
+          path: |
+            r251-sc25.json
+            r251-runtime.txt
+            r251-stdout.txt
+            R251_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
