@@ -1,0 +1,76 @@
+name: ARC3 TU93 frozen heldout symbolic validation 200
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - .github/workflows/arc3-tu93-frozen-heldout-200.yml
+      - public_benchmark/arc3/kaggle_candidates/public_tu93_timeout_threat_symbolic_199.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tu93-frozen-heldout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile frozen solver
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_tu93_symbolic_lattice_planner_198.py             public_benchmark/arc3/kaggle_candidates/public_tu93_timeout_threat_symbolic_199.py
+      - name: Fetch only frozen heldout traces p10-p19
+        run: |
+          set -euo pipefail
+          mkdir -p heldout
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 10 19); do
+            f="tu93-0768757b_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "heldout/$f"
+            test -s "heldout/$f"
+          done
+          sha256sum heldout/*.jsonl > heldout/SHA256SUMS.txt
+      - name: Run unchanged R199 on heldout only
+        run: |
+          set -euo pipefail
+          args=()
+          for f in heldout/tu93-0768757b_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tu93_timeout_threat_symbolic_199.py             "${args[@]}" --output tu93-r200-heldout.json | tee tu93-r200-heldout.stdout
+      - name: Strict heldout gate
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('tu93-r200-heldout.json'))
+          c=d['transition_classifier']; p=d['planner']
+          assert c['tests'] > 0
+          assert c['accuracy'] >= 0.99, c
+          assert p['plan_found_rate'] >= 0.99, p
+          assert d['truth']['kaggle_execution'] is False
+          print(json.dumps({
+            'rung':200,
+            'gate':'TU93_FROZEN_HELDOUT_PASS',
+            'tests':c['tests'],
+            'correct':c['correct'],
+            'wrong':c['wrong'],
+            'accuracy':c['accuracy'],
+            'planner':p,
+            'mismatches':c['mismatch_examples'][:10],
+            'truth':'PUBLIC_FROZEN_HELDOUT_ONLY_NOT_KAGGLE'
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-tu93-r200-frozen-heldout
+          path: |
+            tu93-r200-heldout.json
+            tu93-r200-heldout.stdout
+            heldout/SHA256SUMS.txt
+          if-no-files-found: warn
+          retention-days: 30
