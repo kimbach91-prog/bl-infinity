@@ -1565,15 +1565,30 @@ def s2_2_build_neck_bridge(body_obj,head_obj,cut_z,material):
         return metrics
     head_min=min(float(v.co.z) for v in head_obj.data.vertices)
     body_pts=[v.co.copy() for v in body_obj.data.vertices
-              if cut_z-.026 <= float(v.co.z) <= cut_z+.002
-              and abs(float(v.co.x)) <= .105
-              and abs(float(v.co.y)) <= .115]
+              if cut_z-.045 <= float(v.co.z) <= cut_z+.006
+              and abs(float(v.co.x)) <= .125
+              and abs(float(v.co.y)) <= .170]
     head_pts=[v.co.copy() for v in head_obj.data.vertices
-              if head_min <= float(v.co.z) <= head_min+.032
-              and abs(float(v.co.x)) <= .105
-              and abs(float(v.co.y)) <= .115]
-    if len(body_pts)<24 or len(head_pts)<24:
-        raise RuntimeError(f"S2.2 neck bridge insufficient rings body={len(body_pts)} head={len(head_pts)}")
+              if head_min <= float(v.co.z) <= head_min+.040
+              and abs(float(v.co.x)) <= .120
+              and abs(float(v.co.y)) <= .150]
+    if len(body_pts)<24:
+        # MakeHuman body topology can leave a sparse neck ring after the planar
+        # head cut. Fall back to the closest neck-zone vertices rather than
+        # failing on an arbitrary point-count threshold.
+        candidates=[v.co.copy() for v in body_obj.data.vertices
+                    if abs(float(v.co.x)) <= .145 and abs(float(v.co.y)) <= .190
+                    and cut_z-.075 <= float(v.co.z) <= cut_z+.012]
+        candidates.sort(key=lambda p:(abs(float(p.z)-cut_z),abs(float(p.x)),abs(float(p.y))))
+        body_pts=candidates[:min(96,len(candidates))]
+    if len(head_pts)<24:
+        candidates=[v.co.copy() for v in head_obj.data.vertices
+                    if abs(float(v.co.x)) <= .145 and abs(float(v.co.y)) <= .180
+                    and head_min <= float(v.co.z) <= head_min+.060]
+        candidates.sort(key=lambda p:(abs(float(p.z)-head_min),abs(float(p.x)),abs(float(p.y))))
+        head_pts=candidates[:min(128,len(candidates))]
+    if len(body_pts)<12 or len(head_pts)<24:
+        raise RuntimeError(f"S2.2 neck bridge insufficient geometry body={len(body_pts)} head={len(head_pts)}")
     def ellipse(pts):
         xs=np.array([float(p.x) for p in pts],dtype=np.float64)
         ys=np.array([float(p.y) for p in pts],dtype=np.float64)
