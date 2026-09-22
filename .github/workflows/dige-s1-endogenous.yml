@@ -1,0 +1,207 @@
+name: DIGE S1 Endogenous Human System
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-s1-endogenous.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_s1.py'
+      - 'experiments/dige-v8-executor-capsule/DIGE_S1_SYNTHESIS_CONTRACT.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-s1-endogenous-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  s1-full-system:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Reuse verified DiGe runtime assets
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 guide prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Verify S1 contract, source syntax and frozen assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python -m py_compile blender_render_s1.py
+          python - <<'PY'
+          import json,pathlib,hashlib
+          p=pathlib.Path("DIGE_S1_SYNTHESIS_CONTRACT.json")
+          d=json.loads(p.read_text())
+          assert d["candidate"]=="DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1"
+          assert d["generation_mode"]=="ENDOGENOUS_SOURCE_LEVEL_3D"
+          assert d["external_image_generation_calls"]==0
+          assert d["canonical_pixel_copy"] is False
+          assert d["runtime_gate"]["render_set"]=="FULL"
+          print(json.dumps({
+            "contract_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
+            "lineage_nodes":len(d["lineage"]),
+            "rules":len(d["synthesis_rules"])
+          }))
+          PY
+          cd runtime/system_assets
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  long01.mhclo" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  long01.mhmat" | sha256sum -c -
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
+
+      - name: Rebind deterministic body geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python build_makehuman_v8.py | tee runtime/s1_geometry_canon_rebind.json
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Render endogenous S1 full system
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: FULL
+          DIGE_SEARCH_ONLY: '0'
+          DIGE_OUTPUT_TAG: s1_endogenous
+          DIGE_S1_ENDOGENOUS: '1'
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_C36_CANONICAL_APPEARANCE: '1'
+          DIGE_C39_HHIR_HYPERREAL: '1'
+          DIGE_C40_HYPERREAL_REPAIR: '0'
+          DIGE_C41_HYPERREAL_NATIVE_EYE: '1'
+          DIGE_C42_GEOMETRY_EYE_HAIRLINE: '1'
+          DIGE_C43_TANGENTIAL_GROOM: '1'
+          DIGE_C44_FOLLICLE_FLOW: '1'
+          DIGE_C36_JAW_TAPER: '0.90'
+          DIGE_C36_EYE_OPEN_SCALE: '0.74'
+          DIGE_C36_EYE_GLOBE_SCALE: '0.94'
+          DIGE_C36_HAIR_LENGTH_M: '0.28'
+          DIGE_C36_HAIR_WAVE: '0.004'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_GNM_IDENTITY_SEED: '20262828'
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_long01
+          DIGE_HAIR_STRANDS_PER_ROOT: '4'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '0.68'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.88'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SAMPLES_PREVIEW: '128'
+          DIGE_SAMPLES_HERO: '320'
+          DIGE_RENDER_SEED: '20260922'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          START=$(date +%s)
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_s1.py | tee runtime/s1_endogenous.log
+          END=$(date +%s)
+          printf '{"wall_seconds":%s}\n' "$((END-START))" > runtime/s1_endogenous_timing.json
+
+      - name: Verify S1 typed receipt and endogenous boundary
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          root=pathlib.Path("runtime/renders/s1_endogenous")
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          t=json.loads(pathlib.Path("runtime/s1_endogenous_timing.json").read_text())
+          assert r["device"]=="CPU"
+          assert r["render_set"]=="FULL"
+          assert r["appearance_candidate"]=="DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1"
+          assert r["appearance_selection"]["s1_endogenous"] is True
+          expected={"01_FRONT50","02_LEFT_PROFILE50","03_THREE_QUARTER50","04_HERO85","05_BACK_THREE_QUARTER50"}
+          got={x["view"] for x in r["outputs"]}
+          assert got==expected, (got,expected)
+          hero=[x for x in r["outputs"] if x["view"]=="04_HERO85"][0]
+          assert hero["lens_mm"]==85 and abs(hero["fstop"]-4.0)<1e-6
+          g=r["appearance_selection"]["c41_groom_metrics"]
+          assert g["enabled"] is True
+          assert g["undercoat_lane_count"]==4
+          assert g["s1_scalp_cap_faces"]>0
+          assert g["bun_curves"]>=500
+          eye=r["c28_gnm_head"]["eye_contract"]
+          assert eye["integration"]=="GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY"
+          skin=r["c28_gnm_head"]["skin_contract"]
+          assert skin["model"]=="S1_GNM_MULTISCALE_NATURAL_PBR_SKIN"
+          garments=r["appearance_selection"]["s1_garment_metrics"]
+          assert garments["enabled"] is True
+          assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
+          p=r["provenance"]
+          assert p["reference_pixels_read_by_renderer"] is False
+          assert p["reference_images_composited"] is False
+          assert p["image_model_calls"]==0
+          assert p["renderer_network_calls"]==0
+          summary={
+            "schema":"dige-s1-endogenous-runtime-receipt/1",
+            "candidate":r["appearance_candidate"],
+            "wall_seconds":t["wall_seconds"],
+            "outputs":r["outputs"],
+            "groom":g,
+            "eye_contract":eye,
+            "skin_contract":skin,
+            "garments":garments,
+            "provenance":p,
+            "truth_boundary":"SOURCE_LEVEL_RUNTIME_PASS_ONLY__DIRECT_MULTIVIEW_VISUAL_AUDIT_REQUIRED"
+          }
+          (root/"DIGE_S1_RUNTIME_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DIGE-S1-ENDOGENOUS-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.blend
+            experiments/dige-v8-executor-capsule/runtime/s1_endogenous.log
+            experiments/dige-v8-executor-capsule/runtime/s1_endogenous_timing.json
+          if-no-files-found: error
+          retention-days: 30
