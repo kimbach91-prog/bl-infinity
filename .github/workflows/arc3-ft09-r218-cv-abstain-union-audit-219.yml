@@ -1,0 +1,58 @@
+name: ARC3 ft09 R218 CV abstain union audit 219
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_r218_cv_abstain_union_audit_219.py
+      - .github/workflows/arc3-ft09-r218-cv-abstain-union-audit-219.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-ft09-cv-abstain-union:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_ft09_ring2_relational_gate_211.py             public_benchmark/arc3/kaggle_candidates/public_ft09_full_frame_composer_212.py             public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py             public_benchmark/arc3/kaggle_candidates/public_ft09_scene_exact_expert_216.py             public_benchmark/arc3/kaggle_candidates/public_ft09_virtual_goal_scene_expert_217.py             public_benchmark/arc3/kaggle_candidates/public_ft09_structural_goal_scene_expert_218.py             public_benchmark/arc3/kaggle_candidates/public_ft09_cv_support_ensemble_212.py             public_benchmark/arc3/kaggle_candidates/public_ft09_r218_cv_abstain_union_audit_219.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute abstain-only union audit
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_r218_cv_abstain_union_audit_219.py "${args[@]}" --output r219-ft09-r218-cv-abstain-union-audit.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r219-ft09-r218-cv-abstain-union-audit.json'))
+          assert d['schema']=='deus/arc3-ft09-r218-cv-abstain-union-audit/1'
+          t=d['truth']
+          assert t['p0_p9_cv_policy_selection_only'] is True
+          assert t['heldout_never_updates_models_or_policy'] is True
+          assert t['r218_precedence_preserved'] is True
+          assert t['cv_used_only_after_r218_abstain'] is True
+          assert t['gameplay_rows0_62_exact_scoring'] is True
+          assert t['kaggle_execution'] is False
+          assert d['promotion']['solver_promotion'] is False
+          print(json.dumps({'baseline':d['r218_baseline']['all'],'union':d['union']['all'],'incremental':d['unique_incremental_predictions'],'gate':d['candidate_zero_wrong_gate_pass']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r219-ft09-r218-cv-abstain-union-audit
+          path: |
+            r219-ft09-r218-cv-abstain-union-audit.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
