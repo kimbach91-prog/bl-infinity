@@ -77,14 +77,14 @@ def r218_predict(r,lm,m):
         virtual=r212ff.recolor_bbox(r['before'],r['bbox'],tgt)
         ek=r217.goal_key(lm['level_before'],virtual)
         if ek in m['exact_goal']:
-            return gp(m['exact_goal'][ek]),'exact_goal'
+            return [row[:] for row in m['exact_goal'][ek]],'exact_goal'
         sk=r218.structural_key(m['selected_family'],lm['level_before'],virtual)
         if sk in m['struct_goal']:
-            return gp(m['struct_goal'][sk]),'struct_goal'
+            return [row[:] for row in m['struct_goal'][sk]],'struct_goal'
 
     sk2=r216.scene_key(r)
     if sk2 in m['scene']:
-        return gp(m['scene'][sk2]),'scene_exact'
+        return [row[:] for row in m['scene'][sk2]],'scene_exact'
 
     idkey=r202.feature('local',r['before'],r['action'],r['prev_action'],r['run_len'],r['step0'])
     if idkey in m['im']:
@@ -107,10 +107,10 @@ def cv_fallback_predict(r,lm,m):
     if lm is not None:
         ek=r217.goal_key(lm['level_before'],virtual)
         if ek in m['exact_goal']:
-            return gp(m['exact_goal'][ek]),'cv_exact_goal'
+            return [row[:] for row in m['exact_goal'][ek]],'cv_exact_goal'
         sk=r218.structural_key(m['selected_family'],lm['level_before'],virtual)
         if sk in m['struct_goal']:
-            return gp(m['struct_goal'][sk]),'cv_struct_goal'
+            return [row[:] for row in m['struct_goal'][sk]],'cv_struct_goal'
     return gp(virtual),'cv_local_recolor'
 
 def run(paths):
