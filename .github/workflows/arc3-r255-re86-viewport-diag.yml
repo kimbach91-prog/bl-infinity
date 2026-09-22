@@ -1,9 +1,9 @@
-name: ARC3 R257 re86 history-conditioned transport gate
+name: ARC3 R258 re86 agent-HUD residual gate
 
 on:
   push:
     branches:
-      - deus/r257-re86-history-transport-gate-20260923
+      - deus/r258-re86-agent-hud-residual-gate-20260923
     paths:
       - .github/workflows/arc3-r255-re86-viewport-diag.yml
   workflow_dispatch:
@@ -12,9 +12,9 @@ permissions:
   contents: read
 
 jobs:
-  gate-r257-re86:
+  gate-r258-re86:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Checkout pinned public traces
@@ -30,7 +30,7 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile
-        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_history_transport_gate_257.py
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_history_transport_gate_257.py public_benchmark/arc3/kaggle_candidates/public_agent_hud_residual_gate_258.py
       - name: Stage exact re86 p0-p19 public traces
         shell: bash
         run: |
@@ -43,14 +43,14 @@ jobs:
             cp "$src" "public_trace/$f"
           done
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
-      - name: Execute R257 gate
+      - name: Execute R258 gate
         shell: bash
         run: |
           set -euo pipefail
           args=()
           for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
           test "${#args[@]}" -eq 40
-          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_history_transport_gate_257.py "${args[@]}" --output r257-re86-history-transport.json 2> >(tee r257-runtime.txt >&2) | tee r257-stdout.txt
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_agent_hud_residual_gate_258.py "${args[@]}" --output r258-re86-agent-hud.json 2> >(tee r258-runtime.txt >&2) | tee r258-stdout.txt
       - name: Verify truth boundary and verdict
         shell: bash
         run: |
@@ -58,25 +58,25 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          d=json.loads(Path('r257-re86-history-transport.json').read_text())
-          assert d['schema']=='deus/arc3-r257-history-transport-gate/1'
+          d=json.loads(Path('r258-re86-agent-hud.json').read_text())
+          assert d['schema']=='deus/arc3-r258-agent-hud-residual-gate/1'
           t=d['truth']
           assert t['public_trace_only'] and not t['game_source_read']
           assert t['selection_uses_p0_p9_only'] and t['p10_p19_never_updates_selection_or_model']
           assert not t['independent_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission']
           verdict='INTEGRATION_CANDIDATE' if d['non_dominated_source_side_gain'] else 'NO_PROMOTION'
-          Path('r257-verdict.json').write_text(json.dumps({'verdict':verdict,'scope':'public_development_only'},indent=2)+'\n')
+          Path('r258-verdict.json').write_text(json.dumps({'verdict':verdict,'scope':'public_development_only'},indent=2)+'\n')
           PY
-          sha256sum r257-re86-history-transport.json r257-verdict.json r257-runtime.txt r257-stdout.txt public_trace/SHA256SUMS.txt > R257_SHA256SUMS.txt
+          sha256sum r258-re86-agent-hud.json r258-verdict.json r258-runtime.txt r258-stdout.txt public_trace/SHA256SUMS.txt > R258_SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: r257-re86-history-transport
+          name: r258-re86-agent-hud
           path: |
-            r257-re86-history-transport.json
-            r257-verdict.json
-            r257-runtime.txt
-            r257-stdout.txt
-            R257_SHA256SUMS.txt
+            r258-re86-agent-hud.json
+            r258-verdict.json
+            r258-runtime.txt
+            r258-stdout.txt
+            R258_SHA256SUMS.txt
             public_trace/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
