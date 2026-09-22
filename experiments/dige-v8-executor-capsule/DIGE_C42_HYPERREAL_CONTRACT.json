@@ -1,0 +1,42 @@
+{
+  "schema": "dige-c42-hyperreal-contract/1",
+  "candidate": "C42_HHIR_EYE_GEOMETRY_FACE_SKIN_V1",
+  "parent": "C41_HHIR_NATIVE_EYE_SCALP_FLOW_V1",
+  "parent_runtime": {
+    "run_id": 35715090026,
+    "wall_seconds": 130,
+    "runtime_structural_pass": true,
+    "hero_sha256": "bdf8c32ce9189c92df417e2ab587a39d12c8c698b64aa8dbb13963eca08d902d",
+    "visual_verdict": "FAIL"
+  },
+  "scars": [
+    "C41 procedural-eye material on GNM mesh loses iris mapping and leaves white sclera patches",
+    "hairline still reads as a dark helmet band",
+    "face PBR remained on C36 branch and ignored later C40/C41 body-skin tuning",
+    "skin still waxy/smooth at 900px"
+  ],
+  "delta_only": [
+    "GNM sclera substrate + thin limbal/iris/pupil geometry on actual front plane",
+    "no protruding cornea cylinder and no UV-dependent iris shader",
+    "C42-specific GNM face PBR branch with lower SSS/coat, higher roughness, visible-scale pore/micro bump",
+    "reduced front-band undercoat density and thinner scalp-gather radii"
+  ],
+  "acceptance": {
+    "runtime": [
+      "candidate id exact",
+      "lens85/f3.6",
+      "c42_surface_iris_count=2",
+      "c29_calibrated_iris_count=0",
+      "no ref pixels",
+      "lower-central root leak=0"
+    ],
+    "visual": [
+      "iris/pupil visible without detached discs",
+      "sclera bounded by eyelids",
+      "hairline softer than C41",
+      "skin less waxy with visible response"
+    ],
+    "promotion": "direct hero visual PASS required"
+  },
+  "truth_boundary": "RUNTIME_PASS!=VISUAL_PASS; source-level procedural 3D only."
+}
