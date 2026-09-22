@@ -1,0 +1,149 @@
+name: ARC3 full public 25x20 frozen suite 184
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - .github/workflows/arc3-full-public-25x20-frozen-184.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        game:
+          - ar25-0c556536
+          - bp35-0a0ad940
+          - cd82-fb555c5d
+          - cn04-2fe56bfb
+          - dc22-fdcac232
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - sc25-635fd71a
+          - sk48-d8078629
+          - sp80-589a99af
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - tu93-0768757b
+          - vc33-5430563c
+          - wa30-ee6fef47
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Download all 20 pinned trajectories for game
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for i in $(seq 0 19); do
+            f="${{ matrix.game }}_p${i}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+      - name: Run frozen R180 pipeline on all 20 trajectories
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          args=()
+          for i in $(seq 0 19); do
+            args+=(--input "$GITHUB_WORKSPACE/public_trace/${{ matrix.game }}_p${i}_events.jsonl")
+          done
+          python public_frozen_pipeline_multigame_182.py "${args[@]}" \
+            --output "$GITHUB_WORKSPACE/r184-${{ matrix.game }}.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r184-${{ matrix.game }}
+          path: r184-${{ matrix.game }}.json
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: game
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r184-*
+          path: results
+          merge-multiple: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Aggregate full 500-trajectory public suite
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,glob
+          files=glob.glob('results/r184-*.json')
+          assert len(files)==25, len(files)
+          rows=[]
+          for p in files:
+              d=json.load(open(p))
+              assert d['schema']=='deus/arc3-frozen-pipeline-multigame/1'
+              assert d['truth']['architecture_frozen_before_cross_game_evaluation']
+              assert len(d['aggregate']['per_file'])==20
+              rows.extend(d['aggregate']['per_file'])
+          assert len(rows)==500, len(rows)
+          rows.sort(key=lambda x:(x['game'],int(x['path'][1:])))
+          keys=('opportunities','exact','wrong','near4','near16','cell_errors','camera_action_count')
+          def agg(xs):
+              d={k:sum(int(x.get(k,0)) for x in xs) for k in keys}
+              d['accuracy']=round(d['exact']/d['opportunities'],6) if d['opportunities'] else None
+              d['files_total']=len(xs)
+              d['files_with_opportunities']=sum(1 for x in xs if x['opportunities']>0)
+              d['mean_cell_errors']=round(d['cell_errors']/d['opportunities'],3) if d['opportunities'] else None
+              return d
+          by_game={}
+          for g in sorted(set(x['game'] for x in rows)):
+              by_game[g]=agg([x for x in rows if x['game']==g])
+          by_path={}
+          for i in range(20):
+              p=f'p{i}'
+              by_path[p]=agg([x for x in rows if x['path']==p])
+          summary=agg(rows)
+          summary['games_total']=len(by_game)
+          summary['games_with_any_opportunity']=sum(1 for v in by_game.values() if v['opportunities']>0)
+          summary['games_with_any_exact']=sum(1 for v in by_game.values() if v['exact']>0)
+          out={
+            'schema':'deus/arc3-full-public-25x20-frozen/1',
+            'rung':184,
+            'architecture':{'stage1':'patch_recent1_s2','stage2':'local_s1','stage3':'component_s1','frozen_from_r180':True},
+            'aggregate':summary,
+            'by_game':by_game,
+            'by_path':by_path,
+            'per_file':rows,
+            'truth':{'public_trace_only':True,'architecture_frozen_before_full_suite':True,'full_suite_not_used_for_selection':True,'online_state_reset_per_trajectory':True,'kaggle_execution':False,'submission_quota_spent':False,'independent_generalization_claim':False}
+          }
+          open('r184-full-public-500-aggregate.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({
+            'aggregate':summary,
+            'by_game':{g:{'files':v['files_total'],'files_with_opp':v['files_with_opportunities'],'opp':v['opportunities'],'exact':v['exact'],'accuracy':v['accuracy']} for g,v in by_game.items()},
+            'by_path':{p:{'opp':v['opportunities'],'exact':v['exact'],'accuracy':v['accuracy']} for p,v in by_path.items()}
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-full-public-25x20-frozen-184
+          path: r184-full-public-500-aggregate.json
+          if-no-files-found: error
+          retention-days: 30
