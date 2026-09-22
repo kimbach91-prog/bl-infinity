@@ -8,7 +8,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
-$ExpectedServerCommit = 'deef0ef53513b353c43d8585eee7f9565fcab0f3'
+$ExpectedServerCommit = '9cf798db6a3df63e961a0d25fa92350c85650e91'
 $ExpectedSchema = 'deus-workstation-benchmark/1'
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RecoveryStarted = (Get-Date).ToUniversalTime().ToString('o')
@@ -243,7 +243,8 @@ Step 'Checking DEUS Runtime health.'
 $RuntimeUrl = $RuntimeUrl.TrimEnd('/')
 $health = Invoke-RestMethod -Method Get -Uri "$RuntimeUrl/health" -TimeoutSec 20
 if (-not $health.ok) { Fail 'DEUS Runtime health did not return ok=true.' }
-Pass "Runtime healthy: $RuntimeUrl"
+if ([string]$health.workstationReceiptApi -ne $ExpectedSchema) { Fail "Runtime health marker mismatch: workstationReceiptApi=$($health.workstationReceiptApi) expected=$ExpectedSchema" }
+Pass "Runtime healthy and workstation receipt API marker verified: $RuntimeUrl"
 
 Step 'Resolving scoped runtime token without printing it.'
 $tokenInfo = Resolve-RuntimeToken $roots
