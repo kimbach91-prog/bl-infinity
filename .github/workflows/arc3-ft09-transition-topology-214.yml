@@ -1,0 +1,69 @@
+name: ARC3 ft09 transition topology discovery 214
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_transition_topology_214.py
+      - .github/workflows/arc3-ft09-transition-topology-214.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discover-ft09-topology:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py             public_benchmark/arc3/kaggle_candidates/public_ft09_transition_topology_214.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute transition-topology discovery
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_transition_topology_214.py             "${args[@]}" --output r214-ft09-transition-topology.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r214-ft09-transition-topology.json'))
+          assert d['schema']=='deus/arc3-ft09-transition-topology-discovery/1'
+          t=d['truth']
+          assert t['independent_implementation'] is True
+          assert t['external_solver_code_imported'] is False
+          assert t['p0_p9_fit_only'] is True
+          assert t['p10_p19_never_update_model'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert d['promotion']['solver_promotion'] is False
+          print(json.dumps({'coupling':d['coupling_evidence'],'gate':d['mechanism_gate_pass'],
+            'models':{k:v['heldout'] for k,v in d['models'].items()}},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r214-ft09-transition-topology
+          path: |
+            r214-ft09-transition-topology.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
