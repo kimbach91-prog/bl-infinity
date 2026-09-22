@@ -1,0 +1,83 @@
+name: ARC3 ft09 HUD overlay CV 214
+
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_hud_overlay_cv_214.py
+      - .github/workflows/arc3-ft09-hud-overlay-cv-214.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-ft09-hud-overlay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_macro_neighbor_rule_207.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_mismatch_boarddiff_210.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_ring2_relational_gate_211.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_full_frame_composer_212.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_full_frame_residual_topology_213.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_hud_overlay_cv_214.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute CV-selected HUD overlay composer
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_hud_overlay_cv_214.py \
+            "${args[@]}" --output r214-ft09-hud-overlay-cv.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r214-ft09-hud-overlay-cv.json'))
+          assert d['schema']=='deus/arc3-ft09-hud-overlay-cv/1'
+          t=d['truth']
+          assert t['policy_parameters_selected_from_p0_p9_cv_only'] is True
+          assert t['p10_p19_never_select_policy'] is True
+          assert t['heldout_never_updates_models'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['submission_quota_spent'] is False
+          assert d['promotion']['solver_promotion'] is False
+          print(json.dumps({
+            'selected_family':d['selected_family'],
+            'heldout':{k:d['heldout'].get(k) for k in ('predictions','correct','wrong','exact_accuracy','coverage','hud_predicted_changes')},
+            'gain':d['reference']['strict_exact_gain_vs_r212'],
+            'mechanism_gain':d['mechanism_gain'],
+            'gate':d['full_frame_gate_pass'],
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r214-ft09-hud-overlay-cv
+          path: |
+            r214-ft09-hud-overlay-cv.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
