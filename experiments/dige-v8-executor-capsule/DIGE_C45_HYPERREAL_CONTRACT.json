@@ -1,0 +1,42 @@
+{
+  "schema": "dige-c45-hyperreal-contract/1",
+  "candidate": "C45_HHIR_BARYCENTRIC_UV_SKIN_V1",
+  "parent": "C44_HHIR_UV_TRANSFER_SKIN_V1",
+  "parent_runtime": {
+    "run_id": 35716877616,
+    "wall_seconds": 142,
+    "hero_sha256": "52224cc5f027cdbeb1ca750b366376c47f1cbc5d89403a23256653fd3c54f641",
+    "runtime_structural_pass": true,
+    "visual_verdict": "FAIL",
+    "uv_transfer": {
+      "loops": 74460,
+      "mean_distance_m": 0.008044161495467637,
+      "p95_distance_m": 0.017027154564857483,
+      "max_distance_m": 0.028372740373015404
+    }
+  },
+  "scar": "Nearest source vertex UV is discontinuous across semantic UV regions and produced red facial patch mosaics despite technically successful transfer.",
+  "delta_only": [
+    "build BVH over source MakeHuman loop triangles",
+    "find nearest source surface triangle for each GNM face loop",
+    "barycentrically interpolate the source triangle UV at the closest surface point",
+    "retain C44 CC0 albedo/PBR and C43 eye/hair/framing"
+  ],
+  "acceptance": {
+    "runtime": [
+      "all target loops mapped",
+      "zero nearest-surface misses",
+      "source albedo hash exact",
+      "candidate exact",
+      "85mm/f3.6"
+    ],
+    "visual": [
+      "C44 red patch mosaic disappears",
+      "face albedo becomes spatially coherent",
+      "no severe UV seam/feature displacement",
+      "C43 eye/hair/framing not materially regressed"
+    ],
+    "promotion": "direct visual PASS required"
+  },
+  "truth_boundary": "UV is transferred from lawful existing CC0 texture coordinates; canonical visual reference remains audit-only."
+}
