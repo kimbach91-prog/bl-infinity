@@ -96,6 +96,7 @@ const server = http.createServer(async (req, res) => {
       providerSync: providerSynchronizer?.status?.() ?? null,
       directWorkerHeartbeat: Boolean(providerStore),
       workstationReceiptApi: 'deus-workstation-benchmark/1',
+      workstationReceiptAliases: ['/workstations/report','/runtime/workstations/report','/workstations/latest','/runtime/workstations/latest'],
       stateAllowedDataClasses: allowedStateDataClasses,
       providers: runtime.registry.list().length,
       search: search.stats(),
@@ -170,7 +171,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
     }
 
-    if (req.method === 'POST' && req.url === '/workstations/report') {
+    if (req.method === 'POST' && (req.url === '/workstations/report' || req.url === '/runtime/workstations/report')) {
       const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
       const body = await readJson(req, maxBodyBytes);
       const report = normalizeWorkstationReport(body, access.principal.id);
@@ -183,7 +184,7 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (req.method === 'GET' && req.url === '/workstations/latest') {
+    if (req.method === 'GET' && (req.url === '/workstations/latest' || req.url === '/runtime/workstations/latest')) {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       const records = await runtime.audit.list();
       const record = [...records].reverse().find((entry) => entry.type === 'workstation.report') ?? null;
