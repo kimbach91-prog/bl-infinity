@@ -94,12 +94,14 @@ def infer_struct(before:Grid,after:Grid,action:str,pad:int,mouse:bool):
 
 def infer_programs(before,after,action):
     out=[]
+    is_mouse=r189.parse_mouse(action) is not None
     for pad in (0,1):
-        p=infer_struct(before,after,action,pad,False)
-        if p is not None:out.append(p)
-        if r189.parse_mouse(action) is not None:
+        if is_mouse:
             q=infer_struct(before,after,action,pad,True)
             if q is not None:out.append(q)
+        else:
+            p=infer_struct(before,after,action,pad,False)
+            if p is not None:out.append(p)
     uniq={base.stable(x):x for x in out}
     return [uniq[k] for k in sorted(uniq)]
 
@@ -118,21 +120,35 @@ def match_at(program,board,r0,c0):
     return out
 
 
-def apply_program(program,board,action):
-    kind=program["kind"];h,w=int(program["h"]),int(program["w"])
+def struct_key(program):
+    return (int(program["h"]),int(program["w"]),base.stable(program["pre_pattern"]))
+
+
+def unique_struct_location(program,board,index_cache):
+    h,w=int(program["h"]),int(program["w"]);dim=(h,w)
+    if dim not in index_cache:
+        idx={}
+        if h<=len(board) and w<=len(board[0]):
+            for r0 in range(len(board)-h+1):
+                for c0 in range(len(board[0])-w+1):
+                    pat,_=canon(window(board,r0,c0,h,w));k=base.stable(pat)
+                    if k not in idx:idx[k]=(r0,c0)
+                    else:idx[k]=None
+        index_cache[dim]=idx
+    return index_cache[dim].get(base.stable(program["pre_pattern"]))
+
+
+def apply_program(program,board,action,index_cache=None):
+    kind=program["kind"]
     if kind=="mouse_struct_patch":
         click=r189.parse_mouse(action)
         if click is None:return None
         return match_at(program,board,click[0]+int(program["dr"]),click[1]+int(program["dc"]))
     if kind=="struct_patch":
-        hits=[]
-        for r0 in range(len(board)-h+1):
-            for c0 in range(len(board[0])-w+1):
-                p=window(board,r0,c0,h,w);pat,_=canon(p)
-                if pat==program["pre_pattern"]:hits.append((r0,c0))
-                if len(hits)>1:return None
-        if len(hits)!=1:return None
-        return match_at(program,board,*hits[0])
+        if index_cache is None:index_cache={}
+        loc=unique_struct_location(program,board,index_cache)
+        if loc is None:return None
+        return match_at(program,board,*loc)
     return None
 
 
@@ -151,12 +167,12 @@ def train(paths):
     return bank,dict(meta)
 
 
-def choose(policy,bank,before,action):
+def choose(policy,bank,before,action,index_cache):
     cfg=POLICIES[policy];rows=[]
     for ent in bank.get(r189.action_key(action),{}).values():
         ts=len(ent["traces"])
         if ts<cfg["min_trace_support"]:continue
-        pred=apply_program(ent["program"],before,action)
+        pred=apply_program(ent["program"],before,action,index_cache)
         if pred is not None:rows.append((base.digest(pred),pred,ts,ent["program"]["kind"]))
     if not rows:return None,{"conflict":False,"kinds":[]}
     groups={}
@@ -179,8 +195,9 @@ def evaluate(bank,paths):
             if e.get("type")!="action":pre=e;continue
             before=base.as_grid(pre["board"]);after=base.as_grid(e["board"]);action=base.action_name(e);pre=e
             if not base.same_shape(before,after):continue
+            index_cache={}
             for p in POLICIES:
-                s=stats[p];s["transitions"]+=1;pred,info=choose(p,bank,before,action)
+                s=stats[p];s["transitions"]+=1;pred,info=choose(p,bank,before,action,index_cache)
                 if pred is None:
                     s["abstain"]+=1;s["conflict_abstain"]+=int(info.get("conflict",False));continue
                 s["predictions"]+=1;ok=pred==after;s["correct" if ok else "wrong"]+=1
