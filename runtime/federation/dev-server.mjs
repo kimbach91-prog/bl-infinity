@@ -97,6 +97,7 @@ const server = http.createServer(async (req, res) => {
       directWorkerHeartbeat: Boolean(providerStore),
       workstationReceiptApi: 'deus-workstation-benchmark/1',
       workstationReceiptAliases: ['/workstations/report','/runtime/workstations/report','/workstations/latest','/runtime/workstations/latest'],
+      updateManifestApi: 'deus-workstation-update/1',
       stateAllowedDataClasses: allowedStateDataClasses,
       providers: runtime.registry.list().length,
       search: search.stats(),
@@ -169,6 +170,40 @@ const server = http.createServer(async (req, res) => {
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       const rateLimit = typeof limiter.stats === 'function' ? await limiter.stats() : { backend: 'memory' };
       return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
+    }
+
+    if (req.method === 'GET' && req.url === '/runtime/workstation/update-manifest') {
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
+      const read = await driveBridgeRuntime.readRange('77_WORKSTATION_UPDATE_CHANNEL!A1:O2');
+      const headers = read.values?.[0] ?? [];
+      const values = read.values?.[1] ?? [];
+      if (!headers.length) return send(res, 503, { error: 'update-manifest-unavailable' });
+      const manifest = {};
+      for (let i = 0; i < headers.length; i += 1) manifest[String(headers[i])] = values[i] ?? '';
+      return send(res, 200, {
+        schema: 'deus-workstation-update/1',
+        manifest,
+        source: { spreadsheetId: driveBridgeRuntime.spreadsheetId(), range: read.range },
+      });
+    }
+
+    if (req.method === 'POST' && req.url === '/runtime/workstation/update-ack') {
+      const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
+      const body = await readJson(req, Math.min(maxBodyBytes, 16_384));
+      const nodeId = String(body.nodeId ?? '');
+      const state = String(body.state ?? '');
+      const version = String(body.version ?? '');
+      const generation = String(body.generation ?? '');
+      if (!/^[a-zA-Z0-9._:-]{2,128}$/.test(nodeId)) return send(res, 400, { error: 'invalid-nodeId' });
+      if (!/^[A-Z0-9_/-]{2,128}$/.test(state)) return send(res, 400, { error: 'invalid-state' });
+      if (version.length > 64 || generation.length > 64) return send(res, 400, { error: 'update-ack-field-too-long' });
+      const receipt = await driveBridgeRuntime.appendHeartbeat({
+        state: 'WORKSTATION_UPDATE_' + state,
+        receiptRef: String(body.receiptRef ?? '').slice(0, 256),
+        note: JSON.stringify({ nodeId, version, generation, state }).slice(0, 1500),
+      });
+      await runtime.audit.append('workstation.update-ack', { nodeId, version, generation, state, actor: access.principal.id, receiptDigest: receipt.digest });
+      return send(res, 201, { accepted: true, receipt });
     }
 
     if (req.method === 'POST' && (req.url === '/workstations/report' || req.url === '/runtime/workstations/report')) {
@@ -526,6 +561,15 @@ function createDriveBridgeRuntime(){
   }
   return {
     snapshot:()=>structuredClone(state),
+    spreadsheetId:()=>process.env.DEUS_LIVEBUS_SPREADSHEET_ID||'1pVtDbKFGECbogSR0-nrVDEecF8xQNelCux6GFUEmVrQ',
+    async readRange(range){
+      if(!bridge) throw new Error('drive bridge unavailable');
+      return bridge.readRange(range);
+    },
+    async appendHeartbeat(input){
+      if(!bridge) throw new Error('drive bridge unavailable');
+      return bridge.appendHeartbeat(input);
+    },
     reconcile,
     start(){
       if(timer||!bridge) return;
