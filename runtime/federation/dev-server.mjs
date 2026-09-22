@@ -96,6 +96,7 @@ const server = http.createServer(async (req, res) => {
       providerSync: providerSynchronizer?.status?.() ?? null,
       directWorkerHeartbeat: Boolean(providerStore),
       workstationReceiptApi: 'deus-workstation-benchmark/1',
+      workstationUpdateViaRuntimeStatus: 'deus-workstation-update/1',
       workstationReceiptAliases: ['/workstations/report','/runtime/workstations/report','/workstations/latest','/runtime/workstations/latest'],
       updateManifestApi: 'deus-workstation-update/1',
       stateAllowedDataClasses: allowedStateDataClasses,
@@ -131,7 +132,34 @@ const server = http.createServer(async (req, res) => {
 
     if (req.method === 'POST' && req.url === '/drive-bridge/reconcile') {
       const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
-      return send(res, 200, await driveBridgeRuntime.reconcile());
+      let body = {};
+      try { body = await readJson(req, Math.min(maxBodyBytes, 16_384)); } catch (error) {
+        if (error?.message !== 'Unexpected end of JSON input') throw error;
+      }
+      let updateAck = null;
+      if (body?.updateAck && typeof body.updateAck === 'object') {
+        const ack = body.updateAck;
+        const nodeId = String(ack.nodeId ?? '');
+        const state = String(ack.state ?? '');
+        const version = String(ack.version ?? '');
+        const generation = String(ack.generation ?? '');
+        if (!/^[a-zA-Z0-9._:-]{2,128}$/.test(nodeId)) return send(res, 400, { error: 'invalid-nodeId' });
+        if (!/^[A-Z0-9_/-]{2,128}$/.test(state)) return send(res, 400, { error: 'invalid-state' });
+        if (version.length > 64 || generation.length > 64) return send(res, 400, { error: 'update-ack-field-too-long' });
+        const receipt = await driveBridgeRuntime.appendHeartbeat({
+          state: 'WORKSTATION_UPDATE_' + state,
+          receiptRef: String(ack.receiptRef ?? '').slice(0, 256),
+          note: JSON.stringify({ nodeId, version, generation, state }).slice(0, 1500),
+        });
+        await runtime.audit.append('workstation.update-ack', {
+          nodeId, version, generation, state,
+          actor: access.principal.id,
+          receiptDigest: receipt.digest,
+        });
+        updateAck = { accepted: true, receipt };
+      }
+      const bridge = await driveBridgeRuntime.reconcile();
+      return send(res, 200, { ...bridge, updateAck });
     }
 
     if (req.method === 'GET' && req.url === '/providers') {
@@ -169,7 +197,31 @@ const server = http.createServer(async (req, res) => {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       const rateLimit = typeof limiter.stats === 'function' ? await limiter.stats() : { backend: 'memory' };
-      return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
+      let workstationUpdate = { schema: 'deus-workstation-update/1', available: false, manifest: null, error: null };
+      try {
+        const read = await driveBridgeRuntime.readRange('77_WORKSTATION_UPDATE_CHANNEL!A1:O2');
+        const headers = read.values?.[0] ?? [];
+        const values = read.values?.[1] ?? [];
+        if (headers.length) {
+          const manifest = {};
+          for (let i = 0; i < headers.length; i += 1) manifest[String(headers[i])] = values[i] ?? '';
+          workstationUpdate = { schema: 'deus-workstation-update/1', available: true, manifest, error: null };
+        } else {
+          workstationUpdate.error = 'update-manifest-empty';
+        }
+      } catch (error) {
+        workstationUpdate.error = error.message;
+      }
+      return send(res, 200, {
+        ...(await runtime.orchestrator.status()),
+        providerSyncMode,
+        providerSync,
+        providerSynchronizer: providerSynchronizer?.status?.() ?? null,
+        rateLimitBackend,
+        rateLimitMode,
+        rateLimit,
+        workstationUpdate,
+      });
     }
 
     if (req.method === 'GET' && req.url === '/runtime/workstation/update-manifest') {
