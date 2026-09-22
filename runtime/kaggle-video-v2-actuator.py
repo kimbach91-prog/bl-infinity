@@ -186,16 +186,14 @@ def build_i2v_kernel(ref_bytes):
     root.mkdir(parents=True, exist_ok=True)
     ref_b64 = base64.b64encode(ref_bytes).decode("ascii")
     prompt = (
-        "Photorealistic live-action single young adult woman matching the reference identity and white satin dress. "
-        "She begins facing the camera with a warm playful smile, makes a tiny natural bounce, then performs one complete "
-        "smooth 360-degree turn in place with believable human weight shift and small foot steps. Her long dark hair and satin "
-        "dress respond naturally to inertia and gravity. She returns to face the camera, raises her right hand, waves happily, "
-        "and smiles. Stable fixed camera, realistic anatomy, realistic skin and fabric, consistent face and outfit, cinematic hotel-room lighting."
+        "Photorealistic young woman matching the reference, white satin dress, fixed camera. "
+        "She smiles, bounces lightly, performs one smooth full 360-degree turn with natural steps, "
+        "hair and dress moving with inertia, returns facing camera, and waves her right hand. "
+        "Preserve face, anatomy, outfit, and hotel room."
     )
     negative = (
-        "cartoon, anime, illustration, duplicate person, twins, extra limbs, extra fingers, missing limbs, malformed hands, "
-        "face morphing, identity change, body distortion, floating, sliding without footsteps, camera orbit, sexualized pose, "
-        "wardrobe change, flicker, warped background, low quality, blurry"
+        "cartoon, duplicate person, extra limbs, malformed hands, face morphing, identity change, "
+        "body distortion, floating, camera orbit, wardrobe change, flicker, blurry"
     )
     code = f'''import base64, hashlib, json, os, pathlib, subprocess, sys, time
 from io import BytesIO
@@ -215,8 +213,8 @@ def sh(cmd):
 
 # Use current Kaggle CUDA/PyTorch and install only the inference stack.
 sh([sys.executable,"-m","pip","install","-q","--upgrade",
-    "diffusers>=0.37.1","transformers>=4.46","accelerate>=1.1",
-    "huggingface_hub>=0.31","safetensors","imageio","imageio-ffmpeg","Pillow"])
+    "diffusers==0.33.1","transformers==4.46.3","accelerate==1.1.1",
+    "huggingface_hub>=0.31,<1.0","safetensors","imageio","imageio-ffmpeg","Pillow<12"])
 
 import torch
 from PIL import Image
