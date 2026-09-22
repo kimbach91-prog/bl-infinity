@@ -1,0 +1,73 @@
+name: ARC3 ft09 preaction completion veto 228
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_preaction_completion_veto_228.py
+      - .github/workflows/arc3-ft09-preaction-completion-veto-228.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-ft09-preaction-completion-veto:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_full_frame_composer_212.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_scene_exact_expert_216.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_virtual_goal_scene_expert_217.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_structural_goal_scene_expert_218.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_low_support_base_abstain_union_221.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_low_confidence_goal_manifold_veto_225.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_coarse_local_target_gate_227.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_preaction_completion_veto_228.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute preaction completion veto gate
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates python public_benchmark/arc3/kaggle_candidates/public_ft09_preaction_completion_veto_228.py "${args[@]}" --output r228-ft09-preaction-completion-veto.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r228-ft09-preaction-completion-veto.json'))
+          assert d['schema']=='deus/arc3-ft09-preaction-completion-veto/1'
+          t=d['truth']
+          assert t['completion_veto_fit_p0_p4_validate_p5_p9_only'] is True
+          assert t['selected_veto_refit_p0_p9_only'] is True
+          assert t['veto_uses_preaction_state_only'] is True
+          assert t['veto_can_only_abstain'] is True
+          assert t['r225_precedence_preserved'] is True
+          assert t['r227_target_model_unchanged'] is True
+          assert t['heldout_never_updates_models_or_selection'] is True
+          assert t['kaggle_execution'] is False
+          if d.get('heldout') is not None:
+            assert d['heldout']['eligible']==914
+            assert d['heldout']['incumbent_predictions']==307
+          assert d['promotion']['solver_promotion'] is False
+          print(json.dumps({'r227':d['r227_selected'],'selection':d['selection'].get('selected'),'selected_config':d['selection'].get('selected_config'),'refit':d.get('refit'),'heldout':d.get('heldout'),'gate':d.get('zero_wrong_coverage_gain_gate_pass',False)},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r228-ft09-preaction-completion-veto
+          path: |
+            r228-ft09-preaction-completion-veto.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
