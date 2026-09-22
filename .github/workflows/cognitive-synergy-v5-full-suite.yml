@@ -1,0 +1,111 @@
+name: DEUS cognitive synergy V5 full frozen suite
+
+on:
+  push:
+    branches:
+      - deus/cognitive-synergy-v4-20260922
+    paths:
+      - '.github/workflows/cognitive-synergy-v5-full-suite.yml'
+      - 'public_benchmark/cognitive_synergy/synergy_full_v1_batch.py'
+      - 'public_benchmark/cognitive_synergy/synergy_full_v1_reduce.py'
+      - 'public_benchmark/cognitive_synergy/taskbank_v1.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  batch:
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile frozen-suite runner
+        run: python -m py_compile public_benchmark/cognitive_synergy/synergy_full_v1_batch.py
+      - name: Cool down shared public inference window
+        run: sleep 125
+      - name: Run frozen batch
+        id: run
+        continue-on-error: true
+        run: python public_benchmark/cognitive_synergy/synergy_full_v1_batch.py --batch-index ${{ matrix.batch }} --batch-size 6
+      - name: Check batch receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          f="$(printf 'synergy-batch-%02d.json' '${{ matrix.batch }}')"
+          test -s "$f"
+          sha256sum "$f" > "$(printf 'BATCH_%02d_SHA256.txt' '${{ matrix.batch }}')"
+          jq '{batch_index,batch_size,task_ids,quality_correct,identity:{call_count:.identity.call_count,all_calls_exact_identity:.identity.all_calls_exact_identity,served_models:.identity.served_models},gate}' "$f" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload batch receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: synergy-batch-${{ matrix.batch }}
+          path: |
+            synergy-batch-*.json
+            BATCH_*_SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive batch
+        shell: bash
+        run: |
+          f="$(printf 'synergy-batch-%02d.json' '${{ matrix.batch }}')"
+          gate="$(jq -r '.gate' "$f")"
+          case "$gate" in
+            INCONCLUSIVE_*) exit 2 ;;
+            *) exit 0 ;;
+          esac
+
+  reduce:
+    if: always()
+    needs: batch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: synergy-batch-*
+          path: batch-artifacts
+          merge-multiple: true
+      - name: Reduce frozen suite
+        id: reduce
+        continue-on-error: true
+        run: python public_benchmark/cognitive_synergy/synergy_full_v1_reduce.py
+      - name: Summarize aggregate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s synergy-full-suite-aggregate.json
+          cat AGGREGATE_SHA256.txt
+          jq '{task_count_unique,batch_count,quality_correct,accuracy,negative_E_vs_A_families,superadditive_E_vs_best_A_C_D_families,identity,promotion_gate,truth}' synergy-full-suite-aggregate.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload aggregate
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-cognitive-synergy-v5-full-suite
+          path: |
+            synergy-full-suite-aggregate.json
+            AGGREGATE_SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on incomplete or inconclusive aggregate
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' synergy-full-suite-aggregate.json)"
+          case "$gate" in
+            INCOMPLETE_*|INCONCLUSIVE_*) exit 2 ;;
+            *) exit 0 ;;
+          esac
