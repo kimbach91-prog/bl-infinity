@@ -106,7 +106,23 @@ def main():
     scene.frame_start = 1
     scene.frame_end = end
     scene.render.fps = fps
-    scene.render.engine = args.engine
+    requested_engine = args.engine
+    allowed_engines = {
+        item.identifier for item in scene.render.bl_rna.properties["engine"].enum_items
+    }
+    engine_aliases = {
+        "BLENDER_EEVEE_NEXT": "BLENDER_EEVEE",
+        "BLENDER_EEVEE": "BLENDER_EEVEE_NEXT",
+    }
+    actual_engine = requested_engine
+    if actual_engine not in allowed_engines:
+        actual_engine = engine_aliases.get(requested_engine)
+    if actual_engine not in allowed_engines:
+        raise RuntimeError(
+            "NATIVE_VIDEO_RENDER_ENGINE_UNAVAILABLE:"
+            f"requested={requested_engine};allowed={sorted(allowed_engines)}"
+        )
+    scene.render.engine = actual_engine
     scene.render.resolution_x = args.width
     scene.render.resolution_y = args.height
     scene.render.resolution_percentage = 100
@@ -151,7 +167,9 @@ def main():
     print(json.dumps({
         "event": "native_video_render_start",
         "blender": bpy.app.version_string,
-        "engine": scene.render.engine,
+        "engine_requested": requested_engine,
+        "engine_actual": scene.render.engine,
+        "engine_allowed": sorted(allowed_engines),
         "camera": scene.camera.name,
         "character_object_count": len(chars),
         "character_objects": [o.name for o in chars],
@@ -172,7 +190,9 @@ def main():
         "engine_id": "DEUS_NATIVE_VIDEO_ENGINE_V0",
         "renderer": "Blender",
         "blender_version": bpy.app.version_string,
+        "render_engine_requested": requested_engine,
         "render_engine": scene.render.engine,
+        "render_engine_allowed": sorted(allowed_engines),
         "source_blend": os.path.basename(bpy.data.filepath),
         "animated_blend": animated_blend.name,
         "camera": scene.camera.name,
