@@ -3324,7 +3324,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         if cross.length<1e-8:
             cross=Vector((1,0,0))
         cross.normalize()
-        lane_count=4 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)
+        lane_count=5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)
         for lane in range(lane_count):
             lane_bias=(lane-(lane_count-1)*.5)*(.00022 if S1_ENDOGENOUS else .00032)
             p0=root+n*.00048+cross*lane_bias
@@ -3438,10 +3438,17 @@ if C41_HYPERREAL_NATIVE_EYE:
         bpy.context.view_layer.objects.active=cap
         try: bpy.ops.object.shade_smooth()
         except Exception: pass
-        s1_scalp_cap_faces=len(cap.data.polygons)
+        cap.hide_render=True
+        try: cap.hide_set(True)
+        except Exception: pass
+        s1_scalp_cap_faces=0
 
         frame=[]
-        frame_roots=sorted(edge_band,key=lambda q:abs(q[1].x),reverse=True)[:64]
+        frame_source=edge_band if len(edge_band)>=12 else scalp
+        frame_roots=sorted(
+            frame_source,
+            key=lambda q:(abs(abs(q[1].x)-.078)+.35*abs(q[1].z-q[3]))
+        )[:72]
         if frame_roots:
             step=max(1,len(frame_roots)//40)
             for _vi,root,n,_edge in frame_roots[::step][:40]:
@@ -3478,7 +3485,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         "geometry_eye_uv_dependency":False,
         "edge_band_roots":len(edge_band),
         "gather_pool_count":len(gather_pool),
-        "undercoat_lane_count":(4 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)),
+        "undercoat_lane_count":(5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)),
         "s1_scalp_cap_faces":s1_scalp_cap_faces,
         "s1_face_frame_curves":s1_face_frame_curves,
         "truth_boundary":"GNM_NATIVE_EYES_AND_SCALP_ROOTS__NO_REFERENCE_PIXELS_USED"
@@ -3608,9 +3615,12 @@ gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsu
 solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0030; solid.offset=1.0
 s1_garment_metrics={"enabled":False}
 if S1_ENDOGENOUS:
-    def _s1_clip_helper(src,name,keep_fn,mat):
+    def _s1_clip_body(src,name,keep_fn,mat,thickness=.0020):
         obj=src.copy(); obj.data=src.data.copy(); obj.name=name
         bpy.context.collection.objects.link(obj)
+        for mod in list(obj.modifiers):
+            try: obj.modifiers.remove(mod)
+            except Exception: pass
         bm=bmesh.new(); bm.from_mesh(obj.data)
         kill=[f for f in bm.faces if not keep_fn(obj.matrix_world @ f.calc_center_median())]
         if kill:
@@ -3621,13 +3631,21 @@ if S1_ENDOGENOUS:
         try: bpy.ops.object.shade_smooth()
         except Exception: pass
         sub=obj.modifiers.new(name+"_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
-        so=obj.modifiers.new(name+"_THICKNESS","SOLIDIFY"); so.thickness=.0022; so.offset=1.0
+        so=obj.modifiers.new(name+"_THICKNESS","SOLIDIFY"); so.thickness=thickness; so.offset=1.0
         return obj
-    leggings=_s1_clip_helper(tights,"DIGE_S1_LEGGINGS",lambda p:(p.z>=.13 and p.z<=1.005),s1_leggings_mat)
-    tank=_s1_clip_helper(
-        tights,"DIGE_S1_TANK_TOP",
-        lambda p:(p.z>=1.065 and p.z<=1.425 and abs(p.x)<=.225 and (p.z<1.325 or abs(p.x)>.082) and (p.z<1.395 or abs(p.x)>.118)),
-        s1_tank_mat
+    leggings=_s1_clip_body(
+        body,"DIGE_S1_LEGGINGS",
+        lambda p:(p.z>=.13 and p.z<=1.015 and abs(p.x)<=.315),
+        s1_leggings_mat,.0018
+    )
+    tank=_s1_clip_body(
+        body,"DIGE_S1_TANK_TOP",
+        lambda p:(
+            p.z>=1.070 and p.z<=1.430 and abs(p.x)<=.205 and
+            (p.z<=1.305 or abs(p.x)>=.090) and
+            (p.z<=1.390 or abs(p.x)>=.122)
+        ),
+        s1_tank_mat,.0017
     )
     tights.hide_render=True
     try: tights.hide_set(True)
@@ -3636,11 +3654,12 @@ if S1_ENDOGENOUS:
         "enabled":True,
         "tank_polygons":len(tank.data.polygons),
         "leggings_polygons":len(leggings.data.polygons),
-        "source":"DETERMINISTIC_MAKEHUMAN_HELPER_SHELL_CLIPPED_IN_SOURCE",
+        "source":"RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL",
         "material":"PROCEDURAL_GRAY_FABRIC_PBR",
         "body_arm_vertices_relaxed":s1_arm_vertices,
         "tights_arm_vertices_relaxed":s1_tights_arm_vertices,
-        "midriff_gap_m":0.060
+        "midriff_gap_m":0.055,
+        "helper_tights_rendered":False
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
