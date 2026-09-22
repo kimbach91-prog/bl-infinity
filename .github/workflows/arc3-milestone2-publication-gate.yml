@@ -27,14 +27,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ROOT=public_benchmark/arc3/kaggle_candidates/flash_next_340
-          python "$ROOT/upstream_build_flash_next_package.py" \
+          ROOT="public_benchmark/arc3/kaggle_candidates/flash_next_340"
+          TMP="$RUNNER_TEMP/m2-publication"
+          BUILT="$TMP/build/m2-built"
+          mkdir -p "$TMP/scripts"
+          cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
+          cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
+          cp "$ROOT/upstream_flash_teardown_patch.py" "$TMP/scripts/flash_teardown_patch.py"
+          python "$TMP/scripts/build_flash_next_package.py" \
             --kernel-id deusplaceholder/deus-arc-agi3-m2-publication-candidate \
             --mode full \
             --concurrency 8 \
             --analyzer-timeout 900 \
             --full-runtime-seconds 7200 \
-            --output-dir public_benchmark/arc3/.m2-built
+            --output-dir "$BUILT"
+          rm -rf public_benchmark/arc3/.m2-built
+          cp -r "$BUILT" public_benchmark/arc3/.m2-built
 
       - name: Prepare public-intent milestone bundle and fail-closed receipt
         shell: bash
