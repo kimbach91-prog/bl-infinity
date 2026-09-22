@@ -1,0 +1,89 @@
+name: ARC3 V5 R192 cancelled-lane recovery
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - '.github/workflows/arc3-r192-recovery-20260922.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  recover:
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        game:
+          - ls20-9607627b
+          - su15-1944f8ab
+          - sb26-7fbdac44
+          - tr87-cd924810
+          - s5i5-18d95033
+          - tn36-ef4dde99
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - ft09-0d8bbf25
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile R192 stack
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_local_transition_program_prequential_136.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_v5_cooperative_synergy_arbiter_192.py
+      - name: Download pinned traces
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute recovered R192 lane
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_v5_cooperative_synergy_arbiter_192.py \
+            --game "$GAME" "${args[@]}" --output "r192-${GAME}.json"
+      - name: Verify
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME'];d=json.load(open(f'r192-{g}.json'))
+          t=d['truth']
+          assert t['arbiter_selected_on_inner_validation_only'] is True
+          assert t['heldout_p10_p19_never_updates_cores_or_arbiter'] is True
+          print(json.dumps({'game':g,'selected':d['inner']['selected_config'],'heldout':d['heldout']['all']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r192-recovery-${{ matrix.game }}
+          path: |
+            r192-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
