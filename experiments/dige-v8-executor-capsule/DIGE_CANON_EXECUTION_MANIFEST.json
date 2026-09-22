@@ -1,0 +1,265 @@
+{
+  "schema": "DIGE_CANON_EXECUTION_MANIFEST_V1",
+  "project_id": "DEUS_CORE_COMPUTE_DIGE_V1",
+  "state": "CANDIDATE_SOURCE_BINDING_NOT_RUNTIME_RECEIPT",
+  "canonical_drive": {
+    "staging_id": "1FZaAu-thWXBCGAToFXawt62he8JTJVrBWI9emF6XE7g",
+    "staging_modified_time": "2026-09-19T07:05:47.246Z",
+    "execution_receipt_id": "1hALdiqsgnY52lY8t3qxxh-TCzOW1QTEXlXfZbhOmnD0",
+    "execution_receipt_revision": "2",
+    "execution_receipt_revision_token": "ANLCKQnYoObhF_zfekFolvGypaHcXHSNSl3TYDhFoDwLaoExtaYaf2laAhO-3E1ABkGwHYWguvRNnU0QAeXt8P0mO8vmowon9mKeFaC08g"
+  },
+  "code_lineage": {
+    "branch": "deus/dige-v8-makehuman-cycles-20260919",
+    "parent_head": "206395b1a6529046c2d1b3c4e244b8d3f01b978f",
+    "runtime_commit_must_be_recorded": true
+  },
+  "assets": {
+    "base": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/3dobjs/base.obj",
+      "git_blob_sha1": "d26635e9326e3cca30778fd7b9c00062b03cce09",
+      "reconstructed_sha256": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c",
+      "license": "CC0-1.0"
+    },
+    "target": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/asian-female-young.target",
+      "git_blob_sha1": "f862c96add11c31ab1ca75c69e1c67ae5e0e3d5f",
+      "reconstructed_sha256": "095fe79694fa19e1fe98d93009ec116199bd524e081c640351a10eccf2cca1eb",
+      "license": "CC0-1.0"
+    },
+    "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
+    "candidate_body_only_normalized_obj_sha256": "16c4dbe5103e2e58d90f5807e1ddf4686791c4d3080fb94d7a884bc1a033e0fd",
+    "precompact_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
+    "garment_helper_tights": {
+      "group": "helper-tights",
+      "expected_faces": 2650,
+      "normalized_obj_sha256": "f1e3728271b5623cd6a0a90bac75b3f30128f17c076fc5ad9f3411d74b50513e",
+      "license": "CC0-1.0"
+    },
+    "eye_helpers": {
+      "left": {
+        "group": "helper-l-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "d867a87491242974faf991d34274fd466321b2930bc8d105d43c2fe0117bfd9a",
+        "license": "CC0-1.0"
+      },
+      "right": {
+        "group": "helper-r-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "6b9034ad52e2786709128c2fbb4d4b8e577cb3c74716f9fba5b43e7a7b3454fb",
+        "license": "CC0-1.0"
+      }
+    },
+    "pre_body_height_normalization_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160",
+    "filtered_hair_helper": {
+      "group": "helper-hair",
+      "source_faces": 198,
+      "removed_front_faces": 50,
+      "retained_faces": 148,
+      "retained_vertices": 324,
+      "filter": "retain face when centroid_y_m <= 0.01 after canonical body-referenced normalization",
+      "compact_obj_sha256": "5fee5c08c835431c66862160dfc07c2e0d7450e62ab342e99ead82ea7db46c0b",
+      "license": "CC0-1.0",
+      "scar_lineage": "R4 face-curtain removal reconstructed exactly by retained/removed face counts"
+    },
+    "system_assets_c12": {
+      "source_page": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+      "pack_primary_url": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+      "pack_secondary_url": "https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+      "pack_sha256": "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107",
+      "license": "CC0",
+      "probe_run": 35455034704,
+      "probe_artifact_id": 10588620236,
+      "probe_artifact_digest": "sha256:325275f0ab7de2f45aae5bc95f7343e6d45cf7afa6fe074561b31b56e17e87d1",
+      "hair_short03": {
+        "tags": [
+          "MakeHuman",
+          "Short",
+          "Female"
+        ],
+        "obj": {
+          "runtime_name": "short03.obj",
+          "zip_path": "hair/short03/short03.obj",
+          "sha256": "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c",
+          "vertices": 1011,
+          "faces": 961,
+          "uvs": 1071
+        },
+        "mhclo": {
+          "runtime_name": "short03.mhclo",
+          "zip_path": "hair/short03/short03.mhclo",
+          "sha256": "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f"
+        },
+        "diffuse": {
+          "runtime_name": "short03_diffuse.png",
+          "zip_path": "hair/short03/short03_diffuse.png",
+          "sha256": "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da"
+        }
+      },
+      "high_poly_eyes": {
+        "obj": {
+          "runtime_name": "high-poly.obj",
+          "zip_path": "eyes/high-poly/high-poly.obj",
+          "sha256": "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1",
+          "vertices": 1064,
+          "faces": 1020,
+          "uvs": 808
+        },
+        "mhclo": {
+          "runtime_name": "high-poly.mhclo",
+          "zip_path": "eyes/high-poly/high-poly.mhclo",
+          "sha256": "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d"
+        },
+        "diffuse": {
+          "runtime_name": "brown_eye.png",
+          "zip_path": "eyes/materials/brown_eye.png",
+          "sha256": "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b"
+        }
+      },
+      "eyebrow001": {
+        "obj": {
+          "runtime_name": "eyebrow001.obj",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.obj",
+          "sha256": "88b13146395133f3901715e11706cdfd293e5d6087ad7c5e01efe1485a26b513",
+          "vertices": 124,
+          "faces": 96,
+          "uvs": 126
+        },
+        "mhclo": {
+          "runtime_name": "eyebrow001.mhclo",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.mhclo",
+          "sha256": "54c8892c2ba577f4152d779ce1f20f7cd323beb8cbd9cb701796165c221b4f5b"
+        },
+        "diffuse": {
+          "runtime_name": "eyebrow001.png",
+          "zip_path": "eyebrows/eyebrow001/eyebrow001.png",
+          "sha256": "9940f7d0b1b223709a19b05156ba6f6e9e4dbdbced02d7574f4d51d72c58967b"
+        }
+      },
+      "eyelashes01": {
+        "obj": {
+          "runtime_name": "eyelashes01.obj",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.obj",
+          "sha256": "f78f5b93fea1946fcae103d32c4f082dd9612a1ec2e7e2f90b03ebe59b0baf20",
+          "vertices": 250,
+          "faces": 184,
+          "uvs": 250
+        },
+        "mhclo": {
+          "runtime_name": "eyelashes01.mhclo",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.mhclo",
+          "sha256": "5a86b29c15649273d723084954b7fa7bf199112571d4f58539b46734d397ee6b"
+        },
+        "diffuse": {
+          "runtime_name": "eyelashes01.png",
+          "zip_path": "eyelashes/eyelashes01/eyelashes01.png",
+          "sha256": "4b69c0fff2648874460e9caf80c31413c444218a5c50afebc425aeaa65484a35"
+        }
+      },
+      "hair_short04": {
+        "tags": [
+          "MakeHuman",
+          "Male",
+          "Short"
+        ],
+        "obj": {
+          "runtime_name": "short04.obj",
+          "zip_path": "hair/short04/short04.obj",
+          "sha256": "676964a133ee35ffcea1195382bf75542da7a298931e4001bc7b0d7b707225de",
+          "vertices": 865,
+          "faces": 525,
+          "uvs": 991
+        },
+        "mhclo": {
+          "runtime_name": "short04.mhclo",
+          "zip_path": "hair/short04/short04.mhclo",
+          "sha256": "d60640aa4c4ffce1aa269647ba436b6ee0bb21bb948f927b84e27a48d2107157"
+        },
+        "diffuse": {
+          "runtime_name": "short04_diffuse.png",
+          "zip_path": "hair/short04/short04_diffuse.png",
+          "sha256": "0bef7fc0e403db5a40fabb2111ebfa6f7e8158e204c6e56b8da98e9ef527846e"
+        }
+      },
+      "hair_default_key": "hair_short03"
+    }
+  },
+  "policy": {
+    "identity_bound": false,
+    "source_pixels_allowed": false,
+    "reference_images_allowed": false,
+    "external_geometry_license_required": "CC0-1.0",
+    "hyperreal_claim_allowed": false,
+    "execution_receipt_required_for_promotion": true,
+    "system_asset_fit_algorithm": "MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED",
+    "system_asset_probe_required": true
+  },
+  "mesh_policy": {
+    "include_face_groups": [
+      "body"
+    ],
+    "exclude_helper_and_joint_groups": true,
+    "expected_body_faces": 13378,
+    "source_total_faces": 18486,
+    "rationale": "Body render mesh is compact, closed and helper-free. Deterministic CC0 helper-tights is emitted separately as a fitted garment proxy; eyes/hair are renderer-built from exact source-derived landmarks.",
+    "expected_boundary_edges": 0,
+    "expected_nonmanifold_edges": 0,
+    "local_drive_staging_topology_receipt": {
+      "body_faces": 13378,
+      "undirected_edges": 26756,
+      "boundary_edges": 0,
+      "nonmanifold_edges": 0,
+      "state": "LOCALLY_RECOMPUTED_FROM_DRIVE_STAGING_BYTES",
+      "body_vertices": 13380,
+      "normalization": "BODY_REFERENCED_HEIGHT_1P70_GROUND_Z0"
+    },
+    "source_total_vertices": 19158,
+    "expected_body_vertices": 13380,
+    "vertex_compaction": "retain exactly body-referenced vertex indices 0..13379; helper loose vertices excluded",
+    "garment_helper_group": "helper-tights",
+    "expected_garment_faces": 2650
+  },
+  "l_hyper_spec": {
+    "source_drive_id": "1BKIfzxRR0nk_qqo85uiBuz1DDegHQQEeML76H4hlZi0",
+    "source_marker": "DIGE_HYPERREAL_APPEARANCE_PARAMETER_PACK_V1 + DIGE_DEEP_RESEARCH_HYPERREAL_UPGRADE_V2/V3",
+    "weights": {
+      "identity": 0.26,
+      "geometry": 0.16,
+      "skin_transport": 0.12,
+      "hair_transport": 0.1,
+      "eye": 0.08,
+      "cloth": 0.08,
+      "light": 0.08,
+      "camera": 0.06,
+      "color": 0.06
+    },
+    "normalization": "each component normalized to [0,1] using calibration anchors",
+    "role": "RANK_CANDIDATES_NOT_UNIVERSAL_CERTIFIER",
+    "universal_threshold_state": "NOT_CANONIZED_PENDING_HELD_OUT_CALIBRATION",
+    "identity_input_boundary": "TRUSTED_SCALAR_ONLY_NO_RAW_REFERENCE_PIXELS",
+    "core_hard_gates": [
+      "provenance_clean",
+      "renderer_reference_open_count_zero",
+      "dependency_config_hashes_complete",
+      "mesh_valid_for_random_walk",
+      "nan_inf_zero",
+      "cloth_body_penetration_zero",
+      "critical_face_eye_clipping_zero",
+      "raw_quality_auditable",
+      "denoise_detail_retention_checked",
+      "human_visual_audit_pass",
+      "drive_upload_readback_hash_pass"
+    ],
+    "delivery_gate": "delivery_sent_readback_pass"
+  },
+  "normalization_policy": {
+    "reference_group": "body",
+    "target_height_m": 1.7,
+    "ground_z_m": 0,
+    "x_y_center": "body_bbox_midpoint",
+    "applies_same_transform_to_helpers": true,
+    "rationale": "Previous transform used all source/helper vertices and produced 1.662 m body height with feet ~0.0318 m above ground. Current transform is body-referenced and grounds the body at z=0."
+  }
+}

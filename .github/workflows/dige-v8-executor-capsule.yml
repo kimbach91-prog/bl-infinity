@@ -1,0 +1,216 @@
+name: DIGE V8 Cycles Executor Capsule
+
+on:
+  pull_request:
+    paths:
+      - 'experiments/dige-v8-executor-capsule/**'
+      - '.github/workflows/dige-v8-executor-capsule.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-executor-capsule-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cycles-cpu-receipt:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Runtime receipt
+        run: |
+          set -euxo pipefail
+          uname -a
+          python --version
+          free -h
+          lscpu | sed -n '1,40p'
+          echo "GITHUB_SHA=$GITHUB_SHA"
+          echo "RUNNER_NAME=$RUNNER_NAME"
+          echo "RUNNER_OS=$RUNNER_OS"
+          echo "RUNNER_ARCH=$RUNNER_ARCH"
+
+      - name: Resolve Blender 5.2.2 from official release
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          test -x "$BLENDER"
+          "$BLENDER" --version | tee "experiments/dige-v8-executor-capsule/blender_version.txt"
+          sha256sum "/tmp/$TAR" | tee "experiments/dige-v8-executor-capsule/blender_archive.sha256"
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build canon-locked geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/geometry_execution.json
+          test -s runtime/dige_makehuman_v8.obj
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Resolve official MakeHuman CC0 skin albedo
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets
+          PACK=/tmp/skins01_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 3 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 3 "$SECONDARY" -o "$PACK"
+          fi
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $PACK" | sha256sum -c -
+          unzip -p "$PACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          {
+            echo "pack_sha256=7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
+            echo "asset_sha256=e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+            echo "license=CC0"
+            echo "asset=onlytheghosts_young_eurasian_female"
+          } > runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
+
+      - name: Resolve official MakeHuman CC0 system hair and face assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/system_assets
+          PACK=/tmp/makehuman_system_assets_cc0.zip
+          PRIMARY=https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          SECONDARY=https://files.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip
+          if ! curl -fL --retry 4 --retry-delay 4 "$PRIMARY" -o "$PACK"; then
+            curl -fL --retry 4 --retry-delay 4 "$SECONDARY" -o "$PACK"
+          fi
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $PACK" | sha256sum -c -
+
+          unzip -p "$PACK" "hair/short03/short03.obj" > runtime/system_assets/short03.obj
+          unzip -p "$PACK" "hair/short03/short03.mhclo" > runtime/system_assets/short03.mhclo
+          unzip -p "$PACK" "hair/short03/short03_diffuse.png" > runtime/system_assets/short03_diffuse.png
+
+          unzip -p "$PACK" "eyes/high-poly/high-poly.obj" > runtime/system_assets/high-poly.obj
+          unzip -p "$PACK" "eyes/high-poly/high-poly.mhclo" > runtime/system_assets/high-poly.mhclo
+          unzip -p "$PACK" "eyes/materials/brown_eye.png" > runtime/system_assets/brown_eye.png
+
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.obj" > runtime/system_assets/eyebrow001.obj
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > runtime/system_assets/eyebrow001.mhclo
+          unzip -p "$PACK" "eyebrows/eyebrow001/eyebrow001.png" > runtime/system_assets/eyebrow001.png
+
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.obj" > runtime/system_assets/eyelashes01.obj
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > runtime/system_assets/eyelashes01.mhclo
+          unzip -p "$PACK" "eyelashes/eyelashes01/eyelashes01.png" > runtime/system_assets/eyelashes01.png
+
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+
+          echo "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1  runtime/system_assets/high-poly.obj" | sha256sum -c -
+          echo "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d  runtime/system_assets/high-poly.mhclo" | sha256sum -c -
+          echo "4659691c7295ad6206c78b003e5fd0e5f91dcd53032fa914a229bb48cabe424b  runtime/system_assets/brown_eye.png" | sha256sum -c -
+
+          echo "88b13146395133f3901715e11706cdfd293e5d6087ad7c5e01efe1485a26b513  runtime/system_assets/eyebrow001.obj" | sha256sum -c -
+          echo "54c8892c2ba577f4152d779ce1f20f7cd323beb8cbd9cb701796165c221b4f5b  runtime/system_assets/eyebrow001.mhclo" | sha256sum -c -
+          echo "9940f7d0b1b223709a19b05156ba6f6e9e4dbdbced02d7574f4d51d72c58967b  runtime/system_assets/eyebrow001.png" | sha256sum -c -
+
+          echo "f78f5b93fea1946fcae103d32c4f082dd9612a1ec2e7e2f90b03ebe59b0baf20  runtime/system_assets/eyelashes01.obj" | sha256sum -c -
+          echo "5a86b29c15649273d723084954b7fa7bf199112571d4f58539b46734d397ee6b  runtime/system_assets/eyelashes01.mhclo" | sha256sum -c -
+          echo "4b69c0fff2648874460e9caf80c31413c444218a5c50afebc425aeaa65484a35  runtime/system_assets/eyelashes01.png" | sha256sum -c -
+
+          sha256sum runtime/system_assets/* | tee runtime/system_assets/DIGE_C12_SYSTEM_ASSET_SHA256SUMS.txt
+
+      - name: Render bounded Cycles CPU path-trace
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_SAMPLES_PREVIEW: '16'
+          DIGE_SAMPLES_HERO: '24'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.sha }}
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/blender_execution.log
+
+      - name: Verify receipt and outputs
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, hashlib, os
+          root=pathlib.Path(".")
+          r=json.loads((root/"runtime/renders/DIGE_V8_RENDER_RECEIPT.json").read_text())
+          canon=(root/"DIGE_CANON_EXECUTION_MANIFEST.json").read_bytes()
+          assert r["engine"]=="CYCLES"
+          assert r["device"]=="CPU"
+          assert r["runtime_commit"] == os.environ["GITHUB_SHA"]
+          assert r["canon_execution_manifest_sha256"] == hashlib.sha256(canon).hexdigest()
+          assert r["identity_bound"] is False
+          assert r["provenance"]["source_pixels_used"] is False
+          assert r["provenance"]["reference_pixels_read_by_renderer"] is False
+          assert r["skin_albedo"]["enabled"] is True
+          assert r["skin_albedo"]["sha256"] == "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf"
+          assert r["provenance"]["external_skin_texture_used"] is True
+          assert r["provenance"]["external_skin_texture_license"] == "CC0"
+          assert r["provenance"]["external_skin_texture_pack_sha256"] == "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9"
+          assert r["appearance_candidate"] == "C12_SYSTEM_CC0_SHORT03_HIGHPOLY_FACE_V1"
+          assert r["system_asset_pack"]["pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+          assert r["system_asset_pack"]["license"] == "CC0"
+          assert r["provenance"]["external_system_asset_used"] is True
+          assert r["provenance"]["external_system_asset_pack_sha256"] == "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107"
+          assert r["hair_surface_contract"]["style"] == "MHCLO_FITTED_SHORT03_SYSTEM_CC0_V1"
+          assert r["hair_surface_contract"]["object_vertices"] == 1011
+          assert r["hair_surface_contract"]["mass_mesh_rendered"] is True
+          fits=r["system_asset_fits"]
+          assert fits["hair_short03"]["vertices"] == 1011
+          assert fits["high_poly_eyes"]["vertices"] == 1064
+          assert fits["eyebrow001"]["vertices"] == 124
+          assert fits["eyelashes01"]["vertices"] == 250
+          assert all(v["fit_algorithm"] == "MAKEHUMAN_MHCLO_BARYCENTRIC_OFFSETS_SCALED" for v in fits.values())
+          assert r["fit_reference"]["vertices"] >= 19158
+          assert r["fit_reference"]["body_prefix_overridden_vertices"] == 13380
+          assert r["fit_reference"]["coordinate_system"] == "BLENDER_X_DEPTH_Y_UP_Z_NORMALIZED_BODY_REFERENCED"
+          assert len(r["outputs"]) == 5 and all(o["sha256"] for o in r["outputs"])
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["evidence_boundary"]["hyperreal_certified"] is False
+          print("DIGE_V8_CPU_CYCLES_EXECUTOR_CAPSULE_PASS")
+          PY
+
+      - name: Hash evidence bundle
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          find runtime -type f -maxdepth 2 -print0 | sort -z | xargs -0 sha256sum > DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          sha256sum DIGE_CANON_EXECUTION_MANIFEST.json >> DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          cat DIGE_V8_EXECUTOR_SHA256SUMS.txt
+
+      - name: Upload evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-CYCLES-CPU-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/*.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+            experiments/dige-v8-executor-capsule/runtime/geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_FIT_REFERENCE.json
+            experiments/dige-v8-executor-capsule/runtime/system_assets/*
+            experiments/dige-v8-executor-capsule/runtime/blender_execution.log
+            experiments/dige-v8-executor-capsule/runtime/assets/young_eurasian_female_diffuse.png
+            experiments/dige-v8-executor-capsule/runtime/assets/DIGE_SKIN_ASSET_RECEIPT.txt
+            experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json
+            experiments/dige-v8-executor-capsule/blender_version.txt
+            experiments/dige-v8-executor-capsule/blender_archive.sha256
+            experiments/dige-v8-executor-capsule/DIGE_V8_EXECUTOR_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

@@ -1,0 +1,254 @@
+name: DIGE V8 C18 Mature Convergence Matrix
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c18-mature-convergence.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-c18-mature-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  prep-assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Stage mature CC0 skin and system assets once
+        run: |
+          set -euxo pipefail
+          mkdir -p staged-assets/assets staged-assets/system_assets
+          SKINPACK=/tmp/skins01_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > staged-assets/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  staged-assets/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+
+          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
+          unzip -p "$SYSPACK" "hair/short03/short03.obj" > staged-assets/system_assets/short03.obj
+          unzip -p "$SYSPACK" "hair/short03/short03.mhclo" > staged-assets/system_assets/short03.mhclo
+          unzip -p "$SYSPACK" "hair/short03/short03_diffuse.png" > staged-assets/system_assets/short03_diffuse.png
+          unzip -p "$SYSPACK" "hair/short04/short04.obj" > staged-assets/system_assets/short04.obj
+          unzip -p "$SYSPACK" "hair/short04/short04.mhclo" > staged-assets/system_assets/short04.mhclo
+          unzip -p "$SYSPACK" "hair/short04/short04_diffuse.png" > staged-assets/system_assets/short04_diffuse.png
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.obj" > staged-assets/system_assets/high-poly.obj
+          unzip -p "$SYSPACK" "eyes/high-poly/high-poly.mhclo" > staged-assets/system_assets/high-poly.mhclo
+          unzip -p "$SYSPACK" "eyes/materials/brown_eye.png" > staged-assets/system_assets/brown_eye.png
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.obj" > staged-assets/system_assets/eyebrow001.obj
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.mhclo" > staged-assets/system_assets/eyebrow001.mhclo
+          unzip -p "$SYSPACK" "eyebrows/eyebrow001/eyebrow001.png" > staged-assets/system_assets/eyebrow001.png
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.obj" > staged-assets/system_assets/eyelashes01.obj
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.mhclo" > staged-assets/system_assets/eyelashes01.mhclo
+          unzip -p "$SYSPACK" "eyelashes/eyelashes01/eyelashes01.png" > staged-assets/system_assets/eyelashes01.png
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  staged-assets/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  staged-assets/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  staged-assets/system_assets/short03_diffuse.png" | sha256sum -c -
+
+      - name: Upload shared C18 asset stage
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C18-MATURE-ASSETS
+          path: staged-assets/
+          if-no-files-found: error
+          retention-days: 1
+
+  c18-matrix:
+    needs: prep-assets
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - id: balanced
+            sss: '0.20'
+            sss_scale: '0.0016'
+            rough_min: '0.36'
+            rough_max: '0.54'
+            micro: '0.18'
+            meso_freq: '72'
+            pore_freq: '420'
+            micro_freq: '1400'
+            bump_distance: '0.00016'
+            strands: '16'
+            hair_len: '0.72'
+            front_safe: '0.94'
+          - id: defined
+            sss: '0.16'
+            sss_scale: '0.0015'
+            rough_min: '0.38'
+            rough_max: '0.56'
+            micro: '0.21'
+            meso_freq: '64'
+            pore_freq: '380'
+            micro_freq: '1250'
+            bump_distance: '0.00018'
+            strands: '12'
+            hair_len: '0.66'
+            front_safe: '0.96'
+          - id: soft
+            sss: '0.24'
+            sss_scale: '0.0018'
+            rough_min: '0.34'
+            rough_max: '0.52'
+            micro: '0.17'
+            meso_freq: '80'
+            pore_freq: '460'
+            micro_freq: '1500'
+            bump_distance: '0.00014'
+            strands: '20'
+            hair_len: '0.76'
+            front_safe: '0.92'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact head
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen C16 geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets runtime/system_assets
+          python build_makehuman_v8.py | tee runtime/c18_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Download shared C18 asset stage
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C18-MATURE-ASSETS
+          path: experiments/dige-v8-executor-capsule/runtime
+
+      - name: Verify staged C18 assets
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          echo "4a9fc385718f2c46fb328ab99d33e3a946cecdb717987c8b324cf2466b59bd9c  runtime/system_assets/short03.obj" | sha256sum -c -
+          echo "d80bbb8fd9b06721c481756fb3e1d6dce04fcfc9ca8a379edd4ea3c0d81ed17f  runtime/system_assets/short03.mhclo" | sha256sum -c -
+          echo "fe6ed0bb14498a48a2e8fc07e80e2a6f62c8b67686fcd0a7a570d345faec97da  runtime/system_assets/short03_diffuse.png" | sha256sum -c -
+
+      - name: Render C18 hybrid candidate
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_OUTPUT_TAG: c18_${{ matrix.id }}
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_HAIR_ASSET_KEY: hair_short03
+          DIGE_HAIR_STRANDS_PER_ROOT: ${{ matrix.strands }}
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: ${{ matrix.hair_len }}
+          DIGE_HAIR_FRONT_SAFE_BLEND: ${{ matrix.front_safe }}
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SKIN_SSS_WEIGHT: ${{ matrix.sss }}
+          DIGE_SKIN_SSS_SCALE: ${{ matrix.sss_scale }}
+          DIGE_SKIN_ROUGH_MIN: ${{ matrix.rough_min }}
+          DIGE_SKIN_ROUGH_MAX: ${{ matrix.rough_max }}
+          DIGE_SKIN_ALBEDO_SAT: '0.96'
+          DIGE_SKIN_ALBEDO_VALUE: '0.52'
+          DIGE_EYE_TEX_SAT: '0.52'
+          DIGE_EYE_TEX_VALUE: '0.78'
+          DIGE_HAIR_TEX_SAT: '0.46'
+          DIGE_HAIR_TEX_VALUE: '0.30'
+          DIGE_FACE_MESO_SCALE: '1.28'
+          DIGE_SKIN_TONE_R: '0.84'
+          DIGE_SKIN_TONE_G: '0.70'
+          DIGE_SKIN_TONE_B: '0.64'
+          DIGE_SKIN_TONE_MIX: '0.34'
+          DIGE_SKIN_MICRO_STRENGTH: ${{ matrix.micro }}
+          DIGE_SKIN_MESO_FREQ: ${{ matrix.meso_freq }}
+          DIGE_SKIN_PORE_FREQ: ${{ matrix.pore_freq }}
+          DIGE_SKIN_MICRO_FREQ: ${{ matrix.micro_freq }}
+          DIGE_SKIN_BUMP_DISTANCE: ${{ matrix.bump_distance }}
+          DIGE_SKIN_COAT_WEIGHT: '0.004'
+          DIGE_SKIN_COAT_ROUGHNESS: '0.34'
+          DIGE_SAMPLES_PREVIEW: '32'
+          DIGE_SAMPLES_HERO: '72'
+          DIGE_RENDER_SEED: '20260920'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c18_${{ matrix.id }}.log
+
+      - name: Verify C18 receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          C18_ID: ${{ matrix.id }}
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib, os
+          cid=os.environ["C18_ID"]
+          root=pathlib.Path(f"runtime/renders/c18_{cid}")
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+          assert r["render_set"]=="HERO_ONLY"
+          assert r["appearance_candidate"]=="C18_HYBRID_MATURE_GROOM_SKIN_V1"
+          h=r["hair_surface_contract"]
+          assert h["style"]=="HYBRID_BULK_PLUS_BOUNDED_CURVES_C18_V1"
+          assert h["mass_mesh_rendered"] is True
+          assert h["curve_count"] >= 4000
+          assert r["hair_curve_metrics"]["guide_mesh_rendered"] is True
+          assert r["render_curve_shape"]=="CYLINDER"
+          assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          assert r["evidence_boundary"]["hyperreal_certified"] is False
+          summary={
+            "schema":"DIGE_C18_MATURE_MATRIX_RECEIPT_V1",
+            "candidate":cid,
+            "approved_sha":os.environ["APPROVED_SHA"],
+            "hero_sha256":r["outputs"][0]["sha256"],
+            "raw_sha256":r["denoise_ab"]["raw_aov"]["sha256"],
+            "denoised_sha256":r["denoise_ab"]["denoised"]["sha256"],
+            "hair_surface_contract":h,
+            "hair_curve_metrics":r["hair_curve_metrics"],
+            "skin_model":r["skin_model"],
+            "appearance_selection":r["appearance_selection"],
+            "claim_ceiling":"C18_HYBRID_EXECUTED; HUMAN_VISUAL_AUDIT_REQUIRED; HYPERREAL_NOT_YET_CERTIFIED"
+          }
+          (root/"DIGE_C18_MATRIX_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - name: Upload C18 candidate evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-C18-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c18_${{ matrix.id }}/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c18_${{ matrix.id }}/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/c18_${{ matrix.id }}/*.json
+            experiments/dige-v8-executor-capsule/runtime/c18_${{ matrix.id }}.log
+          if-no-files-found: error
+          retention-days: 14

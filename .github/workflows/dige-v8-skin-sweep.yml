@@ -1,0 +1,85 @@
+name: DIGE V8 Skin SSS Sweep
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-skin-sweep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  skin-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Render four controlled SSS hero candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          for SPEC in "035:0.35" "050:0.50" "065:0.65" "080:0.80"; do
+            TAG=${SPEC%%:*}
+            WEIGHT=${SPEC##*:}
+            DIGE_CYCLES_DEVICE=CPU             DIGE_RENDER_SET=HERO_ONLY             DIGE_OUTPUT_TAG="sss_${TAG}"             DIGE_SKIN_SSS_WEIGHT="$WEIGHT"             DIGE_SKIN_SSS_SCALE="0.0035"             DIGE_SKIN_SSS_ANISO="0.80"             DIGE_SKIN_ROUGH_MIN="0.46"             DIGE_SKIN_ROUGH_MAX="0.62"             DIGE_SAMPLES_PREVIEW="12"             DIGE_SAMPLES_HERO="20"             DIGE_RENDER_SEED="20260919"             DIGE_RUNTIME_COMMIT="$GITHUB_SHA"             "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py               | tee "runtime/blender_sss_${TAG}.log"
+          done
+
+      - name: Verify controlled sweep receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          expected={"035":0.35,"050":0.50,"065":0.65,"080":0.80}
+          root=pathlib.Path("runtime/renders")
+          for tag,w in expected.items():
+              d=root/f"sss_{tag}"
+              j=json.loads((d/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              assert j["engine"]=="CYCLES" and j["device"]=="CPU"
+              assert j["render_set"]=="HERO_ONLY"
+              assert j["output_tag"]==f"sss_{tag}"
+              assert abs(j["skin_model"]["subsurface_weight"]-w)<1e-9
+              assert abs(j["skin_model"]["subsurface_anisotropy"]-.80)<1e-9
+              assert len(j["outputs"])==1 and j["outputs"][0]["view"]=="04_HERO85"
+              assert j["denoise_ab"]["raw_aov"]["sha256"]
+              assert j["denoise_ab"]["denoised"]["sha256"]
+          print("DIGE_V8_SSS_SWEEP_PASS")
+          PY
+
+      - name: Upload SSS sweep evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-SSS-SWEEP-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/sss_*/04_HERO85_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/sss_*/04_HERO85_DENOISED_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/sss_*/04_HERO85_RAW_AOV_V8.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/sss_*/DIGE_V8_RENDER_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 14
