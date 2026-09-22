@@ -1,0 +1,49 @@
+{
+  "schema": "dige-c41-hyperreal-contract/1",
+  "candidate": "C41_HHIR_NATIVE_EYE_SCALP_FLOW_V1",
+  "parent": "C40_HHIR_HYPERREAL_SCALP_BOUND_UPDO_V1",
+  "parent_runtime": {
+    "run_id": 35706755641,
+    "wall_seconds": 93,
+    "lens_mm": 85,
+    "fstop": 3.6,
+    "runtime_structural_pass": true,
+    "hero_sha256": "d85c8458fa56340252c97026fdfaff7d082ac817fda51ba77c45fa4d31b53dd8",
+    "visual_verdict": "FAIL"
+  },
+  "direct_visual_scars": [
+    "C40 cylinder iris/cornea overlays protrude as black discs/white blobs",
+    "hairline/scalp gather reads as vertical comb lines",
+    "scalp coverage still weak despite rounded bun improvement",
+    "skin remains overly smooth/waxy"
+  ],
+  "delta_only": [
+    "retain actual GNM eye meshes and apply MPFB2 procedural eye material",
+    "disable C29 geometric iris/pupil/cornea cylinder overlays",
+    "relax eyelid/globe compression versus C40",
+    "project scalp undercoat/gather intermediate points back onto GNM scalp surface",
+    "add 3x scalp-hugging undercoat per root",
+    "replace vertical fringe with sparse tangential hairline feathers",
+    "retune pore scale/strength, roughness and SSS for visible-scale skin response"
+  ],
+  "acceptance": {
+    "runtime": [
+      "candidate id C41_HHIR_NATIVE_EYE_SCALP_FLOW_V1",
+      "lens 85mm and f/3.6",
+      "C41 native eye contract true",
+      "C29 calibrated iris overlay count = 0",
+      "undercoat_curves >= 2000",
+      "primary_curves >= 500",
+      "lower-central root leak = 0",
+      "no reference pixels or image-model calls"
+    ],
+    "visual": [
+      "no detached black iris discs/white eye blobs",
+      "hairline no longer forms vertical comb",
+      "scalp coverage improves without helmet shell",
+      "skin response shows less wax/plastic read"
+    ],
+    "promotion": "hero direct visual PASS before any multiview/full-quality expansion"
+  },
+  "truth_boundary": "RUNTIME_PASS!=VISUAL_PASS; C41 remains source-level procedural 3D; no reference pixels are ingested."
+}
