@@ -101,6 +101,7 @@ jobs:
             --width "$WIDTH" \
             --height "$HEIGHT" \
             --engine BLENDER_EEVEE \
+            --proof-lite \
             | tee "$OUTDIR/blender_native_video.log"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_CANARY.blend"
@@ -154,6 +155,8 @@ jobs:
             },
             "external_image_generation_calls":0,
             "external_video_generation_calls":0,
+            "proof_lite":render.get("proof_lite",False),
+            "production_appearance_certified":False,
             "audio":"NOT_EXECUTED",
             "lip_sync":"NOT_EXECUTED",
             "arm_wave":"NOT_EXECUTED",
@@ -161,6 +164,8 @@ jobs:
           }
           assert receipt["external_image_generation_calls"]==0
           assert receipt["external_video_generation_calls"]==0
+          assert receipt["proof_lite"] is True
+          assert receipt["production_appearance_certified"] is False
           assert receipt["mp4"]["codec"]=="h264"
           assert int(receipt["mp4"]["width"])==int(os.environ["WIDTH"])
           assert int(receipt["mp4"]["height"])==int(os.environ["HEIGHT"])
