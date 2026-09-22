@@ -1080,8 +1080,8 @@ def s1_gnm_skin_material():
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"IOR",1.42)
     set_input(bs,"Specular IOR Level",.30)
-    set_input(bs,"Subsurface Weight",.020)
-    set_input(bs,"Subsurface Scale",.00052)
+    set_input(bs,"Subsurface Weight",.014)
+    set_input(bs,"Subsurface Scale",.00042)
     set_input(bs,"Subsurface Radius",(1.0,.38,.18))
     set_input(bs,"Coat Weight",0.0)
     set_input(bs,"Coat Roughness",.55)
@@ -1125,8 +1125,8 @@ def s1_gnm_skin_material():
     rmap=nt.nodes.new("ShaderNodeMapRange")
     rmap.inputs["From Min"].default_value=0.0
     rmap.inputs["From Max"].default_value=1.0
-    rmap.inputs["To Min"].default_value=.40
-    rmap.inputs["To Max"].default_value=.62
+    rmap.inputs["To Min"].default_value=.42
+    rmap.inputs["To Max"].default_value=.66
     nt.links.new(rough.outputs["Fac"],rmap.inputs["Value"])
     tzone=nt.nodes.new("ShaderNodeMath"); tzone.operation='MULTIPLY'; tzone.inputs[1].default_value=.025
     liprough=nt.nodes.new("ShaderNodeMath"); liprough.operation='MULTIPLY'; liprough.inputs[1].default_value=.055
@@ -1139,15 +1139,15 @@ def s1_gnm_skin_material():
     nt.links.new(rs2.outputs[0],bs.inputs["Roughness"])
 
     meso=nt.nodes.new("ShaderNodeTexNoise")
-    meso.inputs["Scale"].default_value=118.0
+    meso.inputs["Scale"].default_value=82.0
     meso.inputs["Detail"].default_value=6.0
     meso.inputs["Roughness"].default_value=.72
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=650.0
+    pore.inputs["Scale"].default_value=380.0
     pore.inputs["Detail"].default_value=5.0
     pore.inputs["Roughness"].default_value=.68
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=2200.0
+    micro.inputs["Scale"].default_value=1250.0
     micro.inputs["Detail"].default_value=3.0
     micro.inputs["Roughness"].default_value=.60
     for node in (meso,pore,micro):
@@ -1161,21 +1161,21 @@ def s1_gnm_skin_material():
     nt.links.new(ms.outputs[0],h1.inputs[0]); nt.links.new(ps.outputs[0],h1.inputs[1])
     nt.links.new(h1.outputs[0],h2.inputs[0]); nt.links.new(xs.outputs[0],h2.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.38
-    bump.inputs["Distance"].default_value=.000055
+    bump.inputs["Strength"].default_value=.48
+    bump.inputs["Distance"].default_value=.000068
     nt.links.new(h2.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m,{
         "model":"S1_GNM_MULTISCALE_NATURAL_PBR_SKIN",
         "mask_attribute":"C31_FaceMask",
-        "roughness_range":[.40,.62],
-        "subsurface_weight":.020,
-        "subsurface_scale":.00052,
-        "meso_scale":118.0,
-        "pore_scale":650.0,
-        "micro_scale":2200.0,
-        "bump_distance":.000055,
+        "roughness_range":[.42,.66],
+        "subsurface_weight":.014,
+        "subsurface_scale":.00042,
+        "meso_scale":82.0,
+        "pore_scale":380.0,
+        "micro_scale":1250.0,
+        "bump_distance":.000068,
         "metadata_effective_for":"S1",
     }
 
@@ -1212,13 +1212,13 @@ def s1_geometry_eye_material(name):
     ramp.color_ramp.interpolation='CONSTANT'
     elems=ramp.color_ramp.elements
     elems[0].position=0.0; elems[0].color=(.0018,.0013,.0010,1)
-    elems[1].position=.074; elems[1].color=(.0018,.0013,.0010,1)
+    elems[1].position=.082; elems[1].color=(.0018,.0013,.0010,1)
     for pos,col in [
-        (.084,(.020,.006,.002,1)),
-        (.145,(.105,.035,.010,1)),
-        (.200,(.050,.014,.004,1)),
-        (.220,(.012,.003,.0015,1)),
-        (.240,(.58,.54,.51,1)),
+        (.092,(.020,.006,.002,1)),
+        (.155,(.105,.035,.010,1)),
+        (.215,(.050,.014,.004,1)),
+        (.238,(.012,.003,.0015,1)),
+        (.258,(.58,.54,.51,1)),
         (.500,(.68,.64,.61,1)),
     ]:
         e=elems.new(pos); e.color=col
@@ -1240,9 +1240,9 @@ def s1_geometry_eye_material(name):
         "enabled":True,
         "material_model":"S1_NATIVE_GNM_GENERATED_COORD_EYE",
         "integration":"GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY",
-        "pupil_radius_norm":.074,
-        "iris_outer_radius_norm":.220,
-        "sclera_start_norm":.240,
+        "pupil_radius_norm":.082,
+        "iris_outer_radius_norm":.238,
+        "sclera_start_norm":.258,
         "uv_dependency":False,
     }
 
@@ -1452,8 +1452,8 @@ def s1_cloth_material(name,base):
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m
 
-s1_tank_mat=s1_cloth_material("DIGE_S1_TANK_PBR",(0.58,0.59,0.61)) if S1_ENDOGENOUS else None
-s1_leggings_mat=s1_cloth_material("DIGE_S1_LEGGINGS_PBR",(0.36,0.37,0.39)) if S1_ENDOGENOUS else None
+s1_tank_mat=s1_cloth_material("DIGE_S1_TANK_PBR",(0.66,0.67,0.69)) if S1_ENDOGENOUS else None
+s1_leggings_mat=s1_cloth_material("DIGE_S1_LEGGINGS_PBR",(0.28,0.29,0.31)) if S1_ENDOGENOUS else None
 floor_mat=principled("FLOOR",((0.045,0.050,0.058) if S1_ENDOGENOUS else (0.12,0.12,0.125)),rough=.76 if S1_ENDOGENOUS else .70)
 
 mesh_path=RUNTIME/"dige_makehuman_v8.obj"
@@ -1473,6 +1473,31 @@ body=imported_meshes[0]
 body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
+
+def s1_relax_arms(obj):
+    if not S1_ENDOGENOUS:
+        return 0
+    moved=0
+    for v in obj.data.vertices:
+        p=v.co
+        ax=abs(float(p.x))
+        if p.z < .62 or p.z > 1.47 or ax < .175:
+            continue
+        side=1.0 if p.x>=0 else -1.0
+        w=max(0.0,min(1.0,(ax-.175)/.095))
+        sx=side*.185; sz=1.355
+        dx=float(p.x-sx); dz=float(p.z-sz)
+        th=math.radians(side*27.0)
+        xr=math.cos(th)*dx + math.sin(th)*dz
+        zr=-math.sin(th)*dx + math.cos(th)*dz
+        tx=sx+xr; tz=sz+zr
+        p.x += (tx-p.x)*w
+        p.z += (tz-p.z)*w
+        moved+=1
+    obj.data.update()
+    return moved
+
+s1_arm_vertices=s1_relax_arms(body)
 c25_mpfb_skin={"enabled":False}
 if C25_MATURE_STACK:
     c25_mpfb_skin=c25_apply_mpfb_enhanced_skin(skin)
@@ -2115,7 +2140,7 @@ if C28_GNM_HEAD:
     gnm_brow_right=transformed_landmarks[22:27]
 
     gnm_skin_mat,c28_skin_contract=(s1_gnm_skin_material() if S1_ENDOGENOUS else c28_gnm_skin_material())
-    if C42_GEOMETRY_EYE_HAIRLINE:
+    if C42_GEOMETRY_EYE_HAIRLINE and not S1_ENDOGENOUS:
         c28_skin_contract.update({
             "model":"C42_GNM_VISIBLE_SCALE_PBR_SKIN",
             "roughness_range":[0.50,0.72],
@@ -2214,8 +2239,8 @@ if C28_GNM_HEAD:
             mdx=abs(p.x-mouth_center.x); mdz=abs(p.z-mouth_center.z)
             if mdx < mouth_half*1.18 and mdz < .015 and p.y > mouth_center.y-.022:
                 mw=max(0.0,(1.0-mdx/(mouth_half*1.18))*(1.0-mdz/.015))
-                p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-.055*mw)
-                p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-.25*mw)
+                p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-(.020 if S1_ENDOGENOUS else .055)*mw)
+                p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-(.08 if S1_ENDOGENOUS else .25)*mw)
             # Very subtle mouth-corner lift to avoid the mannequin-flat resting line.
             dx=abs(abs(p.x-mouth_center.x)-.020)
             dz=abs(p.z-mouth_center.z)
@@ -2310,7 +2335,7 @@ if C28_GNM_HEAD:
             ob.hide_render=True
 
     brow_top=max(p.z for p in gnm_brow_left+gnm_brow_right)
-    target_hairline_z=brow_top+(.014 if S1_ENDOGENOUS else (.018 if C44_FOLLICLE_FLOW else (.026 if C42_GEOMETRY_EYE_HAIRLINE else (.028 if C41_HYPERREAL_NATIVE_EYE else .043))))
+    target_hairline_z=brow_top+(.008 if S1_ENDOGENOUS else (.018 if C44_FOLLICLE_FLOW else (.026 if C42_GEOMETRY_EYE_HAIRLINE else (.028 if C41_HYPERREAL_NATIVE_EYE else .043))))
     front=[]
     for v in hair_obj.data.vertices:
         wp=hair_obj.matrix_world@v.co
@@ -2423,6 +2448,7 @@ if C28_GNM_HEAD:
         "model":gm["model"],
         "manifest_sha256":sha(manifest_path),
         "identity_source":gm.get("identity_source"),
+        "identity_seed":gm.get("identity_seed"),
         "semantic_identity_enabled":gm.get("semantic_identity_enabled"),
         "semantic_gender":gm.get("semantic_gender"),
         "semantic_ethnicity":gm.get("semantic_ethnicity"),
@@ -3400,7 +3426,7 @@ if C41_HYPERREAL_NATIVE_EYE:
             p=cap.matrix_world @ face.calc_center_median()
             temple=min(1.0,abs(p.x)/.105)
             edge=hairline+.015*(temple**1.65)
-            if p.z < edge-.002 or p.z > float(bbox_max.z)+.006 or abs(p.x)>.140 or p.y>eye_center.y+.054:
+            if p.z < edge+.016 or p.z > float(bbox_max.z)+.006 or abs(p.x)>.140 or p.y>eye_center.y+.054:
                 kill.append(face)
         if kill:
             bmesh.ops.delete(bm,geom=kill,context='FACES')
@@ -3408,16 +3434,16 @@ if C41_HYPERREAL_NATIVE_EYE:
         for v in cap.data.vertices:
             try: v.co += v.normal*.00032
             except Exception: pass
-        cap.data.materials.clear(); cap.data.materials.append(scalp_shadow)
+        cap.data.materials.clear(); cap.data.materials.append(hair_mass)
         bpy.context.view_layer.objects.active=cap
         try: bpy.ops.object.shade_smooth()
         except Exception: pass
         s1_scalp_cap_faces=len(cap.data.polygons)
 
         frame=[]
-        frame_roots=[q for q in edge_band if abs(q[1].x)>.055]
+        frame_roots=sorted(edge_band,key=lambda q:abs(q[1].x),reverse=True)[:64]
         if frame_roots:
-            step=max(1,len(frame_roots)//34)
+            step=max(1,len(frame_roots)//40)
             for _vi,root,n,_edge in frame_roots[::step][:40]:
                 side=1.0 if root.x>=0 else -1.0
                 p0=root+n*.00042
@@ -3577,6 +3603,7 @@ tights.name="DIGE_V8_FITTED_TIGHTS"
 tights.data.materials.append(cloth)
 bpy.context.view_layer.objects.active=tights
 bpy.ops.object.shade_smooth()
+s1_tights_arm_vertices=s1_relax_arms(tights) if S1_ENDOGENOUS else 0
 gsub=tights.modifiers.new("DIGE_V8_TIGHTS_SUBDIV","SUBSURF"); gsub.levels=1; gsub.render_levels=2
 solid=tights.modifiers.new("DIGE_V8_TIGHTS_THICKNESS","SOLIDIFY"); solid.thickness=.0030; solid.offset=1.0
 s1_garment_metrics={"enabled":False}
@@ -3596,10 +3623,10 @@ if S1_ENDOGENOUS:
         sub=obj.modifiers.new(name+"_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
         so=obj.modifiers.new(name+"_THICKNESS","SOLIDIFY"); so.thickness=.0022; so.offset=1.0
         return obj
-    leggings=_s1_clip_helper(tights,"DIGE_S1_LEGGINGS",lambda p:(p.z>=.13 and p.z<=1.035),s1_leggings_mat)
+    leggings=_s1_clip_helper(tights,"DIGE_S1_LEGGINGS",lambda p:(p.z>=.13 and p.z<=1.005),s1_leggings_mat)
     tank=_s1_clip_helper(
         tights,"DIGE_S1_TANK_TOP",
-        lambda p:(p.z>=1.00 and p.z<=1.435 and abs(p.x)<=.31 and not (p.z>1.325 and abs(p.x)<.105) and not (p.z>1.405 and abs(p.x)<.22)),
+        lambda p:(p.z>=1.065 and p.z<=1.425 and abs(p.x)<=.225 and (p.z<1.325 or abs(p.x)>.082) and (p.z<1.395 or abs(p.x)>.118)),
         s1_tank_mat
     )
     tights.hide_render=True
@@ -3610,15 +3637,18 @@ if S1_ENDOGENOUS:
         "tank_polygons":len(tank.data.polygons),
         "leggings_polygons":len(leggings.data.polygons),
         "source":"DETERMINISTIC_MAKEHUMAN_HELPER_SHELL_CLIPPED_IN_SOURCE",
-        "material":"PROCEDURAL_GRAY_FABRIC_PBR"
+        "material":"PROCEDURAL_GRAY_FABRIC_PBR",
+        "body_arm_vertices_relaxed":s1_arm_vertices,
+        "tights_arm_vertices_relaxed":s1_tights_arm_vertices,
+        "midriff_gap_m":0.060
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
 
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
-if C36_CANONICAL_APPEARANCE:
-    backdrop_mat=principled("DIGE_S1_NEUTRAL_BACKDROP" if S1_ENDOGENOUS else "DIGE_C36_WARM_BACKDROP",((0.018,0.021,0.028) if S1_ENDOGENOUS else (0.10,0.060,0.045)),rough=.95 if S1_ENDOGENOUS else .92,ior=1.40)
+if C36_CANONICAL_APPEARANCE and not S1_ENDOGENOUS:
+    backdrop_mat=principled("DIGE_C36_WARM_BACKDROP",((0.018,0.021,0.028) if S1_ENDOGENOUS else (0.10,0.060,0.045)),rough=.95 if S1_ENDOGENOUS else .92,ior=1.40)
     bpy.ops.mesh.primitive_plane_add(size=5.0,location=(0,-1.25,1.45),rotation=(math.radians(90),0,0))
     backdrop=bpy.context.object; backdrop.name="DIGE_C36_WARM_BACKDROP"; backdrop.data.materials.append(backdrop_mat)
 
@@ -3684,7 +3714,9 @@ else:
 
 world=bpy.context.scene.world or bpy.data.worlds.new("World"); bpy.context.scene.world=world
 world.use_nodes=True
-bg=world.node_tree.nodes.get("Background"); bg.inputs["Color"].default_value=((0.030,0.020,0.018,1) if C36_CANONICAL_APPEARANCE else (0.012,0.014,0.020,1)); bg.inputs["Strength"].default_value=(.11 if C36_CANONICAL_APPEARANCE else (.022 if C26_PHOTOMETRIC else .055))
+bg=world.node_tree.nodes.get("Background")
+bg.inputs["Color"].default_value=((0.018,0.021,0.028,1) if S1_ENDOGENOUS else ((0.030,0.020,0.018,1) if C36_CANONICAL_APPEARANCE else (0.012,0.014,0.020,1)))
+bg.inputs["Strength"].default_value=(.045 if S1_ENDOGENOUS else (.11 if C36_CANONICAL_APPEARANCE else (.022 if C26_PHOTOMETRIC else .055)))
 
 bpy.ops.object.camera_add(); cam=bpy.context.object; bpy.context.scene.camera=cam; cam.data.sensor_width=36
 
