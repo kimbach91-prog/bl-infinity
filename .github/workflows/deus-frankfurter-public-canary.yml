@@ -1,0 +1,95 @@
+name: DEUS Frankfurter Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-frankfurter-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  frankfurter-public-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Execute bounded historical ECB rate query and preserve exact evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          url='https://api.frankfurter.dev/v2/providers/ecb/rate/eur/usd?date=2024-01-02'
+          printf '%s\n' "$url" > evidence/request_url.txt
+
+          for n in 1 2; do
+            code="$(curl -fsS --compressed --max-time 30 \
+              -A 'DEUS-BL-S0-Frankfurter-Canary/1.0' \
+              -H 'Accept: application/json' \
+              -D "evidence/headers${n}.txt" \
+              -o "evidence/body${n}.json" \
+              -w '%{http_code}' \
+              "$url")"
+            test "$code" = '200'
+            printf '%s\n' "$code" > "evidence/http${n}.txt"
+          done
+
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          from decimal import Decimal
+
+          def sha(path):
+              return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+
+          url = pathlib.Path('evidence/request_url.txt').read_text().strip()
+          raw1 = pathlib.Path('evidence/body1.json').read_bytes()
+          raw2 = pathlib.Path('evidence/body2.json').read_bytes()
+          d1 = json.loads(raw1)
+          d2 = json.loads(raw2)
+
+          assert d1 == d2, (d1, d2)
+          assert d1['date'] == '2024-01-02', d1
+          assert d1['base'] == 'EUR', d1
+          assert d1['quote'] == 'USD', d1
+          rate = Decimal(str(d1['rate']))
+          assert rate > 0
+          converted = (Decimal('123.45') * rate).quantize(Decimal('0.000001'))
+
+          receipt = {
+              'schema': 'deus-frankfurter-public-canary/1',
+              'provider': 'Frankfurter',
+              'provider_path': 'ECB',
+              'data_class': 'BL-S0_PUBLIC_SYNTHETIC',
+              'auth_mode': 'NO_API_KEY_NO_ACCOUNT',
+              'request_url': url,
+              'http_status_1': 200,
+              'http_status_2': 200,
+              'response_semantic_equal': True,
+              'date': d1['date'],
+              'base': d1['base'],
+              'quote': d1['quote'],
+              'rate': str(rate),
+              'synthetic_amount_eur': '123.45',
+              'synthetic_converted_usd': str(converted),
+              'body1_bytes': len(raw1),
+              'body2_bytes': len(raw2),
+              'body1_sha256': sha('evidence/body1.json'),
+              'body2_sha256': sha('evidence/body2.json'),
+              'headers1_sha256': sha('evidence/headers1.txt'),
+              'headers2_sha256': sha('evidence/headers2.txt'),
+              'zero_spend': True,
+              'component_credit_recommendation': 'SCOPED_ONLY_PENDING_CANON_READBACK',
+              'aggregate_credit_mutation': False,
+              'truth': 'EXECUTION_PASS_NE_GLOBAL_AGGREGATE_NE_HARDWARE_CPU_GPU_VRAM_SLA'
+          }
+          pathlib.Path('evidence/receipt.json').write_text(json.dumps(receipt, sort_keys=True, indent=2) + '\n')
+          print('DEUS_FRANKFURTER_RECEIPT=' + json.dumps(receipt, separators=(',', ':'), sort_keys=True))
+          PY
+
+      - name: Upload exact evidence bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: deus-frankfurter-public-canary
+          path: evidence/
+          retention-days: 30
