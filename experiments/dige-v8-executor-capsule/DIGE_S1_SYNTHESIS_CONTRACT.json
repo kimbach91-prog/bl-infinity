@@ -82,6 +82,9 @@
     "03_THREE_QUARTER50",
     "04_HERO85",
     "05_BACK_THREE_QUARTER50",
+    "06_BACK50",
+    "04_HERO85_RAW_AOV",
+    "04_HERO85_DENOISED",
     "typed runtime receipt",
     "scene blend",
     "source-level artifact bundle"
@@ -93,7 +96,9 @@
     "reference_pixels_read_by_renderer": false,
     "image_model_calls": 0,
     "external_generation_zero": true,
-    "five_views_required": true
+    "six_views_required": true,
+    "identity_selection": "BOUNDED_GNM_SEMANTIC_SEED_SEARCH_THEN_REBUILD",
+    "prototype_pixels_in_renderer": false
   },
   "visual_gate": [
     "same subject reads coherently front/side/3-4/back/hero",
@@ -104,5 +109,111 @@
     "tank/leggings read as fabric and follow body without full-body helper-suit look",
     "full-body silhouette and ground contact remain plausible"
   ],
-  "truth_boundary": "S1 is endogenous only if renderer receipts show zero external image generation and zero reference-pixel read/composite. Runtime PASS does not equal visual PASS or hyperreal certification."
+  "truth_boundary": "S1 is endogenous only if the selected GNM identity is rebuilt from source-level model state and renderer receipts show zero external image generation and zero prototype/reference-pixel read/composite. Prototype boards are evaluator/engineering targets only. Runtime PASS does not equal visual PASS or hyperreal certification.",
+  "winner_matrix": [
+    {
+      "subsystem": "topology_body",
+      "winner_sources": [
+        "C1",
+        "C2",
+        "R4/V8",
+        "V041",
+        "V051/V052"
+      ],
+      "kept": "body-only manifold topology, continuous mesh, production MakeHuman body, five-view continuity",
+      "prototype_target": "Step02 continuous mesh + silhouette continuity"
+    },
+    {
+      "subsystem": "identity_head",
+      "winner_sources": [
+        "C28",
+        "C30",
+        "C36"
+      ],
+      "kept": "GNM scan-learned head + semantic adult female Asian prior + prototype-driven face-plane correction",
+      "prototype_target": "Step02/04 same coherent adult DEUS subject"
+    },
+    {
+      "subsystem": "face_eyes",
+      "winner_sources": [
+        "C31",
+        "C36",
+        "H24/H25",
+        "H31",
+        "C41",
+        "C42"
+      ],
+      "kept": "regional face masks, local-only repair principle, reduced sclera, native embedded eye, generated-coordinate iris, no image patch",
+      "prototype_target": "Step04 eyelid/jaw/lips articulation and natural eye interface"
+    },
+    {
+      "subsystem": "hair",
+      "winner_sources": [
+        "C17",
+        "C21",
+        "C33",
+        "C39",
+        "C43",
+        "C44"
+      ],
+      "kept": "physical strands, irregular microhair, guide-gated scalp roots, updo decomposition, tangential flow, dense follicle undercoat",
+      "prototype_target": "Step07 crown/primary/secondary/baby/flyaway layered bun"
+    },
+    {
+      "subsystem": "skin",
+      "winner_sources": [
+        "C22",
+        "C25",
+        "C26",
+        "C31",
+        "C32",
+        "C44"
+      ],
+      "kept": "object-space scale, mature PBR discipline, controlled lighting, regional roughness/color, dermal multiscale detail, meso relief",
+      "prototype_target": "Step09 layered skin BRDF with pores, SSS, roughness and natural highlights"
+    },
+    {
+      "subsystem": "cloth",
+      "winner_sources": [
+        "R4/V8",
+        "C1/C2",
+        "S1 source-level extension"
+      ],
+      "kept": "production body contact shell split into tank + leggings with procedural fabric PBR",
+      "prototype_target": "Step06 tank/leggings fit, contact, stretch/compression visual behavior"
+    },
+    {
+      "subsystem": "camera_light",
+      "winner_sources": [
+        "C26",
+        "C35",
+        "C36",
+        "C39.1"
+      ],
+      "kept": "photometric discipline, RAW/AOV same-seed audit, 50mm body views, executed 85mm portrait, neutral area-light studio",
+      "prototype_target": "Step09 area lighting + Step02/06/07 multiview comparability"
+    },
+    {
+      "subsystem": "evidence",
+      "winner_sources": [
+        "C1",
+        "C2",
+        "C34",
+        "C35"
+      ],
+      "kept": "hash/manifest binding, fail-closed runtime, recovery scars, micro-render evidence architecture",
+      "prototype_target": "comparison must be reproducible; no heuristic-only promotion"
+    }
+  ],
+  "prototype_compare_plan": {
+    "before_render": "Select semantic GNM identity from a bounded seed set using prototype-derived landmark ratios only; never read or composite prototype pixels in the renderer.",
+    "after_render": [
+      "Step02: compare full-body front/profile/3-4/back silhouette and mesh continuity.",
+      "Step04: compare neutral face/eye/lip/jaw interface and relaxed hands; do not claim unexecuted expression/finger range.",
+      "Step06: compare tank/leggings silhouette, body contact and visible fabric behavior; dynamic squat/lunge remains outside S1 unless separately executed.",
+      "Step07: compare bun silhouette, scalp-to-strand flow, hairline irregularity, clump hierarchy, fringe/baby/flyaway layers in front/side/back.",
+      "Step09: compare skin/cloth material response, highlight/roughness behavior and area-light falloff."
+    ],
+    "promotion_rule": "Hard subsystem gates dominate any aggregate score. S1 may be retained as the best endogenous candidate even if it remains below prototype/hyperreal bar."
+  }
 }
