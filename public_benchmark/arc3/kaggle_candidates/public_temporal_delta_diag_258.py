@@ -13,15 +13,28 @@ Contexts compared: action, action+prev action, action+prev2, action+run bucket.
 No p10-p19, game source, hidden outcome, Kaggle execution or score is read.
 """
 from __future__ import annotations
-import argparse, json
+import argparse, hashlib, json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
 import public_sourcefree_markov_fidelity_adapter_246 as r246
-import public_transition_morphology_diag_253 as r253
 
 RUNG=258
 CTX=("action","prev1","prev2","run")
+
+def stable(x):
+    return hashlib.sha256(json.dumps(x,sort_keys=True,separators=(",",":")).encode()).hexdigest()[:16]
+
+def transition_class(before,after):
+    changed=[]
+    for r in range(len(before)):
+        for c in range(len(before[0])):
+            b=int(before[r][c]); a=int(after[r][c])
+            if b!=a: changed.append((r,c,b,a))
+    if not changed: return "IDENTITY",0
+    r0=min(x[0] for x in changed); c0=min(x[1] for x in changed)
+    r1=max(x[0] for x in changed); c1=max(x[1] for x in changed)
+    norm=tuple(sorted((r-r0,c-c0,b,a) for r,c,b,a in changed))
+    return stable(((r1-r0+1,c1-c0+1),norm)),len(changed)
 
 def run_bucket(n:int)->str:
     if n<=1:return "1"
@@ -41,14 +54,11 @@ def extract(paths):
             if act==last: same_run+=1
             else: same_run=1
             if len(b)==len(a) and len(b[0])==len(a[0]):
-                d=r253.transition_diag(b,a)
-                out.append({
-                    'trace':p.name,'step':step,'action':act,
+                ds,changed=transition_class(b,a)
+                out.append({'trace':p.name,'step':step,'action':act,
                     'prev1':hist[-1] if hist else 'START',
                     'prev2':hist[-2] if len(hist)>=2 else 'START2',
-                    'run_bucket':run_bucket(same_run),
-                    'delta_sig':d['delta_sig'],'changed':d['changed']
-                })
+                    'run_bucket':run_bucket(same_run),'delta_sig':ds,'changed':changed})
                 step+=1
             hist.append(act); last=act; pre=e
     return out
@@ -67,18 +77,14 @@ def fit(rows,mode):
         k=key(r,mode); s=r['delta_sig']; obs[k][s]+=1; trace_support[k][s].add(r['trace'])
     model={}
     for k,c in obs.items():
-        # Pick deterministic modal signature; require evidence from >=2 train traces.
-        ranked=sorted(c.items(),key=lambda kv:(-kv[1],kv[0]))
-        s,n=ranked[0]
-        if len(trace_support[k][s])>=2:
-            model[k]=s
+        s,_=sorted(c.items(),key=lambda kv:(-kv[1],kv[0]))[0]
+        if len(trace_support[k][s])>=2: model[k]=s
     return model
 
 def evaluate(rows,model,mode):
     s=Counter(); by_action=defaultdict(Counter)
     for r in rows:
-        if r['changed']==0:
-            s['identity_skipped']+=1; continue
+        if r['changed']==0: s['identity_skipped']+=1; continue
         s['nonidentity']+=1; by_action[r['action']]['nonidentity']+=1
         k=key(r,mode)
         if k not in model:
@@ -96,13 +102,11 @@ def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--input',type=Path,action='append',default=[]); ap.add_argument('--output',type=Path,required=True); a=ap.parse_args()
     ps=sorted(a.input,key=r246.pnum); nums=[r246.pnum(p) for p in ps]
     if nums!=list(range(10)): raise ValueError(f'exact p0..p9 required, got {nums}')
-    train=extract(ps[:5]); val=extract(ps[5:])
-    modes={}
+    train=extract(ps[:5]); val=extract(ps[5:]); modes={}
     for mode in CTX:
         m=fit(train,mode); modes[mode]={'model_size':len(m),'validation':evaluate(val,m,mode)}
     base=modes['action']['validation']['correct_coverage']
-    for mode in CTX:
-        modes[mode]['correct_coverage_delta_vs_action']=round(modes[mode]['validation']['correct_coverage']-base,6)
+    for mode in CTX: modes[mode]['correct_coverage_delta_vs_action']=round(modes[mode]['validation']['correct_coverage']-base,6)
     best=max(CTX,key=lambda m:(modes[m]['validation']['correct_coverage'],modes[m]['validation']['accuracy'] or 0,m))
     out={'schema':'deus/arc3-r258-temporal-delta-diagnostic/1','rung':RUNG,
          'protocol':{'fit':'p0-p4','validation':'p5-p9','identity_skipped':True,'min_modal_trace_support':2,'promotion':False},
