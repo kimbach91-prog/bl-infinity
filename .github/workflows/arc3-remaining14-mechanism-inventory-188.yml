@@ -1,0 +1,154 @@
+name: ARC3 remaining14 mechanism inventory 188
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_mechanism_inventory_188.py
+      - .github/workflows/arc3-remaining14-mechanism-inventory-188.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-inventory:
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        game:
+          - bp35-0a0ad940
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - vc33-5430563c
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py             public_benchmark/arc3/kaggle_candidates/public_local_transition_program_prequential_136.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_mechanism_inventory_188.py
+      - name: Download all 20 pinned public traces
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute mechanism inventory
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do
+            args+=(--input "$f")
+          done
+          python public_benchmark/arc3/kaggle_candidates/public_remaining14_mechanism_inventory_188.py             --game "$GAME" "${args[@]}" --output "r188-${GAME}.json"
+      - name: Verify receipt truth
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME']
+          d=json.load(open(f'r188-{g}.json'))
+          assert d['schema']=='deus/arc3-remaining14-mechanism-inventory/1'
+          assert d['rung']==188 and d['game']==g and d['trace_count']==20
+          assert d['truth']['prediction_claim'] is False
+          assert d['truth']['kaggle_execution'] is False
+          print(json.dumps({'game':g,'aggregate':d['aggregate']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r188-${{ matrix.game }}
+          path: |
+            r188-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: game-inventory
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r188-*
+          path: results
+      - name: Aggregate 14-game mechanism map
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json
+          files=sorted(glob.glob('results/**/r188-*.json',recursive=True))
+          rows=[json.load(open(f)) for f in files]
+          if len(rows)!=14:
+              raise SystemExit(f'expected14 receipts, got {len(rows)}')
+          by_game={r['game']:r['aggregate'] for r in rows}
+          groups={
+            'identity_dominant':[],
+            'r134_rule_rich':[],
+            'local_patch_rich':[],
+            'dense_shift_rich':[],
+            'other_complex':[],
+          }
+          for g,a in by_game.items():
+              n=a.get('transitions',0) or 1
+              ident=a.get('identity',0)/n
+              rule=a.get('r134_rule_covered',0)/n
+              local=a.get('local_patch_eligible',0)/n
+              shift=a.get('shift_fit_098',0)/n
+              if ident>=0.5: groups['identity_dominant'].append(g)
+              if rule>=0.25: groups['r134_rule_rich'].append(g)
+              if local>=0.25: groups['local_patch_rich'].append(g)
+              if shift>=0.25: groups['dense_shift_rich'].append(g)
+              if max(ident,rule,local,shift)<0.25: groups['other_complex'].append(g)
+          total_trans=sum(a.get('transitions',0) for a in by_game.values())
+          totals={k:sum(a.get(k,0) for a in by_game.values()) for k in (
+            'transitions','identity','r134_rule_covered','local_patch_eligible','shift_fit_098','shift_fit_090'
+          )}
+          out={
+            'schema':'deus/arc3-remaining14-mechanism-inventory-aggregate/1',
+            'rung':188,
+            'game_count':14,
+            'totals':totals,
+            'groups':groups,
+            'by_game':by_game,
+            'diagnostic_gate':'REMAINING14_MECHANISM_MAP_COMPLETE',
+            'truth':{'public_trace_only':True,'prediction_claim':False,'kaggle_execution':False,'submission_quota_spent':False}
+          }
+          open('r188-remaining14-aggregate.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':188,'game_count':14,'totals':totals,'groups':groups},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r188-remaining14-aggregate
+          path: r188-remaining14-aggregate.json
+          if-no-files-found: error
+          retention-days: 30
