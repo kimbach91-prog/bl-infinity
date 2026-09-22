@@ -1,0 +1,59 @@
+name: ARC3 ft09 confidence separated lowbase local only 222
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_confidence_separated_lowbase_local_only_222.py
+      - .github/workflows/arc3-ft09-confidence-separated-lowbase-local-only-222.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-ft09-confidence-separated:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py             public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py             public_benchmark/arc3/kaggle_candidates/public_ft09_macro_neighbor_rule_207.py             public_benchmark/arc3/kaggle_candidates/public_ft09_mismatch_boarddiff_210.py             public_benchmark/arc3/kaggle_candidates/public_ft09_ring2_relational_gate_211.py             public_benchmark/arc3/kaggle_candidates/public_ft09_cv_support_ensemble_212.py             public_benchmark/arc3/kaggle_candidates/public_ft09_full_frame_composer_212.py             public_benchmark/arc3/kaggle_candidates/public_ft09_scene_exact_expert_216.py             public_benchmark/arc3/kaggle_candidates/public_ft09_virtual_goal_scene_expert_217.py             public_benchmark/arc3/kaggle_candidates/public_ft09_structural_goal_scene_expert_218.py             public_benchmark/arc3/kaggle_candidates/public_ft09_low_support_base_abstain_union_221.py             public_benchmark/arc3/kaggle_candidates/public_ft09_confidence_separated_lowbase_local_only_222.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute confidence separated gate
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_confidence_separated_lowbase_local_only_222.py "${args[@]}" --output r222-ft09-confidence-separated.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r222-ft09-confidence-separated.json'))
+          assert d['schema']=='deus/arc3-ft09-confidence-separated-lowbase-local-only/1'
+          t=d['truth']
+          assert t['r218_precedence_preserved'] is True
+          assert t['r219_base5_precedence_preserved'] is True
+          assert t['threshold_reused_from_p0_p9_only_r221_selection'] is True
+          assert t['low_support_goal_reset_authority_disabled_before_r222_heldout_eval'] is True
+          assert t['r222_only_after_r218_r219_abstain'] is True
+          assert t['heldout_never_updates_policy_or_models'] is True
+          assert t['exact_gameplay_rows0_62_scoring'] is True
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'policy':d['policy'],'authority':d['authority_contract'],'heldout':d['heldout']['all'],'stages':d['heldout']['stage_metrics'],'gain':d['heldout']['coverage_gain_abs'],'gate':d['zero_wrong_coverage_gain_gate_pass']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r222-ft09-confidence-separated-lowbase-local-only
+          path: |
+            r222-ft09-confidence-separated.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
