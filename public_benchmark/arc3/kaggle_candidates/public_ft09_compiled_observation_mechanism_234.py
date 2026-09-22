@@ -59,8 +59,10 @@ def compile_manifest(source:Path,out:Path):
     levels=[]
     nlevels=len(mod.levels)
     for idx in range(nlevels):
-        if int(game.level_index)!=idx:
-            raise RuntimeError(f"level desync {game.level_index} != {idx}")
+        # ARCBaseGame.next_level() only schedules a transition. For compile-time
+        # enumeration use the public set_level(index), which immediately updates
+        # level state and invokes Ft09.on_set_level for the cloned level.
+        game.set_level(idx)
         nodes=[sprite_rec(s,"regular") for s in game.fhc]
         nodes += [sprite_rec(s,"special") for s in game.mou]
         clues=[sprite_rec(s,"clue") for s in game.gig]
@@ -79,8 +81,6 @@ def compile_manifest(source:Path,out:Path):
           "initial_frame":current_frame(game),
         }
         levels.append(level)
-        if idx<nlevels-1:
-            game.next_level()
     manifest={
       "schema":"deus/arc3-ft09-compiled-observation-mechanism/1",
       "game":GAME,"rung":RUNG,
