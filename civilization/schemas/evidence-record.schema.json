@@ -1,0 +1,24 @@
+{
+  "$schema":"https://json-schema.org/draft/2020-12/schema",
+  "$id":"https://deusagi.ai/schema/viet-civilization/evidence-record/v0.1",
+  "title":"Việt Chứng Evidence Record v0.1",
+  "type":"object",
+  "required":["evidenceId","claimRef","kind","direction","status","sourceRefs","createdAt"],
+  "properties":{
+    "evidenceId":{"type":"string","minLength":3},
+    "claimRef":{"type":"string","minLength":3},
+    "kind":{"enum":["formal-proof","measurement","experiment","archival-record","legal-text","linguistic-attestation","expert-analysis","computed-result","testimony","counterexample"]},
+    "direction":{"enum":["supports","weakens","contradicts","contextualizes"]},
+    "status":{"enum":["unreviewed","reviewed","replicated","contested","retracted"]},
+    "strength":{"type":["number","null"],"minimum":0,"maximum":1},
+    "sourceRefs":{"type":"array","items":{"type":"string"},"minItems":1,"uniqueItems":true},
+    "method":{"type":["string","null"]},
+    "assumptions":{"type":"array","items":{"type":"string"}},
+    "counterevidenceRefs":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "createdAt":{"type":"string","format":"date-time"},
+    "reviewedBy":{"type":"array","items":{"type":"string"},"uniqueItems":true},
+    "contentHash":{"type":["string","null"],"pattern":"^(sha256:)?[a-fA-F0-9]{64}$"},
+    "notes":{"type":["string","null"]}
+  },
+  "additionalProperties":false
+}
