@@ -1,0 +1,183 @@
+name: ARC3 all-public crossgame audit 177
+
+on:
+  push:
+    branches:
+      - deus/arc3-r175-residual-suite-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_crossgame_residual_audit_177.py
+      - .github/workflows/arc3-public-crossgame-audit-177.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-audit:
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        game:
+          - ar25-0c556536
+          - bp35-0a0ad940
+          - cd82-fb555c5d
+          - cn04-2fe56bfb
+          - dc22-fdcac232
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - sc25-635fd71a
+          - sk48-d8078629
+          - sp80-589a99af
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - tu93-0768757b
+          - vc33-5430563c
+          - wa30-ee6fef47
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_fullboard_translation_program_160.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_world_overlay_renderer_172.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_family_sweep_175.py \
+            public_benchmark/arc3/kaggle_candidates/public_heldout_confidence_gate_176.py \
+            public_benchmark/arc3/kaggle_candidates/public_crossgame_residual_audit_177.py
+      - name: Download all 20 pinned public player traces for game
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute fixed best-family audit
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do
+            args+=(--input "$f")
+          done
+          python public_benchmark/arc3/kaggle_candidates/public_crossgame_residual_audit_177.py \
+            --game "$GAME" \
+            "${args[@]}" \
+            --output "crossgame-${GAME}-177.json"
+      - name: Enforce per-game truth boundary
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          game=os.environ['GAME']
+          d=json.load(open(f'crossgame-{game}-177.json'))
+          assert d['schema']=='deus/arc3-public-crossgame-residual-audit/1'
+          assert d['rung']==177 and d['game']==game and d['trace_count']==20
+          t=d['truth']
+          assert t['trace_local_prior_only_learning'] is True
+          assert t['cross_trace_state_transfer'] is False
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'game':game,'aggregate':d['aggregate'],'truth':'PUBLIC_SOURCE_ASSISTED_ONLY'},sort_keys=True))
+          PY
+      - name: Upload per-game receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r177-${{ matrix.game }}
+          path: |
+            crossgame-${{ matrix.game }}-177.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: game-audit
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r177-*
+          path: results
+      - name: Aggregate all completed public games
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob, json, os
+          files=sorted(glob.glob('results/**/crossgame-*-177.json',recursive=True))
+          rows=[json.load(open(f)) for f in files]
+          expected=25
+          if len(rows)!=expected:
+              raise SystemExit(f'expected {expected} game receipts, got {len(rows)}')
+          keys=('opportunities','exact','wrong','near4','near16','cell_errors')
+          agg={k:sum(int(r['aggregate'][k]) for r in rows) for k in keys}
+          agg['raw_accuracy']=round(agg['exact']/agg['opportunities'],6) if agg['opportunities'] else None
+          agg['mean_cell_errors']=round(agg['cell_errors']/agg['opportunities'],3) if agg['opportunities'] else None
+          per_game={r['game']:r['aggregate'] for r in rows}
+          games_with_opps=sum(r['aggregate']['opportunities']>0 for r in rows)
+          games_with_exact=sum(r['aggregate']['exact']>0 for r in rows)
+          traces=sum(int(r['trace_count']) for r in rows)
+          out={
+            'schema':'deus/arc3-public-crossgame-residual-audit-aggregate/1',
+            'rung':177,
+            'candidate':'patch_recent1_s2',
+            'game_receipts':len(rows),
+            'trace_count':traces,
+            'games_with_opportunities':games_with_opps,
+            'games_with_exact':games_with_exact,
+            'aggregate':agg,
+            'per_game':per_game,
+            'diagnostic_gate':'ALL_500_PINNED_PUBLIC_TRACES_EXECUTED',
+            'promotion':{'candidate_model_promotion':False,'kaggle_packaging':False},
+            'truth':{
+              'public_trace_only':True,
+              'source_assisted_sequence_replay':True,
+              'all_25_games_x20_players_accounted_for': traces==500,
+              'independent_generalization_claim':False,
+              'kaggle_execution':False,
+              'submission_quota_spent':False,
+              'owner_score_claim':False
+            }
+          }
+          open('crossgame-all-public-177.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({
+            'rung':177,'game_receipts':len(rows),'trace_count':traces,
+            'games_with_opportunities':games_with_opps,'games_with_exact':games_with_exact,
+            'aggregate':agg,'gate':out['diagnostic_gate']
+          },sort_keys=True))
+          assert traces==500
+          PY
+      - name: Upload aggregate receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-crossgame-all-500-177
+          path: crossgame-all-public-177.json
+          if-no-files-found: error
+          retention-days: 30
