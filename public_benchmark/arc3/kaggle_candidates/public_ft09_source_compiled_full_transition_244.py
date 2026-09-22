@@ -73,3 +73,4 @@ def main():
     ap=argparse.ArgumentParser();ap.add_argument('--manifest',type=Path,required=True);ap.add_argument('--input',type=Path,action='append',default=[]);ap.add_argument('--output',type=Path,required=True);a=ap.parse_args()
     d=evaluate(a.input,json.loads(a.manifest.read_text()));a.output.write_text(json.dumps(d,indent=2,sort_keys=True)+'\n');print(json.dumps({'aggregate':d['aggregate'],'stages':d['stage_counts'],'branches':d['branch_counts'],'abstain_reasons':d['abstain_reasons'],'full_gate':d['full_public_source_assisted_transition_gate_pass'],'wrong':d['wrong_examples']},sort_keys=True))
 if __name__=='__main__':main()
+# trigger after workflow registration
