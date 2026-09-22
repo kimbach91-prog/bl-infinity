@@ -263,7 +263,8 @@ pipe = I2VGenXLPipeline.from_pretrained(
     local_files_only=True,
 )
 pipe.enable_model_cpu_offload()
-pipe.enable_vae_slicing()
+if hasattr(pipe.vae, "enable_slicing"):
+    pipe.vae.enable_slicing()
 
 seed = 260923
 generator = torch.Generator(device="cpu").manual_seed(seed)
