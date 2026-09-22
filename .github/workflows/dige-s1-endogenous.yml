@@ -27,23 +27,49 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
 
-      - name: Reuse verified DiGe runtime assets
-        uses: actions/download-artifact@v4
-        with:
-          name: DIGE-C34-SHARED-RUNTIME
-          path: experiments/dige-v8-executor-capsule/runtime
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: '35591781070'
+      - name: Stage hash-pinned DiGe source assets from upstream
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/assets runtime/system_assets runtime/assets/c25_mpfb
 
-      - name: Stage hash-verified CC0 long01 guide prior
-        uses: actions/download-artifact@v4
-        with:
-          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
-          path: experiments/dige-v8-executor-capsule/runtime/system_assets
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: '35605124719'
+          SKINPACK=/tmp/skins01_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/skins01/skins01_cc0.zip -o "$SKINPACK"
+          echo "7495ab99287053bd19ff1636114e64b608994d9f7437fea6cc75ea387f96dba9  $SKINPACK" | sha256sum -c -
+          unzip -p "$SKINPACK" "skins/onlytheghosts_young_eurasian_female/young_eurasian_female_diffuse.png" > runtime/assets/young_eurasian_female_diffuse.png
+          echo "e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf  runtime/assets/young_eurasian_female_diffuse.png" | sha256sum -c -
+          cp runtime/assets/young_eurasian_female_diffuse.png runtime/assets/c25_mpfb/young_eurasian_female_diffuse.png
+          cat > runtime/assets/c25_mpfb/c25_skin.mhmat <<'EOF'
+          name c25_mpfb_enhanced_skin
+          diffuseColor 1.0 1.0 1.0
+          diffuseTexture young_eurasian_female_diffuse.png
+          EOF
+
+          SYSPACK=/tmp/makehuman_system_assets_cc0.zip
+          curl -fL --retry 6 --retry-delay 5 https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip -o "$SYSPACK"
+          echo "b542127a8e25547c7c29c19f2d1d2adb9a664c80396ecd694095dbc8028a0107  $SYSPACK" | sha256sum -c -
+          for spec in             "hair/short03/short03.obj:short03.obj"             "hair/short03/short03.mhclo:short03.mhclo"             "hair/short03/short03_diffuse.png:short03_diffuse.png"             "hair/short04/short04.obj:short04.obj"             "hair/short04/short04.mhclo:short04.mhclo"             "hair/short04/short04_diffuse.png:short04_diffuse.png"             "hair/long01/long01.obj:long01.obj"             "hair/long01/long01.mhclo:long01.mhclo"             "hair/long01/long01_diffuse.png:long01_diffuse.png"             "hair/long01/long01.mhmat:long01.mhmat"             "eyes/high-poly/high-poly.obj:high-poly.obj"             "eyes/high-poly/high-poly.mhclo:high-poly.mhclo"             "eyes/materials/brown_eye.png:brown_eye.png"             "eyebrows/eyebrow001/eyebrow001.obj:eyebrow001.obj"             "eyebrows/eyebrow001/eyebrow001.mhclo:eyebrow001.mhclo"             "eyebrows/eyebrow001/eyebrow001.png:eyebrow001.png"             "eyelashes/eyelashes01/eyelashes01.obj:eyelashes01.obj"             "eyelashes/eyelashes01/eyelashes01.mhclo:eyelashes01.mhclo"             "eyelashes/eyelashes01/eyelashes01.png:eyelashes01.png"
+          do
+            src="${spec%%:*}"; dst="${spec##*:}"
+            unzip -p "$SYSPACK" "$src" > "runtime/system_assets/$dst"
+          done
+
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  runtime/system_assets/long01.obj" | sha256sum -c -
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  runtime/system_assets/long01.mhclo" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  runtime/system_assets/long01_diffuse.png" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  runtime/system_assets/long01.mhmat" | sha256sum -c -
+          echo "da2493215b708a344c33dc72f2a9a5b8fa985dcc5a70ad3b208995cf871da8e1  runtime/system_assets/high-poly.obj" | sha256sum -c -
+          echo "b183cfe37120ab726f9b3f2ea6cd3a64c44ce7b4bd91a77c841cf70c04f83a0d  runtime/system_assets/high-poly.mhclo" | sha256sum -c -
+
+          MPFB_COMMIT=b58176c661a9680294eb75f127842cb8378e4974
+          rm -rf /tmp/mpfb2
+          git init /tmp/mpfb2
+          git -C /tmp/mpfb2 remote add origin https://github.com/makehumancommunity/mpfb2.git
+          git -C /tmp/mpfb2 fetch --depth=1 origin "$MPFB_COMMIT"
+          git -C /tmp/mpfb2 checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/mpfb2 rev-parse HEAD)" = "$MPFB_COMMIT"
+          test -s /tmp/mpfb2/src/mpfb/data/node_trees/enhanced_skin.json
+          test -s /tmp/mpfb2/src/mpfb/data/node_trees/procedural_eyes.json
 
       - name: Verify S1 contract, source syntax and frozen assets
         working-directory: experiments/dige-v8-executor-capsule
@@ -167,7 +193,7 @@ jobs:
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_GNM_SEMANTIC_IDENTITY: '1'
           DIGE_GNM_IDENTITY_SEED: ${{ env.DIGE_S1_IDENTITY_SEED }}
-          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_SRC: /tmp/mpfb2/src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
           DIGE_HAIR_ASSET_KEY: hair_long01
