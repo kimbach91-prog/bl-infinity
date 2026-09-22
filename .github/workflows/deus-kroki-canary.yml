@@ -1,0 +1,103 @@
+name: DEUS Kroki Public Render Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-kroki-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  kroki-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Execute bounded public GraphViz render canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/deus-kroki
+          mkdir -p "$out"
+          nonce="DEUSKROKI$(date -u +%Y%m%dT%H%M%SZ)$RANDOM"
+          marker_a="${nonce}_A314159"
+          marker_b="${nonce}_B271828"
+          cat > "$out/request_a.dot" <<EOF
+          digraph G {
+            rankdir=LR;
+            a [label="$marker_a"];
+            b [label="42A"];
+            a -> b;
+          }
+          EOF
+          cat > "$out/request_b.dot" <<EOF
+          digraph G {
+            rankdir=LR;
+            a [label="$marker_b"];
+            b [label="42B"];
+            b -> a;
+          }
+          EOF
+          url="https://kroki.io/graphviz/svg"
+          printf '%s\n' "$url" > "$out/request.url"
+          start_ms="$(date +%s%3N)"
+          code_a="$(curl -L --max-time 25 -sS -D "$out/headers_a.txt" -o "$out/body_a.svg" -w '%{http_code}' -H 'Content-Type: text/plain' --data-binary @"$out/request_a.dot" "$url")"
+          mid_ms="$(date +%s%3N)"
+          code_b="$(curl -L --max-time 25 -sS -D "$out/headers_b.txt" -o "$out/body_b.svg" -w '%{http_code}' -H 'Content-Type: text/plain' --data-binary @"$out/request_b.dot" "$url")"
+          end_ms="$(date +%s%3N)"
+          printf 'http_a=%s http_b=%s\n' "$code_a" "$code_b"
+          test "$code_a" = "200"
+          test "$code_b" = "200"
+          MARKER_A="$marker_a" MARKER_B="$marker_b" python3 - <<'PY'
+          import hashlib, json, os, xml.etree.ElementTree as ET
+          root='/tmp/deus-kroki'
+          meta={
+              'schema':'deus-public-diagram-render-canary/1',
+              'provider':'Kroki public service',
+              'scope':'BL-S0 bounded GraphViz DOT -> SVG rendering',
+              'http_status_a':200,
+              'http_status_b':200,
+          }
+          bodies=[]
+          for name, marker in [('a', os.environ['MARKER_A']), ('b', os.environ['MARKER_B'])]:
+              p=f'{root}/body_{name}.svg'
+              data=open(p,'rb').read()
+              if not data.startswith(b'<?xml') and b'<svg' not in data[:500]:
+                  raise SystemExit(f'not-svg-{name}')
+              tree=ET.fromstring(data)
+              text=' '.join((el.text or '') for el in tree.iter() if el.tag.endswith('text'))
+              if marker not in text:
+                  raise SystemExit(f'marker-missing-{name}: {text[:300]}')
+              if '42'+name.upper() not in text:
+                  raise SystemExit(f'secondary-marker-missing-{name}: {text[:300]}')
+              meta[f'body_{name}_bytes']=len(data)
+              meta[f'body_{name}_sha256']=hashlib.sha256(data).hexdigest()
+              bodies.append(data)
+          if bodies[0] == bodies[1]:
+              raise SystemExit('unexpected-identical-renders')
+          meta['semantic_marker_match_a']=True
+          meta['semantic_marker_match_b']=True
+          meta['distinct_outputs']=True
+          open(f'{root}/meta.json','w').write(json.dumps(meta,sort_keys=True,indent=2)+'\n')
+          PY
+          sha256sum "$out"/* > "$out/sha256.txt"
+          jq -n \
+            --arg nonce "$nonce" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_a_ms "$((mid_ms-start_ms))" \
+            --argjson latency_b_ms "$((end_ms-mid_ms))" \
+            --slurpfile meta "$out/meta.json" \
+            '{provider:"Kroki public service",nonce:$nonce,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,latency_a_ms:$latency_a_ms,latency_b_ms:$latency_b_ms,result:$meta[0]}' \
+            | tee "$out/receipt.json"
+
+      - name: Upload exact canary custody artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-kroki-canary
+          path: /tmp/deus-kroki/
+          if-no-files-found: error
+          retention-days: 7
