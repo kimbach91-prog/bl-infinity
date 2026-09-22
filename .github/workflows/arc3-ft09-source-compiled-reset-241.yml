@@ -1,0 +1,91 @@
+name: ARC3 ft09 source-compiled explicit RESET 241
+
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_reset_241.py
+      - .github/workflows/arc3-ft09-source-compiled-reset-241.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-ft09-reset:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install compile-only runtime
+        run: python -m pip install --disable-pip-version-check --quiet 'arcengine==0.9.3'
+      - name: Compile harnesses
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_reset_241.py
+      - name: Fetch pinned source and traces
+        run: |
+          set -euo pipefail
+          mkdir -p source public_trace
+          curl --fail --location --retry 3 --silent --show-error \
+            'https://raw.githubusercontent.com/axobase001/arc-agi-games/41b87fe1ea8d9819a44eea35172ffe28d6c5ffe6/ft09/0d8bbf25/ft09.py' \
+            -o source/ft09.py
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum source/ft09.py > source/SHA256SUMS.txt
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile base manifest then remove source
+        run: |
+          set -euo pipefail
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates \
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py \
+            compile --source source/ft09.py --output r241-ft09-manifest.json
+          rm -f source/ft09.py
+          test ! -e source/ft09.py
+          python -m venv cleanenv
+          cleanenv/bin/python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_reset_241.py
+      - name: Execute source-free RESET gate
+        run: |
+          set -euo pipefail
+          test ! -e source/ft09.py
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates \
+          cleanenv/bin/python public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_reset_241.py \
+            --manifest r241-ft09-manifest.json "${args[@]}" --output r241-ft09-source-compiled-reset.json
+      - name: Verify truth boundary
+        run: |
+          cleanenv/bin/python - <<'PY'
+          import json
+          d=json.load(open('r241-ft09-source-compiled-reset.json'))
+          assert d['schema']=='deus/arc3-ft09-source-compiled-explicit-reset/1'
+          assert d['truth']['reset_match_is_exact_action_string_only'] is True
+          assert d['truth']['arbitrary_nonmouse_not_mapped_to_source_action0'] is True
+          assert d['truth']['independent_generalization_claim'] is False
+          assert d['truth']['competition_submission'] is False
+          assert d['decision']['solver_promotion'] is False
+          print(json.dumps({'aggregate':d['aggregate'],'incremental':{k:v for k,v in d['incremental'].items() if k!='examples'},'branches':d['branches'],'abstain_reasons':d['abstain_reasons'],'gate':d['source_assisted_zero_wrong_gain_gate_pass'],'wrong':d['wrong_examples']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r241-ft09-source-compiled-reset
+          path: |
+            r241-ft09-manifest.json
+            r241-ft09-source-compiled-reset.json
+            source/SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
