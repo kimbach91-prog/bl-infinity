@@ -217,6 +217,7 @@ sh([sys.executable,"-m","pip","install","-q","--upgrade",
     "huggingface_hub>=0.31,<1.0","safetensors","imageio","imageio-ffmpeg","Pillow<12"])
 
 import torch
+import diffusers, transformers
 from PIL import Image
 from diffusers import I2VGenXLPipeline
 from diffusers.utils import export_to_video
@@ -322,6 +323,8 @@ receipt = {{
     "gpu_free_memory_bytes_at_start":int(free_b),
     "torch":torch.__version__,
     "cuda":torch.version.cuda,
+    "diffusers":diffusers.__version__,
+    "transformers":transformers.__version__,
     "runtime_seconds":round(time.time()-start,3),
     "output_file":FINAL.name,
     "output_bytes":FINAL.stat().st_size,
@@ -334,7 +337,7 @@ print("DEUS_NATIVE_GENERATIVE_VIDEO_V2_RECEIPT="+json.dumps(receipt,sort_keys=Tr
     (root / "generate_i2v.py").write_text(code)
     metadata = {
         "id": I2V_KERNEL,
-        "title": "DEUS Native Generative Video V2 I2VGenXL",
+        "title": I2V_KERNEL.split("/",1)[1],
         "code_file": "generate_i2v.py",
         "language": "python",
         "kernel_type": "script",
