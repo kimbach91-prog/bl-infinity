@@ -46,6 +46,8 @@ The rest of the runtime retains:
 - provider `change_seq` delta synchronization with fail-closed backlog handling;
 - 10k-provider structural benchmark and logical dump/restore invariant drill.
 
+An optional bounded canonical observer can continuously read the LiveBus boot capsule and exact primary job, then append a deduplicated read-back-verified checkpoint when state changes. It is observe/checkpoint only: it cannot execute jobs, spend, accept terms or widen privileges. See `docs/AUTONOMOUS_OBSERVER.md`.
+
 ## Install and test
 
 ```bash
