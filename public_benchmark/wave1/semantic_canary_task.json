@@ -1,0 +1,14 @@
+{
+  "task_id":"GRE-SEMANTIC-S0-20260920-001",
+  "benchmark":"deus-unseen-semantic-canary",
+  "benchmark_version":"1",
+  "task_ref":"public_benchmark/wave1/semantic_canary_task.json",
+  "allowed_tools":[],
+  "budget":{"seconds":30},
+  "evaluator_ref":"public_benchmark/wave1/semantic_canary_verifier.py",
+  "authority_ref":"owner:deus-agi-closure-s0",
+  "payload":{
+    "problem":"Four independent service paths A,B,C,D have availability 0.90,0.80,0.75,0.60. The system succeeds if at least three are available. Compute baseline success probability. Then increase exactly one path by +0.10 capped at 1.0, evaluate A/B/C/D separately, and identify the intervention with largest absolute improvement.",
+    "output_contract":{"format":"json","fields":["baseline","A","B","C","D","best","best_probability","improvement"]}
+  }
+}

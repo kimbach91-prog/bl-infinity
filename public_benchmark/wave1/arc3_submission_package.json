@@ -1,0 +1,17 @@
+{
+  "schema":"DEUS_ARC3_OFFICIAL_SUBMISSION_PACKAGE_V1",
+  "benchmark":"ARC-AGI-3",
+  "competition_year":2026,
+  "agent_source":"PR180 general-reasoning endpoint + MicroNet intelligence federation",
+  "open_source_projection":false,
+  "protected_core_included":false,
+  "requires":["ARC_API_KEY","KAGGLE_RULES_ACCEPTED","OFFICIAL_COMPETITION_ACCOUNT"],
+  "truth_boundaries":[
+    "PACKAGE_READY_NEQ_SUBMITTED",
+    "SUBMITTED_NEQ_EVALUATED",
+    "EVALUATED_NEQ_SCORE_VERIFIED",
+    "OWNER_ATTESTED_KEY_NEQ_MACHINE_BOUND_KEY",
+    "NO_INTERNET_DURING_OFFICIAL_EVALUATION"
+  ],
+  "next_action":"After official rules/account acceptance and secret binding, set open_source_projection=true only for the approved public-safe projection, then run the official submission adapter."
+}

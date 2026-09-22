@@ -1,0 +1,88 @@
+name: DEUS ARC Current Public P09 NET-CI
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-arc-current-public-p09-netci.yml'
+      - 'public_benchmark/arc3/verify_current_public_arc_receipts.py'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  p09-current-public:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: current
+      - name: Download fresh ONLINE m0r0 receipt
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35523110479
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: m0r0-six-level-verification-ONLINE
+          path: evidence/m0r0-online
+      - name: Download fresh ONLINE ls20 receipt
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35523274978
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          name: arc3-seven-level-verification-ONLINE
+          path: evidence/ls20-online
+      - name: P09 verify exact current public closures
+        run: |
+          python current/public_benchmark/arc3/verify_current_public_arc_receipts.py \
+            --mode p09 --root evidence --out p09-current-public.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: p09-current-arc-public-closures
+          path: p09-current-public.json
+
+  net-ci-current-public:
+    needs: p09-current-public
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: current
+      - name: Download P09 receipt
+        uses: actions/download-artifact@v4
+        with:
+          name: p09-current-arc-public-closures
+          path: p09
+      - name: Download ONLINE and NORMAL m0r0 evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35523110479
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: m0r0-six-level-verification-*
+          path: raw-m0r0
+      - name: Download ONLINE and NORMAL ls20 evidence
+        uses: actions/download-artifact@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35523274978
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          pattern: arc3-seven-level-verification-*
+          path: raw-ls20
+      - name: Normalize evidence layout
+        run: |
+          mkdir -p evidence/m0r0-online evidence/m0r0-normal evidence/ls20-online evidence/ls20-normal
+          cp -a raw-m0r0/m0r0-six-level-verification-ONLINE/. evidence/m0r0-online/
+          cp -a raw-m0r0/m0r0-six-level-verification-NORMAL/. evidence/m0r0-normal/
+          cp -a raw-ls20/arc3-seven-level-verification-ONLINE/. evidence/ls20-online/
+          cp -a raw-ls20/arc3-seven-level-verification-NORMAL/. evidence/ls20-normal/
+      - name: NET-CI cross-mode corroboration
+        run: |
+          python current/public_benchmark/arc3/verify_current_public_arc_receipts.py \
+            --mode netci --root evidence --p09 p09/p09-current-public.json --out netci-current-public.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: netci-current-arc-public-closures
+          path: netci-current-public.json

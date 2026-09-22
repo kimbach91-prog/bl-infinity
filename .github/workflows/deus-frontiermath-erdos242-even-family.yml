@@ -1,0 +1,72 @@
+name: DEUS FrontierMath Erdos242 Even Family
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-frontiermath-erdos242-even-family.yml'
+      - 'public_benchmark/wave1/frontiermath_erdos242_even_family.lean'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  even-family:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: google-deepmind/formal-conjectures
+          ref: 488aade228ec37880b8fec178c173c07d279bb53
+          path: vendor/formal-conjectures
+      - name: Install exact FC Lean toolchain
+        shell: bash
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          toolchain="$(cat vendor/formal-conjectures/lean-toolchain)"
+          "$HOME/.elan/bin/elan" toolchain install "$toolchain"
+          "$HOME/.elan/bin/elan" default "$toolchain"
+      - name: Prepare exact FC proving environment
+        shell: bash
+        run: |
+          cd vendor/formal-conjectures
+          lake exe cache get
+          lake build FormalConjecturesUtil
+      - name: Verify even-n family with Lean
+        shell: bash
+        run: |
+          set +e
+          cp public_benchmark/wave1/frontiermath_erdos242_even_family.lean vendor/formal-conjectures/DeusErdos242EvenFamily.lean
+          cd vendor/formal-conjectures
+          lake env lean DeusErdos242EvenFamily.lean > ../../erdos242-even-family.log 2>&1
+          rc=$?
+          cd ../..
+          python - "$rc" <<'PY'
+          import hashlib,json,pathlib,sys
+          rc=int(sys.argv[1])
+          candidate=pathlib.Path('public_benchmark/wave1/frontiermath_erdos242_even_family.lean').read_bytes()
+          log=pathlib.Path('erdos242-even-family.log').read_text(errors='replace')
+          receipt={
+            'schema':'DEUS_FRONTIERMATH_ERDOS242_EVEN_FAMILY_V1',
+            'formal_conjectures_commit':'488aade228ec37880b8fec178c173c07d279bb53',
+            'target':'Erdos242.erdos_242_even_family',
+            'claim':'all_even_n_greater_than_2_via_n_eq_2k_k_ge_2',
+            'lean_returncode':rc,
+            'lean_verified':rc==0,
+            'candidate_sha256':hashlib.sha256(candidate).hexdigest(),
+            'log_tail':log[-4000:],
+            'claim_boundary':'PASS verifies only the explicit even-denominator family in the pinned Formal Conjectures Lean environment. It does not prove the full Erdos-Straus conjecture and is not an official FrontierMath benchmark solve.'
+          }
+          pathlib.Path('erdos242-even-family-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in receipt.items() if k!='log_tail'},sort_keys=True))
+          PY
+          test "$rc" -eq 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deus-frontiermath-erdos242-even-family
+          path: |
+            erdos242-even-family.log
+            erdos242-even-family-receipt.json

@@ -1,0 +1,71 @@
+name: DEUS FrontierMath Erdos242 n3 Witness
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/deus-frontiermath-erdos242-n3-witness.yml'
+      - 'public_benchmark/wave1/frontiermath_erdos242_n3_witness.lean'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  n3-witness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: google-deepmind/formal-conjectures
+          ref: 488aade228ec37880b8fec178c173c07d279bb53
+          path: vendor/formal-conjectures
+      - name: Install exact FC Lean toolchain
+        shell: bash
+        run: |
+          curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+          toolchain="$(cat vendor/formal-conjectures/lean-toolchain)"
+          "$HOME/.elan/bin/elan" toolchain install "$toolchain"
+          "$HOME/.elan/bin/elan" default "$toolchain"
+      - name: Prepare exact FC proving environment
+        shell: bash
+        run: |
+          cd vendor/formal-conjectures
+          lake exe cache get
+          lake build FormalConjecturesUtil
+      - name: Verify n=3 witness with Lean
+        shell: bash
+        run: |
+          set +e
+          cp public_benchmark/wave1/frontiermath_erdos242_n3_witness.lean vendor/formal-conjectures/DeusErdos242N3Witness.lean
+          cd vendor/formal-conjectures
+          lake env lean DeusErdos242N3Witness.lean > ../../erdos242-n3-witness.log 2>&1
+          rc=$?
+          cd ../..
+          python - "$rc" <<'PY'
+          import hashlib,json,pathlib,sys
+          rc=int(sys.argv[1])
+          candidate=pathlib.Path('public_benchmark/wave1/frontiermath_erdos242_n3_witness.lean').read_bytes()
+          log=pathlib.Path('erdos242-n3-witness.log').read_text(errors='replace')
+          receipt={
+            'schema':'DEUS_FRONTIERMATH_ERDOS242_N3_WITNESS_V1',
+            'formal_conjectures_commit':'488aade228ec37880b8fec178c173c07d279bb53',
+            'target':'Erdos242.erdos_242_n3_witness',
+            'claim':'n3_witness_only',
+            'lean_returncode':rc,
+            'lean_verified':rc==0,
+            'candidate_sha256':hashlib.sha256(candidate).hexdigest(),
+            'log_tail':log[-4000:],
+            'claim_boundary':'PASS verifies only the concrete n=3 witness in the pinned Formal Conjectures environment. It does not prove the full Erdős–Straus conjecture. Its purpose is to falsify the previous n=3 disproof strategy.'
+          }
+          pathlib.Path('erdos242-n3-witness-receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
+          print(json.dumps({k:v for k,v in receipt.items() if k!='log_tail'},sort_keys=True))
+          PY
+          test "$rc" -eq 0
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-frontiermath-erdos242-n3-witness
+          path: |
+            erdos242-n3-witness.log
+            erdos242-n3-witness-receipt.json

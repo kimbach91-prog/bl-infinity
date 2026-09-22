@@ -1,0 +1,29 @@
+name: DEUS HLE Public Subset Score
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/hle_public_subset_runner.py'
+      - '.github/workflows/deus-hle-public-subset-score.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hle-public-subset:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - run: pip install datasets
+      - name: Execute authorized HLE text subset if machine-bound HF token has gated access
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HUGGING_FACE_HUB_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python public_benchmark/wave1/hle_public_subset_runner.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-hle-public-subset-score
+          path: hle-public-subset-score.json

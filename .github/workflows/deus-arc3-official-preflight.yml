@@ -1,0 +1,34 @@
+name: DEUS ARC3 Official Preflight
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/arc3_official_preflight.py'
+      - 'public_benchmark/wave1/arc3_submission_package.json'
+      - '.github/workflows/deus-arc3-official-preflight.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  fail-closed-preflight:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: ARC3 preflight must hold without provider-side acceptance
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+        shell: bash
+        run: |
+          set +e
+          python public_benchmark/wave1/arc3_official_preflight.py
+          rc=$?
+          set -e
+          test "$rc" -eq 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-arc3-official-preflight
+          path: arc3-official-preflight-receipt.json

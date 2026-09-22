@@ -1,0 +1,38 @@
+name: DEUS ARC3 $850K Submission Readiness
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/arc3_open_source_projection.json'
+      - 'public_benchmark/wave1/arc3_official_submission_ready.py'
+      - 'public_benchmark/wave1/ARC3_PAPER_TRACK_SKELETON.md'
+      - '.github/workflows/deus-arc3-850k-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  readiness:
+    runs-on: ubuntu-latest
+    env:
+      ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+      KAGGLE_JOIN_RECEIPT: ${{ secrets.KAGGLE_JOIN_RECEIPT }}
+      KAGGLE_RULES_ACCEPTED: ${{ secrets.KAGGLE_RULES_ACCEPTED }}
+      KAGGLE_SUBMISSION_RECEIPT: ${{ secrets.KAGGLE_SUBMISSION_RECEIPT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Submission readiness must fail closed until provider receipts are bound
+        shell: bash
+        run: |
+          set +e
+          python public_benchmark/wave1/arc3_official_submission_ready.py
+          rc=$?
+          set -e
+          test "$rc" -eq 0 -o "$rc" -eq 3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-arc3-850k-readiness
+          path: arc3-official-submission-ready-receipt.json

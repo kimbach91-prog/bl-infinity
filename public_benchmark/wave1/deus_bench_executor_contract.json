@@ -1,0 +1,22 @@
+{
+  "schema":"DEUS_BENCH_EXECUTOR_V1",
+  "role":"GENERAL_REASONING_ENDPOINT",
+  "canonical_controller":"DEUS",
+  "compute_router":"CAP-MICRONET-ASSET-RESOLVER-001",
+  "provider_substrates_are_replaceable":true,
+  "input":{"required":["task_id","benchmark","benchmark_version","task_ref","allowed_tools","budget","evaluator_ref","authority_ref"],"semantic_payload":"opaque_or_local_to_executor"},
+  "output":{"required":["task_id","executor_id","executor_version","input_digest","result_ref","result_digest","started_at","finished_at","execution_state","receipt_id"]},
+  "truth_boundaries":[
+    "ROUTED_NEQ_EXECUTED",
+    "EXECUTED_NEQ_VERIFIED",
+    "VERIFIED_NEQ_PROMOTED",
+    "PROVIDER_NEQ_DEUS_IDENTITY",
+    "LOGICAL_SCALE_NEQ_PHYSICAL_MACHINE_COUNT"
+  ],
+  "admission":{
+    "requires_task_bound_authority":true,
+    "requires_mang":true,
+    "requires_attributable_executor":true,
+    "requires_result_receipt":true
+  }
+}

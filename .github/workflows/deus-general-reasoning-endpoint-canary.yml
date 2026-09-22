@@ -1,0 +1,82 @@
+name: DEUS General Reasoning Endpoint Canary
+
+on:
+  pull_request:
+    paths:
+      - 'public_benchmark/wave1/general_reasoning_endpoint.py'
+      - 'public_benchmark/wave1/test_general_reasoning_endpoint.py'
+      - 'public_benchmark/wave1/deus_bench_executor_contract.json'
+      - 'public_benchmark/wave1/independent_evaluator_contract.json'
+      - 'public_benchmark/wave1/semantic_canary_task.json'
+      - 'public_benchmark/wave1/semantic_canary_solver.py'
+      - 'public_benchmark/wave1/semantic_canary_verifier.py'
+      - '.github/workflows/deus-general-reasoning-endpoint-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  contract-canary:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Endpoint contract canary
+        run: python public_benchmark/wave1/test_general_reasoning_endpoint.py
+      - name: Validate contracts
+        run: |
+          python - <<'PY'
+          import json
+          for p in [
+            "public_benchmark/wave1/deus_bench_executor_contract.json",
+            "public_benchmark/wave1/independent_evaluator_contract.json"
+          ]:
+            x=json.load(open(p))
+            assert x["schema"].startswith("DEUS_")
+          print("CONTRACTS=PASS")
+          PY
+
+  semantic-solver:
+    runs-on: ubuntu-latest
+    needs: contract-canary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - name: Build solver argv
+        run: |
+          python - <<'PY'
+          import json,sys
+          json.dump([sys.executable,"public_benchmark/wave1/semantic_canary_solver.py"],open("solver-argv.json","w"))
+          PY
+      - name: Execute semantic canary through GRE
+        run: |
+          python public_benchmark/wave1/general_reasoning_endpoint.py             --task public_benchmark/wave1/semantic_canary_task.json             --backend ARGV             --solver-argv-file solver-argv.json             --out semantic-receipt.json
+      - name: Freeze candidate result
+        run: cp general-reasoning-result.json semantic-candidate.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-semantic-candidate
+          path: |
+            semantic-receipt.json
+            semantic-candidate.json
+
+  p09-independent-evaluator:
+    runs-on: ubuntu-latest
+    needs: semantic-solver
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
+      - uses: actions/download-artifact@v4
+        with:
+          name: deus-semantic-candidate
+      - name: P09 deterministic verification
+        run: |
+          python public_benchmark/wave1/semantic_canary_verifier.py             --candidate semantic-candidate.json             --out p09-receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-p09-receipt
+          path: p09-receipt.json

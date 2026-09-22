@@ -1,0 +1,51 @@
+{
+  "schema": "DEUS_WAVE1_OFFICIAL_ACCESS_STATE_V1",
+  "checked_at_utc": "2026-09-20T12:20:00Z",
+  "tool_substrate": "GPT_TOOL_SUBSTRATE",
+  "arc_agi_3_private": {
+    "official_page": "https://arcprize.org/competitions/2026/arc-agi-3",
+    "competition": "https://www.kaggle.com/competitions/arc-prize-2026-arc-agi-3",
+    "access_state": "ARC_API_KEY_AND_KAGGLE_ACCOUNT_RULE_ACCEPTANCE_REQUIRED",
+    "evaluation_constraints": [
+      "KAGGLE_NOTEBOOK_SUBMISSION",
+      "NO_INTERNET_DURING_EVALUATION",
+      "OPEN_SOURCE_REQUIRED_BEFORE_OFFICIAL_PRIVATE_EVALUATION_SCORE"
+    ],
+    "disclosure_state": "UNRESOLVED_DIVERGENCE_PROTECTED_CORE_VS_OPEN_SOURCE",
+    "entry_deadline_utc": "2026-10-26T23:59:00Z",
+    "final_submission_deadline_utc": "2026-11-02T23:59:00Z",
+    "hard_run_state": "HOLD_OFFICIAL_ACCOUNT_ACCESS_AND_DISCLOSURE_DECISION"
+  },
+  "frontiermath_erdos": {
+    "source_repo": "epoch-research/LeanOpenProblems",
+    "source_commit": "af3b82f9d2fd38bea33d59e637b6b4eff54a464c",
+    "canonical_config": "configs/bloom68.yaml",
+    "access_state": "PUBLIC_SOURCE_AND_EVALUATION_SCAFFOLD_AVAILABLE",
+    "source_harness_canary": "PASS_ON_GITHUB_ACTIONS_RUN_35416761437",
+    "executor_contract": "DEUS_GENERAL_REASONING_PROOF_EXECUTOR_PLUS_OFFICIAL_COMPARATOR",
+    "hard_run_state": "RUNNABLE_SOURCE_HARNESS; HOLD_FULL_PROOF_ATTEMPT_UNTIL_DEUS_LEAN_PROOF_EXECUTOR_BOUND"
+  },
+  "hle_rolling": {
+    "official_dataset": "https://huggingface.co/datasets/cais/hle-rolling",
+    "public_eval_repo": "centerforaisafety/hle",
+    "public_eval_commit": "73ae974b1844c3ffa64c3f4343d9f1f259575700",
+    "public_prediction_script": "hle_eval/run_model_predictions.py",
+    "access_state": "VERSION_SPECIFIC_DATASET_ACCESS_MUST_BE_FRESH_VERIFIED",
+    "public_card_state": "VISIBLE",
+    "endpoint_contract": [
+      "OPENAI_COMPATIBLE_CHAT_COMPLETIONS",
+      "TEXT_ITEMS",
+      "IMAGE_URL_MULTIMODAL_ITEMS_OR_DECLARED_RESTRICTED_SUBSET",
+      "ATTRIBUTABLE_DEUS_EXECUTOR_RECEIPT"
+    ],
+    "hard_run_state": "HOLD_ROLLING_DATASET_ACCESS_UNTIL_EXACT_VERSION_BOUND",
+    "distribution_warning": "DO_NOT_PUBLICLY_REUPLOAD_OR_DISTRIBUTE_DATASET"
+  },
+  "claim_boundary": "Access-state manifest only. Public harness availability does not equal official/private score. No hidden benchmark data or fabricated score.",
+  "hle_public": {
+    "official_repo": "centerforaisafety/hle",
+    "access_state": "PUBLIC_REPO_AND_PUBLIC_EVAL_HARNESS_AVAILABLE",
+    "current_scope": "TEXT_OR_DECLARED_SUPPORTED_SUBSET_UNLESS_MULTIMODAL_ASSETS_BOUND",
+    "hard_run_state": "RUNNABLE_ON_PUBLIC_HARNESS_WITH_BOUND_MODEL_ENDPOINT_AND_RECEIPTS"
+  }
+}
