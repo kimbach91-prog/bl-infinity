@@ -1,0 +1,68 @@
+name: ARC3 SU15 shift residual heldout 195
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_su15_shift_residual_195.py
+      - .github/workflows/arc3-su15-shift-residual-195.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  su15:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_generalized_viewport_shift_194.py \
+            public_benchmark/arc3/kaggle_candidates/public_su15_shift_residual_195.py
+      - name: Download SU15 p0-p19
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="su15-1944f8ab_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute frozen shift residual
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/su15-1944f8ab_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_su15_shift_residual_195.py \
+            "${args[@]}" --output su15-r195.json
+      - name: Verify
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('su15-r195.json'))
+          assert d['schema']=='deus/arc3-su15-shift-residual-heldout/1'
+          assert d['truth']['heldout_p10_p19_never_updates_shift_residual_or_selection'] is True
+          assert d['truth']['kaggle_execution'] is False
+          print(json.dumps({'rung':195,'selected':d['inner']['selected'],'heldout':d['heldout'],'refit':d['refit']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-su15-r195
+          path: |
+            su15-r195.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
