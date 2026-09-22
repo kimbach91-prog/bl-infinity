@@ -1,0 +1,15 @@
+[package]
+name = "deus-desktop"
+version = "0.1.0"
+description = "DEUS controlled enterprise/government desktop client"
+authors = ["BL Infinity"]
+edition = "2021"
+
+[build-dependencies]
+tauri-build = { version = "2" }
+
+[dependencies]
+tauri = { version = "2" }
+
+[features]
+default = []
