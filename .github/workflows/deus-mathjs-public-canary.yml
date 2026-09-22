@@ -1,0 +1,69 @@
+name: DEUS MathJS Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-mathjs-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mathjs-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run one bounded BL-S0 MathJS canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-mathjs
+
+          rid="${GITHUB_RUN_ID}"
+          a=$((17000 + rid % 1000))
+          expected=$((a * 47 - 23 * 31))
+          expr="det([[$a,23],[31,47]])"
+          encoded="$(python3 - <<'PY' "$expr"
+          import sys, urllib.parse
+          print(urllib.parse.quote(sys.argv[1], safe=''))
+          PY
+          )"
+          url="https://api.mathjs.org/v4/?expr=${encoded}"
+
+          start_ms="$(date +%s%3N)"
+          code="$(curl --max-time 20 -sS -D /tmp/deus-mathjs/headers.txt -o /tmp/deus-mathjs/body.txt -w '%{http_code}' "$url" || true)"
+          end_ms="$(date +%s%3N)"
+          latency_ms=$((end_ms - start_ms))
+          body="$(tr -d '\r\n ' < /tmp/deus-mathjs/body.txt)"
+          body_sha="$(sha256sum /tmp/deus-mathjs/body.txt | awk '{print $1}')"
+          exact=false
+          if [ "$code" = "200" ] && [ "$body" = "$expected" ]; then exact=true; fi
+
+          jq -n \
+            --arg receipt_version "DEUS-MATHJS-PUBLIC-CANARY/1" \
+            --arg provider "MATHJS_WEB_SERVICE" \
+            --arg endpoint "https://api.mathjs.org/v4/" \
+            --arg expression "$expr" \
+            --arg expected "$expected" \
+            --arg observed "$body" \
+            --arg http_status "$code" \
+            --arg body_sha256 "$body_sha" \
+            --arg source_run_id "$GITHUB_RUN_ID" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_ms "$latency_ms" \
+            --argjson exact_contract "$exact" \
+            '{receipt_version:$receipt_version,provider:$provider,endpoint:$endpoint,data_class:"BL-S0_PUBLIC_SYNTHETIC",auth_mode:"NO_AUTH_HEADER",scope:"REMOTE_DETERMINISTIC_MATH_EVALUATION",expression:$expression,expected:$expected,observed:$observed,http_status:($http_status|tonumber),latency_ms:$latency_ms,exact_contract:$exact_contract,body_sha256:$body_sha256,source_run_id:$source_run_id,source_sha:$source_sha,spend_authorized:false,spend_observed:0}' \
+            | tee /tmp/deus-mathjs/receipt.json
+
+          test "$code" = "200"
+          test "$exact" = "true"
+
+      - name: Upload exact canary custody
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-mathjs-public-canary-${{ github.run_id }}
+          path: /tmp/deus-mathjs/
+          if-no-files-found: error
+          retention-days: 7
