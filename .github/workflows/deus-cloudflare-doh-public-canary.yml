@@ -1,0 +1,83 @@
+name: DEUS Cloudflare DoH Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-cloudflare-doh-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  cloudflare-doh-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Execute bounded public DNS-over-HTTPS canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/deus-cloudflare-doh
+          mkdir -p "$out"
+          nonce="DEUS_CF_DOH_$(date -u +%Y%m%dT%H%M%SZ)_$RANDOM"
+          url_a='https://cloudflare-dns.com/dns-query?name=example.com&type=A'
+          url_b='https://cloudflare-dns.com/dns-query?name=cloudflare.com&type=AAAA'
+          printf '%s\n' "$url_a" > "$out/request_a.url"
+          printf '%s\n' "$url_b" > "$out/request_b.url"
+          printf '%s\n' 'accept: application/dns-json' > "$out/request_headers.txt"
+          start_ms="$(date +%s%3N)"
+          code_a="$(curl --http2 -L --max-time 20 -sS -H 'accept: application/dns-json' -D "$out/headers_a.txt" -o "$out/body_a.json" -w '%{http_code}' "$url_a")"
+          mid_ms="$(date +%s%3N)"
+          code_b="$(curl --http2 -L --max-time 20 -sS -H 'accept: application/dns-json' -D "$out/headers_b.txt" -o "$out/body_b.json" -w '%{http_code}' "$url_b")"
+          end_ms="$(date +%s%3N)"
+          test "$code_a" = "200"
+          test "$code_b" = "200"
+          python3 - <<'PY'
+          import hashlib, json
+          root='/tmp/deus-cloudflare-doh'
+          checks=[('a','example.com',1),('b','cloudflare.com',28)]
+          meta={
+              'schema':'deus-public-doh-canary/1',
+              'provider':'Cloudflare 1.1.1.1',
+              'scope':'BL-S0 public DNS resolution via DNS-over-HTTPS JSON',
+              'http_status_a':200,
+              'http_status_b':200,
+          }
+          for key,name,rtype in checks:
+              p=f'{root}/body_{key}.json'
+              raw=open(p,'rb').read()
+              obj=json.loads(raw)
+              if obj.get('Status') != 0:
+                  raise SystemExit(f'dns-status-{key}:{obj.get("Status")}')
+              q=obj.get('Question') or []
+              if not q or q[0].get('name','').rstrip('.').lower() != name or int(q[0].get('type',-1)) != rtype:
+                  raise SystemExit(f'question-mismatch-{key}:{q}')
+              answers=[x for x in (obj.get('Answer') or []) if int(x.get('type',-1)) == rtype]
+              if not answers:
+                  raise SystemExit(f'answer-missing-{key}')
+              meta[f'answer_count_{key}']=len(answers)
+              meta[f'body_{key}_bytes']=len(raw)
+              meta[f'sha256_{key}']=hashlib.sha256(raw).hexdigest()
+          open(f'{root}/meta.json','w').write(json.dumps(meta,sort_keys=True,indent=2)+'\n')
+          PY
+          sha256sum "$out"/* > "$out/sha256.txt"
+          jq -n \
+            --arg nonce "$nonce" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_a_ms "$((mid_ms-start_ms))" \
+            --argjson latency_b_ms "$((end_ms-mid_ms))" \
+            --slurpfile meta "$out/meta.json" \
+            '{provider:"Cloudflare 1.1.1.1",nonce:$nonce,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,latency_a_ms:$latency_a_ms,latency_b_ms:$latency_b_ms,result:$meta[0]}' \
+            | tee "$out/receipt.json"
+
+      - name: Upload exact canary custody artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-cloudflare-doh-public-canary
+          path: /tmp/deus-cloudflare-doh/
+          if-no-files-found: error
+          retention-days: 7
