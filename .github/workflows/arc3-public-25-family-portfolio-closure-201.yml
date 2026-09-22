@@ -1,0 +1,122 @@
+name: ARC3 public 25-family heterogeneous portfolio closure 201
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - .github/workflows/arc3-public-25-family-portfolio-closure-201.yml
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  closure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exact prior public receipts
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/r184 evidence/r196 evidence/r200
+          gh run download 35698271815 -R "$GITHUB_REPOSITORY" -n 'arc3-full-public-25x20-frozen-184' -D evidence/r184
+          gh run download 35707311249 -R "$GITHUB_REPOSITORY" -n 'arc3-r196-remaining14-heldout-union' -D evidence/r196
+          gh run download 35713766192 -R "$GITHUB_REPOSITORY" -n 'arc3-tu93-r200-frozen-heldout' -D evidence/r200
+          find evidence -type f -maxdepth 3 -print -exec sha256sum {} \;
+      - name: Verify heterogeneous 25-family public closure
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob, hashlib, json
+          from pathlib import Path
+
+          def one(pattern):
+              xs=glob.glob(pattern,recursive=True)
+              if len(xs)!=1: raise SystemExit(f'expected one {pattern}, got {xs}')
+              return Path(xs[0])
+
+          r184p=one('evidence/r184/**/r184-full-public-500-aggregate.json')
+          r196p=one('evidence/r196/**/r196-remaining14-heldout-union.json')
+          r200p=one('evidence/r200/**/tu93-r200-heldout.json')
+          r184=json.load(open(r184p)); r196=json.load(open(r196p)); r200=json.load(open(r200p))
+
+          assert r184['schema']=='deus/arc3-full-public-25x20-frozen/1'
+          assert r184['rung']==184
+          assert r184['truth']['public_trace_only'] is True
+          assert r184['truth']['kaggle_execution'] is False
+          all25=set(r184['by_game'])
+          assert len(all25)==25, len(all25)
+          exact10={g for g,v in r184['by_game'].items() if int(v['exact'])>0}
+          zeroopp14={g for g,v in r184['by_game'].items() if int(v['opportunities'])==0}
+          residual={g for g,v in r184['by_game'].items() if int(v['opportunities'])>0 and int(v['exact'])==0}
+          assert len(exact10)==10, exact10
+          assert len(zeroopp14)==14, zeroopp14
+          assert residual=={'tu93-0768757b'}, residual
+
+          assert r196['schema']=='deus/arc3-remaining14-heldout-union-closure/1'
+          assert r196['rung']==196
+          assert r196['truth']['same_game_heldout_only'] is True
+          assert r196['truth']['full_game_solve_claim'] is False
+          assert r196['truth']['kaggle_execution'] is False
+          covered14=set(r196['games_with_nonzero_exact_heldout'])
+          assert int(r196['coverage_game_count'])==14
+          assert not r196['games_without_nonzero_exact_heldout']
+          assert covered14==zeroopp14, (covered14,zeroopp14)
+          assert int(r196['aggregate_selected']['correct'])>0
+
+          c=r200['transition_classifier']; p=r200['planner']; t=r200['truth']
+          assert float(c['accuracy'])>=0.99, c
+          assert float(p['plan_found_rate'])>=0.99, p
+          assert t['kaggle_execution'] is False
+          tu93={'tu93-0768757b'}
+          portfolio=exact10|covered14|tu93
+          assert portfolio==all25 and len(portfolio)==25
+          assert exact10.isdisjoint(covered14)
+          assert tu93.isdisjoint(exact10|covered14)
+
+          hashes={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in (r184p,r196p,r200p)}
+          out={
+            'schema':'deus/arc3-public-25-family-heterogeneous-portfolio-closure/1',
+            'rung':201,
+            'source_runs':{
+              'r184':{'run_id':35698271815,'artifact_id':10680539183,'artifact_zip_sha256':'f6cfdd1db8ff497f986987d1dc7fa47f306e4fb6a2e12119603b625221402729'},
+              'r196':{'run_id':35707311249,'artifact_id':10684604904,'artifact_zip_sha256':'9f8be8089b5a8244201c446998b0d6102edead7dddbb2ed268f4c55dbea7d3d4'},
+              'r200':{'run_id':35713766192,'artifact_id':10688031663,'artifact_zip_sha256':'4411edafab9a3867caa1f2942c2e6996fdda012a0ecebf9e24a5e0c892e7140d'}
+            },
+            'evidence_file_sha256':hashes,
+            'portfolio':{
+              'r184_exact_full_frame_public_evidence_games':sorted(exact10),
+              'r196_nonzero_exact_same_game_heldout_games':sorted(covered14),
+              'r200_tu93_behavioral_gate_games':sorted(tu93),
+              'union_game_count':len(portfolio),
+              'all_public_game_families':sorted(portfolio),
+            },
+            'diagnostic_gate':'PUBLIC_HETEROGENEOUS_25_FAMILY_COVERAGE_CLOSED',
+            'truth':{
+              'public_only':True,
+              'heterogeneous_evidence_types':True,
+              'portfolio_coverage_claim_only':True,
+              'all_25_games_solved_claim':False,
+              'same_metric_across_all_families_claim':False,
+              'independent_hidden_game_generalization_claim':False,
+              'kaggle_execution':False,
+              'competition_submission':False,
+              'leaderboard_score_claim':False,
+              'owner_score_claim':False,
+              'submission_quota_spent':False,
+            }
+          }
+          Path('r201-public-25-family-portfolio.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':201,'gate':out['diagnostic_gate'],'counts':{'r184_exact':len(exact10),'r196_heldout':len(covered14),'r200_behavioral':1,'union':len(portfolio)},'truth':out['truth']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r201-public-25-family-portfolio
+          path: r201-public-25-family-portfolio.json
+          if-no-files-found: error
+          retention-days: 30
