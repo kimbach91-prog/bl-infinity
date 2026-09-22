@@ -1,0 +1,104 @@
+name: DEUS Pollinations Image Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-pollinations-image-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pollinations-image-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Run one bounded S0 image-generation canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/deus-pollinations-image"
+          mkdir -p "$out"
+          prompt='DEUS public S0 canary: a single flat blue circle centered on a plain white background, no text, minimal icon'
+          encoded="$(python3 - <<'PY'
+          import urllib.parse
+          s='DEUS public S0 canary: a single flat blue circle centered on a plain white background, no text, minimal icon'
+          print(urllib.parse.quote(s, safe=''))
+          PY
+          )"
+          url="https://image.pollinations.ai/prompt/${encoded}?width=256&height=256&seed=42&nologo=true"
+          start_ms="$(date +%s%3N)"
+          http_code="$(curl -L --max-time 75 --connect-timeout 10 -sS -D "$out/headers.txt" -o "$out/body.bin" -w '%{http_code}' "$url" || true)"
+          latency_ms="$(( $(date +%s%3N) - start_ms ))"
+          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub(/\r/,""); v=$0} END{sub(/^[^:]*:[[:space:]]*/,"",v); print v}' "$out/headers.txt")"
+          bytes="$(wc -c < "$out/body.bin" | tr -d ' ')"
+          sha256="$(sha256sum "$out/body.bin" | awk '{print $1}')"
+
+          python3 - "$out/body.bin" "$out/image_meta.json" <<'PY'
+          import json, struct, sys
+          path, meta_path = sys.argv[1:3]
+          b=open(path,'rb').read()
+          kind='unknown'; w=h=None
+          if b.startswith(b'\x89PNG\r\n\x1a\n') and len(b)>=24:
+              kind='png'; w,h=struct.unpack('>II', b[16:24])
+          elif b.startswith(b'\xff\xd8'):
+              kind='jpeg'
+              i=2
+              while i+4 <= len(b):
+                  if b[i] != 0xFF:
+                      i += 1; continue
+                  while i < len(b) and b[i] == 0xFF: i += 1
+                  if i >= len(b): break
+                  marker=b[i]; i += 1
+                  if marker in (0xD8,0xD9): continue
+                  if i+2 > len(b): break
+                  seglen=int.from_bytes(b[i:i+2],'big')
+                  if seglen < 2 or i+seglen > len(b): break
+                  if marker in {0xC0,0xC1,0xC2,0xC3,0xC5,0xC6,0xC7,0xC9,0xCA,0xCB,0xCD,0xCE,0xCF} and seglen >= 7:
+                      h=int.from_bytes(b[i+3:i+5],'big'); w=int.from_bytes(b[i+5:i+7],'big'); break
+                  i += seglen
+          json.dump({'format':kind,'width':w,'height':h}, open(meta_path,'w'))
+          PY
+
+          format="$(jq -r '.format' "$out/image_meta.json")"
+          width="$(jq -r '.width // 0' "$out/image_meta.json")"
+          height="$(jq -r '.height // 0' "$out/image_meta.json")"
+          success=false
+          if [ "$http_code" = "200" ] && [ "$bytes" -gt 1024 ] && [ "$width" = "256" ] && [ "$height" = "256" ] && { [ "$format" = "png" ] || [ "$format" = "jpeg" ]; }; then
+            success=true
+          fi
+
+          jq -n \
+            --arg schema 'deus-public-compute-canary/1' \
+            --arg provider 'Pollinations' \
+            --arg capability 'public text-to-image generation' \
+            --arg data_class 'BL-S0 synthetic/public only' \
+            --arg endpoint 'https://image.pollinations.ai/prompt/{prompt}' \
+            --arg request_contract 'single synthetic prompt; width=256;height=256;seed=42;nologo=true' \
+            --arg http_status "$http_code" \
+            --arg content_type "$content_type" \
+            --arg format "$format" \
+            --arg sha256 "$sha256" \
+            --argjson bytes "$bytes" \
+            --argjson width "$width" \
+            --argjson height "$height" \
+            --argjson latency_ms "$latency_ms" \
+            --argjson success "$success" \
+            --arg verified_at "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{schema:$schema,provider:$provider,capability:$capability,data_class:$data_class,endpoint:$endpoint,request_contract:$request_contract,http_status:($http_status|tonumber),content_type:$content_type,format:$format,bytes:$bytes,width:$width,height:$height,latency_ms:$latency_ms,body_sha256:$sha256,useful_execution:$success,verified_at:$verified_at}' \
+            | tee "$out/receipt.json"
+
+          jq -e '.useful_execution == true' "$out/receipt.json" >/dev/null
+
+      - name: Upload bounded canary evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-pollinations-image-public-canary
+          path: |
+            ${{ runner.temp }}/deus-pollinations-image/receipt.json
+            ${{ runner.temp }}/deus-pollinations-image/headers.txt
+            ${{ runner.temp }}/deus-pollinations-image/body.bin
+            ${{ runner.temp }}/deus-pollinations-image/image_meta.json
+          retention-days: 7
