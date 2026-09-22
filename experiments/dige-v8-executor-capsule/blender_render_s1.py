@@ -1454,7 +1454,7 @@ def s1_cloth_material(name,base):
 
 s1_tank_mat=s1_cloth_material("DIGE_S1_TANK_PBR",(0.58,0.59,0.61)) if S1_ENDOGENOUS else None
 s1_leggings_mat=s1_cloth_material("DIGE_S1_LEGGINGS_PBR",(0.36,0.37,0.39)) if S1_ENDOGENOUS else None
-floor_mat=principled("FLOOR",(0.12,0.12,0.125),rough=.70)
+floor_mat=principled("FLOOR",((0.045,0.050,0.058) if S1_ENDOGENOUS else (0.12,0.12,0.125)),rough=.76 if S1_ENDOGENOUS else .70)
 
 mesh_path=RUNTIME/"dige_makehuman_v8.obj"
 # Builder already writes Blender-space coordinates (Y forward, Z up). Import with an identity axis convention;
@@ -3341,7 +3341,8 @@ if C41_HYPERREAL_NATIVE_EYE:
     curve_object("DIGE_S1_DEEP_SCALP_GATHER" if S1_ENDOGENOUS else ("DIGE_C44_HHIR_DEEP_GATHER" if C44_FOLLICLE_FLOW else "DIGE_C43_HHIR_TANGENTIAL_GATHER"),primary,.000021 if S1_ENDOGENOUS else (.000025 if C44_FOLLICLE_FLOW else .000028),hair)
 
     bun=[]
-    for i in range(520):
+    bun_count=(820 if S1_ENDOGENOUS else 520)
+    for i in range(bun_count):
         phi=math.tau*((i*.61803398875)%1.0)
         b1=Vector((math.cos(phi),.52*math.sin(phi),hrng.uniform(-.20,.20)))
         if b1.length<1e-8: b1=Vector((1,0,0))
@@ -3358,7 +3359,7 @@ if C41_HYPERREAL_NATIVE_EYE:
             a=math.tau*j/18.0
             pts.append(tuple(center+b1*(rr*math.cos(a))+b2*(rr*squash*math.sin(a))))
         bun.append(pts)
-    curve_object("DIGE_C43_HHIR_ROUNDED_BUN",bun,.000032,hair)
+    curve_object("DIGE_S1_LAYERED_ROUNDED_BUN" if S1_ENDOGENOUS else "DIGE_C43_HHIR_ROUNDED_BUN",bun,.000023 if S1_ENDOGENOUS else .000032,hair)
 
     micro=[]
     if edge_band:
@@ -3617,7 +3618,7 @@ elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HE
 bpy.ops.mesh.primitive_plane_add(size=20,location=(0,0,-.006))
 floor=bpy.context.object; floor.data.materials.append(floor_mat)
 if C36_CANONICAL_APPEARANCE:
-    backdrop_mat=principled("DIGE_C36_WARM_BACKDROP",(0.10,0.060,0.045),rough=.92,ior=1.40)
+    backdrop_mat=principled("DIGE_S1_NEUTRAL_BACKDROP" if S1_ENDOGENOUS else "DIGE_C36_WARM_BACKDROP",((0.018,0.021,0.028) if S1_ENDOGENOUS else (0.10,0.060,0.045)),rough=.95 if S1_ENDOGENOUS else .92,ior=1.40)
     bpy.ops.mesh.primitive_plane_add(size=5.0,location=(0,-1.25,1.45),rotation=(math.radians(90),0,0))
     backdrop=bpy.context.object; backdrop.name="DIGE_C36_WARM_BACKDROP"; backdrop.data.materials.append(backdrop_mat)
 
@@ -3788,7 +3789,8 @@ all_views=[
  ("02_LEFT_PROFILE50",(5.1,0,1.08),(0,0,.98),50,7.1,(640 if S1_ENDOGENOUS else 512),(960 if S1_ENDOGENOUS else 768)),
  ("03_THREE_QUARTER50",(3.60,3.60,1.10),(0,0,1.00),50,6.3,(640 if S1_ENDOGENOUS else 512),(960 if S1_ENDOGENOUS else 768)),
  hero_view,
- ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,(640 if S1_ENDOGENOUS else 512),(960 if S1_ENDOGENOUS else 768))
+ ("05_BACK_THREE_QUARTER50",(-3.60,-3.60,1.08),(0,0,1.00),50,6.3,(640 if S1_ENDOGENOUS else 512),(960 if S1_ENDOGENOUS else 768)),
+ ("06_BACK50",(0,-5.1,1.03),(0,0,.92),50,7.1,(640 if S1_ENDOGENOUS else 512),(960 if S1_ENDOGENOUS else 768))
 ]
 if SAMPLE_SHARD_MODE:
     if RENDER_SET!="HERO_ONLY":
@@ -4084,6 +4086,14 @@ receipt={
    "c43_tangential_groom":C43_TANGENTIAL_GROOM,
    "c44_follicle_flow":C44_FOLLICLE_FLOW,
    "s1_endogenous":S1_ENDOGENOUS,
+   "s1_prototype_contract":{
+      "step02":"continuous_mesh_surface_blockout",
+      "step04":"face_hands_articulation_neutral",
+      "step06":"tank_leggings_cloth_contact",
+      "step07":"layered_bun_scalp_strand_flow",
+      "step09":"pbr_materials_area_lighting",
+      "reference_pixels_used":False
+   } if S1_ENDOGENOUS else None,
    "s1_garment_metrics":s1_garment_metrics,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
