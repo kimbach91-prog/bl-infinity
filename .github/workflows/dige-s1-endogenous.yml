@@ -232,8 +232,9 @@ jobs:
           assert hero["lens_mm"]==85 and abs(hero["fstop"]-4.0)<1e-6
           g=r["appearance_selection"]["c41_groom_metrics"]
           assert g["enabled"] is True
-          assert g["undercoat_lane_count"]==4
-          assert g["s1_scalp_cap_faces"]>0
+          assert g["undercoat_lane_count"]==5
+          assert g["s1_scalp_cap_faces"]==0
+          assert g["s1_face_frame_curves"]>0
           assert g["bun_curves"]>=800
           eye=r["c28_gnm_head"]["eye_contract"]
           assert eye["integration"]=="GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY"
@@ -243,7 +244,9 @@ jobs:
           assert garments["enabled"] is True
           assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
           assert garments["midriff_gap_m"]>=0.05
-          assert garments["body_arm_vertices_relaxed"]>0 and garments["tights_arm_vertices_relaxed"]>0
+          assert garments["body_arm_vertices_relaxed"]>0
+          assert garments["source"]=="RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL"
+          assert garments["helper_tights_rendered"] is False
           sel=json.loads(pathlib.Path("runtime/s1_identity_selection.json").read_text())
           assert int(r["c28_gnm_head"]["identity_seed"])==int(sel["selected"]["seed"])
           assert r["c28_gnm_head"]["identity_source"]=="SEMANTIC_CVAE"
