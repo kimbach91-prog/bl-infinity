@@ -115,7 +115,6 @@ jobs:
           python -m pip install --disable-pip-version-check -q tensorflow
           python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
           python select_s1_identity.py --start-seed 20263000 --count 64 --out runtime/s1_identity_selection.json | tee runtime/s1_identity_selection.log
-          test -n "$DIGE_S1_IDENTITY_SEED" || true
 
       - name: Rebind deterministic body geometry
         working-directory: experiments/dige-v8-executor-capsule
