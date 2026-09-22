@@ -1,9 +1,9 @@
-name: ARC3 R256 re86 dynamic-component history diagnostic
+name: ARC3 R257 re86 history-conditioned transport gate
 
 on:
   push:
     branches:
-      - deus/r256-re86-dynamic-component-diag-20260923
+      - deus/r257-re86-history-transport-gate-20260923
     paths:
       - .github/workflows/arc3-r255-re86-viewport-diag.yml
   workflow_dispatch:
@@ -12,12 +12,12 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-r256-re86:
+  gate-r257-re86:
     runs-on: ubuntu-24.04
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - name: Checkout pinned public trace source
+      - name: Checkout pinned public traces
         uses: actions/checkout@v4
         with:
           repository: Tufalabs/duck-harness
@@ -30,51 +30,53 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile
-        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_dynamic_component_history_diag_256.py
-      - name: Stage re86 p0-p9 only
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_history_transport_gate_257.py
+      - name: Stage exact re86 p0-p19 public traces
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public_trace
-          for p in $(seq 0 9); do
+          for p in $(seq 0 19); do
             f="re86-8af5384d_p${p}_events.jsonl"
             src="upstream-duck/example-run/artifacts/$f"
             test -s "$src"
             cp "$src" "public_trace/$f"
           done
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
-      - name: Execute R256 diagnostic
+      - name: Execute R257 gate
         shell: bash
         run: |
           set -euo pipefail
           args=()
           for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
-          test "${#args[@]}" -eq 20
-          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_dynamic_component_history_diag_256.py "${args[@]}" --output r256-re86-dynamic-component-diag.json 2> >(tee r256-runtime.txt >&2) | tee r256-stdout.txt
-      - name: Verify and digest
+          test "${#args[@]}" -eq 40
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_history_transport_gate_257.py "${args[@]}" --output r257-re86-history-transport.json 2> >(tee r257-runtime.txt >&2) | tee r257-stdout.txt
+      - name: Verify truth boundary and verdict
         shell: bash
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
-          d=json.loads(Path('r256-re86-dynamic-component-diag.json').read_text())
-          assert d['schema']=='deus/arc3-r256-dynamic-component-history-diagnostic/1'
+          d=json.loads(Path('r257-re86-history-transport.json').read_text())
+          assert d['schema']=='deus/arc3-r257-history-transport-gate/1'
           t=d['truth']
-          assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read']
-          assert not t['kaggle_execution'] and not t['competition_submission'] and not t['owner_score_claim']
-          Path('r256-verdict.json').write_text(json.dumps({'verdict':d['overall']['verdict'],'scope':'p0-p9_public_development_only'},indent=2)+'\n')
+          assert t['public_trace_only'] and not t['game_source_read']
+          assert t['selection_uses_p0_p9_only'] and t['p10_p19_never_updates_selection_or_model']
+          assert not t['independent_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission']
+          verdict='INTEGRATION_CANDIDATE' if d['non_dominated_source_side_gain'] else 'NO_PROMOTION'
+          Path('r257-verdict.json').write_text(json.dumps({'verdict':verdict,'scope':'public_development_only'},indent=2)+'\n')
           PY
-          sha256sum r256-re86-dynamic-component-diag.json r256-verdict.json r256-runtime.txt r256-stdout.txt public_trace/SHA256SUMS.txt > R256_SHA256SUMS.txt
+          sha256sum r257-re86-history-transport.json r257-verdict.json r257-runtime.txt r257-stdout.txt public_trace/SHA256SUMS.txt > R257_SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: r256-re86-dynamic-component-diag
+          name: r257-re86-history-transport
           path: |
-            r256-re86-dynamic-component-diag.json
-            r256-verdict.json
-            r256-runtime.txt
-            r256-stdout.txt
-            R256_SHA256SUMS.txt
+            r257-re86-history-transport.json
+            r257-verdict.json
+            r257-runtime.txt
+            r257-stdout.txt
+            R257_SHA256SUMS.txt
             public_trace/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
