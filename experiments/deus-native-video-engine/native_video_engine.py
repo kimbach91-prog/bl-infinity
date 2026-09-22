@@ -102,7 +102,7 @@ def main():
         obj.matrix_world = mw
 
     fps = args.fps
-    end = max(24, int(round(args.seconds * fps)))
+    end = max(8, int(round(args.seconds * fps)))
     scene.frame_start = 1
     scene.frame_end = end
     scene.render.fps = fps
