@@ -39,3 +39,15 @@ public reproducible target: 3.40 upstream
 research targets: >3.40 only after source/runtime grounding and reproducibility checks
 
 Static validation: GitHub Actions workflow arc3-flash340-static-validate.yml is the pre-GPU integrity gate.
+
+
+## ARC-AGI-3 Milestone 2 publication boundary
+
+- Deadline: 2026-09-30 23:59 UTC.
+- The exact milestone candidate must be public under an open-source license by the deadline.
+- Competition execution remains notebook-only, Internet disabled, with CPU/GPU runtime <= 9 hours.
+- Operational submission quota is treated as one submission per day.
+- Private evaluation packages remain private until a non-dominated candidate is selected.
+- A separate public-intent bundle may set `is_private=false` for static packaging, but this does **not** prove Kaggle publication or license selection.
+- Required provider receipts before claiming milestone eligibility: exact public notebook identity, public visibility, open-source license selection/readback, corresponding milestone/leaderboard candidate, and no rule/entry gap.
+- Truth boundary: `PUBLICATION_READY_STATIC != KAGGLE_PUBLIC != LICENSE_SELECTED != PRIZE_ELIGIBLE`.
