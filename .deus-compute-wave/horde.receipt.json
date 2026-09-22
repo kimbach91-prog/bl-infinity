@@ -4,7 +4,7 @@
   "http_status": 200,
   "exact_contract": false,
   "model": "koboldcpp/Llama-3.2-1B-Instruct",
-  "digest": "5de0322c47f7118762050d973723ce512f8e1f6ed5c506808052f97d8a2c607c",
+  "digest": "56af6f33ed31736b3eb668da8b063d719151eaa4bf86837a7563b8266eaf8907",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
