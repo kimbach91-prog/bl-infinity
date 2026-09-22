@@ -1,0 +1,96 @@
+name: ARC3 ft09 source-compiled nonnode no-op 239
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py
+      - .github/workflows/arc3-ft09-source-compiled-nonnode-noop-239.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-ft09-nonnode-noop:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install compile-only public runtime
+        run: python -m pip install --disable-pip-version-check --quiet 'arcengine==0.9.3'
+      - name: Compile harnesses
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py             public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py
+      - name: Fetch pinned source and public traces
+        run: |
+          set -euo pipefail
+          mkdir -p source public_trace
+          curl --fail --location --retry 3 --silent --show-error             'https://raw.githubusercontent.com/axobase001/arc-agi-games/41b87fe1ea8d9819a44eea35172ffe28d6c5ffe6/ft09/0d8bbf25/ft09.py'             -o source/ft09.py
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum source/ft09.py > source/SHA256SUMS.txt
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile R234 static manifest from pinned source
+        run: |
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates           python public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py             compile --source source/ft09.py --output r239-ft09-manifest.json
+      - name: Delete source and create clean inference venv
+        run: |
+          set -euo pipefail
+          rm -f source/ft09.py
+          test ! -e source/ft09.py
+          python -m venv cleanenv
+          cleanenv/bin/python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_ft09_compiled_observation_mechanism_234.py             public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py
+          set +e
+          cleanenv/bin/python - <<'PY'
+          try:
+              import arcengine
+          except ModuleNotFoundError:
+              print("CLEAN_INFERENCE_ARCENGINE_ABSENT")
+              raise SystemExit(0)
+          raise SystemExit("clean inference venv unexpectedly has arcengine")
+          PY
+          test "$?" -eq 0
+      - name: Execute source-free R239 evaluation
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          PYTHONPATH=public_benchmark/arc3/kaggle_candidates           cleanenv/bin/python public_benchmark/arc3/kaggle_candidates/public_ft09_source_compiled_nonnode_noop_239.py             --manifest r239-ft09-manifest.json "${args[@]}" --output r239-ft09-source-compiled-nonnode-noop.json
+      - name: Verify truth boundary
+        run: |
+          cleanenv/bin/python - <<'PY'
+          import json
+          d=json.load(open('r239-ft09-source-compiled-nonnode-noop.json'))
+          assert d['schema']=='deus/arc3-ft09-source-compiled-nonnode-noop/1'
+          t=d['truth']
+          assert t['r234_precedence_preserved'] is True
+          assert t['multiple_dynamic_hits_never_assumed_noop'] is True
+          assert t['level0_animation_branch_abstains'] is True
+          assert t['evaluator_imports_game_source'] is False
+          assert t['evaluator_requires_arcengine'] is False
+          assert t['evaluator_requires_internet'] is False
+          assert t['independent_generalization_claim'] is False
+          assert d['decision']['solver_promotion'] is False
+          print(json.dumps({
+            'aggregate':d['aggregate'],
+            'incremental':{k:v for k,v in d['incremental'].items() if k!='examples'},
+            'abstain_reasons':d['abstain_reasons'],
+            'gate':d['source_assisted_zero_wrong_gain_gate_pass'],
+          },sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r239-ft09-source-compiled-nonnode-noop
+          path: |
+            r239-ft09-manifest.json
+            r239-ft09-source-compiled-nonnode-noop.json
+            source/SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
