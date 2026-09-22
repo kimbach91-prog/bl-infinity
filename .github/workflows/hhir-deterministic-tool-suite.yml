@@ -1,0 +1,41 @@
+name: DEUS HHIR deterministic tool-lane frozen suite
+
+on:
+  push:
+    branches:
+      - deus/cognitive-synergy-v4-20260922
+    paths:
+      - '.github/workflows/hhir-deterministic-tool-suite.yml'
+      - 'public_benchmark/cognitive_synergy/hhir_deterministic_tool_suite.py'
+      - 'public_benchmark/cognitive_synergy/taskbank_v1.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-suite:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile public_benchmark/cognitive_synergy/hhir_deterministic_tool_suite.py
+      - name: Execute frozen taskbank
+        run: python public_benchmark/cognitive_synergy/hhir_deterministic_tool_suite.py
+      - name: Verify receipt
+        run: |
+          test -s hhir-deterministic-tool-suite.json
+          cat RECEIPT_SHA256SUMS.txt
+          jq '{schema,task_count,correct,accuracy,unrouted,family_counts,truth}' hhir-deterministic-tool-suite.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-hhir-deterministic-tool-suite
+          path: |
+            hhir-deterministic-tool-suite.json
+            RECEIPT_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
