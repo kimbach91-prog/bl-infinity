@@ -1,0 +1,102 @@
+name: ARC3 remaining14 heldout union closure 196
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - .github/workflows/arc3-remaining14-heldout-union-196.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  union:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download completed R190 per-game receipts
+        run: |
+          set -euo pipefail
+          mkdir -p r190
+          gh run download 35704605679 -R "$GITHUB_REPOSITORY" -p 'arc3-r190-*' -D r190
+      - name: Download SU15 structural R191 receipt
+        run: |
+          set -euo pipefail
+          mkdir -p r191
+          gh run download 35705545398 -R "$GITHUB_REPOSITORY" -p 'arc3-r191-su15-1944f8ab' -D r191
+      - name: Verify union closure
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json,hashlib
+          r190_files=sorted(glob.glob('r190/**/r190-*.json',recursive=True))
+          rows190=[json.load(open(f)) for f in r190_files]
+          if len(rows190)!=14:
+              raise SystemExit(f'expected 14 R190 per-game receipts, got {len(rows190)}')
+          by190={}
+          for d in rows190:
+              assert d['schema']=='deus/arc3-remaining14-heldout-program-transfer/1'
+              assert d['truth']['heldout_p10_p19_never_updates_model'] is True
+              g=d['game'];b=d['heldout']['best_diagnostic_policy'];s=d['heldout']['policies'][b]
+              by190[g]={'source':'R190','policy':b,'stats':s}
+          sufiles=glob.glob('r191/**/r191-su15-1944f8ab.json',recursive=True)
+          if len(sufiles)!=1:
+              raise SystemExit(f'expected one SU15 R191 receipt, got {len(sufiles)}')
+          su=json.load(open(sufiles[0]))
+          assert su['schema']=='deus/arc3-remaining14-structural-patch-heldout/1'
+          assert su['truth']['heldout_p10_p19_never_updates_model'] is True
+          b=su['heldout']['best_diagnostic_policy'];ss=su['heldout']['policies'][b]
+          union={}
+          for g,x in sorted(by190.items()):
+              if x['stats']['correct']>0:
+                  union[g]=x
+              elif g=='su15-1944f8ab' and ss['correct']>0:
+                  union[g]={'source':'R191_STRUCTURAL','policy':b,'stats':ss}
+              else:
+                  union[g]=x
+          covered=[g for g,x in union.items() if x['stats']['correct']>0]
+          missing=[g for g,x in union.items() if x['stats']['correct']==0]
+          total_correct=sum(int(x['stats']['correct']) for x in union.values())
+          total_pred=sum(int(x['stats']['predictions']) for x in union.values())
+          total_wrong=sum(int(x['stats']['wrong']) for x in union.values())
+          out={
+            'schema':'deus/arc3-remaining14-heldout-union-closure/1',
+            'rung':196,
+            'source_runs':{'r190':35704605679,'r191_structural':35705545398},
+            'game_count':14,
+            'games_with_nonzero_exact_heldout':covered,
+            'games_without_nonzero_exact_heldout':missing,
+            'coverage_game_count':len(covered),
+            'selected_union':union,
+            'aggregate_selected':{
+              'predictions':total_pred,'correct':total_correct,'wrong':total_wrong,
+              'accuracy':round(total_correct/total_pred,6) if total_pred else None,
+            },
+            'diagnostic_gate':'REMAINING14_HELDOUT_NONZERO_EXACT_COVERAGE_COMPLETE' if not missing else 'REMAINING14_HELDOUT_COVERAGE_INCOMPLETE',
+            'truth':{
+              'public_trace_only':True,
+              'same_game_heldout_only':True,
+              'heldout_learning':False,
+              'nonzero_exact_prediction_per_game_claim_only':True,
+              'full_game_solve_claim':False,
+              'independent_hidden_game_generalization_claim':False,
+              'kaggle_execution':False,
+              'submission_quota_spent':False,
+            },
+          }
+          open('r196-remaining14-heldout-union.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':196,'coverage_game_count':len(covered),'missing':missing,'aggregate_selected':out['aggregate_selected'],'gate':out['diagnostic_gate']},sort_keys=True))
+          if missing: raise SystemExit(3)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r196-remaining14-heldout-union
+          path: r196-remaining14-heldout-union.json
+          if-no-files-found: error
+          retention-days: 30
