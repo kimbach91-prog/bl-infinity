@@ -1,0 +1,219 @@
+{
+  "schema": "dige-s1-endogenous-synthesis/1",
+  "candidate": "DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1",
+  "objective": "Synthesize the verified/scar-bearing DiGe C/H lineage into one source-level internal S1 human-system candidate using the canonical DEUS prototypes as evaluator/engineering targets, not as pixels or external image-generation inputs.",
+  "generation_mode": "ENDOGENOUS_SOURCE_LEVEL_3D",
+  "renderer": "Blender 5.2.2 / Cycles",
+  "external_image_generation_calls": 0,
+  "canonical_pixel_copy": false,
+  "prototype_inputs": {
+    "step02": "continuous mesh + surface blockout / unified topology / silhouette continuity",
+    "step04": "face + hands articulation / eyelid-jaw-lips interfaces / neutral pose",
+    "step06": "cloth layer + deformation / tank top + leggings / body contact",
+    "step07": "hair strand system + groom / layered bun / scalp flow / flyaways",
+    "step09": "PBR skin + cloth + area lighting / material response",
+    "canonical_visual_evaluator_drive": "1uAez6mKO1XmykN86j7hLSt-jdgkufzFu"
+  },
+  "lineage": [
+    "V011 skeleton",
+    "V021 joint kinematics",
+    "V031 ML kernel",
+    "V041 continuous skinmesh",
+    "V051/V052 multiview",
+    "C17 strand groom",
+    "C18 hybrid groom/skin",
+    "C19 humanization",
+    "C20 visual repair",
+    "C21 natural detail",
+    "C22 physical skin + landmark groom",
+    "C23 calibrated eyes + face planes",
+    "C24 source albedo/surface eyes",
+    "C25 MPFB2 mature skin/eyes",
+    "C26 photometric",
+    "C27 anatomy surface fibers",
+    "C28 GNM head + MakeHuman body",
+    "C29 presentation",
+    "C30 semantic female/asian identity",
+    "C31 regional face appearance",
+    "C32 dermal hair",
+    "C33 guide-gated groom",
+    "C35 micro-render fabric",
+    "C36 canonical appearance",
+    "H4/H11 artifact scar",
+    "H20 global-warp/patch scar",
+    "H24/H25 local repair principle",
+    "H31 eyelid/sclera/locality principle",
+    "C39 updo decomposition",
+    "C40 scalp-bound groom",
+    "C41 native eye/scalp",
+    "C42 no-UV native eye",
+    "C43 tangential flow",
+    "C44 follicle flow + meso skin",
+    "C44 UV transfer negative scar"
+  ],
+  "synthesis_rules": [
+    "Identity/body stays deterministic source-level geometry; no image-space identity repair.",
+    "H-line contributes locality and artifact-avoidance principles only; no H image pixels are composited.",
+    "Eyes use native GNM geometry with topology-independent generated-coordinate iris/pupil and real cornea/wetline interfaces.",
+    "Skin uses actual GNM face material with restrained SSS, regional roughness, meso/pore/micro normal; semantic UV nearest-transfer is forbidden.",
+    "Hair uses scalp-rooted layered system: dark scalp coverage mass + dense thin tangential undercoat + deep gather + rounded bun + sparse baby/flyaway layers; long01 is not a final-style prior.",
+    "Cloth becomes explicit gray tank + gray leggings source-level shell with procedural fabric PBR; helper body-suit is not final presentation.",
+    "Camera contract: 50mm full-body multiview + 85mm portrait hero; same subject origin/scale.",
+    "Studio area lighting must reveal material response without beauty-patch postprocess.",
+    "Hands remain neutral/rest in S1; no articulation-range claim unless separately executed."
+  ],
+  "scars_forbidden": [
+    "rigid bilateral hair curtains",
+    "vertical comb hairline",
+    "radial follicle spikes/helmet transition",
+    "floating geometric eye discs",
+    "white-eye/iris mapping failure",
+    "doll-like sclera excess",
+    "waxy/plastic face",
+    "semantic UV red-mask mismatch",
+    "global warp damage",
+    "rectangular eye patch seams",
+    "helper garment contaminating portrait framing",
+    "external image-generation fallback"
+  ],
+  "outputs": [
+    "01_FRONT50",
+    "02_LEFT_PROFILE50",
+    "03_THREE_QUARTER50",
+    "04_HERO85",
+    "05_BACK_THREE_QUARTER50",
+    "06_BACK50",
+    "04_HERO85_RAW_AOV",
+    "04_HERO85_DENOISED",
+    "typed runtime receipt",
+    "scene blend",
+    "source-level artifact bundle"
+  ],
+  "runtime_gate": {
+    "device": "CPU unless a fresh admitted GPU receipt exists",
+    "render_set": "FULL",
+    "semantic_identity": true,
+    "reference_pixels_read_by_renderer": false,
+    "image_model_calls": 0,
+    "external_generation_zero": true,
+    "six_views_required": true,
+    "identity_selection": "BOUNDED_GNM_SEMANTIC_SEED_SEARCH_THEN_REBUILD",
+    "prototype_pixels_in_renderer": false
+  },
+  "visual_gate": [
+    "same subject reads coherently front/side/3-4/back/hero",
+    "hairline continuous and irregular, no comb/radial spike/helmet artifact",
+    "bun/scalp flow coherent across views",
+    "eyes embedded in lids with readable iris/pupil and restrained sclera",
+    "skin visibly material-responsive with pores/meso detail without plastic/chalk read",
+    "tank/leggings read as fabric and follow body without full-body helper-suit look",
+    "full-body silhouette and ground contact remain plausible"
+  ],
+  "truth_boundary": "S1 is endogenous only if the selected GNM identity is rebuilt from source-level model state and renderer receipts show zero external image generation and zero prototype/reference-pixel read/composite. Prototype boards are evaluator/engineering targets only. Runtime PASS does not equal visual PASS or hyperreal certification.",
+  "winner_matrix": [
+    {
+      "subsystem": "topology_body",
+      "winner_sources": [
+        "C1",
+        "C2",
+        "R4/V8",
+        "V041",
+        "V051/V052"
+      ],
+      "kept": "body-only manifold topology, continuous mesh, production MakeHuman body, five-view continuity",
+      "prototype_target": "Step02 continuous mesh + silhouette continuity"
+    },
+    {
+      "subsystem": "identity_head",
+      "winner_sources": [
+        "C28",
+        "C30",
+        "C36"
+      ],
+      "kept": "GNM scan-learned head + semantic adult female Asian prior + prototype-driven face-plane correction",
+      "prototype_target": "Step02/04 same coherent adult DEUS subject"
+    },
+    {
+      "subsystem": "face_eyes",
+      "winner_sources": [
+        "C31",
+        "C36",
+        "H24/H25",
+        "H31",
+        "C41",
+        "C42"
+      ],
+      "kept": "regional face masks, local-only repair principle, reduced sclera, native embedded eye, generated-coordinate iris, no image patch",
+      "prototype_target": "Step04 eyelid/jaw/lips articulation and natural eye interface"
+    },
+    {
+      "subsystem": "hair",
+      "winner_sources": [
+        "C17",
+        "C21",
+        "C33",
+        "C39",
+        "C43",
+        "C44"
+      ],
+      "kept": "physical strands, irregular microhair, guide-gated scalp roots, updo decomposition, tangential flow, dense follicle undercoat",
+      "prototype_target": "Step07 crown/primary/secondary/baby/flyaway layered bun"
+    },
+    {
+      "subsystem": "skin",
+      "winner_sources": [
+        "C22",
+        "C25",
+        "C26",
+        "C31",
+        "C32",
+        "C44"
+      ],
+      "kept": "object-space scale, mature PBR discipline, controlled lighting, regional roughness/color, dermal multiscale detail, meso relief",
+      "prototype_target": "Step09 layered skin BRDF with pores, SSS, roughness and natural highlights"
+    },
+    {
+      "subsystem": "cloth",
+      "winner_sources": [
+        "R4/V8",
+        "C1/C2",
+        "S1 source-level extension"
+      ],
+      "kept": "production body contact shell split into tank + leggings with procedural fabric PBR",
+      "prototype_target": "Step06 tank/leggings fit, contact, stretch/compression visual behavior"
+    },
+    {
+      "subsystem": "camera_light",
+      "winner_sources": [
+        "C26",
+        "C35",
+        "C36",
+        "C39.1"
+      ],
+      "kept": "photometric discipline, RAW/AOV same-seed audit, 50mm body views, executed 85mm portrait, neutral area-light studio",
+      "prototype_target": "Step09 area lighting + Step02/06/07 multiview comparability"
+    },
+    {
+      "subsystem": "evidence",
+      "winner_sources": [
+        "C1",
+        "C2",
+        "C34",
+        "C35"
+      ],
+      "kept": "hash/manifest binding, fail-closed runtime, recovery scars, micro-render evidence architecture",
+      "prototype_target": "comparison must be reproducible; no heuristic-only promotion"
+    }
+  ],
+  "prototype_compare_plan": {
+    "before_render": "Select semantic GNM identity from a bounded seed set using prototype-derived landmark ratios only; never read or composite prototype pixels in the renderer.",
+    "after_render": [
+      "Step02: compare full-body front/profile/3-4/back silhouette and mesh continuity.",
+      "Step04: compare neutral face/eye/lip/jaw interface and relaxed hands; do not claim unexecuted expression/finger range.",
+      "Step06: compare tank/leggings silhouette, body contact and visible fabric behavior; dynamic squat/lunge remains outside S1 unless separately executed.",
+      "Step07: compare bun silhouette, scalp-to-strand flow, hairline irregularity, clump hierarchy, fringe/baby/flyaway layers in front/side/back.",
+      "Step09: compare skin/cloth material response, highlight/roughness behavior and area-light falloff."
+    ],
+    "promotion_rule": "Hard subsystem gates dominate any aggregate score. S1 may be retained as the best endogenous candidate even if it remains below prototype/hyperreal bar."
+  }
+}
