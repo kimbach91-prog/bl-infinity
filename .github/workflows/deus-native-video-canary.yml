@@ -75,6 +75,8 @@ jobs:
       - name: Resolve Blender 5.2.2 and FFmpeg
         run: |
           set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
           ROOT=https://download.blender.org/release/Blender5.2
           TAR=blender-5.2.2-linux-x64.tar.xz
           curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
@@ -120,7 +122,7 @@ jobs:
         run: |
           set -euxo pipefail
           python - <<'PY'
-          import hashlib, json, os, pathlib, subprocess
+          import hashlib, json, os, pathlib
           out=pathlib.Path(os.environ["OUTDIR"])
           mp4=out/"DEUS_NATIVE_VIDEO_V0_CANARY.mp4"
           render=json.loads((out/"DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json").read_text())
