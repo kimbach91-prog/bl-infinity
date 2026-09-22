@@ -167,7 +167,7 @@ def choose_gate(train):
     pool=zeros if zeros else scored
     # Max selected/correct, then fewer errors, then simpler/lower thresholds.
     c,e,z=max(pool,key=lambda x:(
-      x[1]["selected"] if z else x[1]["accuracy"] or 0,
+      x[1]["selected"] if x[2] else (x[1]["accuracy"] or 0),
       x[1]["correct"],
       -x[1]["wrong"],
       -x[1]["cell_errors"],
