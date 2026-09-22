@@ -1,0 +1,57 @@
+name: ARC3 ft09 R219 base-only abstain CV 220
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_r219_base_only_abstain_cv_220.py
+      - .github/workflows/arc3-ft09-r219-base-only-abstain-cv-220.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-ft09-base-only:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_ft09_r219_base_only_abstain_cv_220.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'; game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do f="${game}_p${p}_events.jsonl"; curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"; test -s "public_trace/$f"; done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R220 audit
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_r219_base_only_abstain_cv_220.py "${args[@]}" --output r220-ft09-base-only-abstain-cv.json
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r220-ft09-base-only-abstain-cv.json'))
+          assert d['schema']=='deus/arc3-ft09-r219-base-only-abstain-cv/1'
+          t=d['truth']
+          assert t['r219_precedence_unchanged'] is True
+          assert t['threshold_selected_by_p0_p9_loto_cv_only'] is True
+          assert t['cv_domain_ring2_abstain_only'] is True
+          assert t['fallback_only_when_r219_abstains'] is True
+          assert t['heldout_never_updates_policy_or_models'] is True
+          assert t['kaggle_execution'] is False
+          assert d['promotion']['solver_promotion'] is False
+          print(json.dumps({'threshold':d['selected_base_support_min'],'anchor':d['r219_anchor'],'incremental':d['incremental_base_fallback'],'heldout':d['heldout']['all'],'gate':d['zero_wrong_coverage_gain_gate_pass']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r220-ft09-base-only-abstain-cv
+          path: |
+            r220-ft09-base-only-abstain-cv.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
