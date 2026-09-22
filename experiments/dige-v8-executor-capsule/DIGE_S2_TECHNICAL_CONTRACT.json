@@ -1,0 +1,45 @@
+{
+  "schema": "dige-s2-anatomy-dynamics/1",
+  "candidate": "DIGE_S2_ANATOMY_DYNAMICS_V1",
+  "parent": "DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1_REPAIR2",
+  "objective": "Move DiGe from surface-only mannequin realism toward anatomy-aware, tissue-aware, articulation-aware source-level realism while preserving the full C/H/S1 lineage and zero reference-pixel reuse.",
+  "owner_refs": {
+    "pair04_dental_jaw": "TMJ rotation/translation, dental arches/occlusion, lip-teeth relation, neutral/open-close mapping",
+    "pair05_hand_complex": "CMC/MCP/PIP/DIP chain, thumb opposition, tendon/thenar/hypothenar/knuckle/nail/contact zones",
+    "pair06_body_muscle_front": "front muscle groups, skinning/deformation regions, pose-corrective zones, landmarks",
+    "pair07_body_muscle_back": "posterior muscle/scapula/spine/glute/leg maps and shoulder correctives",
+    "pair08_soft_tissue_motion": "skin/subcutaneous/fascia/muscle layers; compression/shear/bulge/gravity/contact and validation targets",
+    "pair09_wind_interaction": "hair/cloth vector field, drag/lift/turbulence, follicle direction, strand compliance",
+    "pair10_camera_light_aperture": "36x24mm sensor, 50mm natural reference, 85mm headshot, aperture/exposure/area-light mapping"
+  },
+  "hard_truth": {
+    "prototype_pixels_in_renderer": false,
+    "external_image_generation_calls": 0,
+    "static_s2_does_not_claim_unexecuted_dynamics": true,
+    "hand_grasps": "MAPPED_NOT_EXECUTED",
+    "jaw_open_close": "MAPPED_NOT_EXECUTED",
+    "soft_tissue_dynamic_sequence": "MAPPED_NOT_EXECUTED",
+    "wind_5mps_dynamic_sequence": "MAPPED_NOT_EXECUTED"
+  },
+  "synthesis": {
+    "body_anatomy": "Subtle source-level rest-shape fields for deltoid/pectoral/core/hip/quadriceps/hamstring/calf + posterior trap/scapula/lat/glute; soft-tissue rest offsets bounded to millimeters.",
+    "face_jaw": "Preserve semantic GNM seed; soften lower face, improve lip seal, retain native teeth/gums/tongue and encode TMJ neutral contract.",
+    "eyes": "Native embedded generated-coordinate eyes; no detached discs; lid/wetline interface retained.",
+    "hair": "Replace helmet/buzz-cut coverage with layered long scalp-flow strands clustered toward crown/bun; analytic hairline, face-frame wisps, baby hairs and sparse flyaways; rest field contains zero-wind stochastic secondary motion.",
+    "cloth": "Replace broken body-clipped shell with procedural analytic crop tank + fitted leggings; distinct material values and no helper-suit contamination.",
+    "hand": "Neutral hand remains MakeHuman geometry but adds explicit hand-chain/contact/nail contract; visual gate requires separated digits and plausible wrist transition.",
+    "skin": "Actual GNM face skin receives regional tone + roughness + visible-scale meso/pore/micro relief with restrained SSS; no semantic UV transfer.",
+    "camera_light": "Full-frame 36mm sensor; body 50mm f/5.6; hero 85mm f/2.8; large rectangular key, restrained fill and rim, 0EV-style neutral studio."
+  },
+  "preview_gate": [
+    "front/profile/three-quarter/back all show one coherent adult",
+    "no missing torso/garment polygons",
+    "tank and leggings are distinct garments with plausible boundaries",
+    "hairline/scalp no helmet, radial spikes, buzz-cut stubble or comb bars",
+    "face no detached eye artifact; mouth neutral and closed",
+    "body silhouette shows subtle anatomy rather than cylindrical mannequin",
+    "hero skin materially less plastic than S1 repair2",
+    "reference_pixels_read_by_renderer=false and image_model_calls=0"
+  ],
+  "final_gate": "Only run final-sample S2 after preview hard gates pass. S2 can remain a scoped technical successor if dynamics are mapped but not executed."
+}

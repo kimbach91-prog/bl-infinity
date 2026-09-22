@@ -1,0 +1,189 @@
+name: DEUS GPT Native Video V0 Canary
+
+on:
+  pull_request:
+    paths:
+      - '.deus/agents/GPT-NATIVE-VIDEO-01/**'
+      - 'experiments/deus-native-video-engine/**'
+      - '.github/workflows/deus-native-video-canary.yml'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deus-native-video-v0-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  native-video-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      LIBGL_ALWAYS_SOFTWARE: '1'
+      SOURCE_RUN_ID: '35737240259'
+      SOURCE_ARTIFACT_ID: '10697619610'
+      SOURCE_ARTIFACT_SHA256: 'f6642e5754e87ac57f7760b4c8194e050df39ee55a44c343aca8712af021e616'
+      OUTDIR: experiments/deus-native-video-engine/runtime/native_video_canary
+      FPS: '2'
+      SECONDS: '3'
+      WIDTH: '180'
+      HEIGHT: '320'
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Verify GPT-side skill and engine contract
+        run: |
+          set -euxo pipefail
+          test -s .deus/agents/GPT-NATIVE-VIDEO-01/GPT_NATIVE_VIDEO_SKILL_V1.md
+          test -s experiments/deus-native-video-engine/NATIVE_VIDEO_ENGINE_CONTRACT.json
+          python -m py_compile experiments/deus-native-video-engine/native_video_engine.py
+          python - <<'PY'
+          import json, pathlib
+          p=pathlib.Path("experiments/deus-native-video-engine/NATIVE_VIDEO_ENGINE_CONTRACT.json")
+          d=json.loads(p.read_text())
+          assert d["engine_id"]=="DEUS_NATIVE_VIDEO_ENGINE_V0"
+          assert d["endogenous_definition"]["external_image_generation_calls"]==0
+          assert d["endogenous_definition"]["external_video_generation_calls"]==0
+          assert d["operators"]["root_spin"]=="EXECUTABLE"
+          assert d["operators"]["viseme_lipsync"]=="MAPPED_NOT_EXECUTED"
+          print(json.dumps({"contract":"PASS","engine_id":d["engine_id"]}))
+          PY
+
+      - name: Restore verified S2 scene artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euxo pipefail
+          mkdir -p /tmp/deus-s2
+          curl -fL --retry 4 --retry-delay 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/${SOURCE_ARTIFACT_ID}/zip" \
+            -o /tmp/deus-s2.zip
+          unzip -q /tmp/deus-s2.zip -d /tmp/deus-s2
+          SCENE="$(find /tmp/deus-s2 -type f -name 'DIGE_V8_scene.blend' | head -n1)"
+          test -n "$SCENE"
+          test -s "$SCENE"
+          echo "SOURCE_SCENE=$SCENE" >> "$GITHUB_ENV"
+          sha256sum "$SCENE" | tee /tmp/source_scene.sha256
+
+      - name: Resolve Blender 5.2.2 and FFmpeg
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg libegl1 libgl1 libgl1-mesa-dri libx11-6 libxext6 libxi6 libxrender1 libxfixes3 libxxf86vm1
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+          ffmpeg -version | head -n1
+          ffprobe -version | head -n1
+
+      - name: Execute endogenous motion and render frame sequence
+        run: |
+          set -euxo pipefail
+          mkdir -p "$OUTDIR"
+          "$BLENDER" "$SOURCE_SCENE" --background --python-exit-code 1 \
+            --python experiments/deus-native-video-engine/native_video_engine.py -- \
+            --outdir "$OUTDIR" \
+            --fps "$FPS" \
+            --seconds "$SECONDS" \
+            --width "$WIDTH" \
+            --height "$HEIGHT" \
+            --engine BLENDER_EEVEE \
+            --proof-lite \
+            | tee "$OUTDIR/blender_native_video.log"
+          test -s "$OUTDIR/DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json"
+          test -s "$OUTDIR/DEUS_NATIVE_VIDEO_CANARY.blend"
+          test "$(find "$OUTDIR/frames" -type f -name 'frame_*.png' | wc -l)" -ge 6
+
+      - name: Encode and verify MP4
+        run: |
+          set -euxo pipefail
+          MP4="$OUTDIR/DEUS_NATIVE_VIDEO_V0_CANARY.mp4"
+          ffmpeg -y -framerate "$FPS" -i "$OUTDIR/frames/frame_%04d.png" \
+            -c:v libx264 -preset medium -crf 20 -pix_fmt yuv420p -movflags +faststart \
+            "$MP4"
+          test -s "$MP4"
+          ffprobe -v error -select_streams v:0 \
+            -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration \
+            -of json "$MP4" | tee "$OUTDIR/ffprobe.json"
+          sha256sum "$MP4" | tee "$OUTDIR/mp4.sha256"
+
+      - name: Build final typed receipt
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          out=pathlib.Path(os.environ["OUTDIR"])
+          mp4=out/"DEUS_NATIVE_VIDEO_V0_CANARY.mp4"
+          render=json.loads((out/"DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json").read_text())
+          probe=json.loads((out/"ffprobe.json").read_text())
+          data=mp4.read_bytes()
+          v=(probe.get("streams") or [{}])[0]
+          receipt={
+            "schema":"deus-native-video-final-receipt/1",
+            "engine_id":"DEUS_NATIVE_VIDEO_ENGINE_V0",
+            "state":"EXECUTED_AND_PROBED",
+            "source":{
+              "s2_run_id":int(os.environ["SOURCE_RUN_ID"]),
+              "s2_artifact_id":int(os.environ["SOURCE_ARTIFACT_ID"]),
+              "s2_artifact_digest_claim":os.environ["SOURCE_ARTIFACT_SHA256"],
+              "scene_path":os.environ["SOURCE_SCENE"]
+            },
+            "render_receipt":render,
+            "mp4":{
+              "file":mp4.name,
+              "sha256":hashlib.sha256(data).hexdigest(),
+              "bytes":len(data),
+              "codec":v.get("codec_name"),
+              "width":v.get("width"),
+              "height":v.get("height"),
+              "r_frame_rate":v.get("r_frame_rate"),
+              "nb_frames":v.get("nb_frames"),
+              "duration":v.get("duration")
+            },
+            "external_image_generation_calls":0,
+            "external_video_generation_calls":0,
+            "proof_lite":render.get("proof_lite",False),
+            "production_appearance_certified":False,
+            "audio":"NOT_EXECUTED",
+            "lip_sync":"NOT_EXECUTED",
+            "arm_wave":"NOT_EXECUTED",
+            "truth_boundary":"ROOT_MOTION_VIDEO_V0_VERIFIED_IF_ARTIFACT_READBACK_MATCHES__GESTURE_AUDIO_DYNAMICS_REMAIN_OPEN"
+          }
+          assert receipt["external_image_generation_calls"]==0
+          assert receipt["external_video_generation_calls"]==0
+          assert receipt["proof_lite"] is True
+          assert receipt["production_appearance_certified"] is False
+          assert receipt["mp4"]["codec"]=="h264"
+          assert int(receipt["mp4"]["width"])==int(os.environ["WIDTH"])
+          assert int(receipt["mp4"]["height"])==int(os.environ["HEIGHT"])
+          (out/"DEUS_NATIVE_VIDEO_FINAL_RECEIPT.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DEUS-NATIVE-VIDEO-V0-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/deus-native-video-engine/runtime/native_video_canary/DEUS_NATIVE_VIDEO_V0_CANARY.mp4
+            experiments/deus-native-video-engine/runtime/native_video_canary/DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json
+            experiments/deus-native-video-engine/runtime/native_video_canary/DEUS_NATIVE_VIDEO_FINAL_RECEIPT.json
+            experiments/deus-native-video-engine/runtime/native_video_canary/DEUS_NATIVE_VIDEO_CANARY.blend
+            experiments/deus-native-video-engine/runtime/native_video_canary/ffprobe.json
+            experiments/deus-native-video-engine/runtime/native_video_canary/mp4.sha256
+            experiments/deus-native-video-engine/runtime/native_video_canary/blender_native_video.log
+          if-no-files-found: warn
+          retention-days: 30
