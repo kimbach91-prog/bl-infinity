@@ -1,0 +1,162 @@
+name: DIGE V8 Pinned Final Evidence
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-final-pinned.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-final-pinned-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  pinned-final:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Pin exact source
+        run: |
+          set -euxo pipefail
+          test "$(git rev-parse HEAD)" = "${{ github.event.pull_request.head.sha }}"
+          git status --porcelain=v1
+          test -z "$(git status --porcelain=v1)"
+          echo "APPROVED_SHA=${{ github.event.pull_request.head.sha }}" >> "$GITHUB_ENV"
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          test -x "$BLENDER"
+          "$BLENDER" --version | tee experiments/dige-v8-executor-capsule/pinned_blender_version.txt
+          sha256sum "/tmp/$TAR" | tee experiments/dige-v8-executor-capsule/pinned_blender_archive.sha256
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build pinned canon geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/pinned_geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Render pinned high-sample final
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: FULL
+          DIGE_OUTPUT_TAG: pinned_final_c4
+          DIGE_SKIN_SSS_WEIGHT: '0.35'
+          DIGE_SKIN_SSS_SCALE: '0.0025'
+          DIGE_SKIN_SSS_ANISO: '0.80'
+          DIGE_SKIN_ROUGH_MIN: '0.30'
+          DIGE_SKIN_ROUGH_MAX: '0.48'
+          DIGE_SAMPLES_PREVIEW: '128'
+          DIGE_SAMPLES_HERO: '256'
+          DIGE_RENDER_SEED: '20260919'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/pinned_blender_execution.log
+
+      - name: Verify pinned receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, os
+          root=pathlib.Path(".")
+          geom=json.loads((root/"runtime/DIGE_V8_GEOMETRY_MANIFEST.json").read_text())
+          r=json.loads((root/"runtime/renders/pinned_final_c4/DIGE_V8_RENDER_RECEIPT.json").read_text())
+          canon_bytes=(root/"DIGE_CANON_EXECUTION_MANIFEST.json").read_bytes()
+          canon=json.loads(canon_bytes)
+          assert r["engine"]=="CYCLES" and r["device"]=="CPU"
+          assert r["runtime_commit"]==os.environ["APPROVED_SHA"]
+          assert r["render_set"]=="FULL" and r["output_tag"]=="pinned_final_c4"
+          assert r["canon_execution_manifest_sha256"]==hashlib.sha256(canon_bytes).hexdigest()
+          assert abs(r["skin_model"]["subsurface_weight"]-.35)<1e-9
+          assert abs(r["skin_model"]["subsurface_scale"]-.0025)<1e-12
+          assert r["skin_model"]["roughness_range"]==[0.30,0.48]
+          h=r["hair_surface_contract"]
+          hc=canon["assets"]["filtered_hair_helper"]
+          assert h["guide_source"]=="FILTERED_MAKEHUMAN_HELPER_HAIR"
+          assert h["source_faces"]==hc["source_faces"]==198
+          assert h["removed_front_faces"]==hc["removed_front_faces"]==50
+          assert h["retained_faces"]==hc["retained_faces"]==148
+          assert h["guide_vertices"]==hc["retained_vertices"]==324
+          assert h["guide_sha256"]==hc["compact_obj_sha256"]
+          assert len(r["outputs"])==5 and all(x["sha256"] for x in r["outputs"])
+          assert r["denoise_ab"]["raw_aov"]["sha256"]
+          assert r["denoise_ab"]["denoised"]["sha256"]
+          mesh=geom["mesh"]; pol=canon["mesh_policy"]
+          machine={
+            "provenance_clean": r["provenance"]["source_pixels_used"] is False and r["provenance"]["reference_pixels_read_by_renderer"] is False and r["provenance"]["reference_images_composited"] is False and r["provenance"]["reference_textures_used"] is False,
+            "topology_exact": mesh["vertices_written"]==pol["expected_body_vertices"] and mesh["faces"]==pol["expected_body_faces"] and mesh["boundary_edges"]==0 and mesh["nonmanifold_edges"]==0,
+            "height_grounded": abs(r["topology_metrics"]["bbox_extent"][2]-1.70)<1e-5 and abs(r["topology_metrics"]["bbox_min"][2])<1e-6 and abs(geom["normalization"].get("ground_z_m",0.0))<1e-9,
+            "eye_contract_exact": geom["eye_helpers"]["left"]["sha256"]==canon["assets"]["eye_helpers"]["left"]["compact_obj_sha256"] and geom["eye_helpers"]["right"]["sha256"]==canon["assets"]["eye_helpers"]["right"]["compact_obj_sha256"],
+            "hair_guide_exact": geom["hair_guide"]["sha256"]==canon["assets"]["filtered_hair_helper"]["compact_obj_sha256"] and geom["hair_guide"]["faces"]==148 and geom["hair_guide"]["removed_front_faces"]==50,
+            "five_views": len(r["outputs"])==5,
+            "raw_aov": bool(r["denoise_ab"]["raw_aov"]["sha256"]),
+            "denoise_ab": bool(r["denoise_ab"]["denoised"]["sha256"]),
+            "identity_not_bound": r["identity_bound"] is False,
+            "no_hyperreal_claim": r["evidence_boundary"]["hyperreal_certified"] is False,
+          }
+          out={
+            "schema":"DIGE_PINNED_FINAL_MACHINE_GATE_V1",
+            "approved_sha":os.environ["APPROVED_SHA"],
+            "selected_skin":r["skin_model"],
+            "selected_hair":h,
+            "appearance_selection":r.get("appearance_selection"),
+            "machine_gates":machine,
+            "machine_gates_pass":all(machine.values()),
+            "human_visual_audit_required":True,
+            "hyperreal_certified":False,
+            "truth_boundary":"Pinned machine evidence only; human visual audit, held-out L_hyper calibration, GPU receipt and trusted identity binding remain separate gates."
+          }
+          p=root/"runtime/renders/pinned_final_c4/DIGE_PINNED_FINAL_MACHINE_GATE.json"
+          p.write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          assert out["machine_gates_pass"]
+          print(json.dumps(out,sort_keys=True))
+          PY
+
+      - name: Hash pinned evidence
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          find runtime/renders/pinned_final_c4 -type f -print0 | sort -z | xargs -0 sha256sum > DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
+          sha256sum runtime/DIGE_V8_GEOMETRY_MANIFEST.json >> DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
+          sha256sum DIGE_CANON_EXECUTION_MANIFEST.json >> DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
+          cat DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
+
+      - name: Upload pinned final evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-PINNED-FINAL-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/pinned_final_c4/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/pinned_final_c4/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/pinned_final_c4/*.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+            experiments/dige-v8-executor-capsule/runtime/pinned_geometry_execution.json
+            experiments/dige-v8-executor-capsule/runtime/pinned_blender_execution.log
+            experiments/dige-v8-executor-capsule/DIGE_CANON_EXECUTION_MANIFEST.json
+            experiments/dige-v8-executor-capsule/pinned_blender_version.txt
+            experiments/dige-v8-executor-capsule/pinned_blender_archive.sha256
+            experiments/dige-v8-executor-capsule/DIGE_V8_PINNED_FINAL_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 14

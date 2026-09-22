@@ -1,0 +1,142 @@
+{
+  "schema": "DIGE_CANON_EXECUTION_MANIFEST_V1",
+  "project_id": "DEUS_CORE_COMPUTE_DIGE_V1",
+  "state": "CANDIDATE_SOURCE_BINDING_NOT_RUNTIME_RECEIPT",
+  "canonical_drive": {
+    "staging_id": "1FZaAu-thWXBCGAToFXawt62he8JTJVrBWI9emF6XE7g",
+    "staging_modified_time": "2026-09-19T07:05:47.246Z",
+    "execution_receipt_id": "1hALdiqsgnY52lY8t3qxxh-TCzOW1QTEXlXfZbhOmnD0",
+    "execution_receipt_revision": "2",
+    "execution_receipt_revision_token": "ANLCKQnYoObhF_zfekFolvGypaHcXHSNSl3TYDhFoDwLaoExtaYaf2laAhO-3E1ABkGwHYWguvRNnU0QAeXt8P0mO8vmowon9mKeFaC08g"
+  },
+  "code_lineage": {
+    "branch": "deus/dige-v8-makehuman-cycles-20260919",
+    "parent_head": "206395b1a6529046c2d1b3c4e244b8d3f01b978f",
+    "runtime_commit_must_be_recorded": true
+  },
+  "assets": {
+    "base": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/3dobjs/base.obj",
+      "git_blob_sha1": "d26635e9326e3cca30778fd7b9c00062b03cce09",
+      "reconstructed_sha256": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c",
+      "license": "CC0-1.0"
+    },
+    "target": {
+      "url": "https://raw.githubusercontent.com/makehumancommunity/makehuman/master/makehuman/data/targets/macrodetails/asian-female-young.target",
+      "git_blob_sha1": "f862c96add11c31ab1ca75c69e1c67ae5e0e3d5f",
+      "reconstructed_sha256": "095fe79694fa19e1fe98d93009ec116199bd524e081c640351a10eccf2cca1eb",
+      "license": "CC0-1.0"
+    },
+    "parent_r4_normalized_obj_sha256": "7bcc88e9b0c602df2b24c507927d6ca578f5e6e29c14bee570d918777896eab",
+    "candidate_body_only_normalized_obj_sha256": "16c4dbe5103e2e58d90f5807e1ddf4686791c4d3080fb94d7a884bc1a033e0fd",
+    "precompact_body_only_normalized_obj_sha256": "9d96d8cf9ba7faafe9600c452771b3c07b6d43eb042f67dd9d1f2f1173de1f49",
+    "garment_helper_tights": {
+      "group": "helper-tights",
+      "expected_faces": 2650,
+      "normalized_obj_sha256": "f1e3728271b5623cd6a0a90bac75b3f30128f17c076fc5ad9f3411d74b50513e",
+      "license": "CC0-1.0"
+    },
+    "eye_helpers": {
+      "left": {
+        "group": "helper-l-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "d867a87491242974faf991d34274fd466321b2930bc8d105d43c2fe0117bfd9a",
+        "license": "CC0-1.0"
+      },
+      "right": {
+        "group": "helper-r-eye",
+        "vertices": 72,
+        "faces": 70,
+        "compact_obj_sha256": "6b9034ad52e2786709128c2fbb4d4b8e577cb3c74716f9fba5b43e7a7b3454fb",
+        "license": "CC0-1.0"
+      }
+    },
+    "pre_body_height_normalization_obj_sha256": "2e5f8d8829148e8f1485ef7b88f05b359aef4fd93166c112e45ae05d71e92160",
+    "filtered_hair_helper": {
+      "group": "helper-hair",
+      "source_faces": 198,
+      "removed_front_faces": 50,
+      "retained_faces": 148,
+      "retained_vertices": 324,
+      "filter": "retain face when centroid_y_m <= 0.01 after canonical body-referenced normalization",
+      "compact_obj_sha256": "5fee5c08c835431c66862160dfc07c2e0d7450e62ab342e99ead82ea7db46c0b",
+      "license": "CC0-1.0",
+      "scar_lineage": "R4 face-curtain removal reconstructed exactly by retained/removed face counts"
+    }
+  },
+  "policy": {
+    "identity_bound": false,
+    "source_pixels_allowed": false,
+    "reference_images_allowed": false,
+    "external_geometry_license_required": "CC0-1.0",
+    "hyperreal_claim_allowed": false,
+    "execution_receipt_required_for_promotion": true
+  },
+  "mesh_policy": {
+    "include_face_groups": [
+      "body"
+    ],
+    "exclude_helper_and_joint_groups": true,
+    "expected_body_faces": 13378,
+    "source_total_faces": 18486,
+    "rationale": "Body render mesh is compact, closed and helper-free. Deterministic CC0 helper-tights is emitted separately as a fitted garment proxy; eyes/hair are renderer-built from exact source-derived landmarks.",
+    "expected_boundary_edges": 0,
+    "expected_nonmanifold_edges": 0,
+    "local_drive_staging_topology_receipt": {
+      "body_faces": 13378,
+      "undirected_edges": 26756,
+      "boundary_edges": 0,
+      "nonmanifold_edges": 0,
+      "state": "LOCALLY_RECOMPUTED_FROM_DRIVE_STAGING_BYTES",
+      "body_vertices": 13380,
+      "normalization": "BODY_REFERENCED_HEIGHT_1P70_GROUND_Z0"
+    },
+    "source_total_vertices": 19158,
+    "expected_body_vertices": 13380,
+    "vertex_compaction": "retain exactly body-referenced vertex indices 0..13379; helper loose vertices excluded",
+    "garment_helper_group": "helper-tights",
+    "expected_garment_faces": 2650
+  },
+  "l_hyper_spec": {
+    "source_drive_id": "1BKIfzxRR0nk_qqo85uiBuz1DDegHQQEeML76H4hlZi0",
+    "source_marker": "DIGE_HYPERREAL_APPEARANCE_PARAMETER_PACK_V1 + DIGE_DEEP_RESEARCH_HYPERREAL_UPGRADE_V2/V3",
+    "weights": {
+      "identity": 0.26,
+      "geometry": 0.16,
+      "skin_transport": 0.12,
+      "hair_transport": 0.1,
+      "eye": 0.08,
+      "cloth": 0.08,
+      "light": 0.08,
+      "camera": 0.06,
+      "color": 0.06
+    },
+    "normalization": "each component normalized to [0,1] using calibration anchors",
+    "role": "RANK_CANDIDATES_NOT_UNIVERSAL_CERTIFIER",
+    "universal_threshold_state": "NOT_CANONIZED_PENDING_HELD_OUT_CALIBRATION",
+    "identity_input_boundary": "TRUSTED_SCALAR_ONLY_NO_RAW_REFERENCE_PIXELS",
+    "core_hard_gates": [
+      "provenance_clean",
+      "renderer_reference_open_count_zero",
+      "dependency_config_hashes_complete",
+      "mesh_valid_for_random_walk",
+      "nan_inf_zero",
+      "cloth_body_penetration_zero",
+      "critical_face_eye_clipping_zero",
+      "raw_quality_auditable",
+      "denoise_detail_retention_checked",
+      "human_visual_audit_pass",
+      "drive_upload_readback_hash_pass"
+    ],
+    "delivery_gate": "delivery_sent_readback_pass"
+  },
+  "normalization_policy": {
+    "reference_group": "body",
+    "target_height_m": 1.7,
+    "ground_z_m": 0,
+    "x_y_center": "body_bbox_midpoint",
+    "applies_same_transform_to_helpers": true,
+    "rationale": "Previous transform used all source/helper vertices and produced 1.662 m body height with feet ~0.0318 m above ground. Current transform is body-referenced and grounds the body at z=0."
+  }
+}
