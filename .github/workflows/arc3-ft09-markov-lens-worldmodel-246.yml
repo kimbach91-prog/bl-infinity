@@ -30,10 +30,16 @@ jobs:
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
       - name: Execute R246
         run: |
-          set -euo pipefail
+          set -uo pipefail
           args=(); for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
-          PYTHONPATH="$GITHUB_WORKSPACE/public_benchmark/arc3/kaggle_candidates" python public_benchmark/arc3/kaggle_candidates/public_ft09_markov_lens_worldmodel_246.py "${args[@]}" --output r246-ft09-markov-worldmodel.json
+          set +e
+          PYTHONPATH="$GITHUB_WORKSPACE/public_benchmark/arc3/kaggle_candidates" python public_benchmark/arc3/kaggle_candidates/public_ft09_markov_lens_worldmodel_246.py "${args[@]}" --output r246-ft09-markov-worldmodel.json > r246-exec.log 2>&1
+          rc=$?
+          echo "$rc" > r246-exit-code.txt
+          cat r246-exec.log
+          exit "$rc"
       - name: Verify truth boundary and bounded gate
+        if: success()
         run: |
           python - <<'PY'
           import json
@@ -51,10 +57,13 @@ jobs:
           print(json.dumps({'chosen':d['selection']['chosen'],'adapter':d['frozen_adapter'],'held':d['reused_public_development_p10_p19']['metrics'],'gate':d['reused_public_development_p10_p19']['strict_zero_wrong_gain_vs_r225']},sort_keys=True))
           PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: arc3-r246-ft09-markov-lens-worldmodel
           path: |
             r246-ft09-markov-worldmodel.json
+            r246-exec.log
+            r246-exit-code.txt
             public_trace/SHA256SUMS.txt
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
