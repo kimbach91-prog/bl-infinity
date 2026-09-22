@@ -14,16 +14,23 @@ jobs:
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
       - name: Compile
         run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py
-      - name: Download exact 25x20 pinned public traces
+      - name: Stage exact 25x20 pinned public traces
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public_trace
-          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
           games=(
             ar25-0c556536
             bp35-0a0ad940
@@ -54,8 +61,9 @@ jobs:
           for game in "${games[@]}"; do
             for p in $(seq 0 19); do
               f="${game}_p${p}_events.jsonl"
-              curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
-              test -s "public_trace/$f"
+              src="upstream-duck/example-run/artifacts/$f"
+              test -s "$src"
+              cp "$src" "public_trace/$f"
             done
           done
           test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 500
