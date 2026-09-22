@@ -1,4 +1,4 @@
-name: DIGE S2 Anatomy Dynamics Preview
+name: DIGE S2.1 Hyperreal Preview
 
 on:
   pull_request:
@@ -7,6 +7,7 @@ on:
       - 'experiments/dige-v8-executor-capsule/blender_render_s2.py'
       - 'experiments/dige-v8-executor-capsule/DIGE_S2_TECHNICAL_CONTRACT.json'
       - 'experiments/dige-v8-executor-capsule/build_gnm_head_c28.py'
+      - 'experiments/dige-v8-executor-capsule/dige_s2_cycles_gpu_admission.py'
 
 permissions:
   contents: read
@@ -74,7 +75,7 @@ jobs:
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
-          python -m py_compile blender_render_s2.py build_gnm_head_c28.py
+          python -m py_compile blender_render_s2.py build_gnm_head_c28.py dige_s2_cycles_gpu_admission.py
           python - <<'PY'
           import json,pathlib,hashlib
           p=pathlib.Path("DIGE_S2_TECHNICAL_CONTRACT.json")
@@ -167,9 +168,10 @@ jobs:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: FULL
           DIGE_SEARCH_ONLY: '0'
-          DIGE_OUTPUT_TAG: s2_preview
+          DIGE_OUTPUT_TAG: s2_1_preview
           DIGE_S1_ENDOGENOUS: '1'
           DIGE_S2_ANATOMY_DYNAMICS: '1'
+          DIGE_S2_1_HYPERREAL: '1'
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C25_MATURE_STACK: '1'
           DIGE_C26_PHOTOMETRIC: '1'
@@ -208,6 +210,17 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SKIN_SSS_WEIGHT: '0.075'
+          DIGE_SKIN_SSS_SCALE: '0.0010'
+          DIGE_SKIN_ROUGH_MIN: '0.42'
+          DIGE_SKIN_ROUGH_MAX: '0.62'
+          DIGE_SKIN_MICRO_STRENGTH: '0.30'
+          DIGE_SKIN_MESO_FREQ: '95.0'
+          DIGE_SKIN_PORE_FREQ: '1800.0'
+          DIGE_SKIN_MICRO_FREQ: '6200.0'
+          DIGE_SKIN_BUMP_DISTANCE: '0.000055'
+          DIGE_SKIN_ALBEDO_SAT: '0.88'
+          DIGE_SKIN_ALBEDO_VALUE: '0.80'
           DIGE_SAMPLES_PREVIEW: '24'
           DIGE_SAMPLES_HERO: '48'
           DIGE_RENDER_SEED: '20260922'
@@ -224,12 +237,12 @@ jobs:
         run: |
           python - <<'PY'
           import json,pathlib
-          root=pathlib.Path("runtime/renders/s2_preview")
+          root=pathlib.Path("runtime/renders/s2_1_preview")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           t=json.loads(pathlib.Path("runtime/s2_preview_timing.json").read_text())
           assert r["device"]=="CPU"
           assert r["render_set"]=="FULL"
-          assert r["appearance_candidate"]=="DIGE_S2_ANATOMY_DYNAMICS_V1"
+          assert r["appearance_candidate"]=="DIGE_S2_1_HYPERREAL_GPU_READY_V1"
           a=r["appearance_selection"]
           assert a["s2_anatomy_dynamics"] is True
           anat=a["s2_anatomy_metrics"]
@@ -241,14 +254,15 @@ jobs:
           assert hero["lens_mm"]==85 and abs(hero["fstop"]-2.8)<1e-6
           g=a["c41_groom_metrics"]
           assert g["enabled"] is True
-          assert g["undercoat_lane_count"]==3
+          assert g["undercoat_lane_count"]==5
           assert g["bun_curves"]>=1000
           assert g["s1_face_frame_curves"]>0
           eye=r["c28_gnm_head"]["eye_contract"]
           assert eye["integration"]=="GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY"
-          assert eye["material_model"]=="S2_NATIVE_GNM_GENERATED_COORD_EYE"
+          assert eye["material_model"]=="S2_1_NATIVE_GNM_GENERATED_COORD_EYE"
           skin=r["c28_gnm_head"]["skin_contract"]
-          assert skin["model"]=="S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN"
+          assert skin["model"]=="S2_1_GNM_HYPERREAL_MULTISCALE_SKIN"
+          assert skin["pore_scale"]>=1800 and skin["micro_scale"]>=6200
           garments=a["s1_garment_metrics"]
           assert garments["enabled"] is True
           assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
@@ -262,7 +276,7 @@ jobs:
           assert p["image_model_calls"]==0
           assert p["renderer_network_calls"]==0
           summary={
-            "schema":"dige-s2-preview-runtime-receipt/1",
+            "schema":"dige-s2-1-preview-runtime-receipt/1",
             "candidate":r["appearance_candidate"],
             "wall_seconds":t["wall_seconds"],
             "outputs":r["outputs"],
@@ -273,7 +287,7 @@ jobs:
             "garments":garments,
             "control_contract":ctl,
             "provenance":p,
-            "truth_boundary":"STATIC_S2_PREVIEW_RUNTIME_PASS_ONLY__DIRECT_VISUAL_AUDIT_REQUIRED"
+            "truth_boundary":"STATIC_S2_1_PREVIEW_CPU_PASS_ONLY__LOCAL_CYCLES_GPU_ADMISSION_REQUIRES_SEPARATE_OWNER_WORKSTATION_RECEIPT__DIRECT_VISUAL_AUDIT_REQUIRED"
           }
           (root/"DIGE_S2_PREVIEW_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
@@ -282,12 +296,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: DIGE-S2-PREVIEW-${{ github.event.pull_request.head.sha }}
+          name: DIGE-S2-1-PREVIEW-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_preview/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_preview/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_preview/*.json
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_preview/*.blend
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_1_preview/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_1_preview/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_1_preview/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_1_preview/*.blend
             experiments/dige-v8-executor-capsule/runtime/s2_preview.log
             experiments/dige-v8-executor-capsule/runtime/s2_preview_timing.json
             experiments/dige-v8-executor-capsule/runtime/s2_identity_selection.json
