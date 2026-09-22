@@ -1,0 +1,132 @@
+name: DIGE V8 C46 Blender CC0 Realistic Probe
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c46-blender-cc0-probe.yml'
+      - 'experiments/dige-v8-executor-capsule/DIGE_C46_SOURCE_PIVOT_CONTRACT.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c46-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: true
+
+jobs:
+  c46-probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Validate contract
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          d=json.loads(pathlib.Path("DIGE_C46_SOURCE_PIVOT_CONTRACT.json").read_text())
+          assert d["candidate"]=="C46_BLENDER_CC0_REALISTIC_BASE_PROBE_V1"
+          assert d["source"]["license"]=="CC0"
+          print(json.dumps({"verdict":"PASS","reasons":len(d["reason"])}))
+          PY
+
+      - name: Download official Blender human base meshes bundle
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime/c46_bundle
+          URL=https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip
+          curl -fL --retry 4 --retry-delay 3 "$URL" -o runtime/c46_bundle/human-base-meshes-v1.4.1.zip
+          sha256sum runtime/c46_bundle/human-base-meshes-v1.4.1.zip | tee runtime/c46_bundle/BUNDLE_SHA256.txt
+          unzip -l runtime/c46_bundle/human-base-meshes-v1.4.1.zip | tee runtime/c46_bundle/ARCHIVE_LIST.txt
+          unzip -q runtime/c46_bundle/human-base-meshes-v1.4.1.zip -d runtime/c46_bundle/extracted
+          find runtime/c46_bundle/extracted -type f | sort | tee runtime/c46_bundle/FILES.txt
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Inspect blend libraries for realistic female head eye candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          cat > runtime/c46_bundle/inspect_bundle.py <<'PY'
+          import bpy, json, pathlib, hashlib, re
+          root=pathlib.Path("runtime/c46_bundle/extracted")
+          rows=[]
+          patterns=re.compile(r"(realistic|female|head|eye)",re.I)
+          for p in sorted(root.rglob("*.blend")):
+              try:
+                  with bpy.data.libraries.load(str(p),link=False) as (src,dst):
+                      objs=list(src.objects)
+                      cols=list(src.collections)
+                      mats=list(src.materials)
+                  interesting=sorted({x for x in objs+cols if patterns.search(x or "")})
+                  rows.append({
+                      "file":str(p.relative_to(root)),
+                      "sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
+                      "objects":len(objs),
+                      "collections":len(cols),
+                      "materials":len(mats),
+                      "interesting":interesting[:200],
+                  })
+              except Exception as e:
+                  rows.append({"file":str(p.relative_to(root)),"error":repr(e)})
+          candidates=[]
+          for row in rows:
+              names=row.get("interesting",[])
+              score=sum(1 for n in names if re.search(r"(female|head|eye|realistic)",n,re.I))
+              if score:
+                  candidates.append({"file":row["file"],"score":score,"names":names})
+          out={
+              "schema":"dige-c46-blender-cc0-probe/1",
+              "source":"Blender Human Base Meshes v1.4.1",
+              "license":"CC0",
+              "blend_files":rows,
+              "candidates":sorted(candidates,key=lambda x:(-x["score"],x["file"])),
+              "truth_boundary":"ASSET_DISCOVERY_ONLY__FOUND_NE_RENDERED"
+          }
+          pathlib.Path("runtime/c46_bundle/DIGE_C46_PROBE.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print(json.dumps({"blend_files":len(rows),"candidate_files":len(candidates),"top":out["candidates"][:8]},sort_keys=True))
+          PY
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python runtime/c46_bundle/inspect_bundle.py | tee runtime/c46_bundle/inspect.log
+
+      - name: Verify candidate discovery
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          python - <<'PY'
+          import json,pathlib,re
+          p=pathlib.Path("runtime/c46_bundle/DIGE_C46_PROBE.json")
+          d=json.loads(p.read_text())
+          names="\n".join(n for c in d["candidates"] for n in c["names"])
+          has_head=bool(re.search(r"head",names,re.I))
+          has_eye=bool(re.search(r"eye",names,re.I))
+          has_female=bool(re.search(r"female",names,re.I))
+          assert has_head and has_eye and has_female, (has_head,has_eye,has_female)
+          print(json.dumps({"verdict":"PASS","has_head":has_head,"has_eye":has_eye,"has_female":has_female,"candidate_files":len(d["candidates"])}))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DIGE-C46-BLENDER-CC0-PROBE-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/c46_bundle/DIGE_C46_PROBE.json
+            experiments/dige-v8-executor-capsule/runtime/c46_bundle/BUNDLE_SHA256.txt
+            experiments/dige-v8-executor-capsule/runtime/c46_bundle/ARCHIVE_LIST.txt
+            experiments/dige-v8-executor-capsule/runtime/c46_bundle/FILES.txt
+            experiments/dige-v8-executor-capsule/runtime/c46_bundle/inspect.log
+          if-no-files-found: error
+          retention-days: 14
