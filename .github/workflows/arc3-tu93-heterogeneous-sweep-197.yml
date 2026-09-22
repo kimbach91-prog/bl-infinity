@@ -1,0 +1,105 @@
+name: ARC3 TU93 heterogeneous representation sweep 197
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - .github/workflows/arc3-tu93-heterogeneous-sweep-197.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tu93-sweep:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Download TU93 p0-p19
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="tu93-0768757b_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile heterogeneous lanes
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_mechanism_inventory_188.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py \
+            public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_generalized_viewport_shift_194.py
+      - name: Execute inventory + four frozen/prequential solver families
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import public_remaining14_mechanism_inventory_188 as r188
+          import public_remaining14_universal_program_ensemble_189 as r189
+          import public_remaining14_heldout_program_transfer_190 as r190
+          import public_remaining14_structural_patch_heldout_191 as r191
+          import public_generalized_viewport_shift_194 as r194
+
+          game='tu93-0768757b'
+          root=Path('../../../public_trace')
+          paths=[root/f'{game}_p{i}_events.jsonl' for i in range(20)]
+          outputs={}
+          outputs['r188']=r188.run(game,paths)
+          outputs['r189']=r189.run(game,paths)
+          outputs['r190']=r190.run(game,paths)
+          outputs['r191']=r191.run(game,paths)
+          outputs['r194']=r194.run(game,paths)
+          for k,v in outputs.items():
+              Path(f'../../../tu93-{k}.json').write_text(json.dumps(v,indent=2,sort_keys=True)+'\n')
+          s190=outputs['r190']['heldout']['policies'][outputs['r190']['heldout']['best_diagnostic_policy']]
+          s191=outputs['r191']['heldout']['policies'][outputs['r191']['heldout']['best_diagnostic_policy']]
+          s194=outputs['r194']['heldout']['all']
+          s189=outputs['r189']['aggregate']['policies'][outputs['r189']['best_diagnostic_policy']]
+          summary={
+            'schema':'deus/arc3-tu93-heterogeneous-sweep/1',
+            'rung':197,
+            'game':game,
+            'inventory':outputs['r188']['aggregate'],
+            'r189_prequential_best':s189,
+            'r190_heldout_best':s190,
+            'r191_structural_heldout_best':s191,
+            'r194_viewport_heldout':s194,
+            'heldout_any_exact': any(int(x.get('correct',0))>0 for x in (s190,s191,s194)),
+            'best_heldout_lane': max(
+              [('r190',s190),('r191_structural',s191),('r194_viewport',s194)],
+              key=lambda kv:(int(kv[1].get('correct',0)),-int(kv[1].get('wrong',0)),float(kv[1].get('coverage') or 0))
+            )[0],
+            'truth':{
+              'public_trace_only':True,
+              'same_game_public_heldout_only':True,
+              'p10_p19_frozen_in_heldout_lanes':True,
+              'kaggle_execution':False,
+              'submission_quota_spent':False
+            }
+          }
+          Path('../../../tu93-r197-summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(summary,sort_keys=True))
+          if not summary['heldout_any_exact']:
+              raise SystemExit(3)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-tu93-r197
+          path: |
+            tu93-r*.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: warn
+          retention-days: 30
