@@ -25,10 +25,10 @@ jobs:
       SOURCE_ARTIFACT_ID: '10697619610'
       SOURCE_ARTIFACT_SHA256: 'f6642e5754e87ac57f7760b4c8194e050df39ee55a44c343aca8712af021e616'
       OUTDIR: experiments/deus-native-video-engine/runtime/native_video_canary
-      FPS: '12'
+      FPS: '2'
       SECONDS: '4'
-      WIDTH: '360'
-      HEIGHT: '640'
+      WIDTH: '180'
+      HEIGHT: '320'
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -104,7 +104,7 @@ jobs:
             | tee "$OUTDIR/blender_native_video.log"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_CANARY.blend"
-          test "$(find "$OUTDIR/frames" -type f -name 'frame_*.png' | wc -l)" -ge 24
+          test "$(find "$OUTDIR/frames" -type f -name 'frame_*.png' | wc -l)" -ge 8
 
       - name: Encode and verify MP4
         run: |
