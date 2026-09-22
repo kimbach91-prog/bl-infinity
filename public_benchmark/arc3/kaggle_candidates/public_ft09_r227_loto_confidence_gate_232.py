@@ -2,7 +2,7 @@
 """R232: select an R227 confidence-abstention gate with p0..p9 LOTO only.
 
 R231 found a useful but outcome-assisted signal on the already-reused p10..p19
-public-development traces.  R232 removes that leakage from gate selection:
+public-development traces. R232 removes that leakage from gate selection:
 
 * outer leave-one-trace-out (LOTO) folds use only p0..p9;
 * each fold fits the frozen R227 current_ring2hist family and all confidence
@@ -12,8 +12,15 @@ public-development traces.  R232 removes that leakage from gate selection:
 * the selected gate is then frozen, refit on p0..p9 and merely audited on the
   already-reused p10..p19 public-development traces.
 
+R221's build_models() internally assumes exactly ten traces because it selects
+its own threshold by ten-fold CV. That is incompatible with an outer nine-trace
+LOTO fold. For fold construction only, R232 rebuilds the same model fields
+without that inner selector and keeps R225's already-frozen low-base threshold
+at support>=2. This repairs the harness assumption; it does not change the
+R227 representation or use the held-out fold outcome to build the model.
+
 The p10..p19 audit is NOT independent heldout generalization and cannot itself
-promote a Kaggle candidate.  A later genuinely untouched public/source-generated
+promote a Kaggle candidate. A later genuinely untouched public/source-generated
 partition is still required before this confidence family may become a
 source-assisted coverage expert.
 """
@@ -47,6 +54,33 @@ def pnum(p: Path) -> int:
 
 def gp(board):
     return [row[:] for row in board[:-1]]
+
+
+def build_models_fold(train_paths):
+    """R221 model fields for arbitrary trace count; R225 support=2 stays frozen."""
+    rm = r221.r212ff.ring2_model(train_paths)
+    im = r221.r212ff.identity_model(train_paths)
+    scene, _ = r221.r216.fit_scene(train_paths, 2)
+    exact_goal, _, _, _ = r217.fit_goal(train_paths, rm, 2)
+    fam, struct_goal, fstats = r221.r218.choose_family(train_paths, rm)
+    rows = [r for p in train_paths for r in r221.r211.rows(p)]
+    base = r221.cv212.fit(rows, "base")
+    policy = {
+        "config": "s2-fixed-r225",
+        "min_support": 2,
+        "source": "R225 frozen incumbent threshold; no inner threshold reselection",
+    }
+    return {
+        "rm": rm,
+        "im": im,
+        "scene": scene,
+        "exact_goal": exact_goal,
+        "fam": fam,
+        "struct_goal": struct_goal,
+        "fstats": fstats,
+        "base": base,
+        "policy": policy,
+    }
 
 
 def train_stats(paths):
@@ -112,7 +146,7 @@ def candidate_rows(eval_paths, train_paths):
     """Return frozen-R227 residual candidates using train-derived state only."""
     tab, rejected = r227.fit(train_paths, FAM, 2)
     stats = train_stats(train_paths)
-    m = r221.build_models(train_paths)
+    m = build_models_fold(train_paths)
     rows = []
     incumbent_predictions = 0
     eligible = 0
@@ -209,8 +243,6 @@ def loto_select(train10):
             }
         )
 
-    # Selection is entirely p0..p9 LOTO. Require broad fold support to avoid a
-    # trivially tiny zero-error gate, then maximize zero-error coverage.
     eligible = [
         x
         for x in scored
@@ -281,7 +313,7 @@ def run(paths):
         "game": GAME,
         "representation": FAM,
         "selection": {
-            "protocol": "10-fold leave-one-trace-out over p0..p9 only; zero-wrong aggregate; >=5 folds with predictions; maximize correct",
+            "protocol": "10-fold leave-one-trace-out over p0..p9 only; R225 s2 incumbent contract fixed; zero-wrong aggregate; >=5 folds with predictions; maximize correct",
             "selected": selected,
             "top_loto_gates": top_loto,
             "folds": folds,
@@ -309,6 +341,7 @@ def run(paths):
             "public_trace_only": True,
             "gate_selected_from_p0_p9_loto_only": True,
             "confidence_features_preaction_training_derived_only": True,
+            "r225_lowbase_threshold_fixed_at_support2_in_outer_folds": True,
             "p10_p19_status": "PUBLIC_DEVELOPMENT_REUSED_NOT_INDEPENDENT_HELDOUT",
             "p10_p19_used_for_gate_selection": False,
             "p10_p19_audit_only": True,
