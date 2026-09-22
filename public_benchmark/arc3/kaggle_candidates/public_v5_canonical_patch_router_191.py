@@ -166,7 +166,7 @@ class Bank:
     def __init__(self):
         # action -> kind -> (h,w,before_sig,dr,dc,after_template_stable) -> metadata
         self.rows=defaultdict(dict)
-        self.sizes=defaultdict(lambda:defaultdict(set))
+        self.sizes=defaultdict(set)
 
     def add(self,p:Program,trace:str,state_digest:str):
         key=base.stable({
