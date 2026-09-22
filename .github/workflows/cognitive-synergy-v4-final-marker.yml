@@ -1,0 +1,56 @@
+name: DEUS cognitive synergy V4 final-marker canary
+
+on:
+  push:
+    branches:
+      - deus/cognitive-synergy-v4-20260922
+    paths:
+      - '.github/workflows/cognitive-synergy-v4-final-marker.yml'
+      - 'public_benchmark/cognitive_synergy/synergy_canary_v4_final_marker.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  final-marker-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile marker harness
+        run: python -m py_compile public_benchmark/cognitive_synergy/synergy_canary_v4_final_marker.py
+      - name: Cool down shared public inference window
+        run: sleep 125
+      - name: Execute marker canary
+        id: canary
+        continue-on-error: true
+        run: python public_benchmark/cognitive_synergy/synergy_canary_v4_final_marker.py
+      - name: Summarize marker canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s synergy-canary-v4-final-marker.json
+          sha256sum synergy-canary-v4-final-marker.json > RECEIPT_SHA256SUMS.txt
+          jq '{schema,task_count,protocol,quality_correct,marker_valid,synergy_gain,identity:{call_count:.identity.call_count,all_calls_exact_identity:.identity.all_calls_exact_identity,served_models:.identity.served_models},promotion_gate,truth}' synergy-canary-v4-final-marker.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload marker canary receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-cognitive-synergy-v4-final-marker
+          path: |
+            synergy-canary-v4-final-marker.json
+            RECEIPT_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive marker protocol
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' synergy-canary-v4-final-marker.json)"
+          case "$gate" in
+            INCONCLUSIVE*) exit 2 ;;
+            *) exit 0 ;;
+          esac
