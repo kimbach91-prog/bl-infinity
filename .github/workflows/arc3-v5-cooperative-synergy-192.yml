@@ -19,7 +19,7 @@ jobs:
   synergy-game:
     strategy:
       fail-fast: false
-      max-parallel: 14
+      max-parallel: 3
       matrix:
         game:
           - bp35-0a0ad940
@@ -37,7 +37,7 @@ jobs:
           - tr87-cd924810
           - vc33-5430563c
     runs-on: ubuntu-24.04
-    timeout-minutes: 75
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
