@@ -1,0 +1,105 @@
+name: ARC3 OY1 source/runtime audit 248
+on:
+  push:
+    branches: [deus/arc3-oy1-source-audit-20260922]
+    paths:
+      - .github/workflows/arc3-oy1-source-runtime-audit-248.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit-oy1-r248:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: OYLabsAI/arc-agi-3-api-harness
+          ref: 0c7848dafeb4d7969279b5f193af71112404309a
+          path: upstream-oy1
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify pinned upstream release
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-oy1
+          python3 -B tools/verify_release.py | tee ../r248-verify-release.log
+      - name: Build zero-spend source/evidence audit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, pathlib, subprocess
+          root=pathlib.Path('upstream-oy1')
+          def sha(p):
+              h=hashlib.sha256(); h.update(p.read_bytes()); return h.hexdigest()
+          commit=subprocess.check_output(['git','-C',str(root),'rev-parse','HEAD'],text=True).strip()
+          assert commit=='0c7848dafeb4d7969279b5f193af71112404309a'
+          license_text=(root/'LICENSE').read_text(errors='replace')
+          assert 'Apache License' in license_text and 'Version 2.0' in license_text
+          pub=json.loads((root/'evidence/public-run.json').read_text())
+          fixture=json.loads((root/'evidence/linux-fixture.json').read_text())
+          out={
+            'schema':'deus/arc3-r248-oy1-source-runtime-audit/1',
+            'source':{
+              'repository':'OYLabsAI/arc-agi-3-api-harness',
+              'commit':commit,
+              'license':'Apache-2.0',
+              'release_manifest_sha256':sha(root/'harness/RELEASE-MANIFEST.json'),
+              'public_run_evidence_sha256':sha(root/'evidence/public-run.json'),
+              'linux_fixture_evidence_sha256':sha(root/'evidence/linux-fixture.json'),
+              'bundle_sha256':sha(root/'assets/api9-source-and-licenses.zip'),
+            },
+            'evidence_shapes':{
+              'public_run_top_level_keys':sorted(pub.keys()),
+              'linux_fixture_top_level_keys':sorted(fixture.keys()),
+            },
+            'truth':{
+              'upstream_release_verifier_executed':True,
+              'remote_inference_called':False,
+              'paid_api_called':False,
+              'owner_kaggle_execution':False,
+              'competition_submission':False,
+              'leaderboard_score_receipt':False,
+              'independent_generalization_claim':False,
+              'published_public_result_is_source_claim_only':True,
+              'packaging_or_solver_promotion':False,
+            },
+            'next_gate':'mechanism extraction and source-free/local compatibility audit only; no paid run without explicit spend authorization'
+          }
+          pathlib.Path('r248-oy1-source-runtime-audit.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+      - name: Verify truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          d=json.load(open('r248-oy1-source-runtime-audit.json'))
+          assert d['schema']=='deus/arc3-r248-oy1-source-runtime-audit/1'
+          assert d['source']['commit']=='0c7848dafeb4d7969279b5f193af71112404309a'
+          assert d['source']['license']=='Apache-2.0'
+          t=d['truth']
+          assert t['upstream_release_verifier_executed'] is True
+          assert t['remote_inference_called'] is False
+          assert t['paid_api_called'] is False
+          assert t['owner_kaggle_execution'] is False
+          assert t['competition_submission'] is False
+          assert t['leaderboard_score_receipt'] is False
+          assert t['independent_generalization_claim'] is False
+          assert t['published_public_result_is_source_claim_only'] is True
+          assert t['packaging_or_solver_promotion'] is False
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r248-oy1-source-runtime-audit
+          path: |
+            r248-oy1-source-runtime-audit.json
+            r248-verify-release.log
+          if-no-files-found: error
+          retention-days: 30
