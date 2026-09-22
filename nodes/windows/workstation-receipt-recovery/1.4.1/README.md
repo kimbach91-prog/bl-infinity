@@ -3,7 +3,9 @@
 Purpose: recover the already-completed DEUS V5 Workstation 1.4.0 1T benchmark after the historical receipt-submit HTTP 404, **without rerunning the physical/logical benchmark**.
 
 Server fix:
-- runtime commit: `deef0ef53513b353c43d8585eee7f9565fcab0f3`
+- receipt route introduced at: `deef0ef53513b353c43d8585eee7f9565fcab0f3`
+- guarded deployed runtime source: `9cf798db6a3df63e961a0d25fa92350c85650e91`
+- health marker required: `workstationReceiptApi=deus-workstation-benchmark/1`
 - endpoint: `POST /workstations/report`
 - readback: `GET /workstations/latest`
 - promotion gate: exact `receiptDigest` equality and matching `workstationId`.
