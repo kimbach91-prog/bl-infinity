@@ -1,0 +1,75 @@
+name: DEUS split-plane boot shadow canary
+
+on:
+  push:
+    branches:
+      - deus/split-plane-boot-shadow-20260922
+    paths:
+      - deus_runtime/split_plane_boot_shadow.py
+      - .github/workflows/deus-split-plane-boot-shadow.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  route-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile deus_runtime/split_plane_boot_shadow.py
+      - name: Execute routing canaries
+        run: |
+          set -euo pipefail
+          mkdir -p receipts
+          python deus_runtime/split_plane_boot_shadow.py --task-class SIMPLE > receipts/simple.json
+          python deus_runtime/split_plane_boot_shadow.py --task-class DRIVE_SIMPLE > receipts/drive_simple.json
+          python deus_runtime/split_plane_boot_shadow.py --task-class MEDIUM > receipts/medium.json
+          python deus_runtime/split_plane_boot_shadow.py --task-class HEAVY > receipts/heavy.json
+          python deus_runtime/split_plane_boot_shadow.py --task-class EXTREME > receipts/extreme.json
+          python deus_runtime/split_plane_boot_shadow.py --task-class HEAVY --protected-boundary > receipts/protected.json
+      - name: Verify invariants
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          root=pathlib.Path('receipts')
+          def load(n): return json.load(open(root/f'{n}.json'))
+          s=load('simple')['route']; d=load('drive_simple')['route']; m=load('medium')['route']; h=load('heavy')['route']; x=load('extreme')['route']; p=load('protected')['route']
+          assert s['compute_tier']=='C0' and s['hydrate_full_spectrum'] is False and s['external_compute_allowed'] is False
+          assert d['compute_tier']=='C1' and d['hydrate_full_spectrum'] is False and 'EXACT_DRIVE_TARGET' in d['boot_reads']
+          assert m['compute_tier']=='C2' and m['exact_job_required'] is True and m['working_capsule_required'] is True
+          assert h['compute_tier']=='C4' and h['compute_manifest_required'] is True and h['external_compute_allowed'] is True and h['hydrate_full_spectrum'] is False
+          assert x['compute_tier']=='C5' and x['external_compute_allowed'] is True and x['hydrate_full_spectrum'] is True
+          assert 'STEP_UP_REQUIRED' in p['notes'] and p['external_compute_allowed'] is False
+          for n in ('simple','drive_simple','medium','heavy','extreme','protected'):
+              q=load(n)
+              assert q['canonical_mutation'] is False
+              assert q['truth']['shadow_only'] is True
+              assert q['truth']['canonical_boot_unchanged'] is True
+          summary={
+            'schema':'deus/split-plane-boot-shadow-canary/1',
+            'candidate':'DEUS-V5-SPLIT-PLANE-BOOT-ELASTIC-MOBILIZATION-SHADOW-1',
+            'pass':True,
+            'simple_full_spectrum':s['hydrate_full_spectrum'],
+            'drive_simple_full_spectrum':d['hydrate_full_spectrum'],
+            'heavy_compute_tier':h['compute_tier'],
+            'heavy_external_compute_allowed':h['external_compute_allowed'],
+            'extreme_compute_tier':x['compute_tier'],
+            'protected_step_up_required':'STEP_UP_REQUIRED' in p['notes'],
+            'canonical_mutation':False,
+          }
+          pathlib.Path('receipts/summary.json').write_text(json.dumps(summary,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(summary,sort_keys=True))
+          PY
+      - name: Upload receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-split-plane-boot-shadow-canary
+          path: receipts/*.json
+          if-no-files-found: error
+          retention-days: 30
