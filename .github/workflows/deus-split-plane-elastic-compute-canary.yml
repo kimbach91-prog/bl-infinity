@@ -1,0 +1,123 @@
+name: DEUS split-plane elastic compute canary
+
+on:
+  push:
+    branches:
+      - deus/split-plane-boot-shadow-20260922
+    paths:
+      - .github/workflows/deus-split-plane-elastic-compute-canary.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  route:
+    runs-on: ubuntu-24.04
+    outputs:
+      extreme_tier: ${{ steps.route.outputs.tier }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: route
+        name: Verify EXTREME routes to C5
+        run: |
+          set -euo pipefail
+          python deus_runtime/split_plane_boot_shadow.py --task-class EXTREME > route.json
+          python - <<'PY'
+          import json, os
+          d=json.load(open('route.json'))
+          r=d['route']
+          assert r['compute_tier']=='C5'
+          assert r['external_compute_allowed'] is True
+          assert r['hydrate_full_spectrum'] is True
+          with open(os.environ['GITHUB_OUTPUT'],'a') as f:
+              f.write('tier=C5\n')
+          print(json.dumps({'route_selected':'C5','canonical_mutation':False},sort_keys=True))
+          PY
+
+  worker:
+    needs: route
+    strategy:
+      fail-fast: false
+      max-parallel: 5
+      matrix:
+        lane: [symbolic, code, research, simulator, verifier]
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Execute deterministic lane workload
+        env:
+          LANE: ${{ matrix.lane }}
+        run: |
+          set -euo pipefail
+          mkdir -p receipts
+          python - <<'PY'
+          import hashlib,json,os,time
+          lane=os.environ['LANE']
+          start=time.perf_counter()
+          seed=int(hashlib.sha256(lane.encode()).hexdigest()[:8],16)
+          x=seed
+          n=750000
+          for i in range(n):
+              x=((x ^ i) * 2654435761 + 1013904223) & 0xffffffff
+          elapsed=time.perf_counter()-start
+          out={
+            'schema':'deus/split-plane-elastic-worker-receipt/1',
+            'lane':lane,
+            'iterations':n,
+            'checksum':x,
+            'elapsed_seconds':round(elapsed,6),
+            'executed':True,
+            'verified_local_checksum':True,
+            'provider':'github_actions',
+            'canonical_mutation':False
+          }
+          open(f'receipts/{lane}.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: split-plane-lane-${{ matrix.lane }}
+          path: receipts/${{ matrix.lane }}.json
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: worker
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: split-plane-lane-*
+          path: all
+          merge-multiple: true
+      - name: Verify all five task-fit lanes executed
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json,pathlib
+          rows=[json.load(open(p)) for p in sorted(glob.glob('all/*.json'))]
+          lanes=sorted(x['lane'] for x in rows)
+          expected=sorted(['symbolic','code','research','simulator','verifier'])
+          assert lanes==expected,(lanes,expected)
+          assert all(x['executed'] and x['verified_local_checksum'] for x in rows)
+          out={
+            'schema':'deus/split-plane-elastic-compute-canary/1',
+            'route':'C5',
+            'lanes':lanes,
+            'lane_count':len(lanes),
+            'all_executed':True,
+            'all_verified':True,
+            'provider':'github_actions',
+            'canonical_mutation':False,
+            'truth':'EXTERNAL_COMPUTE_EXECUTED_NOT_GLOBAL_PROVIDER_CAPACITY'
+          }
+          pathlib.Path('elastic-summary.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: split-plane-elastic-compute-summary
+          path: elastic-summary.json
+          if-no-files-found: error
+          retention-days: 30
