@@ -1,0 +1,134 @@
+name: ARC3 remaining14 heldout program transfer 190
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py
+      - .github/workflows/arc3-remaining14-heldout-program-190.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-heldout:
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        game:
+          - bp35-0a0ad940
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - vc33-5430563c
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py             public_benchmark/arc3/kaggle_candidates/public_local_transition_program_prequential_136.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py
+      - name: Download p0..p19 pinned public traces
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Train p0-p9 and evaluate frozen p10-p19
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_remaining14_heldout_program_transfer_190.py             --game "$GAME" "${args[@]}" --output "r190-${GAME}.json"
+      - name: Verify heldout truth boundary
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME']; d=json.load(open(f'r190-{g}.json'))
+          assert d['schema']=='deus/arc3-remaining14-heldout-program-transfer/1'
+          assert d['rung']==190 and d['game']==g
+          t=d['truth']
+          assert t['train_only_p0_p9'] is True
+          assert t['heldout_p10_p19_never_updates_model'] is True
+          assert t['kaggle_execution'] is False
+          b=d['heldout']['best_diagnostic_policy']
+          print(json.dumps({'game':g,'best':b,'stats':d['heldout']['policies'][b],'frozen_programs':d['train']['frozen_programs']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r190-${{ matrix.game }}
+          path: |
+            r190-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: game-heldout
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r190-*
+          path: results
+      - name: Aggregate heldout14
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json
+          rows=[json.load(open(f)) for f in sorted(glob.glob('results/**/r190-*.json',recursive=True))]
+          if len(rows)!=14: raise SystemExit(f'expected14, got {len(rows)}')
+          policies=('strict3','strict2','vote2','vote1')
+          agg={}
+          for p in policies:
+              vals=[r['heldout']['policies'][p] for r in rows]
+              d={k:sum(int(x.get(k,0)) for x in vals) for k in ('transitions','predictions','correct','wrong','abstain','conflict_abstain')}
+              d['accuracy']=round(d['correct']/d['predictions'],6) if d['predictions'] else None
+              d['coverage']=round(d['predictions']/d['transitions'],6) if d['transitions'] else None
+              d['games_with_prediction']=sum(x['predictions']>0 for x in vals)
+              d['games_with_any_correct']=sum(x['correct']>0 for x in vals)
+              d['games_zero_wrong_with_correct']=sum(x['correct']>0 and x['wrong']==0 for x in vals)
+              agg[p]=d
+          best=sorted(policies,key=lambda p:(-agg[p]['games_with_any_correct'],-agg[p]['correct'],agg[p]['wrong'],-agg[p]['coverage'],p))[0]
+          by_game={r['game']:{'best':r['heldout']['best_diagnostic_policy'],'stats':r['heldout']['policies'][r['heldout']['best_diagnostic_policy']],'frozen_programs':r['train']['frozen_programs']} for r in rows}
+          solved=[g for g,x in by_game.items() if x['stats']['correct']>0]
+          clean=[g for g,x in by_game.items() if x['stats']['correct']>0 and x['stats']['wrong']==0]
+          unsolved=[g for g,x in by_game.items() if x['stats']['correct']==0]
+          out={'schema':'deus/arc3-remaining14-heldout-program-aggregate/1','rung':190,'game_count':14,'aggregate_by_policy':agg,'best_diagnostic_policy':best,'by_game':by_game,'games_with_any_correct':solved,'games_zero_wrong_with_correct':clean,'games_without_any_correct':unsolved,'diagnostic_gate':'REMAINING14_FROZEN_HELDOUT_COMPLETE','truth':{'public_trace_only':True,'same_game_public_heldout':True,'heldout_learning':False,'kaggle_execution':False,'submission_quota_spent':False}}
+          open('r190-remaining14-aggregate.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':190,'best':best,'aggregate':agg[best],'solved_count':len(solved),'clean_count':len(clean),'solved':solved,'clean':clean,'unsolved':unsolved},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r190-remaining14-aggregate
+          path: r190-remaining14-aggregate.json
+          if-no-files-found: error
+          retention-days: 30
