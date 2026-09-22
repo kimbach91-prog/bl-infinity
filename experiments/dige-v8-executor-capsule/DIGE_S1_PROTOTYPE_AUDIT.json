@@ -1,0 +1,152 @@
+{
+  "schema": "dige-s1-prototype-audit/1",
+  "candidate": "DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1",
+  "prototype_sources": {
+    "step02": "continuous mesh + surface blockout",
+    "step04": "face + hands articulation",
+    "step06": "cloth layer + deformation",
+    "step07": "hair strand system + groom",
+    "step09": "PBR materials + area lighting",
+    "canonical_drive_evaluator": "1uAez6mKO1XmykN86j7hLSt-jdgkufzFu"
+  },
+  "rules": [
+    "Use only S1 outputs and owner-supplied prototypes for visual audit; prototypes are not renderer inputs.",
+    "Hard subsystem failure cannot be averaged away by strengths elsewhere.",
+    "Neutral S1 does not claim expression/gesture/dynamic cloth ranges that were not executed.",
+    "Compare all available matching views, especially front/profile/3-4/back and hero."
+  ],
+  "dimensions": [
+    {
+      "id": "P02_MESH_SILHOUETTE",
+      "prototype": "Step02",
+      "views": [
+        "01_FRONT50",
+        "02_LEFT_PROFILE50",
+        "03_THREE_QUARTER50",
+        "06_BACK50"
+      ],
+      "checks": [
+        "same adult identity across views",
+        "continuous head-neck-torso silhouette",
+        "shoulder/waist/hip/leg proportions",
+        "feet/ground contact",
+        "no helper/proxy silhouette leak"
+      ],
+      "hard": true
+    },
+    {
+      "id": "P04_FACE_EYE",
+      "prototype": "Step04",
+      "views": [
+        "04_HERO85",
+        "03_THREE_QUARTER50"
+      ],
+      "checks": [
+        "almond eye aperture",
+        "iris/pupil embedded in lids",
+        "restrained sclera",
+        "brow/lash strand read",
+        "jaw/lips/nose coherent and neutral",
+        "no eye-disc/white-eye/patch artifact"
+      ],
+      "hard": true
+    },
+    {
+      "id": "P04_HAND_NEUTRAL",
+      "prototype": "Step04",
+      "views": [
+        "01_FRONT50",
+        "03_THREE_QUARTER50"
+      ],
+      "checks": [
+        "five fingers visually separated at neutral rest",
+        "wrist/hand silhouette plausible",
+        "no fused/interpenetrating hand geometry"
+      ],
+      "hard": true,
+      "note": "expression/finger articulation range is not claimed in S1"
+    },
+    {
+      "id": "P06_CLOTH",
+      "prototype": "Step06",
+      "views": [
+        "01_FRONT50",
+        "02_LEFT_PROFILE50",
+        "03_THREE_QUARTER50",
+        "06_BACK50"
+      ],
+      "checks": [
+        "tank and leggings separately readable",
+        "fitted contact without floating",
+        "neckline/hem/waistband plausible",
+        "fabric surface visible",
+        "no helper-suit contamination"
+      ],
+      "hard": true,
+      "note": "dynamic squat/lunge deformation remains future gate"
+    },
+    {
+      "id": "P07_HAIR",
+      "prototype": "Step07",
+      "views": [
+        "01_FRONT50",
+        "02_LEFT_PROFILE50",
+        "03_THREE_QUARTER50",
+        "05_BACK_THREE_QUARTER50",
+        "06_BACK50",
+        "04_HERO85"
+      ],
+      "checks": [
+        "continuous irregular hairline",
+        "scalp-to-strand direction",
+        "layered crown/primary/secondary hierarchy",
+        "rounded bun volume",
+        "face-frame/baby/flyaway sparsity",
+        "no curtains/comb/radial spikes/helmet"
+      ],
+      "hard": true
+    },
+    {
+      "id": "P09_SKIN",
+      "prototype": "Step09",
+      "views": [
+        "04_HERO85",
+        "03_THREE_QUARTER50"
+      ],
+      "checks": [
+        "non-plastic skin",
+        "subtle pores/meso variation",
+        "roughness/specular rolloff",
+        "restrained SSS",
+        "regional lips/cheek/T-zone variation",
+        "lighting-dependent material response"
+      ],
+      "hard": true
+    },
+    {
+      "id": "P09_CLOTH_PBR_LIGHT",
+      "prototype": "Step09",
+      "views": [
+        "01_FRONT50",
+        "03_THREE_QUARTER50",
+        "04_HERO85"
+      ],
+      "checks": [
+        "gray fabric response",
+        "soft specular",
+        "fiber/microstructure visibility",
+        "area-light falloff",
+        "ground/contact shadow",
+        "no flat unlit CG read"
+      ],
+      "hard": true
+    }
+  ],
+  "verdict_states": [
+    "PASS",
+    "PARTIAL",
+    "FAIL",
+    "NOT_EXECUTED"
+  ],
+  "promotion": "S1 may be called HYPERREAL_S1 only if all hard executed dimensions PASS on direct audit; otherwise retain as S1 candidate with exact improvement radius."
+}
