@@ -1,0 +1,77 @@
+name: ARC3 coarse region agent residual 180
+
+on:
+  push:
+    branches:
+      - deus/arc3-kaggle-rank-climb-20260921
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_coarse_region_agent_residual_180.py
+      - .github/workflows/arc3-coarse-region-agent-residual-180.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coarse-region-agent-residual:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_fullboard_translation_program_160.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_world_overlay_renderer_172.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_family_sweep_175.py \
+            public_benchmark/arc3/kaggle_candidates/public_coarse_region_agent_residual_180.py
+      - name: Download exact pinned public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in ar25-0c556536_p0_events.jsonl ar25-0c556536_p10_events.jsonl ar25-0c556536_p11_events.jsonl; do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute changed-representation rung 180
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_coarse_region_agent_residual_180.py \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p0_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
+            --output "$GITHUB_WORKSPACE/coarse-region-agent-residual-public-180.json"
+      - name: Enforce truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('coarse-region-agent-residual-public-180.json'))
+          assert d['schema']=='deus/arc3-public-coarse-region-agent-residual/1'
+          assert d['rung']==180
+          t=d['truth']
+          assert t['current_prediction_uses_preaction_and_prior_history_only'] is True
+          assert t['current_outcome_used_only_for_scoring_and_post_prediction_learning'] is True
+          assert t['representation_changed_from_rung179'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False and t['submission_quota_spent'] is False
+          print(json.dumps({'rung':180,'gate':d['diagnostic_gate'],'best':d['aggregate']['best_diagnostic_candidate'],'strict':d['aggregate']['strict_p0_p10_candidates'],'truth':'PUBLIC_SOURCE_ASSISTED_PREACTION_ONLY'},sort_keys=True))
+          PY
+      - name: Upload rung 180 diagnostic receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-coarse-region-agent-residual-180
+          path: |
+            coarse-region-agent-residual-public-180.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
