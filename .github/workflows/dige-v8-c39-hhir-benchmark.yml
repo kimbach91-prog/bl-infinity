@@ -4,11 +4,11 @@ on:
   pull_request:
     paths:
       - '.github/workflows/dige-v8-c39-hhir-benchmark.yml'
-      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/blender_render_c39.py'
       - 'experiments/dige-v8-executor-capsule/DIGE_C39_HHIR_BENCHMARK.json'
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 concurrency:
@@ -31,6 +31,7 @@ jobs:
             jaw: '0.88'
             hair_length: '0.40'
             hair_wave: '0.012'
+            strands: '24'
           - id: HHIR_C39
             hhir: '1'
             eye_open: '0.64'
@@ -38,12 +39,13 @@ jobs:
             jaw: '0.88'
             hair_length: '0.30'
             hair_wave: '0.006'
+            strands: '4'
 
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          persist-credentials: false
+          persist-credentials: true
 
       - name: Reuse C34 verified runtime assets
         uses: actions/download-artifact@v4
@@ -133,7 +135,7 @@ jobs:
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
           DIGE_HAIR_ASSET_KEY: hair_long01
-          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_STRANDS_PER_ROOT: ${{ matrix.strands }}
           DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
           DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
@@ -146,7 +148,7 @@ jobs:
         run: |
           set -euxo pipefail
           START=$(date +%s)
-          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c39_${{ matrix.id }}.log
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_c39.py | tee runtime/c39_${{ matrix.id }}.log
           END=$(date +%s)
           printf '{"wall_seconds":%s}\n' "$((END-START))" > runtime/c39_${{ matrix.id }}_timing.json
 
@@ -167,7 +169,7 @@ jobs:
           assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
           hhir=os.environ["HHIR"]=="1"
           if hhir:
-              assert r["appearance_candidate"]=="C39_HHIR_HYPERREAL_UPDO_V1"
+              assert r["appearance_candidate"]=="C39_1_HHIR_HYPERREAL_UPDO_CAMERA_FIXED_V1"\n              assert r["outputs"][0]["lens_mm"]==85 and abs(r["outputs"][0]["fstop"]-3.6)<1e-6\n              assert r["appearance_selection"]["c39_camera_contract"]["lens_mm"]==85
               m=r["appearance_selection"]["c39_updo_metrics"]
               assert m["enabled"] is True
               assert m["primary_curves"]>=900 and m["bun_curves"]>=500
@@ -207,6 +209,21 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
+      - name: Publish C39.1 HHIR preview evidence
+        if: matrix.id == 'HHIR_C39' && success()
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p ../../evidence/dige-c39
+          cp runtime/renders/c39_HHIR_C39/04_HERO85_V8.png ../../evidence/dige-c39/C39_1_HHIR_HERO85.png
+          cp runtime/renders/c39_HHIR_C39/DIGE_C39_ARM_SUMMARY.json ../../evidence/dige-c39/C39_1_HHIR_ARM_SUMMARY.json
+          cd ../..
+          git config user.name "deus-c39-evidence"
+          git config user.email "actions@users.noreply.github.com"
+          git add evidence/dige-c39/C39_1_HHIR_HERO85.png evidence/dige-c39/C39_1_HHIR_ARM_SUMMARY.json
+          git commit -m "DIGE C39.1: publish HHIR preview evidence" || exit 0
+          git push origin HEAD:${{ github.head_ref }}
+
   reduce-benchmark:
     needs: render-ab
     runs-on: ubuntu-latest
@@ -231,7 +248,7 @@ jobs:
           result={
               "schema":"dige-c39-hhir-benchmark-result/1",
               "direct_arm":a,
-              "hhir_arm":b,
+              "hhir_arm":b,\n              "candidate_revision":"C39.1_CAMERA_FIXED_DEAD_SUBGRAPH_PRUNED",
               "structural_hhir_pass":True,
               "known_scar_delta":{
                   "direct":"retains long01 final-style baseline already visually rejected in C36_G",
