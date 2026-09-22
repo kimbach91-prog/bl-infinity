@@ -1,0 +1,143 @@
+name: ARC3 remaining14 universal program ensemble 189
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py
+      - .github/workflows/arc3-remaining14-universal-program-189.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-program:
+    strategy:
+      fail-fast: false
+      max-parallel: 7
+      matrix:
+        game:
+          - bp35-0a0ad940
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - vc33-5430563c
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py             public_benchmark/arc3/kaggle_candidates/public_local_transition_program_prequential_136.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py
+      - name: Download all20 pinned public traces
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute universal prequential program ensemble
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_remaining14_universal_program_ensemble_189.py             --game "$GAME" "${args[@]}" --output "r189-${GAME}.json"
+      - name: Verify truth boundary
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME']; d=json.load(open(f'r189-{g}.json'))
+          assert d['schema']=='deus/arc3-remaining14-universal-program-ensemble/1'
+          assert d['rung']==189 and d['game']==g and d['trace_count']==20
+          t=d['truth']
+          assert t['prediction_uses_preaction_and_prior_history_only'] is True
+          assert t['current_outcome_used_only_for_scoring_and_post_prediction_learning'] is True
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'game':g,'best':d['best_diagnostic_policy'],'stats':d['aggregate']['policies'][d['best_diagnostic_policy']]},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r189-${{ matrix.game }}
+          path: |
+            r189-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: game-program
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r189-*
+          path: results
+      - name: Aggregate remaining14 solver coverage
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json
+          rows=[json.load(open(f)) for f in sorted(glob.glob('results/**/r189-*.json',recursive=True))]
+          if len(rows)!=14: raise SystemExit(f'expected14, got {len(rows)}')
+          policies=('s2_shadow2','s2_shadow1','s2_noshadow','s1_shadow1')
+          agg={}
+          for p in policies:
+              vals=[r['aggregate']['policies'][p] for r in rows]
+              d={k:sum(int(x.get(k,0)) for x in vals) for k in ('transitions','predictions','correct','wrong','abstain','conflict_abstain','exact_source','program_source')}
+              d['accuracy']=round(d['correct']/d['predictions'],6) if d['predictions'] else None
+              d['coverage']=round(d['predictions']/d['transitions'],6) if d['transitions'] else None
+              d['games_with_prediction']=sum(x['predictions']>0 for x in vals)
+              d['games_with_program_prediction']=sum(x['program_source']>0 for x in vals)
+              d['games_with_any_correct']=sum(x['correct']>0 for x in vals)
+              agg[p]=d
+          best=sorted(policies,key=lambda p:(-agg[p]['correct'],agg[p]['wrong'],-agg[p]['coverage'],p))[0]
+          by_game={r['game']:{'best':r['best_diagnostic_policy'],'stats':r['aggregate']['policies'][r['best_diagnostic_policy']]} for r in rows}
+          solved=[g for g,x in by_game.items() if x['stats']['correct']>0]
+          unsolved=[g for g,x in by_game.items() if x['stats']['correct']==0]
+          out={
+            'schema':'deus/arc3-remaining14-universal-program-aggregate/1',
+            'rung':189,
+            'game_count':14,
+            'aggregate_by_policy':agg,
+            'best_diagnostic_policy':best,
+            'by_game':by_game,
+            'games_with_any_correct':solved,
+            'games_without_any_correct':unsolved,
+            'diagnostic_gate':'REMAINING14_UNIVERSAL_PROGRAM_COMPLETE',
+            'truth':{'public_trace_only':True,'prequential_only':True,'kaggle_execution':False,'submission_quota_spent':False}
+          }
+          open('r189-remaining14-aggregate.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':189,'best':best,'aggregate':agg[best],'solved_count':len(solved),'solved':solved,'unsolved':unsolved},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r189-remaining14-aggregate
+          path: r189-remaining14-aggregate.json
+          if-no-files-found: error
+          retention-days: 30
