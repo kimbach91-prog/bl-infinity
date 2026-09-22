@@ -1,0 +1,71 @@
+name: ARC3 ft09 phase HUD identity gate 202
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py
+      - .github/workflows/arc3-ft09-phase-hud-identity-gate-202.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-ft09:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile diagnostic
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py \
+            public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py
+      - name: Download exact ft09 p0..p19 public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          game='ft09-0d8bbf25'
+          for p in $(seq 0 19); do
+            f="${game}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute frozen phase HUD identity diagnostic
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_phase_hud_identity_gate_202.py \
+            "${args[@]}" --output r202-ft09-phase-hud-identity.json
+      - name: Enforce truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r202-ft09-phase-hud-identity.json'))
+          assert d['schema']=='deus/arc3-ft09-phase-hud-identity-gate/1'
+          assert d['rung']==202 and d['game']=='ft09-0d8bbf25'
+          t=d['truth']
+          assert t['pre_action_features_only'] is True
+          assert t['inner_selection_only_p0_p9'] is True
+          assert t['heldout_never_updates_selector'] is True
+          assert t['predicts_identity_only'] is True
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'selected':d['inner']['selected'],'heldout':d['heldout']['all']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r202-ft09-phase-hud-identity
+          path: |
+            r202-ft09-phase-hud-identity.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
