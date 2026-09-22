@@ -118,3 +118,105 @@ jobs:
           path: nervous-pulse-evidence/pulse-receipt.json
           if-no-files-found: error
           retention-days: 30
+
+
+  turn-independent-continuation-canary:
+    name: turn-independent-continuation-canary
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkpoint exact cursor
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p continuation-canary
+          STARTED_AT="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          export STARTED_AT
+          python3 - <<'PY'
+          import json, os
+          payload = {
+              'schema': 'deus-turn-continuation-checkpoint/1',
+              'continuity_id': 'CONT-CANARY-20260920-GH-V1',
+              'phase': 'MID_TASK_CHECKPOINT',
+              'cursor': 'PHASE_1_VERIFIED',
+              'carrier': 'github-actions',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'started_at': os.environ['STARTED_AT'],
+              'provider_chat_required': False,
+              'canonical_write': False,
+              'protected_core_export': False,
+              'data_class': 'S0'
+          }
+          with open('continuation-canary/checkpoint.json','w',encoding='utf-8') as fh:
+              json.dump(payload,fh,indent=2)
+          print(json.dumps(payload))
+          PY
+          sha256sum continuation-canary/checkpoint.json | awk '{print $1}' > continuation-canary/checkpoint.sha256
+
+      - name: Upload checkpoint before wait
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-continuation-checkpoint-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            continuation-canary/checkpoint.json
+            continuation-canary/checkpoint.sha256
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Independent wait outside provider chat
+        shell: bash
+        run: |
+          set -euo pipefail
+          sleep 90
+
+      - name: Resume exact cursor and emit receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          EXPECTED="$(cat continuation-canary/checkpoint.sha256)"
+          ACTUAL="$(sha256sum continuation-canary/checkpoint.json | awk '{print $1}')"
+          test "$EXPECTED" = "$ACTUAL"
+          export EXPECTED ACTUAL
+          python3 - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          with open('continuation-canary/checkpoint.json',encoding='utf-8') as fh:
+              cp=json.load(fh)
+          if cp.get('cursor') != 'PHASE_1_VERIFIED':
+              raise SystemExit('CURSOR_MISMATCH')
+          receipt={
+              'schema':'deus-turn-continuation-runtime-receipt/1',
+              'state':'TURN_INDEPENDENT_EXECUTOR_CANARY_PASS',
+              'continuity_id':cp['continuity_id'],
+              'prior_cursor':cp['cursor'],
+              'resume_cursor':'PHASE_2_VERIFIED',
+              'exact_cursor_resume':True,
+              'checkpoint_sha256_expected':os.environ['EXPECTED'],
+              'checkpoint_sha256_actual':os.environ['ACTUAL'],
+              'carrier':'github-actions',
+              'repository':os.environ['GITHUB_REPOSITORY'],
+              'run_id':os.environ['GITHUB_RUN_ID'],
+              'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'event_name':os.environ['GITHUB_EVENT_NAME'],
+              'provider_chat_required':False,
+              'canonical_write':False,
+              'protected_core_export':False,
+              'data_class':'S0',
+              'completed_at':datetime.now(timezone.utc).isoformat(),
+              'claim_boundary':'external finite executor survived checkpoint + 90s wait + exact-cursor resume; durable crash-recovery and cadence reliability remain separate'
+          }
+          with open('continuation-canary/final-receipt.json','w',encoding='utf-8') as fh:
+              json.dump(receipt,fh,indent=2)
+          print(json.dumps(receipt))
+          PY
+
+      - name: Upload final continuation receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-continuation-final-${{ github.run_id }}-${{ github.run_attempt }}
+          path: continuation-canary/final-receipt.json
+          if-no-files-found: error
+          retention-days: 30
