@@ -1,0 +1,56 @@
+name: DEUS cognitive synergy V4 target-lowering canary
+
+on:
+  push:
+    branches:
+      - deus/cognitive-synergy-v4-20260922
+    paths:
+      - '.github/workflows/cognitive-synergy-v4-target-lowering.yml'
+      - 'public_benchmark/cognitive_synergy/synergy_canary_v4_target_lowering.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  target-lowering-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile repaired harness
+        run: python -m py_compile public_benchmark/cognitive_synergy/synergy_canary_v4_target_lowering.py
+      - name: Cool down shared public inference window
+        run: sleep 120
+      - name: Execute repaired exact-identity canary
+        id: canary
+        continue-on-error: true
+        run: python public_benchmark/cognitive_synergy/synergy_canary_v4_target_lowering.py
+      - name: Summarize repaired receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s synergy-canary-v4-target-lowering.json
+          sha256sum synergy-canary-v4-target-lowering.json > RECEIPT_SHA256SUMS.txt
+          jq '{schema,requested_model,task_count,repair,quality_correct,accuracy,synergy,promotion_gate,identity:{call_count:.identity.call_count,all_calls_exact_identity:.identity.all_calls_exact_identity,served_models:.identity.served_models},truth}' synergy-canary-v4-target-lowering.json | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: Upload repaired canary receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-cognitive-synergy-v4-target-lowering
+          path: |
+            synergy-canary-v4-target-lowering.json
+            RECEIPT_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+      - name: Fail closed on inconclusive provider execution
+        shell: bash
+        run: |
+          gate="$(jq -r '.promotion_gate' synergy-canary-v4-target-lowering.json)"
+          case "$gate" in
+            INCONCLUSIVE_*) exit 2 ;;
+            *) exit 0 ;;
+          esac
