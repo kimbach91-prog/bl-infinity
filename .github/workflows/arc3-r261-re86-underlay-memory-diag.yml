@@ -1,0 +1,74 @@
+name: ARC3 R261 re86 underlay memory diagnostic
+
+on:
+  push:
+    branches:
+      - deus/r261-re86-underlay-memory-diag-20260923
+    paths:
+      - .github/workflows/arc3-r261-re86-underlay-memory-diag.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-r261-re86:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_component_delta_operator_254.py public_benchmark/arc3/kaggle_candidates/public_object_motion_diag_256.py public_benchmark/arc3/kaggle_candidates/public_selective_object_transport_257.py public_benchmark/arc3/kaggle_candidates/public_underlay_memory_diag_261.py
+      - name: Stage re86 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="re86-8af5384d_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"; cp "$src" "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=(); for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
+          test "${#args[@]}" -eq 20
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_underlay_memory_diag_261.py "${args[@]}" --output r261-re86-underlay-memory.json 2> >(tee r261-runtime.txt >&2) | tee r261-stdout.txt
+      - name: Verify and digest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r261-re86-underlay-memory.json').read_text())
+          assert d['schema']=='deus/arc3-r261-underlay-memory-diagnostic/1'
+          t=d['truth']; assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read'] and t['cache_uses_past_and_current_preaction_only'] and not t['future_after_used_for_cache'] and not t['kaggle_execution'] and not t['competition_submission']
+          Path('r261-verdict.json').write_text(json.dumps({'verdict':'DIAGNOSTIC_ONLY_NO_PROMOTION','best_variant':d['best_variant'],'best':d['variants'].get(d['best_variant'])},indent=2,sort_keys=True)+'\n')
+          PY
+          sha256sum r261-re86-underlay-memory.json r261-verdict.json r261-runtime.txt r261-stdout.txt public_trace/SHA256SUMS.txt > R261_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r261-re86-underlay-memory-diag
+          path: |
+            r261-re86-underlay-memory.json
+            r261-verdict.json
+            r261-runtime.txt
+            r261-stdout.txt
+            R261_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
