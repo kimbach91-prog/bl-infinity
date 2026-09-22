@@ -40,8 +40,8 @@
     "height": 320,
     "duration_seconds": 4,
     "audio": "none",
-    "render_engine_request": "BLENDER_EEVEE_NEXT",
-    "render_engine_runtime_alias": "BLENDER_EEVEE",
+    "render_engine_request": "BLENDER_WORKBENCH",
+    "render_engine_runtime_alias": null,
     "frame_count": 8,
     "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY"
   },
@@ -56,5 +56,16 @@
     "external_image_generation_calls_zero",
     "external_video_generation_calls_zero"
   ],
-  "truth_boundary": "CONFIGURED_NE_EXECUTED__RUNTIME_ENGINE_ENUM_MUST_BE_OBSERVED__EXECUTED_NE_VERIFIED_DONE"
+  "truth_boundary": "CONFIGURED_NE_EXECUTED__RUNTIME_ENGINE_ENUM_MUST_BE_OBSERVED__EXECUTED_NE_VERIFIED_DONE",
+  "production_profiles": {
+    "realtime_preview": [
+      "BLENDER_WORKBENCH",
+      "BLENDER_EEVEE"
+    ],
+    "quality_final": [
+      "BLENDER_EEVEE",
+      "CYCLES"
+    ],
+    "truth_boundary": "PROFILES_CONFIGURED_NOT_ALL_EXECUTED"
+  }
 }
