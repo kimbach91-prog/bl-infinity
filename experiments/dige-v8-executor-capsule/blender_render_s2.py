@@ -2560,14 +2560,15 @@ if C28_GNM_HEAD:
     lash_fibers=[]
     for pts in (gnm_brow_left,gnm_brow_right):
         ordered=sorted(pts,key=lambda p:p.x)
-        for i in range(72):
-            u=(i+grng.uniform(-.30,.30))/71.0
+        brow_count=112 if S2_2_SURFACE_INTEGRATION else 72
+        for i in range(brow_count):
+            u=(i+grng.uniform(-.30,.30))/max(1.0,float(brow_count-1))
             u=max(0.0,min(1.0,u))
             seg=min(len(ordered)-2,int(u*(len(ordered)-1)))
             lu=u*(len(ordered)-1)-seg
             root=ordered[seg].lerp(ordered[seg+1],lu)+Vector((0,.00115 if C31_GNM_FACE_APPEARANCE else .00065,grng.uniform(-.0004,.0004)))
             side=1.0 if root.x>=gnm_eye_mid.x else -1.0
-            length=grng.uniform(.0026,.0048)
+            length=grng.uniform(.0019,.0038) if S2_2_SURFACE_INTEGRATION else grng.uniform(.0026,.0048)
             brow_fibers.append([
                 root,
                 root+Vector((side*length*.25,.00035,length*.45)),
@@ -2578,21 +2579,22 @@ if C28_GNM_HEAD:
         upper=sorted([p for p in eye_pts if p.z>=ec.z-.0005],key=lambda p:p.x)
         if len(upper)<2:
             upper=sorted(eye_pts,key=lambda p:p.x)
-        for i in range(28):
-            u=(i+.5)/28.0
+        lash_count=42 if S2_2_SURFACE_INTEGRATION else 28
+        for i in range(lash_count):
+            u=(i+.5)/float(lash_count)
             seg=min(len(upper)-2,int(u*(len(upper)-1)))
             lu=u*(len(upper)-1)-seg
             root=upper[seg].lerp(upper[seg+1],lu)+Vector((0,.00105 if C31_GNM_FACE_APPEARANCE else .00055,.00025))
             side=1.0 if root.x>=gnm_eye_mid.x else -1.0
-            length=grng.uniform(.0016,.0034)
+            length=grng.uniform(.0014,.0028) if S2_2_SURFACE_INTEGRATION else grng.uniform(.0016,.0034)
             lash_fibers.append([
                 root,
                 root+Vector((side*.00010,length*.52,length*.14)),
                 root+Vector((side*.00022,length,length*.26)),
             ])
     facial_hair_mat=principled("DIGE_C31_FACIAL_HAIR",(0.006,0.0025,0.0015) if C36_CANONICAL_APPEARANCE else (0.010,0.004,0.002),rough=.34 if C36_CANONICAL_APPEARANCE else .40,ior=1.50) if C31_GNM_FACE_APPEARANCE else hair
-    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000135 if C42_GEOMETRY_EYE_HAIRLINE else (.000125 if C40_HYPERREAL_REPAIR else (.000095 if C36_CANONICAL_APPEARANCE else (.000082 if C31_GNM_FACE_APPEARANCE else .000060))),facial_hair_mat)
-    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000056 if C40_HYPERREAL_REPAIR else (.000048 if C31_GNM_FACE_APPEARANCE else .000036),facial_hair_mat)
+    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000038 if S2_2_SURFACE_INTEGRATION else (.000135 if C42_GEOMETRY_EYE_HAIRLINE else (.000125 if C40_HYPERREAL_REPAIR else (.000095 if C36_CANONICAL_APPEARANCE else (.000082 if C31_GNM_FACE_APPEARANCE else .000060)))),facial_hair_mat)
+    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000026 if S2_2_SURFACE_INTEGRATION else (.000056 if C40_HYPERREAL_REPAIR else (.000048 if C31_GNM_FACE_APPEARANCE else .000036)),facial_hair_mat)
     c28_brow_fiber_count=len(brow_fibers)
     c28_lash_fiber_count=len(lash_fibers)
     if C31_GNM_FACE_APPEARANCE:
@@ -2602,7 +2604,7 @@ if C28_GNM_HEAD:
             lower=sorted(eye_pts,key=lambda p:(p.z,p.x))[:4]
             lower=sorted(lower,key=lambda p:p.x)
             wet_splines.append([Vector((p.x,p.y+.00105,p.z-.00010)) for p in lower])
-        curve_object("DIGE_C31_GNM_EYE_WETLINES",wet_splines,.000038,wetline)
+        curve_object("DIGE_C31_GNM_EYE_WETLINES",wet_splines,.000024 if S2_2_SURFACE_INTEGRATION else .000038,wetline)
         c31_wetline_count=len(wet_splines)
         mc=sum(transformed_landmarks[48:60],Vector())/12
         ml=transformed_landmarks[48]; mr=transformed_landmarks[54]
@@ -2613,7 +2615,7 @@ if C28_GNM_HEAD:
             Vector(((mr.x+mc.x)*.5,mc.y+.00135,mc.z-.00015)),
             Vector((mr.x,mc.y+.00125,mc.z)),
         ]
-        curve_object("DIGE_C31_GNM_MOUTH_GAP",[mouth_line],.000045,mouth_dark)
+        curve_object("DIGE_C31_GNM_MOUTH_GAP",[mouth_line],.000020 if S2_2_SURFACE_INTEGRATION else .000045,mouth_dark)
         c31_mouth_gap_count=1
 
     baby=[]
