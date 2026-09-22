@@ -1,0 +1,128 @@
+name: ARC3 V5 state-conditioned operator 193
+
+on:
+  push:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_v5_state_conditioned_operator_193.py
+      - public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py
+      - public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py
+      - .github/workflows/arc3-v5-state-conditioned-operator-193.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  operator-game:
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        game:
+          - bp35-0a0ad940
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - vc33-5430563c
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py             public_benchmark/arc3/kaggle_candidates/public_remaining14_structural_patch_heldout_191.py             public_benchmark/arc3/kaggle_candidates/public_v5_canonical_patch_router_191.py             public_benchmark/arc3/kaggle_candidates/public_v5_state_conditioned_operator_193.py
+      - name: Download p0..p19 exact public traces
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for p in $(seq 0 19); do
+            f="${GAME}_p${p}_events.jsonl"
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute nested state-conditioned operator search
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/${GAME}_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_v5_state_conditioned_operator_193.py             --game "$GAME" "${args[@]}" --output "r193-${GAME}.json"
+      - name: Verify no heldout leakage
+        env:
+          GAME: ${{ matrix.game }}
+        run: |
+          python - <<'PY'
+          import json,os
+          g=os.environ['GAME'];d=json.load(open(f'r193-{g}.json'))
+          assert d['schema']=='deus/arc3-v5-state-conditioned-operator/1'
+          assert d['rung']==193 and d['game']==g
+          t=d['truth']
+          assert t['pre_action_context_only'] is True
+          assert t['inner_selection_uses_only_p0_p9'] is True
+          assert t['heldout_p10_p19_never_updates_programs_or_router'] is True
+          assert t['kaggle_execution'] is False
+          print(json.dumps({'game':g,'depth':d['inner']['selected_depth'],'selection':d['inner']['selection'],'heldout':d['heldout']['all']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r193-${{ matrix.game }}
+          path: |
+            r193-${{ matrix.game }}.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  aggregate:
+    needs: operator-game
+    if: ${{ always() }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: arc3-r193-*
+          path: results
+      - name: Aggregate state-conditioned heldout
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import glob,json
+          rows=[json.load(open(f)) for f in sorted(glob.glob('results/**/r193-*.json',recursive=True))]
+          if len(rows)!=14: raise SystemExit(f'expected14, got {len(rows)}')
+          ks=('transitions','predictions','correct','wrong','abstain')
+          agg={k:sum(int(r['heldout']['all'].get(k,0)) for r in rows) for k in ks}
+          agg['accuracy']=round(agg['correct']/agg['predictions'],6) if agg['predictions'] else None
+          agg['coverage']=round(agg['predictions']/agg['transitions'],6) if agg['transitions'] else None
+          by_game={r['game']:{'heldout':r['heldout']['all'],'depth':r['inner']['selected_depth'],'selection':r['inner']['selection']} for r in rows}
+          solved=[g for g,x in by_game.items() if x['heldout']['correct']>0]
+          clean=[g for g,x in by_game.items() if x['heldout']['correct']>0 and x['heldout']['wrong']==0]
+          unsolved=[g for g,x in by_game.items() if x['heldout']['correct']==0]
+          out={'schema':'deus/arc3-v5-state-conditioned-operator-aggregate/1','rung':193,'game_count':14,'aggregate':agg,'by_game':by_game,'games_with_any_correct':solved,'games_zero_wrong_with_correct':clean,'games_without_any_correct':unsolved,'diagnostic_gate':'STATE_CONDITIONED_REMAINING14_HELDOUT_COMPLETE','truth':{'public_trace_only':True,'same_game_public_heldout':True,'heldout_learning':False,'kaggle_execution':False,'submission_quota_spent':False}}
+          open('r193-remaining14-aggregate.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({'rung':193,'aggregate':agg,'solved_count':len(solved),'clean_count':len(clean),'solved':solved,'clean':clean,'unsolved':unsolved},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r193-remaining14-aggregate
+          path: r193-remaining14-aggregate.json
+          if-no-files-found: error
+          retention-days: 30
