@@ -1,0 +1,237 @@
+name: DEUS private provider canary
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/deus-private-provider-canary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  arc-authenticated-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+    steps:
+      - name: Verify authenticated ARC route
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, sys, urllib.request, urllib.error, datetime, hashlib
+
+          key = os.environ.get("ARC_API_KEY", "")
+          if not key:
+              print("ARC_PRIVATE_CANARY=BLOCKED_SECRET_MISSING")
+              sys.exit(41)
+
+          def fetch(url, key=None):
+              headers={"Accept":"application/json","User-Agent":"deus-private-canary/1"}
+              if key:
+                  headers["X-API-Key"] = key
+              req=urllib.request.Request(url, headers=headers)
+              try:
+                  with urllib.request.urlopen(req, timeout=20) as r:
+                      return r.status, json.loads(r.read().decode("utf-8"))
+              except urllib.error.HTTPError as e:
+                  body=e.read().decode("utf-8","replace")
+                  return e.code, {"_error":body[:300]}
+
+          def count_games(payload):
+              if isinstance(payload, list):
+                  return len(payload)
+              if isinstance(payload, dict):
+                  for k in ("games","data","results","items"):
+                      v=payload.get(k)
+                      if isinstance(v,list):
+                          return len(v)
+              return -1
+
+          bases=[]
+          configured=os.environ.get("ARC_BASE_URL","").strip().rstrip("/")
+          if configured:
+              bases.append(configured)
+          for b in ("https://three.arcprize.org","https://arcprize.org"):
+              if b not in bases:
+                  bases.append(b)
+
+          last=None
+          for base in bases:
+              anon_status, anon = fetch(base + "/api/games")
+              auth_status, auth = fetch(base + "/api/games", key)
+              anon_count=count_games(anon)
+              auth_count=count_games(auth)
+              last=(base, anon_status, auth_status, anon_count, auth_count)
+              if auth_status == 200 and auth_count >= 0:
+                  receipt={
+                    "schema":"deus-arc-authenticated-private-route-canary/1",
+                    "provider":"ARC-AGI-3",
+                    "base_url":base,
+                    "secret_present":True,
+                    "anonymous_status":anon_status,
+                    "authenticated_status":auth_status,
+                    "anonymous_game_count":anon_count,
+                    "authenticated_game_count":auth_count,
+                    "authenticated_scope_expanded": bool(auth_count > anon_count and auth_count >= 4),
+                    "verified_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                    "truth_boundary":"Authenticated API route verified only if key-backed response expands beyond anonymous game scope; no secret material emitted."
+                  }
+                  open("arc-private-canary-receipt.json","w").write(json.dumps(receipt,indent=2))
+                  print(json.dumps(receipt))
+                  if not receipt["authenticated_scope_expanded"]:
+                      sys.exit(42)
+                  print("ARC_PRIVATE_CANARY=PASS_AUTHENTICATED_SCOPE")
+                  sys.exit(0)
+
+          print("ARC_PRIVATE_CANARY=FAIL_API", last)
+          sys.exit(43)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc-private-canary-receipt
+          path: arc-private-canary-receipt.json
+          if-no-files-found: ignore
+
+  kaggle-private-gpu-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install current Kaggle CLI
+        run: python -m pip install --upgrade pip kaggle
+      - name: Verify auth and launch private GPU kernel
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${KAGGLE_API_TOKEN:-}" && ( -z "${KAGGLE_USERNAME:-}" || -z "${KAGGLE_KEY:-}" ) ]]; then
+            echo "KAGGLE_PRIVATE_GPU_CANARY=BLOCKED_SECRET_MISSING"
+            exit 51
+          fi
+
+          kaggle kernels list --mine --page-size 5 >/tmp/kaggle-mine.txt
+
+          USERNAME="${KAGGLE_USERNAME:-}"
+          if [[ -z "$USERNAME" ]]; then
+            USERNAME="$(python - <<'PY'
+          import re
+          txt=open('/tmp/kaggle-mine.txt',errors='ignore').read()
+          m=re.search(r'\b([A-Za-z0-9_-]+)/[A-Za-z0-9_-]+', txt)
+          print(m.group(1) if m else '')
+          PY
+          )"
+          fi
+
+          if [[ -z "$USERNAME" ]]; then
+            echo "KAGGLE_PRIVATE_GPU_CANARY=AUTH_OK_USERNAME_UNRESOLVED"
+            exit 52
+          fi
+
+          SLUG="deus-private-gpu-canary"
+          REF="$USERNAME/$SLUG"
+          mkdir -p kernel
+          cat > kernel/canary.py <<'PY'
+          import json, os, platform, subprocess, datetime
+          receipt={
+            "schema":"deus-kaggle-private-gpu-canary/1",
+            "private_kernel":True,
+            "internet_enabled":False,
+            "python":platform.python_version(),
+            "verified_at_utc":datetime.datetime.now(datetime.timezone.utc).isoformat()
+          }
+          try:
+              q=subprocess.run(
+                  ["nvidia-smi","--query-gpu=name,memory.total","--format=csv,noheader"],
+                  capture_output=True,text=True,timeout=20
+              )
+              lines=[x.strip() for x in q.stdout.splitlines() if x.strip()]
+              receipt["nvidia_smi_rc"]=q.returncode
+              receipt["gpu_lines"]=lines
+              receipt["gpu_count"]=len(lines)
+          except Exception as e:
+              receipt["gpu_error"]=type(e).__name__
+              receipt["gpu_count"]=0
+          try:
+              import torch
+              receipt["torch_cuda_available"]=bool(torch.cuda.is_available())
+              receipt["torch_cuda_device_count"]=int(torch.cuda.device_count())
+              if torch.cuda.is_available():
+                  receipt["torch_gpu_name"]=torch.cuda.get_device_name(0)
+                  receipt["torch_cuda_alloc_test"]=float((torch.ones(1024,device="cuda")*2).sum().item())
+          except Exception as e:
+              receipt["torch_error"]=type(e).__name__
+          ok = receipt.get("gpu_count",0) > 0 and receipt.get("torch_cuda_available") is True
+          receipt["gpu_verified"]=ok
+          open("/kaggle/working/deus_private_gpu_receipt.json","w").write(json.dumps(receipt,indent=2))
+          print(json.dumps(receipt))
+          if not ok:
+              raise SystemExit(61)
+          PY
+
+          python - <<PY
+          import json
+          meta={
+            "id":"$REF",
+            "title":"DEUS private GPU canary",
+            "code_file":"canary.py",
+            "language":"python",
+            "kernel_type":"script",
+            "is_private":True,
+            "enable_gpu":True,
+            "enable_internet":False,
+            "machine_shape":"NvidiaTeslaT4",
+            "dataset_sources":[],
+            "competition_sources":[],
+            "kernel_sources":[],
+            "model_sources":[]
+          }
+          open("kernel/kernel-metadata.json","w").write(json.dumps(meta,indent=2))
+          PY
+
+          kaggle kernels push -p kernel --accelerator NvidiaTeslaT4 --timeout 900 | tee /tmp/kaggle-push.txt
+
+          status=""
+          for i in $(seq 1 60); do
+            status="$(kaggle kernels status "$REF" 2>&1 | tee /tmp/kaggle-status.txt)"
+            echo "$status"
+            if echo "$status" | grep -Eqi 'complete|success'; then break; fi
+            if echo "$status" | grep -Eqi 'error|failed|cancel'; then exit 53; fi
+            sleep 10
+          done
+
+          if ! echo "$status" | grep -Eqi 'complete|success'; then
+            echo "KAGGLE_PRIVATE_GPU_CANARY=TIMEOUT_STATUS"
+            exit 54
+          fi
+
+          mkdir -p out
+          kaggle kernels output "$REF" -p out --force
+          if [[ ! -f out/deus_private_gpu_receipt.json ]]; then
+            echo "KAGGLE_PRIVATE_GPU_CANARY=RECEIPT_MISSING"
+            exit 55
+          fi
+
+          python - <<'PY'
+          import json, sys
+          r=json.load(open("out/deus_private_gpu_receipt.json"))
+          print(json.dumps(r))
+          if not (r.get("private_kernel") is True and r.get("gpu_verified") is True):
+              sys.exit(56)
+          print("KAGGLE_PRIVATE_GPU_CANARY=PASS_PRIVATE_GPU_EXECUTED")
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kaggle-private-gpu-canary-receipt
+          path: |
+            out/deus_private_gpu_receipt.json
+            /tmp/kaggle-push.txt
+            /tmp/kaggle-status.txt
+          if-no-files-found: ignore
