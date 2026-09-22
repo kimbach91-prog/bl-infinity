@@ -1,0 +1,44 @@
+{
+  "schema": "dige-c44-follicle-flow/1",
+  "candidate": "C44_HHIR_FOLLICLE_FLOW_V1",
+  "parent": "C43_HHIR_TANGENTIAL_GROOM_V1",
+  "parent_runtime": {
+    "run_id": 35716341591,
+    "wall_seconds": 135,
+    "runtime_pass": true,
+    "visual_pass": false
+  },
+  "mechanism_deltas": [
+    "Lower center hairline to brow+18mm while preserving temple rise.",
+    "Use two stochastic curved undercoat lanes per accepted scalp root with tangent/cross jitter.",
+    "Push long gather roots deeper behind the frontal edge and reduce long gather count.",
+    "Reduce explicit edge microfibers; undercoat owns continuous frontal coverage.",
+    "Add meso-scale face bump layer at scale 92 to the actual GNM skin shader.",
+    "Increase bounded face bump distance to 95um while keeping low SSS."
+  ],
+  "truth_boundaries": [
+    "no reference pixels read/composited",
+    "no image-model calls",
+    "CPU execution unless fresh admitted GPU receipt exists",
+    "runtime PASS != visual PASS",
+    "C43 variants retained as separate evidence; C44 is a new local recompile"
+  ],
+  "runtime_gate": {
+    "candidate": "C44_HHIR_FOLLICLE_FLOW_V1",
+    "eye_integration": "GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_RADIAL_IRIS_NO_UV_NO_OVERLAY",
+    "scalp_min": 650,
+    "undercoat_lane_count": 2,
+    "gather_pool_min": 300,
+    "bun_curves": 520,
+    "skin_metadata_effective_for": "C44",
+    "lens_mm": 85,
+    "fstop": 4
+  },
+  "visual_gate": [
+    "frontal scalp coverage increases without reintroducing vertical comb bars",
+    "hairline sits lower and reads continuous/irregular rather than sparse rays",
+    "bun remains coherent",
+    "skin shows visible meso/pore material response without noisy damage",
+    "eyes do not regress"
+  ]
+}
