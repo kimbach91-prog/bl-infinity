@@ -1,0 +1,30 @@
+{
+  "schema": "dige-c46-source-pivot-contract/1",
+  "candidate": "C46_BLENDER_CC0_REALISTIC_BASE_PROBE_V1",
+  "parent": "C45_HHIR_BARYCENTRIC_UV_SKIN_V1",
+  "source": {
+    "provider": "Blender",
+    "bundle": "Human Base Meshes v1.4.1",
+    "url": "https://download.blender.org/demo/asset-bundles/human-base-meshes/human-base-meshes-bundle-v1.4.1.zip",
+    "license": "CC0",
+    "official_source": "https://www.blender.org/download/demo-files/"
+  },
+  "reason": [
+    "C43 remains synthetic despite better eye/hairline/framing",
+    "C44 nearest-vertex UV transfer produces semantic texture patches",
+    "C45 barycentric nearest-surface UV transfer still produces the same semantic patch failure",
+    "GNM/MakeHuman cross-topology texture transfer is now a verified dead path for this target"
+  ],
+  "probe": [
+    "download official bundle",
+    "record sha256 and archive listing",
+    "discover realistic female/head/eye blend assets",
+    "open library metadata with Blender 5.2.2 without mutating source",
+    "emit compact candidate manifest for C47 render integration"
+  ],
+  "acceptance": {
+    "pass": "at least one realistic female/head candidate and one realistic eye candidate discovered with exact bundle/file evidence",
+    "next": "C47 uses discovered CC0 geometry as a clean substrate; no hyperreal claim from asset discovery alone"
+  },
+  "truth_boundary": "ASSET_FOUND!=RENDERED; CC0 source provenance must remain explicit."
+}
