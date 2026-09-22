@@ -81,10 +81,13 @@ const server = http.createServer(async (req, res) => {
       : await takeRequestRate(req);
     if (!rate.ok) return sendRateLimited(res, rate);
 
-    if (req.method === 'GET' && req.url === '/health') return send(res, 200, {
+    if (req.method === 'GET' && requestPath(req.url) === '/health') return send(res, 200, {
       ok: true,
       service: 'bl-compute-federation',
       version: '0.9.0',
+      sourceRev: process.env.DEUS_SOURCE_REV ?? null,
+      runtimeResponseMarker: 'WORKSTATION_UPDATE_CARRIER_V3',
+      workstationUpdateCarrier: true,
       stateBackend,
       rateLimitBackend,
       rateLimitMode,
@@ -130,7 +133,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, driveBridgeRuntime.snapshot());
     }
 
-    if (req.method === 'POST' && req.url === '/drive-bridge/reconcile') {
+    if (req.method === 'POST' && requestPath(req.url) === '/drive-bridge/reconcile') {
       const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
       let body = {};
       try { body = await readJson(req, Math.min(maxBodyBytes, 16_384)); } catch (error) {
@@ -193,7 +196,7 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, result);
     }
 
-    if (req.method === 'GET' && req.url === '/runtime/status') {
+    if (req.method === 'GET' && requestPath(req.url) === '/runtime/status') {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       const providerSync = await refreshSharedProviders({ failOnBacklog: false });
       const rateLimit = typeof limiter.stats === 'function' ? await limiter.stats() : { backend: 'memory' };
@@ -212,16 +215,28 @@ const server = http.createServer(async (req, res) => {
       } catch (error) {
         workstationUpdate.error = error.message;
       }
-      return send(res, 200, {
-        ...(await runtime.orchestrator.status()),
+      const runtimeStatus = await runtime.orchestrator.status();
+      const responseBody = {
+        ...runtimeStatus,
         providerSyncMode,
         providerSync,
         providerSynchronizer: providerSynchronizer?.status?.() ?? null,
         rateLimitBackend,
         rateLimitMode,
-        rateLimit,
+        rateLimit: { ...rateLimit, workstationUpdate },
+        runtimeResponseMarker: 'WORKSTATION_UPDATE_CARRIER_V3',
+        runtimeSourceRev: process.env.DEUS_SOURCE_REV ?? null,
         workstationUpdate,
-      });
+      };
+      console.log(JSON.stringify({
+        event: 'DEUS_RUNTIME_STATUS_RESPONSE',
+        marker: responseBody.runtimeResponseMarker,
+        sourceRev: responseBody.runtimeSourceRev,
+        workstationUpdateAvailable: workstationUpdate.available,
+        workstationUpdateGeneration: workstationUpdate.manifest?.GENERATION ?? null,
+        ua: header(req.headers, 'user-agent'),
+      }));
+      return send(res, 200, responseBody);
     }
 
     if (req.method === 'GET' && req.url === '/runtime/workstation/update-manifest') {
@@ -716,6 +731,7 @@ async function readBody(req, maxBytes) {
   return Buffer.concat(chunks).toString('utf8');
 }
 async function readJson(req, maxBytes) { return JSON.parse((await readBody(req, maxBytes)) || '{}'); }
+function requestPath(rawUrl) { try { return new URL(rawUrl || '/', 'http://localhost').pathname; } catch { return rawUrl || '/'; } }
 function header(headers, name) { if (!headers) return null; if (typeof headers.get === 'function') return headers.get(name); return headers[name] ?? headers[name.toLowerCase()] ?? null; }
 function sanitizeProvider(provider) {
   const p = structuredClone(provider);
