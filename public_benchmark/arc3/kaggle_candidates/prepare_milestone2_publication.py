@@ -18,7 +18,7 @@ import math
 import shutil
 from pathlib import Path
 
-SCHEMA="deus/arc3-milestone2-publication-gate/1"
+# Trigger revision: workflow is now present on this branch.\nSCHEMA="deus/arc3-milestone2-publication-gate/1"
 COMPETITION="arc-prize-2026-arc-agi-3"
 MACHINE="NvidiaRtxPro6000"
 LIMIT_SECONDS=9*60*60
