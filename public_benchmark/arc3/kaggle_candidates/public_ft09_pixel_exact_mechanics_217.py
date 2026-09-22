@@ -428,3 +428,5 @@ def main():
       "promotion":d["promotion"],
     },sort_keys=True))
 if __name__=="__main__":main()
+
+# Verification child: PR-triggered runtime receipt only; no semantic change.
