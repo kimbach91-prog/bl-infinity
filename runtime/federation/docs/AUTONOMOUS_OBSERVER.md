@@ -27,6 +27,8 @@ NODE_ID = PRIMARY-JOB-STATE
 
 Every new row is read back exactly before the runtime reports `CHECKPOINT_APPENDED`. An unchanged fingerprint returns `UNCHANGED` and performs no checkpoint write. The pre-existing machine-bridge heartbeat remains separate in `54_MACHINE_BRIDGE_HEALTH`.
 
+The fingerprint is semantic: boot/job timestamps, lease owner, lease expiry and lease heartbeat are deliberately excluded. Lease renewal without a state, phase, receipt, result, context or canonical invalidation change therefore does not create checkpoint noise.
+
 ## Truth boundary
 
 `CHECKPOINT_APPENDED` proves that this machine identity read the bounded canonical ranges and appended/read back one state checkpoint. It does not prove that the primary job was executed, that a provider granted compute, or that any external action succeeded.

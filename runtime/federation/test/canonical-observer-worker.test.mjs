@@ -87,6 +87,26 @@ test('observer fails closed when the primary job is ambiguous',async()=>{
   await assert.rejects(()=>observer.runOnce(),(error)=>error.code==='PRIMARY_JOB_CARDINALITY');
 });
 
+test('observer ignores lease renewal and timestamp-only churn',async()=>{
+  const data=fixture();
+  const bridge=new FakeBridge(data.tables);
+  const observer=new BoundedCanonicalObserver({bridge});
+  const first=await observer.runOnce();
+
+  const boot=data.tables.get('10_LIGHT_BOOT!A1:O2')[1];
+  const job=data.tables.get('11_ACTIVE_JOBS!A1:X250')[1];
+  boot[BOOT_HEADERS.indexOf('UPDATED_AT_UTC')]='2026-09-22T00:05:00Z';
+  job[JOB_HEADERS.indexOf('LEASE_OWNER')]='AUTOMATION-WAKE-12';
+  job[JOB_HEADERS.indexOf('LEASE_UNTIL_UTC')]='2026-09-22T00:35:00Z';
+  job[JOB_HEADERS.indexOf('LAST_HEARTBEAT_UTC')]='2026-09-22T00:05:00Z';
+  job[JOB_HEADERS.indexOf('UPDATED_AT_UTC')]='2026-09-22T00:05:00Z';
+
+  const second=await observer.runOnce();
+  assert.equal(second.state,'UNCHANGED');
+  assert.equal(second.checkpointRef,first.checkpointRef);
+  assert.equal(bridge.appended.length,1);
+});
+
 test('observer fails closed when a required canonical header disappears',async()=>{
   const data=fixture();
   data.tables.get('10_LIGHT_BOOT!A1:O2')[0][6]='RENAMED_PRIMARY_JOB_ID';

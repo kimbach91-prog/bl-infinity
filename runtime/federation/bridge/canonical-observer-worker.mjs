@@ -112,7 +112,6 @@ export class BoundedCanonicalObserver {
         invalidationFingerprint:boot.INVALIDATION_FINGERPRINT,
         lastEventId:boot.LAST_EVENT_ID,
         lastReceipt:boot.LAST_RECEIPT,
-        updatedAtUtc:boot.UPDATED_AT_UTC,
         truthBoundary:boot.TRUTH_BOUNDARY,
       },
       job:{
@@ -123,11 +122,7 @@ export class BoundedCanonicalObserver {
         phase:job.PHASE,
         contextDigest:job.CONTEXT_DIGEST,
         executionMode:job.EXECUTION_MODE,
-        leaseOwner:job.LEASE_OWNER,
-        leaseUntilUtc:job.LEASE_UNTIL_UTC,
-        lastHeartbeatUtc:job.LAST_HEARTBEAT_UTC,
         lastReceipt:job.LAST_RECEIPT,
-        updatedAtUtc:job.UPDATED_AT_UTC,
         resultRef:job.RESULT_REF,
       },
     });
