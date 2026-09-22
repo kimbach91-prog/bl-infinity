@@ -33,14 +33,21 @@ def select_per_action(train,val):
     exact=r246.fit_exact(train)
     selected={};diagnostic={}
     all_actions=sorted(set(actions(train))|set(actions(val)))
+
+    # Pure runtime optimization only: each training lens table is identical
+    # across actions because action is already part of the abstract key.
+    # Precompute it once per lens instead of refitting it once per action.
+    lens_tables={name:r246.fit_lens(train,name) for name in r246.LENS_NAMES}
+    train_by_action={a:[r for r in train if r["action"]==a] for a in all_actions}
+
     for action in all_actions:
         cand={}
         for name in r246.LENS_NAMES:
-            tab=r246.fit_lens(train,name)
+            tab=lens_tables[name]
             met=eval_action(val,exact,tab,name,action)
             cand[name]={
               "keys":len(tab),
-              "fidelity":round(r246.markov_fidelity([r for r in train if r["action"]==action],name),6),
+              "fidelity":round(r246.markov_fidelity(train_by_action[action],name),6),
               "validation":met,
             }
         zero=[n for n in r246.LENS_NAMES
