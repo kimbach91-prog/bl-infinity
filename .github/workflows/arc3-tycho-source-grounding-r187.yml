@@ -1,0 +1,72 @@
+name: ARC3 Tycho source grounding R187
+
+on:
+  push:
+    branches: [deus/arc3-kaggle-rank-climb-20260921]
+    paths:
+      - '.github/workflows/arc3-tycho-source-grounding-r187.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ground-tycho:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact public Tycho source
+        shell: bash
+        run: |
+          set -euxo pipefail
+          git clone --filter=blob:none https://github.com/NIMI-research/Tycho.git tycho-src
+          cd tycho-src
+          git checkout --detach f68912a764372ead0a610db2e1c011d41ce5197e
+          test "$(git rev-parse HEAD)" = "f68912a764372ead0a610db2e1c011d41ce5197e"
+          grep -q 'Apache License' LICENSE
+          grep -q 'Apache-2.0' pyproject.toml
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install exact source and run credential-free structural checks
+        shell: bash
+        run: |
+          set -euxo pipefail
+          python -m pip install --upgrade pip >/dev/null
+          python -m pip install -e './tycho-src[dev]' >/dev/null
+          python -m compileall -q tycho-src/tycho
+          python - <<'PY'
+          import os, json, hashlib
+          from pathlib import Path
+          root=Path('tycho-src')
+          llm=(root/'tycho/serving/llm_client.py').read_text()
+          arch=(root/'docs/ARCHITECTURE.md').read_text()
+          readme=(root/'README.md').read_text()
+          pyproject=(root/'pyproject.toml').read_text()
+          checks={
+            'exact_commit':'f68912a764372ead0a610db2e1c011d41ce5197e',
+            'apache2': 'Apache-2.0' in pyproject and 'Apache License 2.0' in readme,
+            'openai_compatible_local_endpoint': 'LLM_BASE_URL' in llm and 'openai backend needs LLM_BASE_URL' in llm,
+            'provider_plugin': 'TYCHO_LLM_PLUGIN' in llm,
+            'executable_world_model': all(x in arch for x in ['State','transition','render','outcome']),
+            'network_disabled_model_sandbox': 'no network' in arch.lower(),
+          }
+          assert all(v for k,v in checks.items() if k!='exact_commit'), checks
+          (Path('receipt')).mkdir(exist_ok=True)
+          (Path('receipt')/'tycho-grounding.json').write_text(json.dumps(checks,indent=2,sort_keys=True)+'\n')
+          (Path('receipt')/'source-head.txt').write_text(os.popen('cd tycho-src && git rev-parse HEAD').read())
+          (Path('receipt')/'license.sha256').write_text(hashlib.sha256((root/'LICENSE').read_bytes()).hexdigest()+'  LICENSE\n')
+          print(json.dumps(checks,sort_keys=True))
+          PY
+          cd tycho-src
+          pytest -q tests/serving tests/config --disable-warnings --maxfail=1
+
+      - name: Archive source-grounding receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-tycho-source-grounding-r187
+          path: receipt/
+          if-no-files-found: error
+          retention-days: 30
