@@ -43,7 +43,10 @@
     "render_engine_request": "BLENDER_EEVEE",
     "render_engine_runtime_alias": null,
     "frame_count": 6,
-    "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY"
+    "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY",
+    "proof_lite": true,
+    "proof_lite_definition": "CANONICAL_S2_BODY_GEOMETRY + SIMPLE_TEST_MATERIAL; HAIR/CLOTH/HEAVY_APPEARANCE HIDDEN FOR ARCHITECTURAL PROOF",
+    "appearance_quality_certified": false
   },
   "acceptance": [
     "blend_scene_opened",
@@ -56,7 +59,7 @@
     "external_image_generation_calls_zero",
     "external_video_generation_calls_zero"
   ],
-  "truth_boundary": "CONFIGURED_NE_EXECUTED__RUNTIME_ENGINE_ENUM_MUST_BE_OBSERVED__EXECUTED_NE_VERIFIED_DONE",
+  "truth_boundary": "V0_PROOF_LITE_CAN_VERIFY_MOTION_RENDER_ENCODE_RECEIPT_ONLY__PRODUCTION_APPEARANCE_REQUIRES_SEPARATE_FULL_SCENE_RUN",
   "production_profiles": {
     "realtime_preview": [
       "BLENDER_EEVEE"
