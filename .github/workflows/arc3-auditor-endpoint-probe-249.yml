@@ -1,0 +1,31 @@
+name: ARC3 auditor endpoint probe 249
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - .github/workflows/arc3-auditor-endpoint-probe-249.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Probe sanitized public endpoints
+        shell: bash
+        run: |
+          set -euo pipefail
+          base='https://deus-cpu-executor-a-production.up.railway.app'
+          for path in /health /audit-status /status /; do
+            echo "=== $path ==="
+            code=$(curl --silent --show-error --location --max-time 20 -o body.txt -w '%{http_code}' "$base$path" || true)
+            echo "HTTP=$code"
+            python - <<'PY'
+          from pathlib import Path
+          p=Path('body.txt')
+          if p.exists():
+              t=p.read_text(errors='replace')
+              print(t[:4000])
+          PY
+          done
