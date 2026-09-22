@@ -453,6 +453,7 @@ C43_TANGENTIAL_GROOM=os.environ.get("DIGE_C43_TANGENTIAL_GROOM","0").strip()=="1
 C44_FOLLICLE_FLOW=os.environ.get("DIGE_C44_FOLLICLE_FLOW","0").strip()=="1"
 S1_ENDOGENOUS=os.environ.get("DIGE_S1_ENDOGENOUS","0").strip()=="1"
 S2_ANATOMY_DYNAMICS=os.environ.get("DIGE_S2_ANATOMY_DYNAMICS","0").strip()=="1"
+S2_1_HYPERREAL=os.environ.get("DIGE_S2_1_HYPERREAL","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1081,8 +1082,8 @@ def s1_gnm_skin_material():
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"IOR",1.42)
     set_input(bs,"Specular IOR Level",.30)
-    set_input(bs,"Subsurface Weight",.010 if S2_ANATOMY_DYNAMICS else .014)
-    set_input(bs,"Subsurface Scale",.00034 if S2_ANATOMY_DYNAMICS else .00042)
+    set_input(bs,"Subsurface Weight",.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014))
+    set_input(bs,"Subsurface Scale",.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042))
     set_input(bs,"Subsurface Radius",(1.0,.38,.18))
     set_input(bs,"Coat Weight",0.0)
     set_input(bs,"Coat Roughness",.55)
@@ -1097,9 +1098,9 @@ def s1_gnm_skin_material():
     nt.links.new(tex.outputs["Object"],base.inputs["Vector"])
     ramp=nt.nodes.new("ShaderNodeValToRGB")
     ramp.color_ramp.elements[0].position=.16
-    ramp.color_ramp.elements[0].color=((0.235,0.145,0.120,1) if S2_ANATOMY_DYNAMICS else (0.19,0.11,0.09,1))
+    ramp.color_ramp.elements[0].color=((0.205,0.120,0.100,1) if S2_1_HYPERREAL else ((0.235,0.145,0.120,1) if S2_ANATOMY_DYNAMICS else (0.19,0.11,0.09,1)))
     ramp.color_ramp.elements[1].position=.84
-    ramp.color_ramp.elements[1].color=((0.455,0.305,0.255,1) if S2_ANATOMY_DYNAMICS else (0.385,0.25,0.205,1))
+    ramp.color_ramp.elements[1].color=((0.430,0.278,0.235,1) if S2_1_HYPERREAL else ((0.455,0.305,0.255,1) if S2_ANATOMY_DYNAMICS else (0.385,0.25,0.205,1)))
     nt.links.new(base.outputs["Fac"],ramp.inputs["Fac"])
 
     vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -1119,15 +1120,15 @@ def s1_gnm_skin_material():
     nt.links.new(blushmix.outputs["Color"],bs.inputs["Base Color"])
 
     rough=nt.nodes.new("ShaderNodeTexNoise")
-    rough.inputs["Scale"].default_value=48.0
+    rough.inputs["Scale"].default_value=96.0 if S2_1_HYPERREAL else 48.0
     rough.inputs["Detail"].default_value=4.0
     rough.inputs["Roughness"].default_value=.64
     nt.links.new(tex.outputs["Object"],rough.inputs["Vector"])
     rmap=nt.nodes.new("ShaderNodeMapRange")
     rmap.inputs["From Min"].default_value=0.0
     rmap.inputs["From Max"].default_value=1.0
-    rmap.inputs["To Min"].default_value=.45 if S2_ANATOMY_DYNAMICS else .42
-    rmap.inputs["To Max"].default_value=.70 if S2_ANATOMY_DYNAMICS else .66
+    rmap.inputs["To Min"].default_value=.40 if S2_1_HYPERREAL else (.45 if S2_ANATOMY_DYNAMICS else .42)
+    rmap.inputs["To Max"].default_value=.64 if S2_1_HYPERREAL else (.70 if S2_ANATOMY_DYNAMICS else .66)
     nt.links.new(rough.outputs["Fac"],rmap.inputs["Value"])
     tzone=nt.nodes.new("ShaderNodeMath"); tzone.operation='MULTIPLY'; tzone.inputs[1].default_value=.025
     liprough=nt.nodes.new("ShaderNodeMath"); liprough.operation='MULTIPLY'; liprough.inputs[1].default_value=.055
@@ -1140,15 +1141,15 @@ def s1_gnm_skin_material():
     nt.links.new(rs2.outputs[0],bs.inputs["Roughness"])
 
     meso=nt.nodes.new("ShaderNodeTexNoise")
-    meso.inputs["Scale"].default_value=58.0 if S2_ANATOMY_DYNAMICS else 82.0
+    meso.inputs["Scale"].default_value=96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0)
     meso.inputs["Detail"].default_value=6.0
     meso.inputs["Roughness"].default_value=.72
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=280.0 if S2_ANATOMY_DYNAMICS else 380.0
+    pore.inputs["Scale"].default_value=1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0)
     pore.inputs["Detail"].default_value=5.0
     pore.inputs["Roughness"].default_value=.68
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=900.0 if S2_ANATOMY_DYNAMICS else 1250.0
+    micro.inputs["Scale"].default_value=6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0)
     micro.inputs["Detail"].default_value=3.0
     micro.inputs["Roughness"].default_value=.60
     for node in (meso,pore,micro):
@@ -1162,22 +1163,22 @@ def s1_gnm_skin_material():
     nt.links.new(ms.outputs[0],h1.inputs[0]); nt.links.new(ps.outputs[0],h1.inputs[1])
     nt.links.new(h1.outputs[0],h2.inputs[0]); nt.links.new(xs.outputs[0],h2.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.58 if S2_ANATOMY_DYNAMICS else .48
-    bump.inputs["Distance"].default_value=.000085 if S2_ANATOMY_DYNAMICS else .000068
+    bump.inputs["Strength"].default_value=.40 if S2_1_HYPERREAL else (.58 if S2_ANATOMY_DYNAMICS else .48)
+    bump.inputs["Distance"].default_value=.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068)
     nt.links.new(h2.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m,{
-        "model":("S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN" if S2_ANATOMY_DYNAMICS else "S1_GNM_MULTISCALE_NATURAL_PBR_SKIN"),
+        "model":("S2_1_GNM_HYPERREAL_MULTISCALE_SKIN" if S2_1_HYPERREAL else ("S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN" if S2_ANATOMY_DYNAMICS else "S1_GNM_MULTISCALE_NATURAL_PBR_SKIN")),
         "mask_attribute":"C31_FaceMask",
-        "roughness_range":([.45,.70] if S2_ANATOMY_DYNAMICS else [.42,.66]),
-        "subsurface_weight":(.010 if S2_ANATOMY_DYNAMICS else .014),
-        "subsurface_scale":(.00034 if S2_ANATOMY_DYNAMICS else .00042),
-        "meso_scale":(58.0 if S2_ANATOMY_DYNAMICS else 82.0),
-        "pore_scale":(280.0 if S2_ANATOMY_DYNAMICS else 380.0),
-        "micro_scale":(900.0 if S2_ANATOMY_DYNAMICS else 1250.0),
-        "bump_distance":(.000085 if S2_ANATOMY_DYNAMICS else .000068),
-        "metadata_effective_for":("S2" if S2_ANATOMY_DYNAMICS else "S1"),
+        "roughness_range":([.40,.64] if S2_1_HYPERREAL else ([.45,.70] if S2_ANATOMY_DYNAMICS else [.42,.66])),
+        "subsurface_weight":(.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014)),
+        "subsurface_scale":(.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042)),
+        "meso_scale":(96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0)),
+        "pore_scale":(1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0)),
+        "micro_scale":(6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0)),
+        "bump_distance":(.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068)),
+        "metadata_effective_for":("S2.1" if S2_1_HYPERREAL else ("S2" if S2_ANATOMY_DYNAMICS else "S1")),
     }
 
 def s1_geometry_eye_material(name):
@@ -1187,10 +1188,10 @@ def s1_geometry_eye_material(name):
     nt=m.node_tree; nt.nodes.clear()
     out=nt.nodes.new("ShaderNodeOutputMaterial")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
-    set_input(bs,"Roughness",.22)
+    set_input(bs,"Roughness",.16 if S2_1_HYPERREAL else .22)
     set_input(bs,"IOR",1.376)
-    set_input(bs,"Specular IOR Level",.34)
-    set_input(bs,"Coat Weight",.18)
+    set_input(bs,"Specular IOR Level",.30 if S2_1_HYPERREAL else .34)
+    set_input(bs,"Coat Weight",.24 if S2_1_HYPERREAL else .18)
     set_input(bs,"Coat Roughness",.035)
     set_input(bs,"Subsurface Weight",.004)
 
@@ -1213,8 +1214,15 @@ def s1_geometry_eye_material(name):
     ramp.color_ramp.interpolation='CONSTANT'
     elems=ramp.color_ramp.elements
     elems[0].position=0.0; elems[0].color=(.0018,.0013,.0010,1)
-    elems[1].position=(.095 if S2_ANATOMY_DYNAMICS else .082); elems[1].color=(.0018,.0013,.0010,1)
+    elems[1].position=(.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082)); elems[1].color=(.0018,.0013,.0010,1)
     eye_stops=([
+        (.084,(.018,.005,.002,1)),
+        (.145,(.105,.035,.010,1)),
+        (.220,(.050,.014,.004,1)),
+        (.245,(.012,.003,.0015,1)),
+        (.272,(.60,.57,.55,1)),
+        (.500,(.72,.69,.67,1)),
+    ] if S2_1_HYPERREAL else ([
         (.105,(.020,.006,.002,1)),
         (.178,(.115,.040,.012,1)),
         (.255,(.052,.015,.004,1)),
@@ -1228,30 +1236,30 @@ def s1_geometry_eye_material(name):
         (.238,(.012,.003,.0015,1)),
         (.258,(.58,.54,.51,1)),
         (.500,(.68,.64,.61,1)),
-    ])
+    ]))
     for pos,col in eye_stops:
         e=elems.new(pos); e.color=col
     nt.links.new(rad.outputs[0],ramp.inputs["Fac"])
     nt.links.new(ramp.outputs["Color"],bs.inputs["Base Color"])
     wave=nt.nodes.new("ShaderNodeTexWave")
     wave.wave_type='RINGS'; wave.rings_direction='Z'
-    wave.inputs["Scale"].default_value=38.0
+    wave.inputs["Scale"].default_value=54.0 if S2_1_HYPERREAL else 38.0
     wave.inputs["Distortion"].default_value=2.2
     wave.inputs["Detail"].default_value=2.0
     nt.links.new(tex.outputs["Generated"],wave.inputs["Vector"])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.075
-    bump.inputs["Distance"].default_value=.00008
+    bump.inputs["Strength"].default_value=.040 if S2_1_HYPERREAL else .075
+    bump.inputs["Distance"].default_value=.00005 if S2_1_HYPERREAL else .00008
     nt.links.new(wave.outputs["Color"],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m,{
         "enabled":True,
-        "material_model":("S2_NATIVE_GNM_GENERATED_COORD_EYE" if S2_ANATOMY_DYNAMICS else "S1_NATIVE_GNM_GENERATED_COORD_EYE"),
+        "material_model":("S2_1_NATIVE_GNM_GENERATED_COORD_EYE" if S2_1_HYPERREAL else ("S2_NATIVE_GNM_GENERATED_COORD_EYE" if S2_ANATOMY_DYNAMICS else "S1_NATIVE_GNM_GENERATED_COORD_EYE")),
         "integration":"GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY",
-        "pupil_radius_norm":(.095 if S2_ANATOMY_DYNAMICS else .082),
-        "iris_outer_radius_norm":(.286 if S2_ANATOMY_DYNAMICS else .238),
-        "sclera_start_norm":(.308 if S2_ANATOMY_DYNAMICS else .258),
+        "pupil_radius_norm":(.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082)),
+        "iris_outer_radius_norm":(.245 if S2_1_HYPERREAL else (.286 if S2_ANATOMY_DYNAMICS else .238)),
+        "sclera_start_norm":(.272 if S2_1_HYPERREAL else (.308 if S2_ANATOMY_DYNAMICS else .258)),
         "uv_dependency":False,
     }
 
@@ -3396,7 +3404,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         pass
     hrng=random.Random(20264141)
     brow_top=max(p.z for p in (gnm_brow_left+gnm_brow_right))
-    hairline=min(float(c28_gnm["hairline_target_z"]),brow_top+(.016 if S1_ENDOGENOUS else (.020 if C44_FOLLICLE_FLOW else .029)))
+    hairline=(min(float(c28_gnm["hairline_target_z"])-.012,brow_top+.010) if S2_1_HYPERREAL else min(float(c28_gnm["hairline_target_z"]),brow_top+(.016 if S1_ENDOGENOUS else (.020 if C44_FOLLICLE_FLOW else .029))))
     bbox_max=Vector(c28_gnm["aligned_bbox_max"])
     eye_center=sum(transformed_landmarks[36:48],Vector())/12
     bun_center=Vector((0.0, eye_center.y-.066, min(float(bbox_max.z)+.003, hairline+.094)))
@@ -3408,7 +3416,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         p=groom_surface.matrix_world @ v.co
         n=(surf_rot @ v.normal).normalized()
         temple=min(1.0,abs(p.x)/.105)
-        edge_z=hairline+(.015 if S1_ENDOGENOUS else (.012 if C44_FOLLICLE_FLOW else .010))*(temple**1.65)
+        edge_z=hairline+(.010 if S2_1_HYPERREAL else (.015 if S1_ENDOGENOUS else (.012 if C44_FOLLICLE_FLOW else .010)))*(temple**1.55 if S2_1_HYPERREAL else temple**1.65)
         if p.z < edge_z or p.z > float(bbox_max.z)+.004:
             continue
         if abs(p.x) > .134 or p.y > eye_center.y+.052:
@@ -3437,12 +3445,12 @@ if C41_HYPERREAL_NATIVE_EYE:
         if cross.length<1e-8:
             cross=Vector((1,0,0))
         cross.normalize()
-        lane_count=3 if S2_ANATOMY_DYNAMICS else (5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1))
+        lane_count=5 if S2_1_HYPERREAL else (3 if S2_ANATOMY_DYNAMICS else (5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)))
         for lane in range(lane_count):
-            lane_bias=(lane-(lane_count-1)*.5)*(.00030 if S2_ANATOMY_DYNAMICS else (.00022 if S1_ENDOGENOUS else .00032))
-            p0=root+n*.00048+cross*lane_bias
-            L=hrng.uniform(.075,.145) if S2_ANATOMY_DYNAMICS else (hrng.uniform(.024,.042) if S1_ENDOGENOUS else (hrng.uniform(.032,.052) if C44_FOLLICLE_FLOW else hrng.uniform(.028,.045)))
-            tangent=(base_t+cross*hrng.uniform(-.24,.24)+n*hrng.uniform(.00,.055)).normalized() if S2_ANATOMY_DYNAMICS else ((base_t+cross*hrng.uniform(-.18,.18)+n*hrng.uniform(-.01,.025)).normalized() if S1_ENDOGENOUS else (base_t+cross*hrng.uniform(-.10,.10)).normalized())
+            lane_bias=(lane-(lane_count-1)*.5)*(.00016 if S2_1_HYPERREAL else (.00030 if S2_ANATOMY_DYNAMICS else (.00022 if S1_ENDOGENOUS else .00032)))
+            p0=root+n*.00042+cross*lane_bias
+            L=hrng.uniform(.016,.036) if S2_1_HYPERREAL else (hrng.uniform(.075,.145) if S2_ANATOMY_DYNAMICS else (hrng.uniform(.024,.042) if S1_ENDOGENOUS else (hrng.uniform(.032,.052) if C44_FOLLICLE_FLOW else hrng.uniform(.028,.045))))
+            tangent=(base_t+cross*hrng.uniform(-.12,.12)+n*hrng.uniform(-.015,.025)).normalized() if S2_1_HYPERREAL else ((base_t+cross*hrng.uniform(-.24,.24)+n*hrng.uniform(.00,.055)).normalized() if S2_ANATOMY_DYNAMICS else ((base_t+cross*hrng.uniform(-.18,.18)+n*hrng.uniform(-.01,.025)).normalized() if S1_ENDOGENOUS else (base_t+cross*hrng.uniform(-.10,.10)).normalized()))
             phase=hrng.uniform(0,math.tau)
             pts=[]
             for j in range(6):
@@ -3451,16 +3459,16 @@ if C41_HYPERREAL_NATIVE_EYE:
                 wav=math.sin(math.tau*t+phase)*bend
                 pts.append(
                     p0+tangent*(L*t)
-                    +n*((.0026 if C44_FOLLICLE_FLOW else .0018)*bend)
-                    +cross*((.0010 if C44_FOLLICLE_FLOW else .0006)*wav)
+                    +n*((.0010 if S2_1_HYPERREAL else (.0026 if C44_FOLLICLE_FLOW else .0018))*bend)
+                    +cross*((.00045 if S2_1_HYPERREAL else (.0010 if C44_FOLLICLE_FLOW else .0006))*wav)
                 )
             undercoat.append(pts)
-    curve_object("DIGE_S2_LAYERED_SCALP_FLOW" if S2_ANATOMY_DYNAMICS else ("DIGE_S1_DENSE_TANGENTIAL_UNDERCOAT" if S1_ENDOGENOUS else ("DIGE_C44_HHIR_FOLLICLE_UNDERCOAT" if C44_FOLLICLE_FLOW else "DIGE_C43_HHIR_TANGENTIAL_UNDERCOAT")),undercoat,.000018 if S2_ANATOMY_DYNAMICS else (.000013 if S1_ENDOGENOUS else (.000019 if C44_FOLLICLE_FLOW else .000024)),hair)
+    curve_object("DIGE_S2_1_DENSE_SCALP_FLOW" if S2_1_HYPERREAL else ("DIGE_S2_LAYERED_SCALP_FLOW" if S2_ANATOMY_DYNAMICS else ("DIGE_S1_DENSE_TANGENTIAL_UNDERCOAT" if S1_ENDOGENOUS else ("DIGE_C44_HHIR_FOLLICLE_UNDERCOAT" if C44_FOLLICLE_FLOW else "DIGE_C43_HHIR_TANGENTIAL_UNDERCOAT"))),undercoat,.000014 if S2_1_HYPERREAL else (.000018 if S2_ANATOMY_DYNAMICS else (.000013 if S1_ENDOGENOUS else (.000019 if C44_FOLLICLE_FLOW else .000024))),hair)
 
-    gather_pool=[q for q in scalp if (q[1].z >= q[3]+(.028 if S2_ANATOMY_DYNAMICS else (.040 if S1_ENDOGENOUS else (.030 if C44_FOLLICLE_FLOW else .020))) or q[1].y < eye_center.y-.020)]
+    gather_pool=[q for q in scalp if (q[1].z >= q[3]+(.020 if S2_1_HYPERREAL else (.028 if S2_ANATOMY_DYNAMICS else (.040 if S1_ENDOGENOUS else (.030 if C44_FOLLICLE_FLOW else .020)))) or q[1].y < eye_center.y-.020)]
     if len(gather_pool)<350:
         raise RuntimeError(f"C43 gather pool too sparse: {len(gather_pool)}")
-    primary_count=min(900 if S2_ANATOMY_DYNAMICS else (600 if S1_ENDOGENOUS else (720 if C44_FOLLICLE_FLOW else 900)),len(gather_pool))
+    primary_count=min(1100 if S2_1_HYPERREAL else (900 if S2_ANATOMY_DYNAMICS else (600 if S1_ENDOGENOUS else (720 if C44_FOLLICLE_FLOW else 900))),len(gather_pool))
     roots=[gather_pool[min(len(gather_pool)-1,int(i*len(gather_pool)/primary_count))] for i in range(primary_count)]
     primary=[]
     for vi,root,n,_edge in roots:
@@ -3502,7 +3510,7 @@ if C41_HYPERREAL_NATIVE_EYE:
 
     micro=[]
     if edge_band:
-        fcount=min(110,max(55,len(edge_band))) if S2_ANATOMY_DYNAMICS else (min(80,max(40,len(edge_band))) if S1_ENDOGENOUS else (min(48,max(24,len(edge_band))) if C44_FOLLICLE_FLOW else min(90,max(45,len(edge_band)))))
+        fcount=min(180,max(90,len(edge_band))) if S2_1_HYPERREAL else (min(110,max(55,len(edge_band))) if S2_ANATOMY_DYNAMICS else (min(80,max(40,len(edge_band))) if S1_ENDOGENOUS else (min(48,max(24,len(edge_band))) if C44_FOLLICLE_FLOW else min(90,max(45,len(edge_band))))))
         picks=[edge_band[min(len(edge_band)-1,int(i*len(edge_band)/fcount))] for i in range(fcount)]
         for _vi,root,n,_edge in picks:
             side=1.0 if root.x>=0 else -1.0
@@ -3515,13 +3523,13 @@ if C41_HYPERREAL_NATIVE_EYE:
                 p0+Vector((side*.0015,-.0065,L*.60)),
                 p0+Vector((side*.0022,-.0100,L)),
             ])
-        curve_object("DIGE_S2_HAIRLINE_BABY" if S2_ANATOMY_DYNAMICS else ("DIGE_S1_HAIRLINE_BABY" if S1_ENDOGENOUS else ("DIGE_C44_HHIR_HAIRLINE_EDGE" if C44_FOLLICLE_FLOW else "DIGE_C43_HHIR_HAIRLINE_EDGE")),micro,.000010 if S2_ANATOMY_DYNAMICS else (.000011 if S1_ENDOGENOUS else (.000013 if C44_FOLLICLE_FLOW else .000016)),hair)
+        curve_object("DIGE_S2_1_HAIRLINE_BABY" if S2_1_HYPERREAL else ("DIGE_S2_HAIRLINE_BABY" if S2_ANATOMY_DYNAMICS else ("DIGE_S1_HAIRLINE_BABY" if S1_ENDOGENOUS else ("DIGE_C44_HHIR_HAIRLINE_EDGE" if C44_FOLLICLE_FLOW else "DIGE_C43_HHIR_HAIRLINE_EDGE"))),micro,.000009 if S2_1_HYPERREAL else (.000010 if S2_ANATOMY_DYNAMICS else (.000011 if S1_ENDOGENOUS else (.000013 if C44_FOLLICLE_FLOW else .000016))),hair)
 
     fly=[]
-    for i in range(26):
+    for i in range(14 if S2_1_HYPERREAL else 26):
         phase=math.tau*((i*.754877666)%1.0)
         root=bun_center+Vector((.042*math.cos(phase),.024*math.sin(phase),.030*math.sin(phase*.7)))
-        L=hrng.uniform(.012,.030)
+        L=hrng.uniform(.009,.022) if S2_1_HYPERREAL else hrng.uniform(.012,.030)
         side=1.0 if math.cos(phase)>=0 else -1.0
         fly.append([root,root+Vector((side*L*.18,-L*.10,L*.30)),root+Vector((side*L*.34,-L*.18,L*.68))])
     curve_object("DIGE_C41_HHIR_FLYAWAYS",fly,.000019,hair)
@@ -3563,11 +3571,12 @@ if C41_HYPERREAL_NATIVE_EYE:
             key=lambda q:(abs(abs(q[1].x)-.078)+.35*abs(q[1].z-q[3]))
         )[:72]
         if frame_roots:
-            step=max(1,len(frame_roots)//40)
-            for _vi,root,n,_edge in frame_roots[::step][:40]:
+            frame_target=56 if S2_1_HYPERREAL else 40
+            step=max(1,len(frame_roots)//frame_target)
+            for _vi,root,n,_edge in frame_roots[::step][:frame_target]:
                 side=1.0 if root.x>=0 else -1.0
                 p0=root+n*.00042
-                L=hrng.uniform(.075,.165) if S2_ANATOMY_DYNAMICS else hrng.uniform(.045,.105)
+                L=hrng.uniform(.060,.130) if S2_1_HYPERREAL else (hrng.uniform(.075,.165) if S2_ANATOMY_DYNAMICS else hrng.uniform(.045,.105))
                 fall=Vector((side*.14,-.34,-.93)).normalized()
                 cross=n.cross(fall)
                 if cross.length<1e-8: cross=Vector((1,0,0))
@@ -3585,7 +3594,7 @@ if C41_HYPERREAL_NATIVE_EYE:
 
     c41_groom_metrics={
         "enabled":True,
-        "style":("S2_LAYERED_VECTOR_FIELD_UPDO_V1" if S2_ANATOMY_DYNAMICS else ("S1_LAYERED_SCALP_BUN_GROOM_V1" if S1_ENDOGENOUS else ("C44_FOLLICLE_FLOW_GEOMETRY_EYE_V1" if C44_FOLLICLE_FLOW else "C43_TANGENTIAL_SCALP_FLOW_GEOMETRY_EYE_V1"))),
+        "style":("S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1" if S2_1_HYPERREAL else ("S2_LAYERED_VECTOR_FIELD_UPDO_V1" if S2_ANATOMY_DYNAMICS else ("S1_LAYERED_SCALP_BUN_GROOM_V1" if S1_ENDOGENOUS else ("C44_FOLLICLE_FLOW_GEOMETRY_EYE_V1" if C44_FOLLICLE_FLOW else "C43_TANGENTIAL_SCALP_FLOW_GEOMETRY_EYE_V1")))),
         "hairline_z":hairline,
         "scalp_candidate_count":len(scalp),
         "undercoat_curves":len(undercoat),
@@ -3598,7 +3607,7 @@ if C41_HYPERREAL_NATIVE_EYE:
         "geometry_eye_uv_dependency":False,
         "edge_band_roots":len(edge_band),
         "gather_pool_count":len(gather_pool),
-        "undercoat_lane_count":(3 if S2_ANATOMY_DYNAMICS else (5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1))),
+        "undercoat_lane_count":(5 if S2_1_HYPERREAL else (3 if S2_ANATOMY_DYNAMICS else (5 if S1_ENDOGENOUS else (2 if C44_FOLLICLE_FLOW else 1)))),
         "s1_scalp_cap_faces":s1_scalp_cap_faces,
         "s1_face_frame_curves":s1_face_frame_curves,
         "truth_boundary":"GNM_NATIVE_EYES_AND_SCALP_ROOTS__NO_REFERENCE_PIXELS_USED"
@@ -3637,7 +3646,9 @@ if C29_GNM_PRESENTATION:
     hair_curve_metrics["guide_mesh_rendered"]=False
     hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
-if S2_ANATOMY_DYNAMICS:
+if S2_1_HYPERREAL:
+    hair_style_label="S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1"
+elif S2_ANATOMY_DYNAMICS:
     hair_style_label="S2_LAYERED_VECTOR_FIELD_UPDO_V1"
 elif S1_ENDOGENOUS:
     hair_style_label="S1_LAYERED_SCALP_BUN_GROOM_V1"
@@ -4131,6 +4142,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_1_HYPERREAL_GPU_READY_V1" if S2_1_HYPERREAL else
    "DIGE_S2_ANATOMY_DYNAMICS_V1" if S2_ANATOMY_DYNAMICS else
    "DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1" if S1_ENDOGENOUS else
    "C44_HHIR_FOLLICLE_FLOW_V1" if C44_FOLLICLE_FLOW else
