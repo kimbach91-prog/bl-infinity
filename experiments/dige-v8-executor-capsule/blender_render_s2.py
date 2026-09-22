@@ -454,6 +454,7 @@ C44_FOLLICLE_FLOW=os.environ.get("DIGE_C44_FOLLICLE_FLOW","0").strip()=="1"
 S1_ENDOGENOUS=os.environ.get("DIGE_S1_ENDOGENOUS","0").strip()=="1"
 S2_ANATOMY_DYNAMICS=os.environ.get("DIGE_S2_ANATOMY_DYNAMICS","0").strip()=="1"
 S2_1_HYPERREAL=os.environ.get("DIGE_S2_1_HYPERREAL","0").strip()=="1"
+S2_2_SURFACE_INTEGRATION=os.environ.get("DIGE_S2_2_SURFACE_INTEGRATION","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1558,6 +1559,77 @@ def s2_anatomy_rest_shape(obj):
 
 s2_anatomy_metrics=s2_anatomy_rest_shape(body)
 
+def s2_2_build_neck_bridge(body_obj,head_obj,cut_z,material):
+    metrics={"enabled":False}
+    if not S2_2_SURFACE_INTEGRATION:
+        return metrics
+    head_min=min(float(v.co.z) for v in head_obj.data.vertices)
+    body_pts=[v.co.copy() for v in body_obj.data.vertices
+              if cut_z-.026 <= float(v.co.z) <= cut_z+.002
+              and abs(float(v.co.x)) <= .105
+              and abs(float(v.co.y)) <= .115]
+    head_pts=[v.co.copy() for v in head_obj.data.vertices
+              if head_min <= float(v.co.z) <= head_min+.032
+              and abs(float(v.co.x)) <= .105
+              and abs(float(v.co.y)) <= .115]
+    if len(body_pts)<24 or len(head_pts)<24:
+        raise RuntimeError(f"S2.2 neck bridge insufficient rings body={len(body_pts)} head={len(head_pts)}")
+    def ellipse(pts):
+        xs=np.array([float(p.x) for p in pts],dtype=np.float64)
+        ys=np.array([float(p.y) for p in pts],dtype=np.float64)
+        zs=np.array([float(p.z) for p in pts],dtype=np.float64)
+        cx=float(np.median(xs)); cy=float(np.median(ys)); cz=float(np.median(zs))
+        rx=float(np.percentile(np.abs(xs-cx),82))
+        ry=float(np.percentile(np.abs(ys-cy),82))
+        return cx,cy,cz,max(.030,min(.080,rx)),max(.026,min(.075,ry))
+    bx,by,bz,brx,bry=ellipse(body_pts)
+    hx,hy,hz,hrx,hry=ellipse(head_pts)
+    z0=min(cut_z-.004,bz)
+    z1=max(head_min+.020,hz)
+    segments=64; rings=7
+    verts=[]
+    for ri in range(rings):
+        t=ri/(rings-1)
+        s=t*t*(3.0-2.0*t)
+        cx=bx+(hx-bx)*s; cy=by+(hy-by)*s
+        rx=brx+(hrx-brx)*s; ry=bry+(hry-bry)*s
+        z=z0+(z1-z0)*s
+        for si in range(segments):
+            a=math.tau*si/segments
+            yscale=1.0-.055*max(0.0,math.sin(a))
+            verts.append((cx+rx*math.cos(a),cy+ry*math.sin(a)*yscale,z))
+    faces=[]
+    for ri in range(rings-1):
+        for si in range(segments):
+            a=ri*segments+si
+            b=ri*segments+(si+1)%segments
+            d=(ri+1)*segments+si
+            cc=(ri+1)*segments+(si+1)%segments
+            faces.append((a,b,cc,d))
+    mesh=bpy.data.meshes.new("DIGE_S2_2_NECK_BRIDGE_MESH")
+    mesh.from_pydata(verts,[],faces); mesh.update()
+    obj=bpy.data.objects.new("DIGE_S2_2_NECK_BRIDGE",mesh)
+    bpy.context.collection.objects.link(obj)
+    mesh.materials.append(material)
+    for poly in mesh.polygons: poly.use_smooth=True
+    sub=obj.modifiers.new("DIGE_S2_2_NECK_BRIDGE_SUBDIV","SUBSURF")
+    sub.levels=1; sub.render_levels=2
+    return {
+        "enabled":True,
+        "segments":segments,
+        "rings":rings,
+        "vertices":len(verts),
+        "faces":len(faces),
+        "body_ring_points":len(body_pts),
+        "head_ring_points":len(head_pts),
+        "body_ellipse":[bx,by,bz,brx,bry],
+        "head_ellipse":[hx,hy,hz,hrx,hry],
+        "z_span":[z0,z1],
+        "method":"SOURCE_GEOMETRY_DERIVED_ELLIPTIC_NECK_TRANSITION"
+    }
+
+s2_2_surface_metrics={"enabled":False}
+
 def s1_relax_arms(obj):
     if not S1_ENDOGENOUS:
         return 0
@@ -2447,6 +2519,8 @@ if C28_GNM_HEAD:
         raise RuntimeError(f"C28 body-head cut selected too few vertices: {len(kill)} cut_z={c28_body_cut_z}")
     bmesh.ops.delete(bm,geom=kill,context='VERTS')
     bm.to_mesh(body.data); bm.free(); body.data.update()
+    if S2_2_SURFACE_INTEGRATION:
+        s2_2_surface_metrics=s2_2_build_neck_bridge(body,c28_gnm_objects["skin"],c28_body_cut_z,gnm_skin_mat)
 
     eye_obj.hide_render=True
     brow_obj.hide_render=True
@@ -3751,10 +3825,14 @@ if S1_ENDOGENOUS:
         kill=[f for f in bm.faces if not keep_fn(obj.matrix_world @ f.calc_center_median())]
         if kill:
             bmesh.ops.delete(bm,geom=kill,context='FACES')
+        if bm.faces:
+            try: bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+            except Exception: pass
         bm.to_mesh(obj.data); bm.free(); obj.data.update()
         if S2_ANATOMY_DYNAMICS:
+            garment_offset=.0062 if S2_2_SURFACE_INTEGRATION else .0042
             for vv in obj.data.vertices:
-                try: vv.co += vv.normal*.0042
+                try: vv.co += vv.normal*garment_offset
                 except Exception: pass
             obj.data.update()
         obj.data.materials.clear(); obj.data.materials.append(mat)
@@ -3763,6 +3841,8 @@ if S1_ENDOGENOUS:
         except Exception: pass
         sub=obj.modifiers.new(name+"_SUBDIV","SUBSURF"); sub.levels=1; sub.render_levels=2
         so=obj.modifiers.new(name+"_THICKNESS","SOLIDIFY"); so.thickness=thickness; so.offset=1.0
+        if S2_2_SURFACE_INTEGRATION:
+            bev=obj.modifiers.new(name+"_EDGE_SOFTEN","BEVEL"); bev.width=.0012; bev.segments=2; bev.limit_method='ANGLE'
         return obj
     leggings=_s1_clip_body(
         body,("DIGE_S2_LEGGINGS" if S2_ANATOMY_DYNAMICS else "DIGE_S1_LEGGINGS"),
@@ -4142,6 +4222,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_2_SURFACE_INTEGRATION_V1" if S2_2_SURFACE_INTEGRATION else
    "DIGE_S2_1_HYPERREAL_GPU_READY_V1" if S2_1_HYPERREAL else
    "DIGE_S2_ANATOMY_DYNAMICS_V1" if S2_ANATOMY_DYNAMICS else
    "DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1" if S1_ENDOGENOUS else
@@ -4289,6 +4370,7 @@ receipt={
    "s1_endogenous":S1_ENDOGENOUS,
    "s2_anatomy_dynamics":S2_ANATOMY_DYNAMICS,
    "s2_anatomy_metrics":s2_anatomy_metrics,
+   "s2_2_surface_metrics":s2_2_surface_metrics,
    "s2_control_contract":{
       "hand_chain":"CMC_MCP_PIP_DIP_MAPPED_NOT_EXECUTED",
       "thumb_opposition":"MAPPED_NOT_EXECUTED",
@@ -4306,6 +4388,7 @@ receipt={
       "reference_pixels_used":False
    } if S1_ENDOGENOUS else None,
    "s1_garment_metrics":s1_garment_metrics,
+   "s2_2_surface_integration":S2_2_SURFACE_INTEGRATION,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
