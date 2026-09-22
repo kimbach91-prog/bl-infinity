@@ -36,9 +36,13 @@ jobs:
           python - <<'PY'
           import glob,json,hashlib
           r190_files=sorted(glob.glob('r190/**/r190-*.json',recursive=True))
-          rows190=[json.load(open(f)) for f in r190_files]
+          rows190=[]
+          for f in r190_files:
+              d=json.load(open(f))
+              if d.get('schema')=='deus/arc3-remaining14-heldout-program-transfer/1':
+                  rows190.append(d)
           if len(rows190)!=14:
-              raise SystemExit(f'expected 14 R190 per-game receipts, got {len(rows190)}')
+              raise SystemExit(f'expected 14 R190 per-game receipts by schema, got {len(rows190)}')
           by190={}
           for d in rows190:
               assert d['schema']=='deus/arc3-remaining14-heldout-program-transfer/1'
