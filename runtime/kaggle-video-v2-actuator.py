@@ -353,13 +353,17 @@ def i2v_loop():
         emit("deus_video_v2_input_fetched", drive_file_id=INPUT_DRIVE_FILE_ID, bytes=len(ref), sha256=hashlib.sha256(ref).hexdigest())
         root = build_i2v_kernel(ref)
         exists, old_status = kernel_exists(I2V_KERNEL)
+        should_push = not exists
         if exists:
+            old_txt=(old_status["stdout"]+"\n"+old_status["stderr"]).upper()
             emit("deus_video_v2_i2v_existing_kernel", kernel=I2V_KERNEL, status=old_status)
-            # An existing same-slug version is intentionally replaced by a new private version for this r1 canary.
-        push = run([KAGGLE,"kernels","push","-p",str(root),"--timeout","7200","--accelerator","gpu"],timeout=600)
-        emit("deus_video_v2_i2v_push",kernel=I2V_KERNEL,ok=push["ok"],stdout=push["stdout"],stderr=push["stderr"])
-        if not push["ok"]:
-            state["error"]="i2v_push_failed"; state["i2v_status"]=push; return
+            if "ERROR" in old_txt or "CANCEL" in old_txt:
+                should_push=True
+        if should_push:
+            push = run([KAGGLE,"kernels","push","-p",str(root),"--timeout","7200","--accelerator","gpu"],timeout=600)
+            emit("deus_video_v2_i2v_push",kernel=I2V_KERNEL,ok=push["ok"],stdout=push["stdout"],stderr=push["stderr"])
+            if not push["ok"]:
+                state["error"]="i2v_push_failed"; state["i2v_status"]=push; return
         while True:
             st=run([KAGGLE,"kernels","status",I2V_KERNEL],timeout=90); state["i2v_status"]=st
             txt=(st["stdout"]+"\n"+st["stderr"]).upper()
@@ -395,7 +399,7 @@ def arc_poll_loop():
             state["arc_status"]=r
             emit("arc3_c8_status_poll_preserved",kernel=ARC_KERNEL,ok=r["ok"],stdout=r["stdout"],stderr=r["stderr"])
         except Exception as exc:
-            state["arc_status"]={{"ok":False,"error":f"{{type(exc).__name__}}:{{exc}}"}}
+            state["arc_status"]={"ok":False,"error":f"{type(exc).__name__}:{exc}"}
         time.sleep(60)
 
 def cap_ok(path):
