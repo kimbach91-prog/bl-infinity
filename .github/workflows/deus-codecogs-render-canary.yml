@@ -1,0 +1,90 @@
+name: DEUS CodeCogs Public Render Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-codecogs-render-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codecogs-render-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Execute bounded public LaTeX render canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/deus-codecogs
+          mkdir -p "$out"
+          nonce="DEUS_CODECOGS_$(date -u +%Y%m%dT%H%M%SZ)_$RANDOM"
+          formula_a="\\text{$nonce}\\;314159+271828"
+          formula_b="\\text{$nonce}\\;314159+271829"
+          enc_a="$(python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))' F="$formula_a")"
+          enc_b="$(python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))' F="$formula_b")"
+          url_a="https://latex.codecogs.com/svg.image?$enc_a"
+          url_b="https://latex.codecogs.com/svg.image?$enc_b"
+          printf '%s\n' "$url_a" > "$out/request_a.url"
+          printf '%s\n' "$url_b" > "$out/request_b.url"
+          start_ms="$(date +%s%3N)"
+          code_a="$(curl -L --max-time 20 -sS -D "$out/headers_a.txt" -o "$out/body_a.svg" -w '%{http_code}' "$url_a")"
+          mid_ms="$(date +%s%3N)"
+          code_b="$(curl -L --max-time 20 -sS -D "$out/headers_b.txt" -o "$out/body_b.svg" -w '%{http_code}' "$url_b")"
+          end_ms="$(date +%s%3N)"
+          test "$code_a" = "200"
+          test "$code_b" = "200"
+          python3 - <<'PY'
+          import hashlib, json, os, xml.etree.ElementTree as ET
+          root='/tmp/deus-codecogs'
+          bodies=[]
+          for name in ('a','b'):
+              p=f'{root}/body_{name}.svg'
+              data=open(p,'rb').read()
+              if not data or b'<svg' not in data[:1000]:
+                  raise SystemExit(f'not-svg-{name}')
+              elem=ET.fromstring(data)
+              if not elem.tag.lower().endswith('svg'):
+                  raise SystemExit(f'bad-root-{name}:{elem.tag}')
+              bodies.append(data)
+          sha=[hashlib.sha256(x).hexdigest() for x in bodies]
+          if sha[0] == sha[1]:
+              raise SystemExit('dual-render-hash-collision')
+          meta={
+              'schema':'deus-public-render-canary/1',
+              'provider':'CodeCogs',
+              'scope':'BL-S0 bounded LaTeX text to SVG rendering',
+              'http_status_a':200,
+              'http_status_b':200,
+              'svg_parse_a':True,
+              'svg_parse_b':True,
+              'dual_render_distinct':True,
+              'body_a_bytes':len(bodies[0]),
+              'body_b_bytes':len(bodies[1]),
+              'sha256_a':sha[0],
+              'sha256_b':sha[1],
+          }
+          open(f'{root}/meta.json','w').write(json.dumps(meta,sort_keys=True,indent=2)+'\n')
+          PY
+          sha256sum "$out"/* > "$out/sha256.txt"
+          jq -n \
+            --arg nonce "$nonce" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_a_ms "$((mid_ms-start_ms))" \
+            --argjson latency_b_ms "$((end_ms-mid_ms))" \
+            --slurpfile meta "$out/meta.json" \
+            '{provider:"CodeCogs",nonce:$nonce,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,latency_a_ms:$latency_a_ms,latency_b_ms:$latency_b_ms,result:$meta[0]}' \
+            | tee "$out/receipt.json"
+
+      - name: Upload exact canary custody artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-codecogs-render-canary
+          path: /tmp/deus-codecogs/
+          if-no-files-found: error
+          retention-days: 7
