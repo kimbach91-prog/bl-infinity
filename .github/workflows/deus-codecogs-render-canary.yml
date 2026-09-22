@@ -24,8 +24,8 @@ jobs:
           nonce="DEUS_CODECOGS_$(date -u +%Y%m%dT%H%M%SZ)_$RANDOM"
           formula_a="\\text{$nonce}\\;314159+271828"
           formula_b="\\text{$nonce}\\;314159+271829"
-          enc_a="$(python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))' F="$formula_a")"
-          enc_b="$(python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))' F="$formula_b")"
+          enc_a="$(F="$formula_a" python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))')"
+          enc_b="$(F="$formula_b" python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["F"], safe=""))')"
           url_a="https://latex.codecogs.com/svg.image?$enc_a"
           url_b="https://latex.codecogs.com/svg.image?$enc_b"
           printf '%s\n' "$url_a" > "$out/request_a.url"
@@ -38,7 +38,7 @@ jobs:
           test "$code_a" = "200"
           test "$code_b" = "200"
           python3 - <<'PY'
-          import hashlib, json, os, xml.etree.ElementTree as ET
+          import hashlib, json, xml.etree.ElementTree as ET
           root='/tmp/deus-codecogs'
           bodies=[]
           for name in ('a','b'):
