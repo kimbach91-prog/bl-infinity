@@ -1,0 +1,73 @@
+{
+  "schema": "deus-native-video-engine-contract/1",
+  "engine_id": "DEUS_NATIVE_VIDEO_ENGINE_V0",
+  "status": "CANDIDATE",
+  "parent_scene_family": "DIGE_S2_ANATOMY_DYNAMICS_V1",
+  "gpt_side_install": "DEUS_ROUTING_SKILL_NOT_OPENAI_NATIVE_TOOL",
+  "endogenous_definition": {
+    "external_image_generation_calls": 0,
+    "external_video_generation_calls": 0,
+    "renderer": "Blender",
+    "encoder": "FFmpeg"
+  },
+  "operators": {
+    "hold": "EXECUTABLE",
+    "root_bounce": "EXECUTABLE",
+    "root_spin": "EXECUTABLE",
+    "root_lean": "EXECUTABLE",
+    "fixed_camera": "EXECUTABLE",
+    "frame_sequence_render": "EXECUTABLE",
+    "mp4_encode": "EXECUTABLE",
+    "existing_audio_mux": "EXECUTABLE_IF_INPUT_EXISTS",
+    "arm_wave": "MAPPED_NOT_EXECUTED",
+    "hand_finger_articulation": "MAPPED_NOT_EXECUTED",
+    "tmj_jaw": "MAPPED_NOT_EXECUTED",
+    "viseme_lipsync": "MAPPED_NOT_EXECUTED",
+    "cloth_dynamics": "MAPPED_NOT_EXECUTED",
+    "hair_dynamics": "MAPPED_NOT_EXECUTED",
+    "native_speech_synthesis": "MAPPED_NOT_EXECUTED"
+  },
+  "canary": {
+    "source_artifact_run_id": 35737240259,
+    "source_artifact_id": 10697619610,
+    "motion": [
+      "root_bounce",
+      "root_spin",
+      "root_lean"
+    ],
+    "fps": 2,
+    "width": 180,
+    "height": 320,
+    "duration_seconds": 3,
+    "audio": "none",
+    "render_engine_request": "BLENDER_EEVEE",
+    "render_engine_runtime_alias": null,
+    "frame_count": 6,
+    "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY",
+    "proof_lite": true,
+    "proof_lite_definition": "CANONICAL_S2_BODY_GEOMETRY + SIMPLE_TEST_MATERIAL; HAIR/CLOTH/HEAVY_APPEARANCE HIDDEN FOR ARCHITECTURAL PROOF",
+    "appearance_quality_certified": false
+  },
+  "acceptance": [
+    "blend_scene_opened",
+    "character_root_created",
+    "temporal_motion_keyframes_present",
+    "frames_rendered",
+    "mp4_encoded",
+    "ffprobe_pass",
+    "mp4_sha256_recorded",
+    "external_image_generation_calls_zero",
+    "external_video_generation_calls_zero"
+  ],
+  "truth_boundary": "V0_PROOF_LITE_CAN_VERIFY_MOTION_RENDER_ENCODE_RECEIPT_ONLY__PRODUCTION_APPEARANCE_REQUIRES_SEPARATE_FULL_SCENE_RUN",
+  "production_profiles": {
+    "realtime_preview": [
+      "BLENDER_EEVEE"
+    ],
+    "quality_final": [
+      "BLENDER_EEVEE",
+      "CYCLES"
+    ],
+    "truth_boundary": "PROFILES_CONFIGURED_NOT_ALL_EXECUTED"
+  }
+}
