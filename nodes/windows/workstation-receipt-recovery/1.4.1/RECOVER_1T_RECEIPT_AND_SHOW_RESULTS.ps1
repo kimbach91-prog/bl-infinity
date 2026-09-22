@@ -100,6 +100,7 @@ function Read-DpapiString([string]$path) {
 
 function Resolve-RuntimeToken([string[]]$packageRoots) {
   $envNames = @(
+    'DEUS_WORKSTATION_001_TOKEN',
     'DEUS_WORKSTATION_RUNTIME_TOKEN',
     'DEUS_SCOPED_RUNTIME_TOKEN',
     'DEUS_RUNTIME_TOKEN'
@@ -122,7 +123,7 @@ function Resolve-RuntimeToken([string[]]$packageRoots) {
     if (Test-Path -LiteralPath $d -PathType Container) { [void]$candidateDirs.Add($d) }
   }
 
-  $nameRx = '(?i)(runtime.*token|scoped.*token|token.*runtime|token.*scoped)'
+  $nameRx = '(?i)(workstation.*token|runtime.*token|scoped.*token|token.*workstation|token.*runtime|token.*scoped)'
   foreach ($dir in $candidateDirs) {
     try {
       Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue |
@@ -144,7 +145,7 @@ function Resolve-RuntimeToken([string[]]$packageRoots) {
     } catch {}
   }
 
-  $jsonNames = @('runtimeToken','scopedRuntimeToken','runtime_token','scoped_runtime_token','deusRuntimeToken')
+  $jsonNames = @('workstationToken','workstation_token','runtimeToken','scopedRuntimeToken','runtime_token','scoped_runtime_token','deusRuntimeToken')
   $envRefNames = @('runtimeTokenEnv','scopedRuntimeTokenEnv','runtime_token_env','scoped_runtime_token_env')
   $pathRefNames = @('runtimeTokenPath','scopedRuntimeTokenPath','runtime_token_path','scoped_runtime_token_path')
 
@@ -246,6 +247,7 @@ Pass "Runtime healthy: $RuntimeUrl"
 
 Step 'Resolving scoped runtime token without printing it.'
 $tokenInfo = Resolve-RuntimeToken $roots
+if ($tokenInfo -is [Array]) { $tokenInfo = @($tokenInfo | Where-Object { $_ -and $_.Token }) | Select-Object -First 1 }
 if (-not $tokenInfo) {
   Fail 'Scoped runtime token was not found in DEUS runtime environment/package/DEUSNode scoped-token files. Do not paste credentials into chat. Keep the existing workstation node running and place the scoped runtime token only in a local DEUS_*_RUNTIME_TOKEN environment variable or package token file, then rerun this recovery.'
 }
