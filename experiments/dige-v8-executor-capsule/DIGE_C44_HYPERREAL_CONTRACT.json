@@ -1,0 +1,36 @@
+{
+  "schema": "dige-c44-hyperreal-contract/1",
+  "candidate": "C44_HHIR_UV_TRANSFER_SKIN_V1",
+  "parent": "C43_HHIR_HYBRID_REALISM_V1",
+  "parent_runtime": {
+    "run_id": 35716315974,
+    "wall_seconds": 137,
+    "hero_sha256": "e5479da5aaff1beaeccbc67b649f57b86df8e79febbb3ceeed7e5dae9a612c13",
+    "runtime_structural_pass": true,
+    "visual_verdict": "FAIL"
+  },
+  "stop_rule": "Do not continue cosmetic scalar tuning on the procedural GNM skin branch; change material representation.",
+  "delta_only": [
+    "transfer averaged MakeHuman source-vertex UVs to GNM face by nearest world-space source vertex",
+    "bind verified CC0 young_eurasian_female albedo to transferred UV",
+    "retain C43 eye/hair/framing mechanisms",
+    "use texture-driven pigmentation plus separate roughness/pore/micro-normal"
+  ],
+  "acceptance": {
+    "runtime": [
+      "static compile PASS",
+      "UV loops transferred > 0",
+      "source albedo hash exact",
+      "transfer mean/p95/max distances recorded",
+      "candidate exact + 85mm/f3.6 + no reference pixels"
+    ],
+    "visual": [
+      "face no longer reads as flat procedural single-tone material",
+      "natural pigmentation/texture survives fixed lighting",
+      "no severe UV seams or facial texture distortion",
+      "C43 eye/hair/framing does not regress materially"
+    ],
+    "promotion": "direct visual PASS before multiview/high-sample"
+  },
+  "truth_boundary": "CC0 source texture transfer is renderer input; canonical reference images remain audit-only and are not ingested."
+}
