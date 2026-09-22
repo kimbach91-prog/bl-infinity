@@ -262,6 +262,21 @@ def c25_apply_mpfb_enhanced_skin(material):
             "SSS strength":0.10,
             "SSS radius scale":0.07,
         })
+    if C39_HHIR_HYPERREAL:
+        # HHIR skin lane: preserve the mature MPFB2 graph but push material response
+        # toward scale-separated human skin rather than cosmetic smoothness.
+        settings.update({
+            "Clearcoat":0.018,
+            "Clearcoat Roughness":0.44,
+            "Pore detail":4.2,
+            "Pore distortion":1.15,
+            "Pore scale":3350.0,
+            "Pore strength":0.38,
+            "Roughness":0.54,
+            "colorMixInStrength":0.012,
+            "SSS strength":0.065,
+            "SSS radius scale":0.055,
+        })
     c25_set_group_values(group,settings)
     values=c25_group_values(group)
     for key in ("Pore detail","Pore scale","Pore strength","Roughness","SSS strength"):
@@ -398,6 +413,13 @@ C36_EYE_OPEN_SCALE=float(os.environ.get("DIGE_C36_EYE_OPEN_SCALE","0.76"))
 C36_EYE_GLOBE_SCALE=float(os.environ.get("DIGE_C36_EYE_GLOBE_SCALE","0.94"))
 C36_HAIR_LENGTH_M=float(os.environ.get("DIGE_C36_HAIR_LENGTH_M","0.36"))
 C36_HAIR_WAVE=float(os.environ.get("DIGE_C36_HAIR_WAVE","0.010"))
+C39_HHIR_HYPERREAL=os.environ.get("DIGE_C39_HHIR_HYPERREAL","0").strip()=="1"
+C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
+C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
+C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
+C39_UPDO_PRIMARY=int(os.environ.get("DIGE_C39_UPDO_PRIMARY","960"))
+C39_UPDO_BUN=int(os.environ.get("DIGE_C39_UPDO_BUN","520"))
+C39_FLYAWAYS=int(os.environ.get("DIGE_C39_FLYAWAYS","44"))
 C19_HAIRLINE_CENTER_Z=float(os.environ.get("DIGE_C19_HAIRLINE_CENTER_Z","1.600"))
 C19_HAIRLINE_TEMPLE_RISE=float(os.environ.get("DIGE_C19_HAIRLINE_TEMPLE_RISE","0.08"))
 HAIR_STRANDS_PER_ROOT=max(4,int(os.environ.get("DIGE_HAIR_STRANDS_PER_ROOT","16")))
@@ -578,13 +600,13 @@ def hair_material():
         set_input(h,"Reflection",1.0)
         set_input(h,"Transmission",1.0)
         set_input(h,"Secondary Reflection",1.0)
-        set_input(h,"Melanin",.965 if C36_CANONICAL_APPEARANCE else (.82 if C32_GNM_DERMAL_HAIR else .93))
-        set_input(h,"Melanin Redness",.018 if C36_CANONICAL_APPEARANCE else (.065 if C32_GNM_DERMAL_HAIR else .04))
-        set_input(h,"Random Color",.045 if C36_CANONICAL_APPEARANCE else (.085 if C32_GNM_DERMAL_HAIR else .03))
-        set_input(h,"Roughness",.255 if C36_CANONICAL_APPEARANCE else (.34 if C32_GNM_DERMAL_HAIR else .28))
-        set_input(h,"Radial Roughness",.35 if C36_CANONICAL_APPEARANCE else (.42 if C32_GNM_DERMAL_HAIR else .30))
-        set_input(h,"Random Roughness",.075 if C36_CANONICAL_APPEARANCE else (.11 if C32_GNM_DERMAL_HAIR else .06))
-        set_input(h,"Coat",.018 if C36_CANONICAL_APPEARANCE else (.03 if C32_GNM_DERMAL_HAIR else .02))
+        set_input(h,"Melanin",.985 if C39_HHIR_HYPERREAL else (.965 if C36_CANONICAL_APPEARANCE else (.82 if C32_GNM_DERMAL_HAIR else .93)))
+        set_input(h,"Melanin Redness",.010 if C39_HHIR_HYPERREAL else (.018 if C36_CANONICAL_APPEARANCE else (.065 if C32_GNM_DERMAL_HAIR else .04)))
+        set_input(h,"Random Color",.032 if C39_HHIR_HYPERREAL else (.045 if C36_CANONICAL_APPEARANCE else (.085 if C32_GNM_DERMAL_HAIR else .03)))
+        set_input(h,"Roughness",.285 if C39_HHIR_HYPERREAL else (.255 if C36_CANONICAL_APPEARANCE else (.34 if C32_GNM_DERMAL_HAIR else .28)))
+        set_input(h,"Radial Roughness",.37 if C39_HHIR_HYPERREAL else (.35 if C36_CANONICAL_APPEARANCE else (.42 if C32_GNM_DERMAL_HAIR else .30)))
+        set_input(h,"Random Roughness",.055 if C39_HHIR_HYPERREAL else (.075 if C36_CANONICAL_APPEARANCE else (.11 if C32_GNM_DERMAL_HAIR else .06)))
+        set_input(h,"Coat",.010 if C39_HHIR_HYPERREAL else (.018 if C36_CANONICAL_APPEARANCE else (.03 if C32_GNM_DERMAL_HAIR else .02)))
         set_input(h,"IOR",1.55)
         if h.inputs.get("Color"): h.inputs["Color"].default_value=(0.018,0.010,0.006,1)
     except Exception:
@@ -2846,7 +2868,103 @@ groom_surface=(c28_gnm_objects.get("skin") if C28_GNM_HEAD else body)
 if groom_surface is None:
     raise RuntimeError("C28 GNM skin surface missing for strand groom")
 hair_groom,hair_curve_metrics=build_c17_strand_groom(hair_obj,groom_surface,hair)
-if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR:
+
+# C39 HHIR hyperreal updo lane.
+# This intentionally replaces the semantically wrong long-hair curtain prior with a
+# typed groom subsystem: scalp gathering -> primary flow -> bun volume -> fringe/baby
+# hair -> sparse flyaways. It is procedural geometry, not image-space beautification.
+c39_updo_metrics={"enabled":False}
+if C39_HHIR_HYPERREAL:
+    if not C28_GNM_HEAD:
+        raise RuntimeError("C39 HHIR hyperreal requires GNM head geometry")
+    try:
+        hair_groom.hide_render=True
+        hair_groom.hide_set(True)
+    except Exception:
+        pass
+    hrng=random.Random(20263939)
+    hairline=float(c28_gnm["hairline_target_z"])
+    bbox_max=Vector(c28_gnm["aligned_bbox_max"])
+    eye_center=sum(transformed_landmarks[36:48],Vector())/12
+    bun_center=Vector((0.0, eye_center.y-C39_BUN_BACK, min(float(bbox_max.z)+.018, hairline+C39_BUN_LIFT)))
+    primary=[]
+    for i in range(max(160,C39_UPDO_PRIMARY)):
+        u=(i+.5)/max(160,C39_UPDO_PRIMARY)
+        theta=math.tau*((i*0.61803398875)%1.0)
+        ring=(u**0.58)
+        x=.102*ring*math.cos(theta)
+        y=eye_center.y-.025-.050*ring*abs(math.sin(theta))
+        z=hairline+.018+.095*(1.0-ring)+hrng.uniform(-.0025,.0025)
+        root=Vector((x,y,z))
+        side=1.0 if x>=0 else -1.0
+        shoulder=Vector((x*.58, y-.018-.010*ring, z+.018+hrng.uniform(-.003,.003)))
+        gather=bun_center+Vector((side*.018*(1.0-ring),.004*math.cos(theta),-.010+.015*(1.0-ring)))
+        tip=bun_center+Vector((side*.010*math.sin(theta),-.006*math.cos(theta),.006*math.sin(theta*1.7)))
+        primary.append([root,shoulder,gather,tip])
+    curve_object("DIGE_C39_HHIR_UPDO_PRIMARY",primary,.000044,hair)
+
+    bun=[]
+    bun_count=max(160,C39_UPDO_BUN)
+    for i in range(bun_count):
+        phase=math.tau*i/bun_count
+        local_r=C39_BUN_RADIUS*(.72+.28*((i*37)%101)/100.0)
+        zoff=.028*math.sin(phase*1.7)
+        pts=[]
+        turns=1.35+0.45*((i*17)%83)/82.0
+        for j in range(10):
+            t=j/9.0
+            ang=phase+math.tau*turns*t
+            rr=local_r*(1.0-.20*t)+hrng.uniform(-.0015,.0015)
+            pts.append((
+                bun_center.x+rr*math.cos(ang),
+                bun_center.y+.62*rr*math.sin(ang),
+                bun_center.z+zoff*(1.0-.35*t)+.016*math.sin(ang*.7)
+            ))
+        bun.append(pts)
+    curve_object("DIGE_C39_HHIR_BUN_VOLUME",bun,.000048,hair)
+
+    fringe=[]
+    for i in range(132):
+        u=(i+.5)/132.0
+        x=-.082+.164*u
+        temple=min(1.0,abs(x)/.082)
+        root=Vector((x,eye_center.y+.026,hairline+.008+.016*(temple**1.45)+hrng.uniform(-.0015,.0015)))
+        length=hrng.uniform(.020,.060)*(1.0-.25*temple)
+        side=1.0 if x>=0 else -1.0
+        fringe.append([
+            root,
+            root+Vector((side*.002,-.004,-length*.28)),
+            root+Vector((side*.004,-.009,-length*.62)),
+            root+Vector((side*.006,-.012,-length)),
+        ])
+    curve_object("DIGE_C39_HHIR_FRINGE_BABY",fringe,.000036,hair)
+
+    fly=[]
+    for i in range(max(12,C39_FLYAWAYS)):
+        phase=math.tau*((i*0.754877666)%1.0)
+        root=bun_center+Vector((C39_BUN_RADIUS*.78*math.cos(phase),.58*C39_BUN_RADIUS*.78*math.sin(phase),.018*math.sin(phase*.8)))
+        length=hrng.uniform(.018,.045)
+        side=1 if math.cos(phase)>=0 else -1
+        fly.append([
+            root,
+            root+Vector((side*length*.22,-length*.12,length*.35)),
+            root+Vector((side*length*.45,-length*.20,length*.72)),
+        ])
+    curve_object("DIGE_C39_HHIR_FLYAWAYS",fly,.000026,hair)
+    c39_updo_metrics={
+        "enabled":True,
+        "style":"HHIR_SCALP_GATHER_PRIMARY_BUN_FRINGE_FLYAWAY_V1",
+        "primary_curves":len(primary),
+        "bun_curves":len(bun),
+        "fringe_curves":len(fringe),
+        "flyaway_curves":len(fly),
+        "bun_center":list(bun_center),
+        "bun_radius_m":C39_BUN_RADIUS,
+        "truth_boundary":"PROCEDURAL_SOURCE_LEVEL_GROOM__NO_REFERENCE_PIXELS_USED"
+    }
+    hair_curve_metrics["c39_hhir_updo"]=c39_updo_metrics
+
+if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR and not C39_HHIR_HYPERREAL:
     brng=random.Random(20263637)
     bangs=[]
     for side in (-1.0,1.0):
@@ -3111,7 +3229,9 @@ for vid,loc,target,lens,fstop,w,h in views:
 # Controlled hero evidence or sample-space shard.
 hero_samples=int(os.environ.get("DIGE_SAMPLES_HERO","256"))
 hero_seed=int(os.environ.get("DIGE_RENDER_SEED","20260919"))
-if C36_CANONICAL_APPEARANCE:
+if C39_HHIR_HYPERREAL:
+    aim((0,.96,1.598),(0,.012,1.585),85,3.6)
+elif C36_CANONICAL_APPEARANCE:
     aim((0,.82,1.598),(0,.010,1.585),70,3.2)
 else:
     aim((0,1.10,1.595),(0,.030,1.580),85,4.5)
@@ -3228,6 +3348,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "C39_HHIR_HYPERREAL_UPDO_V1" if C39_HHIR_HYPERREAL else
    "C36_CANONICAL_REFERENCE_APPEARANCE_V1" if C36_CANONICAL_APPEARANCE else
     "C33_GUIDE_GATED_GROOM_SEARCH_V1" if C33_GUIDE_GATED_GROOM else
    "C32_GNM_DERMAL_HAIR_REFINEMENT_V1" if C32_GNM_DERMAL_HAIR else
@@ -3357,6 +3478,8 @@ receipt={
    "c33_guide_gated_groom":C33_GUIDE_GATED_GROOM,
    "c33_guide_max_dist_m":C33_GUIDE_MAX_DIST if C33_GUIDE_GATED_GROOM else None,
    "c33_scalp_z_drop_m":C33_SCALP_Z_DROP if C33_GUIDE_GATED_GROOM else None,
+   "c39_hhir_hyperreal":C39_HHIR_HYPERREAL,
+   "c39_updo_metrics":c39_updo_metrics,
    "c31_mask_vertex_count":c31_mask_vertex_count,
    "c31_wetline_count":c31_wetline_count,
    "c31_mouth_gap_count":c31_mouth_gap_count
