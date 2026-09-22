@@ -1,0 +1,101 @@
+name: ARC3 R253 re86 g50t mechanism diagnostic
+
+on:
+  push:
+    branches:
+      - deus/r253-re86-g50t-mechanism-diag-20260923
+    paths:
+      - .github/workflows/arc3-r253-mechanism-diag.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-r253:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout DEUS candidate
+        uses: actions/checkout@v4
+      - name: Checkout pinned public traces
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile R253
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_transition_morphology_diag_253.py
+      - name: Stage p0-p9 only for re86 and g50t
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for game in re86-8af5384d g50t-5849a774; do
+            for p in $(seq 0 9); do
+              f="${game}_p${p}_events.jsonl"
+              src="upstream-duck/example-run/artifacts/$f"
+              test -s "$src"
+              cp "$src" "public_trace/$f"
+            done
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R253 source-free morphology diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          test "${#args[@]}" -eq 40
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_transition_morphology_diag_253.py \
+            "${args[@]}" --output r253-mechanism-diag.json \
+            2> >(tee r253-runtime.txt >&2) | tee r253-stdout.txt
+      - name: Verify diagnostic truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r253-mechanism-diag.json').read_text())
+          assert d['schema']=='deus/arc3-r253-transition-morphology-diagnostic/1'
+          assert sorted(d['games'])==['g50t-5849a774','re86-8af5384d']
+          t=d['truth']
+          assert t['public_trace_only'] is True
+          assert t['game_source_read'] is False
+          assert t['p10_p19_read'] is False
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          assert t['competition_submission'] is False
+          Path('r253-verdict.json').write_text(json.dumps({
+            'verdict':'DIAGNOSTIC_ONLY_NO_PROMOTION',
+            'games':sorted(d['games']),
+            'scope':'p0-p9_public_development_only'
+          },indent=2,sort_keys=True)+'\n')
+          PY
+          sha256sum r253-mechanism-diag.json r253-verdict.json r253-runtime.txt r253-stdout.txt public_trace/SHA256SUMS.txt > R253_SHA256SUMS.txt
+      - name: Upload R253 evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: r253-re86-g50t-mechanism-diag
+          path: |
+            r253-mechanism-diag.json
+            r253-verdict.json
+            r253-runtime.txt
+            r253-stdout.txt
+            R253_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
