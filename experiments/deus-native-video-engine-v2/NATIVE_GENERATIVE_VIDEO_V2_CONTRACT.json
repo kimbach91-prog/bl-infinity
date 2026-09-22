@@ -1,0 +1,64 @@
+{
+  "schema": "deus-native-generative-video-contract/2",
+  "engine_id": "DEUS_NATIVE_GENERATIVE_VIDEO_V2",
+  "status": "CANDIDATE",
+  "supersedes_visible_motion_claims_from": [
+    "DEUS_NATIVE_VIDEO_ENGINE_V0",
+    "DEUS_NATIVE_IMAGE_VIDEO_V1_BETA"
+  ],
+  "definition": {
+    "generative_motion": "new temporal visual states synthesized by a learned spatiotemporal model in video latent/token space",
+    "native_self_hosted_open_weight": "DEUS-controlled execution with third-party licensed open weights and zero proprietary video-generation API calls",
+    "native_self_trained": "DEUS-controlled trained/fine-tuned weights with attributable training receipt"
+  },
+  "mandatory_receipt_fields": [
+    "learned_checkpoint_sha256",
+    "weights_origin",
+    "weights_license",
+    "generation_operator",
+    "temporal_latent_frames",
+    "sampling_steps",
+    "spatiotemporal_modeling",
+    "output_sha256",
+    "proprietary_video_api_calls"
+  ],
+  "allowed_generation_operators": [
+    "flow_matching",
+    "diffusion",
+    "autoregressive_latent"
+  ],
+  "non_generative_primary_operators": [
+    "affine_transform",
+    "homography",
+    "ken_burns",
+    "optical_flow_warp_only",
+    "blender_root_motion_only",
+    "duplicate_frame_interpolation",
+    "crossfade_only"
+  ],
+  "architecture": {
+    "conditioning_streams": [
+      "reference_identity",
+      "text_action_timeline",
+      "optional_pose",
+      "optional_face",
+      "optional_keyframes"
+    ],
+    "latent": "video_vae_or_equivalent_temporal_latent",
+    "temporal_model": "3d_or_explicit_spatiotemporal_tokens",
+    "sampling": "iterative_flow_diffusion_or_autoregressive",
+    "decoding": "video_vae_or_equivalent_temporal_decoder"
+  },
+  "provenance_gate": "experiments/deus-native-video-engine-v2/provenance_gate.py",
+  "first_runtime_candidate": "pyramid_flow",
+  "fallback_runtime_candidates": [
+    "wan2_2_ti2v_5b",
+    "wan2_2_animate_14b",
+    "mochi1"
+  ],
+  "research_only_by_default": [
+    "ltx2",
+    "hunyuanvideo"
+  ],
+  "truth_boundary": "ARCHITECTURE_VERIFIED_NE_MODEL_RUNTIME_VERIFIED_NE_NATURAL_MOTION_VERIFIED"
+}

@@ -1,0 +1,71 @@
+name: DEUS Native Generative Video V2 Architecture Gate
+
+on:
+  pull_request:
+    paths:
+      - '.deus/agents/GPT-NATIVE-VIDEO-01/GENERATIVE_VIDEO_V2_RESEARCH_SYNTHESIS.md'
+      - 'experiments/deus-native-video-engine-v2/**'
+      - '.github/workflows/deus-native-generative-video-v2-architecture.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  architecture-provenance-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Syntax and contract checks
+        run: |
+          set -euxo pipefail
+          python -m py_compile experiments/deus-native-video-engine-v2/*.py
+          python - <<'PY'
+          import json
+          p="experiments/deus-native-video-engine-v2/NATIVE_GENERATIVE_VIDEO_V2_CONTRACT.json"
+          d=json.load(open(p))
+          assert d["engine_id"]=="DEUS_NATIVE_GENERATIVE_VIDEO_V2"
+          assert "affine_transform" in d["non_generative_primary_operators"]
+          assert "flow_matching" in d["allowed_generation_operators"]
+          assert d["first_runtime_candidate"]=="pyramid_flow"
+          print("CONTRACT_PASS")
+          PY
+
+      - name: Run provenance-gate tests
+        working-directory: experiments/deus-native-video-engine-v2
+        run: python -m unittest -v test_provenance_gate.py
+
+      - name: Emit architecture receipt
+        run: |
+          python - <<'PY'
+          import hashlib, json, pathlib
+          paths=[
+            pathlib.Path(".deus/agents/GPT-NATIVE-VIDEO-01/GENERATIVE_VIDEO_V2_RESEARCH_SYNTHESIS.md"),
+            pathlib.Path("experiments/deus-native-video-engine-v2/NATIVE_GENERATIVE_VIDEO_V2_CONTRACT.json"),
+            pathlib.Path("experiments/deus-native-video-engine-v2/backend_registry.py"),
+            pathlib.Path("experiments/deus-native-video-engine-v2/provenance_gate.py"),
+          ]
+          receipt={
+            "schema":"deus-native-generative-video-v2-architecture-receipt/1",
+            "state":"ARCHITECTURE_AND_PROVENANCE_GATE_EXECUTED",
+            "copied_third_party_code_lines":0,
+            "files":{str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in paths},
+            "runtime_natural_motion":"NOT_EXECUTED",
+            "model_checkpoint":"NOT_BOUND",
+            "truth_boundary":"ARCHITECTURE_VERIFIED_NE_MODEL_RUNTIME_VERIFIED_NE_NATURAL_MOTION_VERIFIED"
+          }
+          out=pathlib.Path("experiments/deus-native-video-engine-v2/runtime")
+          out.mkdir(parents=True,exist_ok=True)
+          (out/"V2_ARCHITECTURE_RECEIPT.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DEUS-NATIVE-GENERATIVE-VIDEO-V2-ARCH-${{ github.event.pull_request.head.sha }}
+          path: experiments/deus-native-video-engine-v2/runtime/V2_ARCHITECTURE_RECEIPT.json
+          retention-days: 30
