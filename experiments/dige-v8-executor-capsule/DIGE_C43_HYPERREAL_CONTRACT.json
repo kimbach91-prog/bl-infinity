@@ -1,0 +1,47 @@
+{
+  "schema": "dige-c43-hyperreal-contract/1",
+  "candidate": "C43_HHIR_HYBRID_REALISM_V1",
+  "parent": "C42_HHIR_EYE_GEOMETRY_FACE_SKIN_V1",
+  "parent_runtime": {
+    "run_id": 35715747571,
+    "wall_seconds": 127,
+    "hero_sha256": "0454b838e1f2b1bc61b29638c6801c6dcfe17a45d801fe88de71061cec6a41fb",
+    "runtime_structural_pass": true,
+    "visual_verdict": "FAIL"
+  },
+  "retained_wins": [
+    "C42 restores visible iris/pupil without detached C40 discs",
+    "C41/C42 scalp-flow bun is structurally better than C39 fan/side-walls",
+    "85mm camera is stable"
+  ],
+  "remaining_scars": [
+    "eyes still too round/doll-like",
+    "frontal hairline reads as dense dark band",
+    "helper garment/neck silhouette contaminates portrait diagnostic",
+    "face remains waxy/flat"
+  ],
+  "delta_only": [
+    "shrink iris/pupil surface geometry and keep it closer to eyeball",
+    "aggressively downsample frontal scalp roots while retaining rear scalp coverage",
+    "single-offset undercoat on frontal band plus <=28 sparse hairline feathers",
+    "hide fitted tights only in hero diagnostic",
+    "slightly lower SSS/specular for face PBR"
+  ],
+  "acceptance": {
+    "runtime": [
+      "exact C43 candidate",
+      "85mm/f3.6",
+      "C42 eye geometry retained",
+      "no ref pixels",
+      "render artifact complete"
+    ],
+    "visual": [
+      "eyes read less round/doll-like",
+      "hairline not a solid dark strip",
+      "neck/shoulder framing clean",
+      "skin response not worse than C42"
+    ],
+    "promotion": "direct visual pass required before multiview"
+  },
+  "truth_boundary": "Delta-only hybrid; no hyperreal certification from runtime."
+}
