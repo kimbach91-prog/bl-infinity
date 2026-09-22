@@ -1,0 +1,85 @@
+name: ARC3 public heldout confidence gate 176
+
+on:
+  push:
+    branches:
+      - deus/arc3-r175-residual-suite-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_heldout_confidence_gate_176.py
+      - .github/workflows/arc3-public-heldout-confidence-gate-176.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  heldout-confidence-gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_executable_world_model_134.py \
+            public_benchmark/arc3/kaggle_candidates/public_fullboard_translation_program_160.py \
+            public_benchmark/arc3/kaggle_candidates/public_dense_scroll_renderer_audit_167.py \
+            public_benchmark/arc3/kaggle_candidates/public_world_overlay_renderer_172.py \
+            public_benchmark/arc3/kaggle_candidates/public_residual_family_sweep_175.py \
+            public_benchmark/arc3/kaggle_candidates/public_heldout_confidence_gate_176.py
+      - name: Download exact pinned public traces
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          base='https://raw.githubusercontent.com/Tufalabs/duck-harness/7652836056c59e044f093e3c13ed7438c814169e/example-run/artifacts'
+          for f in ar25-0c556536_p0_events.jsonl ar25-0c556536_p10_events.jsonl ar25-0c556536_p11_events.jsonl; do
+            curl --fail --location --retry 3 --silent --show-error "$base/$f" -o "public_trace/$f"
+            test -s "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute p0-train heldout gate
+        run: |
+          set -euo pipefail
+          cd public_benchmark/arc3/kaggle_candidates
+          python public_heldout_confidence_gate_176.py \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p0_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p10_events.jsonl" \
+            --input "$GITHUB_WORKSPACE/public_trace/ar25-0c556536_p11_events.jsonl" \
+            --output "$GITHUB_WORKSPACE/heldout-confidence-public-176.json"
+      - name: Enforce truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('heldout-confidence-public-176.json'))
+          assert d['schema']=='deus/arc3-public-heldout-confidence-gate/1'
+          assert d['rung']==176
+          t=d['truth']
+          assert t['gate_selected_from_p0_only'] is True
+          assert t['gate_locked_before_p10_p11_outcomes_are_used_for_evaluation'] is True
+          assert t['current_prediction_uses_preaction_and_prior_history_only'] is True
+          assert t['independent_generalization_claim'] is False
+          assert t['kaggle_execution'] is False
+          print(json.dumps({
+            'rung':176,
+            'gate':d['diagnostic_gate'],
+            'locked_gate':d['locked_gate'],
+            'raw_per_trace':d['raw_per_trace'],
+            'train_eval':d['train_eval'],
+            'heldout_eval':d['heldout_eval'],
+            'truth':'PUBLIC_TRAIN_P0_LOCKED_GATE_HELDOUT_P10_P11'
+          },sort_keys=True))
+          PY
+      - name: Upload rung 176 diagnostic receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: arc3-public-heldout-confidence-gate-176
+          path: |
+            heldout-confidence-public-176.json
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
