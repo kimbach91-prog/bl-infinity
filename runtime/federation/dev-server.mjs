@@ -169,6 +169,26 @@ const server = http.createServer(async (req, res) => {
       return send(res, 200, { ...(await runtime.orchestrator.status()), providerSyncMode, providerSync, providerSynchronizer: providerSynchronizer?.status?.() ?? null, rateLimitBackend, rateLimitMode, rateLimit });
     }
 
+    if (req.method === 'POST' && req.url === '/workstations/report') {
+      const access = authorizeRequired(req, res, 'runtime:operate'); if (!access) return;
+      const body = await readJson(req, maxBodyBytes);
+      const report = normalizeWorkstationReport(body, access.principal.id);
+      const record = await runtime.audit.append('workstation.report', report);
+      return send(res, 201, {
+        accepted: true,
+        record: { seq: record.seq, ts: record.ts, hash: record.hash },
+        workstationId: report.workstationId,
+        schema: report.schema,
+      });
+    }
+
+    if (req.method === 'GET' && req.url === '/workstations/latest') {
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
+      const records = await runtime.audit.list();
+      const record = [...records].reverse().find((entry) => entry.type === 'workstation.report') ?? null;
+      return send(res, 200, { record });
+    }
+
     if (req.method === 'GET' && req.url === '/ledger') {
       const access = authorizeRequired(req, res, 'ledger:read'); if (!access) return;
       return send(res, 200, { summary: await runtime.orchestrator.ledger.summary() });
@@ -522,6 +542,33 @@ async function loadProviders() {
   }
   const file = process.env.BL_PROVIDER_FILE || new URL('./config/providers.example.json', import.meta.url);
   return JSON.parse(await readFile(file, 'utf8'));
+}
+function normalizeWorkstationReport(input, actor) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('workstation report must be an object');
+  assertNoSensitiveFields(input);
+  const workstationId = String(input.workstationId ?? '');
+  if (!/^[a-zA-Z0-9._:-]{2,128}$/.test(workstationId)) throw new Error('invalid workstationId');
+  const schema = String(input.schema ?? '');
+  if (schema !== 'deus-workstation-benchmark/1') throw new Error('unsupported workstation report schema');
+  const allowed = {};
+  for (const key of ['schema','workstationId','nodeVersion','createdAt','system','resources','benchmark','supercell','receiptDigest','notes']) {
+    if (Object.hasOwn(input, key)) allowed[key] = structuredClone(input[key]);
+  }
+  return { ...allowed, workstationId, schema, actor };
+}
+function assertNoSensitiveFields(value, path = '') {
+  if (value == null) return;
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i += 1) assertNoSensitiveFields(value[i], `${path}[${i}]`);
+    return;
+  }
+  if (typeof value !== 'object') return;
+  for (const [key, child] of Object.entries(value)) {
+    if (/(token|secret|password|api[_-]?key|credential|private[_-]?key)/i.test(key)) {
+      throw new Error(`sensitive field rejected: ${path ? path + '.' : ''}${key}`);
+    }
+    assertNoSensitiveFields(child, path ? `${path}.${key}` : key);
+  }
 }
 function neutralTelemetry() { return { inFlight: 0, trust: 0.5, availability: 0.5, p95LatencyMs: 1000, costPerUnitUsd: 0 }; }
 function parseJsonEnv(name, fallback) { return process.env[name] ? JSON.parse(process.env[name]) : fallback; }
