@@ -1,0 +1,77 @@
+name: DEUS CodeCogs Public Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-codecogs-public-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  codecogs-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run one bounded BL-S0 CodeCogs render canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-codecogs
+          marker="DEUS${GITHUB_RUN_ID: -6}"
+          latex="${marker}+\\frac{47}{31}+\\int_0^1x^2dx"
+          encoded="$(python3 - <<'PY' "$latex"
+          import sys, urllib.parse
+          print(urllib.parse.quote(sys.argv[1], safe=''))
+          PY
+          )"
+          url="https://latex.codecogs.com/svg.image?${encoded}"
+          start_ms="$(date +%s%3N)"
+          code="$(curl --max-time 20 -sS -D /tmp/deus-codecogs/headers.txt -o /tmp/deus-codecogs/body.svg -w '%{http_code}' "$url" || true)"
+          end_ms="$(date +%s%3N)"
+          latency_ms=$((end_ms - start_ms))
+          ctype="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{gsub("\\r",""); sub(/^[^:]*:[ ]*/,""); print; exit}' /tmp/deus-codecogs/headers.txt || true)"
+          body_sha="$(sha256sum /tmp/deus-codecogs/body.svg 2>/dev/null | awk '{print $1}' || true)"
+          body_bytes="$(wc -c < /tmp/deus-codecogs/body.svg 2>/dev/null || echo 0)"
+          structural=false
+          if [ "$code" = "200" ] && [ "$body_bytes" -gt 200 ]; then
+            structural="$(python3 - <<'PY' /tmp/deus-codecogs/body.svg
+          import sys, xml.etree.ElementTree as ET
+          try:
+              root=ET.parse(sys.argv[1]).getroot()
+              local=root.tag.split('}')[-1].lower()
+              has_geom=any(e.tag.split('}')[-1].lower() in {'path','use','g','text'} for e in root.iter())
+              print('true' if local=='svg' and has_geom else 'false')
+          except Exception:
+              print('false')
+          PY
+          )"
+          fi
+          jq -n \
+            --arg receipt_version "DEUS-CODECOGS-PUBLIC-CANARY/1" \
+            --arg provider "CODECOGS_EQUATION_RENDER" \
+            --arg endpoint "https://latex.codecogs.com/svg.image" \
+            --arg marker "$marker" \
+            --arg latex "$latex" \
+            --arg http_status "$code" \
+            --arg content_type "$ctype" \
+            --arg body_sha256 "$body_sha" \
+            --arg source_run_id "$GITHUB_RUN_ID" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_ms "$latency_ms" \
+            --argjson body_bytes "$body_bytes" \
+            --argjson structural_contract "$structural" \
+            '{receipt_version:$receipt_version,provider:$provider,endpoint:$endpoint,data_class:"BL-S0_PUBLIC_SYNTHETIC",auth_mode:"NO_AUTH_HEADER",scope:"REMOTE_LATEX_TO_SVG_RENDERING",marker:$marker,latex:$latex,http_status:($http_status|tonumber),content_type:$content_type,latency_ms:$latency_ms,body_bytes:$body_bytes,structural_contract:$structural_contract,body_sha256:$body_sha256,source_run_id:$source_run_id,source_sha:$source_sha,spend_authorized:false,spend_observed:0}' \
+            | tee /tmp/deus-codecogs/receipt.json
+          test "$code" = "200"
+          test "$structural" = "true"
+
+      - name: Upload exact canary custody
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-codecogs-public-canary-${{ github.run_id }}
+          path: /tmp/deus-codecogs/
+          if-no-files-found: error
+          retention-days: 7
