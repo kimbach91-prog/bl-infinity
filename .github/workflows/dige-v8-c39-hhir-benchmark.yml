@@ -1,0 +1,251 @@
+name: DIGE V8 C39 HHIR Heterogeneous Benchmark
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/dige-v8-c39-hhir-benchmark.yml'
+      - 'experiments/dige-v8-executor-capsule/blender_render_v8.py'
+      - 'experiments/dige-v8-executor-capsule/DIGE_C39_HHIR_BENCHMARK.json'
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: dige-v8-c39-hhir-${{ github.event.pull_request.head.sha }}
+  cancel-in-progress: false
+
+jobs:
+  render-ab:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        include:
+          - id: DIRECT_G
+            hhir: '0'
+            eye_open: '0.68'
+            eye_globe: '0.90'
+            jaw: '0.88'
+            hair_length: '0.40'
+            hair_wave: '0.012'
+          - id: HHIR_C39
+            hhir: '1'
+            eye_open: '0.64'
+            eye_globe: '0.88'
+            jaw: '0.88'
+            hair_length: '0.30'
+            hair_wave: '0.006'
+
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+
+      - name: Reuse C34 verified runtime assets
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 authored prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Verify frozen assets and HHIR contract
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          cd runtime/system_assets
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  long01.mhclo" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  long01.mhmat" | sha256sum -c -
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
+          cd ../..
+          python - <<'PY'
+          import json,hashlib,pathlib
+          p=pathlib.Path("DIGE_C39_HHIR_BENCHMARK.json")
+          d=json.loads(p.read_text())
+          assert d["schema"]=="dige-hhir-hyperreal-benchmark/1"
+          assert len(d["hhir_graph"])>=6
+          assert "runtime pass != hyperreal pass" in d["hhir_graph"][-1]["invariants"]
+          print(json.dumps({"benchmark_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"nodes":len(d["hhir_graph"])}))
+          PY
+
+      - name: Rebind deterministic body geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python build_makehuman_v8.py | tee runtime/c39_geometry_canon_rebind.json
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Render matched A/B candidate
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '1'
+          DIGE_SEARCH_DENOISE: '0'
+          DIGE_OUTPUT_TAG: c39_${{ matrix.id }}
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_C36_CANONICAL_APPEARANCE: '1'
+          DIGE_C39_HHIR_HYPERREAL: ${{ matrix.hhir }}
+          DIGE_C36_JAW_TAPER: ${{ matrix.jaw }}
+          DIGE_C36_EYE_OPEN_SCALE: ${{ matrix.eye_open }}
+          DIGE_C36_EYE_GLOBE_SCALE: ${{ matrix.eye_globe }}
+          DIGE_C36_HAIR_LENGTH_M: ${{ matrix.hair_length }}
+          DIGE_C36_HAIR_WAVE: ${{ matrix.hair_wave }}
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_long01
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SAMPLES_PREVIEW: '96'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20263939'
+          DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euxo pipefail
+          START=$(date +%s)
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py | tee runtime/c39_${{ matrix.id }}.log
+          END=$(date +%s)
+          printf '{"wall_seconds":%s}\n' "$((END-START))" > runtime/c39_${{ matrix.id }}_timing.json
+
+      - name: Verify arm receipt
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          ARM: ${{ matrix.id }}
+          HHIR: ${{ matrix.hhir }}
+        run: |
+          python - <<'PY'
+          import json,hashlib,os,pathlib
+          arm=os.environ["ARM"]
+          root=pathlib.Path("runtime/renders/c39_"+arm)
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          timing=json.loads(pathlib.Path("runtime/c39_"+arm+"_timing.json").read_text())
+          assert r["device"]=="CPU"
+          assert r["hair_curve_metrics"]["c32_lower_central_root_count"]==0
+          assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
+          hhir=os.environ["HHIR"]=="1"
+          if hhir:
+              assert r["appearance_candidate"]=="C39_HHIR_HYPERREAL_UPDO_V1"
+              m=r["appearance_selection"]["c39_updo_metrics"]
+              assert m["enabled"] is True
+              assert m["primary_curves"]>=900 and m["bun_curves"]>=500
+              assert m["fringe_curves"]>=100 and m["flyaway_curves"]>=12
+              known_scar="LONG01_FINAL_STYLE_REPLACED"
+          else:
+              assert r["appearance_candidate"]=="C36_CANONICAL_REFERENCE_APPEARANCE_V1"
+              known_scar="DIRECT_LONG01_BASELINE"
+          bench=pathlib.Path("DIGE_C39_HHIR_BENCHMARK.json")
+          summary={
+              "schema":"dige-c39-hhir-arm-receipt/1",
+              "arm":arm,
+              "hhir":hhir,
+              "appearance_candidate":r["appearance_candidate"],
+              "hero":r["outputs"][0],
+              "wall_seconds":timing["wall_seconds"],
+              "hair_style":r["hair_surface_contract"]["style"],
+              "hair_curve_metrics":r["hair_curve_metrics"],
+              "c39_updo_metrics":r["appearance_selection"].get("c39_updo_metrics"),
+              "known_scar_state":known_scar,
+              "benchmark_contract_sha256":hashlib.sha256(bench.read_bytes()).hexdigest(),
+              "truth_boundary":"RUNTIME_AND_STRUCTURAL_RECEIPT_ONLY__DIRECT_VISUAL_HYPERREAL_AUDIT_REQUIRED"
+          }
+          (root/"DIGE_C39_ARM_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(summary,sort_keys=True))
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: DIGE-C39-${{ matrix.id }}-${{ github.event.pull_request.head.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/c39_${{ matrix.id }}/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/c39_${{ matrix.id }}/*.json
+            experiments/dige-v8-executor-capsule/runtime/c39_${{ matrix.id }}.log
+            experiments/dige-v8-executor-capsule/runtime/c39_${{ matrix.id }}_timing.json
+          if-no-files-found: error
+          retention-days: 14
+
+  reduce-benchmark:
+    needs: render-ab
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: DIGE-C39-*-${{ github.event.pull_request.head.sha }}
+          path: artifacts
+          merge-multiple: true
+      - name: Reduce structural benchmark
+        run: |
+          python - <<'PY'
+          import json,pathlib
+          rows=[]
+          for p in pathlib.Path("artifacts").rglob("DIGE_C39_ARM_SUMMARY.json"):
+              rows.append(json.loads(p.read_text()))
+          assert len(rows)==2, rows
+          by={x["arm"]:x for x in rows}
+          a=by["DIRECT_G"]; b=by["HHIR_C39"]
+          assert b["hhir"] and not a["hhir"]
+          assert b["c39_updo_metrics"]["enabled"] is True
+          result={
+              "schema":"dige-c39-hhir-benchmark-result/1",
+              "direct_arm":a,
+              "hhir_arm":b,
+              "structural_hhir_pass":True,
+              "known_scar_delta":{
+                  "direct":"retains long01 final-style baseline already visually rejected in C36_G",
+                  "hhir":"replaces final-style long01 curtain with source-level scalp-gather/bun/fringe/flyaway graph"
+              },
+              "runtime_wall_seconds":{"direct":a["wall_seconds"],"hhir":b["wall_seconds"]},
+              "visual_verdict":"PENDING_DIRECT_IMAGE_AUDIT",
+              "promotion":"NO_HYPERREAL_CLAIM_UNTIL_VISUAL_PASS"
+          }
+          pathlib.Path("DIGE_C39_HHIR_BENCHMARK_RESULT.json").write_text(json.dumps(result,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(result,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DIGE-C39-HHIR-BENCHMARK-${{ github.event.pull_request.head.sha }}
+          path: DIGE_C39_HHIR_BENCHMARK_RESULT.json
+          retention-days: 14
