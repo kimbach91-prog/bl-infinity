@@ -1,0 +1,320 @@
+name: ARC3 source-free integration audit 248
+on:
+  push:
+    branches: [deus/arc3-remaining14-coverage-20260922]
+    paths:
+      - .github/workflows/arc3-sourcefree-integration-audit-248.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  r247-per-game:
+    strategy:
+      fail-fast: false
+      matrix:
+        game:
+          - ar25-0c556536
+          - bp35-0a0ad940
+          - cd82-fb555c5d
+          - cn04-2fe56bfb
+          - dc22-fdcac232
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - sc25-635fd71a
+          - sk48-d8078629
+          - sp80-589a99af
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - tu93-0768757b
+          - vc33-5430563c
+          - wa30-ee6fef47
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage R247 game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace out
+          for p in $(seq 0 19); do
+            f="${{ matrix.game }}_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+      - name: Execute R247
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_247.py             "${args[@]}" --output "out/${{ matrix.game }}.json"
+      - name: Verify R247 truth
+        run: |
+          python - <<'PY'
+          import json,glob
+          p=glob.glob('out/*.json'); assert len(p)==1
+          d=json.load(open(p[0]))
+          assert d['schema']=='deus/arc3-r247-action-conditional-markov-gate/1'
+          assert d['aggregate']['game_count']==1
+          t=d['truth']
+          assert t['game_source_read'] is False
+          assert t['selection_uses_p0_p9_only'] is True
+          assert t['p10_p19_never_updates_selection_or_model'] is True
+          assert t['r246_wrong_locations_not_encoded_as_rules'] is True
+          assert t['kaggle_execution'] is False
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r248-r247-${{ matrix.game }}
+          path: out/${{ matrix.game }}.json
+          if-no-files-found: error
+          retention-days: 30
+
+  r225-sentinel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage ft09 p0-p19
+        run: |
+          set -euo pipefail
+          mkdir -p trace out
+          for p in $(seq 0 19); do
+            f="ft09-0d8bbf25_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "trace/$f"
+          done
+      - name: Execute R225
+        run: |
+          set -euo pipefail
+          args=(); for f in trace/ft09-0d8bbf25_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ft09_goal_manifold_veto_225.py             "${args[@]}" --output out/r225.json
+      - name: Verify R225 incumbent
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('out/r225.json'))
+          m=d['heldout']['all']
+          assert m['eligible']==914,m
+          assert m['predictions']==307,m
+          assert m['correct']==307,m
+          assert m.get('wrong',0)==0,m
+          assert d['zero_wrong_coverage_gain_gate_pass'] is True
+          assert d['truth']['kaggle_execution'] is False
+          print(json.dumps({'R225':m,'gate':True},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r248-r225
+          path: out/r225.json
+          if-no-files-found: error
+          retention-days: 30
+
+  r200-sentinel:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage TU93 p10-p19
+        run: |
+          set -euo pipefail
+          mkdir -p heldout out
+          for p in $(seq 10 19); do
+            f="tu93-0768757b_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "heldout/$f"
+          done
+      - name: Execute R200 unchanged symbolic solver
+        run: |
+          set -euo pipefail
+          args=(); for f in heldout/tu93-0768757b_p*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tu93_timeout_threat_symbolic_199.py             "${args[@]}" --output out/r200.json
+      - name: Verify R200 gate
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('out/r200.json')); c=d['transition_classifier']; p=d['planner']
+          assert c['tests']==888,c
+          assert c['correct']==887,c
+          assert c['wrong']==1,c
+          assert c['accuracy']>=0.99,c
+          assert p['states']==82,p
+          assert p['plan_found']==82,p
+          assert p['plan_found_rate']>=0.99,p
+          assert d['truth']['kaggle_execution'] is False
+          print(json.dumps({'R200_classifier':c['accuracy'],'R200_planner':p['plan_found_rate']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r248-r200
+          path: out/r200.json
+          if-no-files-found: error
+          retention-days: 30
+
+  r199-scar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Fetch immutable R199 artifact
+        run: |
+          set -euo pipefail
+          curl --fail --location             -H "Authorization: Bearer $GH_TOKEN"             -H "Accept: application/vnd.github+json"             -H "X-GitHub-Api-Version: 2022-11-28"             "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/artifacts/10688276280/zip"             -o r199.zip
+          echo "3b7a032e3ced2ccf3b4f1eba99331811bc98fc9b78cf46eec093e817860df25a  r199.zip" | sha256sum -c -
+          mkdir scar
+          unzip -q r199.zip -d scar
+      - name: Verify no-promotion scar
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('scar/tu93-r199.json'))
+          c=d['heldout_classifier']
+          assert d['diagnostic_gate']=='TU93_DYNAMIC_HAZARD_HELDOUT_NEEDS_REPAIR'
+          assert c['tests']==888,c
+          assert c['correct']==828,c
+          assert c['wrong']==60,c
+          assert c['accuracy']==0.932432,c
+          assert d['safe_action_planner']['states']==888
+          assert d['safe_action_planner']['available']==888
+          out={'artifact_id':10688276280,'digest':'sha256:3b7a032e3ced2ccf3b4f1eba99331811bc98fc9b78cf46eec093e817860df25a',
+               'gate':d['diagnostic_gate'],'classifier':{k:c[k] for k in ('tests','correct','wrong','accuracy')}}
+          open('r199-scar.json','w').write(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r248-r199-scar
+          path: r199-scar.json
+          if-no-files-found: error
+          retention-days: 30
+
+  reduce:
+    needs: [r247-per-game, r225-sentinel, r200-sentinel, r199-scar]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r248-r247-*
+          path: r247
+          merge-multiple: true
+      - uses: actions/download-artifact@v4
+        with:
+          name: r248-r225
+          path: sentinels/r225
+      - uses: actions/download-artifact@v4
+        with:
+          name: r248-r200
+          path: sentinels/r200
+      - uses: actions/download-artifact@v4
+        with:
+          name: r248-r199-scar
+          path: sentinels/r199
+      - name: Reduce matched integration audit
+        run: |
+          python - <<'PY'
+          import glob,json
+          from collections import Counter
+          files=sorted(glob.glob('r247/*.json')); assert len(files)==25,len(files)
+          agg=Counter(); gain_games=[]; games={}
+          for p in files:
+              d=json.load(open(p)); assert d['schema']=='deus/arc3-r247-action-conditional-markov-gate/1'
+              assert len(d['games'])==1
+              g,x=next(iter(d['games'].items())); games[g]=x
+              a=d['aggregate']
+              for k in ('transitions','exact_baseline','baseline_abstain','candidate_predictions','candidate_correct','candidate_wrong'):
+                  agg[k]+=int(a.get(k,0) or 0)
+              if x.get('gain'): gain_games.append(g)
+          assert agg['candidate_predictions']==179,dict(agg)
+          assert agg['candidate_correct']==179,dict(agg)
+          assert agg['candidate_wrong']==0,dict(agg)
+          assert len(gain_games)==17,gain_games
+          sc=games['sc25-635fd71a']
+          assert sc['heldout']['candidate_predictions']==21
+          assert sc['heldout']['candidate_correct']==21
+          assert sc['heldout'].get('candidate_wrong',0)==0
+          assert sc['selected_by_action']=={'RESET':'regions'},sc['selected_by_action']
+
+          r225=json.load(open('sentinels/r225/r225.json')); m225=r225['heldout']['all']
+          assert m225['predictions']==307 and m225['correct']==307 and m225.get('wrong',0)==0
+          r200=json.load(open('sentinels/r200/r200.json')); c200=r200['transition_classifier']; p200=r200['planner']
+          assert c200['correct']==887 and c200['wrong']==1 and c200['accuracy']>=0.99
+          assert p200['plan_found']==82 and p200['states']==82
+          r199=json.load(open('sentinels/r199/r199-scar.json'))
+          assert r199['gate']=='TU93_DYNAMIC_HAZARD_HELDOUT_NEEDS_REPAIR'
+          assert r199['classifier']['correct']==828 and r199['classifier']['wrong']==60
+
+          result={
+            'schema':'deus/arc3-r248-sourcefree-integration-audit/1',
+            'verdict':'PASS',
+            'r247':{'predictions':179,'correct':179,'wrong':0,'gain_games':len(gain_games),
+                    'sc25_selected':sc['selected_by_action']},
+            'r225':{k:m225.get(k) for k in ('eligible','predictions','correct','wrong','accuracy','coverage')},
+            'r200':{'classifier':{k:c200.get(k) for k in ('tests','correct','wrong','accuracy')},
+                    'planner':{k:p200.get(k) for k in ('states','plan_found','plan_found_rate')}},
+            'r199_scar':r199,
+            'integration_gate_pass':True,
+            'promotion':{'sourcefree_integration':True,'solver_promotion':False,'kaggle_packaging':False},
+            'truth':{
+              'public_sourcefree_integration_only':True,
+              'source_assisted_r244_not_used_for_r247_predictions':True,
+              'r199_no_promotion_scar_preserved':True,
+              'r200_public_gate_preserved':True,
+              'r225_zero_wrong_incumbent_preserved':True,
+              'kaggle_hidden_generalization_claim':False,
+              'kaggle_execution':False,
+              'submission_quota_spent':False
+            }
+          }
+          open('r248-integration-audit.json','w').write(json.dumps(result,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(result,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r248-sourcefree-integration-audit
+          path: r248-integration-audit.json
+          if-no-files-found: error
+          retention-days: 30
