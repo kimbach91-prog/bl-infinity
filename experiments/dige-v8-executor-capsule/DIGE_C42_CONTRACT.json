@@ -1,0 +1,48 @@
+{
+  "schema": "dige-c42-geometry-eye-hairline/1",
+  "candidate": "C42_HHIR_GEOMETRY_EYE_EDGE_HAIRLINE_V1",
+  "parent": "C41_HHIR_NATIVE_EYE_SCALP_COVER_V1",
+  "parent_runtime": {
+    "run_id": 35714880719,
+    "wall_seconds": 146,
+    "runtime_pass": true,
+    "visual_pass": false
+  },
+  "visual_scars": [
+    "C41 MPFB2 procedural eye shader does not map iris correctly on GNM native topology; eye reads white with a dark slit.",
+    "C41 scalp undercoat reaches too close to the forehead and creates dotted/stubbly hairline artifacts.",
+    "C41 skin is less glossy than C40 but remains too smooth/flat for hyperreal promotion."
+  ],
+  "mechanism_deltas": [
+    "Native GNM eyeball receives a Generated-coordinate radial eye material; no UV dependency and no geometric iris/cornea overlay.",
+    "Hairline uses an analytic curved edge_z with temple rise; scalp roots below the edge are rejected.",
+    "Near-edge forehead-facing normals are excluded from undercoat/gather roots.",
+    "Hairline microfibers originate only from the narrow scalp-side edge band and sweep backward/up.",
+    "Actual GNM face shader uses visible-scale roughness/pore/micro settings and effective metadata is updated.",
+    "Hero diagnostic remains 85mm f/4 with helper garment hidden."
+  ],
+  "frozen_truth": [
+    "reference pixels are not read or composited",
+    "image_model_calls=0",
+    "CPU execution unless fresh admitted GPU receipt exists",
+    "runtime pass is not visual certification",
+    "C39 workload speedup remains scoped; C42 is a visual mechanism successor, not a global intelligence benchmark"
+  ],
+  "runtime_gate": {
+    "eye_integration": "GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_RADIAL_IRIS_NO_UV_NO_OVERLAY",
+    "uv_dependency": false,
+    "c29_geometric_iris_count": 0,
+    "scalp_min": 650,
+    "undercoat_min": 1200,
+    "bun_curves": 520,
+    "lens_mm": 85,
+    "fstop": 4
+  },
+  "visual_gate": [
+    "iris/pupil visibly centered and embedded inside the native eye mesh",
+    "no white-eye/dark-slit failure",
+    "hairline forms a continuous plausible edge without forehead stubble",
+    "scalp coverage and bun remain coherent",
+    "skin shows visible non-plastic material response"
+  ]
+}
