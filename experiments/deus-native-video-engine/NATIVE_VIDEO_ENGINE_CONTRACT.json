@@ -38,11 +38,11 @@
     "fps": 2,
     "width": 180,
     "height": 320,
-    "duration_seconds": 4,
+    "duration_seconds": 3,
     "audio": "none",
-    "render_engine_request": "BLENDER_WORKBENCH",
+    "render_engine_request": "BLENDER_EEVEE",
     "render_engine_runtime_alias": null,
-    "frame_count": 8,
+    "frame_count": 6,
     "profile": "SPARSE_TEMPORAL_PROOF_NOT_PRODUCTION_QUALITY"
   },
   "acceptance": [
@@ -59,7 +59,6 @@
   "truth_boundary": "CONFIGURED_NE_EXECUTED__RUNTIME_ENGINE_ENUM_MUST_BE_OBSERVED__EXECUTED_NE_VERIFIED_DONE",
   "production_profiles": {
     "realtime_preview": [
-      "BLENDER_WORKBENCH",
       "BLENDER_EEVEE"
     ],
     "quality_final": [
