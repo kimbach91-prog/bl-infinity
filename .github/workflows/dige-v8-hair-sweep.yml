@@ -1,0 +1,113 @@
+name: DIGE V8 Hair Geometry Sweep
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: dige-v8-hair-sweep-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hair-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+
+      - name: Resolve Blender 5.2.2
+        run: |
+          set -euxo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          BLENDER=/tmp/blender-5.2.2-linux-x64/blender
+          "$BLENDER" --version
+          echo "BLENDER=$BLENDER" >> "$GITHUB_ENV"
+
+      - name: Build frozen geometry
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          mkdir -p runtime
+          python build_makehuman_v8.py | tee runtime/geometry_execution.json
+          test -s runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+
+      - name: Render four controlled hair candidates
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          for SPEC in "dense_short:28:0.0010:0.0024:0.000022" "dense_mid:24:0.0015:0.0032:0.000026" "visible_mid:18:0.0020:0.0040:0.000030" "coarse:14:0.0025:0.0050:0.000034"; do
+            TAG=$(echo "$SPEC" | cut -d: -f1)
+            REPS=$(echo "$SPEC" | cut -d: -f2)
+            LMIN=$(echo "$SPEC" | cut -d: -f3)
+            LMAX=$(echo "$SPEC" | cut -d: -f4)
+            BEVEL=$(echo "$SPEC" | cut -d: -f5)
+            DIGE_CYCLES_DEVICE=CPU \
+            DIGE_RENDER_SET=HERO_ONLY \
+            DIGE_OUTPUT_TAG="hair_${TAG}" \
+            DIGE_SKIN_SSS_WEIGHT="0.35" \
+            DIGE_SKIN_SSS_SCALE="0.0035" \
+            DIGE_SKIN_SSS_ANISO="0.80" \
+            DIGE_SKIN_ROUGH_MIN="0.30" \
+            DIGE_SKIN_ROUGH_MAX="0.48" \
+            DIGE_HAIR_REPLICAS="$REPS" \
+            DIGE_HAIR_LEN_MIN="$LMIN" \
+            DIGE_HAIR_LEN_MAX="$LMAX" \
+            DIGE_HAIR_BEVEL="$BEVEL" \
+            DIGE_SAMPLES_PREVIEW="12" \
+            DIGE_SAMPLES_HERO="20" \
+            DIGE_RENDER_SEED="20260919" \
+            DIGE_RUNTIME_COMMIT="$GITHUB_SHA" \
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py \
+              | tee "runtime/blender_hair_${TAG}.log"
+          done
+
+      - name: Verify controlled hair receipts
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          python - <<'PY'
+          import json, pathlib
+          expected={
+            "dense_short":(28,0.0010,0.0024,0.000022),
+            "dense_mid":(24,0.0015,0.0032,0.000026),
+            "visible_mid":(18,0.0020,0.0040,0.000030),
+            "coarse":(14,0.0025,0.0050,0.000034),
+          }
+          root=pathlib.Path("runtime/renders")
+          for tag,(reps,lmin,lmax,bevel) in expected.items():
+              d=root/f"hair_{tag}"
+              j=json.loads((d/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+              h=j["hair_surface_contract"]
+              assert j["engine"]=="CYCLES" and j["device"]=="CPU"
+              assert j["render_set"]=="HERO_ONLY"
+              assert j["output_tag"]==f"hair_{tag}"
+              assert abs(j["skin_model"]["subsurface_weight"]-.35)<1e-9
+              assert j["skin_model"]["roughness_range"]==[0.30,0.48]
+              assert h["replicas_per_vertex"]==reps
+              assert abs(h["length_range_m"][0]-lmin)<1e-12
+              assert abs(h["length_range_m"][1]-lmax)<1e-12
+              assert abs(h["bevel_radius_m"]-bevel)<1e-12
+              assert j["hair_curve_count"]>0
+              assert len(j["outputs"])==1 and j["outputs"][0]["view"]=="04_HERO85"
+          print("DIGE_V8_HAIR_SWEEP_PASS")
+          PY
+
+      - name: Upload hair sweep evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: DIGE-V8-HAIR-SWEEP-${{ github.sha }}
+          path: |
+            experiments/dige-v8-executor-capsule/runtime/renders/hair_*/04_HERO85_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/hair_*/04_HERO85_DENOISED_V8.png
+            experiments/dige-v8-executor-capsule/runtime/renders/hair_*/DIGE_V8_RENDER_RECEIPT.json
+            experiments/dige-v8-executor-capsule/runtime/DIGE_V8_GEOMETRY_MANIFEST.json
+          if-no-files-found: error
+          retention-days: 14
