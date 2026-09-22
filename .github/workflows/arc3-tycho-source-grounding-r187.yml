@@ -54,16 +54,21 @@ jobs:
             'network_disabled_model_sandbox': 'no network' in arch.lower(),
           }
           assert all(v for k,v in checks.items() if k!='exact_commit'), checks
-          (Path('receipt')).mkdir(exist_ok=True)
+          Path('receipt').mkdir(exist_ok=True)
           (Path('receipt')/'tycho-grounding.json').write_text(json.dumps(checks,indent=2,sort_keys=True)+'\n')
           (Path('receipt')/'source-head.txt').write_text(os.popen('cd tycho-src && git rev-parse HEAD').read())
           (Path('receipt')/'license.sha256').write_text(hashlib.sha256((root/'LICENSE').read_bytes()).hexdigest()+'  LICENSE\n')
           print(json.dumps(checks,sort_keys=True))
           PY
-          cd tycho-src
-          pytest -q tests/serving tests/config --disable-warnings --maxfail=1
+          set +e
+          (cd tycho-src && pytest -q tests/serving tycho/config --disable-warnings --maxfail=1) 2>&1 | tee receipt/pytest.txt
+          rc=${PIPESTATUS[0]}
+          set -e
+          printf '%s\n' "$rc" > receipt/pytest_rc.txt
+          exit "$rc"
 
       - name: Archive source-grounding receipt
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: arc3-tycho-source-grounding-r187
