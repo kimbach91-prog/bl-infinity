@@ -100,7 +100,7 @@ jobs:
             --seconds "$SECONDS" \
             --width "$WIDTH" \
             --height "$HEIGHT" \
-            --engine BLENDER_EEVEE_NEXT \
+            --engine BLENDER_WORKBENCH \
             | tee "$OUTDIR/blender_native_video.log"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_RENDER_RECEIPT.json"
           test -s "$OUTDIR/DEUS_NATIVE_VIDEO_CANARY.blend"
