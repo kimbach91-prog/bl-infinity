@@ -184,9 +184,9 @@ jobs:
           DIGE_C42_GEOMETRY_EYE_HAIRLINE: '1'
           DIGE_C43_TANGENTIAL_GROOM: '1'
           DIGE_C44_FOLLICLE_FLOW: '1'
-          DIGE_C36_JAW_TAPER: '0.86'
-          DIGE_C36_EYE_OPEN_SCALE: '0.78'
-          DIGE_C36_EYE_GLOBE_SCALE: '0.92'
+          DIGE_C36_JAW_TAPER: '0.92'
+          DIGE_C36_EYE_OPEN_SCALE: '0.88'
+          DIGE_C36_EYE_GLOBE_SCALE: '0.96'
           DIGE_C36_HAIR_LENGTH_M: '0.28'
           DIGE_C36_HAIR_WAVE: '0.004'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
@@ -202,8 +202,8 @@ jobs:
           DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
           DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
           DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
-          DIGE_SAMPLES_PREVIEW: '128'
-          DIGE_SAMPLES_HERO: '320'
+          DIGE_SAMPLES_PREVIEW: '32'
+          DIGE_SAMPLES_HERO: '64'
           DIGE_RENDER_SEED: '20260922'
           DIGE_RUNTIME_COMMIT: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -242,6 +242,8 @@ jobs:
           garments=r["appearance_selection"]["s1_garment_metrics"]
           assert garments["enabled"] is True
           assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
+          assert garments["midriff_gap_m"]>=0.05
+          assert garments["body_arm_vertices_relaxed"]>0 and garments["tights_arm_vertices_relaxed"]>0
           sel=json.loads(pathlib.Path("runtime/s1_identity_selection.json").read_text())
           assert int(r["c28_gnm_head"]["identity_seed"])==int(sel["selected"]["seed"])
           assert r["c28_gnm_head"]["identity_source"]=="SEMANTIC_CVAE"
@@ -273,6 +275,7 @@ jobs:
           name: DIGE-S1-ENDOGENOUS-${{ github.event.pull_request.head.sha }}
           path: |
             experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.exr
             experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.json
             experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.blend
             experiments/dige-v8-executor-capsule/runtime/s1_endogenous.log
