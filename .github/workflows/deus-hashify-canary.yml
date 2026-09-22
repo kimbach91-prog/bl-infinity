@@ -1,0 +1,87 @@
+name: DEUS Hashify Public Compute Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/deus-hashify-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  hashify-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - name: Execute bounded public SHA256 canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=/tmp/deus-hashify
+          mkdir -p "$out"
+          nonce="DEUS_HASHIFY_$(date -u +%Y%m%dT%H%M%SZ)_$RANDOM"
+          value_a="${nonce}_314159"
+          value_b="${nonce}_271828"
+          enc_a="$(V="$value_a" python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["V"], safe=""))')"
+          enc_b="$(V="$value_b" python3 -c 'import os,urllib.parse; print(urllib.parse.quote(os.environ["V"], safe=""))')"
+          url_a="https://api.hashify.net/hash/sha256/hex?value=$enc_a"
+          url_b="https://api.hashify.net/hash/sha256/hex?value=$enc_b"
+          printf '%s\n' "$url_a" > "$out/request_a.url"
+          printf '%s\n' "$url_b" > "$out/request_b.url"
+          start_ms="$(date +%s%3N)"
+          code_a="$(curl -L --max-time 20 -sS -D "$out/headers_a.txt" -o "$out/body_a.json" -w '%{http_code}' "$url_a")"
+          mid_ms="$(date +%s%3N)"
+          code_b="$(curl -L --max-time 20 -sS -D "$out/headers_b.txt" -o "$out/body_b.json" -w '%{http_code}' "$url_b")"
+          end_ms="$(date +%s%3N)"
+          printf 'http_a=%s http_b=%s\n' "$code_a" "$code_b"
+          test "$code_a" = "200"
+          test "$code_b" = "200"
+          V_A="$value_a" V_B="$value_b" python3 - <<'PY'
+          import hashlib, json, os
+          root='/tmp/deus-hashify'
+          result={}
+          for name, env in [('a','V_A'),('b','V_B')]:
+              data=json.load(open(f'{root}/body_{name}.json'))
+              lower={str(k).lower():v for k,v in data.items()}
+              got=lower.get('digest', lower.get('hash'))
+              expected=hashlib.sha256(os.environ[env].encode()).hexdigest()
+              if got != expected:
+                  raise SystemExit(f'digest-mismatch-{name}: keys={list(data.keys())}')
+              result[f'digest_{name}']=got
+              result[f'body_{name}_bytes']=os.path.getsize(f'{root}/body_{name}.json')
+          if result['digest_a'] == result['digest_b']:
+              raise SystemExit('unexpected-equal-digests')
+          meta={
+              'schema':'deus-public-hash-canary/1',
+              'provider':'Hashify',
+              'scope':'BL-S0 bounded remote SHA256 computation',
+              'http_status_a':200,
+              'http_status_b':200,
+              'digest_match_a':True,
+              'digest_match_b':True,
+              'distinct_outputs':True,
+              **result,
+          }
+          open(f'{root}/meta.json','w').write(json.dumps(meta,sort_keys=True,indent=2)+'\n')
+          PY
+          sha256sum "$out"/* > "$out/sha256.txt"
+          jq -n \
+            --arg nonce "$nonce" \
+            --arg run_id "$GITHUB_RUN_ID" \
+            --arg run_attempt "$GITHUB_RUN_ATTEMPT" \
+            --arg source_sha "$GITHUB_SHA" \
+            --argjson latency_a_ms "$((mid_ms-start_ms))" \
+            --argjson latency_b_ms "$((end_ms-mid_ms))" \
+            --slurpfile meta "$out/meta.json" \
+            '{provider:"Hashify",nonce:$nonce,run_id:$run_id,run_attempt:$run_attempt,source_sha:$source_sha,latency_a_ms:$latency_a_ms,latency_b_ms:$latency_b_ms,result:$meta[0]}' \
+            | tee "$out/receipt.json"
+
+      - name: Upload exact canary custody artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-hashify-canary
+          path: /tmp/deus-hashify/
+          if-no-files-found: error
+          retention-days: 7
