@@ -6,6 +6,8 @@ on:
       - '.github/workflows/dige-s1-endogenous.yml'
       - 'experiments/dige-v8-executor-capsule/blender_render_s1.py'
       - 'experiments/dige-v8-executor-capsule/DIGE_S1_SYNTHESIS_CONTRACT.json'
+      - 'experiments/dige-v8-executor-capsule/select_s1_identity.py'
+      - 'experiments/dige-v8-executor-capsule/build_gnm_head_c28.py'
 
 permissions:
   contents: read
@@ -47,7 +49,7 @@ jobs:
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
-          python -m py_compile blender_render_s1.py
+          python -m py_compile blender_render_s1.py select_s1_identity.py build_gnm_head_c28.py
           python - <<'PY'
           import json,pathlib,hashlib
           p=pathlib.Path("DIGE_S1_SYNTHESIS_CONTRACT.json")
@@ -57,6 +59,9 @@ jobs:
           assert d["external_image_generation_calls"]==0
           assert d["canonical_pixel_copy"] is False
           assert d["runtime_gate"]["render_set"]=="FULL"
+          assert d["runtime_gate"]["six_views_required"] is True
+          assert len(d["winner_matrix"]) >= 8
+          assert "prototype_compare_plan" in d
           print(json.dumps({
             "contract_sha256":hashlib.sha256(p.read_bytes()).hexdigest(),
             "lineage_nodes":len(d["lineage"]),
@@ -69,11 +74,51 @@ jobs:
           echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
           echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
 
+      - name: Pin Google GNM and select prototype-oriented S1 identity
+        working-directory: experiments/dige-v8-executor-capsule
+        run: |
+          set -euxo pipefail
+          GNM_COMMIT=a424b5153eec9154f3dfa5ee7f214e5817918d54
+          rm -rf /tmp/GNM
+          git init /tmp/GNM
+          git -C /tmp/GNM remote add origin https://github.com/google/GNM.git
+          git -C /tmp/GNM fetch --depth=1 origin "$GNM_COMMIT"
+          git -C /tmp/GNM checkout --detach FETCH_HEAD
+          test "$(git -C /tmp/GNM rev-parse HEAD)" = "$GNM_COMMIT"
+          python -m pip install --disable-pip-version-check -q numpy scipy absl-py etils immutabledict importlib-resources opt-einsum typeguard
+          python -m pip install --disable-pip-version-check -q tensorflow
+          python -m pip install --disable-pip-version-check -q --no-deps -e /tmp/GNM/gnm/shape
+          python select_s1_identity.py --start-seed 20263000 --count 64 --out runtime/s1_identity_selection.json | tee runtime/s1_identity_selection.log
+          test -n "$DIGE_S1_IDENTITY_SEED" || true
+
       - name: Rebind deterministic body geometry
         working-directory: experiments/dige-v8-executor-capsule
         run: |
           set -euxo pipefail
           python build_makehuman_v8.py | tee runtime/s1_geometry_canon_rebind.json
+
+      - name: Rebuild selected semantic GNM head for S1
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_GNM_IDENTITY_SEED: ${{ env.DIGE_S1_IDENTITY_SEED }}
+          DIGE_GNM_IDENTITY_SIGMA: '0.34'
+          DIGE_GNM_SEMANTIC_IDENTITY: '1'
+        run: |
+          set -euxo pipefail
+          test -n "$DIGE_GNM_IDENTITY_SEED"
+          python build_gnm_head_c28.py | tee runtime/s1_gnm_build.log
+          test -s runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json
+          python - <<'PY'
+          import json, os, pathlib
+          sel=json.loads(pathlib.Path("runtime/s1_identity_selection.json").read_text())
+          g=json.loads(pathlib.Path("runtime/gnm_c28/DIGE_C28_GNM_HEAD_MANIFEST.json").read_text())
+          assert int(g["identity_seed"])==int(sel["selected"]["seed"])
+          assert g["identity_source"]=="SEMANTIC_CVAE"
+          assert g["semantic_gender"]=="FEMALE"
+          assert g["semantic_ethnicity"]=="ASIAN"
+          print(json.dumps({"selected_seed":sel["selected"]["seed"],"selector_score":sel["selected"]["score"],"gnm_identity_source":g["identity_source"]}))
+          PY
 
       - name: Resolve Blender 5.2.2
         run: |
@@ -114,14 +159,14 @@ jobs:
           DIGE_C42_GEOMETRY_EYE_HAIRLINE: '1'
           DIGE_C43_TANGENTIAL_GROOM: '1'
           DIGE_C44_FOLLICLE_FLOW: '1'
-          DIGE_C36_JAW_TAPER: '0.90'
-          DIGE_C36_EYE_OPEN_SCALE: '0.74'
-          DIGE_C36_EYE_GLOBE_SCALE: '0.94'
+          DIGE_C36_JAW_TAPER: '0.86'
+          DIGE_C36_EYE_OPEN_SCALE: '0.78'
+          DIGE_C36_EYE_GLOBE_SCALE: '0.92'
           DIGE_C36_HAIR_LENGTH_M: '0.28'
           DIGE_C36_HAIR_WAVE: '0.004'
           DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
           DIGE_GNM_SEMANTIC_IDENTITY: '1'
-          DIGE_GNM_IDENTITY_SEED: '20262828'
+          DIGE_GNM_IDENTITY_SEED: ${{ env.DIGE_S1_IDENTITY_SEED }}
           DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
           DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
           DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
@@ -155,7 +200,7 @@ jobs:
           assert r["render_set"]=="FULL"
           assert r["appearance_candidate"]=="DIGE_S1_ENDOGENOUS_HUMAN_SYSTEM_V1"
           assert r["appearance_selection"]["s1_endogenous"] is True
-          expected={"01_FRONT50","02_LEFT_PROFILE50","03_THREE_QUARTER50","04_HERO85","05_BACK_THREE_QUARTER50"}
+          expected={"01_FRONT50","02_LEFT_PROFILE50","03_THREE_QUARTER50","04_HERO85","05_BACK_THREE_QUARTER50","06_BACK50"}
           got={x["view"] for x in r["outputs"]}
           assert got==expected, (got,expected)
           hero=[x for x in r["outputs"] if x["view"]=="04_HERO85"][0]
@@ -164,7 +209,7 @@ jobs:
           assert g["enabled"] is True
           assert g["undercoat_lane_count"]==4
           assert g["s1_scalp_cap_faces"]>0
-          assert g["bun_curves"]>=500
+          assert g["bun_curves"]>=800
           eye=r["c28_gnm_head"]["eye_contract"]
           assert eye["integration"]=="GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY"
           skin=r["c28_gnm_head"]["skin_contract"]
@@ -172,6 +217,9 @@ jobs:
           garments=r["appearance_selection"]["s1_garment_metrics"]
           assert garments["enabled"] is True
           assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
+          sel=json.loads(pathlib.Path("runtime/s1_identity_selection.json").read_text())
+          assert int(r["c28_gnm_head"]["identity_seed"])==int(sel["selected"]["seed"])
+          assert r["c28_gnm_head"]["identity_source"]=="SEMANTIC_CVAE"
           p=r["provenance"]
           assert p["reference_pixels_read_by_renderer"] is False
           assert p["reference_images_composited"] is False
@@ -186,6 +234,7 @@ jobs:
             "eye_contract":eye,
             "skin_contract":skin,
             "garments":garments,
+            "identity_selection":sel,
             "provenance":p,
             "truth_boundary":"SOURCE_LEVEL_RUNTIME_PASS_ONLY__DIRECT_MULTIVIEW_VISUAL_AUDIT_REQUIRED"
           }
@@ -203,5 +252,9 @@ jobs:
             experiments/dige-v8-executor-capsule/runtime/renders/s1_endogenous/*.blend
             experiments/dige-v8-executor-capsule/runtime/s1_endogenous.log
             experiments/dige-v8-executor-capsule/runtime/s1_endogenous_timing.json
+            experiments/dige-v8-executor-capsule/runtime/s1_identity_selection.json
+            experiments/dige-v8-executor-capsule/runtime/s1_identity_selection.log
+            experiments/dige-v8-executor-capsule/runtime/s1_gnm_build.log
+            experiments/dige-v8-executor-capsule/runtime/gnm_c28/*.json
           if-no-files-found: error
           retention-days: 30
