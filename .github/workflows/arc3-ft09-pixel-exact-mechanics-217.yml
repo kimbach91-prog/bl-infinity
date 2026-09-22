@@ -7,6 +7,12 @@ on:
     paths:
       - public_benchmark/arc3/kaggle_candidates/public_ft09_pixel_exact_mechanics_217.py
       - .github/workflows/arc3-ft09-pixel-exact-mechanics-217.yml
+  pull_request:
+    branches:
+      - deus/arc3-remaining14-coverage-20260922
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ft09_pixel_exact_mechanics_217.py
+      - .github/workflows/arc3-ft09-pixel-exact-mechanics-217.yml
   workflow_dispatch:
 
 permissions:
