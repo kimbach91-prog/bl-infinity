@@ -1,0 +1,65 @@
+name: DEUS Shields Public Canary
+
+on:
+  push:
+    branches: [deus-shields-canary-20260922]
+    paths:
+      - '.github/workflows/deus-shields-public-canary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  shields-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Run bounded S0 Shields.io render canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-shields
+          token='DEUSSHIELDS20260922T0151Z'
+          url="https://img.shields.io/badge/${token}-42-brightgreen.svg"
+          start_ms="$(date +%s%3N)"
+          http_code="$(curl -L --max-time 20 -sS -D /tmp/deus-shields/headers.txt -o /tmp/deus-shields/body.svg -w '%{http_code}' "$url")"
+          latency_ms="$(( $(date +%s%3N) - start_ms ))"
+          body_sha256="$(sha256sum /tmp/deus-shields/body.svg | awk '{print $1}')"
+          headers_sha256="$(sha256sum /tmp/deus-shields/headers.txt | awk '{print $1}')"
+          body_bytes="$(wc -c < /tmp/deus-shields/body.svg | tr -d ' ')"
+          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/{gsub(/\r/,"",$0); sub(/^[^:]*:[[:space:]]*/,"",$0); v=$0} END{print v}' /tmp/deus-shields/headers.txt)"
+          token_present=false
+          marker_present=false
+          svg_present=false
+          grep -Fq "$token" /tmp/deus-shields/body.svg && token_present=true
+          grep -Fq '>42<' /tmp/deus-shields/body.svg && marker_present=true
+          grep -Fq '<svg' /tmp/deus-shields/body.svg && svg_present=true
+          pass=false
+          if [ "$http_code" = "200" ] && [ "$token_present" = true ] && [ "$marker_present" = true ] && [ "$svg_present" = true ]; then pass=true; fi
+          jq -n \
+            --arg receipt_version 'DEUS-SHIELDS-PUBLIC-CANARY/1' \
+            --arg provider 'Shields.io' \
+            --arg endpoint "$url" \
+            --arg token "$token" \
+            --arg http_code "$http_code" \
+            --arg content_type "$content_type" \
+            --arg body_sha256 "$body_sha256" \
+            --arg headers_sha256 "$headers_sha256" \
+            --argjson body_bytes "$body_bytes" \
+            --argjson latency_ms "$latency_ms" \
+            --argjson token_present "$token_present" \
+            --argjson marker_present "$marker_present" \
+            --argjson svg_present "$svg_present" \
+            --argjson pass "$pass" \
+            '{receipt_version:$receipt_version,provider:$provider,scope:"BL-S0 static badge SVG rendering",endpoint:$endpoint,token:$token,http_status:($http_code|tonumber),content_type:$content_type,body_bytes:$body_bytes,latency_ms:$latency_ms,body_sha256:$body_sha256,headers_sha256:$headers_sha256,token_present:$token_present,marker_42_present:$marker_present,svg_present:$svg_present,provider_execution:($http_code=="200"),useful_execution_pass:$pass,spend_usd:0}' \
+            | tee /tmp/deus-shields/receipt.json
+          test "$pass" = true
+
+      - name: Upload exact canary custody artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-shields-public-canary
+          path: /tmp/deus-shields/
+          if-no-files-found: error
+          retention-days: 7
