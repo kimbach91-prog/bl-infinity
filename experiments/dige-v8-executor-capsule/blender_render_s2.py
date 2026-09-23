@@ -1119,7 +1119,21 @@ def s1_gnm_skin_material():
     nt.links.new(sep.outputs["Red"],lipmix.inputs[0])
     base_color_socket=ramp.outputs["Color"]
     s24_albedo={"enabled":False}
-    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE:
+    if S2_7_BAKED_FACE_ALBEDO:
+        baked=nt.nodes.new("ShaderNodeVertexColor")
+        baked.layer_name="S2_7_BakedAlbedo"
+        valid_scale=nt.nodes.new("ShaderNodeMath")
+        valid_scale.operation='MULTIPLY'
+        valid_scale.inputs[1].default_value=.32
+        nt.links.new(baked.outputs["Alpha"],valid_scale.inputs[0])
+        baked_mix=nt.nodes.new("ShaderNodeMixRGB")
+        baked_mix.blend_type='MIX'
+        nt.links.new(valid_scale.outputs[0],baked_mix.inputs[0])
+        nt.links.new(base_color_socket,baked_mix.inputs[1])
+        nt.links.new(baked.outputs["Color"],baked_mix.inputs[2])
+        base_color_socket=baked_mix.outputs["Color"]
+        s24_albedo={"enabled":True,"mode":"SPATIAL_BAKED_VERTEX_COLOR","attribute":"S2_7_BakedAlbedo","max_blend":.32}
+    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE and not S2_7_BAKED_FACE_ALBEDO:
         p=Path(SKIN_ALBEDO_PATH)
         if not p.is_absolute(): p=ROOT/p
         if not p.exists():
