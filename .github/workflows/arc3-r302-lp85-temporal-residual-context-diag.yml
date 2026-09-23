@@ -1,0 +1,75 @@
+name: ARC3 R302 lp85 temporal residual context diagnostic
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r302-lp85-temporal-residual-context-diag.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r302-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 32}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify source fixed before staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 8ef0c66fdbc1087027939c221b33117359e1995d^{commit}
+          git merge-base --is-ancestor 8ef0c66fdbc1087027939c221b33117359e1995d HEAD
+      - name: Stage exact lp85 p0-p4 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 4); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_trace -maxdepth 1 -type f -regex '.*_p[5-9]_events.jsonl\|.*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute contextual collision diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_lp85_temporal_residual_context_diag_302.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_temporal_residual_context_diag_302.py "${args[@]}" --output r302-lp85.json 2> >(tee r302-runtime.txt >&2) | tee r302-stdout.txt
+      - name: Audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r302-lp85.json'))
+          assert d['schema']=='deus/arc3-r302-lp85-temporal-residual-context-diagnostic/1'
+          assert d['protocol']['diagnostic']=='p0-p4 only'
+          assert d['protocol']['p5_p19_staged_or_read'] is False
+          assert d['protocol']['past_only_online_history'] is True
+          assert d['truth']['p5_p19_read'] is False
+          assert d['truth']['solver_promotion'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'best_safe_mode':d['best_safe_mode'],'safe_modes':d['safe_modes'],'best_any_mode':d['best_any_mode'],'totals':{k:v['total'] for k,v in d['modes'].items()}},sort_keys=True))
+          PY
+          sha256sum r302-lp85.json r302-runtime.txt r302-stdout.txt public_trace/SHA256SUMS.txt > R302_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r302-lp85-temporal-residual-context-diagnostic
+          path: |
+            r302-lp85.json
+            r302-runtime.txt
+            r302-stdout.txt
+            R302_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
