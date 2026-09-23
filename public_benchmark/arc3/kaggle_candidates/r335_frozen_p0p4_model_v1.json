@@ -1,0 +1,33 @@
+{
+  "truth_boundary": "PUBLIC_SOURCEFREE_P0P4_FROZEN_ACTION_MODEL_ONLY",
+  "source_run": 35873876012,
+  "source_job": 107224652657,
+  "source_method_commit": "86206804f93371eb249d2c5a50871bb39bae2c42",
+  "source_artifact": 10756565717,
+  "source_artifact_zip_sha256": "cd301ca6186d4f90e6ce120eb0d63a2538dc437ae34fbcb6e394e67fa91e3020",
+  "source_detail_sha256": "2c1caaa520da14f3eec3ef70b23128e82886f86e5b744db37872d49fc7f8ed83",
+  "phase_cycle": [
+    "065dffac4c588d19",
+    "cac698dcf6fb6b76",
+    "62a0851c5747bb6e",
+    "58498753074a2cd7",
+    "b0a3a987438be855",
+    "eb1fb214319d2bd3",
+    "758df3c6a8125ac1"
+  ],
+  "cursor_delta_mod5": {
+    "ACTION3": 4,
+    "ACTION4": 1
+  },
+  "fit_evidence": {
+    "loto_checked": 861,
+    "loto_predicted": 861,
+    "loto_correct": 861,
+    "loto_accuracy": 1.0,
+    "loto_coverage": 1.0,
+    "safe_plan_exists_folds": 5,
+    "total_folds": 5
+  },
+  "heldout_policy": "No retraining or model update on p5-p9. Infer only per-frame structural relation/input/editable/cursor observations with the already-frozen generic parser family. Use the frozen phase_cycle and cursor deltas exactly. Abstain on ambiguous structural extraction. Do not read p10-p19.",
+  "promotion_boundary": "Mechanism/representation evidence only. No whole-game success claim without positive terminal receipt. No provider/Kaggle promotion."
+}
