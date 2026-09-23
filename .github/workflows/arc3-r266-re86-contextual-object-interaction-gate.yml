@@ -1,0 +1,95 @@
+name: ARC3 R266 re86 contextual object interaction gate
+
+on:
+  push:
+    branches:
+      - deus/r266-re86-contextual-object-interaction-gate-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_contextual_object_interaction_gate_266.py
+      - .github/workflows/arc3-r266-re86-contextual-object-interaction-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-r266-re86:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py             public_benchmark/arc3/kaggle_candidates/public_component_delta_operator_254.py             public_benchmark/arc3/kaggle_candidates/public_object_motion_diag_256.py             public_benchmark/arc3/kaggle_candidates/public_selective_object_transport_257.py             public_benchmark/arc3/kaggle_candidates/public_contextual_object_interaction_gate_266.py
+      - name: Stage re86 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="re86-8af5384d_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R266 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/re86-8af5384d_p*_events.jsonl; do
+            args+=(--input "$f")
+          done
+          test "${#args[@]}" -eq 40
+          /usr/bin/time -v python             public_benchmark/arc3/kaggle_candidates/public_contextual_object_interaction_gate_266.py             "${args[@]}"             --output r266-re86-contextual-object-interaction.json             2> >(tee r266-runtime.txt >&2) | tee r266-stdout.txt
+      - name: Verify result and truth boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r266-re86-contextual-object-interaction.json').read_text())
+          assert d['schema']=='deus/arc3-r266-contextual-object-interaction-gate/1'
+          assert list(d['games'])==['re86-8af5384d']
+          t=d['truth']
+          assert t['public_trace_only'] and not t['game_source_read']
+          assert t['selection_uses_p0_p9_only'] and t['p10_p19_never_updates_selection_or_model']
+          assert not t['independent_generalization_claim'] and not t['kaggle_execution']
+          assert not t['competition_submission'] and not t['submission_quota_spent']
+          h=d['games']['re86-8af5384d']['heldout']
+          verdict='PASS_NONDOMINATED_PUBLIC_OFFLINE' if d['non_dominated_source_side_gain'] else 'NO_PROMOTION'
+          Path('r266-verdict.json').write_text(json.dumps({
+            'verdict': verdict,
+            'candidate_predictions': h.get('candidate_predictions',0),
+            'candidate_correct': h.get('candidate_correct',0),
+            'candidate_wrong': h.get('candidate_wrong',0),
+            'selected_by_action': d['games']['re86-8af5384d']['selected_by_action'],
+            'truth_lane':'PUBLIC_OFFLINE_PUBLIC_DEVELOPMENT'
+          },indent=2,sort_keys=True)+'\n')
+          print(Path('r266-verdict.json').read_text())
+          PY
+          sha256sum             r266-re86-contextual-object-interaction.json             r266-verdict.json             r266-runtime.txt             r266-stdout.txt             public_trace/SHA256SUMS.txt             > R266_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r266-re86-contextual-object-interaction-gate
+          path: |
+            r266-re86-contextual-object-interaction.json
+            r266-verdict.json
+            r266-runtime.txt
+            r266-stdout.txt
+            R266_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
