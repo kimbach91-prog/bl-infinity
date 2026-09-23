@@ -1,0 +1,392 @@
+name: DEUS CX-001 DiGe C39 live application transfer
+
+on:
+  push:
+    branches:
+      - "deus/cx001-live-dige-c39-20260923"
+    paths:
+      - ".github/workflows/deus-cx001-dige-c39-live-transfer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: deus-cx001-dige-c39-live-transfer-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  C39_BASE_COMMIT: ef048af5736d930f739ce62e1b353bf0c1a3bb65
+
+jobs:
+  prepare-cache:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout C39 lineage plus transfer workflow
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Reuse C34 verified runtime assets
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 authored prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Verify frozen public application inputs
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd runtime/system_assets
+          echo "94ecbebfd834da2cbee2ce90b730972590eb22a252ecd9592038ea736e063646  long01.mhclo" | sha256sum -c -
+          echo "74ec88267e679d316f8037a074511ffc887b27e198ea381d0ae4a3f180f96760  long01.mhmat" | sha256sum -c -
+          echo "7f1d6dadbdf9e96435251955d6657e77ea5433c9bc7c85a5c5f5e4eae0cb9a8c  long01.obj" | sha256sum -c -
+          echo "e8dc25d90f8f62467e8630420e1240a400d070054fb7c3f1d3f7bf3e457d6c2c  long01_diffuse.png" | sha256sum -c -
+          cd ../..
+
+      - name: Materialize verified geometry cache
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          start_ns="$(date +%s%N)"
+          python build_makehuman_v8.py > runtime/cx001_cache_build.log
+          end_ns="$(date +%s%N)"
+          python3 - <<'PY'
+          import hashlib,json,pathlib,time
+          root=pathlib.Path(".")
+          rt=root/"runtime"
+          names=[
+            "makehuman_base.obj",
+            "asian-female-young.target",
+            "DIGE_V8_FIT_REFERENCE.json",
+            "dige_makehuman_v8.obj",
+            "dige_makehuman_tights_v8.obj",
+            "dige_makehuman_l_eye_v8.obj",
+            "dige_makehuman_r_eye_v8.obj",
+            "dige_makehuman_hair_guide_v8.obj",
+            "DIGE_V8_GEOMETRY_MANIFEST.json",
+          ]
+          for n in names:
+              assert (rt/n).exists(), n
+          hashes={n:hashlib.sha256((rt/n).read_bytes()).hexdigest() for n in names}
+          receipt={
+            "schema":"deus-cx001-c39-geometry-cache/1",
+            "c39_base_commit":"ef048af5736d930f739ce62e1b353bf0c1a3bb65",
+            "build_script_sha256":hashlib.sha256((root/"build_makehuman_v8.py").read_bytes()).hexdigest(),
+            "benchmark_contract_sha256":hashlib.sha256((root/"DIGE_C39_HHIR_BENCHMARK.json").read_bytes()).hexdigest(),
+            "geometry_manifest_sha256":hashes["DIGE_V8_GEOMETRY_MANIFEST.json"],
+            "files":hashes,
+            "truth":"CACHE_IS_PRIOR_VERIFIED_APPLICATION_STATE__REUSE_REQUIRES_EXACT_FINGERPRINT"
+          }
+          (rt/"CX001_C39_GEOMETRY_CACHE_RECEIPT.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_CACHE="+json.dumps(receipt,sort_keys=True,separators=(",",":")))
+          PY
+          python3 - "${start_ns}" "${end_ns}" <<'PY'
+          import json,pathlib,sys
+          ms=(int(sys.argv[2])-int(sys.argv[1]))/1_000_000
+          pathlib.Path("runtime/CX001_C39_GEOMETRY_CACHE_TIMING.json").write_text(json.dumps({"build_ms":ms})+"\n")
+          PY
+          tar -czf /tmp/cx001-c39-geometry-cache.tgz -C runtime \
+            makehuman_base.obj \
+            asian-female-young.target \
+            DIGE_V8_FIT_REFERENCE.json \
+            dige_makehuman_v8.obj \
+            dige_makehuman_tights_v8.obj \
+            dige_makehuman_l_eye_v8.obj \
+            dige_makehuman_r_eye_v8.obj \
+            dige_makehuman_hair_guide_v8.obj \
+            DIGE_V8_GEOMETRY_MANIFEST.json \
+            CX001_C39_GEOMETRY_CACHE_RECEIPT.json \
+            CX001_C39_GEOMETRY_CACHE_TIMING.json
+
+      - name: Upload verified geometry cache
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CX001-C39-GEOMETRY-CACHE
+          path: /tmp/cx001-c39-geometry-cache.tgz
+          retention-days: 30
+
+  live-ab:
+    needs: prepare-cache
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        arm: [BASELINE_REBUILD, CX001_REUSE]
+        trial: [1, 2]
+    steps:
+      - name: Checkout C39 lineage plus transfer workflow
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Reuse C34 verified runtime assets
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C34-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35591781070'
+
+      - name: Stage hash-verified CC0 long01 authored prior
+        uses: actions/download-artifact@v4
+        with:
+          name: DIGE-C36-LONG01-PROBE-84ddfdaa7ead2a28a2f921b7734eda559312e1c5
+          path: experiments/dige-v8-executor-capsule/runtime/system_assets
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35605124719'
+
+      - name: Download verified geometry cache
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: CX001-C39-GEOMETRY-CACHE
+          path: /tmp/cx001-cache
+
+      - name: Baseline rebuild or CX-001 verified reuse
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        env:
+          ARM: ${{ matrix.arm }}
+        run: |
+          set -euo pipefail
+          start_ns="$(date +%s%N)"
+          build_executed=false
+          reuse_verified=false
+          fallback=false
+
+          if [ "$ARM" = "BASELINE_REBUILD" ]; then
+            python build_makehuman_v8.py > runtime/cx001_geometry_${ARM}.log
+            build_executed=true
+          else
+            mkdir -p /tmp/cx001-cache/unpacked
+            tar -xzf /tmp/cx001-cache/cx001-c39-geometry-cache.tgz -C /tmp/cx001-cache/unpacked
+            python3 - <<'PY'
+            import hashlib,json,pathlib,sys
+            root=pathlib.Path(".")
+            cache=pathlib.Path("/tmp/cx001-cache/unpacked")
+            r=json.loads((cache/"CX001_C39_GEOMETRY_CACHE_RECEIPT.json").read_text())
+            current_script=hashlib.sha256((root/"build_makehuman_v8.py").read_bytes()).hexdigest()
+            current_contract=hashlib.sha256((root/"DIGE_C39_HHIR_BENCHMARK.json").read_bytes()).hexdigest()
+            assert current_script==r["build_script_sha256"], (current_script,r["build_script_sha256"])
+            assert current_contract==r["benchmark_contract_sha256"], (current_contract,r["benchmark_contract_sha256"])
+            for name,expected in r["files"].items():
+                actual=hashlib.sha256((cache/name).read_bytes()).hexdigest()
+                assert actual==expected,(name,actual,expected)
+            PY
+            cp /tmp/cx001-cache/unpacked/makehuman_base.obj runtime/
+            cp /tmp/cx001-cache/unpacked/asian-female-young.target runtime/
+            cp /tmp/cx001-cache/unpacked/DIGE_V8_FIT_REFERENCE.json runtime/
+            cp /tmp/cx001-cache/unpacked/dige_makehuman_v8.obj runtime/
+            cp /tmp/cx001-cache/unpacked/dige_makehuman_tights_v8.obj runtime/
+            cp /tmp/cx001-cache/unpacked/dige_makehuman_l_eye_v8.obj runtime/
+            cp /tmp/cx001-cache/unpacked/dige_makehuman_r_eye_v8.obj runtime/
+            cp /tmp/cx001-cache/unpacked/dige_makehuman_hair_guide_v8.obj runtime/
+            cp /tmp/cx001-cache/unpacked/DIGE_V8_GEOMETRY_MANIFEST.json runtime/
+            cp /tmp/cx001-cache/unpacked/CX001_C39_GEOMETRY_CACHE_RECEIPT.json runtime/
+            reuse_verified=true
+          fi
+
+          end_ns="$(date +%s%N)"
+          python3 - "${start_ns}" "${end_ns}" "$ARM" "$build_executed" "$reuse_verified" "$fallback" <<'PY'
+          import hashlib,json,pathlib,sys
+          ms=(int(sys.argv[2])-int(sys.argv[1]))/1_000_000
+          arm=sys.argv[3]
+          out={
+            "arm":arm,
+            "geometry_stage_ms":ms,
+            "build_executed":sys.argv[4]=="true",
+            "reuse_verified":sys.argv[5]=="true",
+            "fallback":sys.argv[6]=="true",
+            "geometry_manifest_sha256":hashlib.sha256(pathlib.Path("runtime/DIGE_V8_GEOMETRY_MANIFEST.json").read_bytes()).hexdigest(),
+          }
+          pathlib.Path("runtime/CX001_C39_GEOMETRY_STAGE.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_GEOMETRY_STAGE="+json.dumps(out,sort_keys=True,separators=(",",":")))
+          PY
+
+      - name: Resolve Blender 5.2.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Render identical C39 HHIR application arm
+        working-directory: experiments/dige-v8-executor-capsule
+        env:
+          ARM: ${{ matrix.arm }}
+          TRIAL: ${{ matrix.trial }}
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '1'
+          DIGE_SEARCH_DENOISE: '0'
+          DIGE_OUTPUT_TAG: cx001_c39_${{ matrix.arm }}_t${{ matrix.trial }}
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_C36_CANONICAL_APPEARANCE: '1'
+          DIGE_C39_HHIR_HYPERREAL: '1'
+          DIGE_C36_JAW_TAPER: '0.88'
+          DIGE_C36_EYE_OPEN_SCALE: '0.64'
+          DIGE_C36_EYE_GLOBE_SCALE: '0.88'
+          DIGE_C36_HAIR_LENGTH_M: '0.30'
+          DIGE_C36_HAIR_WAVE: '0.006'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_long01
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SAMPLES_PREVIEW: '96'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20263939'
+          DIGE_RUNTIME_COMMIT: ef048af5736d930f739ce62e1b353bf0c1a3bb65
+        shell: bash
+        run: |
+          set -euo pipefail
+          start_ns="$(date +%s%N)"
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py > runtime/cx001_c39_${ARM}_t${TRIAL}.log
+          end_ns="$(date +%s%N)"
+          python3 - "${start_ns}" "${end_ns}" "$ARM" "$TRIAL" <<'PY'
+          import hashlib,json,pathlib,sys
+          ms=(int(sys.argv[2])-int(sys.argv[1]))/1_000_000
+          arm=sys.argv[3]; trial=int(sys.argv[4])
+          rt=pathlib.Path("runtime")
+          stage=json.loads((rt/"CX001_C39_GEOMETRY_STAGE.json").read_text())
+          root=rt/"renders"/f"cx001_c39_{arm}_t{trial}"
+          r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
+          assert r["device"]=="CPU"
+          assert r["appearance_candidate"]=="C39_HHIR_HYPERREAL_UPDO_V1"
+          assert len(r["outputs"])==1 and r["outputs"][0]["sha256"]
+          assert r["geometry_manifest_sha256"]==stage["geometry_manifest_sha256"]
+          out={
+            "schema":"deus-cx001-c39-live-transfer-arm/1",
+            "arm":arm,
+            "trial":trial,
+            "geometry_stage":stage,
+            "render_wall_ms":ms,
+            "hero_sha256":r["outputs"][0]["sha256"],
+            "scene_sha256":r["scene_sha256"],
+            "appearance_candidate":r["appearance_candidate"],
+            "receipt_geometry_manifest_sha256":r["geometry_manifest_sha256"],
+            "truth_boundary":"LIVE_C39_HHIR_UPDATE_CYCLE__GEOMETRY_STAGE_ONLY__NO_ENERGY_CREDIT"
+          }
+          pre=json.dumps(out,sort_keys=True,separators=(",",":")).encode()
+          out["receipt_sha256"]=hashlib.sha256(pre).hexdigest()
+          (root/"CX001_C39_LIVE_TRANSFER_ARM.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_LIVE_ARM="+json.dumps(out,sort_keys=True,separators=(",",":")))
+          PY
+
+      - name: Upload live transfer arm receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CX001-C39-LIVE-${{ matrix.arm }}-T${{ matrix.trial }}
+          path: experiments/dige-v8-executor-capsule/runtime/renders/cx001_c39_${{ matrix.arm }}_t${{ matrix.trial }}/CX001_C39_LIVE_TRANSFER_ARM.json
+          retention-days: 30
+
+  reduce-live:
+    needs: live-ab
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download all live transfer arms
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: CX001-C39-LIVE-*
+          path: live-transfer
+          merge-multiple: false
+
+      - name: Reduce live application-transfer verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,pathlib,statistics,hashlib
+          rows=[json.loads(p.read_text()) for p in pathlib.Path("live-transfer").rglob("CX001_C39_LIVE_TRANSFER_ARM.json")]
+          assert len(rows)==4, len(rows)
+          by={(r["arm"],r["trial"]):r for r in rows}
+          exact_pairs=[]
+          base_stage=[]; cx_stage=[]; base_render=[]; cx_render=[]
+          for trial in (1,2):
+              b=by[("BASELINE_REBUILD",trial)]
+              c=by[("CX001_REUSE",trial)]
+              assert b["geometry_stage"]["build_executed"] is True
+              assert c["geometry_stage"]["build_executed"] is False
+              assert c["geometry_stage"]["reuse_verified"] is True
+              assert c["geometry_stage"]["fallback"] is False
+              assert b["geometry_stage"]["geometry_manifest_sha256"]==c["geometry_stage"]["geometry_manifest_sha256"]
+              exact=(b["hero_sha256"]==c["hero_sha256"])
+              assert exact,(trial,b["hero_sha256"],c["hero_sha256"])
+              exact_pairs.append(exact)
+              base_stage.append(b["geometry_stage"]["geometry_stage_ms"])
+              cx_stage.append(c["geometry_stage"]["geometry_stage_ms"])
+              base_render.append(b["render_wall_ms"])
+              cx_render.append(c["render_wall_ms"])
+          summary={
+            "schema":"deus-cx001-c39-live-transfer-summary/1",
+            "application":"DIGE_C39_HHIR_HYPERREAL",
+            "transfer_scope":"LIVE_APPLICATION_UPDATE_CYCLE_GEOMETRY_STAGE",
+            "trials":2,
+            "exact_output_pairs":sum(exact_pairs),
+            "false_exclusion_count":0,
+            "baseline_geometry_build_executions":2,
+            "cx001_geometry_build_executions":0,
+            "physical_stage_executions_avoided":2,
+            "baseline_geometry_stage_ms":base_stage,
+            "cx001_reuse_stage_ms":cx_stage,
+            "baseline_geometry_stage_ms_median":statistics.median(base_stage),
+            "cx001_reuse_stage_ms_median":statistics.median(cx_stage),
+            "baseline_render_ms":base_render,
+            "cx001_render_ms":cx_render,
+            "render_output_exact":True,
+            "transfer_verdict":"LIVE_APPLICATION_STAGE_ELIMINATION_PASS",
+            "energy_joules":"UNKNOWN",
+            "claim_ceiling":"C39_UPDATE_CYCLE_GEOMETRY_REUSE_ONLY__NO_GLOBAL_RENDER_SPEEDUP__NO_ENERGY_CREDIT"
+          }
+          raw=json.dumps(summary,sort_keys=True,separators=(",",":")).encode()
+          summary["summary_sha256"]=hashlib.sha256(raw).hexdigest()
+          pathlib.Path("CX001_C39_LIVE_TRANSFER_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_LIVE_SUMMARY="+json.dumps(summary,sort_keys=True,separators=(",",":")))
+          PY
+
+      - name: Upload live transfer summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CX001-C39-LIVE-TRANSFER-SUMMARY
+          path: CX001_C39_LIVE_TRANSFER_SUMMARY.json
+          retention-days: 30
