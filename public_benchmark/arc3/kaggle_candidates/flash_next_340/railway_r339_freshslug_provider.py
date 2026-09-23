@@ -33,6 +33,8 @@ def list_mine(search: str):
         "--format","json","--sort-by","dateRun","--page-size","50"
     ],timeout=90)
     raw=(q.stdout or "").strip()
+    if raw.lower() in {"not found","no results","none"}:
+        return []
     # CLI 2.2.x may prefix/suffix informational text around formatted JSON.
     lo=raw.find("[")
     hi=raw.rfind("]")
