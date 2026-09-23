@@ -1,0 +1,121 @@
+name: ARC3 R331 audit R330 artifacts
+on:
+  push:
+    branches: [deus/r331-audit-r330-20260923]
+    paths:
+      - .github/workflows/arc3-r331-audit-r330-artifacts.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '35840571983'
+      SOURCE_SHA: '7358fa568414a96a2acf864a450ecc078bd8c433'
+      IDEMPOTENCY_KEY: 'R331-AUDIT-R330-20260923-001'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Read source run and artifact metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN}" > r330_run.json
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${SOURCE_RUN}/artifacts?per_page=100" > r330_artifacts.json
+          python - <<'PY'
+          import json, os
+          run=json.load(open('r330_run.json'))
+          arts=json.load(open('r330_artifacts.json'))
+          assert run['id']==int(os.environ['SOURCE_RUN'])
+          assert run['head_sha']==os.environ['SOURCE_SHA']
+          assert run['status']=='completed' and run['conclusion']=='success'
+          assert arts['total_count']==25, arts['total_count']
+          names=[a['name'] for a in arts['artifacts']]
+          assert len(names)==25 and len(set(names))==25
+          assert all(n.startswith('r330-') for n in names)
+          print(json.dumps({'source_run':run['id'],'head_sha':run['head_sha'],'artifacts':len(names)},sort_keys=True))
+          PY
+      - name: Download all R330 artifacts once
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p r330_artifacts
+          cd r330_artifacts
+          gh run download "${SOURCE_RUN}" -R "${GITHUB_REPOSITORY}"
+          test "$(find . -name 'r330-*.json' -type f | wc -l)" -eq 25
+      - name: Aggregate and audit frozen R330
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import collections, glob, hashlib, json, os
+          files=sorted(glob.glob('r330_artifacts/r330-*/r330-*.json'))
+          assert len(files)==25, len(files)
+          games=[]; totals=collections.Counter(); gate_on=0; gate_off=0; verdicts=collections.Counter(); scars=[]
+          for path in files:
+              d=json.load(open(path))
+              assert d['schema']=='deus/arc3-r330-global-at15-frozen-p5p9/1'
+              assert d['idempotency_key']=='R330-GLOBAL-AT15-P5P9-20260923-001'
+              f=d['freeze']; p=d['protocol']; t=d['truth']; g=d['gate']; r=d['source_assisted_p5_p9']
+              assert f['gate_feature']=='accepted_templates' and f['gate_operator']=='<=' and f['gate_threshold']==15
+              assert f['per_game_threshold_selection'] is False
+              assert f['representation_changed_after_gate_freeze'] is False
+              assert p['fit']=='p0-p4 only' and p['source_assisted_replay']=='p5-p9 only'
+              assert p['p10_p19_staged_or_read'] is False
+              assert p['p5_p9_updates_gate'] is False and p['p5_p9_updates_model_family'] is False
+              assert p['cross_game_hyperparameter_retune_after_replay'] is False
+              assert t['public_trace_only'] is True and t['source_free_runtime_logic'] is True
+              assert t['p5_p9_replay_is_source_assisted'] is True and t['p10_p19_read'] is False
+              assert t['independent_hidden_generalization_claim'] is False
+              assert t['whole_game_solver_promotion'] is False and t['kaggle_execution'] is False and t['competition_submission'] is False
+              assert t['competition_quota_spent_by_r330']==0
+              assert g['feature']=='accepted_templates' and g['threshold']==15
+              assert g['on']==(g['value']<=15)
+              gate_on += int(g['on']); gate_off += int(not g['on'])
+              verdicts[d['verdict']]+=1
+              keys=['frames','pixels','candidate_errors','identity_errors','candidate_exact_frames','identity_exact_frames','exact_frame_gain','pixel_gain','predicted_changes','true_changed_correct','template_firings']
+              for k in keys: totals[k]+=int(r[k])
+              false_changes=int(r['predicted_changes'])-int(r['true_changed_correct'])
+              game={'game':d['game'],'gate_on':g['on'],'accepted_templates':g['value'],'false_changes':false_changes,'exact_frame_gain':int(r['exact_frame_gain']),'pixel_gain':int(r['pixel_gain']),'predicted_changes':int(r['predicted_changes']),'true_changed_correct':int(r['true_changed_correct']),'verdict':d['verdict']}
+              games.append(game)
+              if false_changes or game['exact_frame_gain']<0 or game['pixel_gain']<0:
+                  scars.append(game)
+          assert len({g['game'] for g in games})==25
+          aggregate_false=totals['predicted_changes']-totals['true_changed_correct']
+          assert totals['exact_frame_gain']==totals['candidate_exact_frames']-totals['identity_exact_frames']
+          assert totals['pixel_gain']==totals['identity_errors']-totals['candidate_errors']
+          if aggregate_false==0 and totals['exact_frame_gain']>0 and totals['pixel_gain']>0:
+              verdict='PRESERVE_R330_GLOBAL_AT15_SOURCE_ASSIST_PASS_ZERO_FALSE'
+          elif aggregate_false==0 and totals['exact_frame_gain']>=0 and totals['pixel_gain']>=0:
+              verdict='PRESERVE_R330_GLOBAL_AT15_SOURCE_ASSIST_NONDOMINATED_ZERO_FALSE'
+          else:
+              verdict='FALSIFY_R330_GLOBAL_AT15_ON_FROZEN_P5P9'
+          out={
+            'schema':'deus/arc3-r331-r330-artifact-audit/1',
+            'idempotency_key':os.environ['IDEMPOTENCY_KEY'],
+            'source':{'run_id':int(os.environ['SOURCE_RUN']),'head_sha':os.environ['SOURCE_SHA'],'artifact_count':25,'result_json_count':25},
+            'freeze':{'gate_feature':'accepted_templates','gate_operator':'<=','gate_threshold':15,'per_game_threshold_selection':False,'fit':'p0-p4 only','replay':'p5-p9 only','p10_p19_read':False},
+            'truth':{'public_offline_only':True,'source_assisted_p5_p9':True,'independent_hidden_generalization_claim':False,'whole_game_solver_promotion':False,'kaggle_execution':False,'competition_submission':False,'competition_quota_spent_by_r331':0},
+            'aggregate':dict(totals, false_changes=aggregate_false, gate_on_games=gate_on, gate_off_games=gate_off),
+            'verdict_counts':dict(verdicts),
+            'scars':sorted(scars,key=lambda x:x['game']),
+            'per_game':sorted(games,key=lambda x:x['game']),
+            'verdict':verdict
+          }
+          with open('r331-r330-artifact-audit.json','w') as f: json.dump(out,f,indent=2,sort_keys=True)
+          print(json.dumps({'verdict':verdict,'aggregate':out['aggregate'],'scar_count':len(scars),'gate_on':gate_on,'gate_off':gate_off},sort_keys=True))
+          PY
+          sha256sum r330_run.json r330_artifacts.json r331-r330-artifact-audit.json > SHA256SUMS.txt
+      - name: Upload R331 audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r331-r330-artifact-audit
+          path: |
+            r330_run.json
+            r330_artifacts.json
+            r331-r330-artifact-audit.json
+            SHA256SUMS.txt
+          retention-days: 30
