@@ -48,5 +48,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: r319-meter3-final-audit
-          path: |\n            r319.json\n            stdout.txt
+          path: |
+            r319.json
+            stdout.txt
           retention-days: 30
