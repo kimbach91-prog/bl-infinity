@@ -19,7 +19,8 @@ import railway_r335_flash_provider as p
 import upstream_flash_r335_structured_state_package_patch as pkg
 
 BASE_EXACT="lmkimbch/deus-arc3-r338-base-tr87/1"
-MAX_STATE_VERSION_SCAN=20
+REPAIRED_STATE_REF="lmkimbch/deus-arc3-r335fix-f2ad-state-tr87"
+p.STATE_REF=REPAIRED_STATE_REF
 EXPECTED_BASE_NOTEBOOK_SHA="2fe65f106a7ef34e44d5e12f3133fa471669e78ffeac1e67a558a20c118aca1c"
 EXPECTED_STAGE1_SHA="978026a51c438744c64922571b2264f09a3d4ec4259ddc75b03ccc0f3ba0b772"
 EXPECTED_REPAIRED_OVERLAY_SHA="f2adf9b64107dbfa78e2d693e19919889f31debf0fe98f9c5061b28948910388"
@@ -60,33 +61,22 @@ def exact_source_selftest():
     })
 
 def discover_next_state_version():
-    existing=[]
-    for version in range(1,MAX_STATE_VERSION_SCAN+1):
-        exists,exact,txt=exact_exists(version)
-        if not exists:
-            p.emit("DEUS_R335_FLASH_RECOVERY_VERSION_SCAN",{
-                "existing":existing,
-                "next_free_version":version,
-                "next_free_exact":exact,
-                "competition_submission":False,
-            })
-            return version
-        low=txt.lower()
-        if "error" in low or "failed" in low or "cancelled" in low:
-            state="ERROR"
-        elif "complete" in low or "completed" in low:
-            state="COMPLETE"
-        elif "running" in low or "queued" in low or "pending" in low:
-            state="ACTIVE"
-        else:
-            state="UNKNOWN"
-        existing.append({"version":version,"state":state})
-        # Existing non-error versions are not ours to silently consume or skip.
-        if state!="ERROR":
-            raise RuntimeError(
-                f"existing_state_version_requires_inspection:{exact}:{state}:{txt[:160]}"
-            )
-    raise RuntimeError("state_version_scan_exhausted")
+    # The historical state slug accumulated many stale ERROR versions before
+    # the prompt-escaping repair. Use a fresh content-identity namespace so the
+    # first provider execution of the repaired candidate is attributable.
+    exists, exact, txt = exact_exists(1)
+    if exists:
+        raise RuntimeError(
+            f"isolated_state_namespace_not_empty:{exact}:{txt[:160]}"
+        )
+    p.emit("DEUS_R335_FLASH_RECOVERY_NAMESPACE_FENCE",{
+        "state_ref":REPAIRED_STATE_REF,
+        "expected_first_version":1,
+        "namespace_empty":True,
+        "repaired_overlay_sha256":EXPECTED_REPAIRED_OVERLAY_SHA,
+        "competition_submission":False,
+    })
+    return 1
 
 
 def launch_or_reuse_state(state_dir):
@@ -97,25 +87,25 @@ def launch_or_reuse_state(state_dir):
     m=re.search(r"Kernel version\s+(\d+)\s+successfully pushed",text,re.I)
     if m:
         version=int(m.group(1))
-        if version!=next_version:
+        if version!=1:
             raise RuntimeError(
-                f"provider_version_race:expected{next_version}:observed{version}"
+                f"isolated_namespace_version_race:expected1:observed{version}"
             )
         ok,exact2,_=exact_exists(version)
         if not ok: raise RuntimeError("parsed_state_version_not_readable")
         return version,True
 
-    # CLI text varies; provider existence is the authoritative fallback.
-    ok,exact2,status2=exact_exists(next_version)
+    ok,exact2,status2=exact_exists(1)
     if not ok:
-        raise RuntimeError("provider_push_returned_success_but_next_exact_version_absent")
+        raise RuntimeError("provider_push_returned_success_but_isolated_v1_absent")
     p.emit("DEUS_R335_FLASH_RECOVERY_VERSION_DISCOVERED",{
         "state_exact":exact2,
-        "discovery":"post-push exact status probe",
+        "discovery":"post-push isolated exact status probe",
         "status":status2[:240],
         "competition_submission":False,
     })
-    return next_version,True
+    return 1,True
+
 
 def main():
     threading.Thread(target=p.health,daemon=True).start()
@@ -139,6 +129,8 @@ def main():
             "runtime_seconds":p.RUNTIME,
             "baseline_reused_exact_v1":True,
             "state_repair_only":True,
+            "state_namespace_fenced":True,
+            "state_namespace":REPAIRED_STATE_REF,
             "new_state_push":new_push,
             "exact_source_selftest_passed":True,
             "competition_submission":False,
