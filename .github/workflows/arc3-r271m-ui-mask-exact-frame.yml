@@ -1,0 +1,83 @@
+name: ARC3 R271M UI-mask exact-frame matrix
+on:
+  push:
+    branches: [deus/r270-ui-mask-frozen-gate-20260923]
+    paths:
+      - .github/workflows/arc3-r271m-ui-mask-exact-frame.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-frame-game:
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        game:
+          - ar25-0c556536
+          - cd82-fb555c5d
+          - cn04-2fe56bfb
+          - dc22-fdcac232
+          - ft09-0d8bbf25
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - sk48-d8078629
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - tu93-0768757b
+          - vc33-5430563c
+          - wa30-ee6fef47
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage one game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="${{ matrix.game }}_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"
+          done
+      - name: Execute exact-frame gate
+        shell: bash
+        run: |
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ui_mask_exact_frame_271.py "${args[@]}" --output "r271m-${{ matrix.game }}.json" | tee "r271m-${{ matrix.game }}.stdout.txt"
+      - name: Verify
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,glob
+          d=json.load(open(glob.glob('r271m-*.json')[0]))
+          assert d['schema']=='deus/arc3-r271-ui-mask-exact-frame-incremental/1'
+          assert d['aggregate']['game_count']==1
+          assert d['truth']['exact_frame_scoring']
+          assert d['truth']['selection_uses_p0_p9_only']
+          print(json.dumps(d['aggregate'],sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r271m-${{ matrix.game }}
+          path: |
+            r271m-${{ matrix.game }}.json
+            r271m-${{ matrix.game }}.stdout.txt
+          retention-days: 30
