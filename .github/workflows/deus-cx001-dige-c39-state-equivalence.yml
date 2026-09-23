@@ -1,0 +1,395 @@
+name: DEUS CX-001 C39 pre-render state equivalence
+
+on:
+  push:
+    branches:
+      - "deus/cx001-live-dige-c39-20260923"
+    paths:
+      - ".github/workflows/deus-cx001-dige-c39-state-equivalence.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  state-pair:
+    strategy:
+      fail-fast: false
+      max-parallel: 2
+      matrix:
+        trial: [1, 2]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact C39 lineage
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Download rebuilt public runtime from deterministic run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: CX001-C39-SHARED-RUNTIME
+          path: experiments/dige-v8-executor-capsule/runtime
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35815697991'
+
+      - name: Download exact geometry cache from deterministic run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: CX001-C39-GEOMETRY-CACHE
+          path: /tmp/cx001-cache
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: '35815697991'
+
+      - name: Resolve Blender 5.2.2
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=https://download.blender.org/release/Blender5.2
+          TAR=blender-5.2.2-linux-x64.tar.xz
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/$TAR" -o "/tmp/$TAR"
+          curl -fL --retry 4 --retry-delay 3 "$ROOT/blender-5.2.2.sha256" -o /tmp/blender.sha256
+          grep " $TAR$" /tmp/blender.sha256 > /tmp/blender.expected
+          (cd /tmp && sha256sum -c blender.expected)
+          tar -xf "/tmp/$TAR" -C /tmp
+          echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
+
+      - name: Create canonical pre-render state verifier
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          src=Path("blender_render_v8.py")
+          s=src.read_text()
+          marker="outputs=[]\n"
+          assert s.count(marker)==1, s.count(marker)
+          inject=r'''
+          # CX-001 application-transfer semantic-state verifier.
+          # This executes after the complete C39 scene has been materialized
+          # but before any stochastic Cycles render begins.
+          import struct as _cx_struct
+
+          def _cx_f(x):
+              return float(x).hex()
+
+          def _cx_sha_bytes(chunks):
+              h=hashlib.sha256()
+              for c in chunks:
+                  if isinstance(c,str): c=c.encode()
+                  h.update(c)
+              return h.hexdigest()
+
+          def _cx_mesh_digest(me):
+              h=hashlib.sha256()
+              h.update(f"V{len(me.vertices)}E{len(me.edges)}P{len(me.polygons)}L{len(me.loops)}".encode())
+              for v in me.vertices:
+                  h.update(struct.pack("<3d",float(v.co.x),float(v.co.y),float(v.co.z)))
+              for e in me.edges:
+                  h.update(struct.pack("<2I",int(e.vertices[0]),int(e.vertices[1])))
+              for p in me.polygons:
+                  h.update(struct.pack("<II?",int(p.material_index),len(p.vertices),bool(p.use_smooth)))
+                  for i in p.vertices: h.update(struct.pack("<I",int(i)))
+              for uv in me.uv_layers:
+                  h.update(("UV:"+uv.name).encode())
+                  for d in uv.data:
+                      h.update(struct.pack("<2d",float(d.uv.x),float(d.uv.y)))
+              return h.hexdigest()
+
+          def _cx_curve_digest(cu):
+              h=hashlib.sha256()
+              h.update(json.dumps({
+                  "dimensions":cu.dimensions,
+                  "bevel_depth":_cx_f(cu.bevel_depth),
+                  "bevel_resolution":int(cu.bevel_resolution),
+                  "resolution_u":int(cu.resolution_u),
+                  "fill_mode":cu.fill_mode,
+                  "splines":len(cu.splines),
+              },sort_keys=True,separators=(",",":")).encode())
+              for sp in cu.splines:
+                  h.update((sp.type+":"+str(bool(sp.use_cyclic_u))).encode())
+                  if sp.type=="BEZIER":
+                      for p in sp.bezier_points:
+                          for vec in (p.co,p.handle_left,p.handle_right):
+                              h.update(struct.pack("<3d",float(vec.x),float(vec.y),float(vec.z)))
+                          h.update(struct.pack("<2d",float(p.radius),float(p.tilt)))
+                  else:
+                      for p in sp.points:
+                          h.update(struct.pack("<4d",float(p.co.x),float(p.co.y),float(p.co.z),float(p.co.w)))
+                          h.update(struct.pack("<2d",float(p.radius),float(p.tilt)))
+              return h.hexdigest()
+
+          def _cx_default(v):
+              if v is None or isinstance(v,(bool,int,str)): return v
+              if isinstance(v,float): return _cx_f(v)
+              try:
+                  return [_cx_f(x) for x in v]
+              except Exception:
+                  try: return str(v)
+                  except Exception: return "<unreadable>"
+
+          def _cx_node_tree_digest(nt):
+              if nt is None: return None
+              nodes=[]
+              for n in sorted(nt.nodes,key=lambda x:(x.bl_idname,x.name)):
+                  ins=[]
+                  for sock in n.inputs:
+                      if hasattr(sock,"default_value"):
+                          try: val=_cx_default(sock.default_value)
+                          except Exception: val="<error>"
+                          ins.append([sock.name,val])
+                  extra={}
+                  img=getattr(n,"image",None)
+                  if img is not None:
+                      p=Path(bpy.path.abspath(img.filepath)) if img.filepath else None
+                      extra["image_name"]=img.name
+                      extra["image_path"]=str(p) if p else None
+                      extra["image_sha256"]=sha(p) if p and p.exists() else None
+                      try: extra["colorspace"]=img.colorspace_settings.name
+                      except Exception: pass
+                  nodes.append({
+                      "id":n.bl_idname,"name":n.name,"label":n.label,"mute":bool(n.mute),
+                      "inputs":ins,"extra":extra
+                  })
+              links=sorted([
+                  [l.from_node.name,l.from_socket.name,l.to_node.name,l.to_socket.name]
+                  for l in nt.links
+              ])
+              raw=json.dumps({"nodes":nodes,"links":links},sort_keys=True,separators=(",",":")).encode()
+              return hashlib.sha256(raw).hexdigest()
+
+          def _cx_obj_record(o):
+              rec={
+                  "name":o.name,"type":o.type,
+                  "location":[_cx_f(x) for x in o.location],
+                  "rotation_euler":[_cx_f(x) for x in o.rotation_euler],
+                  "scale":[_cx_f(x) for x in o.scale],
+                  "hide_render":bool(o.hide_render),
+                  "parent":o.parent.name if o.parent else None,
+                  "materials":[s.material.name if s.material else None for s in o.material_slots],
+              }
+              if o.type=="MESH": rec["data_digest"]=_cx_mesh_digest(o.data)
+              elif o.type=="CURVE": rec["data_digest"]=_cx_curve_digest(o.data)
+              elif o.type=="CAMERA":
+                  rec["camera"]={
+                      "lens":_cx_f(o.data.lens),"sensor_width":_cx_f(o.data.sensor_width),
+                      "dof":bool(o.data.dof.use_dof),
+                      "focus_distance":_cx_f(o.data.dof.focus_distance),
+                      "aperture_fstop":_cx_f(o.data.dof.aperture_fstop)
+                  }
+              elif o.type=="LIGHT":
+                  rec["light"]={
+                      "light_type":o.data.type,"energy":_cx_f(o.data.energy),
+                      "color":[_cx_f(x) for x in o.data.color],
+                      "shape":getattr(o.data,"shape",None),
+                      "size":_cx_f(getattr(o.data,"size",0.0))
+                  }
+              mods=[]
+              for m in o.modifiers:
+                  mods.append({"name":m.name,"type":m.type,"show_render":bool(m.show_render)})
+              rec["modifiers"]=mods
+              return rec
+
+          _cx_objects=[_cx_obj_record(o) for o in sorted(bpy.context.scene.objects,key=lambda x:x.name)]
+          _cx_materials=[]
+          for m in sorted(bpy.data.materials,key=lambda x:x.name):
+              _cx_materials.append({
+                  "name":m.name,"use_nodes":bool(m.use_nodes),
+                  "node_digest":_cx_node_tree_digest(m.node_tree if m.use_nodes else None)
+              })
+          _cx_scene={
+              "engine":scene.render.engine,
+              "cycles_device":scene.cycles.device,
+              "samples":int(scene.cycles.samples),
+              "seed":int(scene.cycles.seed),
+              "use_denoising":bool(scene.cycles.use_denoising),
+              "use_adaptive_sampling":bool(scene.cycles.use_adaptive_sampling),
+              "adaptive_threshold":_cx_f(scene.cycles.adaptive_threshold),
+              "max_bounces":int(scene.cycles.max_bounces),
+              "diffuse_bounces":int(scene.cycles.diffuse_bounces),
+              "glossy_bounces":int(scene.cycles.glossy_bounces),
+              "transmission_bounces":int(scene.cycles.transmission_bounces),
+              "resolution":[int(scene.render.resolution_x),int(scene.render.resolution_y),int(scene.render.resolution_percentage)],
+              "view_look":scene.view_settings.look,
+              "exposure":_cx_f(scene.view_settings.exposure),
+              "camera":scene.camera.name if scene.camera else None,
+              "world_digest":_cx_node_tree_digest(scene.world.node_tree if scene.world and scene.world.use_nodes else None),
+          }
+          _cx_component={
+              "objects_sha256":hashlib.sha256(json.dumps(_cx_objects,sort_keys=True,separators=(",",":")).encode()).hexdigest(),
+              "materials_sha256":hashlib.sha256(json.dumps(_cx_materials,sort_keys=True,separators=(",",":")).encode()).hexdigest(),
+              "scene_sha256":hashlib.sha256(json.dumps(_cx_scene,sort_keys=True,separators=(",",":")).encode()).hexdigest(),
+              "geometry_manifest_sha256":sha(RUNTIME/"DIGE_V8_GEOMETRY_MANIFEST.json"),
+              "gnm_manifest_sha256":sha(RUNTIME/"gnm_c28"/"DIGE_C28_GNM_HEAD_MANIFEST.json"),
+              "canon_manifest_sha256":CANON_SHA256,
+          }
+          _cx_final=hashlib.sha256(json.dumps(_cx_component,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+          _cx_receipt={
+              "schema":"deus-cx001-c39-prerender-semantic-state/1",
+              "output_tag":OUTPUT_TAG,
+              "component_digests":_cx_component,
+              "semantic_digest":_cx_final,
+              "object_count":len(_cx_objects),
+              "material_count":len(_cx_materials),
+              "truth_boundary":"C39_PRE_RENDER_APPLICATION_STATE__BEFORE_CYCLES_STOCHASTIC_RENDER"
+          }
+          (OUT/"CX001_C39_PRERENDER_STATE.json").write_text(json.dumps(_cx_receipt,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_PRERENDER_STATE="+json.dumps(_cx_receipt,sort_keys=True,separators=(",",":")))
+          bpy.ops.wm.quit_blender()
+          '''
+          s=s.replace(marker,inject+"\n"+marker,1)
+          Path("blender_render_cxstate.py").write_text(s)
+          PY
+
+      - name: Compare baseline rebuild and CX reuse pre-render semantic state
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        env:
+          TRIAL: ${{ matrix.trial }}
+          DIGE_CYCLES_DEVICE: CPU
+          DIGE_RENDER_SET: HERO_ONLY
+          DIGE_SEARCH_ONLY: '1'
+          DIGE_SEARCH_DENOISE: '0'
+          DIGE_C18_HYBRID_BULK: '1'
+          DIGE_C25_MATURE_STACK: '1'
+          DIGE_C26_PHOTOMETRIC: '1'
+          DIGE_C28_GNM_HEAD: '1'
+          DIGE_C28_GNM_DIR: runtime/gnm_c28
+          DIGE_C29_GNM_PRESENTATION: '1'
+          DIGE_C30_GNM_SEMANTIC_IDENTITY: '1'
+          DIGE_C31_GNM_FACE_APPEARANCE: '1'
+          DIGE_C32_GNM_DERMAL_HAIR: '1'
+          DIGE_C33_GUIDE_GATED_GROOM: '1'
+          DIGE_C33_GUIDE_MAX_DIST: '0.021'
+          DIGE_C33_SCALP_Z_DROP: '0.120'
+          DIGE_C36_CANONICAL_APPEARANCE: '1'
+          DIGE_C39_HHIR_HYPERREAL: '1'
+          DIGE_C36_JAW_TAPER: '0.88'
+          DIGE_C36_EYE_OPEN_SCALE: '0.64'
+          DIGE_C36_EYE_GLOBE_SCALE: '0.88'
+          DIGE_C36_HAIR_LENGTH_M: '0.30'
+          DIGE_C36_HAIR_WAVE: '0.006'
+          DIGE_GNM_COMMIT: a424b5153eec9154f3dfa5ee7f214e5817918d54
+          DIGE_MPFB2_SRC: runtime/shared_mpfb2_src
+          DIGE_MPFB2_COMMIT: b58176c661a9680294eb75f127842cb8378e4974
+          DIGE_C25_MHMAT_PATH: runtime/assets/c25_mpfb/c25_skin.mhmat
+          DIGE_HAIR_ASSET_KEY: hair_long01
+          DIGE_HAIR_STRANDS_PER_ROOT: '24'
+          DIGE_HAIR_ACCENT_LENGTH_SCALE: '1.00'
+          DIGE_HAIR_FRONT_SAFE_BLEND: '0.78'
+          DIGE_SKIN_ALBEDO_PATH: runtime/assets/young_eurasian_female_diffuse.png
+          DIGE_SKIN_ALBEDO_SHA256: e4547a04bab2244d8ec6bcb1d239f4cddb83f145d4ce2a5c7734ec514c8bebcf
+          DIGE_SKIN_ALBEDO_NAME: onlytheghosts_young_eurasian_female
+          DIGE_SAMPLES_PREVIEW: '96'
+          DIGE_SAMPLES_HERO: '96'
+          DIGE_RENDER_SEED: '20263939'
+          DIGE_RUNTIME_COMMIT: ef048af5736d930f739ce62e1b353bf0c1a3bb65
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cx001-cache/unpacked
+          tar -xzf /tmp/cx001-cache/cx001-c39-geometry-cache.tgz -C /tmp/cx001-cache/unpacked
+
+          restore_cache() {
+            python3 - <<'PY'
+          import hashlib,json,pathlib
+          root=pathlib.Path("."); cache=pathlib.Path("/tmp/cx001-cache/unpacked")
+          r=json.loads((cache/"CX001_C39_GEOMETRY_CACHE_RECEIPT.json").read_text())
+          assert hashlib.sha256((root/"build_makehuman_v8.py").read_bytes()).hexdigest()==r["build_script_sha256"]
+          assert hashlib.sha256((root/"DIGE_C39_HHIR_BENCHMARK.json").read_bytes()).hexdigest()==r["benchmark_contract_sha256"]
+          for name,expected in r["files"].items():
+              assert hashlib.sha256((cache/name).read_bytes()).hexdigest()==expected
+          PY
+            for f in makehuman_base.obj asian-female-young.target DIGE_V8_FIT_REFERENCE.json dige_makehuman_v8.obj dige_makehuman_tights_v8.obj dige_makehuman_l_eye_v8.obj dige_makehuman_r_eye_v8.obj dige_makehuman_hair_guide_v8.obj DIGE_V8_GEOMETRY_MANIFEST.json; do
+              cp "/tmp/cx001-cache/unpacked/$f" "runtime/$f"
+            done
+          }
+
+          export DIGE_OUTPUT_TAG="cxstate_base_t${TRIAL}"
+          python build_makehuman_v8.py > "runtime/cxstate_build_t${TRIAL}.log"
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_cxstate.py > "runtime/cxstate_base_t${TRIAL}.log"
+
+          export DIGE_OUTPUT_TAG="cxstate_reuse_t${TRIAL}"
+          restore_cache
+          "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_cxstate.py > "runtime/cxstate_reuse_t${TRIAL}.log"
+
+          python3 - "$TRIAL" <<'PY'
+          import json,pathlib,sys,hashlib
+          trial=int(sys.argv[1]); rt=pathlib.Path("runtime")/"renders"
+          b=json.loads((rt/f"cxstate_base_t{trial}"/"CX001_C39_PRERENDER_STATE.json").read_text())
+          c=json.loads((rt/f"cxstate_reuse_t{trial}"/"CX001_C39_PRERENDER_STATE.json").read_text())
+          diff={k:[b["component_digests"].get(k),c["component_digests"].get(k)]
+                for k in sorted(set(b["component_digests"])|set(c["component_digests"]))
+                if b["component_digests"].get(k)!=c["component_digests"].get(k)}
+          out={
+            "schema":"deus-cx001-c39-prerender-pair/1",
+            "trial":trial,
+            "baseline_semantic_digest":b["semantic_digest"],
+            "candidate_semantic_digest":c["semantic_digest"],
+            "semantic_exact":b["semantic_digest"]==c["semantic_digest"],
+            "component_diff":diff,
+            "baseline_object_count":b["object_count"],
+            "candidate_object_count":c["object_count"],
+            "baseline_material_count":b["material_count"],
+            "candidate_material_count":c["material_count"],
+            "claim_ceiling":"PRE_RENDER_APPLICATION_STATE_EQUIVALENCE_ONLY__RENDERER_NONDETERMINISM_SEPARATE"
+          }
+          raw=json.dumps(out,sort_keys=True,separators=(",",":")).encode()
+          out["receipt_sha256"]=hashlib.sha256(raw).hexdigest()
+          pathlib.Path(f"runtime/CX001_C39_PRERENDER_PAIR_T{trial}.json").write_text(json.dumps(out,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_PRERENDER_PAIR="+json.dumps(out,sort_keys=True,separators=(",",":")))
+          assert out["semantic_exact"], diff
+          PY
+
+      - name: Upload pre-render state pair
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CX001-C39-PRERENDER-PAIR-T${{ matrix.trial }}
+          path: experiments/dige-v8-executor-capsule/runtime/CX001_C39_PRERENDER_PAIR_T${{ matrix.trial }}.json
+          retention-days: 30
+
+  reduce:
+    needs: state-pair
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download pair receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: CX001-C39-PRERENDER-PAIR-*
+          path: pairs
+          merge-multiple: false
+
+      - name: Reduce state-equivalence result
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,pathlib,hashlib
+          rows=[json.loads(p.read_text()) for p in pathlib.Path("pairs").rglob("CX001_C39_PRERENDER_PAIR_T*.json")]
+          assert len(rows)==2
+          rows=sorted(rows,key=lambda r:r["trial"])
+          summary={
+            "schema":"deus-cx001-c39-prerender-summary/1",
+            "trials":2,
+            "exact_pairs":sum(bool(r["semantic_exact"]) for r in rows),
+            "component_diff_union":sorted({k for r in rows for k in r["component_diff"]}),
+            "semantic_exact_all":all(r["semantic_exact"] for r in rows),
+            "transfer_verdict":"PRE_RENDER_APPLICATION_STATE_EQUIVALENCE_PASS" if all(r["semantic_exact"] for r in rows) else "PRE_RENDER_APPLICATION_STATE_EQUIVALENCE_FAIL",
+            "claim_ceiling":"PRE_RENDER_APPLICATION_STATE_ONLY__NO_PIXEL_EQUIVALENCE__NO_GLOBAL_SPEEDUP__NO_ENERGY_CREDIT"
+          }
+          raw=json.dumps(summary,sort_keys=True,separators=(",",":")).encode()
+          summary["summary_sha256"]=hashlib.sha256(raw).hexdigest()
+          pathlib.Path("CX001_C39_PRERENDER_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_PRERENDER_SUMMARY="+json.dumps(summary,sort_keys=True,separators=(",",":")))
+          assert summary["semantic_exact_all"]
+          PY
+
+      - name: Upload summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: CX001-C39-PRERENDER-SUMMARY
+          path: CX001_C39_PRERENDER_SUMMARY.json
+          retention-days: 30
