@@ -53,6 +53,29 @@ def run(args, timeout=120):
         "stderr": (p.stderr or "")[:12000],
     }
 
+def emit_file_chunks(path, label, chunk_chars=1800):
+    path = Path(path)
+    raw = path.read_bytes()
+    encoded = base64.b64encode(raw).decode("ascii")
+    total = (len(encoded) + chunk_chars - 1) // chunk_chars
+    emit(
+        "deus_video_v2_artifact_manifest",
+        label=label,
+        bytes=len(raw),
+        sha256=hashlib.sha256(raw).hexdigest(),
+        base64_chars=len(encoded),
+        chunk_chars=chunk_chars,
+        chunks=total,
+    )
+    for idx in range(total):
+        emit(
+            "deus_video_v2_artifact_chunk",
+            label=label,
+            index=idx,
+            total=total,
+            data=encoded[idx*chunk_chars:(idx+1)*chunk_chars],
+        )
+
 def safe_drive_principal():
     raw = os.environ.get("DEUS_GOOGLE_SERVICE_ACCOUNT_JSON", "")
     if not raw:
@@ -383,6 +406,8 @@ def i2v_loop():
                         state["error"]="i2v_output_hash_mismatch"; return
                     state["i2v_receipt"]=receipt; state["i2v_artifact_ready"]=True
                     emit("deus_video_v2_i2v_receipt",receipt=receipt)
+                    emit_file_chunks(vp, "video_mp4")
+                    emit_file_chunks(rp, "receipt_json")
                 else:
                     state["error"]="i2v_output_missing"
                 return
