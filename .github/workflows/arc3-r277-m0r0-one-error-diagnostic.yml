@@ -1,0 +1,87 @@
+name: ARC3 R277 m0r0 one-error diagnostic
+on:
+  push:
+    branches: [deus/r277-m0r0-one-error-diagnostic-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_m0r0_r276_one_error_diag_277.py
+      - .github/workflows/arc3-r277-m0r0-one-error-diagnostic.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diag-r277:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py public_benchmark/arc3/kaggle_candidates/public_m0r0_r276_one_error_diag_277.py
+      - name: Stage exact m0r0 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace')
+          game='m0r0-492f87ba'; by={}
+          for f in src.glob(f'{game}_p*_events.jsonl'):
+              m=re.match(rf'{re.escape(game)}_p(\d+)_events\.jsonl$',f.name)
+              if m: by[int(m.group(1))]=f
+          if set(by)!=set(range(20)): raise SystemExit(f'exact p0-p19 required; got {sorted(by)}')
+          for p in range(20):
+              f=by[p]; (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -name 'm0r0-492f87ba_p*_events.jsonl' -type f | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R277 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -name 'm0r0-492f87ba_p*_events.jsonl' -type f | sort)
+          args=(); for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_m0r0_r276_one_error_diag_277.py "${args[@]}" --output r277-m0r0-one-error.json 2> >(tee r277-runtime.txt >&2) | tee r277-stdout.txt
+      - name: Verify and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r277-m0r0-one-error.json').read_text())
+          assert d['schema']=='deus/arc3-r277-m0r0-r276-one-error-diagnostic/1'
+          assert d['lineage']['representation_frozen']=='canon_nodes_ui'
+          assert d['game']=='m0r0-492f87ba'
+          assert d['protocol']['p10_p19_updates_model'] is False
+          assert d['protocol']['p10_p19_updates_representation_in_this_run'] is False
+          t=d['truth']
+          assert t['public_trace_only'] and t['source_free_runtime_logic'] and t['reused_public_development_holdout'] and t['diagnostic_only']
+          assert not t['independent_hidden_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission'] and not t['solver_promotion']
+          assert d['stats']['wrong']==1 and d['mismatch_count']==1, (d['stats'],d['mismatch_count'])
+          Path('r277-verdict.json').write_text(json.dumps({'verdict':d['verdict'],'stats':d['stats'],'mismatch':d['mismatches'][0],'truth_lane':'PUBLIC_OFFLINE_REUSED_PUBLIC_DEV_DIAGNOSTIC'},indent=2,sort_keys=True)+'\n')
+          print(Path('r277-verdict.json').read_text())
+          PY
+          sha256sum r277-m0r0-one-error.json r277-verdict.json r277-runtime.txt r277-stdout.txt public_trace/SHA256SUMS.txt > R277_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r277-m0r0-one-error-diagnostic
+          path: |
+            r277-m0r0-one-error.json
+            r277-verdict.json
+            r277-runtime.txt
+            r277-stdout.txt
+            R277_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
