@@ -23,7 +23,8 @@ from typing import Any
 
 import public_sourcefree_markov_fidelity_adapter_246 as r246
 
-RUNG=268\n# R268_RETRY2_MARKER: self-contained compile path verified before runtime.
+RUNG=268
+# R268_RETRY2_MARKER: self-contained compile path verified before runtime.
 
 def delta_sig(before,after):
     ch=[]
