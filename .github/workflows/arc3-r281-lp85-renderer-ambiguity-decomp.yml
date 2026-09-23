@@ -1,0 +1,115 @@
+name: ARC3 R281 lp85 renderer ambiguity decomposition
+
+on:
+  push:
+    branches: [deus/r281-lp85-renderer-ambiguity-decomp-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_lp85_renderer_ambiguity_decomp_281.py
+      - .github/workflows/arc3-r281-lp85-renderer-ambiguity-decomp.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag-r281:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile R281
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py             public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py             public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py             public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py             public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py             public_benchmark/arc3/kaggle_candidates/public_lp85_region_exact_frame_gate_280.py             public_benchmark/arc3/kaggle_candidates/public_lp85_renderer_ambiguity_decomp_281.py
+
+      - name: Stage exact lp85 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          game='lp85-305b61c3'
+          for p in range(10):
+              f=src/f'{game}_p{p}_events.jsonl'
+              if not f.is_file():
+                  raise SystemExit(f'missing trace: {f}')
+              (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -maxdepth 1 -name 'lp85-305b61c3_p*_events.jsonl' -type f | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -regex '.*_p1[0-9]_events.jsonl' -print -quit | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute R281 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name 'lp85-305b61c3_p*_events.jsonl' -type f | sort -V)
+          test "${#files[@]}" -eq 10
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python             public_benchmark/arc3/kaggle_candidates/public_lp85_renderer_ambiguity_decomp_281.py             "${args[@]}"             --output r281-lp85-renderer-ambiguity.json             2> >(tee r281-runtime.txt >&2) | tee r281-stdout.txt
+
+      - name: Verify R281 truth boundary and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          d=json.loads(Path('r281-lp85-renderer-ambiguity.json').read_text())
+          assert d['schema']=='deus/arc3-r281-lp85-renderer-ambiguity-decomp/1'
+          assert d['rung']==281
+          assert d['lineage']['frozen_game']=='lp85-305b61c3'
+          assert d['lineage']['frozen_representation']=='canon_regions_ui'
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4' and p['diagnostic']=='p5-p9'
+          assert p['p10_p19_staged_or_read'] is False
+          assert p['representation_retuned'] is False
+          assert p['threshold_retuned'] is False
+          assert p['promotion_in_r281'] is False
+          assert t['public_trace_only'] and t['source_free_runtime_logic']
+          assert t['p10_p19_read'] is False and t['diagnostic_only']
+          assert not t['independent_hidden_generalization_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert not t['submission_quota_spent_by_r281'] and not t['solver_promotion']
+
+          verdict={
+              'verdict':d['verdict'],
+              'best_next_target':d['best_next_target'],
+              'zero_wrong_signals':d['zero_wrong_signals'],
+              'truth_lane':'PUBLIC_OFFLINE_P5P9_LP85_RENDERER_AMBIGUITY_DIAGNOSTIC',
+          }
+          Path('r281-verdict.json').write_text(json.dumps(verdict,indent=2,sort_keys=True)+'\n')
+          print(Path('r281-verdict.json').read_text())
+          PY
+
+          sha256sum             r281-lp85-renderer-ambiguity.json             r281-verdict.json             r281-runtime.txt             r281-stdout.txt             public_trace/SHA256SUMS.txt             > R281_SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r281-lp85-renderer-ambiguity-decomp
+          path: |
+            r281-lp85-renderer-ambiguity.json
+            r281-verdict.json
+            r281-runtime.txt
+            r281-stdout.txt
+            R281_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
