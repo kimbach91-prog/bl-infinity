@@ -1,0 +1,195 @@
+{
+  "schema": "deus-cx001-dige-c39-transfer-fixture/1",
+  "source_scope": "PUBLIC_GITHUB_LINEAGE_ONLY",
+  "truth_boundary": "REAL_WORKLOAD_REPLAY__NOT_LIVE_RENDER_ACCELERATION__NOT_ENERGY_CREDIT",
+  "source": {
+    "pr": 243,
+    "source_commit": "ef048af5736d930f739ce62e1b353bf0c1a3bb65",
+    "benchmark_run": 35704619399,
+    "benchmark_contract_sha256": "556d10ffae2ce2d9db8fa91e90c2e8a41958a3737a010996261a8ea341e4f87e",
+    "direct_wall_seconds": 302,
+    "hhir_wall_seconds": 85,
+    "structural_hhir_pass": true,
+    "visual_result": "VISUAL_FAIL_NO_HYPERREAL_PROMOTION"
+  },
+  "graph": {
+    "target": "VERIFY",
+    "nodes": [
+      {
+        "id": "GEOMETRY_FACE",
+        "inputs": [
+          "GNM landmarks",
+          "body geometry"
+        ],
+        "output": "face/eyelid geometry contract"
+      },
+      {
+        "id": "EYE_INTERFACE",
+        "inputs": [
+          "eye landmarks",
+          "cornea/iris stack"
+        ],
+        "output": "eye interface"
+      },
+      {
+        "id": "SKIN_PBR",
+        "inputs": [
+          "MPFB2 mature graph",
+          "CC0 albedo"
+        ],
+        "output": "scale-separated skin response"
+      },
+      {
+        "id": "GROOM_UPDO",
+        "inputs": [
+          "scalp/hairline geometry"
+        ],
+        "output": "primary gather + bun + fringe + flyaways"
+      },
+      {
+        "id": "CAMERA",
+        "inputs": [
+          "subject origin",
+          "face target"
+        ],
+        "output": "candidate camera"
+      },
+      {
+        "id": "VERIFY",
+        "inputs": [
+          "render receipt",
+          "PNG"
+        ],
+        "output": "structural verdict + visual gate"
+      }
+    ],
+    "edges": [
+      [
+        "GEOMETRY_FACE",
+        "EYE_INTERFACE"
+      ],
+      [
+        "GEOMETRY_FACE",
+        "SKIN_PBR"
+      ],
+      [
+        "GEOMETRY_FACE",
+        "GROOM_UPDO"
+      ],
+      [
+        "GEOMETRY_FACE",
+        "CAMERA"
+      ],
+      [
+        "GEOMETRY_FACE",
+        "VERIFY"
+      ],
+      [
+        "EYE_INTERFACE",
+        "VERIFY"
+      ],
+      [
+        "SKIN_PBR",
+        "VERIFY"
+      ],
+      [
+        "GROOM_UPDO",
+        "VERIFY"
+      ],
+      [
+        "CAMERA",
+        "VERIFY"
+      ]
+    ]
+  },
+  "direct": {
+    "geometry_manifest_sha256": "3f079b77bd780bb2051e1d67397555f3c356de78a1013bee71f73335d7196c86",
+    "hero_sha256": "1a6c059bb2fe764278a3e0c205a021a7bd82ba5e0f154e1125700a81224457d9",
+    "lens_mm": 70,
+    "appearance_candidate": "C36_CANONICAL_REFERENCE_APPEARANCE_V1",
+    "updo_enabled": false,
+    "arm_inputs": {
+      "eye_open": 0.68,
+      "eye_globe": 0.9,
+      "jaw": 0.88,
+      "hair_length": 0.4,
+      "hair_wave": 0.012,
+      "strands": 24,
+      "hhir": false
+    },
+    "skin": {
+      "clearcoat": 0.05,
+      "clearcoat_roughness": 0.38,
+      "pore_detail": 3,
+      "pore_distortion": 0.8,
+      "pore_scale": 2800,
+      "pore_strength": 0.3,
+      "roughness": 0.5,
+      "sss_radius_scale": 0.07,
+      "sss_strength": 0.1
+    }
+  },
+  "hhir": {
+    "geometry_manifest_sha256": "3f079b77bd780bb2051e1d67397555f3c356de78a1013bee71f73335d7196c86",
+    "hero_sha256": "b9f61342578d6cb3179b1e345c6b93b3f46f1b0b0a619b53b5e3b6fd77ca38b1",
+    "lens_mm": 70,
+    "appearance_candidate": "C39_HHIR_HYPERREAL_UPDO_V1",
+    "updo_enabled": true,
+    "arm_inputs": {
+      "eye_open": 0.64,
+      "eye_globe": 0.88,
+      "jaw": 0.88,
+      "hair_length": 0.3,
+      "hair_wave": 0.006,
+      "strands": 4,
+      "hhir": true
+    },
+    "skin": {
+      "clearcoat": 0.018,
+      "clearcoat_roughness": 0.44,
+      "pore_detail": 4.2,
+      "pore_distortion": 1.15,
+      "pore_scale": 3350,
+      "pore_strength": 0.38,
+      "roughness": 0.54,
+      "sss_radius_scale": 0.055,
+      "sss_strength": 0.065
+    },
+    "updo_metrics": {
+      "primary_curves": 960,
+      "bun_curves": 520,
+      "fringe_curves": 132,
+      "flyaway_curves": 44
+    }
+  },
+  "change_mapping": {
+    "EYE_INTERFACE": [
+      "arm_inputs.eye_open",
+      "arm_inputs.eye_globe"
+    ],
+    "SKIN_PBR": [
+      "skin"
+    ],
+    "GROOM_UPDO": [
+      "arm_inputs.hhir",
+      "arm_inputs.hair_length",
+      "arm_inputs.hair_wave",
+      "arm_inputs.strands",
+      "updo_enabled"
+    ],
+    "CAMERA": [
+      "intended_candidate_camera_contract"
+    ],
+    "GEOMETRY_FACE": [
+      "geometry_manifest_sha256"
+    ]
+  },
+  "actual_observations": {
+    "geometry_unchanged": true,
+    "camera_effect_observed": false,
+    "camera_note": "C39 candidate intended an 85mm camera, but actual preview receipt remained 70mm; C39.1 fixed propagation later.",
+    "output_changed": true,
+    "structural_hhir_pass": true,
+    "visual_fail": true
+  }
+}
