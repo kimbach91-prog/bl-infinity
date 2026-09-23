@@ -456,6 +456,7 @@ S2_ANATOMY_DYNAMICS=os.environ.get("DIGE_S2_ANATOMY_DYNAMICS","0").strip()=="1"
 S2_1_HYPERREAL=os.environ.get("DIGE_S2_1_HYPERREAL","0").strip()=="1"
 S2_2_SURFACE_INTEGRATION=os.environ.get("DIGE_S2_2_SURFACE_INTEGRATION","0").strip()=="1"
 S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
+S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1112,7 +1113,34 @@ def s1_gnm_skin_material():
     lipc=nt.nodes.new("ShaderNodeRGB"); lipc.outputs[0].default_value=(0.31,0.075,0.075,1)
     lipmix=nt.nodes.new("ShaderNodeMixRGB"); lipmix.blend_type='MIX'
     nt.links.new(sep.outputs["Red"],lipmix.inputs[0])
-    nt.links.new(ramp.outputs["Color"],lipmix.inputs[1])
+    base_color_socket=ramp.outputs["Color"]
+    s24_albedo={"enabled":False}
+    if S2_4_SOURCE_MATERIAL:
+        p=Path(SKIN_ALBEDO_PATH)
+        if not p.is_absolute(): p=ROOT/p
+        if not p.exists():
+            raise RuntimeError(f"S2.4 source albedo missing: {p}")
+        got=sha(p)
+        if SKIN_ALBEDO_EXPECTED_SHA256 and got.lower()!=SKIN_ALBEDO_EXPECTED_SHA256:
+            raise RuntimeError(f"S2.4 source albedo hash drift expected={SKIN_ALBEDO_EXPECTED_SHA256} got={got}")
+        img=bpy.data.images.load(str(p),check_existing=True)
+        try: img.colorspace_settings.name='sRGB'
+        except Exception: pass
+        teximg=nt.nodes.new("ShaderNodeTexImage")
+        teximg.name="DIGE_S2_4_SOURCE_ALBEDO"
+        teximg.image=img
+        teximg.interpolation='Linear'
+        teximg.extension='EXTEND'
+        uv=nt.nodes.new("ShaderNodeUVMap")
+        uv.uv_map="S2_4_SourceUV"
+        nt.links.new(uv.outputs["UV"],teximg.inputs["Vector"])
+        grade=nt.nodes.new("ShaderNodeHueSaturation")
+        grade.inputs["Saturation"].default_value=.96
+        grade.inputs["Value"].default_value=.92
+        nt.links.new(teximg.outputs["Color"],grade.inputs["Color"])
+        base_color_socket=grade.outputs["Color"]
+        s24_albedo={"enabled":True,"file":p.name,"sha256":got,"uv_map":"S2_4_SourceUV","transfer":"POLYINTERP_NEAREST"}
+    nt.links.new(base_color_socket,lipmix.inputs[1])
     nt.links.new(lipc.outputs[0],lipmix.inputs[2])
     blushc=nt.nodes.new("ShaderNodeRGB"); blushc.outputs[0].default_value=(0.37,0.15,0.14,1)
     blushmix=nt.nodes.new("ShaderNodeMixRGB"); blushmix.blend_type='MIX'
@@ -1180,7 +1208,8 @@ def s1_gnm_skin_material():
         "pore_scale":(2200.0 if S2_3_FACE_REALISM else (1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0))),
         "micro_scale":(8200.0 if S2_3_FACE_REALISM else (6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0))),
         "bump_distance":(.000040 if S2_3_FACE_REALISM else (.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068))),
-        "metadata_effective_for":("S2.3" if S2_3_FACE_REALISM else ("S2.1" if S2_1_HYPERREAL else ("S2" if S2_ANATOMY_DYNAMICS else "S1"))),
+        "metadata_effective_for":("S2.4" if S2_4_SOURCE_MATERIAL else ("S2.3" if S2_3_FACE_REALISM else ("S2.1" if S2_1_HYPERREAL else ("S2" if S2_ANATOMY_DYNAMICS else "S1")))),
+        "source_albedo":s24_albedo,
     }
 
 def s1_geometry_eye_material(name):
@@ -1499,6 +1528,17 @@ body=imported_meshes[0]
 body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
+body_uv_source=None
+if S2_4_SOURCE_MATERIAL:
+    if not body.data.uv_layers:
+        raise RuntimeError("S2.4 requires source MakeHuman UV layer")
+    body_uv_source=body.copy()
+    body_uv_source.data=body.data.copy()
+    body_uv_source.name="DIGE_S2_4_BODY_UV_SOURCE"
+    bpy.context.collection.objects.link(body_uv_source)
+    body_uv_source.hide_render=True
+    try: body_uv_source.hide_set(True)
+    except Exception: pass
 
 def s1_refine_body_form(obj):
     if not S1_ENDOGENOUS:
@@ -2389,6 +2429,39 @@ if C28_GNM_HEAD:
             head_translation,
         )
         c28_gnm_objects[comp]=obj
+
+    if S2_4_SOURCE_MATERIAL:
+        skin_obj=c28_gnm_objects.get("skin")
+        if skin_obj is None or body_uv_source is None:
+            raise RuntimeError("S2.4 UV transfer prerequisites missing")
+        if not body_uv_source.data.uv_layers:
+            raise RuntimeError("S2.4 source body UV missing at transfer")
+        if skin_obj.data.uv_layers.get("S2_4_SourceUV") is None:
+            skin_obj.data.uv_layers.new(name="S2_4_SourceUV")
+        skin_obj.data.uv_layers.active=skin_obj.data.uv_layers.get("S2_4_SourceUV")
+        mod=skin_obj.modifiers.new("DIGE_S2_4_UV_TRANSFER","DATA_TRANSFER")
+        mod.object=body_uv_source
+        mod.use_loop_data=True
+        mod.data_types_loops={'UV'}
+        mod.loop_mapping='POLYINTERP_NEAREST'
+        try:
+            mod.layers_uv_select_src='ACTIVE'
+            mod.layers_uv_select_dst='ACTIVE'
+        except Exception:
+            pass
+        bpy.context.view_layer.objects.active=skin_obj
+        skin_obj.select_set(True)
+        bpy.ops.object.modifier_apply(modifier=mod.name)
+        skin_obj.select_set(False)
+        uv_layer=skin_obj.data.uv_layers.get("S2_4_SourceUV")
+        if uv_layer is None or len(uv_layer.data)==0:
+            raise RuntimeError("S2.4 UV transfer produced no loop UVs")
+        c28_skin_contract.update({
+            "model":"S2_4_GNM_INTERPOLATED_SOURCE_ALBEDO_SKIN",
+            "source_uv_transfer":"POLYINTERP_NEAREST",
+            "source_uv_loops":len(uv_layer.data),
+            "source_albedo_sha256":SKIN_ALBEDO_EXPECTED_SHA256 or sha(Path(SKIN_ALBEDO_PATH) if Path(SKIN_ALBEDO_PATH).is_absolute() else ROOT/Path(SKIN_ALBEDO_PATH))
+        })
 
     if C36_CANONICAL_APPEARANCE:
         skin_obj=c28_gnm_objects.get("skin")
@@ -3745,13 +3818,21 @@ if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR and not C39_HHIR_HYPERREAL:
     curve_object("DIGE_C36_CANONICAL_CURTAIN_BANGS",bangs,.000045,hair)
     hair_curve_metrics["c36_curtain_bang_count"]=len(bangs)
 if C29_GNM_PRESENTATION:
-    hair_obj.hide_render=True
-    try:
-        hair_obj.hide_set(True)
-    except Exception:
-        pass
-    hair_curve_metrics["guide_mesh_rendered"]=False
-    hair_fit["c29_bulk_mesh_hidden"]=True
+    if S2_4_SOURCE_MATERIAL:
+        hair_obj.hide_render=False
+        try: hair_obj.hide_set(False)
+        except Exception: pass
+        hair_curve_metrics["guide_mesh_rendered"]=True
+        hair_fit["c29_bulk_mesh_hidden"]=False
+        hair_fit["s2_4_scalp_coverage_mass"]=True
+    else:
+        hair_obj.hide_render=True
+        try:
+            hair_obj.hide_set(True)
+        except Exception:
+            pass
+        hair_curve_metrics["guide_mesh_rendered"]=False
+        hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
 if S2_2_SURFACE_INTEGRATION:
     hair_style_label="S2_2_ANATOMICAL_HAIRLINE_SURFACE_INTEGRATION_V1"
@@ -3902,6 +3983,25 @@ if S1_ENDOGENOUS:
     tights.hide_render=True
     try: tights.hide_set(True)
     except Exception: pass
+    s2_4_undercoat_faces={"tank":0,"leggings":0}
+    if S2_4_SOURCE_MATERIAL:
+        if s1_tank_mat.name not in [m.name for m in body.data.materials]:
+            body.data.materials.append(s1_tank_mat)
+        if s1_leggings_mat.name not in [m.name for m in body.data.materials]:
+            body.data.materials.append(s1_leggings_mat)
+        tank_idx=list(body.data.materials).index(s1_tank_mat)
+        leggings_idx=list(body.data.materials).index(s1_leggings_mat)
+        for poly in body.data.polygons:
+            if not poly.vertices: continue
+            p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
+            if p.z>=.13 and p.z<=1.010 and abs(p.x)<=.205:
+                poly.material_index=leggings_idx
+                s2_4_undercoat_faces["leggings"]+=1
+            elif p.z>=1.055 and p.z<=1.430 and abs(p.x)<=.175:
+                poly.material_index=tank_idx
+                s2_4_undercoat_faces["tank"]+=1
+        body.data.update()
+
     s1_garment_metrics={
         "enabled":True,
         "tank_polygons":len(tank.data.polygons),
@@ -3912,7 +4012,8 @@ if S1_ENDOGENOUS:
         "body_arm_vertices_relaxed":s1_arm_vertices,
         "tights_arm_vertices_relaxed":s1_tights_arm_vertices,
         "midriff_gap_m":0.055,
-        "helper_tights_rendered":False
+        "helper_tights_rendered":False,
+        "s2_4_material_undercoat_faces":s2_4_undercoat_faces if S2_4_SOURCE_MATERIAL else {"tank":0,"leggings":0}
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
@@ -4257,6 +4358,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_4_SOURCE_MATERIAL_SCALP_COVERAGE_V1" if S2_4_SOURCE_MATERIAL else
    "DIGE_S2_3_FACE_REALISM_GARMENT_MASK_V1" if S2_3_FACE_REALISM else
    "DIGE_S2_2_SURFACE_INTEGRATION_V1" if S2_2_SURFACE_INTEGRATION else
    "DIGE_S2_1_HYPERREAL_GPU_READY_V1" if S2_1_HYPERREAL else
@@ -4426,6 +4528,7 @@ receipt={
    "s1_garment_metrics":s1_garment_metrics,
    "s2_2_surface_integration":S2_2_SURFACE_INTEGRATION,
    "s2_3_face_realism":S2_3_FACE_REALISM,
+   "s2_4_source_material":S2_4_SOURCE_MATERIAL,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
