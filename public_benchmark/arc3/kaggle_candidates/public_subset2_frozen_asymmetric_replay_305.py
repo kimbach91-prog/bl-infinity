@@ -47,12 +47,12 @@ def main():
         nums=[r246.pnum(p) for p in ps]
         if nums!=list(range(10)):
             raise SystemExit(f"{g}: exact p0-p9 required, got {nums}")
-        train=[r for p in ps[:5] for r in r278.annotated_rows([p])]
+        train_traces=[r278.annotated_rows([p]) for p in ps[:5]]
         replay=[r for p in ps[5:] for r in r278.annotated_rows([p])]
 
         mode=FROZEN[g]
-        ctab,cfit=r304.fit([train],mode)
-        btab,bfit=r304.fit([train],BASELINE)
+        ctab,cfit=r304.fit(train_traces,mode)
+        btab,bfit=r304.fit(train_traces,BASELINE)
         cand=r304.evaluate(replay,ctab,mode)
         base=r304.evaluate(replay,btab,BASELINE)
 
