@@ -460,6 +460,7 @@ S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
 S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1"
 S2_5_SELECTIVE_COVERAGE=os.environ.get("DIGE_S2_5_SELECTIVE_COVERAGE","0").strip()=="1"
 S2_6_GNM_SCALP_PROXIMITY_GARMENT=os.environ.get("DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT","0").strip()=="1"
+S2_7_BAKED_FACE_ALBEDO=os.environ.get("DIGE_S2_7_BAKED_FACE_ALBEDO","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1118,7 +1119,21 @@ def s1_gnm_skin_material():
     nt.links.new(sep.outputs["Red"],lipmix.inputs[0])
     base_color_socket=ramp.outputs["Color"]
     s24_albedo={"enabled":False}
-    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE:
+    if S2_7_BAKED_FACE_ALBEDO:
+        baked=nt.nodes.new("ShaderNodeVertexColor")
+        baked.layer_name="S2_7_BakedAlbedo"
+        valid_scale=nt.nodes.new("ShaderNodeMath")
+        valid_scale.operation='MULTIPLY'
+        valid_scale.inputs[1].default_value=.32
+        nt.links.new(baked.outputs["Alpha"],valid_scale.inputs[0])
+        baked_mix=nt.nodes.new("ShaderNodeMixRGB")
+        baked_mix.blend_type='MIX'
+        nt.links.new(valid_scale.outputs[0],baked_mix.inputs[0])
+        nt.links.new(base_color_socket,baked_mix.inputs[1])
+        nt.links.new(baked.outputs["Color"],baked_mix.inputs[2])
+        base_color_socket=baked_mix.outputs["Color"]
+        s24_albedo={"enabled":True,"mode":"SPATIAL_BAKED_VERTEX_COLOR","attribute":"S2_7_BakedAlbedo","max_blend":.32}
+    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE and not S2_7_BAKED_FACE_ALBEDO:
         p=Path(SKIN_ALBEDO_PATH)
         if not p.is_absolute(): p=ROOT/p
         if not p.exists():
@@ -1532,7 +1547,7 @@ body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
 body_uv_source=None
-if S2_4_SOURCE_MATERIAL:
+if S2_4_SOURCE_MATERIAL or S2_7_BAKED_FACE_ALBEDO:
     if not body.data.uv_layers:
         raise RuntimeError("S2.4 requires source MakeHuman UV layer")
     body_uv_source=body.copy()
@@ -2554,6 +2569,109 @@ if C28_GNM_HEAD:
                 p.z=ec.z+(p.z-ec.z)*(C36_EYE_GLOBE_SCALE*.96)
                 p.y=ec.y+(p.y-ec.y)*.985
             eye_mesh.data.update()
+
+    if S2_7_BAKED_FACE_ALBEDO:
+        skin_obj=c28_gnm_objects.get("skin")
+        if skin_obj is None or body_uv_source is None:
+            raise RuntimeError("S2.7 baked-albedo prerequisites missing")
+        if not body_uv_source.data.uv_layers:
+            raise RuntimeError("S2.7 source body UV missing")
+        p=Path(SKIN_ALBEDO_PATH)
+        if not p.is_absolute():
+            p=ROOT/p
+        if not p.exists():
+            raise RuntimeError(f"S2.7 source albedo missing: {p}")
+        got=sha(p)
+        if SKIN_ALBEDO_EXPECTED_SHA256 and got.lower()!=SKIN_ALBEDO_EXPECTED_SHA256:
+            raise RuntimeError(f"S2.7 source albedo hash drift expected={SKIN_ALBEDO_EXPECTED_SHA256} got={got}")
+        img=bpy.data.images.load(str(p),check_existing=True)
+        try:
+            img.colorspace_settings.name='sRGB'
+        except Exception:
+            pass
+        w,h=int(img.size[0]),int(img.size[1])
+        if w<=0 or h<=0:
+            raise RuntimeError(f"S2.7 invalid albedo size: {w}x{h}")
+        uv_layer=body_uv_source.data.uv_layers.active
+        if uv_layer is None:
+            raise RuntimeError("S2.7 active source UV layer missing")
+        depsgraph=bpy.context.evaluated_depsgraph_get()
+        src_bvh=BVHTree.FromObject(body_uv_source,depsgraph,deform=True,cage=False)
+        attr=skin_obj.data.color_attributes.get("S2_7_BakedAlbedo")
+        if attr is None:
+            attr=skin_obj.data.color_attributes.new(
+                name="S2_7_BakedAlbedo",type='FLOAT_COLOR',domain='POINT'
+            )
+        brow_top_s27=max(pt.z for pt in (gnm_brow_left+gnm_brow_right))
+        valid_count=0
+        dists=[]; dots=[]; alphas=[]
+        pix=img.pixels
+        src_inv=body_uv_source.matrix_world.inverted()
+        src_rot=body_uv_source.matrix_world.to_3x3()
+        dst_rot=skin_obj.matrix_world.to_3x3()
+        for v in skin_obj.data.vertices:
+            wp=skin_obj.matrix_world @ v.co
+            outcol=(0.32,0.20,0.17,0.0)
+            face_region=(
+                wp.z>=chin.z-.004 and
+                wp.z<=brow_top_s27+.055 and
+                abs(wp.x-gnm_eye_mid.x)<=.105 and
+                wp.y>=gnm_eye_mid.y-.060
+            )
+            if face_region:
+                sp=src_inv @ wp
+                hit=src_bvh.find_nearest(sp)
+                if hit and hit[0] is not None:
+                    loc,nrm,fi,dist=hit
+                    dn=(dst_rot @ v.normal).normalized()
+                    sn=(src_rot @ nrm).normalized() if nrm.length>1e-9 else Vector((0,0,1))
+                    ndot=max(-1.0,min(1.0,float(dn.dot(sn))))
+                    if dist<=.026 and ndot>=.20 and 0<=fi<len(body_uv_source.data.polygons):
+                        poly=body_uv_source.data.polygons[fi]
+                        sw=0.0; uu=0.0; vv=0.0
+                        for li in poly.loop_indices:
+                            vid=body_uv_source.data.loops[li].vertex_index
+                            vp=body_uv_source.data.vertices[vid].co
+                            dd=max(1e-10,float((vp-loc).length_squared))
+                            wt=1.0/dd
+                            uv=uv_layer.data[li].uv
+                            uu+=float(uv.x)*wt; vv+=float(uv.y)*wt; sw+=wt
+                        if sw>0.0:
+                            uu=(uu/sw)%1.0; vv=(vv/sw)%1.0
+                            ix=max(0,min(w-1,int(round(uu*(w-1)))))
+                            iy=max(0,min(h-1,int(round(vv*(h-1)))))
+                            pi=(iy*w+ix)*4
+                            rgb=(float(pix[pi]),float(pix[pi+1]),float(pix[pi+2]))
+                            dist_score=max(0.0,min(1.0,1.0-float(dist)/.026))
+                            normal_score=max(0.0,min(1.0,(ndot-.20)/.80))
+                            alpha=(dist_score**.7)*(normal_score**.5)
+                            outcol=(rgb[0],rgb[1],rgb[2],alpha)
+                            if alpha>.05:
+                                valid_count+=1
+                                dists.append(float(dist)); dots.append(ndot); alphas.append(alpha)
+            attr.data[v.index].color=outcol
+        skin_obj.data.update()
+        if valid_count<500:
+            raise RuntimeError(f"S2.7 baked face valid coverage too low: {valid_count}")
+        c28_skin_contract.update({
+            "model":"S2_7_GNM_SPATIAL_BAKED_CC0_SKIN",
+            "source_albedo":{
+                "enabled":True,
+                "file":p.name,
+                "sha256":got,
+                "method":"NEAREST_SOURCE_FACE_INVERSE_DISTANCE_UV_SAMPLE",
+                "attribute":"S2_7_BakedAlbedo",
+                "max_shader_blend":.32,
+                "valid_vertices":valid_count,
+                "mean_distance_m":float(sum(dists)/len(dists)) if dists else None,
+                "max_distance_m":max(dists) if dists else None,
+                "mean_normal_dot":float(sum(dots)/len(dots)) if dots else None,
+                "mean_validity_alpha":float(sum(alphas)/len(alphas)) if alphas else None,
+                "distance_gate_m":.026,
+                "normal_dot_gate":.20,
+                "scope":"FACE_ONLY_ABOVE_CHIN_BELOW_BROW_PLUS55MM"
+            }
+        })
 
     if C31_GNM_FACE_APPEARANCE:
         skin_obj=c28_gnm_objects.get("skin")
@@ -4082,7 +4200,7 @@ if S1_ENDOGENOUS:
     try: tights.hide_set(True)
     except Exception: pass
     s2_4_undercoat_faces={"tank":0,"leggings":0}
-    if S2_4_SOURCE_MATERIAL:
+    if S2_4_SOURCE_MATERIAL and not S2_7_BAKED_FACE_ALBEDO:
         if s1_tank_mat.name not in [m.name for m in body.data.materials]:
             body.data.materials.append(s1_tank_mat)
         if s1_leggings_mat.name not in [m.name for m in body.data.materials]:
@@ -4126,11 +4244,50 @@ if S1_ENDOGENOUS:
                     s2_4_undercoat_faces["tank"]+=1
         body.data.update()
 
+    s2_7_zone_faces={"tank":0,"leggings":0}
+    if S2_7_BAKED_FACE_ALBEDO:
+        tank.hide_render=True
+        leggings.hide_render=True
+        try:
+            tank.hide_set(True); leggings.hide_set(True)
+        except Exception:
+            pass
+        mats=[m.name for m in body.data.materials]
+        if s1_tank_mat.name not in mats:
+            body.data.materials.append(s1_tank_mat)
+        mats=[m.name for m in body.data.materials]
+        if s1_leggings_mat.name not in mats:
+            body.data.materials.append(s1_leggings_mat)
+        tank_idx=[m.name for m in body.data.materials].index(s1_tank_mat.name)
+        leggings_idx=[m.name for m in body.data.materials].index(s1_leggings_mat.name)
+        for poly in body.data.polygons:
+            if not poly.vertices:
+                continue
+            p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
+            ax=abs(float(p.x)); z=float(p.z)
+            is_leggings=(
+                .13<=z<=1.005 and
+                ((z>=.86 and ax<=.225) or (z<.86 and .030<=ax<=.185))
+            )
+            is_tank=(
+                (1.055<=z<=1.335 and ax<=.175) or
+                (1.335<z<=1.430 and .050<=ax<=.125)
+            )
+            if is_leggings:
+                poly.material_index=leggings_idx
+                s2_7_zone_faces["leggings"]+=1
+            elif is_tank:
+                poly.material_index=tank_idx
+                s2_7_zone_faces["tank"]+=1
+        body.data.update()
+        if s2_7_zone_faces["tank"]<300 or s2_7_zone_faces["leggings"]<900:
+            raise RuntimeError(f"S2.7 material zones too sparse: {s2_7_zone_faces}")
+
     s1_garment_metrics={
         "enabled":True,
         "tank_polygons":len(tank.data.polygons),
         "leggings_polygons":len(leggings.data.polygons),
-        "source":("S2_ANATOMY_AWARE_OFFSET_BODY_SURFACE_SHELL" if S2_ANATOMY_DYNAMICS else "RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL"),
+        "source":("S2_7_DIRECT_BODY_MATERIAL_ZONES" if S2_7_BAKED_FACE_ALBEDO else ("S2_ANATOMY_AWARE_OFFSET_BODY_SURFACE_SHELL" if S2_ANATOMY_DYNAMICS else "RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL")),
         "material":"PROCEDURAL_GRAY_FABRIC_PBR",
         "body_form_vertices_refined":s1_body_form_vertices,
         "body_arm_vertices_relaxed":s1_arm_vertices,
@@ -4138,7 +4295,9 @@ if S1_ENDOGENOUS:
         "midriff_gap_m":0.055,
         "helper_tights_rendered":False,
         "s2_4_material_undercoat_faces":s2_4_undercoat_faces if S2_4_SOURCE_MATERIAL else {"tank":0,"leggings":0},
-        "s2_6_component_cleanup":{"tank":json.loads(tank.get("DIGE_COMPONENT_CLEANUP","{}")),"leggings":json.loads(leggings.get("DIGE_COMPONENT_CLEANUP","{}"))} if S2_6_GNM_SCALP_PROXIMITY_GARMENT else {"tank":{},"leggings":{}}
+        "s2_6_component_cleanup":{"tank":json.loads(tank.get("DIGE_COMPONENT_CLEANUP","{}")),"leggings":json.loads(leggings.get("DIGE_COMPONENT_CLEANUP","{}"))} if S2_6_GNM_SCALP_PROXIMITY_GARMENT else {"tank":{},"leggings":{}},
+        "s2_7_material_zone_faces":s2_7_zone_faces if S2_7_BAKED_FACE_ALBEDO else {"tank":0,"leggings":0},
+        "s2_7_shells_rendered":False if S2_7_BAKED_FACE_ALBEDO else None
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
@@ -4483,6 +4642,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_7_BAKED_FACE_ALBEDO_V1" if S2_7_BAKED_FACE_ALBEDO else
    "DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT_V1" if S2_6_GNM_SCALP_PROXIMITY_GARMENT else
    "DIGE_S2_5_SELECTIVE_COVERAGE_V1" if S2_5_SELECTIVE_COVERAGE else
    "DIGE_S2_4_SOURCE_MATERIAL_SCALP_COVERAGE_V1" if S2_4_SOURCE_MATERIAL else
@@ -4658,6 +4818,7 @@ receipt={
    "s2_4_source_material":S2_4_SOURCE_MATERIAL,
    "s2_5_selective_coverage":S2_5_SELECTIVE_COVERAGE,
    "s2_6_gnm_scalp_proximity_garment":S2_6_GNM_SCALP_PROXIMITY_GARMENT,
+   "s2_7_baked_face_albedo":S2_7_BAKED_FACE_ALBEDO,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
