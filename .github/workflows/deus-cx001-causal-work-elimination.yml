@@ -3,6 +3,7 @@ name: DEUS CX-001 causal work elimination benchmark
 on:
   push:
     branches:
+      - "main"
       - "deus/cx001-runtime-bench-20260923"
     paths:
       - "benchmarks/cx001_benchmark.py"
@@ -13,7 +14,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: deus-cx001-causal-work-elimination
+  group: deus-cx001-causal-work-elimination-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
