@@ -1,4 +1,4 @@
-name: DIGE S2.6 GNM Scalp + Proximity Garment Preview
+name: DIGE S2.7 Baked Face Albedo Preview
 
 on:
   pull_request:
@@ -168,7 +168,7 @@ jobs:
           DIGE_CYCLES_DEVICE: CPU
           DIGE_RENDER_SET: FULL
           DIGE_SEARCH_ONLY: '0'
-          DIGE_OUTPUT_TAG: s2_6_preview
+          DIGE_OUTPUT_TAG: s2_7_preview
           DIGE_S1_ENDOGENOUS: '1'
           DIGE_S2_ANATOMY_DYNAMICS: '1'
           DIGE_S2_1_HYPERREAL: '1'
@@ -177,6 +177,7 @@ jobs:
           DIGE_S2_4_SOURCE_MATERIAL: '1'
           DIGE_S2_5_SELECTIVE_COVERAGE: '1'
           DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT: '1'
+          DIGE_S2_7_BAKED_FACE_ALBEDO: '1'
           DIGE_C18_HYBRID_BULK: '1'
           DIGE_C25_MATURE_STACK: '1'
           DIGE_C26_PHOTOMETRIC: '1'
@@ -242,12 +243,12 @@ jobs:
         run: |
           python - <<'PY'
           import json,pathlib
-          root=pathlib.Path("runtime/renders/s2_6_preview")
+          root=pathlib.Path("runtime/renders/s2_7_preview")
           r=json.loads((root/"DIGE_V8_RENDER_RECEIPT.json").read_text())
           t=json.loads(pathlib.Path("runtime/s2_preview_timing.json").read_text())
           assert r["device"]=="CPU"
           assert r["render_set"]=="FULL"
-          assert r["appearance_candidate"]=="DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT_V1"
+          assert r["appearance_candidate"]=="DIGE_S2_7_BAKED_FACE_ALBEDO_V1"
           a=r["appearance_selection"]
           assert a["s2_anatomy_dynamics"] is True
           anat=a["s2_anatomy_metrics"]
@@ -267,9 +268,15 @@ jobs:
           assert eye["material_model"]=="S2_3_NATIVE_GNM_GENERATED_COORD_EYE"
           assert eye["pupil_radius_norm"]<=0.060 and eye["iris_outer_radius_norm"]<=0.205
           skin=r["c28_gnm_head"]["skin_contract"]
-          assert skin["model"]=="S2_3_GNM_FACE_REALISM_SKIN"
+          assert skin["model"]=="S2_7_GNM_SPATIAL_BAKED_CC0_SKIN"
           assert skin["pore_scale"]>=2200 and skin["micro_scale"]>=8200
-          assert skin["source_albedo"]["enabled"] is False
+          src=skin["source_albedo"]
+          assert src["enabled"] is True
+          assert src["method"]=="NEAREST_SOURCE_FACE_INVERSE_DISTANCE_UV_SAMPLE"
+          assert src["valid_vertices"]>=500
+          assert src["max_distance_m"]<=0.0260001
+          assert src["normal_dot_gate"]==0.20
+          assert src["max_shader_blend"]==0.32
           surf=a["s2_2_surface_metrics"]
           assert surf["enabled"] is True and surf["vertices"]>=400 and surf["faces"]>=300
           assert a["s2_2_surface_integration"] is True
@@ -277,6 +284,7 @@ jobs:
           assert a["s2_4_source_material"] is True
           assert a["s2_5_selective_coverage"] is True
           assert a["s2_6_gnm_scalp_proximity_garment"] is True
+          assert a["s2_7_baked_face_albedo"] is True
           assert a["hair_asset_key"]=="hair_short03"
           assert r["hair_surface_contract"]["mass_mesh_rendered"] is True
           hfit=r["system_asset_fits"]["hair_short03"]
@@ -302,7 +310,7 @@ jobs:
           assert p["image_model_calls"]==0
           assert p["renderer_network_calls"]==0
           summary={
-            "schema":"dige-s2-6-preview-runtime-receipt/1",
+            "schema":"dige-s2-7-preview-runtime-receipt/1",
             "candidate":r["appearance_candidate"],
             "wall_seconds":t["wall_seconds"],
             "outputs":r["outputs"],
@@ -314,7 +322,7 @@ jobs:
             "surface_integration":surf,
             "control_contract":ctl,
             "provenance":p,
-            "truth_boundary":"STATIC_S2_6_GNM_SCALP_PROXIMITY_GARMENT_CPU_PASS_ONLY__S2_4_UV_TRANSFER_REJECTED__LOCAL_CYCLES_GPU_ADMISSION_REQUIRES_SEPARATE_OWNER_WORKSTATION_RECEIPT__DIRECT_VISUAL_AUDIT_REQUIRED"
+            "truth_boundary":"STATIC_S2_7_BAKED_FACE_ALBEDO_CPU_PASS_ONLY__NO_TOPOLOGY_UV_TRANSFER__LOCAL_CYCLES_GPU_ADMISSION_REQUIRES_SEPARATE_OWNER_WORKSTATION_RECEIPT__DIRECT_VISUAL_AUDIT_REQUIRED"
           }
           (root/"DIGE_S2_PREVIEW_SUMMARY.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
           print(json.dumps(summary,sort_keys=True))
@@ -323,12 +331,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: DIGE-S2-6-PREVIEW-${{ github.event.pull_request.head.sha }}
+          name: DIGE-S2-7-PREVIEW-${{ github.event.pull_request.head.sha }}
           path: |
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_6_preview/*.png
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_6_preview/*.exr
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_6_preview/*.json
-            experiments/dige-v8-executor-capsule/runtime/renders/s2_6_preview/*.blend
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_7_preview/*.png
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_7_preview/*.exr
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_7_preview/*.json
+            experiments/dige-v8-executor-capsule/runtime/renders/s2_7_preview/*.blend
             experiments/dige-v8-executor-capsule/runtime/s2_preview.log
             experiments/dige-v8-executor-capsule/runtime/s2_preview_timing.json
             experiments/dige-v8-executor-capsule/runtime/s2_identity_selection.json
