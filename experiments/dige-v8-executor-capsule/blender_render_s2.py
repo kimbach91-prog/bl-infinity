@@ -457,6 +457,7 @@ S2_1_HYPERREAL=os.environ.get("DIGE_S2_1_HYPERREAL","0").strip()=="1"
 S2_2_SURFACE_INTEGRATION=os.environ.get("DIGE_S2_2_SURFACE_INTEGRATION","0").strip()=="1"
 S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
 S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1"
+S2_5_SELECTIVE_COVERAGE=os.environ.get("DIGE_S2_5_SELECTIVE_COVERAGE","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1115,7 +1116,7 @@ def s1_gnm_skin_material():
     nt.links.new(sep.outputs["Red"],lipmix.inputs[0])
     base_color_socket=ramp.outputs["Color"]
     s24_albedo={"enabled":False}
-    if S2_4_SOURCE_MATERIAL:
+    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE:
         p=Path(SKIN_ALBEDO_PATH)
         if not p.is_absolute(): p=ROOT/p
         if not p.exists():
@@ -2430,7 +2431,7 @@ if C28_GNM_HEAD:
         )
         c28_gnm_objects[comp]=obj
 
-    if S2_4_SOURCE_MATERIAL:
+    if S2_4_SOURCE_MATERIAL and not S2_5_SELECTIVE_COVERAGE:
         skin_obj=c28_gnm_objects.get("skin")
         if skin_obj is None or body_uv_source is None:
             raise RuntimeError("S2.4 UV transfer prerequisites missing")
@@ -3818,7 +3819,34 @@ if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR and not C39_HHIR_HYPERREAL:
     curve_object("DIGE_C36_CANONICAL_CURTAIN_BANGS",bangs,.000045,hair)
     hair_curve_metrics["c36_curtain_bang_count"]=len(bangs)
 if C29_GNM_PRESENTATION:
-    if S2_4_SOURCE_MATERIAL:
+    if S2_5_SELECTIVE_COVERAGE:
+        scalp_mass=hair_obj.copy()
+        scalp_mass.data=hair_obj.data.copy()
+        scalp_mass.name="DIGE_S2_5_CROWN_SCALP_MASS"
+        bpy.context.collection.objects.link(scalp_mass)
+        bm=bmesh.new(); bm.from_mesh(scalp_mass.data)
+        kill=[]
+        for face in bm.faces:
+            p=scalp_mass.matrix_world @ face.calc_center_median()
+            # Keep only crown/back coverage. Remove low fringe and any geometry in front of the eye plane.
+            if p.z < hairline+.010 or p.y > gnm_eye_mid.y+.004:
+                kill.append(face)
+        if kill:
+            bmesh.ops.delete(bm,geom=kill,context='FACES')
+        bm.to_mesh(scalp_mass.data); bm.free(); scalp_mass.data.update()
+        if len(scalp_mass.data.polygons)<80:
+            raise RuntimeError(f"S2.5 scalp mass too sparse: {len(scalp_mass.data.polygons)}")
+        hair_obj.hide_render=True
+        try: hair_obj.hide_set(True)
+        except Exception: pass
+        scalp_mass.hide_render=False
+        try: scalp_mass.hide_set(False)
+        except Exception: pass
+        hair_curve_metrics["guide_mesh_rendered"]=True
+        hair_fit["c29_bulk_mesh_hidden"]=True
+        hair_fit["s2_5_scalp_mass_faces"]=len(scalp_mass.data.polygons)
+        hair_fit["s2_5_scalp_mass_method"]="SHORT03_CROWN_BACK_CLIP"
+    elif S2_4_SOURCE_MATERIAL:
         hair_obj.hide_render=False
         try: hair_obj.hide_set(False)
         except Exception: pass
@@ -3834,7 +3862,9 @@ if C29_GNM_PRESENTATION:
         hair_curve_metrics["guide_mesh_rendered"]=False
         hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
-if S2_2_SURFACE_INTEGRATION:
+if S2_5_SELECTIVE_COVERAGE:
+    hair_style_label="S2_5_SELECTIVE_CROWN_COVERAGE_V1"
+elif S2_2_SURFACE_INTEGRATION:
     hair_style_label="S2_2_ANATOMICAL_HAIRLINE_SURFACE_INTEGRATION_V1"
 elif S2_1_HYPERREAL:
     hair_style_label="S2_1_DENSE_SCALP_HYPERREAL_UPDO_V1"
@@ -3962,17 +3992,17 @@ if S1_ENDOGENOUS:
         return obj
     leggings=_s1_clip_body(
         body,("DIGE_S2_LEGGINGS" if S2_ANATOMY_DYNAMICS else "DIGE_S1_LEGGINGS"),
-        (lambda p:(p.z>=.13 and p.z<=1.010 and abs(p.x)<=((.205 if S2_3_FACE_REALISM else .320)))),
+        (lambda p:(p.z>=.13 and p.z<=1.010 and ((abs(p.x)<=.34 if p.z<.88 else abs(p.x)<=.30) if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=((.205 if S2_3_FACE_REALISM else .320))))),
         s1_leggings_mat,.0020 if S2_ANATOMY_DYNAMICS else .0018
     )
     tank=_s1_clip_body(
         body,("DIGE_S2_TANK_TOP" if S2_ANATOMY_DYNAMICS else "DIGE_S1_TANK_TOP"),
         (lambda p:(
             p.z>=1.055 and p.z<=1.430 and
-            (abs(p.x)<=.175 if S2_3_FACE_REALISM else (
+            (abs(p.x)<=.205 if S2_5_SELECTIVE_COVERAGE else (abs(p.x)<=.175 if S2_3_FACE_REALISM else (
               (p.z<1.325 and abs(p.x)<=.245) or
               (p.z>=1.325 and abs(p.x)>=.070 and abs(p.x)<=.195)
-            ))
+            )))
         ) if S2_ANATOMY_DYNAMICS else lambda p:(
             p.z>=1.070 and p.z<=1.430 and abs(p.x)<=.205 and
             (p.z<=1.305 or abs(p.x)>=.090) and
@@ -3994,10 +4024,10 @@ if S1_ENDOGENOUS:
         for poly in body.data.polygons:
             if not poly.vertices: continue
             p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
-            if p.z>=.13 and p.z<=1.010 and abs(p.x)<=.205:
+            if p.z>=.13 and p.z<=1.010 and (((abs(p.x)<=.34 if p.z<.88 else abs(p.x)<=.30)) if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.205):
                 poly.material_index=leggings_idx
                 s2_4_undercoat_faces["leggings"]+=1
-            elif p.z>=1.055 and p.z<=1.430 and abs(p.x)<=.175:
+            elif p.z>=1.055 and p.z<=1.430 and (abs(p.x)<=.205 if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.175):
                 poly.material_index=tank_idx
                 s2_4_undercoat_faces["tank"]+=1
         body.data.update()
@@ -4358,6 +4388,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_5_SELECTIVE_COVERAGE_V1" if S2_5_SELECTIVE_COVERAGE else
    "DIGE_S2_4_SOURCE_MATERIAL_SCALP_COVERAGE_V1" if S2_4_SOURCE_MATERIAL else
    "DIGE_S2_3_FACE_REALISM_GARMENT_MASK_V1" if S2_3_FACE_REALISM else
    "DIGE_S2_2_SURFACE_INTEGRATION_V1" if S2_2_SURFACE_INTEGRATION else
@@ -4529,6 +4560,7 @@ receipt={
    "s2_2_surface_integration":S2_2_SURFACE_INTEGRATION,
    "s2_3_face_realism":S2_3_FACE_REALISM,
    "s2_4_source_material":S2_4_SOURCE_MATERIAL,
+   "s2_5_selective_coverage":S2_5_SELECTIVE_COVERAGE,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
