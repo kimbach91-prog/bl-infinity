@@ -1,0 +1,42 @@
+{
+  "schema": "arc-prize-2026-c8-r2-release/1",
+  "competition": "arc-prize-2026-arc-agi-3",
+  "release_branch": "arc-prize-2026-c8-r2-release",
+  "source_commit": "654ef1d71095ea847aa30f7275a9fc0baa1e4d3d",
+  "kaggle_kernel": "lmkimbch/deus-arc-agi3-flash-next-mtp-c8-full-r2",
+  "kaggle_kernel_version": 2,
+  "submission_ref": "56474082",
+  "submission_status_as_of": "2026-09-23T00:48:16Z",
+  "submission_status": "PENDING",
+  "notebook_sha256": "d66abead0f14aeb0ddeb78f3f5c302d23e9fbe7fa012aee8b98ed8e1e785b90a",
+  "output_manifest_sha256": "1d334c4007906918764b64d48508ecab9fa5c478298f6692271cefffa2d98def",
+  "output_file_count": 143,
+  "full_audit_pass": true,
+  "audit_offline_mean": 16.63835985988807,
+  "audited_game_count": 25,
+  "audited_total_actions": 12937,
+  "model_hf_repo": "RadixArk/Qwen3.8-Flash-Next-NVFP4",
+  "model_hf_revision": "7b719225242aacd3dbd3f9407468c2ee9a9d2594",
+  "vllm_version": "0.1.dev20073+g8e685d198",
+  "source_identity_sha256": "473e695998342160478e9066d8a0d45536942ef37c75ddb803f36d3e0abb397c",
+  "runtime": {
+    "internet": false,
+    "game_count": 25,
+    "concurrency": 8,
+    "per_game_runtime_seconds": 7200,
+    "analyzer_timeout_seconds": 900
+  },
+  "source_files": {
+    "arc-agi-flash-next-mtp.ipynb": "git-blob:b28a7ba4c60b6dbb0ce4aa517761d61bcb996b1c",
+    "upstream_build_flash_next_package.py": "git-blob:eddafbc9c5c5b84b2e4388995345bae7ebbd9cae",
+    "upstream_audit_flash_output.py": "git-blob:564c9657ae7d51941cd956f05ccde947534296f2",
+    "upstream_flash_agent_state_patch.py": "git-blob:7b10dd2d221261a71eb6f014d8499c07b5106a36",
+    "upstream_flash_teardown_patch.py": "git-blob:a19df05f4ca82fe0e065178bfd2991b56fc63a79",
+    "UPSTREAM_LICENSE.txt": "git-blob:bc9439e84f9a5c47202cd8cc591d3b30a7fbe17a"
+  },
+  "licensing": {
+    "repo_code_license": "MIT via /LICENSE-CODE",
+    "upstream_flash_duck_license": "MIT via flash_next_340/UPSTREAM_LICENSE.txt"
+  },
+  "truth_boundary": "Offline audit metrics are reproducibility evidence only; Kaggle publicScore for submission_ref is authoritative for competition ranking."
+}
