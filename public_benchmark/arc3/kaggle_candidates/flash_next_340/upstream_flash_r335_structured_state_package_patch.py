@@ -142,7 +142,7 @@ def patch_package(root: Path) -> dict:
     exec(PATCH_SOURCE, ns)
     anchor = ns["R335_WORLD_MODEL_ANCHOR"]
     extension = ns["R335_WORLD_MODEL_EXTENSION"]
-    sample = 'PROMPT = (\\n    "' + anchor + '",\\n)\\n'
+    sample = 'PROMPT = (\n    "' + anchor + '",\n)\n'
     patched_sample = sample.replace(anchor, extension, 1)
     compile(patched_sample, "r335_prompt_escape_selftest.py", "exec")
     if SCHEMA_MARKER not in patched_sample:
