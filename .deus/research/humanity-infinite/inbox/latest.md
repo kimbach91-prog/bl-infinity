@@ -1,26 +1,22 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-22T21:16:41.011844+00:00
-- Records: 75
-- Digest: `92deda837da2886abaffdea786f66df8af76691dde2c897b5b38322a7dc4ae15`
+- Generated: 2026-09-23T04:42:40.147367+00:00
+- Records: 67
+- Digest: `a01872f16264d6fdd3d4ebcd7e8952fc85fca72e6d7945910d111e340f1e9114`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
 
-## BA-P0-01
-
-- [Europe PMC] The vagus nerve: a cornerstone for mental health and performance optimization in recreation and elite sports. — 40718569
-- [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
-- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
-- [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
-- [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
-- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
-- [Europe PMC] A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping. — 42483100
-- [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
-
 ## BA-P0-02
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
+- [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
+- [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
+- [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
+- [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
+- [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
+- [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
+- [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
 
 ## BA-P0-03
 
@@ -33,17 +29,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Effects of mindfulness-based exercise on Parkinson's disease and Alzheimer's disease: a systematic review and meta-analysis. — 42598237
 - [Europe PMC] Does mindfulness mediate the relationship between anxiety and second language performance? A meta-analytic structural equation modeling study. — 42670559
 
-## BA-P0-04
-
-- [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
-- [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
-- [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
-- [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
-- [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
-- [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
-- [Europe PMC] Effects of Health Qigong on quality of life, physical function, and mental health in older adults: a systematic review and meta-analysis of randomized controlled trials. — 42698455
-- [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
-
 ## BA-P0-05
 
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
@@ -55,6 +40,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
 
+## BA-P0-06
+
+- [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
+- [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
+- [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
+- [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
+- [Europe PMC] Non-Pharmacological Interventions for Cognitive Function Management in Middle-Aged and Older Adults with Hypertension: A Scoping Review. — 42746159
+- [Europe PMC] Editorial: Exploring physical activity as a complementary strategy in managing mental illness. — 42761147
+- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
+- [Europe PMC] Effects of High-Intensity Interval Training on Cognitive Function in Older Adults: A Systematic Review of Randomized Controlled Trials — PMC13580880
+
 ## BA-P1-02
 
 - [ClinicalTrials.gov] Neural Markers of Balance in Adults With Brain Injury — NCT05895084
@@ -65,17 +61,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
 - [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
 - [Europe PMC] Ayurveda Treatments for Insomnia: A Narrative Review. — 42739755
-
-## BA-P1-03
-
-- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
-- [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
-- [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
-- [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
-- [Europe PMC] Staging the stands: the ritual choreography of sports fandom and collective emotion regulation. — 42137408
-- [Europe PMC] Humming and Homeostasis: Insights from Infants, Mothers, Mantras and Caregiving. — 42193684
-- [Europe PMC] Synchrony and Reciprocity in Rhythmic Interaction. — 42325126
-- [Europe PMC] Critical Review on the Development and Evolution of Beat Perception. — 42720138
 
 ## BA-P1-04
 
