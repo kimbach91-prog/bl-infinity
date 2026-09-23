@@ -1,0 +1,121 @@
+name: ARC3 R271 independent frozen UI-mask audit
+
+on:
+  push:
+    branches:
+      - deus/r271-ui-mask-independent-audit-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ui_mask_independent_audit_271.py
+      - .github/workflows/arc3-r271-ui-mask-independent-audit.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-r271:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile independent auditor only
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_ui_mask_independent_audit_271.py
+      - name: Stage exact frozen audit set
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          games=(
+              'ar25-0c556536','ft09-0d8bbf25','ka59-38d34dbb','lf52-271a04aa',
+              'lp85-305b61c3','r11l-495a7899','re86-8af5384d','s5i5-18d95033',
+              'su15-1944f8ab','tn36-ef4dde99','tr87-cd924810','tu93-0768757b',
+              'vc33-5430563c','wa30-ee6fef47',
+          )
+          pnums=tuple(range(5))+tuple(range(10,20))
+          files=[]
+          for g in games:
+              for p in pnums:
+                  f=src/f'{g}_p{p}_events.jsonl'
+                  if not f.is_file(): raise SystemExit(f'missing {f}')
+                  files.append(f)
+          if len(files)!=210: raise SystemExit(f'expected 210 traces, got {len(files)}')
+          for f in files: (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | wc -l)" -eq 210
+          ! find public_trace -maxdepth 1 -regex '.*_p[5-9]_events.jsonl' -print -quit | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute independent trace-level audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | sort)
+          test "${#files[@]}" -eq 210
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_independent_audit_271.py \
+            "${args[@]}" \
+            --output r271-ui-mask-independent-audit.json \
+            2> >(tee r271-runtime.txt >&2) | tee r271-stdout.txt
+      - name: Verify audit contract and hash receipts
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r271-ui-mask-independent-audit.json').read_text())
+          assert d['schema']=='deus/arc3-r271-ui-mask-independent-audit/1'
+          assert d['verdict']=='AUDIT_PASS'
+          assert d['aggregate_match'] is True
+          assert d['all_14_game_gates_match_pass'] is True
+          assert len(d['promoted_games'])==14
+          i=d['independence']; t=d['truth']
+          assert i['imports_prior_deus_solver_modules'] is False
+          assert i['p5_p9_staged_or_read'] is False
+          assert t['independent_implementation_audit'] is True
+          assert t['independent_hidden_generalization_claim'] is False
+          assert t['kaggle_execution'] is False and t['competition_submission'] is False
+          assert t['submission_quota_spent_by_r271'] is False
+          Path('r271-verdict.json').write_text(json.dumps({
+            'verdict':d['verdict'],
+            'actual_aggregate':d['actual_aggregate'],
+            'aggregate_match':d['aggregate_match'],
+            'promoted_game_count':len(d['promoted_games']),
+            'truth_lane':'PUBLIC_OFFLINE_INDEPENDENT_IMPLEMENTATION_AUDIT'
+          },indent=2,sort_keys=True)+'\n')
+          print(Path('r271-verdict.json').read_text())
+          PY
+          sha256sum \
+            r271-ui-mask-independent-audit.json \
+            r271-verdict.json \
+            r271-runtime.txt \
+            r271-stdout.txt \
+            public_trace/SHA256SUMS.txt \
+            > R271_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r271-ui-mask-independent-audit
+          path: |
+            r271-ui-mask-independent-audit.json
+            r271-verdict.json
+            r271-runtime.txt
+            r271-stdout.txt
+            R271_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
