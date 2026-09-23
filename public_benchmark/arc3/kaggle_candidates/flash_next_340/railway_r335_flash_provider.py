@@ -52,7 +52,12 @@ def emit(event,payload):
 def run(cmd,*,cwd=None,timeout=None,check=True):
     p=subprocess.run(cmd,cwd=cwd,text=True,capture_output=True,timeout=timeout)
     if check and p.returncode:
-        raise RuntimeError(f"command_failed:{Path(cmd[0]).name}:rc{p.returncode}")
+        stderr=(p.stderr or "").strip().replace("\n"," | ")[-1200:]
+        stdout=(p.stdout or "").strip().replace("\n"," | ")[-600:]
+        raise RuntimeError(
+            f"command_failed:{Path(cmd[0]).name}:rc{p.returncode}:"
+            f"stderr={stderr}:stdout={stdout}"
+        )
     return p
 
 def one_nb(root):
