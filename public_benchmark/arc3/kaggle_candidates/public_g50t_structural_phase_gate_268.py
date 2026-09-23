@@ -22,9 +22,21 @@ from pathlib import Path
 from typing import Any
 
 import public_sourcefree_markov_fidelity_adapter_246 as r246
-import public_visible_state_phase_diag_262 as r262
 
 RUNG=268
+
+def delta_sig(before,after):
+    ch=[]
+    for r in range(len(before)):
+        for cc in range(len(before[0])):
+            b=int(before[r][cc]); a=int(after[r][cc])
+            if b!=a: ch.append((r,cc,b,a))
+    if not ch:return "IDENTITY",0
+    r0=min(x[0] for x in ch); c0=min(x[1] for x in ch)
+    r1=max(x[0] for x in ch); c1=max(x[1] for x in ch)
+    norm=tuple(sorted((r-r0,cc-c0,b,a) for r,cc,b,a in ch))
+    return stable(((r1-r0+1,c1-c0+1),norm)),len(ch)
+
 FEATURE_MODES=(
     "rel_basic",
     "rel_edge",
@@ -49,7 +61,7 @@ def extract(paths):
             b=[[int(v) for v in row] for row in pre["board"]]
             a=[[int(v) for v in row] for row in e["board"]]
             if len(b)==len(a) and len(b[0])==len(a[0]):
-                ds,n=r262.delta_sig(b,a)
+                ds,n=delta_sig(b,a)
                 out.append({"trace":p.name,"step":step,"action":r246.action_name(e),"board":b,"delta_sig":ds,"changed":n})
             pre=e
     return out
