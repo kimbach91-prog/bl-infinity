@@ -5,7 +5,8 @@ on:
     paths:
       - 'runtime/federation/lib/internet-functional-fabric.mjs'
       - 'runtime/federation/test/internet-functional-fabric.test.mjs'
-      - 'runtime/federation/scripts/internet-fabric-canary.mjs'\n      - 'runtime/federation/scripts/internet-fabric-external-observer.mjs'
+      - 'runtime/federation/scripts/internet-fabric-canary.mjs'
+      - 'runtime/federation/scripts/internet-fabric-external-observer.mjs'
       - '.github/workflows/deus-internet-functional-fabric-canary.yml'
   workflow_dispatch:
 
@@ -71,7 +72,7 @@ jobs:
           path: .deus/internet-fabric/shards/shard-${{ matrix.shard }}.json
           if-no-files-found: error
 
-  railway-external:
+  external-route-observer:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -79,5 +80,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Reuse verified Railway A/B federation canary
-        run: node runtime/federation/scripts/railway-live-canary.mjs
+      - name: Classify current Railway A/B route state
+        run: |
+          mkdir -p .deus/internet-fabric
+          node runtime/federation/scripts/internet-fabric-external-observer.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-fabric-external-route-observer-${{ github.run_id }}
+          path: .deus/internet-fabric/external-route-observer.json
+          if-no-files-found: error
