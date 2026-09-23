@@ -1,0 +1,132 @@
+name: ARC3 R270 frozen UI-mask public holdout gate
+
+on:
+  push:
+    branches:
+      - deus/r270-ui-mask-frozen-heldout-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_frozen_gate_270.py
+      - .github/workflows/arc3-r270-ui-mask-frozen-heldout.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-r270-frozen-public-holdout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile frozen gate
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_frozen_gate_270.py
+      - name: Stage exact frozen games p0-p4 plus p10-p19 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          games=(
+              'ar25-0c556536','ft09-0d8bbf25','ka59-38d34dbb','lf52-271a04aa',
+              'lp85-305b61c3','r11l-495a7899','re86-8af5384d','s5i5-18d95033',
+              'su15-1944f8ab','tn36-ef4dde99','tr87-cd924810','tu93-0768757b',
+              'vc33-5430563c','wa30-ee6fef47',
+          )
+          pnums=tuple(range(5))+tuple(range(10,20))
+          files=[]
+          for g in games:
+              for p in pnums:
+                  f=src/f'{g}_p{p}_events.jsonl'
+                  if not f.is_file():
+                      raise SystemExit(f'missing pinned public trace: {f}')
+                  files.append(f)
+          if len(files) != 210:
+              raise SystemExit(f'expected 210 frozen traces, got {len(files)}')
+          for f in files:
+              (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | wc -l)" -eq 210
+          ! find public_trace -maxdepth 1 -regex '.*_p[5-9]_events.jsonl' -print -quit | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R270 frozen gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | sort)
+          test "${#files[@]}" -eq 210
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_frozen_gate_270.py \
+            "${args[@]}" \
+            --output r270-ui-mask-frozen.json \
+            2> >(tee r270-runtime.txt >&2) | tee r270-stdout.txt
+      - name: Verify frozen truth boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r270-ui-mask-frozen.json').read_text())
+          assert d['schema']=='deus/arc3-r270-ui-mask-frozen-public-holdout/1'
+          assert len(d['frozen_from']['games'])==14
+          assert set(d['games'])==set(d['frozen_from']['games'])
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4' and p['holdout_eval']=='p10-p19'
+          assert not p['r270_p5_p9_read'] and not p['p10_p19_model_update'] and not p['p10_p19_selector_retune']
+          assert t['public_trace_only'] and t['source_assisted_representation_idea']
+          assert not t['independent_generalization_claim'] and not t['full_frame_solver_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission'] and not t['submission_quota_spent']
+          verdict=d['verdict']
+          if verdict=='PROMOTE_REPRESENTATION_GATE':
+              a=d['aggregate']
+              assert int(a.get('ui_mask_wrong',0))==0
+              assert int(a.get('ui_mask_correct',0))>int(a.get('raw_correct',0))
+          else:
+              assert verdict=='NO_PROMOTION'
+          Path('r270-verdict.json').write_text(json.dumps({
+              'verdict': verdict,
+              'aggregate': d['aggregate'],
+              'promoted_games': d['promoted_games'],
+              'truth_lane': 'PUBLIC_OFFLINE_FROZEN_P10_P19_REPRESENTATION_GATE'
+          },indent=2,sort_keys=True)+'\n')
+          print(Path('r270-verdict.json').read_text())
+          PY
+          sha256sum \
+            r270-ui-mask-frozen.json \
+            r270-verdict.json \
+            r270-runtime.txt \
+            r270-stdout.txt \
+            public_trace/SHA256SUMS.txt \
+            > R270_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r270-ui-mask-frozen-heldout
+          path: |
+            r270-ui-mask-frozen.json
+            r270-verdict.json
+            r270-runtime.txt
+            r270-stdout.txt
+            R270_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
