@@ -1,0 +1,62 @@
+name: ARC3 R324 TR87 region8 unanimity frozen p5-p9
+on:
+  push:
+    branches: [deus/r324-tr87-region8-unanimity-frozen-p5p9-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_tr87_region8_unanimity_frozen_p5p9_324.py
+      - .github/workflows/arc3-r324-tr87-region8-unanimity-frozen-p5p9.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r324:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify freeze predates workflow
+        run: |
+          test "$(git rev-parse HEAD^)" = "86abe4e980ee612b0b552ba269089bc83380561d"
+      - name: Stage exact TR87 p0-p9 only
+        run: |
+          mkdir -p public_train public_eval
+          for p in $(seq 0 4); do cp "upstream-duck/example-run/artifacts/tr87-cd924810_p${p}_events.jsonl" public_train/; done
+          for p in $(seq 5 9); do cp "upstream-duck/example-run/artifacts/tr87-cd924810_p${p}_events.jsonl" public_eval/; done
+          test "$(find public_train -name '*_events.jsonl' | wc -l)" -eq 5
+          test "$(find public_eval -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_train public_eval -name '*_p1[0-9]_events.jsonl' | grep -q .
+      - name: Execute frozen replay
+        run: |
+          train=(); for f in $(find public_train -name '*_events.jsonl' | sort -V); do train+=(--train "$f"); done
+          evals=(); for f in $(find public_eval -name '*_events.jsonl' | sort -V); do evals+=(--eval "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tr87_region8_unanimity_frozen_p5p9_324.py "${train[@]}" "${evals[@]}" --output r324.json | tee stdout.txt
+      - name: Audit
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r324.json'))
+          assert d['schema']=='deus/arc3-r324-tr87-region8-unanimity-frozen-p5p9/1'
+          assert d['candidate']['representation_changed_after_r323'] is False
+          assert d['candidate']['reliability_changed_after_r323'] is False
+          assert d['protocol']['retune_on_p5_p9'] is False
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          print(json.dumps({'verdict':d['verdict'],'eval_total':d['eval_total']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r324-tr87-region8-unanimity-frozen-p5p9
+          path: |
+            r324.json
+            stdout.txt
+          retention-days: 30
