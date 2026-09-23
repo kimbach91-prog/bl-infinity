@@ -1,0 +1,49 @@
+name: ARC3 R327X wa30 object-context LOTO
+on:
+  push:
+    branches: [deus/r327x-wa30-object-context-loto-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_wa30_object_context_loto_327x.py
+      - .github/workflows/arc3-r327x-wa30-object-context-loto.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r327x:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage wa30 p0-p4 only
+        run: |
+          mkdir -p public_trace
+          for p in $(seq 0 4); do cp "upstream-duck/example-run/artifacts/wa30-ee6fef47_p${p}_events.jsonl" public_trace/; done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 5
+      - name: Execute
+        run: |
+          args=(); for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_wa30_object_context_loto_327x.py "${args[@]}" --output r327x.json | tee stdout.txt
+      - name: Audit
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r327x.json')); assert d['schema']=='deus/arc3-r327x-wa30-object-context-loto/1'
+          assert not d['protocol']['p5_p9_staged_or_read'] and not d['protocol']['p10_p19_staged_or_read']
+          print(json.dumps({'verdict':d['verdict'],'best_mode':d['best_mode']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r327x-wa30-object-context-loto
+          path: |
+            r327x.json
+            stdout.txt
+          retention-days: 30
