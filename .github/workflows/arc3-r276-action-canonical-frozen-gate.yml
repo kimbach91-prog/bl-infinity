@@ -1,0 +1,90 @@
+name: ARC3 R276 frozen action-canonical gate
+on:
+  push:
+    branches: [deus/r276-action-canonical-frozen-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_action_canonical_frozen_gate_276.py
+      - .github/workflows/arc3-r276-action-canonical-frozen-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate-r276:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py public_benchmark/arc3/kaggle_candidates/public_action_canonical_frozen_gate_276.py
+      - name: Stage frozen two games p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace')
+          wanted={'g50t-5849a774','m0r0-492f87ba'}
+          by={}
+          for f in src.glob('*_p*_events.jsonl'):
+              m=re.match(r'(.+)_p(\d+)_events\.jsonl$',f.name)
+              if m and m.group(1) in wanted:
+                  by.setdefault(m.group(1),{})[int(m.group(2))]=f
+          if set(by)!=wanted: raise SystemExit(f'missing frozen games: {sorted(by)}')
+          for g in sorted(wanted):
+              if set(by[g])!=set(range(20)): raise SystemExit(f'{g}: exact p0-p19 required')
+              for p in range(20):
+                  f=by[g][p]; (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -name '*_events.jsonl' -type f | wc -l)" -eq 40
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute frozen gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -name '*_events.jsonl' -type f | sort)
+          args=(); for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_action_canonical_frozen_gate_276.py "${args[@]}" --output r276-action-canonical-frozen.json 2> >(tee r276-runtime.txt >&2) | tee r276-stdout.txt
+      - name: Verify and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r276-action-canonical-frozen.json').read_text())
+          assert d['schema']=='deus/arc3-r276-action-canonical-frozen-gate/1'
+          assert d['lineage']['r275_selector_frozen_before_p10_p19'] is True
+          assert d['frozen_selector']['games']==['g50t-5849a774','m0r0-492f87ba']
+          assert d['frozen_selector']['mode']=='canon_nodes_ui'
+          p=d['protocol']; t=d['truth']
+          assert not p['p10_p19_updates_selector'] and not p['p10_p19_updates_representation'] and not p['p10_p19_updates_model']
+          assert t['public_trace_only'] and t['source_free_runtime_logic'] and t['reused_public_development_holdout']
+          assert not t['independent_hidden_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission']
+          Path('r276-verdict.json').write_text(json.dumps({'verdict':d['verdict'],'pass_games':d['pass_games'],'aggregate':d['aggregate'],'raw_aggregate':d['raw_aggregate'],'truth_lane':'PUBLIC_OFFLINE_FROZEN_P10P19_ACTION_CANONICAL_GATE'},indent=2,sort_keys=True)+'\n')
+          print(Path('r276-verdict.json').read_text())
+          PY
+          sha256sum r276-action-canonical-frozen.json r276-verdict.json r276-runtime.txt r276-stdout.txt public_trace/SHA256SUMS.txt > R276_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r276-action-canonical-frozen-gate
+          path: |
+            r276-action-canonical-frozen.json
+            r276-verdict.json
+            r276-runtime.txt
+            r276-stdout.txt
+            R276_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
