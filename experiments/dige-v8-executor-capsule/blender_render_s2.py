@@ -2570,6 +2570,109 @@ if C28_GNM_HEAD:
                 p.y=ec.y+(p.y-ec.y)*.985
             eye_mesh.data.update()
 
+    if S2_7_BAKED_FACE_ALBEDO:
+        skin_obj=c28_gnm_objects.get("skin")
+        if skin_obj is None or body_uv_source is None:
+            raise RuntimeError("S2.7 baked-albedo prerequisites missing")
+        if not body_uv_source.data.uv_layers:
+            raise RuntimeError("S2.7 source body UV missing")
+        p=Path(SKIN_ALBEDO_PATH)
+        if not p.is_absolute():
+            p=ROOT/p
+        if not p.exists():
+            raise RuntimeError(f"S2.7 source albedo missing: {p}")
+        got=sha(p)
+        if SKIN_ALBEDO_EXPECTED_SHA256 and got.lower()!=SKIN_ALBEDO_EXPECTED_SHA256:
+            raise RuntimeError(f"S2.7 source albedo hash drift expected={SKIN_ALBEDO_EXPECTED_SHA256} got={got}")
+        img=bpy.data.images.load(str(p),check_existing=True)
+        try:
+            img.colorspace_settings.name='sRGB'
+        except Exception:
+            pass
+        w,h=int(img.size[0]),int(img.size[1])
+        if w<=0 or h<=0:
+            raise RuntimeError(f"S2.7 invalid albedo size: {w}x{h}")
+        uv_layer=body_uv_source.data.uv_layers.active
+        if uv_layer is None:
+            raise RuntimeError("S2.7 active source UV layer missing")
+        depsgraph=bpy.context.evaluated_depsgraph_get()
+        src_bvh=BVHTree.FromObject(body_uv_source,depsgraph,deform=True,cage=False)
+        attr=skin_obj.data.color_attributes.get("S2_7_BakedAlbedo")
+        if attr is None:
+            attr=skin_obj.data.color_attributes.new(
+                name="S2_7_BakedAlbedo",type='FLOAT_COLOR',domain='POINT'
+            )
+        brow_top_s27=max(pt.z for pt in (gnm_brow_left+gnm_brow_right))
+        valid_count=0
+        dists=[]; dots=[]; alphas=[]
+        pix=img.pixels
+        src_inv=body_uv_source.matrix_world.inverted()
+        src_rot=body_uv_source.matrix_world.to_3x3()
+        dst_rot=skin_obj.matrix_world.to_3x3()
+        for v in skin_obj.data.vertices:
+            wp=skin_obj.matrix_world @ v.co
+            outcol=(0.32,0.20,0.17,0.0)
+            face_region=(
+                wp.z>=chin.z-.004 and
+                wp.z<=brow_top_s27+.055 and
+                abs(wp.x-gnm_eye_mid.x)<=.105 and
+                wp.y>=gnm_eye_mid.y-.060
+            )
+            if face_region:
+                sp=src_inv @ wp
+                hit=src_bvh.find_nearest(sp)
+                if hit and hit[0] is not None:
+                    loc,nrm,fi,dist=hit
+                    dn=(dst_rot @ v.normal).normalized()
+                    sn=(src_rot @ nrm).normalized() if nrm.length>1e-9 else Vector((0,0,1))
+                    ndot=max(-1.0,min(1.0,float(dn.dot(sn))))
+                    if dist<=.026 and ndot>=.20 and 0<=fi<len(body_uv_source.data.polygons):
+                        poly=body_uv_source.data.polygons[fi]
+                        sw=0.0; uu=0.0; vv=0.0
+                        for li in poly.loop_indices:
+                            vid=body_uv_source.data.loops[li].vertex_index
+                            vp=body_uv_source.data.vertices[vid].co
+                            dd=max(1e-10,float((vp-loc).length_squared))
+                            wt=1.0/dd
+                            uv=uv_layer.data[li].uv
+                            uu+=float(uv.x)*wt; vv+=float(uv.y)*wt; sw+=wt
+                        if sw>0.0:
+                            uu=(uu/sw)%1.0; vv=(vv/sw)%1.0
+                            ix=max(0,min(w-1,int(round(uu*(w-1)))))
+                            iy=max(0,min(h-1,int(round(vv*(h-1)))))
+                            pi=(iy*w+ix)*4
+                            rgb=(float(pix[pi]),float(pix[pi+1]),float(pix[pi+2]))
+                            dist_score=max(0.0,min(1.0,1.0-float(dist)/.026))
+                            normal_score=max(0.0,min(1.0,(ndot-.20)/.80))
+                            alpha=(dist_score**.7)*(normal_score**.5)
+                            outcol=(rgb[0],rgb[1],rgb[2],alpha)
+                            if alpha>.05:
+                                valid_count+=1
+                                dists.append(float(dist)); dots.append(ndot); alphas.append(alpha)
+            attr.data[v.index].color=outcol
+        skin_obj.data.update()
+        if valid_count<500:
+            raise RuntimeError(f"S2.7 baked face valid coverage too low: {valid_count}")
+        c28_skin_contract.update({
+            "model":"S2_7_GNM_SPATIAL_BAKED_CC0_SKIN",
+            "source_albedo":{
+                "enabled":True,
+                "file":p.name,
+                "sha256":got,
+                "method":"NEAREST_SOURCE_FACE_INVERSE_DISTANCE_UV_SAMPLE",
+                "attribute":"S2_7_BakedAlbedo",
+                "max_shader_blend":.32,
+                "valid_vertices":valid_count,
+                "mean_distance_m":float(sum(dists)/len(dists)) if dists else None,
+                "max_distance_m":max(dists) if dists else None,
+                "mean_normal_dot":float(sum(dots)/len(dots)) if dots else None,
+                "mean_validity_alpha":float(sum(alphas)/len(alphas)) if alphas else None,
+                "distance_gate_m":.026,
+                "normal_dot_gate":.20,
+                "scope":"FACE_ONLY_ABOVE_CHIN_BELOW_BROW_PLUS55MM"
+            }
+        })
+
     if C31_GNM_FACE_APPEARANCE:
         skin_obj=c28_gnm_objects.get("skin")
         if skin_obj is None:
