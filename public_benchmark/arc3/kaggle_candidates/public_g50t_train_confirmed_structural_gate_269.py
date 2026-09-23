@@ -27,6 +27,7 @@ import public_sourcefree_markov_fidelity_adapter_246 as r246
 import public_g50t_structural_phase_gate_268 as r268
 
 RUNG=269
+# R269_RETRY1_MARKER: repaired R268 substrate synced.
 SUPPORTS=(2,3,4)
 
 
