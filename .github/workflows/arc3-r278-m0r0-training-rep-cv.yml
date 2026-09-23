@@ -1,3 +1,4 @@
+# Candidate set and p0-p9-only protocol frozen before execution.
 name: ARC3 R278 m0r0 training-side representation CV
 on:
   push:
