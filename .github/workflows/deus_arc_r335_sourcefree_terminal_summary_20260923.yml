@@ -1,0 +1,52 @@
+name: DEUS ARC R335 source-free p0-p4 terminal summary
+on:
+  push:
+    branches:
+      - deus/r335-sourcefree-p0p4-gate-20260923
+    paths:
+      - 'public_benchmark/arc3/kaggle_candidates/r335_sourcefree_terminal_summary.py'
+      - '.github/workflows/deus_arc_r335_sourcefree_terminal_summary_20260923.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  summarize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout DEUS code
+        uses: actions/checkout@v4
+        with:
+          path: deus
+      - name: Checkout pinned public p0-p4 trace source
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: tufa
+          sparse-checkout: |
+            example-run/artifacts/tr87-cd924810_p0_events.jsonl
+            example-run/artifacts/tr87-cd924810_p1_events.jsonl
+            example-run/artifacts/tr87-cd924810_p2_events.jsonl
+            example-run/artifacts/tr87-cd924810_p3_events.jsonl
+            example-run/artifacts/tr87-cd924810_p4_events.jsonl
+          sparse-checkout-cone-mode: false
+      - name: Enforce p0-p4-only frozen boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find tufa/example-run/artifacts -maxdepth 1 -type f -name 'tr87-cd924810_p[0-4]_events.jsonl' | wc -l)" -eq 5
+          test "$(find tufa/example-run/artifacts -maxdepth 1 -type f -name 'tr87-cd924810_p*_events.jsonl' | wc -l)" -eq 5
+          ! find tufa/example-run/artifacts -maxdepth 1 -type f \( -name 'tr87-cd924810_p[5-9]_events.jsonl' -o -name 'tr87-cd924810_p1[0-9]_events.jsonl' \) | grep -q .
+      - name: Summarize terminal signals only
+        run: |
+          mkdir -p out
+          python deus/public_benchmark/arc3/kaggle_candidates/r335_sourcefree_terminal_summary.py --root tufa/example-run/artifacts --out out/r335_sourcefree_p0p4_terminal_summary.json | tee out/brief.json
+          sha256sum out/* | tee out/SHA256SUMS.txt
+      - name: Upload terminal summary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r335-sourcefree-p0p4-terminal-summary
+          path: out/
+          if-no-files-found: error
+          retention-days: 30
