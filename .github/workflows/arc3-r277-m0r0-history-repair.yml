@@ -1,0 +1,83 @@
+name: ARC3 R277 m0r0 bounded history repair
+on:
+  push:
+    branches: [deus/r277-m0r0-history-falsifier-diagnostic-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_m0r0_history_repair_277.py
+      - .github/workflows/arc3-r277-m0r0-history-repair.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  repair-r277:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: |
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py public_benchmark/arc3/kaggle_candidates/public_m0r0_history_repair_277.py
+      - name: Stage m0r0 p0-p19 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace'); g='m0r0-492f87ba'
+          found={}
+          for f in src.glob(f'{g}_p*_events.jsonl'):
+              m=re.match(r'.+_p(\d+)_events\.jsonl$',f.name)
+              if m: found[int(m.group(1))]=f
+          if set(found)!=set(range(20)): raise SystemExit(f'exact p0-p19 required; got {sorted(found)}')
+          for p in range(20):
+              f=found[p]; (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -name '*_events.jsonl' -type f | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute bounded history diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -name '*_events.jsonl' -type f | sort)
+          args=(); for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_m0r0_history_repair_277.py "${args[@]}" --output r277-m0r0-history-repair.json 2> >(tee r277-runtime.txt >&2) | tee r277-stdout.txt
+      - name: Verify and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r277-m0r0-history-repair.json').read_text())
+          assert d['schema']=='deus/arc3-r277-m0r0-history-repair/1'
+          assert d['game']=='m0r0-492f87ba'
+          assert d['protocol']['p10_p19_selects_variant'] is False
+          assert d['truth']['public_trace_only'] and d['truth']['source_assisted_repair']
+          assert not d['truth']['independent_hidden_generalization_claim'] and not d['truth']['kaggle_execution'] and not d['truth']['competition_submission']
+          Path('r277-verdict.json').write_text(json.dumps({'verdict':d['verdict'],'eligible_variants':d['eligible_variants'],'chosen_variant':d['chosen_variant'],'base_public_development':d['base_public_development'],'chosen_public_development':d['chosen_public_development'],'base_wrong_examples':d['base_wrong_examples'],'truth_lane':'PUBLIC_OFFLINE_SOURCE_ASSISTED_M0R0_HISTORY_REPAIR'},indent=2,sort_keys=True)+'\n')
+          print(Path('r277-verdict.json').read_text())
+          PY
+          sha256sum r277-m0r0-history-repair.json r277-verdict.json r277-runtime.txt r277-stdout.txt public_trace/SHA256SUMS.txt > R277_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r277-m0r0-history-repair
+          path: |
+            r277-m0r0-history-repair.json
+            r277-verdict.json
+            r277-runtime.txt
+            r277-stdout.txt
+            R277_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
