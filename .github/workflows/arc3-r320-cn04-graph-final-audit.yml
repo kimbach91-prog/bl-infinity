@@ -46,5 +46,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: r320-cn04-graph-final-audit
-          path: |\n            r320.json\n            stdout.txt
+          path: |
+            r320.json
+            stdout.txt
           retention-days: 30
