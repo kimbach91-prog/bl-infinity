@@ -1,0 +1,68 @@
+name: ARC3 R271 UI-mask Markov harness repair
+on:
+  push:
+    branches: [deus/r271-ui-mask-markov-harness-repair-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_271.py
+      - .github/workflows/arc3-r271-ui-mask-markov-harness-repair.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose-r271-public25:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_271.py
+      - name: Stage exact public25 p0-p9
+        shell: bash
+        run: |
+          set -euo pipefail; mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace'); files=[]
+          for p in range(10): files.extend(src.glob(f'*_p{p}_events.jsonl'))
+          files=sorted(set(files)); assert len(files)==250, len(files)
+          for f in files: (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R271 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail; mapfile -t files < <(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | sort); test "${#files[@]}" -eq 250; args=(); for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_271.py "${args[@]}" --output r271-ui-mask-markov.json 2> >(tee r271-runtime.txt >&2) | tee r271-stdout.txt
+      - name: Verify truth boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r271-ui-mask-markov.json').read_text()); assert d['schema']=='deus/arc3-r271-ui-mask-markov-harness-repair/1'; assert len(d['games'])==25
+          p=d['protocol']; t=d['truth']; assert p['fit']=='p0-p4' and p['diagnostic_eval']=='p5-p9' and not p['p10_p19_read'] and not p['promotion']; assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read'] and t['source_assisted_idea']; assert not t['independent_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission'] and not t['submission_quota_spent']
+          Path('r271-verdict.json').write_text(json.dumps({'verdict':'DIAGNOSTIC_SIGNAL' if d['signal_games'] else 'NO_BROAD_UI_MASK_SIGNAL','signal_games':d['signal_games'],'aggregate':d['aggregate'],'truth_lane':'PUBLIC_OFFLINE_DIAGNOSTIC_P0_P9_ONLY'},indent=2,sort_keys=True)+'\n'); print(Path('r271-verdict.json').read_text())
+          PY
+          sha256sum r271-ui-mask-markov.json r271-verdict.json r271-runtime.txt r271-stdout.txt public_trace/SHA256SUMS.txt > R271_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r271-ui-mask-markov-harness-repair
+          path: |
+            r271-ui-mask-markov.json
+            r271-verdict.json
+            r271-runtime.txt
+            r271-stdout.txt
+            R271_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
