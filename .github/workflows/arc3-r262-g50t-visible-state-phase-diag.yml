@@ -1,9 +1,9 @@
-name: ARC3 R262 g50t visible state phase diagnostic
+name: ARC3 R263 re86 object-relative residual diagnostic
 
 on:
   push:
     branches:
-      - deus/r262-g50t-visible-state-phase-diag-20260923
+      - deus/r263-re86-object-relative-residual-diag-20260923
     paths:
       - .github/workflows/arc3-r262-g50t-visible-state-phase-diag.yml
   workflow_dispatch:
@@ -12,9 +12,9 @@ permissions:
   contents: read
 
 jobs:
-  diagnose-r262-g50t:
+  diagnose-r263-re86:
     runs-on: ubuntu-24.04
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
@@ -29,46 +29,51 @@ jobs:
         with:
           python-version: '3.12'
       - name: Compile
-        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_visible_state_phase_diag_262.py
-      - name: Stage g50t p0-p9 only
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py public_benchmark/arc3/kaggle_candidates/public_component_delta_operator_254.py public_benchmark/arc3/kaggle_candidates/public_object_motion_diag_256.py public_benchmark/arc3/kaggle_candidates/public_selective_object_transport_257.py public_benchmark/arc3/kaggle_candidates/public_object_relative_residual_diag_263.py
+      - name: Stage re86 p0-p9 only
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p public_trace
           for p in $(seq 0 9); do
-            f="g50t-5849a774_p${p}_events.jsonl"
+            f="re86-8af5384d_p${p}_events.jsonl"
             src="upstream-duck/example-run/artifacts/$f"
             test -s "$src"; cp "$src" "public_trace/$f"
           done
           sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
-      - name: Execute diagnostic
+      - name: Execute R263 diagnostic
         shell: bash
         run: |
           set -euo pipefail
-          args=(); for f in public_trace/g50t-5849a774_p*_events.jsonl; do args+=(--input "$f"); done
+          args=(); for f in public_trace/re86-8af5384d_p*_events.jsonl; do args+=(--input "$f"); done
           test "${#args[@]}" -eq 20
-          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_visible_state_phase_diag_262.py "${args[@]}" --output r262-g50t-visible-state-phase.json 2> >(tee r262-runtime.txt >&2) | tee r262-stdout.txt
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_object_relative_residual_diag_263.py "${args[@]}" --output r263-re86-object-relative-residual.json 2> >(tee r263-runtime.txt >&2) | tee r263-stdout.txt
       - name: Verify and digest
         shell: bash
         run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
-          d=json.loads(Path('r262-g50t-visible-state-phase.json').read_text())
-          assert d['schema']=='deus/arc3-r262-visible-state-phase-diagnostic/1'
-          t=d['truth']; assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read'] and not t['kaggle_execution'] and not t['competition_submission']
-          Path('r262-verdict.json').write_text(json.dumps({'verdict':'DIAGNOSTIC_ONLY_NO_PROMOTION','best_mode':d['best_mode'],'modes':{k:v['validation'] for k,v in d['modes'].items()}},indent=2,sort_keys=True)+'\n')
+          d=json.loads(Path('r263-re86-object-relative-residual.json').read_text())
+          assert d['schema']=='deus/arc3-r263-object-relative-residual-diagnostic/1'
+          t=d['truth']
+          assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read']
+          assert not t['independent_generalization_claim'] and not t['kaggle_execution'] and not t['competition_submission'] and not t['owner_score_claim']
+          best=d.get('best_variant')
+          b=d.get('variants',{}).get(best,{}) if best else {}
+          Path('r263-verdict.json').write_text(json.dumps({'verdict':'DIAGNOSTIC_ONLY','best_variant':best,'mean_hamming_reduction_fraction':b.get('mean_hamming_reduction_fraction'),'exact_before':b.get('base_error',{}).get('exact'),'exact_after':b.get('corrected_error',{}).get('exact'),'improved_frames':b.get('improved_frames'),'regressed_frames':b.get('regressed_frames')},indent=2,sort_keys=True)+'\n')
           PY
-          sha256sum r262-g50t-visible-state-phase.json r262-verdict.json r262-runtime.txt r262-stdout.txt public_trace/SHA256SUMS.txt > R262_SHA256SUMS.txt
+          sha256sum r263-re86-object-relative-residual.json r263-verdict.json r263-runtime.txt r263-stdout.txt public_trace/SHA256SUMS.txt > R263_SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: r262-g50t-visible-state-phase-diag
+          name: r263-re86-object-relative-residual-diag
           path: |
-            r262-g50t-visible-state-phase.json
-            r262-verdict.json
-            r262-runtime.txt
-            r262-stdout.txt
-            R262_SHA256SUMS.txt
+            r263-re86-object-relative-residual.json
+            r263-verdict.json
+            r263-runtime.txt
+            r263-stdout.txt
+            R263_SHA256SUMS.txt
             public_trace/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
