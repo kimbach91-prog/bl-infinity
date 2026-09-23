@@ -21,18 +21,36 @@ fail_hold() {
 python3 -m venv "$VENV" || fail_hold VENV_CREATE "failed to create Python venv"
 "$VENV/bin/pip" install --quiet --disable-pip-version-check --no-cache-dir kaggle || fail_hold KAGGLE_INSTALL "failed to install Kaggle client"
 
-# Never print credentials. Authentication is proven only by a successful bounded read.
-"$VENV/bin/kaggle" kernels list --mine --page-size 10 > "$WORK-kernels.txt" 2> "$WORK-kernels.err" || fail_hold KAGGLE_AUTH "authenticated kernels list failed"
-
-KUSER="$("$VENV/bin/python" - "$WORK-kernels.txt" <<'PY'
+# Never print credentials. Authentication is proven only by successful bounded provider reads.
+# Resolve the authenticated owner slug without minting a new credential.
+mkdir -p "$WORK/init"
+"$VENV/bin/kaggle" kernels init -p "$WORK/init" > "$WORK-kernel-init.stdout" 2> "$WORK-kernel-init.stderr" || true
+KUSER="$("$VENV/bin/python" - "$WORK/init/kernel-metadata.json" <<'PY'
+import json,re,sys
+try:
+    d=json.load(open(sys.argv[1]))
+except Exception:
+    d={}
+kid=str(d.get("id",""))
+m=re.fullmatch(r"([A-Za-z0-9_.-]+)/[A-Za-z0-9_.-]+",kid)
+if m and "INSERT" not in m.group(1).upper():
+    print(m.group(1))
+PY
+)"
+if [ -z "$KUSER" ]; then
+  "$VENV/bin/kaggle" kernels list --mine --page-size 100 -v > "$WORK-kernels.txt" 2> "$WORK-kernels.err" || fail_hold KAGGLE_AUTH "authenticated kernels list failed"
+  KUSER="$("$VENV/bin/python" - "$WORK-kernels.txt" <<'PY'
 import re,sys
 text=open(sys.argv[1],errors="replace").read()
-m=re.search(r"(?m)^([A-Za-z0-9_.-]+)/[A-Za-z0-9_.-]+\s+",text)
-if not m:
-    raise SystemExit("owner slug not found in authenticated kernel list")
-print(m.group(1))
+for token in re.findall(r"[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+",text):
+    owner=token.split("/",1)[0]
+    if owner.lower() not in {"https:","http:"} and "token" not in owner.lower():
+        print(owner)
+        break
 PY
-)" || fail_hold KAGGLE_OWNER "unable to resolve authenticated Kaggle owner slug"
+)"
+fi
+[ -n "$KUSER" ] || fail_hold KAGGLE_OWNER "authenticated owner slug unavailable from local init or owned-kernel listing"
 
 BASE_REF="$KUSER/deus-arc-agi3-c9-base-tr87"
 STATE_REF="$KUSER/deus-arc-agi3-c9-state-tr87"
