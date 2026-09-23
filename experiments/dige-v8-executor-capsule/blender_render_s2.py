@@ -2,6 +2,7 @@ import bpy, bmesh, math, json, hashlib, random, os, sys
 import numpy as np
 from pathlib import Path
 from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 
 ROOT=Path(__file__).resolve().parent
 RUNTIME=ROOT/"runtime"
@@ -458,6 +459,7 @@ S2_2_SURFACE_INTEGRATION=os.environ.get("DIGE_S2_2_SURFACE_INTEGRATION","0").str
 S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
 S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1"
 S2_5_SELECTIVE_COVERAGE=os.environ.get("DIGE_S2_5_SELECTIVE_COVERAGE","0").strip()=="1"
+S2_6_GNM_SCALP_PROXIMITY_GARMENT=os.environ.get("DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -3819,7 +3821,52 @@ if C36_CANONICAL_APPEARANCE and not HAIR_LONG_PRIOR and not C39_HHIR_HYPERREAL:
     curve_object("DIGE_C36_CANONICAL_CURTAIN_BANGS",bangs,.000045,hair)
     hair_curve_metrics["c36_curtain_bang_count"]=len(bangs)
 if C29_GNM_PRESENTATION:
-    if S2_5_SELECTIVE_COVERAGE:
+    if S2_6_GNM_SCALP_PROXIMITY_GARMENT:
+        scalp_mass=groom_surface.copy()
+        scalp_mass.data=groom_surface.data.copy()
+        scalp_mass.name="DIGE_S2_6_GNM_CROWN_SCALP_SHELL"
+        bpy.context.collection.objects.link(scalp_mass)
+        for mod in list(scalp_mass.modifiers):
+            try: scalp_mass.modifiers.remove(mod)
+            except Exception: pass
+        bm=bmesh.new(); bm.from_mesh(scalp_mass.data)
+        kill=[]
+        for face in bm.faces:
+            p=scalp_mass.matrix_world @ face.calc_center_median()
+            temple=min(1.0,abs(p.x-gnm_eye_mid.x)/.120)
+            edge=hairline+.024+.012*(temple**1.6)
+            # Crown/back shell only. Keep it behind the frontal hairline so it acts as
+            # optical scalp density under strands rather than a visible helmet/fringe.
+            keep=(p.z>=edge and abs(p.x-gnm_eye_mid.x)<=.135 and
+                  (p.y<=gnm_eye_mid.y-.010 or p.z>=hairline+.060))
+            if not keep:
+                kill.append(face)
+        if kill:
+            bmesh.ops.delete(bm,geom=kill,context='FACES')
+        bm.to_mesh(scalp_mass.data); bm.free(); scalp_mass.data.update()
+        if len(scalp_mass.data.polygons)<120:
+            raise RuntimeError(f"S2.6 GNM scalp shell too sparse: {len(scalp_mass.data.polygons)}")
+        for vv in scalp_mass.data.vertices:
+            try: vv.co += vv.normal*.00045
+            except Exception: pass
+        scalp_mass.data.update()
+        scalp_mass.data.materials.clear()
+        scalp_mass.data.materials.append(hair_mass)
+        bpy.context.view_layer.objects.active=scalp_mass
+        try: bpy.ops.object.shade_smooth()
+        except Exception: pass
+        hair_obj.hide_render=True
+        try: hair_obj.hide_set(True)
+        except Exception: pass
+        scalp_mass.hide_render=False
+        try: scalp_mass.hide_set(False)
+        except Exception: pass
+        hair_curve_metrics["guide_mesh_rendered"]=True
+        hair_fit["c29_bulk_mesh_hidden"]=True
+        hair_fit["s2_6_scalp_mass_faces"]=len(scalp_mass.data.polygons)
+        hair_fit["s2_6_scalp_mass_method"]="GNM_CROWN_BACK_SURFACE_SHELL"
+        hair_fit["s2_6_scalp_mass_offset_m"]=.00045
+    elif S2_5_SELECTIVE_COVERAGE:
         scalp_mass=hair_obj.copy()
         scalp_mass.data=hair_obj.data.copy()
         scalp_mass.name="DIGE_S2_5_CROWN_SCALP_MASS"
@@ -3828,7 +3875,6 @@ if C29_GNM_PRESENTATION:
         kill=[]
         for face in bm.faces:
             p=scalp_mass.matrix_world @ face.calc_center_median()
-            # Keep only crown/back coverage. Remove low fringe and any geometry in front of the eye plane.
             if p.z < hairline+.010 or p.y > gnm_eye_mid.y+.004:
                 kill.append(face)
         if kill:
@@ -3862,7 +3908,9 @@ if C29_GNM_PRESENTATION:
         hair_curve_metrics["guide_mesh_rendered"]=False
         hair_fit["c29_bulk_mesh_hidden"]=True
 strands=[None]*hair_curve_metrics["curve_count"]
-if S2_5_SELECTIVE_COVERAGE:
+if S2_6_GNM_SCALP_PROXIMITY_GARMENT:
+    hair_style_label="S2_6_GNM_SCALP_SHELL_V1"
+elif S2_5_SELECTIVE_COVERAGE:
     hair_style_label="S2_5_SELECTIVE_CROWN_COVERAGE_V1"
 elif S2_2_SURFACE_INTEGRATION:
     hair_style_label="S2_2_ANATOMICAL_HAIRLINE_SURFACE_INTEGRATION_V1"
@@ -3971,10 +4019,30 @@ if S1_ENDOGENOUS:
         kill=[f for f in bm.faces if not keep_fn(obj.matrix_world @ f.calc_center_median())]
         if kill:
             bmesh.ops.delete(bm,geom=kill,context='FACES')
+        component_cleanup={"enabled":False,"components":0,"kept_faces":len(bm.faces),"removed_faces":0}
+        if S2_6_GNM_SCALP_PROXIMITY_GARMENT and bm.faces:
+            unseen=set(bm.faces)
+            comps=[]
+            while unseen:
+                seed=unseen.pop()
+                comp={seed}; stack=[seed]
+                while stack:
+                    ff=stack.pop()
+                    for ee in ff.edges:
+                        for nf in ee.link_faces:
+                            if nf in unseen:
+                                unseen.remove(nf); comp.add(nf); stack.append(nf)
+                comps.append(comp)
+            keep=max(comps,key=len)
+            discard=[ff for comp in comps if comp is not keep for ff in comp]
+            if discard:
+                bmesh.ops.delete(bm,geom=discard,context='FACES')
+            component_cleanup={"enabled":True,"components":len(comps),"kept_faces":len(keep),"removed_faces":len(discard)}
         if bm.faces:
             try: bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
             except Exception: pass
         bm.to_mesh(obj.data); bm.free(); obj.data.update()
+        obj["DIGE_COMPONENT_CLEANUP"]=json.dumps(component_cleanup,sort_keys=True)
         if S2_ANATOMY_DYNAMICS:
             garment_offset=.0062 if S2_2_SURFACE_INTEGRATION else .0042
             for vv in obj.data.vertices:
@@ -4021,15 +4089,41 @@ if S1_ENDOGENOUS:
             body.data.materials.append(s1_leggings_mat)
         tank_idx=list(body.data.materials).index(s1_tank_mat)
         leggings_idx=list(body.data.materials).index(s1_leggings_mat)
-        for poly in body.data.polygons:
-            if not poly.vertices: continue
-            p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
-            if p.z>=.13 and p.z<=1.010 and (((abs(p.x)<=.34 if p.z<.88 else abs(p.x)<=.30)) if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.205):
-                poly.material_index=leggings_idx
-                s2_4_undercoat_faces["leggings"]+=1
-            elif p.z>=1.055 and p.z<=1.430 and (abs(p.x)<=.205 if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.175):
-                poly.material_index=tank_idx
-                s2_4_undercoat_faces["tank"]+=1
+        if S2_6_GNM_SCALP_PROXIMITY_GARMENT:
+            depsgraph=bpy.context.evaluated_depsgraph_get()
+            leg_bvh=BVHTree.FromObject(leggings,depsgraph,deform=True,cage=False)
+            tank_bvh=BVHTree.FromObject(tank,depsgraph,deform=True,cage=False)
+            leg_dists=[]; tank_dists=[]
+            for poly in body.data.polygons:
+                if not poly.vertices: continue
+                p_local=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
+                p_world=body.matrix_world @ p_local
+                lhit=leg_bvh.find_nearest(p_world) if .10<=p_world.z<=1.04 else None
+                thit=tank_bvh.find_nearest(p_world) if 1.02<=p_world.z<=1.46 else None
+                ldist=(lhit[3] if lhit and lhit[0] is not None else None)
+                tdist=(thit[3] if thit and thit[0] is not None else None)
+                if ldist is not None and ldist<=.014:
+                    poly.material_index=leggings_idx
+                    s2_4_undercoat_faces["leggings"]+=1
+                    leg_dists.append(float(ldist))
+                elif tdist is not None and tdist<=.014:
+                    poly.material_index=tank_idx
+                    s2_4_undercoat_faces["tank"]+=1
+                    tank_dists.append(float(tdist))
+            s2_4_undercoat_faces["method"]="SHELL_BVH_PROXIMITY"
+            s2_4_undercoat_faces["threshold_m"]=.014
+            s2_4_undercoat_faces["leggings_max_distance_m"]=max(leg_dists) if leg_dists else None
+            s2_4_undercoat_faces["tank_max_distance_m"]=max(tank_dists) if tank_dists else None
+        else:
+            for poly in body.data.polygons:
+                if not poly.vertices: continue
+                p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
+                if p.z>=.13 and p.z<=1.010 and (((abs(p.x)<=.34 if p.z<.88 else abs(p.x)<=.30)) if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.205):
+                    poly.material_index=leggings_idx
+                    s2_4_undercoat_faces["leggings"]+=1
+                elif p.z>=1.055 and p.z<=1.430 and (abs(p.x)<=.205 if S2_5_SELECTIVE_COVERAGE else abs(p.x)<=.175):
+                    poly.material_index=tank_idx
+                    s2_4_undercoat_faces["tank"]+=1
         body.data.update()
 
     s1_garment_metrics={
@@ -4043,7 +4137,8 @@ if S1_ENDOGENOUS:
         "tights_arm_vertices_relaxed":s1_tights_arm_vertices,
         "midriff_gap_m":0.055,
         "helper_tights_rendered":False,
-        "s2_4_material_undercoat_faces":s2_4_undercoat_faces if S2_4_SOURCE_MATERIAL else {"tank":0,"leggings":0}
+        "s2_4_material_undercoat_faces":s2_4_undercoat_faces if S2_4_SOURCE_MATERIAL else {"tank":0,"leggings":0},
+        "s2_6_component_cleanup":{"tank":json.loads(tank.get("DIGE_COMPONENT_CLEANUP","{}")),"leggings":json.loads(leggings.get("DIGE_COMPONENT_CLEANUP","{}"))} if S2_6_GNM_SCALP_PROXIMITY_GARMENT else {"tank":{},"leggings":{}}
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
@@ -4388,6 +4483,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT_V1" if S2_6_GNM_SCALP_PROXIMITY_GARMENT else
    "DIGE_S2_5_SELECTIVE_COVERAGE_V1" if S2_5_SELECTIVE_COVERAGE else
    "DIGE_S2_4_SOURCE_MATERIAL_SCALP_COVERAGE_V1" if S2_4_SOURCE_MATERIAL else
    "DIGE_S2_3_FACE_REALISM_GARMENT_MASK_V1" if S2_3_FACE_REALISM else
@@ -4561,6 +4657,7 @@ receipt={
    "s2_3_face_realism":S2_3_FACE_REALISM,
    "s2_4_source_material":S2_4_SOURCE_MATERIAL,
    "s2_5_selective_coverage":S2_5_SELECTIVE_COVERAGE,
+   "s2_6_gnm_scalp_proximity_garment":S2_6_GNM_SCALP_PROXIMITY_GARMENT,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
