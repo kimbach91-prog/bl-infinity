@@ -461,6 +461,7 @@ S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1
 S2_5_SELECTIVE_COVERAGE=os.environ.get("DIGE_S2_5_SELECTIVE_COVERAGE","0").strip()=="1"
 S2_6_GNM_SCALP_PROXIMITY_GARMENT=os.environ.get("DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT","0").strip()=="1"
 S2_7_BAKED_FACE_ALBEDO=os.environ.get("DIGE_S2_7_BAKED_FACE_ALBEDO","0").strip()=="1"
+S2_8_NATIVE_GNM_GEOMETRY=os.environ.get("DIGE_S2_8_NATIVE_GNM_GEOMETRY","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -2496,28 +2497,32 @@ if C28_GNM_HEAD:
         for v in skin_obj.data.vertices:
             p=v.co
             lower=max(0.0,min(1.0,(eye_z-p.z)/lower_span))
-            taper=1.0-(1.0-C36_JAW_TAPER)*(lower**1.35)
+            jaw_taper_eff=1.0 if S2_8_NATIVE_GNM_GEOMETRY else C36_JAW_TAPER
+            taper=1.0-(1.0-jaw_taper_eff)*(lower**1.35)
             p.x=gnm_eye_mid.x+(p.x-gnm_eye_mid.x)*taper
             # Narrow vertical palpebral opening without moving the iris center.
             for ec in (eye_l,eye_r):
                 dx=abs(p.x-ec.x); dz=abs(p.z-ec.z)
                 if dx<.031 and dz<.015 and p.y>ec.y-.026:
                     w=(1.0-dx/.031)*(1.0-dz/.015)
-                    fac=1.0-(1.0-C36_EYE_OPEN_SCALE)*max(0.0,min(1.0,w))
+                    eye_open_eff=1.0 if S2_8_NATIVE_GNM_GEOMETRY else C36_EYE_OPEN_SCALE
+                    fac=1.0-(1.0-eye_open_eff)*max(0.0,min(1.0,w))
                     p.z=ec.z+(p.z-ec.z)*fac
             # Canonical target has a smaller, softer mouth than the current GNM sample.
             mdx=abs(p.x-mouth_center.x); mdz=abs(p.z-mouth_center.z)
             if mdx < mouth_half*1.18 and mdz < .015 and p.y > mouth_center.y-.022:
                 mw=max(0.0,(1.0-mdx/(mouth_half*1.18))*(1.0-mdz/.015))
-                p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-(.020 if S1_ENDOGENOUS else .055)*mw)
-                p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-(.08 if S1_ENDOGENOUS else .25)*mw)
+                mouth_x_shrink=0.0 if S2_8_NATIVE_GNM_GEOMETRY else (.020 if S1_ENDOGENOUS else .055)
+                mouth_z_shrink=0.0 if S2_8_NATIVE_GNM_GEOMETRY else (.08 if S1_ENDOGENOUS else .25)
+                p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-mouth_x_shrink*mw)
+                p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-mouth_z_shrink*mw)
             # Very subtle mouth-corner lift to avoid the mannequin-flat resting line.
             dx=abs(abs(p.x-mouth_center.x)-.020)
             dz=abs(p.z-mouth_center.z)
             if dx<.010 and dz<.010 and p.y>mouth_center.y-.020:
                 w=(1.0-dx/.010)*(1.0-dz/.010)
-                p.z += .0016*max(0.0,w)
-        if S1_ENDOGENOUS:
+                p.z += (0.0 if S2_8_NATIVE_GNM_GEOMETRY else .0016)*max(0.0,w)
+        if S1_ENDOGENOUS and not S2_8_NATIVE_GNM_GEOMETRY:
             cheek_z_s1=(eye_z+mouth_center.z)*.5
             for v in skin_obj.data.vertices:
                 p=v.co
@@ -2532,7 +2537,7 @@ if C28_GNM_HEAD:
                 # Soften chin projection very slightly.
                 chin_w=math.exp(-0.5*(((p.x-gnm_eye_mid.x)/.032)**2+((p.z-chin.z)/.024)**2))
                 p.y -= .0014*chin_w
-        if S2_ANATOMY_DYNAMICS:
+        if S2_ANATOMY_DYNAMICS and not S2_8_NATIVE_GNM_GEOMETRY:
             for v in skin_obj.data.vertices:
                 p=v.co
                 # Softer V-line lower face.
@@ -4642,6 +4647,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_8_NATIVE_GNM_GEOMETRY_V1" if S2_8_NATIVE_GNM_GEOMETRY else
    "DIGE_S2_7_BAKED_FACE_ALBEDO_V1" if S2_7_BAKED_FACE_ALBEDO else
    "DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT_V1" if S2_6_GNM_SCALP_PROXIMITY_GARMENT else
    "DIGE_S2_5_SELECTIVE_COVERAGE_V1" if S2_5_SELECTIVE_COVERAGE else
@@ -4819,6 +4825,7 @@ receipt={
    "s2_5_selective_coverage":S2_5_SELECTIVE_COVERAGE,
    "s2_6_gnm_scalp_proximity_garment":S2_6_GNM_SCALP_PROXIMITY_GARMENT,
    "s2_7_baked_face_albedo":S2_7_BAKED_FACE_ALBEDO,
+   "s2_8_native_gnm_geometry":S2_8_NATIVE_GNM_GEOMETRY,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
