@@ -17,14 +17,15 @@ jobs:
       GAME_ID: 'tr87-cd924810'
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Verify frozen source identity
         shell: bash
         run: |
           set -euo pipefail
-          test "$(git rev-parse HEAD~1)" = "$SOURCE_SHA" || {
-            echo "Workflow commit must be exactly one child of frozen source $SOURCE_SHA" >&2
-            exit 1
-          }
+          test "$(git merge-base "$SOURCE_SHA" HEAD)" = "$SOURCE_SHA"
+          unexpected="$(git diff --name-only "$SOURCE_SHA"..HEAD | grep -v '^.github/workflows/arc3-r332-c9-agent-state-diff-audit.yml$' || true)"
+          test -z "$unexpected" || { echo "Unexpected delta from frozen source: $unexpected" >&2; exit 1; }
       - name: Build matched base and state packages offline
         shell: bash
         run: |
@@ -73,13 +74,10 @@ jobs:
               assert bc.get('cell_type')==sc.get('cell_type')
               if bc.get('cell_type')=='code':
                   code_diff.append(i)
-                  bs=''.join(bc.get('source',[])); ss=''.join(sc.get('source',[]))
-                  # Every code delta must be attributable to an explicit state-overlay marker.
+                  ss=''.join(sc.get('source',[]))
                   assert any(m in ss for m in required_markers), (i,'unmarked code delta')
           assert code_diff, 'expected state-overlay code deltas'
-          # Non-code cells must remain identical.
           assert diff==code_diff, (diff, code_diff)
-          # Both generated notebooks independently compile.
           for label,nb in [('base',b),('state',s)]:
               count=0
               for i,c in enumerate(nb['cells']):
@@ -89,7 +87,6 @@ jobs:
               assert count>0
           bm=json.loads((base_dir/'kernel-metadata.json').read_text())
           sm=json.loads((state_dir/'kernel-metadata.json').read_text())
-          # Provider shape/sources/private/offline settings must match except kernel identity.
           comparable=['language','kernel_type','is_private','enable_gpu','enable_tpu','enable_internet','dataset_sources','competition_sources','kernel_sources','model_sources','docker_image','machine_shape']
           for k in comparable: assert bm[k]==sm[k], (k,bm[k],sm[k])
           assert bm['is_private'] is True and bm['enable_internet'] is False
