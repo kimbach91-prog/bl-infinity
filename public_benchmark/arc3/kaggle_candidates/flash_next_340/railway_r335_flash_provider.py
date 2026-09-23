@@ -110,18 +110,31 @@ def download_and_audit(exact,out,r335):
     run(["kaggle","kernels","output",exact,"-p",str(out)],timeout=180)
     logs=sorted(p.name for p in out.glob("arc-agi3-flash-next-mtp-*.log"))
     if len(logs)!=1: raise RuntimeError("kernel_log_count")
-    auditor=ROOT/("upstream_audit_flash_r335_output.py" if r335 else "upstream_audit_flash_output.py")
-    cmd=[
-        sys.executable,str(auditor),"--mode","preflight","--expected-games","1",
-        "--expected-concurrency",str(CONCURRENCY),"--expected-game-id",GAME,
-        "--expected-runtime-seconds",str(RUNTIME),"--expected-gameplay-budget-seconds",str(RUNTIME),
-        "--require-runtime-from-ready","--expected-terminal-grace-seconds",str(GRACE),
-        "--expected-analyzer-timeout",str(ANALYZER),"--require-clean","--kernel-log",logs[0],
-    ]
-    if not r335: cmd.append("--require-agent-state-patch")
-    cmd.append(str(out))
-    p=run(cmd,timeout=180)
-    report=json.loads(p.stdout)
+    if str(ROOT) not in sys.path:
+        sys.path.insert(0,str(ROOT))
+    import upstream_audit_flash_output as base_audit
+    common=dict(
+        check_parquet=False,
+        expected_games=1,
+        expected_concurrency=CONCURRENCY,
+        expected_game_id=GAME,
+        expected_runtime_seconds=RUNTIME,
+        expected_gameplay_budget_seconds=RUNTIME,
+        require_clean=True,
+        require_runtime_from_ready=True,
+        expected_terminal_grace_seconds=GRACE,
+        expected_analyzer_timeout=ANALYZER,
+        kernel_log=logs[0],
+    )
+    if r335:
+        import upstream_audit_flash_r335_output as r335_audit
+        report=r335_audit.audit_r335(out,"preflight",**common)
+    else:
+        report=base_audit.audit(
+            out,"preflight",
+            require_agent_state_patch=True,
+            **common,
+        )
     if report.get("passed") is not True: raise RuntimeError("strict_audit_failed")
     return report
 
