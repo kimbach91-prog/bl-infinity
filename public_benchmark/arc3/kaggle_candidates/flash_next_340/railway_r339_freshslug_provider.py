@@ -32,9 +32,19 @@ def list_mine(search: str):
         "kaggle","kernels","list","--mine","--search",search,
         "--format","json","--sort-by","dateRun","--page-size","50"
     ],timeout=90)
+    raw=(q.stdout or "").strip()
+    # CLI 2.2.x may prefix/suffix informational text around formatted JSON.
+    lo=raw.find("[")
+    hi=raw.rfind("]")
+    candidate=raw[lo:hi+1] if lo>=0 and hi>=lo else raw
     try:
-        rows=json.loads(q.stdout or "[]")
+        rows=json.loads(candidate or "[]")
     except Exception as exc:
+        p.emit("DEUS_R339_LIST_PARSE_DIAG",{
+            "search":search,
+            "stdout":raw[-2400:],
+            "stderr":(q.stderr or "")[-1200:],
+        })
         raise RuntimeError(f"kernel_list_json_parse:{type(exc).__name__}")
     return [r for r in rows if isinstance(r,dict)]
 
