@@ -31,14 +31,16 @@ R335_WORLD_MODEL_ANCHOR = (
 )
 R335_WORLD_MODEL_EXTENSION = (
     R335_WORLD_MODEL_ANCHOR
-    + r"\n- R335_STRUCTURED_STATE_SCHEMA_V1: When the visible evidence uniquely supports it, represent relational state using translation/D4-equivalent token identity, relation or sequence segmentation, composition, and inverse constraints; represent control state using editable sites, cursor position, cyclic phase or offset, and observed action effects."
-    + r"\n- Keep this schema generic and evidence-bounded. Never branch on a game ID, never replay a memorized script, and never force a relational or phase model when the frame topology or transition evidence is ambiguous."
-    + r"\n- Prefer unique-or-abstain: if multiple structural programs or action interpretations remain consistent, record the ambiguity in the existing world/action model and gather discriminating evidence before acting."
+    + " R335_STRUCTURED_STATE_SCHEMA_V1: When the visible evidence uniquely supports it, represent relational state using translation/D4-equivalent token identity, relation or sequence segmentation, composition, and inverse constraints; represent control state using editable sites, cursor position, cyclic phase or offset, and observed action effects."
+    + " Keep this schema generic and evidence-bounded. Never branch on a game ID, never replay a memorized script, and never force a relational or phase model when the frame topology or transition evidence is ambiguous."
+    + " Prefer unique-or-abstain: if multiple structural programs or action interpretations remain consistent, record the ambiguity in the existing world/action model and gather discriminating evidence before acting."
 )
 
 def patch_tool_agent_r335(source: bytes) -> str:
-    if "\n" in R335_WORLD_MODEL_EXTENSION:
-        raise ValueError("R335 extension must contain escaped newline tokens, not physical newlines.")
+    if "\n" in R335_WORLD_MODEL_EXTENSION or "\r" in R335_WORLD_MODEL_EXTENSION:
+        raise ValueError("R335 extension must be single-line for safe source-literal injection.")
+    if '"' in R335_WORLD_MODEL_EXTENSION:
+        raise ValueError("R335 extension must not contain unescaped double quotes.")
     if hashlib.sha256(source).hexdigest() != R335_STRUCTURED_STATE_SOURCE_SHA256:
         raise ValueError("Flash stage-1 agent digest changed; refusing R335 structured-state patch.")
     text = source.decode("utf-8")
@@ -140,7 +142,7 @@ def patch_package(root: Path) -> dict:
     exec(PATCH_SOURCE, ns)
     anchor = ns["R335_WORLD_MODEL_ANCHOR"]
     extension = ns["R335_WORLD_MODEL_EXTENSION"]
-    sample = 'PROMPT = ("' + anchor + '\\n")\n'
+    sample = 'PROMPT = (\\n    "' + anchor + '",\\n)\\n'
     patched_sample = sample.replace(anchor, extension, 1)
     compile(patched_sample, "r335_prompt_escape_selftest.py", "exec")
     if SCHEMA_MARKER not in patched_sample:
