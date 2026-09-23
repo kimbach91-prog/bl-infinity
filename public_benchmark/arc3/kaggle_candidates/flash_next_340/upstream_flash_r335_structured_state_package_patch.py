@@ -10,6 +10,7 @@ The package must already have been built with --agent-state-patch.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -28,13 +29,16 @@ R335_WORLD_MODEL_ANCHOR = (
     "what actions appear to do, what the goal seems to be, what is still uncertain, "
     "and what plan currently looks best."
 )
-R335_WORLD_MODEL_EXTENSION = R335_WORLD_MODEL_ANCHOR + """
-- R335_STRUCTURED_STATE_SCHEMA_V1: When the visible evidence uniquely supports it, represent relational state using translation/D4-equivalent token identity, relation or sequence segmentation, composition, and inverse constraints; represent control state using editable sites, cursor position, cyclic phase or offset, and observed action effects.
-- Keep this schema generic and evidence-bounded. Never branch on a game ID, never replay a memorized script, and never force a relational or phase model when the frame topology or transition evidence is ambiguous.
-- Prefer unique-or-abstain: if multiple structural programs or action interpretations remain consistent, record the ambiguity in the existing world/action model and gather discriminating evidence before acting.
-"""
+R335_WORLD_MODEL_EXTENSION = (
+    R335_WORLD_MODEL_ANCHOR
+    + r"\n- R335_STRUCTURED_STATE_SCHEMA_V1: When the visible evidence uniquely supports it, represent relational state using translation/D4-equivalent token identity, relation or sequence segmentation, composition, and inverse constraints; represent control state using editable sites, cursor position, cyclic phase or offset, and observed action effects."
+    + r"\n- Keep this schema generic and evidence-bounded. Never branch on a game ID, never replay a memorized script, and never force a relational or phase model when the frame topology or transition evidence is ambiguous."
+    + r"\n- Prefer unique-or-abstain: if multiple structural programs or action interpretations remain consistent, record the ambiguity in the existing world/action model and gather discriminating evidence before acting."
+)
 
 def patch_tool_agent_r335(source: bytes) -> str:
+    if "\n" in R335_WORLD_MODEL_EXTENSION:
+        raise ValueError("R335 extension must contain escaped newline tokens, not physical newlines.")
     if hashlib.sha256(source).hexdigest() != R335_STRUCTURED_STATE_SOURCE_SHA256:
         raise ValueError("Flash stage-1 agent digest changed; refusing R335 structured-state patch.")
     text = source.decode("utf-8")
@@ -131,8 +135,14 @@ def patch_package(root: Path) -> dict:
     text = text.replace(OLD_RECORD, NEW_RECORD, 1)
     target["source"] = text.splitlines(keepends=True)
 
+    compile(PATCH_SOURCE, "r335_structured_state_patch_source.py", "exec")
     path.write_text(json.dumps(doc, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     reparsed = json.loads(path.read_text(encoding="utf-8"))
+    for idx, cell in enumerate(reparsed.get("cells", [])):
+        if cell.get("cell_type") != "code":
+            continue
+        source = "".join(cell.get("source", []))
+        compile(source, f"{path.name}:cell-{idx}", "exec", flags=ast.PyCF_ALLOW_TOP_LEVEL_AWAIT)
     code = "\n".join(
         "".join(cell.get("source", []))
         for cell in reparsed.get("cells", [])
