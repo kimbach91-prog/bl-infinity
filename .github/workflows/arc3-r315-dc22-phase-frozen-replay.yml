@@ -1,0 +1,55 @@
+name: ARC3 R315 dc22 phase frozen replay
+on:
+  push:
+    branches: [deus/r315-dc22-phase-frozen-replay-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_dc22_phase_frozen_replay_315.py
+      - .github/workflows/arc3-r315-dc22-phase-frozen-replay.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r315:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 16}
+      - name: Verify frozen source
+        run: |
+          git cat-file -e 0cea52b145ee8b51d82f60ef70f3db72645d15aa^{commit}
+          git merge-base --is-ancestor 0cea52b145ee8b51d82f60ef70f3db72645d15aa HEAD
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage dc22 p0-p9 only
+        run: |
+          mkdir -p public_trace
+          for p in $(seq 0 9); do cp "upstream-duck/example-run/artifacts/dc22-fdcac232_p${p}_events.jsonl" public_trace/; done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -name '*_p1[0-9]_events.jsonl' | grep -q .
+      - name: Execute
+        run: |
+          args=(); for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_dc22_phase_frozen_replay_315.py "${args[@]}" --output r315.json | tee stdout.txt
+      - name: Audit
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r315.json')); assert d['schema']=='deus/arc3-r315-dc22-phase-frozen-replay/1'
+          assert d['lineage']['selector_frozen_before_p5_p9'] and not d['protocol']['p10_p19_staged_or_read']
+          print(json.dumps({'verdict':d['verdict'],'gate_pass':d['gate_pass'],'replay':d['source_assisted_p5_p9']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r315-dc22-phase-frozen-replay
+          path: |
+            r315.json
+            stdout.txt
+          retention-days: 30
