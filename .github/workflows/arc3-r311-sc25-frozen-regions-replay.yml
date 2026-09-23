@@ -1,0 +1,80 @@
+name: ARC3 R311 sc25 frozen regions replay
+on:
+  push:
+    branches: [deus/r311-sc25-frozen-regions-replay-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_sc25_frozen_regions_replay_311.py
+      - .github/workflows/arc3-r311-sc25-frozen-regions-replay.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r311:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 16}
+      - name: Verify frozen source precedes replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 95162dac41603d44fc27f85183df57a6fc3380ac^{commit}
+          git merge-base --is-ancestor 95162dac41603d44fc27f85183df57a6fc3380ac HEAD
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sc25_frozen_regions_replay_311.py
+      - name: Stage sc25 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="sc25-635fd71a_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R311
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_sc25_frozen_regions_replay_311.py "${args[@]}" --output r311.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r311.json'))
+          assert d['schema']=='deus/arc3-r311-sc25-frozen-regions-replay/1'
+          assert d['lineage']['nested_reliability_rule_frozen'] is True
+          p=d['protocol']; t=d['truth']
+          assert p['fit_and_trust']=='p0-p4 only' and p['source_assisted_replay']=='p5-p9 only'
+          assert p['p10_p19_staged_or_read'] is False and not p['p5_p9_updates_trust'] and not p['p5_p9_updates_model']
+          assert t['p5_p9_replay_is_source_assisted'] and not t['p10_p19_read']
+          assert not t['solver_promotion'] and not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'gate_pass':d['gate_pass'],'trusted_keys':d['trusted_keys'],'source_assisted_p5_p9':d['source_assisted_p5_p9']},sort_keys=True))
+          PY
+          sha256sum r311.json runtime.txt stdout.txt public_trace/SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r311-sc25-frozen-regions-replay
+          path: |
+            r311.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
