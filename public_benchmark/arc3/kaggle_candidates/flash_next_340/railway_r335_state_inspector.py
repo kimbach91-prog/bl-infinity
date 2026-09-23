@@ -53,6 +53,15 @@ def inspect(lane,exact):
                 if len(hits)>=120:break
         if len(hits)>=120:break
     emit("DEUS_R335_KERNEL_DIAGNOSTIC",{"lane":lane,"hits":hits})
+    if lane=="state":
+        for f in sorted(out.glob("*.log")):
+            try:
+                full=clean(f.read_text(errors="replace"))
+            except Exception:
+                continue
+            print("DEUS_R335_STATE_LOG_FULL_BEGIN",flush=True)
+            print(full[:12000],flush=True)
+            print("DEUS_R335_STATE_LOG_FULL_END",flush=True)
 
 def main():
     threading.Thread(target=health,daemon=True).start()
