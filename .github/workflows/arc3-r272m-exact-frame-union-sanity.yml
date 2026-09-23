@@ -1,0 +1,74 @@
+name: ARC3 R272M exact-frame union sanity
+on:
+  push:
+    branches: [deus/r270-ui-mask-frozen-gate-20260923]
+    paths:
+      - .github/workflows/arc3-r272m-exact-frame-union-sanity.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  union-game:
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        game:
+          - ar25-0c556536
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tu93-0768757b
+          - vc33-5430563c
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage one promoted game
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="${{ matrix.game }}_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"
+          done
+      - name: Evaluate union game
+        shell: bash
+        run: |
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ui_mask_exact_frame_271.py "${args[@]}" --output "r272m-${{ matrix.game }}.json" | tee "r272m-${{ matrix.game }}.stdout.txt"
+      - name: Verify zero-wrong promoted expert
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,glob
+          d=json.load(open(glob.glob('r272m-*.json')[0]))
+          a=d['aggregate']
+          assert a['promoted_count']==1,a
+          assert a['candidate_predictions']>0,a
+          assert a['candidate_wrong']==0,a
+          print(json.dumps(a,sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r272m-${{ matrix.game }}
+          path: |
+            r272m-${{ matrix.game }}.json
+            r272m-${{ matrix.game }}.stdout.txt
+          retention-days: 30
