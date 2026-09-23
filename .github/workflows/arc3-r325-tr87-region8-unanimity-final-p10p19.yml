@@ -1,0 +1,61 @@
+name: ARC3 R325 TR87 region8 unanimity final p10-p19
+on:
+  push:
+    branches: [deus/r325-tr87-region8-unanimity-final-p10p19-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_tr87_region8_unanimity_final_p10p19_325.py
+      - .github/workflows/arc3-r325-tr87-region8-unanimity-final-p10p19.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r325:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify final-audit source freeze predates p10-p19 workflow
+        run: |
+          test "$(git rev-parse HEAD^)" = "520b7f67581485855bc6c8e5f514e71d962d1fc3"
+      - name: Stage exact TR87 p0-p19
+        run: |
+          mkdir -p public_train public_final
+          for p in $(seq 0 9); do cp "upstream-duck/example-run/artifacts/tr87-cd924810_p${p}_events.jsonl" public_train/; done
+          for p in $(seq 10 19); do cp "upstream-duck/example-run/artifacts/tr87-cd924810_p${p}_events.jsonl" public_final/; done
+          test "$(find public_train -name '*_events.jsonl' | wc -l)" -eq 10
+          test "$(find public_final -name '*_events.jsonl' | wc -l)" -eq 10
+      - name: Execute one-shot final public audit
+        run: |
+          train=(); for f in $(find public_train -name '*_events.jsonl' | sort -V); do train+=(--train "$f"); done
+          evals=(); for f in $(find public_final -name '*_events.jsonl' | sort -V); do evals+=(--eval "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tr87_region8_unanimity_final_p10p19_325.py "${train[@]}" "${evals[@]}" --output r325.json | tee stdout.txt
+      - name: Audit immutable final protocol
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r325.json'))
+          assert d['schema']=='deus/arc3-r325-tr87-region8-unanimity-final-p10p19/1'
+          assert d['candidate']['representation_changed_after_r324'] is False
+          assert d['candidate']['reliability_changed_after_r324'] is False
+          assert d['protocol']['retune_on_p10_p19'] is False
+          assert d['protocol']['candidate_selection_on_p10_p19'] is False
+          print(json.dumps({'verdict':d['verdict'],'eval_total':d['eval_total']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r325-tr87-region8-unanimity-final-p10p19
+          path: |
+            r325.json
+            stdout.txt
+          retention-days: 30
