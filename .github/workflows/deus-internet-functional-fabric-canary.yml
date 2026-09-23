@@ -1,0 +1,91 @@
+name: DEUS Internet Functional Fabric 1T Canary
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+      - 'runtime/federation/test/internet-functional-fabric.test.mjs'
+      - 'runtime/federation/scripts/internet-fabric-canary.mjs'
+      - 'runtime/federation/scripts/internet-fabric-external-observer.mjs'
+      - '.github/workflows/deus-internet-functional-fabric-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Internet fabric unit tests
+        run: node --test runtime/federation/test/internet-functional-fabric.test.mjs
+      - name: Compile 1T logical fabric plan
+        run: node runtime/federation/scripts/internet-fabric-canary.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-fabric-plan-${{ github.run_id }}
+          path: .deus/internet-fabric/plan.json
+          if-no-files-found: error
+
+  scatter:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      max-parallel: 8
+      matrix:
+        shard: [0,1,2,3,4,5,6,7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Deterministic sparse-supercell shard
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          mkdir -p .deus/internet-fabric/shards
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const shard=Number(process.env.SHARD);
+          const logical=125000000000n;
+          const classes=256n;
+          let acc=0n;
+          for(let c=BigInt(shard);c<classes;c+=8n){
+            const count=(logical/classes)+(c<(logical%classes)?1n:0n);
+            acc=(acc + count*(c+1n)) % 1000000007n;
+          }
+          const receipt={schema:'deus-internet-fabric-shard/1',shard,logicalUnits:logical.toString(),equivalenceClasses:classes.toString(),checksum:acc.toString()};
+          receipt.digest=crypto.createHash('sha256').update(JSON.stringify(receipt)).digest('hex');
+          fs.writeFileSync('.deus/internet-fabric/shards/shard-'+shard+'.json',JSON.stringify(receipt,null,2)+'\n');
+          console.log(JSON.stringify(receipt));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-fabric-shard-${{ matrix.shard }}-${{ github.run_id }}
+          path: .deus/internet-fabric/shards/shard-${{ matrix.shard }}.json
+          if-no-files-found: error
+
+  external-route-observer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Classify current Railway A/B route state
+        run: |
+          mkdir -p .deus/internet-fabric
+          node runtime/federation/scripts/internet-fabric-external-observer.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-fabric-external-route-observer-${{ github.run_id }}
+          path: .deus/internet-fabric/external-route-observer.json
+          if-no-files-found: error
