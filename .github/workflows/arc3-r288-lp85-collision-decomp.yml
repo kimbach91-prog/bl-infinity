@@ -1,0 +1,76 @@
+name: ARC3 R288 lp85 exact-frame collision decomposition
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r288-lp85-collision-decomp.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r288-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 20}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify source and stage exact p0-p4 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 3f4c6caf92313ffb351caf91870689c9198b094d^{commit}
+          git merge-base --is-ancestor 3f4c6caf92313ffb351caf91870689c9198b094d HEAD
+          mkdir -p public_trace
+          for p in $(seq 0 4); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_trace -maxdepth 1 -type f -name '*_p[5-9]_events.jsonl' -o -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile and execute
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_exact_frame_collision_decomp_288.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_exact_frame_collision_decomp_288.py "${args[@]}" --output r288-lp85.json 2> >(tee r288-runtime.txt >&2) | tee r288-stdout.txt
+      - name: Audit and hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r288-lp85.json'))
+          assert d['schema']=='deus/arc3-r288-lp85-exact-frame-collision-decomp/1'
+          assert d['protocol']['data']=='p0-p4 only'
+          assert d['protocol']['p5_p19_read'] is False
+          assert d['protocol']['predictor'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'aggregate':d['aggregate'],'r279_fit':d['r279_fit']},sort_keys=True))
+          PY
+          sha256sum r288-lp85.json r288-runtime.txt r288-stdout.txt public_trace/SHA256SUMS.txt > R288_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r288-lp85-collision-decomp
+          path: |
+            r288-lp85.json
+            r288-runtime.txt
+            r288-stdout.txt
+            R288_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
