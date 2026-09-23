@@ -19,7 +19,7 @@ import railway_r335_flash_provider as p
 import upstream_flash_r335_structured_state_package_patch as pkg
 
 BASE_EXACT="lmkimbch/deus-arc3-r338-base-tr87/1"
-KNOWN_LAST_STATE_VERSION=4
+MAX_STATE_VERSION_SCAN=20
 EXPECTED_BASE_NOTEBOOK_SHA="2fe65f106a7ef34e44d5e12f3133fa471669e78ffeac1e67a558a20c118aca1c"
 EXPECTED_STAGE1_SHA="978026a51c438744c64922571b2264f09a3d4ec4259ddc75b03ccc0f3ba0b772"
 EXPECTED_REPAIRED_OVERLAY_SHA="f2adf9b64107dbfa78e2d693e19919889f31debf0fe98f9c5061b28948910388"
@@ -59,22 +59,48 @@ def exact_source_selftest():
         "competition_submission":False,
     })
 
-def launch_or_reuse_state(state_dir):
-    next_version=KNOWN_LAST_STATE_VERSION+1
-    exists,exact,txt=exact_exists(next_version)
-    if exists:
-        # Do not consume an unattributed version. A concurrent writer or old retry
-        # must be inspected before it can count as the repaired candidate.
-        raise RuntimeError(
-            f"next_state_version_already_exists_unattributed:{exact}:{txt[:160]}"
-        )
+def discover_next_state_version():
+    existing=[]
+    for version in range(1,MAX_STATE_VERSION_SCAN+1):
+        exists,exact,txt=exact_exists(version)
+        if not exists:
+            p.emit("DEUS_R335_FLASH_RECOVERY_VERSION_SCAN",{
+                "existing":existing,
+                "next_free_version":version,
+                "next_free_exact":exact,
+                "competition_submission":False,
+            })
+            return version
+        low=txt.lower()
+        if "error" in low or "failed" in low or "cancelled" in low:
+            state="ERROR"
+        elif "complete" in low or "completed" in low:
+            state="COMPLETE"
+        elif "running" in low or "queued" in low or "pending" in low:
+            state="ACTIVE"
+        else:
+            state="UNKNOWN"
+        existing.append({"version":version,"state":state})
+        # Existing non-error versions are not ours to silently consume or skip.
+        if state!="ERROR":
+            raise RuntimeError(
+                f"existing_state_version_requires_inspection:{exact}:{state}:{txt[:160]}"
+            )
+    raise RuntimeError("state_version_scan_exhausted")
 
+
+def launch_or_reuse_state(state_dir):
+    next_version=discover_next_state_version()
     q=p.run(["kaggle","kernels","push","-p",str(state_dir),"-t","30000"],timeout=180)
     text=q.stdout+"\n"+q.stderr
     import re
     m=re.search(r"Kernel version\s+(\d+)\s+successfully pushed",text,re.I)
     if m:
         version=int(m.group(1))
+        if version!=next_version:
+            raise RuntimeError(
+                f"provider_version_race:expected{next_version}:observed{version}"
+            )
         ok,exact2,_=exact_exists(version)
         if not ok: raise RuntimeError("parsed_state_version_not_readable")
         return version,True
