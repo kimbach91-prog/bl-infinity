@@ -88,3 +88,4 @@ jobs:
             public_trace/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 30
+# workflow-registration trigger
