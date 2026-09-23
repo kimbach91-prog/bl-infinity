@@ -18,6 +18,7 @@ import public_residual4_mode_shard_314 as r314
 RUNG=315
 GAME="dc22-fdcac232"
 MODE="phase"
+WORKFLOW_TRIGGER_REVISION=1
 
 
 def _exact(paths,nums,label):
