@@ -106,8 +106,10 @@ fi
 "$VENV/bin/kaggle" kernels output "$BASE_EXACT" -p "$WORK/out/base" > "$WORK/base-output.log" 2>&1 || fail_hold BASE_OUTPUT "base output download failed"
 "$VENV/bin/kaggle" kernels output "$STATE_EXACT" -p "$WORK/out/state" > "$WORK/state-output.log" 2>&1 || fail_hold STATE_OUTPUT "state output download failed"
 
-BASE_LOG="$(find "$WORK/out/base" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' -printf '%f\n' | head -n1)"
-STATE_LOG="$(find "$WORK/out/state" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' -printf '%f\n' | head -n1)"
+BASE_LOG_PATH="$(find "$WORK/out/base" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' | head -n1)"
+STATE_LOG_PATH="$(find "$WORK/out/state" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' | head -n1)"
+BASE_LOG="$(basename "$BASE_LOG_PATH")"
+STATE_LOG="$(basename "$STATE_LOG_PATH")"
 [ -n "$BASE_LOG" ] || fail_hold BASE_LOG "base kernel log not found"
 [ -n "$STATE_LOG" ] || fail_hold STATE_LOG "state kernel log not found"
 
