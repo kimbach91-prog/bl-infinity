@@ -1666,6 +1666,12 @@ def s2_2_build_neck_bridge(body_obj,head_obj,cut_z,material):
         return cx,cy,cz,max(.030,min(.080,rx)),max(.026,min(.075,ry))
     bx,by,bz,brx,bry=ellipse(body_pts)
     hx,hy,hz,hrx,hry=ellipse(head_pts)
+    if S2_8_NATIVE_GNM_GEOMETRY:
+        # The GNM lower-head slice is shallow in Y after the current cut, which
+        # creates a doll-thin neck. Keep the measured X radius but enforce a
+        # conservative human-depth floor for the transition only.
+        hry=max(hry,.042)
+        bry=max(bry,.050)
     z0=min(cut_z-.004,bz)
     z1=max(head_min+.020,hz)
     segments=64; rings=7
