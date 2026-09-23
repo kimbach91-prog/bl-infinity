@@ -1,0 +1,105 @@
+name: ARC3 R273 NVIDIA DreamTeam test-harness repair
+
+on:
+  push:
+    branches: [deus/r273-dreamteam-test-harness-repair-20260923]
+    paths:
+      - .github/workflows/arc3-r273-dreamteam-test-harness-repair.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ground-dreamteam-r273:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: NVIDIA/dream-team
+          ref: bffef22f3e50fb7dcd6b2dc20005e6986e1479e9
+          path: upstream-dreamteam
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify pinned source and license
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd upstream-dreamteam
+          test "$(git rev-parse HEAD)" = "bffef22f3e50fb7dcd6b2dc20005e6986e1479e9"
+          grep -q 'Apache License' LICENSE
+          python - <<'PY'
+          from pathlib import Path
+          r=Path('README.md').read_text()
+          for s in ('shared, executable world model','critic checks the evidence','parallel offline/competition'):
+              assert s in r, s
+          PY
+          git rev-parse HEAD > ../r273-upstream-head.txt
+          sha256sum README.md LICENSE pyproject.toml > ../r273-source-sha256.txt
+      - name: Install upstream package and explicit test prerequisite
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -e ./upstream-dreamteam
+          python -m pip install pytest
+          python -m pytest --version | tee r273-pytest-version.txt
+      - name: Run credential-free release tests
+        shell: bash
+        env:
+          ARC_API_KEY: ''
+          LLM_API_KEY: ''
+          LLM_API_KEY_POOL: ''
+        run: |
+          set -euo pipefail
+          cd upstream-dreamteam
+          /usr/bin/time -v python -m pytest -q tests/release -m 'not live_llm' \
+            2> >(tee ../r273-runtime.txt >&2) | tee ../r273-pytest.txt
+      - name: Verify and write receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, re
+          from pathlib import Path
+          txt=Path('r273-pytest.txt').read_text()
+          assert not re.search(r'\bfailed\b',txt,re.I), txt[-3000:]
+          matches=re.findall(r'(\d+) passed',txt)
+          passed=int(matches[-1]) if matches else None
+          assert passed is not None and passed > 0, txt[-3000:]
+          out={
+            'schema':'deus/arc3-r273-dreamteam-test-harness-repair/1',
+            'repair_of':'R270 run35802988751 missing pytest prerequisite',
+            'upstream_repo':'NVIDIA/dream-team',
+            'upstream_commit':'bffef22f3e50fb7dcd6b2dc20005e6986e1479e9',
+            'license':'Apache-2.0',
+            'credential_free_release_tests_passed':passed,
+            'live_llm_tests_executed':False,
+            'arc_competition_executed':False,
+            'offline_score_claim':False,
+            'kaggle_execution':False,
+            'competition_submission':False,
+            'owner_score_claim':False,
+            'verdict':'SOURCE_RUNTIME_GROUNDED_NOT_PROMOTED'
+          }
+          Path('r273-receipt.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(out,sort_keys=True))
+          PY
+          sha256sum r273-receipt.json r273-pytest.txt r273-runtime.txt r273-upstream-head.txt r273-source-sha256.txt r273-pytest-version.txt > R273_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r273-dreamteam-test-harness-repair
+          path: |
+            r273-receipt.json
+            r273-pytest.txt
+            r273-runtime.txt
+            r273-upstream-head.txt
+            r273-source-sha256.txt
+            r273-pytest-version.txt
+            R273_SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
