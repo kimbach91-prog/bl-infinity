@@ -1,0 +1,110 @@
+name: ARC3 R337 frozen R335 p5-p9 replay
+
+on:
+  push:
+    branches: [deus/r335-sourcefree-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_r335_frozen_p5p9_replay_337.py
+      - .github/workflows/arc3-r337-r335-frozen-p5p9.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/public_benchmark/arc3/kaggle_candidates:${{ github.workspace }}/frozen-r330/public_benchmark/arc3/kaggle_candidates
+  R336_FREEZE: "facb02a82043fdfb98fc4af3e0ea2cb44ee29553"
+  TUFA_PIN: "7652836056c59e044f093e3c13ed7438c814169e"
+
+jobs:
+  frozen-replay:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify frozen candidate bytes unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          for p in             public_benchmark/arc3/kaggle_candidates/public_generic_relational_transducer_335.py             public_benchmark/arc3/kaggle_candidates/public_r335_sourcefree_p0p4_falsifier_336.py
+          do
+            git show "${R336_FREEZE}:${p}" > "/tmp/frozen-$(basename "$p")"
+            cmp -s "$p" "/tmp/frozen-$(basename "$p")"
+            printf '%s  %s\n' "$(sha256sum "$p" | awk '{print $1}')" "$p"
+          done
+
+      - name: Checkout frozen dependency ancestry
+        uses: actions/checkout@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          ref: 7358fa568414a96a2acf864a450ecc078bd8c433
+          path: frozen-r330
+          persist-credentials: false
+
+      - name: Checkout pinned public traces
+        uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+
+      - name: Stage exact TR87 p0-p9 and prove p10-p19 absent
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p traces
+          for p in $(seq 0 9); do
+            f="tr87-cd924810_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "traces/${f}"
+          done
+          test "$(find traces -maxdepth 1 -name 'tr87-cd924810_p*_events.jsonl' -type f | wc -l)" -eq 10
+          ! find traces -name '*_p1[0-9]_events.jsonl' | grep -q .
+
+      - name: Frozen p5-p9 replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          fit=(); evals=()
+          for p in $(seq 0 4); do fit+=(--fit "traces/tr87-cd924810_p${p}_events.jsonl"); done
+          for p in $(seq 5 9); do evals+=(--eval "traces/tr87-cd924810_p${p}_events.jsonl"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_r335_frozen_p5p9_replay_337.py             "${fit[@]}" "${evals[@]}"             --output r337-r335-frozen-p5p9.json             2> >(tee runtime.txt >&2) | tee stdout.txt
+
+      - name: Independent boundary and result audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open("r337-r335-frozen-p5p9.json"))
+          assert d["schema"]=="deus/arc3-r337-r335-frozen-p5p9-replay/1"
+          assert d["protocol"]["fit"]=="public p0-p4 only"
+          assert d["protocol"]["eval"]=="public p5-p9 only"
+          assert d["protocol"]["retuning_after_eval"] is False
+          assert d["protocol"]["game_id_branching"] is False
+          assert d["protocol"]["p10_p19_staged_or_read"] is False
+          assert d["truth"]["kaggle_submission"] is False
+          print(json.dumps({
+            "verdict":d["verdict"],
+            "fit":d["fit"],
+            "metrics":d["metrics"],
+            "by_trace":d["by_trace"]
+          },sort_keys=True))
+          PY
+          sha256sum r337-r335-frozen-p5p9.json runtime.txt stdout.txt > SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r337-r335-frozen-p5p9
+          path: |
+            r337-r335-frozen-p5p9.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+          retention-days: 30
