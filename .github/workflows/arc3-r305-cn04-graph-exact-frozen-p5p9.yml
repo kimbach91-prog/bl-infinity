@@ -1,0 +1,80 @@
+name: ARC3 R305 cn04 graph_exact frozen p5-p9
+on:
+  push:
+    branches: [deus/r305-cn04-graph-exact-frozen-p5p9-20260923]
+    paths:
+      - .github/workflows/arc3-r305-cn04-graph-exact-frozen-p5p9.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r305:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 32}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify frozen source predates replay staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 9bd5223a309d41174ffb194b898af987f928dc58^{commit}
+          git merge-base --is-ancestor 9bd5223a309d41174ffb194b898af987f928dc58 HEAD
+      - name: Stage exact cn04 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="cn04-2fe56bfb_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R305
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_cn04_graph_exact_frozen_305.py
+          args=()
+          for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_cn04_graph_exact_frozen_305.py "${args[@]}" --output r305-cn04.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r305-cn04.json'))
+          assert d['schema']=='deus/arc3-r305-cn04-graph-exact-frozen-p5p9/1'
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4 only' and p['source_assisted_replay']=='p5-p9 only'
+          assert p['p10_p19_staged_or_read'] is False
+          assert p['selector_frozen_before_replay'] is True
+          assert not p['p5_p9_updates_selector'] and not p['p5_p9_updates_representation'] and not p['p5_p9_updates_model']
+          assert t['public_trace_only'] and t['source_free_runtime_logic'] and t['p5_p9_replay_is_source_assisted']
+          assert not t['p10_p19_read'] and not t['solver_promotion']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'candidate':d['candidate'],'baseline':d['baseline']},sort_keys=True))
+          PY
+          sha256sum r305-cn04.json runtime.txt stdout.txt public_trace/SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r305-cn04-graph-exact-frozen-p5p9
+          path: |
+            r305-cn04.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
