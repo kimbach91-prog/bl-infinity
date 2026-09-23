@@ -455,6 +455,7 @@ S1_ENDOGENOUS=os.environ.get("DIGE_S1_ENDOGENOUS","0").strip()=="1"
 S2_ANATOMY_DYNAMICS=os.environ.get("DIGE_S2_ANATOMY_DYNAMICS","0").strip()=="1"
 S2_1_HYPERREAL=os.environ.get("DIGE_S2_1_HYPERREAL","0").strip()=="1"
 S2_2_SURFACE_INTEGRATION=os.environ.get("DIGE_S2_2_SURFACE_INTEGRATION","0").strip()=="1"
+S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1082,26 +1083,26 @@ def s1_gnm_skin_material():
     out=nt.nodes.new("ShaderNodeOutputMaterial")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
     set_input(bs,"IOR",1.42)
-    set_input(bs,"Specular IOR Level",.30)
-    set_input(bs,"Subsurface Weight",.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014))
-    set_input(bs,"Subsurface Scale",.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042))
+    set_input(bs,"Specular IOR Level",.25 if S2_3_FACE_REALISM else .30)
+    set_input(bs,"Subsurface Weight",.012 if S2_3_FACE_REALISM else (.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014)))
+    set_input(bs,"Subsurface Scale",.00055 if S2_3_FACE_REALISM else (.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042))
     set_input(bs,"Subsurface Radius",(1.0,.38,.18))
-    set_input(bs,"Coat Weight",0.0)
-    set_input(bs,"Coat Roughness",.55)
+    set_input(bs,"Coat Weight",.020 if S2_3_FACE_REALISM else 0.0)
+    set_input(bs,"Coat Roughness",.40 if S2_3_FACE_REALISM else .55)
     if hasattr(bs,"subsurface_method"):
         bs.subsurface_method='RANDOM_WALK_SKIN'
 
     tex=nt.nodes.new("ShaderNodeTexCoord")
     base=nt.nodes.new("ShaderNodeTexNoise")
-    base.inputs["Scale"].default_value=6.0
+    base.inputs["Scale"].default_value=14.0 if S2_3_FACE_REALISM else 6.0
     base.inputs["Detail"].default_value=5.0
     base.inputs["Roughness"].default_value=.62
     nt.links.new(tex.outputs["Object"],base.inputs["Vector"])
     ramp=nt.nodes.new("ShaderNodeValToRGB")
     ramp.color_ramp.elements[0].position=.16
-    ramp.color_ramp.elements[0].color=((0.205,0.120,0.100,1) if S2_1_HYPERREAL else ((0.235,0.145,0.120,1) if S2_ANATOMY_DYNAMICS else (0.19,0.11,0.09,1)))
+    ramp.color_ramp.elements[0].color=((0.180,0.098,0.080,1) if S2_3_FACE_REALISM else ((0.205,0.120,0.100,1) if S2_1_HYPERREAL else ((0.235,0.145,0.120,1) if S2_ANATOMY_DYNAMICS else (0.19,0.11,0.09,1))))
     ramp.color_ramp.elements[1].position=.84
-    ramp.color_ramp.elements[1].color=((0.430,0.278,0.235,1) if S2_1_HYPERREAL else ((0.455,0.305,0.255,1) if S2_ANATOMY_DYNAMICS else (0.385,0.25,0.205,1)))
+    ramp.color_ramp.elements[1].color=((0.455,0.300,0.255,1) if S2_3_FACE_REALISM else ((0.430,0.278,0.235,1) if S2_1_HYPERREAL else ((0.455,0.305,0.255,1) if S2_ANATOMY_DYNAMICS else (0.385,0.25,0.205,1))))
     nt.links.new(base.outputs["Fac"],ramp.inputs["Fac"])
 
     vc=nt.nodes.new("ShaderNodeVertexColor")
@@ -1128,8 +1129,8 @@ def s1_gnm_skin_material():
     rmap=nt.nodes.new("ShaderNodeMapRange")
     rmap.inputs["From Min"].default_value=0.0
     rmap.inputs["From Max"].default_value=1.0
-    rmap.inputs["To Min"].default_value=.40 if S2_1_HYPERREAL else (.45 if S2_ANATOMY_DYNAMICS else .42)
-    rmap.inputs["To Max"].default_value=.64 if S2_1_HYPERREAL else (.70 if S2_ANATOMY_DYNAMICS else .66)
+    rmap.inputs["To Min"].default_value=.36 if S2_3_FACE_REALISM else (.40 if S2_1_HYPERREAL else (.45 if S2_ANATOMY_DYNAMICS else .42))
+    rmap.inputs["To Max"].default_value=.58 if S2_3_FACE_REALISM else (.64 if S2_1_HYPERREAL else (.70 if S2_ANATOMY_DYNAMICS else .66))
     nt.links.new(rough.outputs["Fac"],rmap.inputs["Value"])
     tzone=nt.nodes.new("ShaderNodeMath"); tzone.operation='MULTIPLY'; tzone.inputs[1].default_value=.025
     liprough=nt.nodes.new("ShaderNodeMath"); liprough.operation='MULTIPLY'; liprough.inputs[1].default_value=.055
@@ -1142,15 +1143,15 @@ def s1_gnm_skin_material():
     nt.links.new(rs2.outputs[0],bs.inputs["Roughness"])
 
     meso=nt.nodes.new("ShaderNodeTexNoise")
-    meso.inputs["Scale"].default_value=96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0)
+    meso.inputs["Scale"].default_value=120.0 if S2_3_FACE_REALISM else (96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0))
     meso.inputs["Detail"].default_value=6.0
     meso.inputs["Roughness"].default_value=.72
     pore=nt.nodes.new("ShaderNodeTexNoise")
-    pore.inputs["Scale"].default_value=1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0)
+    pore.inputs["Scale"].default_value=2200.0 if S2_3_FACE_REALISM else (1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0))
     pore.inputs["Detail"].default_value=5.0
     pore.inputs["Roughness"].default_value=.68
     micro=nt.nodes.new("ShaderNodeTexNoise")
-    micro.inputs["Scale"].default_value=6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0)
+    micro.inputs["Scale"].default_value=8200.0 if S2_3_FACE_REALISM else (6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0))
     micro.inputs["Detail"].default_value=3.0
     micro.inputs["Roughness"].default_value=.60
     for node in (meso,pore,micro):
@@ -1164,13 +1165,13 @@ def s1_gnm_skin_material():
     nt.links.new(ms.outputs[0],h1.inputs[0]); nt.links.new(ps.outputs[0],h1.inputs[1])
     nt.links.new(h1.outputs[0],h2.inputs[0]); nt.links.new(xs.outputs[0],h2.inputs[1])
     bump=nt.nodes.new("ShaderNodeBump")
-    bump.inputs["Strength"].default_value=.40 if S2_1_HYPERREAL else (.58 if S2_ANATOMY_DYNAMICS else .48)
-    bump.inputs["Distance"].default_value=.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068)
+    bump.inputs["Strength"].default_value=.32 if S2_3_FACE_REALISM else (.40 if S2_1_HYPERREAL else (.58 if S2_ANATOMY_DYNAMICS else .48))
+    bump.inputs["Distance"].default_value=.000040 if S2_3_FACE_REALISM else (.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068))
     nt.links.new(h2.outputs[0],bump.inputs["Height"])
     nt.links.new(bump.outputs["Normal"],bs.inputs["Normal"])
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m,{
-        "model":("S2_1_GNM_HYPERREAL_MULTISCALE_SKIN" if S2_1_HYPERREAL else ("S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN" if S2_ANATOMY_DYNAMICS else "S1_GNM_MULTISCALE_NATURAL_PBR_SKIN")),
+        "model":("S2_3_GNM_FACE_REALISM_SKIN" if S2_3_FACE_REALISM else ("S2_1_GNM_HYPERREAL_MULTISCALE_SKIN" if S2_1_HYPERREAL else ("S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN" if S2_ANATOMY_DYNAMICS else "S1_GNM_MULTISCALE_NATURAL_PBR_SKIN"))),
         "mask_attribute":"C31_FaceMask",
         "roughness_range":([.40,.64] if S2_1_HYPERREAL else ([.45,.70] if S2_ANATOMY_DYNAMICS else [.42,.66])),
         "subsurface_weight":(.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014)),
@@ -1189,10 +1190,10 @@ def s1_geometry_eye_material(name):
     nt=m.node_tree; nt.nodes.clear()
     out=nt.nodes.new("ShaderNodeOutputMaterial")
     bs=nt.nodes.new("ShaderNodeBsdfPrincipled")
-    set_input(bs,"Roughness",.16 if S2_1_HYPERREAL else .22)
+    set_input(bs,"Roughness",.13 if S2_3_FACE_REALISM else (.16 if S2_1_HYPERREAL else .22))
     set_input(bs,"IOR",1.376)
-    set_input(bs,"Specular IOR Level",.30 if S2_1_HYPERREAL else .34)
-    set_input(bs,"Coat Weight",.24 if S2_1_HYPERREAL else .18)
+    set_input(bs,"Specular IOR Level",.28 if S2_3_FACE_REALISM else (.30 if S2_1_HYPERREAL else .34))
+    set_input(bs,"Coat Weight",.30 if S2_3_FACE_REALISM else (.24 if S2_1_HYPERREAL else .18))
     set_input(bs,"Coat Roughness",.035)
     set_input(bs,"Subsurface Weight",.004)
 
@@ -1215,8 +1216,15 @@ def s1_geometry_eye_material(name):
     ramp.color_ramp.interpolation='CONSTANT'
     elems=ramp.color_ramp.elements
     elems[0].position=0.0; elems[0].color=(.0018,.0013,.0010,1)
-    elems[1].position=(.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082)); elems[1].color=(.0018,.0013,.0010,1)
+    elems[1].position=(.060 if S2_3_FACE_REALISM else (.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082))); elems[1].color=(.0018,.0013,.0010,1)
     eye_stops=([
+        (.070,(.018,.006,.002,1)),
+        (.120,(.085,.028,.008,1)),
+        (.185,(.038,.010,.003,1)),
+        (.205,(.010,.0025,.0012,1)),
+        (.230,(.68,.65,.63,1)),
+        (.500,(.79,.76,.74,1)),
+    ] if S2_3_FACE_REALISM else ([
         (.084,(.018,.005,.002,1)),
         (.145,(.105,.035,.010,1)),
         (.220,(.050,.014,.004,1)),
@@ -1237,7 +1245,7 @@ def s1_geometry_eye_material(name):
         (.238,(.012,.003,.0015,1)),
         (.258,(.58,.54,.51,1)),
         (.500,(.68,.64,.61,1)),
-    ]))
+    ])))
     for pos,col in eye_stops:
         e=elems.new(pos); e.color=col
     nt.links.new(rad.outputs[0],ramp.inputs["Fac"])
@@ -1256,11 +1264,11 @@ def s1_geometry_eye_material(name):
     nt.links.new(bs.outputs[0],out.inputs["Surface"])
     return m,{
         "enabled":True,
-        "material_model":("S2_1_NATIVE_GNM_GENERATED_COORD_EYE" if S2_1_HYPERREAL else ("S2_NATIVE_GNM_GENERATED_COORD_EYE" if S2_ANATOMY_DYNAMICS else "S1_NATIVE_GNM_GENERATED_COORD_EYE")),
+        "material_model":("S2_3_NATIVE_GNM_GENERATED_COORD_EYE" if S2_3_FACE_REALISM else ("S2_1_NATIVE_GNM_GENERATED_COORD_EYE" if S2_1_HYPERREAL else ("S2_NATIVE_GNM_GENERATED_COORD_EYE" if S2_ANATOMY_DYNAMICS else "S1_NATIVE_GNM_GENERATED_COORD_EYE"))),
         "integration":"GNM_NATIVE_EYEBALL_MESH_GENERATED_COORD_IRIS_NO_UV_NO_OVERLAY",
-        "pupil_radius_norm":(.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082)),
-        "iris_outer_radius_norm":(.245 if S2_1_HYPERREAL else (.286 if S2_ANATOMY_DYNAMICS else .238)),
-        "sclera_start_norm":(.272 if S2_1_HYPERREAL else (.308 if S2_ANATOMY_DYNAMICS else .258)),
+        "pupil_radius_norm":(.060 if S2_3_FACE_REALISM else (.074 if S2_1_HYPERREAL else (.095 if S2_ANATOMY_DYNAMICS else .082))),
+        "iris_outer_radius_norm":(.205 if S2_3_FACE_REALISM else (.245 if S2_1_HYPERREAL else (.286 if S2_ANATOMY_DYNAMICS else .238))),
+        "sclera_start_norm":(.230 if S2_3_FACE_REALISM else (.272 if S2_1_HYPERREAL else (.308 if S2_ANATOMY_DYNAMICS else .258))),
         "uv_dependency":False,
     }
 
@@ -2444,9 +2452,11 @@ if C28_GNM_HEAD:
                 mdx=abs(p.x-mouth_center.x); mdz=abs(p.z-mouth_center.z)
                 if mdx < mouth_half*1.20 and mdz < .017 and p.y > mouth_center.y-.024:
                     w=max(0.0,(1.0-mdx/(mouth_half*1.20))*(1.0-mdz/.017))
-                    p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-.40*w)+.0014*w
-                    p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-.06*w)
-                    p.y-=.0006*w
+                    mouth_flat=.60 if S2_3_FACE_REALISM else .40
+                    mouth_narrow=.10 if S2_3_FACE_REALISM else .06
+                    p.z=mouth_center.z+(p.z-mouth_center.z)*(1.0-mouth_flat*w)+(.0006 if S2_3_FACE_REALISM else .0014)*w
+                    p.x=mouth_center.x+(p.x-mouth_center.x)*(1.0-mouth_narrow*w)
+                    p.y-=.0008*w if S2_3_FACE_REALISM else .0006*w
                 # Narrow nasal sidewalls while preserving tip projection.
                 nz=(eye_z+mouth_center.z)*.52
                 nw=math.exp(-0.5*((p.z-nz)/.030)**2)*max(0.0,1.0-abs(p.x-gnm_eye_mid.x)/.035)
@@ -2575,7 +2585,7 @@ if C28_GNM_HEAD:
     lash_fibers=[]
     for pts in (gnm_brow_left,gnm_brow_right):
         ordered=sorted(pts,key=lambda p:p.x)
-        brow_count=112 if S2_2_SURFACE_INTEGRATION else 72
+        brow_count=180 if S2_3_FACE_REALISM else (112 if S2_2_SURFACE_INTEGRATION else 72)
         for i in range(brow_count):
             u=(i+grng.uniform(-.30,.30))/max(1.0,float(brow_count-1))
             u=max(0.0,min(1.0,u))
@@ -2583,7 +2593,7 @@ if C28_GNM_HEAD:
             lu=u*(len(ordered)-1)-seg
             root=ordered[seg].lerp(ordered[seg+1],lu)+Vector((0,.00115 if C31_GNM_FACE_APPEARANCE else .00065,grng.uniform(-.0004,.0004)))
             side=1.0 if root.x>=gnm_eye_mid.x else -1.0
-            length=grng.uniform(.0019,.0038) if S2_2_SURFACE_INTEGRATION else grng.uniform(.0026,.0048)
+            length=grng.uniform(.0028,.0052) if S2_3_FACE_REALISM else (grng.uniform(.0019,.0038) if S2_2_SURFACE_INTEGRATION else grng.uniform(.0026,.0048))
             brow_fibers.append([
                 root,
                 root+Vector((side*length*.25,.00035,length*.45)),
@@ -2594,7 +2604,7 @@ if C28_GNM_HEAD:
         upper=sorted([p for p in eye_pts if p.z>=ec.z-.0005],key=lambda p:p.x)
         if len(upper)<2:
             upper=sorted(eye_pts,key=lambda p:p.x)
-        lash_count=42 if S2_2_SURFACE_INTEGRATION else 28
+        lash_count=64 if S2_3_FACE_REALISM else (42 if S2_2_SURFACE_INTEGRATION else 28)
         for i in range(lash_count):
             u=(i+.5)/float(lash_count)
             seg=min(len(upper)-2,int(u*(len(upper)-1)))
@@ -2608,8 +2618,8 @@ if C28_GNM_HEAD:
                 root+Vector((side*.00022,length,length*.26)),
             ])
     facial_hair_mat=principled("DIGE_C31_FACIAL_HAIR",(0.006,0.0025,0.0015) if C36_CANONICAL_APPEARANCE else (0.010,0.004,0.002),rough=.34 if C36_CANONICAL_APPEARANCE else .40,ior=1.50) if C31_GNM_FACE_APPEARANCE else hair
-    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000038 if S2_2_SURFACE_INTEGRATION else (.000135 if C42_GEOMETRY_EYE_HAIRLINE else (.000125 if C40_HYPERREAL_REPAIR else (.000095 if C36_CANONICAL_APPEARANCE else (.000082 if C31_GNM_FACE_APPEARANCE else .000060)))),facial_hair_mat)
-    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000026 if S2_2_SURFACE_INTEGRATION else (.000056 if C40_HYPERREAL_REPAIR else (.000048 if C31_GNM_FACE_APPEARANCE else .000036)),facial_hair_mat)
+    curve_object("DIGE_C28_GNM_BROW_FIBERS",brow_fibers,.000052 if S2_3_FACE_REALISM else (.000038 if S2_2_SURFACE_INTEGRATION else (.000135 if C42_GEOMETRY_EYE_HAIRLINE else (.000125 if C40_HYPERREAL_REPAIR else (.000095 if C36_CANONICAL_APPEARANCE else (.000082 if C31_GNM_FACE_APPEARANCE else .000060))))),facial_hair_mat)
+    curve_object("DIGE_C28_GNM_LASH_FIBERS",lash_fibers,.000032 if S2_3_FACE_REALISM else (.000026 if S2_2_SURFACE_INTEGRATION else (.000056 if C40_HYPERREAL_REPAIR else (.000048 if C31_GNM_FACE_APPEARANCE else .000036))),facial_hair_mat)
     c28_brow_fiber_count=len(brow_fibers)
     c28_lash_fiber_count=len(lash_fibers)
     if C31_GNM_FACE_APPEARANCE:
@@ -2630,8 +2640,11 @@ if C28_GNM_HEAD:
             Vector(((mr.x+mc.x)*.5,mc.y+.00135,mc.z-.00015)),
             Vector((mr.x,mc.y+.00125,mc.z)),
         ]
-        curve_object("DIGE_C31_GNM_MOUTH_GAP",[mouth_line],.000020 if S2_2_SURFACE_INTEGRATION else .000045,mouth_dark)
-        c31_mouth_gap_count=1
+        if S2_3_FACE_REALISM:
+            c31_mouth_gap_count=0
+        else:
+            curve_object("DIGE_C31_GNM_MOUTH_GAP",[mouth_line],.000020 if S2_2_SURFACE_INTEGRATION else .000045,mouth_dark)
+            c31_mouth_gap_count=1
 
     baby=[]
     for i in range(104):
@@ -3868,17 +3881,17 @@ if S1_ENDOGENOUS:
         return obj
     leggings=_s1_clip_body(
         body,("DIGE_S2_LEGGINGS" if S2_ANATOMY_DYNAMICS else "DIGE_S1_LEGGINGS"),
-        (lambda p:(p.z>=.13 and p.z<=1.010 and abs(p.x)<=.320)),
+        (lambda p:(p.z>=.13 and p.z<=1.010 and abs(p.x)<=((.205 if S2_3_FACE_REALISM else .320)))),
         s1_leggings_mat,.0020 if S2_ANATOMY_DYNAMICS else .0018
     )
     tank=_s1_clip_body(
         body,("DIGE_S2_TANK_TOP" if S2_ANATOMY_DYNAMICS else "DIGE_S1_TANK_TOP"),
         (lambda p:(
             p.z>=1.055 and p.z<=1.430 and
-            (
+            (abs(p.x)<=.175 if S2_3_FACE_REALISM else (
               (p.z<1.325 and abs(p.x)<=.245) or
               (p.z>=1.325 and abs(p.x)>=.070 and abs(p.x)<=.195)
-            )
+            ))
         ) if S2_ANATOMY_DYNAMICS else lambda p:(
             p.z>=1.070 and p.z<=1.430 and abs(p.x)<=.205 and
             (p.z<=1.305 or abs(p.x)>=.090) and
@@ -4244,6 +4257,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_3_FACE_REALISM_GARMENT_MASK_V1" if S2_3_FACE_REALISM else
    "DIGE_S2_2_SURFACE_INTEGRATION_V1" if S2_2_SURFACE_INTEGRATION else
    "DIGE_S2_1_HYPERREAL_GPU_READY_V1" if S2_1_HYPERREAL else
    "DIGE_S2_ANATOMY_DYNAMICS_V1" if S2_ANATOMY_DYNAMICS else
@@ -4411,6 +4425,7 @@ receipt={
    } if S1_ENDOGENOUS else None,
    "s1_garment_metrics":s1_garment_metrics,
    "s2_2_surface_integration":S2_2_SURFACE_INTEGRATION,
+   "s2_3_face_realism":S2_3_FACE_REALISM,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
