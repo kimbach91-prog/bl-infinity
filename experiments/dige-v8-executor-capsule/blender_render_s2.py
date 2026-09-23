@@ -1173,14 +1173,14 @@ def s1_gnm_skin_material():
     return m,{
         "model":("S2_3_GNM_FACE_REALISM_SKIN" if S2_3_FACE_REALISM else ("S2_1_GNM_HYPERREAL_MULTISCALE_SKIN" if S2_1_HYPERREAL else ("S2_GNM_ANATOMY_AWARE_MULTISCALE_SKIN" if S2_ANATOMY_DYNAMICS else "S1_GNM_MULTISCALE_NATURAL_PBR_SKIN"))),
         "mask_attribute":"C31_FaceMask",
-        "roughness_range":([.40,.64] if S2_1_HYPERREAL else ([.45,.70] if S2_ANATOMY_DYNAMICS else [.42,.66])),
-        "subsurface_weight":(.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014)),
-        "subsurface_scale":(.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042)),
-        "meso_scale":(96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0)),
-        "pore_scale":(1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0)),
-        "micro_scale":(6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0)),
-        "bump_distance":(.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068)),
-        "metadata_effective_for":("S2.1" if S2_1_HYPERREAL else ("S2" if S2_ANATOMY_DYNAMICS else "S1")),
+        "roughness_range":([.36,.58] if S2_3_FACE_REALISM else ([.40,.64] if S2_1_HYPERREAL else ([.45,.70] if S2_ANATOMY_DYNAMICS else [.42,.66]))),
+        "subsurface_weight":(.012 if S2_3_FACE_REALISM else (.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014))),
+        "subsurface_scale":(.00055 if S2_3_FACE_REALISM else (.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042))),
+        "meso_scale":(120.0 if S2_3_FACE_REALISM else (96.0 if S2_1_HYPERREAL else (58.0 if S2_ANATOMY_DYNAMICS else 82.0))),
+        "pore_scale":(2200.0 if S2_3_FACE_REALISM else (1800.0 if S2_1_HYPERREAL else (280.0 if S2_ANATOMY_DYNAMICS else 380.0))),
+        "micro_scale":(8200.0 if S2_3_FACE_REALISM else (6200.0 if S2_1_HYPERREAL else (900.0 if S2_ANATOMY_DYNAMICS else 1250.0))),
+        "bump_distance":(.000040 if S2_3_FACE_REALISM else (.000055 if S2_1_HYPERREAL else (.000085 if S2_ANATOMY_DYNAMICS else .000068))),
+        "metadata_effective_for":("S2.3" if S2_3_FACE_REALISM else ("S2.1" if S2_1_HYPERREAL else ("S2" if S2_ANATOMY_DYNAMICS else "S1"))),
     }
 
 def s1_geometry_eye_material(name):
