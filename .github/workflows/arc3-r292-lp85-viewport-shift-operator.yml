@@ -1,0 +1,87 @@
+name: ARC3 R292 lp85 viewport shift operator diagnostic
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r292-lp85-viewport-shift-operator.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r292-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 20}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify R292 source fixed before staging diagnostic traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e fe182f7b61c2a2f56668c4579560d33e5c441da3^{commit}
+          git merge-base --is-ancestor fe182f7b61c2a2f56668c4579560d33e5c441da3 HEAD
+          test "$(git show fe182f7b61c2a2f56668c4579560d33e5c441da3:public_benchmark/arc3/kaggle_candidates/public_lp85_viewport_shift_operator_diag_292.py | sha256sum | cut -d' ' -f1)" = "$(sha256sum public_benchmark/arc3/kaggle_candidates/public_lp85_viewport_shift_operator_diag_292.py | cut -d' ' -f1)"
+      - name: Stage exact lp85 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile and execute bounded operator diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_viewport_shift_operator_diag_292.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_viewport_shift_operator_diag_292.py "${args[@]}" --output r292-lp85.json 2> >(tee r292-runtime.txt >&2) | tee r292-stdout.txt
+      - name: Independent truth-boundary audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r292-lp85.json'))
+          assert d['schema']=='deus/arc3-r292-lp85-viewport-shift-operator-diagnostic/1'
+          assert d['mechanism']['shift_range']==[-8,8]
+          assert d['protocol']['fit_causal']=='p0-p4 only'
+          assert d['protocol']['diagnostic']=='p5-p9 only'
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert d['protocol']['threshold_sweep'] is False
+          assert d['protocol']['promotion_in_r292'] is False
+          assert d['truth']['p10_p19_read'] is False
+          assert d['truth']['partial_hamming_reduction_is_not_exact_gain'] is True
+          assert d['truth']['solver_promotion'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'fit':d['fit'],'fit_shift_summary':d['fit_shift_summary'],'validation':d['validation']},sort_keys=True))
+          PY
+          sha256sum r292-lp85.json r292-runtime.txt r292-stdout.txt public_trace/SHA256SUMS.txt > R292_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r292-lp85-viewport-shift-operator
+          path: |
+            r292-lp85.json
+            r292-runtime.txt
+            r292-stdout.txt
+            R292_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
