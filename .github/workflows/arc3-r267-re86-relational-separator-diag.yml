@@ -1,0 +1,107 @@
+name: ARC3 R267 re86 relational separator diagnostic
+
+on:
+  push:
+    branches:
+      - deus/r267-re86-relational-separator-diag-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_interaction_separator_diag_267.py
+      - .github/workflows/arc3-r267-re86-relational-separator-diag.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose-r267-re86:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py \
+            public_benchmark/arc3/kaggle_candidates/public_component_delta_operator_254.py \
+            public_benchmark/arc3/kaggle_candidates/public_selective_object_transport_257.py \
+            public_benchmark/arc3/kaggle_candidates/public_contextual_object_interaction_gate_266.py \
+            public_benchmark/arc3/kaggle_candidates/public_interaction_separator_diag_267.py
+      - name: Stage re86 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="re86-8af5384d_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R267 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/re86-8af5384d_p*_events.jsonl; do
+            args+=(--input "$f")
+          done
+          test "${#args[@]}" -eq 20
+          /usr/bin/time -v python \
+            public_benchmark/arc3/kaggle_candidates/public_interaction_separator_diag_267.py \
+            "${args[@]}" \
+            --output r267-re86-relational-separator.json \
+            2> >(tee r267-runtime.txt >&2) | tee r267-stdout.txt
+      - name: Verify diagnostic truth boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r267-re86-relational-separator.json').read_text())
+          assert d['schema']=='deus/arc3-r267-interaction-separator-diagnostic/1'
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4' and p['diagnostic_eval']=='p5-p9'
+          assert not p['p10_p19_read'] and not p['promotion']
+          assert t['public_trace_only'] and not t['game_source_read'] and not t['p10_p19_read']
+          assert not t['independent_generalization_claim'] and not t['kaggle_execution']
+          assert not t['competition_submission'] and not t['submission_quota_spent']
+          Path('r267-verdict.json').write_text(json.dumps({
+            'verdict':'DIAGNOSTIC_SIGNAL' if d['diagnostic_signal'] else 'FEATURE_FAMILY_FALSIFIED',
+            'signal_actions':d['signal_actions'],
+            'max_support':{a:x.get('max_pure_correct_support',0) for a,x in d['actions'].items()},
+            'truth_lane':'PUBLIC_OFFLINE_DIAGNOSTIC_P0_P9_ONLY'
+          },indent=2,sort_keys=True)+'\n')
+          print(Path('r267-verdict.json').read_text())
+          PY
+          sha256sum \
+            r267-re86-relational-separator.json \
+            r267-verdict.json \
+            r267-runtime.txt \
+            r267-stdout.txt \
+            public_trace/SHA256SUMS.txt \
+            > R267_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r267-re86-relational-separator-diagnostic
+          path: |
+            r267-re86-relational-separator.json
+            r267-verdict.json
+            r267-runtime.txt
+            r267-stdout.txt
+            R267_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
