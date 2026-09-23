@@ -52,3 +52,4 @@ jobs:
             r274.json
             r274-stdout.txt
           retention-days: 30
+# trigger-after-registration
