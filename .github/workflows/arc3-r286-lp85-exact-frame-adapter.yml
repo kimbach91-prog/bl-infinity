@@ -1,0 +1,100 @@
+name: ARC3 R286 lp85 canon-regions exact-frame adapter
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r286-lp85-exact-frame-adapter.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r286-lp85-exact-frame:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 5
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify R286 candidate froze before gate staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e e57e9ab8f49c6b369492539822090f918f7fdb6a^{commit}
+          git merge-base --is-ancestor e57e9ab8f49c6b369492539822090f918f7fdb6a HEAD
+          git show e57e9ab8f49c6b369492539822090f918f7fdb6a:public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_exact_frame_adapter_286.py | grep -F 'TARGET_GAME = "lp85-305b61c3"'
+          git show e57e9ab8f49c6b369492539822090f918f7fdb6a:public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_exact_frame_adapter_286.py | grep -F 'FROZEN_MODE = "canon_regions_ui"'
+          git show e57e9ab8f49c6b369492539822090f918f7fdb6a:public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_exact_frame_adapter_286.py | grep -F 'MIN_DISTINCT_PRESTATES = 2'
+      - name: Stage exact lp85 p0-p19 after freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="lp85-305b61c3_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"
+          done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile frozen implementation
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_exact_frame_adapter_286.py
+      - name: Execute frozen exact-frame adapter gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in $(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_exact_frame_adapter_286.py \
+            "${args[@]}" --output r286-lp85-exact-frame.json \
+            2> >(tee r286-runtime.txt >&2) | tee r286-stdout.txt
+      - name: Independent truth-boundary audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r286-lp85-exact-frame.json').read_text())
+          assert d['schema']=='deus/arc3-r286-lp85-canon-regions-exact-frame-adapter/1'
+          assert d['rung']==286
+          assert d['frozen_candidate']['game']=='lp85-305b61c3'
+          assert d['frozen_candidate']['mode']=='canon_regions_ui'
+          assert d['frozen_candidate']['min_distinct_prestates']==2
+          assert d['protocol']['candidate_selection_in_r286'] is False
+          assert d['protocol']['baseline_precedence'] is True
+          assert d['protocol']['threshold_retuning_on_gate'] is False
+          assert d['truth']['reused_public_development_p10_p19'] is True
+          assert d['truth']['independent_hidden_generalization_claim'] is False
+          assert d['truth']['whole_game_policy_claim'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          assert d['truth']['submission_quota_spent_by_r286'] is False
+          print(json.dumps({'verdict':d['verdict'],'fit':d['fit'],'gate':d['gate']},sort_keys=True))
+          PY
+          sha256sum r286-lp85-exact-frame.json r286-runtime.txt r286-stdout.txt public_trace/SHA256SUMS.txt > R286_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r286-lp85-canon-regions-exact-frame-adapter
+          path: |
+            r286-lp85-exact-frame.json
+            r286-runtime.txt
+            r286-stdout.txt
+            R286_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
