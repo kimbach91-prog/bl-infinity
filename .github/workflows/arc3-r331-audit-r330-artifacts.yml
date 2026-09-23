@@ -51,7 +51,7 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import collections, glob, hashlib, json, os
+          import collections, glob, json, os
           files=sorted(glob.glob('r330_artifacts/r330-*/r330-*.json'))
           assert len(files)==25, len(files)
           games=[]; totals=collections.Counter(); gate_on=0; gate_off=0; verdicts=collections.Counter(); scars=[]
@@ -76,10 +76,27 @@ jobs:
               assert g['on']==(g['value']<=15)
               gate_on += int(g['on']); gate_off += int(not g['on'])
               verdicts[d['verdict']]+=1
-              keys=['frames','pixels','candidate_errors','identity_errors','candidate_exact_frames','identity_exact_frames','exact_frame_gain','pixel_gain','predicted_changes','true_changed_correct','template_firings']
-              for k in keys: totals[k]+=int(r[k])
-              false_changes=int(r['predicted_changes'])-int(r['true_changed_correct'])
-              game={'game':d['game'],'gate_on':g['on'],'accepted_templates':g['value'],'false_changes':false_changes,'exact_frame_gain':int(r['exact_frame_gain']),'pixel_gain':int(r['pixel_gain']),'predicted_changes':int(r['predicted_changes']),'true_changed_correct':int(r['true_changed_correct']),'verdict':d['verdict']}
+              required=['frames','pixels','candidate_errors','identity_errors','candidate_exact_frames','identity_exact_frames','exact_frame_gain','pixel_gain']
+              for k in required: totals[k]+=int(r[k])
+              zero_effect=(int(r['candidate_errors'])==int(r['identity_errors']) and int(r['exact_frame_gain'])==0 and int(r['pixel_gain'])==0)
+              has_pred='predicted_changes' in r; has_true='true_changed_correct' in r
+              assert has_pred==has_true, (d['game'],has_pred,has_true)
+              if has_pred:
+                  predicted=int(r['predicted_changes']); true_correct=int(r['true_changed_correct'])
+              else:
+                  assert zero_effect, (d['game'],'missing change counters on material effect')
+                  predicted=true_correct=0
+              assert predicted>=true_correct>=0, (d['game'],predicted,true_correct)
+              if 'template_firings' in r:
+                  firings=int(r['template_firings'])
+              else:
+                  assert zero_effect, (d['game'],'missing template_firings on material effect')
+                  firings=0
+              totals['predicted_changes']+=predicted
+              totals['true_changed_correct']+=true_correct
+              totals['template_firings']+=firings
+              false_changes=predicted-true_correct
+              game={'game':d['game'],'gate_on':g['on'],'accepted_templates':g['value'],'false_changes':false_changes,'exact_frame_gain':int(r['exact_frame_gain']),'pixel_gain':int(r['pixel_gain']),'predicted_changes':predicted,'true_changed_correct':true_correct,'template_firings':firings,'sparse_zero_effect_counters':not has_pred,'verdict':d['verdict']}
               games.append(game)
               if false_changes or game['exact_frame_gain']<0 or game['pixel_gain']<0:
                   scars.append(game)
