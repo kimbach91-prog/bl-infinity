@@ -15,6 +15,7 @@ jobs:
       SOURCE_SHA: '4528b4a67c822e86f79e9f1a0d9724bc9cd6eea9'
       IDEMPOTENCY_KEY: 'R332-C9-AGENT-STATE-DIFF-20260923-001'
       GAME_ID: 'tr87-cd924810'
+      STAGE: '/tmp/r332-stage'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -26,22 +27,29 @@ jobs:
           test "$(git merge-base "$SOURCE_SHA" HEAD)" = "$SOURCE_SHA"
           unexpected="$(git diff --name-only "$SOURCE_SHA"..HEAD | grep -v '^.github/workflows/arc3-r332-c9-agent-state-diff-audit.yml$' || true)"
           test -z "$unexpected" || { echo "Unexpected delta from frozen source: $unexpected" >&2; exit 1; }
-      - name: Build matched base and state packages offline
+      - name: Stage exact provider builder layout and build matched packages offline
         shell: bash
         run: |
           set -euo pipefail
-          B=public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_build_flash_next_package.py
+          FLASH=public_benchmark/arc3/kaggle_candidates/flash_next_340
+          rm -rf "$STAGE"
+          mkdir -p "$STAGE/scripts"
+          cp "$FLASH/arc-agi-flash-next-mtp.ipynb" "$STAGE/arc-agi-flash-next-mtp.ipynb"
+          cp "$FLASH/upstream_build_flash_next_package.py" "$STAGE/scripts/build_flash_next_package.py"
+          cp "$FLASH/upstream_flash_teardown_patch.py" "$STAGE/scripts/flash_teardown_patch.py"
+          cp "$FLASH/upstream_flash_agent_state_patch.py" "$STAGE/scripts/flash_agent_state_patch.py"
+          B="$STAGE/scripts/build_flash_next_package.py"
           python "$B" \
             --kernel-id lmkimbch/deus-arc-agi3-r332-base-tr87 \
             --mode preflight --max-games 1 --concurrency 1 --game-id "$GAME_ID" \
             --runtime-seconds 1200 --terminal-grace-seconds 120 --analyzer-timeout 900 \
-            --output-dir public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-base
+            --output-dir "$STAGE/build/r332-base"
           python "$B" \
             --kernel-id lmkimbch/deus-arc-agi3-r332-state-tr87 \
             --mode preflight --max-games 1 --concurrency 1 --game-id "$GAME_ID" \
             --runtime-seconds 1200 --terminal-grace-seconds 120 --analyzer-timeout 900 \
             --agent-state-patch \
-            --output-dir public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-state
+            --output-dir "$STAGE/build/r332-state"
       - name: Differential audit
         shell: bash
         run: |
@@ -49,8 +57,7 @@ jobs:
           python - <<'PY'
           import ast, hashlib, json, os
           from pathlib import Path
-
-          root=Path('public_benchmark/arc3/kaggle_candidates/flash_next_340/build')
+          root=Path(os.environ['STAGE'])/'build'
           base_dir=root/'r332-base'; state_dir=root/'r332-state'
           base_nb=next(base_dir.glob('*.ipynb')); state_nb=next(state_dir.glob('*.ipynb'))
           b=json.loads(base_nb.read_text()); s=json.loads(state_nb.read_text())
@@ -110,10 +117,10 @@ jobs:
           print(json.dumps(out,sort_keys=True))
           PY
           sha256sum r332-c9-agent-state-diff-audit.json \
-            public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-base/*.ipynb \
-            public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-state/*.ipynb \
-            public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-base/kernel-metadata.json \
-            public_benchmark/arc3/kaggle_candidates/flash_next_340/build/r332-state/kernel-metadata.json > R332_SHA256SUMS.txt
+            "$STAGE"/build/r332-base/*.ipynb \
+            "$STAGE"/build/r332-state/*.ipynb \
+            "$STAGE"/build/r332-base/kernel-metadata.json \
+            "$STAGE"/build/r332-state/kernel-metadata.json > R332_SHA256SUMS.txt
       - name: Upload R332 audit artifact
         uses: actions/upload-artifact@v4
         with:
