@@ -1,0 +1,52 @@
+name: ARC3 R326 WA30 region unanimity LOTO
+on:
+  push:
+    branches: [deus/r326-wa30-region-unanimity-loto-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_wa30_region_unanimity_loto_326.py
+      - .github/workflows/arc3-r326-wa30-region-unanimity-loto.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r326:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage WA30 p0-p4 only
+        run: |
+          mkdir -p public_trace
+          for p in $(seq 0 4); do cp "upstream-duck/example-run/artifacts/wa30-ee6fef47_p${p}_events.jsonl" public_trace/; done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_trace -name '*_p[5-9]_events.jsonl' | grep -q .
+      - name: Execute bounded falsifier
+        run: |
+          args=(); for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_wa30_region_unanimity_loto_326.py "${args[@]}" --output r326.json | tee stdout.txt
+      - name: Audit
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r326.json'))
+          assert d['schema']=='deus/arc3-r326-wa30-region-unanimity-loto/1'
+          assert d['protocol']['p5_p9_staged_or_read'] is False
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          print(json.dumps({'verdict':d['verdict'],'best_mode':d['best_mode'],'modes':d['modes']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r326-wa30-region-unanimity-loto
+          path: |
+            r326.json
+            stdout.txt
+          retention-days: 30
