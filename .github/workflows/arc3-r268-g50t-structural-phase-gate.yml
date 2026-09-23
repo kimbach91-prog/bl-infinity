@@ -31,7 +31,7 @@ jobs:
           python-version: '3.12'
       - name: Compile
         run: |
-          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_visible_state_phase_diag_262.py             public_benchmark/arc3/kaggle_candidates/public_g50t_structural_phase_gate_268.py
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_g50t_structural_phase_gate_268.py
       - name: Stage g50t p0-p19
         shell: bash
         run: |
