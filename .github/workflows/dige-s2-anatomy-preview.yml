@@ -292,15 +292,10 @@ jobs:
           assert hfit["s2_6_scalp_mass_method"]=="GNM_CROWN_BACK_SURFACE_SHELL"
           garments=a["s1_garment_metrics"]
           assert garments["enabled"] is True
-          assert garments["tank_polygons"]>0 and garments["leggings_polygons"]>0
-          assert garments["source"]=="S2_ANATOMY_AWARE_OFFSET_BODY_SURFACE_SHELL"
-          assert garments["s2_4_material_undercoat_faces"]["tank"]>0
-          assert garments["s2_4_material_undercoat_faces"]["leggings"]>0
-          assert garments["s2_4_material_undercoat_faces"]["method"]=="SHELL_BVH_PROXIMITY"
-          assert garments["s2_6_component_cleanup"]["tank"]["enabled"] is True
-          assert garments["s2_6_component_cleanup"]["leggings"]["enabled"] is True
-          assert garments["s2_6_component_cleanup"]["tank"]["kept_faces"]>0
-          assert garments["s2_6_component_cleanup"]["leggings"]["kept_faces"]>0
+          assert garments["source"]=="S2_7_DIRECT_BODY_MATERIAL_ZONES"
+          assert garments["s2_7_shells_rendered"] is False
+          assert garments["s2_7_material_zone_faces"]["tank"]>=300
+          assert garments["s2_7_material_zone_faces"]["leggings"]>=900
           ctl=a["s2_control_contract"]
           assert "NOT_EXECUTED" in ctl["hand_chain"]
           assert "NOT_EXECUTED" in ctl["tmj_jaw"]
