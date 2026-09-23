@@ -4601,6 +4601,7 @@ receipt={
  "hair_regime":hair_surface_contract["style"],
  "hair_surface_contract":hair_surface_contract,
  "appearance_candidate":(
+   "DIGE_S2_7_BAKED_FACE_ALBEDO_V1" if S2_7_BAKED_FACE_ALBEDO else
    "DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT_V1" if S2_6_GNM_SCALP_PROXIMITY_GARMENT else
    "DIGE_S2_5_SELECTIVE_COVERAGE_V1" if S2_5_SELECTIVE_COVERAGE else
    "DIGE_S2_4_SOURCE_MATERIAL_SCALP_COVERAGE_V1" if S2_4_SOURCE_MATERIAL else
@@ -4776,6 +4777,7 @@ receipt={
    "s2_4_source_material":S2_4_SOURCE_MATERIAL,
    "s2_5_selective_coverage":S2_5_SELECTIVE_COVERAGE,
    "s2_6_gnm_scalp_proximity_garment":S2_6_GNM_SCALP_PROXIMITY_GARMENT,
+   "s2_7_baked_face_albedo":S2_7_BAKED_FACE_ALBEDO,
    "c41_groom_metrics":c41_groom_metrics,
    "c39_updo_metrics":c39_updo_metrics,
    "c39_camera_contract":{"lens_mm":85,"fstop":3.6,"location":[0,0.96,1.598],"target":[0,0.012,1.585]} if C39_HHIR_HYPERREAL else None,
