@@ -4200,7 +4200,7 @@ if S1_ENDOGENOUS:
     try: tights.hide_set(True)
     except Exception: pass
     s2_4_undercoat_faces={"tank":0,"leggings":0}
-    if S2_4_SOURCE_MATERIAL:
+    if S2_4_SOURCE_MATERIAL and not S2_7_BAKED_FACE_ALBEDO:
         if s1_tank_mat.name not in [m.name for m in body.data.materials]:
             body.data.materials.append(s1_tank_mat)
         if s1_leggings_mat.name not in [m.name for m in body.data.materials]:
@@ -4244,11 +4244,50 @@ if S1_ENDOGENOUS:
                     s2_4_undercoat_faces["tank"]+=1
         body.data.update()
 
+    s2_7_zone_faces={"tank":0,"leggings":0}
+    if S2_7_BAKED_FACE_ALBEDO:
+        tank.hide_render=True
+        leggings.hide_render=True
+        try:
+            tank.hide_set(True); leggings.hide_set(True)
+        except Exception:
+            pass
+        mats=[m.name for m in body.data.materials]
+        if s1_tank_mat.name not in mats:
+            body.data.materials.append(s1_tank_mat)
+        mats=[m.name for m in body.data.materials]
+        if s1_leggings_mat.name not in mats:
+            body.data.materials.append(s1_leggings_mat)
+        tank_idx=[m.name for m in body.data.materials].index(s1_tank_mat.name)
+        leggings_idx=[m.name for m in body.data.materials].index(s1_leggings_mat.name)
+        for poly in body.data.polygons:
+            if not poly.vertices:
+                continue
+            p=sum((body.data.vertices[i].co for i in poly.vertices),Vector())/len(poly.vertices)
+            ax=abs(float(p.x)); z=float(p.z)
+            is_leggings=(
+                .13<=z<=1.005 and
+                ((z>=.86 and ax<=.225) or (z<.86 and .030<=ax<=.185))
+            )
+            is_tank=(
+                (1.055<=z<=1.335 and ax<=.175) or
+                (1.335<z<=1.430 and .050<=ax<=.125)
+            )
+            if is_leggings:
+                poly.material_index=leggings_idx
+                s2_7_zone_faces["leggings"]+=1
+            elif is_tank:
+                poly.material_index=tank_idx
+                s2_7_zone_faces["tank"]+=1
+        body.data.update()
+        if s2_7_zone_faces["tank"]<300 or s2_7_zone_faces["leggings"]<900:
+            raise RuntimeError(f"S2.7 material zones too sparse: {s2_7_zone_faces}")
+
     s1_garment_metrics={
         "enabled":True,
         "tank_polygons":len(tank.data.polygons),
         "leggings_polygons":len(leggings.data.polygons),
-        "source":("S2_ANATOMY_AWARE_OFFSET_BODY_SURFACE_SHELL" if S2_ANATOMY_DYNAMICS else "RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL"),
+        "source":("S2_7_DIRECT_BODY_MATERIAL_ZONES" if S2_7_BAKED_FACE_ALBEDO else ("S2_ANATOMY_AWARE_OFFSET_BODY_SURFACE_SHELL" if S2_ANATOMY_DYNAMICS else "RELAXED_MAKEHUMAN_BODY_SURFACE_CLIPPED_SOURCE_LEVEL")),
         "material":"PROCEDURAL_GRAY_FABRIC_PBR",
         "body_form_vertices_refined":s1_body_form_vertices,
         "body_arm_vertices_relaxed":s1_arm_vertices,
@@ -4256,7 +4295,9 @@ if S1_ENDOGENOUS:
         "midriff_gap_m":0.055,
         "helper_tights_rendered":False,
         "s2_4_material_undercoat_faces":s2_4_undercoat_faces if S2_4_SOURCE_MATERIAL else {"tank":0,"leggings":0},
-        "s2_6_component_cleanup":{"tank":json.loads(tank.get("DIGE_COMPONENT_CLEANUP","{}")),"leggings":json.loads(leggings.get("DIGE_COMPONENT_CLEANUP","{}"))} if S2_6_GNM_SCALP_PROXIMITY_GARMENT else {"tank":{},"leggings":{}}
+        "s2_6_component_cleanup":{"tank":json.loads(tank.get("DIGE_COMPONENT_CLEANUP","{}")),"leggings":json.loads(leggings.get("DIGE_COMPONENT_CLEANUP","{}"))} if S2_6_GNM_SCALP_PROXIMITY_GARMENT else {"tank":{},"leggings":{}},
+        "s2_7_material_zone_faces":s2_7_zone_faces if S2_7_BAKED_FACE_ALBEDO else {"tank":0,"leggings":0},
+        "s2_7_shells_rendered":False if S2_7_BAKED_FACE_ALBEDO else None
     }
 elif (C41_HYPERREAL_NATIVE_EYE or C42_GEOMETRY_EYE_HAIRLINE) and RENDER_SET=="HERO_ONLY":
     tights.hide_render=True
