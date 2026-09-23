@@ -17,7 +17,7 @@ def main():
     ps=sorted(by[g],key=r246.pnum)
     if [r246.pnum(p) for p in ps]!=list(range(10)): raise SystemExit(f"{g}: p0-p9 required")
     train=[r for p in ps[:5] for r in r251.prepare_rows([p])]; replay=[r for p in ps[5:] for r in r251.prepare_rows([p])]
-    exact=r307.fit_exact(train); tab=r307.fit_abs(train,MODE); val=r307.evaluate(replay,exact,tab,MODE)
+    exact=r307.fit_exact(train); tab,_=r307.fit_abs(train,MODE); val=r307.evaluate(replay,exact,tab,MODE)
     gate=bool(val.get("candidate_predictions",0)>0 and val.get("candidate_wrong",0)==0 and val.get("candidate_correct",0)>0)
     if gate: passes.append(g)
     games[g]={"mode":MODE,"source_assisted_p5_p9":val,"gate_pass":gate}
