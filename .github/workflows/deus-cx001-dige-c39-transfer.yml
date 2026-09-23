@@ -3,7 +3,8 @@ name: DEUS CX-001 DiGe C39 application-transfer canary
 on:
   push:
     branches:
-      - "deus/cx001-app-transfer-dige-c39-20260923"
+      - "main"
+      - "deus/cx001-app-transfer-main-trigger-20260923"
     paths:
       - "benchmarks/cx001_dige_c39_transfer.py"
       - "benchmarks/data/cx001_dige_c39_public_fixture.json"
