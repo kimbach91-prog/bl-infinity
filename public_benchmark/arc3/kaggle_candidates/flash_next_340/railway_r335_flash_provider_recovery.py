@@ -19,7 +19,7 @@ import railway_r335_flash_provider as p
 import upstream_flash_r335_structured_state_package_patch as pkg
 
 BASE_EXACT="lmkimbch/deus-arc3-r338-base-tr87/1"
-KNOWN_LAST_STATE_VERSION=2
+KNOWN_LAST_STATE_VERSION=3
 EXPECTED_BASE_NOTEBOOK_SHA="2fe65f106a7ef34e44d5e12f3133fa471669e78ffeac1e67a558a20c118aca1c"
 EXPECTED_STAGE1_SHA="978026a51c438744c64922571b2264f09a3d4ec4259ddc75b03ccc0f3ba0b772"
 EXPECTED_REPAIRED_OVERLAY_SHA="f2adf9b64107dbfa78e2d693e19919889f31debf0fe98f9c5061b28948910388"
@@ -63,13 +63,11 @@ def launch_or_reuse_state(state_dir):
     next_version=KNOWN_LAST_STATE_VERSION+1
     exists,exact,txt=exact_exists(next_version)
     if exists:
-        p.emit("DEUS_R335_FLASH_RECOVERY_REUSE_EXISTING",{
-            "state_exact":exact,
-            "status":txt[:240],
-            "new_push":False,
-            "competition_submission":False,
-        })
-        return next_version,False
+        # Do not consume an unattributed version. A concurrent writer or old retry
+        # must be inspected before it can count as the repaired candidate.
+        raise RuntimeError(
+            f"next_state_version_already_exists_unattributed:{exact}:{txt[:160]}"
+        )
 
     q=p.run(["kaggle","kernels","push","-p",str(state_dir),"-t","30000"],timeout=180)
     text=q.stdout+"\n"+q.stderr
