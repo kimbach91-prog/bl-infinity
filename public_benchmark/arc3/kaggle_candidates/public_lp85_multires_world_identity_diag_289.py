@@ -36,6 +36,10 @@ def base_key(r):
     return r278.before_key(r,'canon_regions_ui')
 
 
+def base_next(r):
+    return r278.after_key(r,'canon_regions_ui')
+
+
 def refined_state(board,action):
     b=canon_masked(board,action)
     return (r246.regions(b,G_COARSE),r246.regions(b,G_FINE))
@@ -96,9 +100,9 @@ def main():
     if nums!=list(range(10)): raise SystemExit(f'exact p0-p9 required, got {nums}')
     tr=r278.annotated_rows(ps[:5]); va=r278.annotated_rows(ps[5:])
 
-    base_tab,base_fit=fit_rep(tr,base_key,lambda r:r246.stable(r278.after_state(r,'canon_regions_ui')))
+    base_tab,base_fit=fit_rep(tr,base_key,base_next)
     ref_tab,ref_fit=fit_rep(tr,refined_key,refined_next)
-    base_val=eval_rep(va,base_tab,base_key,lambda r:r246.stable(r278.after_state(r,'canon_regions_ui')))
+    base_val=eval_rep(va,base_tab,base_key,base_next)
     ref_val=eval_rep(va,ref_tab,refined_key,refined_next)
     base_col=exact_collision_stats(tr,base_key); ref_col=exact_collision_stats(tr,refined_key)
 
