@@ -1,0 +1,69 @@
+name: ARC3 R273 factorized UI residual gate
+on:
+  push:
+    branches: [deus/r273-factorized-ui-residual-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_factorized_ui_residual_273.py
+      - .github/workflows/arc3-r273-factorized-ui-residual.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-r273:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage pinned public25 traces
+        shell: bash
+        run: |
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace')
+          fs=[]
+          for p in range(20): fs.extend(src.glob(f'*_p{p}_events.jsonl'))
+          fs=sorted(set(fs)); assert len(fs)==500, len(fs)
+          for f in fs: (dst/f.name).write_bytes(f.read_bytes())
+          print({'files':len(fs)})
+          PY
+      - name: Execute R273
+        shell: bash
+        run: |
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_factorized_ui_residual_273.py "${args[@]}" --output r273.json | tee r273-stdout.txt
+      - name: Verify truth boundaries and frozen gate
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r273.json'))
+          assert d['schema']=='deus/arc3-r273-factorized-ui-residual/1'
+          assert d['aggregate']['game_count']==25
+          assert d['protocol']['selection'].startswith('p0-p4 fit / p5-p9')
+          assert d['protocol']['frozen_eval']=='p10-p19'
+          assert d['truth']['selection_uses_p0_p9_only']
+          assert d['truth']['p10_p19_never_updates_selection_or_model']
+          assert not d['truth']['kaggle_execution']
+          assert not d['truth']['competition_submission']
+          assert not d['truth']['submission_quota_spent']
+          print(json.dumps(d['aggregate'],sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r273-factorized-ui-residual
+          path: |
+            r273.json
+            r273-stdout.txt
+          retention-days: 30
