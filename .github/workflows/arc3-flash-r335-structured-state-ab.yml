@@ -1,0 +1,364 @@
+name: ARC3 Flash R335 structured-state matched provider A/B
+
+on:
+  push:
+    branches: [deus/r335-sourcefree-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340/r335_structured_state_ab_request.json
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_flash_r335_structured_state_package_patch.py
+      - public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_audit_flash_r335_output.py
+      - .github/workflows/arc3-flash-r335-structured-state-ab.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  ROOT: public_benchmark/arc3/kaggle_candidates/flash_next_340
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      operation: ${{ steps.req.outputs.operation }}
+      game_id: ${{ steps.req.outputs.game_id }}
+      runtime_seconds: ${{ steps.req.outputs.runtime_seconds }}
+      terminal_grace_seconds: ${{ steps.req.outputs.terminal_grace_seconds }}
+      concurrency: ${{ steps.req.outputs.concurrency }}
+      analyzer_timeout: ${{ steps.req.outputs.analyzer_timeout }}
+      base_kernel_ref: ${{ steps.req.outputs.base_kernel_ref }}
+      state_kernel_ref: ${{ steps.req.outputs.state_kernel_ref }}
+      base_kernel_version: ${{ steps.req.outputs.base_kernel_version }}
+      state_kernel_version: ${{ steps.req.outputs.state_kernel_version }}
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+
+      - name: Validate frozen request and R336 lineage
+        id: req
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json,os,re,subprocess
+          from pathlib import Path
+          p=Path("public_benchmark/arc3/kaggle_candidates/flash_next_340/r335_structured_state_ab_request.json")
+          d=json.loads(p.read_text())
+          assert d["schema"]=="deus/arc3-flash-r335-structured-state-ab-request/1"
+          assert d["operation"] in {"dry_run","launch","readback"}
+          assert d["game_id"]=="tr87-cd924810"
+          for k in ("runtime_seconds","terminal_grace_seconds","concurrency","analyzer_timeout"):
+              assert isinstance(d[k],int) and d[k]>0
+          assert 0 <= d["terminal_grace_seconds"] < 600
+          for k in ("base_kernel_version","state_kernel_version"):
+              assert isinstance(d[k],int) and d[k]>=0
+          for k in ("base_kernel_ref","state_kernel_ref"):
+              assert re.fullmatch(r"[a-z0-9_.-]+/[a-z0-9_.-]+",d[k])
+          assert d["base_kernel_ref"] != d["state_kernel_ref"]
+          assert d["r336_freeze"]=="facb02a82043fdfb98fc4af3e0ea2cb44ee29553"
+          assert d["r338_evidence_run"]==35864351710
+          if d["operation"]=="readback":
+              assert d["base_kernel_version"]>0 and d["state_kernel_version"]>0
+          frozen=[
+            "public_benchmark/arc3/kaggle_candidates/public_generic_relational_transducer_335.py",
+            "public_benchmark/arc3/kaggle_candidates/public_r335_sourcefree_p0p4_falsifier_336.py",
+          ]
+          for path in frozen:
+              a=subprocess.check_output(["git","show",f"{d['r336_freeze']}:{path}"])
+              b=Path(path).read_bytes()
+              assert a==b, f"frozen R336 candidate changed: {path}"
+          with open(os.environ["GITHUB_OUTPUT"],"a") as f:
+              for k in ("operation","game_id","runtime_seconds","terminal_grace_seconds",
+                        "concurrency","analyzer_timeout","base_kernel_ref","state_kernel_ref",
+                        "base_kernel_version","state_kernel_version"):
+                  f.write(f"{k}={d[k]}\n")
+          PY
+
+      - name: Stage isolated builders
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/r335-static"
+          mkdir -p "$TMP/scripts"
+          cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
+          cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
+          cp "$ROOT/upstream_flash_teardown_patch.py" "$TMP/scripts/flash_teardown_patch.py"
+          cp "$ROOT/upstream_flash_agent_state_patch.py" "$TMP/scripts/flash_agent_state_patch.py"
+          cp "$ROOT/upstream_flash_r335_structured_state_package_patch.py" "$TMP/patch_r335.py"
+          echo "AB_TMP=$TMP" >> "$GITHUB_ENV"
+
+      - name: Build matched stage-1 packages and apply only R335 delta to candidate
+        shell: bash
+        env:
+          GAME_ID: ${{ steps.req.outputs.game_id }}
+          RUNTIME: ${{ steps.req.outputs.runtime_seconds }}
+          GRACE: ${{ steps.req.outputs.terminal_grace_seconds }}
+          CONCURRENCY: ${{ steps.req.outputs.concurrency }}
+          ANALYZER: ${{ steps.req.outputs.analyzer_timeout }}
+        run: |
+          set -euo pipefail
+          BASE="$AB_TMP/build/base"
+          STATE="$AB_TMP/build/state"
+          python "$AB_TMP/scripts/build_flash_next_package.py"             --kernel-id "lmkimbch/deus-placeholder-r335-base" --mode preflight --max-games 1             --game-id "$GAME_ID" --concurrency "$CONCURRENCY" --runtime-seconds "$RUNTIME"             --terminal-grace-seconds "$GRACE" --analyzer-timeout "$ANALYZER"             --agent-state-patch --output-dir "$BASE"
+          python "$AB_TMP/scripts/build_flash_next_package.py"             --kernel-id "lmkimbch/deus-placeholder-r335-state" --mode preflight --max-games 1             --game-id "$GAME_ID" --concurrency "$CONCURRENCY" --runtime-seconds "$RUNTIME"             --terminal-grace-seconds "$GRACE" --analyzer-timeout "$ANALYZER"             --agent-state-patch --output-dir "$STATE"
+          BASE_NB="$(find "$BASE" -maxdepth 1 -name '*.ipynb' -type f)"
+          STATE_NB="$(find "$STATE" -maxdepth 1 -name '*.ipynb' -type f)"
+          test "$(sha256sum "$BASE_NB" | awk '{print $1}')" = "$(sha256sum "$STATE_NB" | awk '{print $1}')"
+          PRE_STATE_SHA="$(sha256sum "$STATE_NB" | awk '{print $1}')"
+          python "$AB_TMP/patch_r335.py" --package-dir "$STATE" --receipt r335-static-package-patch.json
+          POST_STATE_SHA="$(sha256sum "$STATE_NB" | awk '{print $1}')"
+          test "$PRE_STATE_SHA" != "$POST_STATE_SHA"
+          echo "STATIC_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "STATIC_STATE=$STATE" >> "$GITHUB_ENV"
+          echo "PRE_STATE_SHA=$PRE_STATE_SHA" >> "$GITHUB_ENV"
+          echo "POST_STATE_SHA=$POST_STATE_SHA" >> "$GITHUB_ENV"
+
+      - name: Verify exact static A/B contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          def pkg(root):
+              root=Path(root)
+              nb=next(root.glob("*.ipynb"))
+              meta=json.loads((root/"kernel-metadata.json").read_text())
+              doc=json.loads(nb.read_text())
+              code="\n".join("".join(c.get("source",[])) for c in doc["cells"] if c.get("cell_type")=="code")
+              return nb,meta,code
+          bnb,bm,bc=pkg(os.environ["STATIC_BASE"])
+          snb,sm,sc=pkg(os.environ["STATIC_STATE"])
+          checks={
+            "pre_patch_notebooks_identical": os.environ["PRE_STATE_SHA"]==hashlib.sha256(bnb.read_bytes()).hexdigest(),
+            "post_patch_notebook_changed": os.environ["POST_STATE_SHA"]!=os.environ["PRE_STATE_SHA"],
+            "base_stage1_patch_present": "FLASH_AGENT_STATE_PATCH" in bc,
+            "base_r335_marker_absent": "R335_STRUCTURED_STATE_SCHEMA_V1" not in bc,
+            "state_stage1_patch_present": "FLASH_AGENT_STATE_PATCH" in sc,
+            "state_r335_marker_present": "R335_STRUCTURED_STATE_SCHEMA_V1" in sc,
+            "state_r335_runtime_marker_present": "FLASH_R335_STRUCTURED_STATE_PATCH" in sc,
+            "same_machine": bm["machine_shape"]==sm["machine_shape"]=="NvidiaRtxPro6000",
+            "same_model_sources": bm["model_sources"]==sm["model_sources"],
+            "same_dataset_sources": bm["dataset_sources"]==sm["dataset_sources"],
+            "same_competition_sources": bm["competition_sources"]==sm["competition_sources"],
+            "internet_off": bm["enable_internet"] is False and sm["enable_internet"] is False,
+          }
+          receipt={
+            "schema":"deus/arc3-flash-r335-structured-state-contract/1",
+            "gate":"READY_FOR_MATCHED_PRIVATE_PROVIDER_AB" if all(checks.values()) else "HOLD",
+            "checks":checks,
+            "base_notebook_sha256":hashlib.sha256(bnb.read_bytes()).hexdigest(),
+            "state_notebook_sha256":hashlib.sha256(snb.read_bytes()).hexdigest(),
+            "r336_candidate_mutated":False,
+            "competition_submission":False,
+            "submission_quota_spent":False,
+          }
+          Path("r335-flash-static-contract.json").write_text(json.dumps(receipt,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          assert receipt["gate"]=="READY_FOR_MATCHED_PRIVATE_PROVIDER_AB"
+          PY
+          sha256sum r335-flash-static-contract.json r335-static-package-patch.json > STATIC_SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: arc3-r335-flash-static-contract
+          path: |
+            r335-flash-static-contract.json
+            r335-static-package-patch.json
+            STATIC_SHA256SUMS.txt
+          retention-days: 30
+
+  provider:
+    if: needs.contract.outputs.operation != 'dry_run'
+    needs: contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    env:
+      OPERATION: ${{ needs.contract.outputs.operation }}
+      GAME_ID: ${{ needs.contract.outputs.game_id }}
+      RUNTIME: ${{ needs.contract.outputs.runtime_seconds }}
+      GRACE: ${{ needs.contract.outputs.terminal_grace_seconds }}
+      CONCURRENCY: ${{ needs.contract.outputs.concurrency }}
+      ANALYZER: ${{ needs.contract.outputs.analyzer_timeout }}
+      BASE_KERNEL_REF: ${{ needs.contract.outputs.base_kernel_ref }}
+      STATE_KERNEL_REF: ${{ needs.contract.outputs.state_kernel_ref }}
+      BASE_KERNEL_VERSION: ${{ needs.contract.outputs.base_kernel_version }}
+      STATE_KERNEL_VERSION: ${{ needs.contract.outputs.state_kernel_version }}
+      SEC_KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      VAR_KAGGLE_USERNAME: ${{ vars.KAGGLE_USERNAME }}
+      SEC_KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+      VAR_KAGGLE_KEY: ${{ vars.KAGGLE_KEY }}
+      SEC_KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      VAR_KAGGLE_API_TOKEN: ${{ vars.KAGGLE_API_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Install provider CLI
+        run: python -m pip install --disable-pip-version-check --quiet kaggle pyarrow
+
+      - name: Authenticate fail-closed
+        shell: bash
+        run: |
+          set -euo pipefail
+          KAGGLE_USERNAME="${SEC_KAGGLE_USERNAME:-${VAR_KAGGLE_USERNAME:-}}"
+          KAGGLE_KEY="${SEC_KAGGLE_KEY:-${VAR_KAGGLE_KEY:-}}"
+          KAGGLE_API_TOKEN="${SEC_KAGGLE_API_TOKEN:-${VAR_KAGGLE_API_TOKEN:-}}"
+          if [ -z "$KAGGLE_API_TOKEN" ] && { [ -z "$KAGGLE_USERNAME" ] || [ -z "$KAGGLE_KEY" ]; }; then
+            echo "No GitHub-bound Kaggle machine credential; holding before provider access." >&2
+            exit 4
+          fi
+          {
+            echo "KAGGLE_USERNAME=$KAGGLE_USERNAME"
+            echo "KAGGLE_KEY=$KAGGLE_KEY"
+            echo "KAGGLE_API_TOKEN=$KAGGLE_API_TOKEN"
+          } >> "$GITHUB_ENV"
+          kaggle kernels list --mine --page-size 1 >/dev/null
+
+      - name: Build matched private packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          TMP="$RUNNER_TEMP/r335-provider"
+          mkdir -p "$TMP/scripts"
+          cp "$ROOT/arc-agi-flash-next-mtp.ipynb" "$TMP/arc-agi-flash-next-mtp.ipynb"
+          cp "$ROOT/upstream_build_flash_next_package.py" "$TMP/scripts/build_flash_next_package.py"
+          cp "$ROOT/upstream_flash_teardown_patch.py" "$TMP/scripts/flash_teardown_patch.py"
+          cp "$ROOT/upstream_flash_agent_state_patch.py" "$TMP/scripts/flash_agent_state_patch.py"
+          cp "$ROOT/upstream_flash_r335_structured_state_package_patch.py" "$TMP/patch_r335.py"
+          BASE="$TMP/build/base"
+          STATE="$TMP/build/state"
+          python "$TMP/scripts/build_flash_next_package.py"             --kernel-id "$BASE_KERNEL_REF" --mode preflight --max-games 1 --game-id "$GAME_ID"             --concurrency "$CONCURRENCY" --runtime-seconds "$RUNTIME"             --terminal-grace-seconds "$GRACE" --analyzer-timeout "$ANALYZER"             --agent-state-patch --output-dir "$BASE"
+          python "$TMP/scripts/build_flash_next_package.py"             --kernel-id "$STATE_KERNEL_REF" --mode preflight --max-games 1 --game-id "$GAME_ID"             --concurrency "$CONCURRENCY" --runtime-seconds "$RUNTIME"             --terminal-grace-seconds "$GRACE" --analyzer-timeout "$ANALYZER"             --agent-state-patch --output-dir "$STATE"
+          BASE_NB="$(find "$BASE" -maxdepth 1 -name '*.ipynb' -type f)"
+          STATE_NB="$(find "$STATE" -maxdepth 1 -name '*.ipynb' -type f)"
+          test "$(sha256sum "$BASE_NB" | awk '{print $1}')" = "$(sha256sum "$STATE_NB" | awk '{print $1}')"
+          python "$TMP/patch_r335.py" --package-dir "$STATE" --receipt r335-provider-package-patch.json
+          echo "PROVIDER_BASE=$BASE" >> "$GITHUB_ENV"
+          echo "PROVIDER_STATE=$STATE" >> "$GITHUB_ENV"
+
+      - name: Launch matched private preflights
+        if: env.OPERATION == 'launch'
+        shell: bash
+        run: |
+          set -euo pipefail
+          push_one () {
+            local dir="$1" prefix="$2"
+            kaggle kernels push -p "$dir" -t 30000 > "$prefix.stdout" 2> "$prefix.stderr"
+            python - "$prefix.stdout" "$prefix.stderr" <<'PY'
+          import re,sys
+          text=open(sys.argv[1],errors="replace").read()+"\n"+open(sys.argv[2],errors="replace").read()
+          m=re.search(r"Kernel version\s+(\d+)\s+successfully pushed",text,re.I)
+          if not m: raise SystemExit("provider did not expose exact pushed version")
+          print(m.group(1))
+          PY
+          }
+          BASE_VERSION="$(push_one "$PROVIDER_BASE" base-push)"
+          STATE_VERSION="$(push_one "$PROVIDER_STATE" state-push)"
+          export BASE_VERSION STATE_VERSION
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          def digest(root):
+              return hashlib.sha256(next(Path(root).glob("*.ipynb")).read_bytes()).hexdigest()
+          r={
+            "schema":"deus/arc3-flash-r335-structured-state-launch/1",
+            "status":"MATCHED_PRIVATE_PREFLIGHTS_LAUNCHED",
+            "base":{"kernel_ref":os.environ["BASE_KERNEL_REF"],"version":int(os.environ["BASE_VERSION"]),"notebook_sha256":digest(os.environ["PROVIDER_BASE"])},
+            "state":{"kernel_ref":os.environ["STATE_KERNEL_REF"],"version":int(os.environ["STATE_VERSION"]),"notebook_sha256":digest(os.environ["PROVIDER_STATE"])},
+            "matched":{"game_id":os.environ["GAME_ID"],"runtime_seconds":int(os.environ["RUNTIME"]),"concurrency":int(os.environ["CONCURRENCY"]),"analyzer_timeout":int(os.environ["ANALYZER"])},
+            "truth":{"kaggle_authenticated":True,"kernel_pushes":2,"competition_submission":False,"submission_quota_spent":False,"candidate_promoted":False},
+          }
+          Path("r335-flash-provider-launch.json").write_text(json.dumps(r,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(r,indent=2,sort_keys=True))
+          PY
+
+      - name: Read exact versions and compare
+        if: env.OPERATION == 'readback'
+        shell: bash
+        run: |
+          set -euo pipefail
+          for v in "$BASE_KERNEL_VERSION" "$STATE_KERNEL_VERSION"; do
+            [[ "$v" =~ ^[1-9][0-9]*$ ]] || { echo "readback requires exact positive versions" >&2; exit 5; }
+          done
+          BASE_EXACT="$BASE_KERNEL_REF/$BASE_KERNEL_VERSION"
+          STATE_EXACT="$STATE_KERNEL_REF/$STATE_KERNEL_VERSION"
+          export BASE_EXACT STATE_EXACT
+          kaggle kernels status "$BASE_EXACT" > base-status.stdout 2> base-status.stderr
+          kaggle kernels status "$STATE_EXACT" > state-status.stdout 2> state-status.stderr
+          if ! grep -Eqi 'complete|completed' base-status.stdout base-status.stderr ||              ! grep -Eqi 'complete|completed' state-status.stdout state-status.stderr; then
+            python - <<'PY'
+          import json,os
+          from pathlib import Path
+          r={"schema":"deus/arc3-flash-r335-structured-state-readback/1","status":"PENDING_PROVIDER",
+             "base_exact":os.environ["BASE_EXACT"],"state_exact":os.environ["STATE_EXACT"],
+             "truth":{"exact_versions_queried":True,"both_complete":False,"audits_executed":False,
+                      "competition_submission":False,"submission_quota_spent":False,"candidate_promoted":False}}
+          Path("r335-flash-provider-readback.json").write_text(json.dumps(r,indent=2,sort_keys=True)+"\n")
+          print(json.dumps(r,indent=2))
+          PY
+            exit 0
+          fi
+          BASE_OUT="$RUNNER_TEMP/base-output"; STATE_OUT="$RUNNER_TEMP/state-output"
+          mkdir -p "$BASE_OUT" "$STATE_OUT"
+          kaggle kernels output "$BASE_EXACT" -p "$BASE_OUT"
+          kaggle kernels output "$STATE_EXACT" -p "$STATE_OUT"
+          BASE_LOG="$(find "$BASE_OUT" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' -printf '%f\n' | head -n1)"
+          STATE_LOG="$(find "$STATE_OUT" -maxdepth 1 -type f -name 'arc-agi3-flash-next-mtp-*.log' -printf '%f\n' | head -n1)"
+          test -n "$BASE_LOG"; test -n "$STATE_LOG"
+          set +e
+          python "$ROOT/upstream_audit_flash_output.py"             --mode preflight --expected-games 1 --expected-concurrency "$CONCURRENCY"             --expected-game-id "$GAME_ID" --expected-runtime-seconds "$RUNTIME"             --expected-gameplay-budget-seconds "$RUNTIME" --require-runtime-from-ready             --expected-terminal-grace-seconds "$GRACE" --expected-analyzer-timeout "$ANALYZER"             --require-clean --require-agent-state-patch --kernel-log "$BASE_LOG" "$BASE_OUT" > base-audit.json
+          BRC=$?
+          python "$ROOT/upstream_audit_flash_r335_output.py"             --mode preflight --expected-games 1 --expected-concurrency "$CONCURRENCY"             --expected-game-id "$GAME_ID" --expected-runtime-seconds "$RUNTIME"             --expected-gameplay-budget-seconds "$RUNTIME" --require-runtime-from-ready             --expected-terminal-grace-seconds "$GRACE" --expected-analyzer-timeout "$ANALYZER"             --require-clean --kernel-log "$STATE_LOG" "$STATE_OUT" > state-audit.json
+          SRC=$?
+          set -e
+          export BRC SRC
+          python - <<'PY'
+          import json,os
+          from pathlib import Path
+          def load(p):
+              try:return json.loads(Path(p).read_text())
+              except Exception:return {"passed":False,"error_type":"AuditParseError"}
+          b=load("base-audit.json"); s=load("state-audit.json")
+          bp=os.environ["BRC"]=="0" and b.get("passed") is True
+          sp=os.environ["SRC"]=="0" and s.get("passed") is True
+          if not (bp and sp):
+              verdict="INCONCLUSIVE_AUDIT_FAILURE"
+          else:
+              bm=float(b.get("offline_mean",0)); sm=float(s.get("offline_mean",0))
+              ba=int(b.get("total_actions",0)); sa=int(s.get("total_actions",0))
+              if sm>bm: verdict="PROMOTE_TO_WIDER_PROVIDER_TEST"
+              elif sm==bm and sa<ba: verdict="PROMOTE_EFFICIENCY_ONLY"
+              else: verdict="RETAIN_BASE"
+          r={"schema":"deus/arc3-flash-r335-structured-state-readback/1",
+             "status":"MATCHED_AUDIT_COMPLETE" if bp and sp else "MATCHED_AUDIT_FAILED",
+             "verdict":verdict,"base_exact":os.environ["BASE_EXACT"],"state_exact":os.environ["STATE_EXACT"],
+             "base_audit":b,"state_audit":s,
+             "truth":{"kaggle_authenticated":True,"both_complete":True,"audits_executed":True,
+                      "competition_submission":False,"submission_quota_spent":False,"leaderboard_score_observed":False,"candidate_promoted":False}}
+          Path("r335-flash-provider-readback.json").write_text(json.dumps(r,indent=2,sort_keys=True)+"\n")
+          print(json.dumps({"status":r["status"],"verdict":verdict,"base_mean":b.get("offline_mean"),
+                            "state_mean":s.get("offline_mean"),"base_actions":b.get("total_actions"),
+                            "state_actions":s.get("total_actions"),"submission_quota_spent":False},indent=2))
+          if not (bp and sp): raise SystemExit(7)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-r335-flash-provider-receipts
+          path: |
+            r335-provider-package-patch.json
+            r335-flash-provider-launch.json
+            r335-flash-provider-readback.json
+            base-audit.json
+            state-audit.json
+            base-status.stdout
+            base-status.stderr
+            state-status.stdout
+            state-status.stderr
+          if-no-files-found: warn
+          retention-days: 30
