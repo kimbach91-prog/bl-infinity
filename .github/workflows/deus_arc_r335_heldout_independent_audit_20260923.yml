@@ -1,0 +1,45 @@
+name: DEUS ARC R335 heldout independent artifact audit
+on:
+  push:
+    branches:
+      - deus/r335-sourcefree-p0p4-gate-20260923
+    paths:
+      - '.github/workflows/deus_arc_r335_heldout_independent_audit_20260923.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout independent auditor
+        uses: actions/checkout@v4
+        with:
+          path: deus
+      - name: Download exact prior heldout artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p prior out
+          gh run download 35874841453 --repo kimbach91-prog/bl-infinity --name r335-frozen-p5p9-heldout-no-retrain --dir prior
+          test -f prior/r335_frozen_p5p9_heldout.json
+          echo '874fc9b46cd8147184eb906857ed2f7a6cf5a988514fbad52323aaf5d5422915  prior/r335_frozen_p5p9_heldout.json' | sha256sum -c -
+      - name: Independent recomputation audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python deus/public_benchmark/arc3/kaggle_candidates/r335_heldout_artifact_independent_audit.py \
+            --input prior/r335_frozen_p5p9_heldout.json \
+            --out out/r335_p5p9_independent_audit.json | tee out/audit_brief.json
+          sha256sum out/* | tee out/SHA256SUMS.txt
+      - name: Upload independent audit receipt artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r335-p5p9-independent-audit
+          path: out/
+          if-no-files-found: error
+          retention-days: 30
