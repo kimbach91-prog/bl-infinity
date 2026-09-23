@@ -1,0 +1,32 @@
+name: DEUS Internet Capability Atlas V2
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/federation/config/internet-capability-catalog.v2.json'
+      - 'runtime/federation/scripts/public-functional-roots-canary.mjs'
+      - 'runtime/federation/test/internet-capability-catalog.test.mjs'
+      - '.github/workflows/deus-internet-capability-atlas-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate catalog and routing gates
+        run: node --test runtime/federation/test/internet-capability-catalog.test.mjs
+      - name: Run bounded documented-public-root canary
+        run: node runtime/federation/scripts/public-functional-roots-canary.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-capability-atlas-v2-\${{ github.run_id }}
+          path: .deus/internet-fabric/capability-atlas-v2-receipt.json
+          if-no-files-found: error
