@@ -1,0 +1,68 @@
+name: ARC3 R273T factorized UI target-family gate
+on:
+  push:
+    branches: [deus/r273t-factorized-ui-target4-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_factorized_ui_target4_273t.py
+      - .github/workflows/arc3-r273t-factorized-ui-target4.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-r273t:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage exact target-family traces
+        shell: bash
+        run: |
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace')
+          prefixes=('dc22-','ft09-','lp85-','tr87-','wa30-')
+          fs=[]
+          for p in range(20):
+              for f in src.glob(f'*_p{p}_events.jsonl'):
+                  if f.name.startswith(prefixes): fs.append(f)
+          fs=sorted(set(fs)); assert len(fs)==100, (len(fs),[f.name for f in fs[:5]])
+          for f in fs: (dst/f.name).write_bytes(f.read_bytes())
+          print({'files':len(fs)})
+          PY
+      - name: Execute R273T
+        shell: bash
+        run: |
+          args=(); for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_factorized_ui_target4_273t.py "${args[@]}" --output r273t.json | tee r273t-stdout.txt
+      - name: Verify frozen truth contract
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r273t.json'))
+          assert d['schema']=='deus/arc3-r273t-factorized-ui-target4/1'
+          assert d['aggregate']['game_count']==5
+          assert d['protocol']['frozen_eval']=='p10-p19'
+          assert not d['truth']['heldout_updates_model']
+          assert not d['truth']['kaggle_execution']
+          assert not d['truth']['competition_submission']
+          print(json.dumps(d['aggregate'],sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r273t-factorized-ui-target4
+          path: |
+            r273t.json
+            r273t-stdout.txt
+          retention-days: 30
