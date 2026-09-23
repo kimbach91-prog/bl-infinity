@@ -1,0 +1,54 @@
+name: ARC3 R274 tr87 temporal UI order2
+on:
+  push:
+    branches: [deus/r274-tr87-temporal-ui-order2-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_tr87_temporal_ui_order2_274.py
+      - .github/workflows/arc3-r274-tr87-temporal-ui-order2.yml
+permissions: {contents: read}
+jobs:
+  evaluate-r274:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage tr87 p0-p19
+        shell: bash
+        run: |
+          mkdir -p public_trace
+          cp upstream-duck/example-run/artifacts/tr87-*_events.jsonl public_trace/
+          test "$(find public_trace -name 'tr87-*_events.jsonl' | wc -l)" -eq 20
+      - name: Execute R274
+        shell: bash
+        run: |
+          args=(); for f in public_trace/tr87-*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_tr87_temporal_ui_order2_274.py "${args[@]}" --output r274.json | tee r274-stdout.txt
+      - name: Verify truth boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r274.json'))
+          assert d['schema']=='deus/arc3-r274-tr87-temporal-ui-order2/1'
+          assert not d['truth']['p10_p19_updates_model']
+          assert not d['truth']['kaggle_execution']
+          assert not d['truth']['competition_submission']
+          print(json.dumps({'selected':d['selection']['selected_order2'],'heldout':d['heldout_p10_p19'],'promote':d['promote_representation']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r274-tr87-temporal-ui-order2
+          path: |
+            r274.json
+            r274-stdout.txt
+          retention-days: 30
