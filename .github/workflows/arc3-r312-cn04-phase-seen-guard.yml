@@ -1,0 +1,67 @@
+name: ARC3 R312 cn04 phase-seen reliability guard
+on:
+  push:
+    branches: [deus/r312-cn04-phase-seen-reliability-gate-20260923]
+    paths:
+      - .github/workflows/arc3-r312-cn04-phase-seen-guard.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage exact cn04 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="cn04-2fe56bfb_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -type f -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R312
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_cn04_phase_seen_guard_312.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_cn04_phase_seen_guard_312.py "${args[@]}" --output r312-cn04.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r312-cn04.json'))
+          assert d['schema']=='deus/arc3-r312-cn04-phase-seen-guard/1'
+          p=d['protocol']; t=d['truth']
+          assert p['hypothesis_informed_by_p10_p19'] is True and p['p10_p19_updates_table'] is False
+          assert t['source_assisted_by_reused_public_errors'] and t['reused_public_development_holdout']
+          assert not t['solver_promotion'] and not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'baseline':d['baseline'],'guarded':d['guarded']},sort_keys=True))
+          PY
+          sha256sum r312-cn04.json runtime.txt stdout.txt public_trace/SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r312-cn04-phase-seen-guard
+          path: |
+            r312-cn04.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
