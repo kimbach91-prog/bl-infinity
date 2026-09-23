@@ -1,0 +1,113 @@
+name: DEUS CX-001 DiGe C39 application-transfer canary
+
+on:
+  push:
+    branches:
+      - "deus/cx001-app-transfer-dige-c39-20260923"
+    paths:
+      - "benchmarks/cx001_dige_c39_transfer.py"
+      - "benchmarks/data/cx001_dige_c39_public_fixture.json"
+      - ".github/workflows/deus-cx001-dige-c39-transfer.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deus-cx001-dige-c39-transfer-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  transfer:
+    strategy:
+      fail-fast: false
+      max-parallel: 4
+      matrix:
+        regime:
+          - C39_REAL_REPLAY
+          - GEOMETRY_MUTATION_CONTROL
+        trial: [1, 2]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+
+      - name: Execute application-transfer canary
+        shell: bash
+        env:
+          REGIME: ${{ matrix.regime }}
+          TRIAL: ${{ matrix.trial }}
+        run: |
+          set -euo pipefail
+          out="cx-transfer-artifacts/${REGIME}/trial-${TRIAL}/receipt.json"
+          python3 benchmarks/cx001_dige_c39_transfer.py \
+            --regime "${REGIME}" \
+            --trial "${TRIAL}" \
+            --output "${out}"
+
+      - name: Upload transfer receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cx001-dige-c39-${{ matrix.regime }}-trial-${{ matrix.trial }}
+          path: cx-transfer-artifacts/${{ matrix.regime }}/trial-${{ matrix.trial }}/receipt.json
+          retention-days: 30
+
+  reduce:
+    needs: transfer
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Download all transfer receipts
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          pattern: cx001-dige-c39-*
+          path: cx-transfer-reduce
+          merge-multiple: false
+
+      - name: Reduce application-transfer verdict
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, pathlib, hashlib
+          receipts=[json.loads(p.read_text()) for p in pathlib.Path("cx-transfer-reduce").rglob("receipt.json")]
+          assert len(receipts)==4, len(receipts)
+          real=[r for r in receipts if r["regime"]=="C39_REAL_REPLAY"]
+          neg=[r for r in receipts if r["regime"]=="GEOMETRY_MUTATION_CONTROL"]
+          assert len(real)==2 and len(neg)==2
+          assert all(r["metrics"]["false_exclusion_count"]==0 for r in receipts)
+          assert all(r["acceptance"]["exact_transfer_verdict"] for r in receipts)
+          assert all(r["candidate"]["node_evals"]==5 for r in real)
+          assert all(r["metrics"]["logical_node_evals_avoided"]==1 for r in real)
+          assert all(r["candidate"]["node_evals"]==6 for r in neg)
+          assert all(r["metrics"]["logical_node_evals_avoided"]==0 for r in neg)
+          summary={
+            "schema":"deus-cx001-application-transfer-summary/1",
+            "application":"DIGE_C39_HHIR_HYPERREAL",
+            "mode":"REAL_PUBLIC_WORKLOAD_REPLAY",
+            "receipts":4,
+            "real_trials":2,
+            "negative_control_trials":2,
+            "false_exclusion_count":sum(r["metrics"]["false_exclusion_count"] for r in receipts),
+            "real_dependency_nodes":real[0]["metrics"]["dependency_nodes"],
+            "real_causal_nodes":real[0]["metrics"]["causal_nodes"],
+            "real_logical_node_evals_avoided":real[0]["metrics"]["logical_node_evals_avoided"],
+            "real_logical_work_avoided_fraction":real[0]["metrics"]["logical_work_avoided_fraction"],
+            "geometry_negative_control_reopens_full_graph":all(r["candidate"]["node_evals"]==6 for r in neg),
+            "actual_public_reducer_structural_hhir_pass":True,
+            "transfer_verdict":"APPLICATION_TRANSFER_REPLAY_PASS",
+            "claim_ceiling":"REAL_WORKLOAD_REPLAY_ONLY__LIVE_RENDER_INTEGRATION_PENDING__NO_PHYSICAL_SPEEDUP_OR_ENERGY_CREDIT"
+          }
+          raw=json.dumps(summary,sort_keys=True,separators=(",",":")).encode()
+          summary["summary_sha256"]=hashlib.sha256(raw).hexdigest()
+          pathlib.Path("cx001_dige_c39_transfer_summary.json").write_text(json.dumps(summary,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_APP_TRANSFER_SUMMARY="+json.dumps(summary,sort_keys=True,separators=(",",":")))
+          PY
+
+      - name: Upload transfer summary
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cx001-dige-c39-transfer-summary
+          path: cx001_dige_c39_transfer_summary.json
+          retention-days: 30
