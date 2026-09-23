@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# Trigger note: workflow added in prior commit; this comment retriggers execution without changing frozen candidate semantics.\n#!/usr/bin/env python3
 """R338: one-shot no-retune source-free p10-p19 final public audit for frozen R336/R335.
 
 Fit uses exact public p0-p4 only. Evaluation uses exact p10-p19 only.
