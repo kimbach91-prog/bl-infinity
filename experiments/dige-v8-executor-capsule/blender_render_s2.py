@@ -1085,7 +1085,7 @@ def s1_gnm_skin_material():
     set_input(bs,"IOR",1.42)
     set_input(bs,"Specular IOR Level",.25 if S2_3_FACE_REALISM else .30)
     set_input(bs,"Subsurface Weight",.012 if S2_3_FACE_REALISM else (.006 if S2_1_HYPERREAL else (.010 if S2_ANATOMY_DYNAMICS else .014)))
-    set_input(bs,"Subsurface Scale",.00055 if S2_3_FACE_REALISM else (.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042))
+    set_input(bs,"Subsurface Scale",.00055 if S2_3_FACE_REALISM else (.00042 if S2_1_HYPERREAL else (.00034 if S2_ANATOMY_DYNAMICS else .00042)))
     set_input(bs,"Subsurface Radius",(1.0,.38,.18))
     set_input(bs,"Coat Weight",.020 if S2_3_FACE_REALISM else 0.0)
     set_input(bs,"Coat Roughness",.40 if S2_3_FACE_REALISM else .55)
