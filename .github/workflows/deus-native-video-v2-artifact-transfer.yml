@@ -1,0 +1,43 @@
+name: DEUS Native Video V2 Artifact Transfer
+on:
+  push:
+    branches:
+      - deus/temp-native-video-v2-artifact-20260923
+permissions:
+  contents: read
+jobs:
+  decode-verify-upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Decode and verify
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/deus-video-v2
+          base64 -d .deus/tmp-artifacts/native-video-v2.mp4.b64 > /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2.mp4
+          base64 -d .deus/tmp-artifacts/native-video-v2-receipt.json.b64 > /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2_RECEIPT.json
+          echo "f0923bcd58ec1295c32ca9a11bf5cb3e4a15671f2c014184166108296a6a89c2  /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2.mp4" | sha256sum -c -
+          echo "d7c2cec48d266528370b54284c283ec082e5e72a614bb1394ab50cb0ea578816  /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2_RECEIPT.json" | sha256sum -c -
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("/tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2.mp4")
+          r=json.loads(pathlib.Path("/tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2_RECEIPT.json").read_text())
+          sha=hashlib.sha256(p.read_bytes()).hexdigest()
+          assert sha==r["output_sha256"], (sha,r["output_sha256"])
+          assert r["generation_operator"]=="diffusion"
+          assert r["temporal_latent_frames"]>1
+          assert r["sampling_steps"]>0
+          assert r["spatiotemporal_modeling"] is True
+          assert r["proprietary_video_api_calls"]==0
+          print(json.dumps({"verified":True,"sha256":sha,"bytes":p.stat().st_size,"receipt":r},sort_keys=True))
+          PY
+          ffprobe -v error -select_streams v:0 -show_entries stream=codec_name,width,height,r_frame_rate,nb_frames,duration -of json /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2.mp4 > /tmp/deus-video-v2/ffprobe.json
+          cat /tmp/deus-video-v2/ffprobe.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: DEUS-NATIVE-GENERATIVE-VIDEO-V2-VERIFIED
+          path: |
+            /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2.mp4
+            /tmp/deus-video-v2/DEUS_NATIVE_GENERATIVE_VIDEO_V2_RECEIPT.json
+            /tmp/deus-video-v2/ffprobe.json
+          retention-days: 30
