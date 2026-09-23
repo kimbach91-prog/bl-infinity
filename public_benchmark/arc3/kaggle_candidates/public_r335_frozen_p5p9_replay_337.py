@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# Trigger note: workflow-only freeze ancestry checkout repaired; candidate semantics remain frozen.\n#!/usr/bin/env python3
 """R337: no-retune source-free p5-p9 replay for the frozen R336/R335 semantic-equivalence candidate.
 
 Fit uses exact public p0-p4 only. Evaluation uses exact p5-p9 only.
