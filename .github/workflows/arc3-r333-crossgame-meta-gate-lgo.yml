@@ -44,6 +44,13 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
+      - name: Checkout frozen R330 dependency ancestry
+        uses: actions/checkout@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          ref: 7358fa568414a96a2acf864a450ecc078bd8c433
+          path: frozen-r330
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: Tufalabs/duck-harness
@@ -68,8 +75,12 @@ jobs:
           ! find public_trace -name '*_p1[0-9]_events.jsonl' | grep -q .
       - name: Build R333 per-game p0-p4 summary
         shell: bash
+        env:
+          PYTHONPATH: ${{ github.workspace }}/frozen-r330/public_benchmark/arc3/kaggle_candidates
         run: |
           set -euo pipefail
+          test -f frozen-r330/public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py
+          test -f frozen-r330/public_benchmark/arc3/kaggle_candidates/public_structural25_fixed_method_loto_329.py
           args=()
           for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
           /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_crossgame_meta_gate_lgo_333.py \
