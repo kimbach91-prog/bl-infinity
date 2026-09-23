@@ -1,0 +1,85 @@
+name: ARC3 R298 lp85 hierarchical sparse delta gate
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r298-lp85-hierarchical-sparse-delta-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r298-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 24}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify R298 source fixed before staging replay traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 1969ca7fe1b09ec2f5f5540ff58cadc01b8b8040^{commit}
+          git merge-base --is-ancestor 1969ca7fe1b09ec2f5f5540ff58cadc01b8b8040 HEAD
+          test "$(git show 1969ca7fe1b09ec2f5f5540ff58cadc01b8b8040:public_benchmark/arc3/kaggle_candidates/public_lp85_hierarchical_sparse_delta_gate_298.py | sha256sum | cut -d' ' -f1)" = "$(sha256sum public_benchmark/arc3/kaggle_candidates/public_lp85_hierarchical_sparse_delta_gate_298.py | cut -d' ' -f1)"
+      - name: Stage exact lp85 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute bounded hierarchical replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_loto_sparse_local_delta_diag_294.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_hierarchical_sparse_delta_gate_298.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_hierarchical_sparse_delta_gate_298.py "${args[@]}" --output r298-lp85.json 2> >(tee r298-runtime.txt >&2) | tee r298-stdout.txt
+      - name: Independent truth-boundary audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r298-lp85.json'))
+          assert d['schema']=='deus/arc3-r298-lp85-hierarchical-sparse-delta-gate/1'
+          assert d['protocol']['fit']=='p0-p4 only'
+          assert d['protocol']['source_assisted_replay']=='p5-p9 only'
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert d['protocol']['replay_is_not_independent'] is True
+          assert d['truth']['p10_p19_read'] is False
+          assert d['truth']['solver_promotion'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'fit_gate':d['fit_gate'],'replay':d['replay'],'delta':d['delta'],'per_trace':d['per_trace']},sort_keys=True))
+          PY
+          sha256sum r298-lp85.json r298-runtime.txt r298-stdout.txt public_trace/SHA256SUMS.txt > R298_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r298-lp85-hierarchical-sparse-delta-gate
+          path: |
+            r298-lp85.json
+            r298-runtime.txt
+            r298-stdout.txt
+            R298_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
