@@ -1,0 +1,73 @@
+name: ARC3 R333 aggregate repair from run35846360907
+on:
+  push:
+    branches: [deus/r333-crossgame-meta-gate-lgo-20260923]
+    paths:
+      - .github/workflows/arc3-r333-aggregate-repair.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  aggregate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout frozen R330 dependency ancestry
+        uses: actions/checkout@v4
+        with:
+          repository: kimbach91-prog/bl-infinity
+          ref: 7358fa568414a96a2acf864a450ecc078bd8c433
+          path: frozen-r330
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Download exact R333 A2 per-game artifacts only
+        uses: actions/download-artifact@v4
+        with:
+          pattern: r333-game-*
+          path: r333_inputs
+          merge-multiple: true
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35846360907
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Verify exact 25 summaries and aggregate leave-one-game-out gate
+        shell: bash
+        env:
+          PYTHONPATH: ${{ github.workspace }}/frozen-r330/public_benchmark/arc3/kaggle_candidates
+        run: |
+          set -euo pipefail
+          test "$(find r333_inputs -maxdepth 1 -name 'r333-game-*.json' -type f | wc -l)" -eq 25
+          test -f frozen-r330/public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py
+          python public_benchmark/arc3/kaggle_candidates/public_crossgame_meta_gate_lgo_333.py \
+            --aggregate-dir r333_inputs --output r333-crossgame-meta-gate-lgo.json | tee aggregate-stdout.txt
+      - name: Independent audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r333-crossgame-meta-gate-lgo.json'))
+          assert d['schema']=='deus/arc3-r333-crossgame-meta-gate-lgo/1'
+          assert d['idempotency_key']=='R333-CROSSGAME-META-GATE-LGO-20260923-001'
+          assert d['protocol']['game_count']==25
+          assert d['protocol']['p5_p9_staged_or_read'] is False
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert len(d['folds'])==25 and len({x['held_game'] for x in d['folds']})==25
+          assert all(x['selection_used_held_outcome'] is False for x in d['folds'])
+          t=d['truth']
+          assert t['public_offline_only'] and t['game_level_cross_validation']
+          assert not t['independent_hidden_generalization_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert t['competition_quota_spent']==0
+          print(json.dumps({'verdict':d['verdict'],'aggregate':d['aggregate'],'threshold_histogram':d['threshold_histogram']},sort_keys=True))
+          PY
+          sha256sum r333-crossgame-meta-gate-lgo.json aggregate-stdout.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r333-crossgame-meta-gate-lgo
+          path: |
+            r333-crossgame-meta-gate-lgo.json
+            aggregate-stdout.txt
+            SHA256SUMS.txt
+          retention-days: 30
