@@ -1,0 +1,57 @@
+name: ARC3 R325X bp35 ls20 regions fallback
+on:
+  push:
+    branches: [deus/r325x-bp35-ls20-regions-fallback-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_bp35_ls20_regions_fallback_325x.py
+      - .github/workflows/arc3-r325x-regions-fallback.yml
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  r325x:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 16}
+      - name: Verify frozen source
+        run: |
+          git cat-file -e 5c49dc2970c7a52cae8b81980f247c6fda478d88^{commit}
+          git merge-base --is-ancestor 5c49dc2970c7a52cae8b81980f247c6fda478d88 HEAD
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage p0-p9 only
+        run: |
+          mkdir -p public_trace
+          for game in bp35-0a0ad940 ls20-9607627b; do
+            for p in $(seq 0 9); do cp "upstream-duck/example-run/artifacts/${game}_p${p}_events.jsonl" public_trace/; done
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 20
+          ! find public_trace -name '*_p1[0-9]_events.jsonl' | grep -q .
+      - name: Execute
+        run: |
+          args=(); for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_bp35_ls20_regions_fallback_325x.py "${args[@]}" --output r325x.json | tee stdout.txt
+      - name: Audit
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r325x.json')); assert d['schema']=='deus/arc3-r325x-regions-fallback/1'
+          assert not d['protocol']['p10_p19_staged_or_read']
+          print(json.dumps({'verdict':d['verdict'],'pass_games':d['pass_games']},sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r325x-regions-fallback
+          path: |
+            r325x.json
+            stdout.txt
+          retention-days: 30
