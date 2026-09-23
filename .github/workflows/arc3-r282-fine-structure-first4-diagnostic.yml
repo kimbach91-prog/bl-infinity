@@ -1,0 +1,131 @@
+name: ARC3 R282 fine-structure first-four diagnostic
+
+on:
+  push:
+    branches: [deus/r282-fine-structure-first4-diagnostic-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_fine_structure_first4_diag_282.py
+      - .github/workflows/arc3-r282-fine-structure-first4-diagnostic.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diag-r282:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile R282
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py             public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py             public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py             public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py             public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py             public_benchmark/arc3/kaggle_candidates/public_fine_structure_first4_diag_282.py
+
+      - name: Stage remaining first-subset four p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          import re
+          from pathlib import Path
+
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          prefixes=('dc22','ft09','tr87','wa30')
+
+          by={}
+          for f in src.glob('*_p*_events.jsonl'):
+              m=re.match(r'(.+)_p(\d+)_events\.jsonl$',f.name)
+              if m:
+                  by.setdefault(m.group(1),{})[int(m.group(2))]=f
+
+          selected={}
+          for prefix in prefixes:
+              matches=sorted(g for g,d in by.items() if g.startswith(prefix+'-') and set(d)>=set(range(10)))
+              if len(matches)!=1:
+                  raise SystemExit(f'{prefix}: expected one p0-p9 game, got {matches}')
+              selected[prefix]=matches[0]
+
+          for prefix,g in selected.items():
+              for p in range(10):
+                  f=by[g][p]
+                  (dst/f.name).write_bytes(f.read_bytes())
+          print(selected)
+          PY
+
+          test "$(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | wc -l)" -eq 40
+          ! find public_trace -maxdepth 1 -regex '.*_p1[0-9]_events.jsonl' -print -quit | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute R282 diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | sort)
+          test "${#files[@]}" -eq 40
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python             public_benchmark/arc3/kaggle_candidates/public_fine_structure_first4_diag_282.py             "${args[@]}"             --output r282-fine-structure-first4.json             2> >(tee r282-runtime.txt >&2) | tee r282-stdout.txt
+
+      - name: Verify R282 truth boundary and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          d=json.loads(Path('r282-fine-structure-first4.json').read_text())
+          assert d['schema']=='deus/arc3-r282-fine-structure-first4-diagnostic/1'
+          assert d['rung']==282
+          assert d['target_prefixes']==['dc22','ft09','tr87','wa30']
+          assert len(d['resolved_games'])==4 and len(d['games'])==4
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4' and p['diagnostic']=='p5-p9'
+          assert p['p10_p19_staged_or_read'] is False and p['promotion_in_r282'] is False
+          assert d['representation_delta']['ui_mask_retuned'] is False
+          assert t['public_trace_only'] and t['source_free_runtime_logic'] and t['past_only_phase_features']
+          assert t['p10_p19_read'] is False
+          assert not t['independent_hidden_generalization_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert not t['submission_quota_spent_by_r282'] and not t['solver_promotion']
+
+          verdict={
+              'verdict':d['verdict'],
+              'signal_count':len(d['signals']),
+              'signals':d['signals'],
+              'resolved_games':d['resolved_games'],
+              'truth_lane':'PUBLIC_OFFLINE_P5P9_FINE_STRUCTURE_FIRST4_DIAGNOSTIC',
+          }
+          Path('r282-verdict.json').write_text(json.dumps(verdict,indent=2,sort_keys=True)+'\n')
+          print(Path('r282-verdict.json').read_text())
+          PY
+
+          sha256sum             r282-fine-structure-first4.json             r282-verdict.json             r282-runtime.txt             r282-stdout.txt             public_trace/SHA256SUMS.txt             > R282_SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r282-fine-structure-first4-diagnostic
+          path: |
+            r282-fine-structure-first4.json
+            r282-verdict.json
+            r282-runtime.txt
+            r282-stdout.txt
+            R282_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
