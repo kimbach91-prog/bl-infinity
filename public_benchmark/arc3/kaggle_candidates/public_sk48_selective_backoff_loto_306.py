@@ -30,8 +30,10 @@ MIN_NESTED_PRED=2
 
 
 def fit_raw(rows,mode):
-    # r304.fit expects a list of trace groups; a single group preserves rows.
-    return r304.fit([rows],mode)
+    groups={}
+    for r in rows:
+        groups.setdefault(r["trace"],[]).append(r)
+    return r304.fit(list(groups.values()),mode)
 
 
 def nested_trust(train_traces):
