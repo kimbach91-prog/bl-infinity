@@ -92,7 +92,7 @@ def parse_state(event):
     cursor=None
     if white_cols:
         m=sum(white_cols)/len(white_cols)
-        ds=sorted((abs(m,c0),i) for i,c0 in enumerate(centers))
+        ds=sorted((abs(m-c0),i) for i,c0 in enumerate(centers))
         if len(ds)==1 or ds[0][0]<ds[1][0]:cursor=ds[0][1]
     return {'current':[p['id'] for p in editable],'target':targets,'cursor':cursor,'relation_map':relation_map}
 
