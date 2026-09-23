@@ -3,7 +3,7 @@ name: ARC3 Flash agent-state matched provider A/B
 on:
   push:
     branches:
-      - deus/arc3-kaggle-rank-climb-20260921
+      - deus/c9-agent-state-ab-tr87-20260923
     paths:
       - public_benchmark/arc3/kaggle_candidates/flash_next_340/agent_state_ab_request.json
       - public_benchmark/arc3/kaggle_candidates/flash_next_340/upstream_flash_agent_state_patch.py
