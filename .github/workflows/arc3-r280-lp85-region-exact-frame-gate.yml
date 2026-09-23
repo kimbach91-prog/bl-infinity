@@ -1,0 +1,123 @@
+name: ARC3 R280 lp85 region exact-frame gate
+
+on:
+  push:
+    branches: [deus/r280-lp85-region-exact-frame-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_lp85_region_exact_frame_gate_280.py
+      - .github/workflows/arc3-r280-lp85-region-exact-frame-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  gate-r280:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile R280
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py             public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py             public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py             public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py             public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py             public_benchmark/arc3/kaggle_candidates/public_lp85_region_exact_frame_gate_280.py
+
+      - name: Stage exact lp85 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          game='lp85-305b61c3'
+          for p in range(20):
+              f=src/f'{game}_p{p}_events.jsonl'
+              if not f.is_file():
+                  raise SystemExit(f'missing trace: {f}')
+              (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          test "$(find public_trace -maxdepth 1 -name 'lp85-305b61c3_p*_events.jsonl' -type f | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+
+      - name: Execute R280 exact-frame gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name 'lp85-305b61c3_p*_events.jsonl' -type f | sort -V)
+          test "${#files[@]}" -eq 20
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python             public_benchmark/arc3/kaggle_candidates/public_lp85_region_exact_frame_gate_280.py             "${args[@]}"             --output r280-lp85-region-exact-frame.json             2> >(tee r280-runtime.txt >&2) | tee r280-stdout.txt
+
+      - name: Verify R280 truth boundary and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          d=json.loads(Path('r280-lp85-region-exact-frame.json').read_text())
+          assert d['schema']=='deus/arc3-r280-lp85-region-exact-frame-gate/1'
+          assert d['rung']==280
+          assert d['lineage']['frozen_game']=='lp85-305b61c3'
+          assert d['lineage']['frozen_representation']=='canon_regions_ui'
+          assert d['lineage']['r279_representation_promoted'] is True
+          assert d['renderer']['exact_baseline_precedence'] is True
+          assert d['renderer']['min_distinct_raw_prestates']==2
+          p=d['protocol']; t=d['truth']
+          assert p['renderer_diagnostic_fit']=='p0-p4'
+          assert p['renderer_diagnostic_eval']=='p5-p9'
+          assert p['frozen_eval']=='p10-p19 reused public-development'
+          assert not p['p10_p19_updates_renderer']
+          assert not p['p10_p19_updates_representation']
+          assert not p['p10_p19_updates_model']
+          assert t['public_trace_only'] and t['source_free_runtime_logic']
+          assert t['reused_public_development_holdout']
+          assert t['representation_frozen_before_r280']
+          assert t['renderer_semantics_fixed_before_p10_p19']
+          assert not t['independent_hidden_generalization_claim']
+          assert not t['full_game_policy_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert not t['submission_quota_spent_by_r280']
+
+          verdict={
+              'verdict':d['verdict'],
+              'diagnostic_pass':d['diagnostic_pass'],
+              'diagnostic_p5_p9':d['diagnostic_p5_p9'],
+              'heldout_p10_p19':d['heldout_p10_p19'],
+              'exact_frame_promoted':d['exact_frame_promoted'],
+              'truth_lane':'PUBLIC_OFFLINE_LP85_INCREMENTAL_EXACT_FRAME_RENDERER_GATE',
+          }
+          Path('r280-verdict.json').write_text(json.dumps(verdict,indent=2,sort_keys=True)+'\n')
+          print(Path('r280-verdict.json').read_text())
+          PY
+
+          sha256sum             r280-lp85-region-exact-frame.json             r280-verdict.json             r280-runtime.txt             r280-stdout.txt             public_trace/SHA256SUMS.txt             > R280_SHA256SUMS.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r280-lp85-region-exact-frame-gate
+          path: |
+            r280-lp85-region-exact-frame.json
+            r280-verdict.json
+            r280-runtime.txt
+            r280-stdout.txt
+            R280_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
