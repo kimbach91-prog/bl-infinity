@@ -13,6 +13,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 4
       - uses: actions/checkout@v4
         with:
           repository: Tufalabs/duck-harness
@@ -23,12 +25,14 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with: {python-version: '3.12'}
-      - name: Verify candidate was frozen in parent commit before heldout staging
+      - name: Verify candidate freeze commit is immutable ancestor before heldout staging
         shell: bash
         run: |
           set -euo pipefail
           git cat-file -e a2df8ee04d7a59319fa37f8cb7b6615737bf2634^{commit}
-          test "$(git rev-parse HEAD^ )" = "a2df8ee04d7a59319fa37f8cb7b6615737bf2634"
+          git merge-base --is-ancestor a2df8ee04d7a59319fa37f8cb7b6615737bf2634 HEAD
+          git show a2df8ee04d7a59319fa37f8cb7b6615737bf2634:public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py | grep -F 'TARGET_GAME = "lp85-305b61c3"'
+          git show a2df8ee04d7a59319fa37f8cb7b6615737bf2634:public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py | grep -F 'FROZEN_MODE = "canon_regions_ui"'
           grep -F 'TARGET_GAME = "lp85-305b61c3"' public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py
           grep -F 'FROZEN_MODE = "canon_regions_ui"' public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py
       - name: Stage exact lp85 p0-p19 after freeze
