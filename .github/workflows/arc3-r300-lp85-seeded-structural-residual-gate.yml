@@ -1,0 +1,75 @@
+name: ARC3 R300 lp85 seeded structural residual gate
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r300-lp85-seeded-structural-residual-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r300-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 32}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify source fixed before staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 8ef0c66fdbc1087027939c221b33117359e1995d^{commit}
+          git merge-base --is-ancestor 8ef0c66fdbc1087027939c221b33117359e1995d HEAD
+      - name: Stage exact lp85 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute bounded structural replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_lp85_seeded_structural_residual_gate_300.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_seeded_structural_residual_gate_300.py "${args[@]}" --output r300-lp85.json 2> >(tee r300-runtime.txt >&2) | tee r300-stdout.txt
+      - name: Audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r300-lp85.json'))
+          assert d['schema']=='deus/arc3-r300-lp85-seeded-structural-residual-gate/1'
+          assert d['protocol']['fit']=='p0-p4 only'
+          assert d['protocol']['source_assisted_replay']=='p5-p9 only'
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert d['protocol']['replay_is_not_independent'] is True
+          assert d['truth']['solver_promotion'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'fit_gate':d['fit_gate'],'replay':d['replay'],'delta':d['delta'],'per_trace':d['per_trace']},sort_keys=True))
+          PY
+          sha256sum r300-lp85.json r300-runtime.txt r300-stdout.txt public_trace/SHA256SUMS.txt > R300_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r300-lp85-seeded-structural-residual-gate
+          path: |
+            r300-lp85.json
+            r300-runtime.txt
+            r300-stdout.txt
+            R300_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
