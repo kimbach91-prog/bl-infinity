@@ -1,0 +1,80 @@
+name: ARC3 R315 dc22 phase frozen p5-p9
+
+on:
+  push:
+    branches:
+      - deus/r314-residual4-mode-sharded-loto-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_dc22_phase_frozen_p5p9_315.py
+      - .github/workflows/arc3-r315-dc22-phase-frozen-p5p9.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Stage exact p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="dc22-fdcac232_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute frozen diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_dc22_phase_frozen_p5p9_315.py
+          train=(); for p in $(seq 0 4); do train+=(--train "public_trace/dc22-fdcac232_p${p}_events.jsonl"); done
+          evals=(); for p in $(seq 5 9); do evals+=(--eval "public_trace/dc22-fdcac232_p${p}_events.jsonl"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_dc22_phase_frozen_p5p9_315.py "${train[@]}" "${evals[@]}" --output r315-dc22-phase-p5p9.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r315-dc22-phase-p5p9.json'))
+          assert d['schema']=='deus/arc3-r315-dc22-phase-frozen-p5p9/1'
+          assert d['game']=='dc22-fdcac232' and d['mode']=='phase'
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='public p0-p4 all five traces'
+          assert p['evaluation']=='public p5-p9 frozen replay'
+          assert p['selector_or_representation_updates_after_p5_read'] is False
+          assert p['p10_p19_staged_or_read'] is False
+          assert t['p5_p9_read'] is True and t['p10_p19_read'] is False
+          assert not t['solver_promotion'] and not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'eval_total':d['eval_total']},sort_keys=True))
+          PY
+          sha256sum r315-dc22-phase-p5p9.json runtime.txt stdout.txt public_trace/SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r315-dc22-phase-p5p9
+          path: |
+            r315-dc22-phase-p5p9.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
