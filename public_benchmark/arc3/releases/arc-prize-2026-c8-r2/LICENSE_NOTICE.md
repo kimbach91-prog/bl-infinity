@@ -1,11 +1,21 @@
 # License notice
 
-The upstream Flash-Next/Duck-derived source in this candidate preserves the upstream MIT license in:
+## Competition-facing code
+
+Repository-authored code used by this release is covered by the repository code license:
+
+`/LICENSE-CODE` — MIT License, copyright (c) 2026 Lâm Kim Bách.
+
+## Upstream Flash-Next / Duck-derived material
+
+The upstream material preserved with this candidate keeps its upstream MIT license at:
 
 `public_benchmark/arc3/kaggle_candidates/flash_next_340/UPSTREAM_LICENSE.txt`
 
-Copyright and license obligations for upstream material remain with the respective upstream authors.
+Upstream copyright and attribution remain with the respective upstream authors.
 
-New documentation in this release is provided for reproducibility and attribution of the ARC Prize 2026 competition candidate.
+## Documentation
 
-This file is not legal advice and does not supersede the competition rules or upstream licenses.
+This release documentation is provided for reproducibility, attribution, and competition review. The repository content-license notice remains at `/LICENSE-CONTENT`.
+
+This notice does not override the competition rules or any third-party license.
