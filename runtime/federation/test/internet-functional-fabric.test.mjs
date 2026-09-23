@@ -70,6 +70,23 @@ test('freshness, quota, cost, trust and receipt requirements fail closed when re
   assert.equal(evaluated.rejectionCounts.QUOTA,1);
 });
 
+test('data ceiling, side-effect and receipt-schema contracts reject incompatible routes',()=>{
+  const atlas=compileCapabilityAtlas([
+    {id:'public-read',namespace:internetNamespace(['service','public-read']),capabilityAbi:[{id:'object.store',inputType:'object',outputType:'revision',sideEffect:'READ_ONLY',dataCeiling:'PUBLIC',receiptSchema:'read/1'}],authorization:{allowedDataClasses:['BL-S1']},telemetry:{trust:1,availability:1},receipt:{capable:true,schema:'read/1'},state:'VERIFIED'},
+    {id:'public-write',namespace:internetNamespace(['service','public-write']),capabilityAbi:[{id:'object.store',inputType:'object',outputType:'revision',sideEffect:'WRITE',dataCeiling:'PUBLIC',receiptSchema:'write/1'}],authorization:{allowedDataClasses:['BL-S1']},telemetry:{trust:1,availability:1},receipt:{capable:true,schema:'write/1'},state:'VERIFIED'},
+    {id:'private-write-wrong-receipt',namespace:internetNamespace(['service','private-write-wrong']),capabilityAbi:[{id:'object.store',inputType:'object',outputType:'revision',sideEffect:'WRITE',dataCeiling:'BL-S1',receiptSchema:'write/0'}],authorization:{allowedDataClasses:['BL-S1']},telemetry:{trust:1,availability:1},receipt:{capable:true,schema:'write/0'},state:'VERIFIED'},
+    {id:'private-write',namespace:internetNamespace(['service','private-write']),capabilityAbi:[{id:'object.store',inputType:'object',outputType:'revision',sideEffect:'WRITE',dataCeiling:'BL-S1',receiptSchema:'write/1'}],authorization:{allowedDataClasses:['BL-S1']},telemetry:{trust:.99,availability:.99},receipt:{capable:true,schema:'write/1'},state:'VERIFIED'},
+  ]);
+  const evaluated=evaluateTaskFitRoutes(atlas,{
+    operatorAbi:{id:'object.store',inputType:'object',outputType:'revision',sideEffect:'WRITE',receiptSchema:'write/1'},
+    dataClass:'BL-S1',requireReceipt:true,now:NOW,
+  });
+  assert.deepEqual(evaluated.routes.map(x=>x.id),['private-write']);
+  assert.equal(evaluated.rejectionCounts.CAPABILITY_ABI,1);
+  assert.equal(evaluated.rejectionCounts.DATA_CEILING,1);
+  assert.equal(evaluated.rejectionCounts.RECEIPT_PATH,1);
+});
+
 test('independent cross-check set uses distinct failure groups',()=>{
   const atlas=compileCapabilityAtlas(resources);
   const set=buildCrossCheckSet(atlas,{capability:'net.dns.resolve',width:3,now:NOW});

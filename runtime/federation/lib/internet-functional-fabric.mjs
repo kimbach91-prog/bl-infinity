@@ -248,6 +248,7 @@ function matchedCapability(resource,required){
     hierarchicalCapabilityMatch(c.id,required.id)&&
     typeCompatible(c.inputType,required.inputType)&&
     typeCompatible(c.outputType,required.outputType)&&
+    (required.sideEffect==='UNKNOWN'||c.sideEffect==='UNKNOWN'||c.sideEffect===required.sideEffect)&&
     (required.protocols.length===0||required.protocols.some(p=>c.protocols.includes(p)||resource.protocols.includes(p)))
   )??null;
 }
@@ -269,12 +270,15 @@ function freshnessState(resource,now,maxEvidenceAgeMs){
 }
 function quotaAvailable(resource,now,requireKnownQuota){
   const q=resource.quota;
-  if(q.resetAt&&Date.parse(q.resetAt)<=now) return true;
+  if(q.resetAt&&Date.parse(q.resetAt)<=now) return !requireKnownQuota;
   if(q.remaining==null) return !requireKnownQuota;
   return q.remaining>0;
 }
-function receiptCapable(resource,capability){
-  return resource.receipt.capable===true||Boolean(resource.receipt.schema)||Boolean(capability?.receiptSchema);
+function receiptCompatible(resource,capability,required){
+  const schemas=uniq([resource.receipt.schema,capability?.receiptSchema].filter(Boolean));
+  const capable=resource.receipt.capable===true||schemas.length>0;
+  if(!capable) return false;
+  return required.receiptSchema==null||schemas.includes(required.receiptSchema);
 }
 function namespaceMatches(resource,query,index,requiredCapability){
   const requested=String(query??'deus://internet/');
@@ -286,13 +290,14 @@ function namespaceMatches(resource,query,index,requiredCapability){
     (f.capabilities.length===0||f.capabilities.some(c=>hierarchicalCapabilityMatch(c,requiredCapability.id)))
   );
 }
-function routeMetrics(resource,capability,freshness,requireReceipt){
+function routeMetrics(resource,capability,required,freshness,requireReceipt){
   const freshnessFactor=freshness==='FRESH'?1:(freshness==='UNKNOWN'?0.7:0);
   const posteriorUseful=resource.telemetry.trust*resource.telemetry.availability*freshnessFactor;
   const latency=resource.telemetry.p95LatencyMs??1000;
   const bandwidth=resource.telemetry.estimatedBandwidthMbps??0;
-  const cacheHit=Math.max(0,Math.min(1,Number(resource.cache?.hitProbability??0)));
-  const receiptFactor=requireReceipt?(receiptCapable(resource,capability)?1:0):1;
+  const rawCacheHit=Number(resource.cache?.hitProbability??0);
+  const cacheHit=Number.isFinite(rawCacheHit)?Math.max(0,Math.min(1,rawCacheHit)):0;
+  const receiptFactor=requireReceipt?(receiptCompatible(resource,capability,required)?1:0):1;
   const expectedVerifiedUsefulResult=posteriorUseful*receiptFactor*(1+Math.min(1,Math.log10(1+bandwidth)/4))*(1+cacheHit*0.25);
   const coordination=(latency+resource.telemetry.coordinationMs)/1000;
   const costPenalty=resource.telemetry.costPerUnitUsd*1000;
@@ -305,7 +310,7 @@ function routeMetrics(resource,capability,freshness,requireReceipt){
     latencyMs:latency,
     costPerUnitUsd:resource.telemetry.costPerUnitUsd,
     cacheHitProbability:cacheHit,
-    receiptCapable:receiptCapable(resource,capability),
+    receiptCapable:receiptCompatible(resource,capability,required),
   });
 }
 
@@ -315,6 +320,9 @@ export function evaluateTaskFitRoutes(atlas,{
   maxEvidenceAgeMs=null,minTrust=0,maxCostPerUnitUsd=null,requireKnownQuota=false,
 }={}){
   const required=normalizeCapabilitySignature(operatorAbi??capability);
+  const evidenceAge=maxEvidenceAgeMs==null?null:num(maxEvidenceAgeMs,'maxEvidenceAgeMs');
+  const minimumTrust=Math.min(1,num(minTrust,'minTrust',0));
+  const costCeiling=maxCostPerUnitUsd==null?null:num(maxCostPerUnitUsd,'maxCostPerUnitUsd');
   const requestedLimit=Math.max(1,Math.trunc(num(maxRoutes,'maxRoutes',8)));
   const matchedNamespaceFamilies=(namespaceIndex?.families??[])
     .filter(f=>String(namespace).startsWith(f.prefix)||f.prefix.startsWith(String(namespace)))
@@ -332,13 +340,14 @@ export function evaluateTaskFitRoutes(atlas,{
     const matched=matchedCapability(resource,required);
     if(!matched){reject('CAPABILITY_ABI');continue;}
     if(!authorizedFor(resource,dataClass,now)){reject('AUTHORITY');continue;}
-    const freshness=freshnessState(resource,now,maxEvidenceAgeMs);
+    if(matched.dataCeiling!=null&&dataRank(matched.dataCeiling)<dataRank(dataClass)){reject('DATA_CEILING');continue;}
+    const freshness=freshnessState(resource,now,evidenceAge);
     if(freshness==='STALE'||freshness==='UNKNOWN_BLOCKED'){reject('FRESHNESS');continue;}
     if(!quotaAvailable(resource,now,requireKnownQuota)){reject('QUOTA');continue;}
-    if(resource.telemetry.trust<Number(minTrust)){reject('TRUST');continue;}
-    if(maxCostPerUnitUsd!=null&&resource.telemetry.costPerUnitUsd>Number(maxCostPerUnitUsd)){reject('COST');continue;}
-    if(requireReceipt&&!receiptCapable(resource,matched)){reject('RECEIPT_PATH');continue;}
-    const metrics=routeMetrics(resource,matched,freshness,requireReceipt);
+    if(resource.telemetry.trust<minimumTrust){reject('TRUST');continue;}
+    if(costCeiling!=null&&resource.telemetry.costPerUnitUsd>costCeiling){reject('COST');continue;}
+    if(requireReceipt&&!receiptCompatible(resource,matched,required)){reject('RECEIPT_PATH');continue;}
+    const metrics=routeMetrics(resource,matched,required,freshness,requireReceipt);
     candidates.push({resource,matched,metrics});
   }
   candidates.sort((a,b)=>b.metrics.marginalValue-a.metrics.marginalValue||a.resource.id.localeCompare(b.resource.id));
