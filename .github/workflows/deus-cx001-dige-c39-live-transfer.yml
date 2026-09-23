@@ -215,6 +215,35 @@ jobs:
           tar -xf "/tmp/$TAR" -C /tmp
           echo "BLENDER=/tmp/blender-5.2.2-linux-x64/blender" >> "$GITHUB_ENV"
 
+      - name: Create deterministic C39 verification renderer
+        working-directory: experiments/dige-v8-executor-capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib, json
+          src=Path("blender_render_v8.py")
+          dst=Path("blender_render_cxverify.py")
+          s=src.read_text()
+          old="scene.cycles.use_adaptive_sampling=True"
+          assert s.count(old)==1, s.count(old)
+          s=s.replace(old,"scene.cycles.use_adaptive_sampling=False",1)
+          dst.write_text(s)
+          rec={
+            "schema":"deus-cx001-c39-deterministic-render-verifier/1",
+            "source_sha256":hashlib.sha256(src.read_bytes()).hexdigest(),
+            "verifier_sha256":hashlib.sha256(dst.read_bytes()).hexdigest(),
+            "only_intentional_change":"CYCLES_ADAPTIVE_SAMPLING_TRUE_TO_FALSE",
+            "search_denoise":False,
+            "samples":96,
+            "render_seed":20263939,
+            "claim_ceiling":"DETERMINISTIC_EQUIVALENCE_VERIFICATION_ONLY__NOT_PRODUCTION_RENDER_POLICY"
+          }
+          Path("runtime/CX001_C39_DETERMINISTIC_VERIFIER.json").write_text(json.dumps(rec,indent=2,sort_keys=True)+"\n")
+          print("DEUS_CX001_C39_VERIFIER="+json.dumps(rec,sort_keys=True,separators=(",",":")))
+          PY
+
       - name: Run paired baseline and CX-001 update cycles on same runner
         working-directory: experiments/dige-v8-executor-capsule
         shell: bash
@@ -320,7 +349,7 @@ jobs:
             arm="$1"
             export DIGE_OUTPUT_TAG="cx001_c39_${arm}_t${TRIAL}"
             start_ns="$(date +%s%N)"
-            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_v8.py > "runtime/cx001_c39_${arm}_t${TRIAL}.log"
+            "$BLENDER" --background --factory-startup --python-exit-code 1 --python blender_render_cxverify.py > "runtime/cx001_c39_${arm}_t${TRIAL}.log"
             end_ns="$(date +%s%N)"
             python3 - "${start_ns}" "${end_ns}" "$arm" "$TRIAL" <<'PY'
           import hashlib,json,pathlib,sys
@@ -343,7 +372,8 @@ jobs:
             "scene_sha256":r["scene_sha256"],
             "appearance_candidate":r["appearance_candidate"],
             "receipt_geometry_manifest_sha256":r["geometry_manifest_sha256"],
-            "truth_boundary":"LIVE_C39_HHIR_UPDATE_CYCLE__PAIRED_SAME_RUNNER__GEOMETRY_STAGE_ONLY__NO_ENERGY_CREDIT"
+            "deterministic_verifier":json.loads((rt/"CX001_C39_DETERMINISTIC_VERIFIER.json").read_text()),
+            "truth_boundary":"LIVE_C39_HHIR_UPDATE_CYCLE__PAIRED_SAME_RUNNER__DETERMINISTIC_VERIFICATION_RENDER__GEOMETRY_STAGE_ONLY__NO_ENERGY_CREDIT"
           }
           pre=json.dumps(out,sort_keys=True,separators=(",",":")).encode()
           out["receipt_sha256"]=hashlib.sha256(pre).hexdigest()
@@ -391,7 +421,7 @@ jobs:
               b["geometry_stage"]["geometry_stage_ms"]+b["render_wall_ms"]
             )/max(c["geometry_stage"]["geometry_stage_ms"]+c["render_wall_ms"],1e-9),
             "energy_joules":"UNKNOWN",
-            "claim_ceiling":"C39_UPDATE_CYCLE_GEOMETRY_REUSE_ONLY__PAIRED_SAME_RUNNER__NO_GLOBAL_RENDER_SPEEDUP__NO_ENERGY_CREDIT"
+            "claim_ceiling":"C39_UPDATE_CYCLE_GEOMETRY_REUSE_ONLY__PAIRED_SAME_RUNNER__DETERMINISTIC_VERIFICATION_RENDER__NO_GLOBAL_RENDER_SPEEDUP__NO_ENERGY_CREDIT"
           }
           pre=json.dumps(summary,sort_keys=True,separators=(",",":")).encode()
           summary["receipt_sha256"]=hashlib.sha256(pre).hexdigest()
@@ -455,7 +485,7 @@ jobs:
             "render_output_exact":True,
             "transfer_verdict":"LIVE_APPLICATION_STAGE_ELIMINATION_PASS",
             "energy_joules":"UNKNOWN",
-            "claim_ceiling":"C39_UPDATE_CYCLE_GEOMETRY_REUSE_ONLY__PAIRED_SAME_RUNNER__NO_GLOBAL_SPEEDUP__NO_ENERGY_CREDIT"
+            "claim_ceiling":"C39_UPDATE_CYCLE_GEOMETRY_REUSE_ONLY__PAIRED_SAME_RUNNER__DETERMINISTIC_VERIFICATION_RENDER__NO_GLOBAL_SPEEDUP__NO_ENERGY_CREDIT"
           }
           raw=json.dumps(summary,sort_keys=True,separators=(",",":")).encode()
           summary["summary_sha256"]=hashlib.sha256(raw).hexdigest()
