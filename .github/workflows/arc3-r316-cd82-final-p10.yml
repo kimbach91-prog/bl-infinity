@@ -1,0 +1,87 @@
+name: ARC3 R316 cd82 final p10
+on:
+  push:
+    branches: [deus/r316-cd82-final-p10-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_cd82_final_p10_316.py
+      - .github/workflows/arc3-r316-cd82-final-p10.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r316:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 16}
+      - name: Verify frozen source predates final staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 6c6434231f9a303d019879d782599652a6a5d977^{commit}
+          git merge-base --is-ancestor 6c6434231f9a303d019879d782599652a6a5d977 HEAD
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_cd82_final_p10_316.py
+      - name: Stage p0-p4 and p10-p19 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p train eval
+          for p in $(seq 0 4); do
+            f="cd82-fb555c5d_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "train/${f}"
+          done
+          for p in $(seq 10 19); do
+            f="cd82-fb555c5d_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "eval/${f}"
+          done
+          test "$(find train -type f -name '*_events.jsonl' | wc -l)" -eq 5
+          test "$(find eval -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find train eval -type f -name '*_p[5-9]_events.jsonl' | grep -q .
+          sha256sum train/*.jsonl eval/*.jsonl > TRACE_SHA256SUMS.txt
+      - name: Execute R316
+        shell: bash
+        run: |
+          set -euo pipefail
+          trainargs=(); evalargs=()
+          for f in $(find train -type f -name '*_events.jsonl' | sort -V); do trainargs+=(--train "$f"); done
+          for f in $(find eval -type f -name '*_events.jsonl' | sort -V); do evalargs+=(--eval "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_cd82_final_p10_316.py "${trainargs[@]}" "${evalargs[@]}" --output r316.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r316.json'))
+          assert d['schema']=='deus/arc3-r316-cd82-final-p10/1'
+          p=d['protocol']; t=d['truth']
+          assert p['fit_and_trust']=='p0-p4 only' and p['final_audit']=='p10-p19 only'
+          assert p['p5_p9_staged_or_read_by_r316'] is False
+          assert not p['p10_p19_updates_selector'] and not p['p10_p19_updates_trust'] and not p['p10_p19_updates_model']
+          assert p['no_retune_after_final_audit']
+          assert t['reused_public_development_final_audit']
+          assert not t['solver_promotion'] and not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'gate_pass':d['gate_pass'],'exact_only':d['exact_only_final'],'ensemble':d['ensemble_final']},sort_keys=True))
+          PY
+          sha256sum r316.json runtime.txt stdout.txt TRACE_SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r316-cd82-final-p10
+          path: |
+            r316.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            TRACE_SHA256SUMS.txt
+          retention-days: 30
