@@ -1,0 +1,64 @@
+name: ARC3 R272 public25 exact-frame union
+on:
+  push:
+    branches: [deus/r270-ui-mask-frozen-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_r272_exact_frame_union.py
+      - .github/workflows/arc3-r272-exact-frame-union.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-r272:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage public25
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts');dst=Path('public_trace')
+          files=[]
+          for p in range(20):files.extend(src.glob(f'*_p{p}_events.jsonl'))
+          files=sorted(set(files));assert len(files)==500
+          for f in files:(dst/f.name).write_bytes(f.read_bytes())
+          PY
+      - name: Execute R272
+        shell: bash
+        run: |
+          args=()
+          for f in public_trace/*_events.jsonl; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_r272_exact_frame_union.py "${args[@]}" --output r272.json | tee r272-stdout.txt
+      - name: Verify
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r272.json'))
+          assert d['schema']=='deus/arc3-r272-public25-exact-frame-union/1'
+          assert d['aggregate']['game_count']==25
+          assert d['truth']['expert_set_frozen_from_r271']
+          assert d['truth']['exact_baseline_precedence']
+          assert not d['truth']['retune'] and not d['truth']['kaggle_execution']
+          print(json.dumps(d['aggregate'],sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r272-public25-exact-frame-union
+          path: |
+            r272.json
+            r272-stdout.txt
+          retention-days: 30
