@@ -1,0 +1,153 @@
+name: ARC3 R333 cross-game meta-gate LGO
+on:
+  push:
+    branches: [deus/r333-crossgame-meta-gate-lgo-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_crossgame_meta_gate_lgo_333.py
+      - .github/workflows/arc3-r333-crossgame-meta-gate-lgo.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  game:
+    strategy:
+      fail-fast: false
+      max-parallel: 12
+      matrix:
+        game:
+          - ar25-0c556536
+          - bp35-0a0ad940
+          - cd82-fb555c5d
+          - cn04-2fe56bfb
+          - dc22-fdcac232
+          - ft09-0d8bbf25
+          - g50t-5849a774
+          - ka59-38d34dbb
+          - lf52-271a04aa
+          - lp85-305b61c3
+          - ls20-9607627b
+          - m0r0-492f87ba
+          - r11l-495a7899
+          - re86-8af5384d
+          - s5i5-18d95033
+          - sb26-7fbdac44
+          - sc25-635fd71a
+          - sk48-d8078629
+          - sp80-589a99af
+          - su15-1944f8ab
+          - tn36-ef4dde99
+          - tr87-cd924810
+          - tu93-0768757b
+          - vc33-5430563c
+          - wa30-ee6fef47
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage exact game p0-p4 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 4); do
+            f="${{ matrix.game }}_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_trace -name '*_p[5-9]_events.jsonl' | grep -q .
+          ! find public_trace -name '*_p1[0-9]_events.jsonl' | grep -q .
+      - name: Build R333 per-game p0-p4 summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_crossgame_meta_gate_lgo_333.py \
+            "${args[@]}" --game "${{ matrix.game }}" --output "r333-game-${{ matrix.game }}.json" \
+            2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit game summary boundary
+        shell: bash
+        run: |
+          python - <<'PY'
+          import glob,json
+          p=glob.glob('r333-game-*.json')
+          assert len(p)==1
+          d=json.load(open(p[0]))
+          assert d['schema']=='deus/arc3-r333-game-summary/1'
+          assert d['idempotency_key']=='R333-CROSSGAME-META-GATE-LGO-20260923-001'
+          assert d['protocol']['p5_p9_staged_or_read'] is False
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          print({'game':d['game'],'gate_value':d['gate_value'],'r329_verdict':d['r329_verdict']})
+          PY
+          sha256sum r333-game-*.json runtime.txt stdout.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r333-game-${{ matrix.game }}
+          path: |
+            r333-game-*.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+          retention-days: 30
+
+  aggregate:
+    needs: game
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: r333-game-*
+          path: r333_inputs
+          merge-multiple: true
+      - name: Verify exact 25 summaries and aggregate leave-one-game-out gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find r333_inputs -maxdepth 1 -name 'r333-game-*.json' -type f | wc -l)" -eq 25
+          python public_benchmark/arc3/kaggle_candidates/public_crossgame_meta_gate_lgo_333.py \
+            --aggregate-dir r333_inputs --output r333-crossgame-meta-gate-lgo.json | tee aggregate-stdout.txt
+      - name: Independent audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r333-crossgame-meta-gate-lgo.json'))
+          assert d['schema']=='deus/arc3-r333-crossgame-meta-gate-lgo/1'
+          assert d['idempotency_key']=='R333-CROSSGAME-META-GATE-LGO-20260923-001'
+          assert d['protocol']['game_count']==25
+          assert d['protocol']['p5_p9_staged_or_read'] is False
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert len(d['folds'])==25 and len({x['held_game'] for x in d['folds']})==25
+          assert all(x['selection_used_held_outcome'] is False for x in d['folds'])
+          t=d['truth']
+          assert t['public_offline_only'] and t['game_level_cross_validation']
+          assert not t['independent_hidden_generalization_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert t['competition_quota_spent']==0
+          print(json.dumps({'verdict':d['verdict'],'aggregate':d['aggregate'],'threshold_histogram':d['threshold_histogram']},sort_keys=True))
+          PY
+          sha256sum r333-crossgame-meta-gate-lgo.json aggregate-stdout.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r333-crossgame-meta-gate-lgo
+          path: |
+            r333-crossgame-meta-gate-lgo.json
+            aggregate-stdout.txt
+            SHA256SUMS.txt
+          retention-days: 30
