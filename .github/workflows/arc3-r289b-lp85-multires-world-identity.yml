@@ -1,0 +1,85 @@
+name: ARC3 R289b lp85 multires world identity diagnostic
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r289b-lp85-multires-world-identity.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r289b-lp85:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 20}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify repaired R289 source fixed before staging diagnostic traces
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 7f4caa0331dca6c1f8b6cd9c924ca5031d90e516^{commit}
+          git merge-base --is-ancestor 7f4caa0331dca6c1f8b6cd9c924ca5031d90e516 HEAD
+          test "$(git show 7f4caa0331dca6c1f8b6cd9c924ca5031d90e516:public_benchmark/arc3/kaggle_candidates/public_lp85_multires_world_identity_diag_289.py | sha256sum | cut -d' ' -f1)" = "$(sha256sum public_benchmark/arc3/kaggle_candidates/public_lp85_multires_world_identity_diag_289.py | cut -d' ' -f1)"
+      - name: Stage exact lp85 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -maxdepth 1 -type f -name '*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile and execute repaired bounded diagnostic
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_multires_world_identity_diag_289.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_multires_world_identity_diag_289.py "${args[@]}" --output r289b-lp85.json 2> >(tee r289b-runtime.txt >&2) | tee r289b-stdout.txt
+      - name: Independent truth-boundary audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('r289b-lp85.json'))
+          assert d['schema']=='deus/arc3-r289-lp85-multires-world-identity-diagnostic/1'
+          assert d['mechanism']['g_coarse']==8 and d['mechanism']['g_fine']==16
+          assert d['protocol']['fit_collision_analysis']=='p0-p4 only'
+          assert d['protocol']['diagnostic']=='p5-p9 only'
+          assert d['protocol']['p10_p19_staged_or_read'] is False
+          assert d['protocol']['threshold_sweep'] is False
+          assert d['protocol']['promotion_in_r289'] is False
+          assert d['truth']['p10_p19_read'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'delta':d['delta'],'base':d['base'],'candidate':d['candidate']},sort_keys=True))
+          PY
+          sha256sum r289b-lp85.json r289b-runtime.txt r289b-stdout.txt public_trace/SHA256SUMS.txt > R289B_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r289b-lp85-multires-world-identity
+          path: |
+            r289b-lp85.json
+            r289b-runtime.txt
+            r289b-stdout.txt
+            R289B_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
