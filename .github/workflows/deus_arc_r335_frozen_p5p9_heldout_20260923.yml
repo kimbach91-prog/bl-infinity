@@ -30,16 +30,27 @@ jobs:
             example-run/artifacts/tr87-cd924810_p8_events.jsonl
             example-run/artifacts/tr87-cd924810_p9_events.jsonl
           sparse-checkout-cone-mode: false
-      - name: Enforce frozen heldout boundary
+      - name: Enforce frozen heldout boundary and model provenance
         shell: bash
         run: |
           set -euo pipefail
           test "$(find tufa/example-run/artifacts -maxdepth 1 -type f -name 'tr87-cd924810_p[5-9]_events.jsonl' | wc -l)" -eq 5
           test "$(find tufa/example-run/artifacts -maxdepth 1 -type f -name 'tr87-cd924810_p*_events.jsonl' | wc -l)" -eq 5
           ! find tufa/example-run/artifacts -maxdepth 1 -type f \( -name 'tr87-cd924810_p[0-4]_events.jsonl' -o -name 'tr87-cd924810_p1[0-9]_events.jsonl' \) | grep -q .
-          test "$(git -C deus rev-parse HEAD)" = "$(git -C deus rev-parse HEAD)"
+          python - <<'PY'
+          import json
+          p='deus/public_benchmark/arc3/kaggle_candidates/r335_frozen_p0p4_model_v1.json'
+          with open(p,encoding='utf-8') as f: m=json.load(f)
+          assert m['source_method_commit']=='86206804f93371eb249d2c5a50871bb39bae2c42'
+          assert m['source_run']==35873876012
+          assert m['fit_evidence']['loto_correct']==861 and m['fit_evidence']['loto_checked']==861
+          assert m['phase_cycle']==['065dffac4c588d19','cac698dcf6fb6b76','62a0851c5747bb6e','58498753074a2cd7','b0a3a987438be855','eb1fb214319d2bd3','758df3c6a8125ac1']
+          assert m['cursor_delta_mod5']=={'ACTION3':4,'ACTION4':1}
+          PY
       - name: Execute frozen no-retrain heldout verifier
+        shell: bash
         run: |
+          set -euo pipefail
           mkdir -p out
           python deus/public_benchmark/arc3/kaggle_candidates/r335_frozen_model_heldout_verify.py \
             --root tufa/example-run/artifacts \
