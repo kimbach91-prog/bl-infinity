@@ -5,7 +5,7 @@ on:
     paths:
       - 'runtime/federation/lib/internet-functional-fabric.mjs'
       - 'runtime/federation/test/internet-functional-fabric.test.mjs'
-      - 'runtime/federation/scripts/internet-fabric-canary.mjs'
+      - 'runtime/federation/scripts/internet-fabric-canary.mjs'\n      - 'runtime/federation/scripts/internet-fabric-external-observer.mjs'
       - '.github/workflows/deus-internet-functional-fabric-canary.yml'
   workflow_dispatch:
 
