@@ -460,6 +460,7 @@ S2_3_FACE_REALISM=os.environ.get("DIGE_S2_3_FACE_REALISM","0").strip()=="1"
 S2_4_SOURCE_MATERIAL=os.environ.get("DIGE_S2_4_SOURCE_MATERIAL","0").strip()=="1"
 S2_5_SELECTIVE_COVERAGE=os.environ.get("DIGE_S2_5_SELECTIVE_COVERAGE","0").strip()=="1"
 S2_6_GNM_SCALP_PROXIMITY_GARMENT=os.environ.get("DIGE_S2_6_GNM_SCALP_PROXIMITY_GARMENT","0").strip()=="1"
+S2_7_BAKED_FACE_ALBEDO=os.environ.get("DIGE_S2_7_BAKED_FACE_ALBEDO","0").strip()=="1"
 C39_BUN_RADIUS=float(os.environ.get("DIGE_C39_BUN_RADIUS","0.052"))
 C39_BUN_LIFT=float(os.environ.get("DIGE_C39_BUN_LIFT","0.105"))
 C39_BUN_BACK=float(os.environ.get("DIGE_C39_BUN_BACK","0.072"))
@@ -1532,7 +1533,7 @@ body.name="DIGE_V8_MAKEHUMAN_BODY"
 body.data.materials.append(skin)
 bpy.ops.object.shade_smooth()
 body_uv_source=None
-if S2_4_SOURCE_MATERIAL:
+if S2_4_SOURCE_MATERIAL or S2_7_BAKED_FACE_ALBEDO:
     if not body.data.uv_layers:
         raise RuntimeError("S2.4 requires source MakeHuman UV layer")
     body_uv_source=body.copy()
