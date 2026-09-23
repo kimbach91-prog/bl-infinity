@@ -1,0 +1,81 @@
+name: ARC3 R270 UI-mask frozen gate
+on:
+  push:
+    branches: [deus/r270-ui-mask-frozen-gate-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_ui_mask_frozen_gate_270.py
+      - .github/workflows/arc3-r270-ui-mask-frozen-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  evaluate-r270:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_action_conditional_markov_gate_251.py             public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py             public_benchmark/arc3/kaggle_candidates/public_ui_mask_frozen_gate_270.py
+      - name: Stage exact public25 p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts')
+          dst=Path('public_trace')
+          files=[]
+          for p in range(20):
+              files.extend(src.glob(f'*_p{p}_events.jsonl'))
+          files=sorted(set(files))
+          if len(files)!=500:
+              raise SystemExit(f'expected 500 files, got {len(files)}')
+          for f in files:
+              (dst/f.name).write_bytes(f.read_bytes())
+          PY
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R270
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -maxdepth 1 -name '*_events.jsonl' -type f | sort)
+          args=()
+          for f in "${files[@]}"; do args+=(--input "$f"); done
+          python public_benchmark/arc3/kaggle_candidates/public_ui_mask_frozen_gate_270.py "${args[@]}" --output r270.json | tee r270-stdout.txt
+      - name: Verify truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r270.json'))
+          assert d['schema']=='deus/arc3-r270-ui-mask-frozen-gate/1'
+          assert d['aggregate']['game_count']==25
+          t=d['truth']; p=d['protocol']
+          assert t['p10_p19_never_updates_selection']
+          assert t['representation_only'] and not t['full_solver_claim']
+          assert not t['kaggle_execution'] and not t['competition_submission']
+          assert not p['retune_on_p10_p19']
+          print(json.dumps(d['aggregate'],sort_keys=True))
+          PY
+          sha256sum r270.json r270-stdout.txt public_trace/SHA256SUMS.txt > R270_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r270-ui-mask-frozen-gate
+          path: |
+            r270.json
+            r270-stdout.txt
+            R270_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
