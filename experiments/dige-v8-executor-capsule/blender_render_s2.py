@@ -1504,6 +1504,11 @@ set_input(hm_bs,"Specular IOR Level",.22)
 set_input(hm_bs,"Coat Weight",.10)
 set_input(hm_bs,"Coat Roughness",.30)
 set_input(hm_bs,"Anisotropic IOR Level",.35)
+scalp_density_mat=principled("DIGE_S2_8_SCALP_DENSITY",(0.004,0.0022,0.0014),rough=.68,ior=1.50)
+sd_bs=scalp_density_mat.node_tree.nodes.get("Principled BSDF")
+set_input(sd_bs,"Specular IOR Level",.10)
+set_input(sd_bs,"Coat Weight",0.0)
+set_input(sd_bs,"Anisotropic IOR Level",.10)
 cloth=principled("CLOTH",(0.62,0.56,0.50) if C36_CANONICAL_APPEARANCE else (0.020,0.026,0.040),rough=.78 if C36_CANONICAL_APPEARANCE else .72,sheen=.18 if C36_CANONICAL_APPEARANCE else .12)
 
 def s1_cloth_material(name,base):
@@ -3980,7 +3985,7 @@ if C29_GNM_PRESENTATION:
             except Exception: pass
         scalp_mass.data.update()
         scalp_mass.data.materials.clear()
-        scalp_mass.data.materials.append(hair_mass)
+        scalp_mass.data.materials.append(scalp_density_mat if S2_8_NATIVE_GNM_GEOMETRY else hair_mass)
         bpy.context.view_layer.objects.active=scalp_mass
         try: bpy.ops.object.shade_smooth()
         except Exception: pass
