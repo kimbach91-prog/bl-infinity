@@ -1,0 +1,91 @@
+name: ARC3 R269 g50t train confirmed structural gate
+
+on:
+  push:
+    branches:
+      - deus/r269-g50t-nested-stability-gate-20260923
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_g50t_train_confirmed_structural_gate_269.py
+      - .github/workflows/arc3-r269-g50t-train-confirmed-structural-gate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evaluate-r269-g50t:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Compile
+        run: |
+          python -m py_compile             public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py             public_benchmark/arc3/kaggle_candidates/public_g50t_structural_phase_gate_268.py             public_benchmark/arc3/kaggle_candidates/public_g50t_train_confirmed_structural_gate_269.py
+      - name: Stage g50t p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="g50t-5849a774_p${p}_events.jsonl"
+            src="upstream-duck/example-run/artifacts/$f"
+            test -s "$src"
+            cp "$src" "public_trace/$f"
+          done
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R269 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in public_trace/g50t-5849a774_p*_events.jsonl; do args+=(--input "$f"); done
+          test "${#args[@]}" -eq 40
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_g50t_train_confirmed_structural_gate_269.py             "${args[@]}" --output r269-g50t-train-confirmed-structural.json             2> >(tee r269-runtime.txt >&2) | tee r269-stdout.txt
+      - name: Verify
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path("r269-g50t-train-confirmed-structural.json").read_text())
+          assert d["schema"]=="deus/arc3-r269-g50t-train-confirmed-structural-reliability/1"
+          t=d["truth"]
+          assert t["public_trace_only"] and not t["game_source_read"]
+          assert t["selection_uses_p0_p9_only"] and t["p10_p19_never_updates_selection_or_model"]
+          assert not t["independent_generalization_claim"] and not t["kaggle_execution"]
+          assert not t["competition_submission"] and not t["submission_quota_spent"]
+          h=d["heldout"]
+          verdict="PASS_NONDOMINATED_PUBLIC_OFFLINE" if d["non_dominated_source_side_gain"] else "NO_PROMOTION"
+          Path("r269-verdict.json").write_text(json.dumps({
+            "verdict":verdict,
+            "predictions":h.get("predictions",0),
+            "correct":h.get("correct",0),
+            "wrong":h.get("wrong",0),
+            "selected_by_action":d["selected_by_action"],
+            "truth_lane":"PUBLIC_OFFLINE_PUBLIC_DEVELOPMENT"
+          },indent=2,sort_keys=True)+"\n")
+          print(Path("r269-verdict.json").read_text())
+          PY
+          sha256sum r269-g50t-train-confirmed-structural.json r269-verdict.json r269-runtime.txt r269-stdout.txt public_trace/SHA256SUMS.txt > R269_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r269-g50t-train-confirmed-structural-gate
+          path: |
+            r269-g50t-train-confirmed-structural.json
+            r269-verdict.json
+            r269-runtime.txt
+            r269-stdout.txt
+            R269_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
