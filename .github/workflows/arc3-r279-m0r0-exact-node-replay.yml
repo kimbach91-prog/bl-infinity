@@ -1,0 +1,77 @@
+name: ARC3 R279 m0r0 exact-node repair replay
+on:
+  push:
+    branches: [deus/r279-m0r0-exact-node-replay-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_m0r0_exact_node_replay_279.py
+      - .github/workflows/arc3-r279-m0r0-exact-node-replay.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r279:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Compile
+        run: python -m py_compile public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py public_benchmark/arc3/kaggle_candidates/public_m0r0_exact_node_replay_279.py
+      - name: Stage exact p0-p19
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          python - <<'PY'
+          import re
+          from pathlib import Path
+          src=Path('upstream-duck/example-run/artifacts'); dst=Path('public_trace'); game='m0r0-492f87ba'; by={}
+          for f in src.glob(f'{game}_p*_events.jsonl'):
+              m=re.match(rf'{re.escape(game)}_p(\d+)_events\.jsonl$',f.name)
+              if m: by[int(m.group(1))]=f
+          if set(by)!=set(range(20)): raise SystemExit(f'exact p0-p19 required; got {sorted(by)}')
+          for p in range(20): (dst/by[p].name).write_bytes(by[p].read_bytes())
+          PY
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute R279
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find public_trace -type f -name 'm0r0-492f87ba_p*_events.jsonl' | sort)
+          args=(); for f in "${files[@]}"; do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_m0r0_exact_node_replay_279.py "${args[@]}" --output r279.json 2> >(tee r279-runtime.txt >&2) | tee r279-stdout.txt
+      - name: Verify and hash
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r279.json').read_text())
+          assert d['schema']=='deus/arc3-r279-m0r0-exact-node-replay/1'
+          assert d['truth']['public_development_informed_by_r277'] is True
+          assert not d['truth']['independent_hidden_generalization_claim'] and not d['truth']['kaggle_execution'] and not d['truth']['competition_submission'] and not d['truth']['solver_promotion']
+          Path('r279-verdict.json').write_text(json.dumps({'verdict':d['verdict'],'results':d['results'],'truth_lane':'PUBLIC_OFFLINE_PUBLIC_DEV_INFORMED_REPAIR_REPLAY'},indent=2,sort_keys=True)+'\n')
+          print(Path('r279-verdict.json').read_text())
+          PY
+          sha256sum r279.json r279-verdict.json r279-runtime.txt r279-stdout.txt public_trace/SHA256SUMS.txt > R279_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r279-m0r0-exact-node-replay
+          path: |
+            r279.json
+            r279-verdict.json
+            r279-runtime.txt
+            r279-stdout.txt
+            R279_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          if-no-files-found: error
+          retention-days: 30
