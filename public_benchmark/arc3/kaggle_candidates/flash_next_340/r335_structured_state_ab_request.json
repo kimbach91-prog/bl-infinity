@@ -1,6 +1,6 @@
 {
   "schema": "deus/arc3-flash-r335-structured-state-ab-request/1",
-  "operation": "launch",
+  "operation": "dry_run",
   "game_id": "tr87-cd924810",
   "runtime_seconds": 1200,
   "terminal_grace_seconds": 120,
