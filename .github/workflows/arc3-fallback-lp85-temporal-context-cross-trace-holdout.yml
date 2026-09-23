@@ -1,0 +1,70 @@
+name: ARC3 fallback lp85 temporal-context cross-trace holdout
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-fallback-lp85-temporal-context-cross-trace-holdout.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  causal-holdout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 32}
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage exact lp85 p0-p4 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 4); do f="lp85-305b61c3_p${p}_events.jsonl"; cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"; done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 5
+          ! find public_trace -maxdepth 1 -type f -regex '.*_p[5-9]_events.jsonl\|.*_p1[0-9]_events.jsonl' | grep -q .
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Execute frozen cross-trace causal holdout
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile public_benchmark/arc3/kaggle_candidates/public_lp85_temporal_context_cross_trace_holdout_fallback.py
+          args=(); for f in $(find public_trace -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_temporal_context_cross_trace_holdout_fallback.py "${args[@]}" --output holdout.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('holdout.json'))
+          assert d['schema']=='deus/arc3-lp85-temporal-context-cross-trace-holdout-fallback/1'
+          assert d['frozen_mechanism']['context']=='ACTION_REGION4'
+          assert d['frozen_mechanism']['history']=='H3_STABLE_PERIOD_VELOCITY'
+          assert d['frozen_mechanism']['selection_changed_after_holdout_read'] is False
+          assert d['protocol']['p5_p19_staged_or_read'] is False
+          assert d['truth']['p5_p19_read'] is False
+          assert d['truth']['static_independent_generalization'] is False
+          assert d['truth']['competition_submission'] is False
+          print(json.dumps({'verdict':d['verdict'],'overall':d['overall']},sort_keys=True))
+          PY
+          sha256sum holdout.json runtime.txt stdout.txt public_trace/SHA256SUMS.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fallback-lp85-temporal-context-cross-trace-holdout
+          path: |
+            holdout.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
