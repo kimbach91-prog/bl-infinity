@@ -1,0 +1,96 @@
+name: ARC3 R279 lp85 canon-regions frozen public gate
+on:
+  push:
+    branches: [deus/r278-object-region-phase-diagnostic-20260923]
+    paths:
+      - .github/workflows/arc3-r279-lp85-frozen-gate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r279-lp85-frozen:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Verify candidate was frozen in parent commit before heldout staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e a2df8ee04d7a59319fa37f8cb7b6615737bf2634^{commit}
+          test "$(git rev-parse HEAD^ )" = "a2df8ee04d7a59319fa37f8cb7b6615737bf2634"
+          grep -F 'TARGET_GAME = "lp85-305b61c3"' public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py
+          grep -F 'FROZEN_MODE = "canon_regions_ui"' public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py
+      - name: Stage exact lp85 p0-p19 after freeze
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 19); do
+            f="lp85-305b61c3_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/$f" "public_trace/$f"
+          done
+          test "$(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | wc -l)" -eq 20
+          sha256sum public_trace/*.jsonl > public_trace/SHA256SUMS.txt
+      - name: Compile frozen implementation
+        run: |
+          python -m py_compile \
+            public_benchmark/arc3/kaggle_candidates/public_sourcefree_markov_fidelity_adapter_246.py \
+            public_benchmark/arc3/kaggle_candidates/public_ui_mask_markov_diag_268.py \
+            public_benchmark/arc3/kaggle_candidates/public_relational_topology_diag_274.py \
+            public_benchmark/arc3/kaggle_candidates/public_action_canonical_topology_diag_275.py \
+            public_benchmark/arc3/kaggle_candidates/public_object_region_phase_diag_278.py \
+            public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py
+      - name: Execute p0-p9 refit then frozen p10-p19 gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in $(find public_trace -maxdepth 1 -type f -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_lp85_canon_regions_frozen_gate_279.py \
+            "${args[@]}" --output r279-lp85-frozen-gate.json \
+            2> >(tee r279-runtime.txt >&2) | tee r279-stdout.txt
+      - name: Independent truth-boundary audit and hashes
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          d=json.loads(Path('r279-lp85-frozen-gate.json').read_text())
+          assert d['schema']=='deus/arc3-r279-lp85-canon-regions-frozen-gate/1'
+          assert d['rung']==279
+          assert d['frozen_candidate']['game']=='lp85-305b61c3'
+          assert d['frozen_candidate']['mode']=='canon_regions_ui'
+          assert d['protocol']['selection_in_r279'] is False
+          assert d['protocol']['refit']=='p0-p9 after candidate freeze'
+          assert d['protocol']['frozen_gate']=='p10-p19 reused public-development traces'
+          assert d['protocol']['full_frame_claim'] is False
+          assert d['truth']['reused_public_development_p10_p19'] is True
+          assert d['truth']['independent_hidden_generalization_claim'] is False
+          assert d['truth']['kaggle_execution'] is False
+          assert d['truth']['competition_submission'] is False
+          assert d['truth']['submission_quota_spent_by_r279'] is False
+          print(json.dumps({'verdict':d['verdict'],'gate':d['gate'],'fit':d['fit']},sort_keys=True))
+          PY
+          sha256sum r279-lp85-frozen-gate.json r279-runtime.txt r279-stdout.txt public_trace/SHA256SUMS.txt > R279_SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r279-lp85-canon-regions-frozen-gate
+          path: |
+            r279-lp85-frozen-gate.json
+            r279-runtime.txt
+            r279-stdout.txt
+            R279_SHA256SUMS.txt
+            public_trace/SHA256SUMS.txt
+          retention-days: 30
