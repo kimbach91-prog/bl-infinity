@@ -1,0 +1,77 @@
+name: ARC3 R328 TR87 structural frozen p5-p9
+on:
+  push:
+    branches: [deus/r328-tr87-structural-frozen-p5p9-20260923]
+    paths:
+      - public_benchmark/arc3/kaggle_candidates/public_tr87_structural_frozen_p5p9_328.py
+      - .github/workflows/arc3-r328-tr87-structural-frozen-p5p9.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  r328:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 16}
+      - name: Verify R327 freeze predates p5-p9 staging
+        shell: bash
+        run: |
+          set -euo pipefail
+          git cat-file -e 8d54bd197ae805a306493d5630c11268fcbe1ef9^{commit}
+          git merge-base --is-ancestor 8d54bd197ae805a306493d5630c11268fcbe1ef9 HEAD
+      - uses: actions/checkout@v4
+        with:
+          repository: Tufalabs/duck-harness
+          ref: 7652836056c59e044f093e3c13ed7438c814169e
+          path: upstream-duck
+          sparse-checkout: example-run/artifacts
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Stage exact TR87 p0-p9 only
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public_trace
+          for p in $(seq 0 9); do
+            f="tr87-cd924810_p${p}_events.jsonl"
+            cp "upstream-duck/example-run/artifacts/${f}" "public_trace/${f}"
+          done
+          test "$(find public_trace -name '*_events.jsonl' | wc -l)" -eq 10
+          ! find public_trace -name '*_p1[0-9]_events.jsonl' | grep -q .
+      - name: Execute R328
+        shell: bash
+        run: |
+          set -euo pipefail
+          args=()
+          for f in $(find public_trace -name '*_events.jsonl' | sort -V); do args+=(--input "$f"); done
+          /usr/bin/time -v python public_benchmark/arc3/kaggle_candidates/public_tr87_structural_frozen_p5p9_328.py "${args[@]}" --output r328.json 2> >(tee runtime.txt >&2) | tee stdout.txt
+      - name: Audit
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('r328.json'))
+          assert d['schema']=='deus/arc3-r328-tr87-structural-frozen-p5p9/1'
+          assert d['freeze_commit']=='8d54bd197ae805a306493d5630c11268fcbe1ef9'
+          p=d['protocol']; t=d['truth']
+          assert p['fit']=='p0-p4 only' and p['source_assisted_replay']=='p5-p9 only'
+          assert p['p10_p19_staged_or_read'] is False
+          assert not p['p5_p9_updates_selector'] and not p['p5_p9_updates_model_family']
+          assert t['p5_p9_replay_is_source_assisted'] and not t['p10_p19_read']
+          assert not t['whole_game_solver_promotion'] and not t['kaggle_execution'] and not t['competition_submission']
+          print(json.dumps({'verdict':d['verdict'],'gate_pass':d['gate_pass'],'replay':d['source_assisted_p5_p9']},sort_keys=True))
+          PY
+          sha256sum r328.json runtime.txt stdout.txt > SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r328-tr87-structural-frozen-p5p9
+          path: |
+            r328.json
+            runtime.txt
+            stdout.txt
+            SHA256SUMS.txt
+          retention-days: 30
