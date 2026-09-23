@@ -56,12 +56,20 @@ def inspect(lane,exact):
     if lane=="state":
         for f in sorted(out.glob("*.log")):
             try:
-                full=clean(f.read_text(errors="replace"))
+                rows=json.loads(f.read_text(errors="replace"))
             except Exception:
                 continue
-            print("DEUS_R335_STATE_LOG_FULL_BEGIN",flush=True)
-            print(full[:12000],flush=True)
-            print("DEUS_R335_STATE_LOG_FULL_END",flush=True)
+            err=[]
+            started=False
+            for row in rows:
+                data=str(row.get("data",""))
+                if "Exception encountered" in data or "Traceback (most recent call last)" in data:
+                    started=True
+                if started:
+                    err.append(clean(data).replace("\\n","\\n")[:1400])
+                    if len(err)>=40:
+                        break
+            emit("DEUS_R335_STATE_ERROR_CONTEXT",{"entries":err})
 
 def main():
     threading.Thread(target=health,daemon=True).start()
