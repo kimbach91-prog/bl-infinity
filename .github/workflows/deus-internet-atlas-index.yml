@@ -1,0 +1,124 @@
+name: DEUS Joined Internet Atlas Index V1
+on:
+  push:
+    branches: [deus/internet-atlas-index-v1-20260924]
+    paths:
+      - runtime/federation/scripts/internet_atlas_index.py
+      - runtime/federation/scripts/test_internet_atlas_index.py
+      - .github/workflows/deus-internet-atlas-index.yml
+  workflow_dispatch:
+  workflow_run:
+    workflows: [DEUS Global Passive Internet Census V1, DEUS Global Routing Overlay V1]
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: deus-joined-internet-atlas-index-v1
+  cancel-in-progress: false
+jobs:
+  index:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.repository.default_branch || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Unit tests
+        run: python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_index.py -v
+      - name: Resolve successful same-repository source artifacts
+        id: sources
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const {owner, repo} = context.repo;
+            const sources = {};
+            for (const [label, workflow_id, prefix] of [
+              ['census', 365780104, 'deus-global-passive-internet-census-'],
+              ['routing', 365786836, 'deus-global-routing-overlay-']
+            ]) {
+              const runs = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id, status:'success', per_page:30});
+              const run = runs.data.workflow_runs.find(r => r.head_repository?.full_name === `${owner}/${repo}` && r.conclusion === 'success' && ['push','workflow_dispatch','schedule'].includes(r.event));
+              if (!run) throw new Error(`NO_SUCCESSFUL_AUTHORIZED_SOURCE_${label}`);
+              const artifacts = await github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id:run.id});
+              const a = artifacts.data.artifacts.find(x => !x.expired && x.name === `${prefix}${run.id}`);
+              if (!a || !/^sha256:[0-9a-f]{64}$/.test(a.digest || '')) throw new Error(`NO_DIGEST_BOUND_ARTIFACT_${label}`);
+              if (a.size_in_bytes > 512*1024*1024) throw new Error('ARTIFACT_SIZE_REVIEW_REQUIRED');
+              sources[label] = {runId:run.id, headSha:run.head_sha, artifactId:a.id, sha256:a.digest.slice(7), bytes:a.size_in_bytes};
+              core.setOutput(`${label}_id`, String(a.id));
+              core.setOutput(`${label}_sha`, a.digest.slice(7));
+            }
+            fs.mkdirSync('.deus/atlas-inputs', {recursive:true});
+            fs.writeFileSync('.deus/atlas-inputs/sources.json', JSON.stringify(sources,null,2));
+      - name: Restore exact compiled snapshot
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: .deus/atlas-snapshots
+          key: atlas-v1-${{ runner.os }}-${{ hashFiles('runtime/federation/scripts/internet_atlas_index.py') }}-${{ steps.sources.outputs.census_sha }}-${{ steps.sources.outputs.routing_sha }}
+      - name: Download digest-bound source archives once
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          CENSUS_ID: ${{ steps.sources.outputs.census_id }}
+          ROUTING_ID: ${{ steps.sources.outputs.routing_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CENSUS_ID/zip" > .deus/atlas-inputs/census.zip
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ROUTING_ID/zip" > .deus/atlas-inputs/routing.zip
+      - name: Compile existing source data without host access
+        if: steps.cache.outputs.cache-hit != 'true'
+        env:
+          CENSUS_SHA: ${{ steps.sources.outputs.census_sha }}
+          ROUTING_SHA: ${{ steps.sources.outputs.routing_sha }}
+        run: |
+          python runtime/federation/scripts/internet_atlas_index.py build \
+            --census .deus/atlas-inputs/census.zip \
+            --routing .deus/atlas-inputs/routing.zip \
+            --census-sha256 "$CENSUS_SHA" --routing-sha256 "$ROUTING_SHA" \
+            --out .deus/atlas-snapshots
+      - name: Verify immutable database and offline IPv4 IPv6 queries
+        env:
+          CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+        run: |
+          python - <<'PY'
+          import sys,json,os,time
+          from pathlib import Path
+          sys.path.insert(0,'runtime/federation/scripts')
+          import internet_atlas_index as m
+          root=Path('.deus/atlas-snapshots')
+          current=json.loads((root/'CURRENT.json').read_text())
+          rec=json.loads((root/current['receipt']).read_text())
+          db=root/current['snapshot']/'atlas.sqlite'
+          sources=json.loads(Path('.deus/atlas-inputs/sources.json').read_text())
+          assert rec['schema']==m.VERSION
+          assert rec['inputHashes']=={k:v['sha256'] for k,v in sources.items()}
+          assert m.sha256_file(db)==rec['databaseSha256']
+          assert rec['metrics']['executionAdmitted']==0
+          assert rec['metrics']['quality']['integrity']=='ok'
+          queries=[]
+          for ip in ['8.8.8.8','1.1.1.1','203.0.113.1','2001:4860:4860::8888']:
+            started=time.perf_counter();q=m.query_ip(db,ip)
+            q['elapsedMilliseconds']=round((time.perf_counter()-started)*1000,3)
+            assert q['networkRequests']==0 and not q['executionAdmitted']
+            queries.append(q)
+          acceptance={'verdict':'PASS_SNAPSHOT_INDEX_ONLY','cacheHit':os.getenv('CACHE_HIT')=='true','sources':sources,'snapshot':current['snapshot'],'databaseSha256':rec['databaseSha256'],'queries':queries,'truthBoundary':m.BOUNDARY}
+          m.atomic_json(root/'acceptance.json',acceptance)
+          print(json.dumps({'inputRows':rec['metrics']['inputRows'],'joins':rec['metrics']['joins'],'cacheHit':acceptance['cacheHit'],'databaseSha256':rec['databaseSha256']}))
+          PY
+      - name: Store derived index and receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-joined-internet-atlas-${{ github.run_id }}
+          path: .deus/atlas-snapshots/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 3
