@@ -266,3 +266,71 @@ test('guard visible updates do not reset total tool-call budget', () => {
   assert.equal(d.action, 'HANDOFF_AND_EMIT_PARTIAL_NOW');
   assert.equal(d.turnEndAllowed, true);
 });
+
+
+test('V2.3 heavy foreground with durable executor checkpoints before offload', () => {
+  const d = responseContinuityDecision({
+    foregroundComplexityClass: 'DEUS_MATERIAL',
+    plannedToolCalls: 6,
+    plannedSteps: 8,
+    durableExecutorAvailable: true,
+    checkpointVerified: false,
+    hasUserVisibleReply: false,
+    turnElapsedMs: 3500,
+    nextAction: 'durable worker resumes exact heavy plan',
+  });
+  assert.equal(d.action, 'CHECKPOINT_FAST_ACK_AND_HANDOFF_NOW');
+  assert.equal(d.fastForegroundOffload, true);
+  assert.equal(d.heavyForegroundTask, true);
+  assert.equal(d.checkpointRequiredBeforeYield, true);
+  assert.equal(d.turnEndAllowed, false);
+});
+
+test('V2.3 heavy foreground emits fast ack and hands off after checkpoint', () => {
+  const d = responseContinuityDecision({
+    foregroundComplexityClass: 'TOOL_HEAVY',
+    plannedToolCalls: 5,
+    durableExecutorAvailable: true,
+    checkpointVerified: true,
+    hasUserVisibleReply: false,
+    turnElapsedMs: 1000,
+  });
+  assert.equal(d.action, 'EMIT_FAST_ACK_AND_HANDOFF_DURABLE_NOW');
+  assert.equal(d.reason, 'HEAVY_FOREGROUND_OFFLOADED_TO_DURABLE_EXECUTOR');
+  assert.equal(d.shouldContinueAfterVisibleUpdate, false);
+  assert.equal(d.turnEndAllowed, true);
+});
+
+test('V2.3 already-visible heavy foreground returns partial and yields UI', () => {
+  const d = responseContinuityDecision({
+    plannedSteps: 7,
+    durableExecutorAvailable: true,
+    checkpointVerified: true,
+    hasUserVisibleReply: true,
+  });
+  assert.equal(d.action, 'HANDOFF_DURABLE_AND_RETURN_PARTIAL_NOW');
+  assert.equal(d.fastForegroundOffload, true);
+  assert.equal(d.solverContinuationRequired, false);
+  assert.equal(d.turnEndAllowed, true);
+});
+
+test('V2.3 light foreground remains local when below heavy thresholds', () => {
+  const d = responseContinuityDecision({
+    foregroundComplexityClass: 'NORMAL',
+    plannedToolCalls: 1,
+    plannedSteps: 2,
+    durableExecutorAvailable: true,
+    checkpointVerified: false,
+  });
+  assert.equal(d.fastForegroundOffload, false);
+  assert.equal(d.action, 'CONTINUE_WORK');
+});
+
+test('V2.3 cannot claim control over platform automatic reasoning', () => {
+  const d = responseContinuityDecision({
+    foregroundComplexityClass: 'HEAVY',
+    durableExecutorAvailable: true,
+    checkpointVerified: true,
+  });
+  assert.match(d.truthBoundary, /CANNOT_DISABLE_OR_OVERRIDE_CHATGPT_PLATFORM_AUTOMATIC_REASONING/);
+});
