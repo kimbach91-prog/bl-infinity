@@ -1,0 +1,38 @@
+name: DEUS Global Passive Internet Census V1
+
+on:
+  push:
+    branches:
+      - deus/global-passive-census-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-passive-internet-census.mjs'
+      - '.github/workflows/deus-global-passive-internet-census.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  census:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run global passive census
+        run: node runtime/federation/scripts/global-passive-internet-census.mjs
+      - name: Verify census outputs
+        run: |
+          test -s .deus/internet-census/v1/manifest.json
+          test -s .deus/internet-census/v1/address-universe-roots.jsonl
+          test -s .deus/internet-census/v1/rir-address-descriptors.jsonl
+          test -s .deus/internet-census/v1/ripe-atlas-observed-devices.jsonl
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-passive-internet-census-${{ github.run_id }}
+          path: .deus/internet-census/v1/
+          if-no-files-found: error
+          compression-level: 6
