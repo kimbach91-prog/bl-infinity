@@ -4,7 +4,7 @@ on:
     branches: [deus/internet-azure-source-expansion-v1-20260924]
     paths:
       - runtime/federation/scripts/internet_atlas_azure.py
-      - runtime/federation/scripts/test_internet_atlas_azure.py
+      - runtime/federation/scripts/test_internet_atlas_azure*.py
       - .github/workflows/deus-internet-azure-service-tags.yml
   workflow_dispatch:
   workflow_run:
@@ -31,7 +31,7 @@ jobs:
       - name: Validate parsers and no-network cache tests
         run: |
           python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_cloud_delta.py -v
-          python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_azure.py -v
+          python -m unittest discover -s runtime/federation/scripts -p 'test_internet_atlas_azure*.py' -v
       - name: Resolve successful parent and cross-branch source receipt
         id: input
         uses: actions/github-script@v7
@@ -107,7 +107,7 @@ jobs:
           cp .deus/azure-work/sources.json .deus/azure-output/ || true
           cp .deus/azure-work/cache-handoff.json .deus/azure-output/ || true
           cp -r .deus/azure-source-cache .deus/azure-output/azure-cache || true
-          cp runtime/federation/scripts/internet_atlas_cloud_delta.py runtime/federation/scripts/test_internet_atlas_azure.py .deus/azure-output/
+          cp runtime/federation/scripts/internet_atlas_cloud_delta.py runtime/federation/scripts/test_internet_atlas_azure*.py .deus/azure-output/
           find .deus/azure-output -name '*-wal' -o -name '*-shm' | xargs -r rm -f
       - uses: actions/cache/save@v4
         if: always()
