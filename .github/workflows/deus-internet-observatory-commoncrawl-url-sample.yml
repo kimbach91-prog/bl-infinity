@@ -1,0 +1,47 @@
+name: DEUS Internet Observatory Common Crawl URL Sample V1
+
+on:
+  push:
+    branches:
+      - deus/internet-observatory-sparse-membership-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/internet-observatory-commoncrawl-url-sample.mjs'
+      - '.github/workflows/deus-internet-observatory-commoncrawl-url-sample.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commoncrawl-url-sample:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run Internet fabric unit regression
+        run: node --test runtime/federation/test/internet-functional-fabric.test.mjs
+      - name: Read bounded Common Crawl URL members
+        run: node runtime/federation/scripts/internet-observatory-commoncrawl-url-sample.mjs
+      - name: Verify material outputs
+        run: |
+          set -euo pipefail
+          test -s .deus/internet-observatory/commoncrawl-url-sample/v1/manifest.json
+          test -s .deus/internet-observatory/commoncrawl-url-sample/v1/members.jsonl
+          node - <<'NODE'
+          const fs=require('fs');
+          const p='.deus/internet-observatory/commoncrawl-url-sample/v1/manifest.json';
+          const m=JSON.parse(fs.readFileSync(p,'utf8'));
+          if(!(m.urlRows>0)) throw new Error('urlRows must be > 0');
+          if(!(m.uniqueKeys>0)) throw new Error('uniqueKeys must be > 0');
+          if(m.slotCollisions<0) throw new Error('invalid collision count');
+          console.log(JSON.stringify({verdict:'PASS',crawlId:m.crawlId,urlRows:m.urlRows,relations:m.relations,uniqueKeys:m.uniqueKeys,uniqueSlots:m.uniqueSlots,slotCollisions:m.slotCollisions,scars:m.scars,memberDigest:m.memberDigest,manifestDigest:m.manifestDigest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-observatory-commoncrawl-url-sample-${{ github.run_id }}
+          path: .deus/internet-observatory/commoncrawl-url-sample/v1/
+          if-no-files-found: error
+          compression-level: 6
