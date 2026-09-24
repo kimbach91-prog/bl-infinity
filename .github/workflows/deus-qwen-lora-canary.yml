@@ -1,0 +1,42 @@
+name: DEUS Qwen LoRA Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "training/deus_qwen_lora_canary.py"
+      - ".github/workflows/deus-qwen-lora-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  qwen-lora:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU training stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+          python -m pip install transformers peft accelerate safetensors
+      - name: Run Qwen-family LoRA canary
+        run: python training/deus_qwen_lora_canary.py --output training/qwen-canary-output
+      - name: Show receipt
+        if: always()
+        run: test -f training/qwen-canary-output/receipt.json && cat training/qwen-canary-output/receipt.json || true
+      - name: Upload Qwen adapter canary
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-qwen-lora-canary
+          path: training/qwen-canary-output
+          if-no-files-found: error
