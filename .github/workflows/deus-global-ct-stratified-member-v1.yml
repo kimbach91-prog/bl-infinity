@@ -1,0 +1,40 @@
+name: DEUS Global CT Stratified Member V1
+on:
+  push:
+    branches:
+      - deus/global-ct-stratified-member-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-ct-stratified-member-v1.mjs'
+      - '.github/workflows/deus-global-ct-stratified-member-v1.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  ct-members:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Materialize stratified public CT certificate-domain members
+        run: node runtime/federation/scripts/global-ct-stratified-member-v1.mjs
+      - name: Verify bounded CT expansion
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-ct-stratified-member/v1/manifest.json','utf8'));
+          if(m.selection.success < 20) throw new Error('entry success gate');
+          if(m.members.certificates < 20) throw new Error('certificate gate');
+          if(m.members.relations < 20) throw new Error('relation gate');
+          if(m.registry.executionAdmitted !== 0) throw new Error('execution admission forbidden');
+          console.log(JSON.stringify({knownLogs:m.logList.knownLogs,reachable:m.logList.reachable,selectedLogs:m.selection.logs,operators:m.selection.operators,tasks:m.selection.tasks,success:m.selection.success,certificates:m.members.certificates,domains:m.members.domains,relations:m.members.relations,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-ct-stratified-member-${{ github.run_id }}
+          path: .deus/global-ct-stratified-member/v1/
+          if-no-files-found: error
+          compression-level: 6
