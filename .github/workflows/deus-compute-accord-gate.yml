@@ -1,0 +1,22 @@
+name: DEUS Compute Accord Gate V1
+on:
+  push:
+    branches:
+      - deus/compute-accord-gate-v1-20260924
+    paths:
+      - 'runtime/federation/lib/compute-accord-gate.mjs'
+      - 'runtime/federation/test/compute-accord-gate.test.mjs'
+      - '.github/workflows/deus-compute-accord-gate.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test runtime/federation/test/compute-accord-gate.test.mjs
