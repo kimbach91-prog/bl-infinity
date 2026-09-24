@@ -1,0 +1,96 @@
+name: DEUS Isolated Cloud Delta and Matched Performance V1
+on:
+  push:
+    branches: [deus/internet-cloud-delta-perf-v1-20260924]
+    paths:
+      - runtime/federation/scripts/internet_atlas_cloud_delta.py
+      - runtime/federation/scripts/test_internet_atlas_cloud_delta.py
+      - .github/workflows/deus-internet-cloud-delta-performance.yml
+  workflow_dispatch:
+  workflow_run:
+    workflows: [DEUS Joined Internet Atlas Index V1]
+    types: [completed]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: deus-internet-isolated-cloud-delta-v1
+  cancel-in-progress: false
+jobs:
+  cloud-delta:
+    if: github.event_name != 'workflow_run' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.repository.default_branch || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - name: Unit tests before public reads
+        run: python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_cloud_delta.py -v
+      - name: Resolve digest-bound accepted parent overlay
+        id: parent
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs');const {owner,repo}=context.repo;
+            const runId=context.eventName==='workflow_run'?context.payload.workflow_run.id:36009834834;
+            const r=await github.rest.actions.getWorkflowRun({owner,repo,run_id:runId});
+            if(r.data.conclusion!=='success'||r.data.head_repository?.full_name!==`${owner}/${repo}`||r.data.path!=='.github/workflows/deus-internet-atlas-index.yml')throw Error('PARENT_NOT_AUTHORIZED_SUCCESS');
+            const aa=await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:runId});
+            const a=aa.data.artifacts.find(x=>x.name===`deus-joined-internet-atlas-overlay-${runId}`&&!x.expired);
+            if(!a||!/^sha256:[0-9a-f]{64}$/.test(a.digest||'')||a.size_in_bytes>64*1024*1024)throw Error('PARENT_ARTIFACT_GATE');
+            fs.mkdirSync('.deus/cloud-delta-work',{recursive:true});
+            fs.writeFileSync('.deus/cloud-delta-work/parent-source.json',JSON.stringify({runId,artifactId:a.id,sha256:a.digest.slice(7),headSha:r.data.head_sha}));
+            core.setOutput('id',a.id);core.setOutput('sha',a.digest.slice(7));
+      - uses: actions/cache/restore@v4
+        id: sources
+        with:
+          path: .deus/cloud-source-cache
+          key: cloud-source-cache-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: cloud-source-cache-v1-${{ runner.os }}-
+      - name: Fetch and verify parent archive once
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PARENT_ID: ${{ steps.parent.outputs.id }}
+          PARENT_SHA: ${{ steps.parent.outputs.sha }}
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$PARENT_ID/zip" > .deus/cloud-delta-work/parent.zip
+          python - <<'PY'
+          import hashlib,json,os,zipfile
+          from pathlib import Path
+          p=Path('.deus/cloud-delta-work');b=(p/'parent.zip').read_bytes()
+          assert hashlib.sha256(b).hexdigest()==os.environ['PARENT_SHA']
+          with zipfile.ZipFile(p/'parent.zip') as z:
+            assert sum(x.file_size for x in z.infolist())<128*1024*1024
+            names=z.namelist();assert len(names)==len(set(names))
+            cur=json.loads(z.read('OVERLAY_CURRENT.json'));snap=cur['snapshot'];assert len(snap)==64 and all(c in '0123456789abcdef' for c in snap)
+            rec=json.loads(z.read(snap+'/receipt.json'));raw=z.read(snap+'/overlay.sqlite')
+            assert hashlib.sha256(raw).hexdigest()==rec['overlaySha256']
+            assert rec['quality']['integrity']=='ok' and rec['executionAdmitted']==0 and rec['counts']['peeringMembershipRelations']>=1000
+            (p/'parent.sqlite').write_bytes(raw);(p/'parent-receipt.json').write_text(json.dumps(rec))
+          PY
+      - name: Isolate cloud sources, preserve non-cloud tables and measure matched work
+        run: |
+          SHA=$(python -c "import json;print(json.load(open('.deus/cloud-delta-work/parent-receipt.json'))['overlaySha256'])")
+          python runtime/federation/scripts/internet_atlas_cloud_delta.py --parent-db .deus/cloud-delta-work/parent.sqlite --parent-sha256 "$SHA" --out .deus/cloud-delta-output --cache .deus/cloud-source-cache
+          cp .deus/cloud-delta-work/parent-source.json .deus/cloud-delta-output/
+          cp runtime/federation/scripts/test_internet_atlas_cloud_delta.py .deus/cloud-delta-output/
+          cp -r .deus/cloud-source-cache .deus/cloud-delta-output/source-cache
+      - uses: actions/cache/save@v4
+        if: success()
+        with:
+          path: .deus/cloud-source-cache
+          key: cloud-source-cache-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deus-isolated-cloud-delta-perf-${{ github.run_id }}
+          path: .deus/cloud-delta-output/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
+          compression-level: 6
