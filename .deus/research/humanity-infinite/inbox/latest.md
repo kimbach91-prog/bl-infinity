@@ -1,11 +1,22 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-09-24T04:46:41.855587+00:00
-- Records: 51
-- Digest: `23511dea6f844eb23d1ab75419d01e2e7bb89404f38dc3d74bcb8f01aad8b3ad`
+- Generated: 2026-09-24T11:42:35.191276+00:00
+- Records: 91
+- Digest: `85fff21ad427c0c0205684865777252be2f20c7cdb5e22dc7860cf2d88d925a9`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
+
+## BA-P0-01
+
+- [Europe PMC] The vagus nerve: a cornerstone for mental health and performance optimization in recreation and elite sports. — 40718569
+- [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
+- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
+- [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
+- [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
+- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
+- [Europe PMC] A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping. — 42483100
+- [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
 
 ## BA-P0-02
 
@@ -29,6 +40,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Effects of mindfulness-based exercise on Parkinson's disease and Alzheimer's disease: a systematic review and meta-analysis. — 42598237
 - [Europe PMC] Does mindfulness mediate the relationship between anxiety and second language performance? A meta-analytic structural equation modeling study. — 42670559
 
+## BA-P0-04
+
+- [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
+- [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
+- [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
+- [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
+- [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
+- [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
+- [Europe PMC] Effects of Health Qigong on quality of life, physical function, and mental health in older adults: a systematic review and meta-analysis of randomized controlled trials. — 42698455
+- [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
+
 ## BA-P0-05
 
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
@@ -39,6 +61,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
+
+## BA-P0-06
+
+- [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
+- [Europe PMC] The impact of exercise on cognitive function and brain health across the lifespan: A systematic review. — 42371603
+- [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
+- [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
+- [Europe PMC] Non-Pharmacological Interventions for Cognitive Function Management in Middle-Aged and Older Adults with Hypertension: A Scoping Review. — 42746159
+- [Europe PMC] Editorial: Exploring physical activity as a complementary strategy in managing mental illness. — 42761147
+- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
+- [Europe PMC] Effects of High-Intensity Interval Training on Cognitive Function in Older Adults: A Systematic Review of Randomized Controlled Trials — PMC13580880
 
 ## BA-P1-02
 
@@ -73,10 +106,25 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
-## Collector errors
+## BA-P2-01
 
-- BA-P0-01 / Europe PMC: HTTPError: HTTP Error 503: 
-- BA-P0-04 / Europe PMC: HTTPError: HTTP Error 503: 
-- BA-P0-06 / Europe PMC: HTTPError: HTTP Error 503: 
-- BA-P2-01 / Europe PMC: HTTPError: HTTP Error 503: 
-- BA-P2-02 / Europe PMC: HTTPError: HTTP Error 503: 
+- [Europe PMC] Does Reiki Benefit Mental Health Symptoms Above Placebo? — 35911042
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38304734
+- [Europe PMC] Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial. — 40931401
+- [Europe PMC] Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial. — 41316170
+- [Europe PMC] Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice. — 42305856
+- [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
+- [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
+
+## BA-P2-02
+
+- [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
+- [Europe PMC] Neuroscientific Framework of Cognitive-Behavioral Interventions for Mental Health Across Diverse Cultural Populations: A Systematic Review of Effectiveness, Delivery Methods, and Engagement. — 41590012
+- [Europe PMC] Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing. — 41594837
+- [Europe PMC] A scoping review of music-based digital therapeutics for stress, anxiety, and depression. — 41907803
+- [Europe PMC] Energy constraint on human health. — 42025458
+- [Europe PMC] Abstracts of the 7th World Parkinson Congress. — 42175618
+- [Europe PMC] ePoster. — 42366021
+- [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
+
