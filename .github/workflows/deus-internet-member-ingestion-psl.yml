@@ -1,0 +1,36 @@
+name: DEUS Internet PSL Member Ingestion
+
+on:
+  push:
+    branches:
+      - deus/internet-member-ingestion-psl-20260924
+    paths:
+      - 'runtime/federation/scripts/internet-member-ingestion-psl.mjs'
+      - '.github/workflows/deus-internet-member-ingestion-psl.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest-psl:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Materialize full Public Suffix List membership
+        run: node runtime/federation/scripts/internet-member-ingestion-psl.mjs
+      - name: Verify artifacts exist
+        run: |
+          test -n "$(find .deus/internet-fabric/members -name 'psl-*.jsonl' -print -quit)"
+          test -n "$(find .deus/internet-fabric/members -name 'psl-*.summary.json' -print -quit)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-psl-members-${{ github.run_id }}
+          path: .deus/internet-fabric/members/
+          if-no-files-found: error
+          compression-level: 6
