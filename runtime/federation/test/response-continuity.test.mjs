@@ -3,7 +3,10 @@ import assert from 'node:assert/strict';
 import {
   ResponseContinuityGuard,
   buildResponseCheckpoint,
+  buildTransactionalResponseCheckpoint,
+  deriveResponseStepIdempotencyKey,
   responseContinuityDecision,
+  transactionResumePlan,
 } from '../lib/response-continuity.mjs';
 
 test('material progress cannot remain silent to the user', () => {
@@ -109,7 +112,7 @@ test('soft turn budget checkpoints even when platform deadline telemetry is unav
   assert.equal(d.turnEndAllowed, false);
 });
 
-test('verified checkpoint at soft turn budget emits partial and stops same-turn continuation', () => {
+test('verified checkpoint at soft turn budget emits partial but keeps same-turn solver active', () => {
   const d = responseContinuityDecision({
     turnElapsedMs: 36_000,
     checkpointVerified: true,
@@ -117,8 +120,9 @@ test('verified checkpoint at soft turn budget emits partial and stops same-turn 
   });
   assert.equal(d.action, 'EMIT_PARTIAL_REPLY_NOW');
   assert.equal(d.reason, 'SOFT_TURN_BUDGET_EXCEEDED');
-  assert.equal(d.shouldContinueAfterVisibleUpdate, false);
-  assert.equal(d.turnEndAllowed, true);
+  assert.equal(d.shouldContinueAfterVisibleUpdate, true);
+  assert.equal(d.solverContinuationRequired, true);
+  assert.equal(d.turnEndAllowed, false);
 });
 
 test('visible progress does not reset total turn budget', () => {
@@ -127,6 +131,8 @@ test('visible progress does not reset total turn budget', () => {
   const d = g.decide({ checkpointVerified: true }, { now: 37_000 });
   assert.equal(d.action, 'EMIT_PARTIAL_REPLY_NOW');
   assert.equal(d.reason, 'SOFT_TURN_BUDGET_EXCEEDED');
+  assert.equal(d.shouldContinueAfterVisibleUpdate, true);
+  assert.equal(d.turnEndAllowed, false);
   assert.ok(d.turnElapsedMs >= 36_000);
 });
 
@@ -139,4 +145,70 @@ test('critical section budget triggers containment before a long blocking operat
   });
   assert.equal(d.action, 'CHECKPOINT_THEN_REPLY_NOW');
   assert.equal(d.reason, 'CRITICAL_SECTION_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT');
+});
+
+
+test('timeout risk requires checkpoint but does not become a solver-stop condition', () => {
+  const d = responseContinuityDecision({
+    uiDeadlineMsRemaining: 5000,
+    checkpointVerified: false,
+    hasUserVisibleReply: true,
+    nextAction: 'persist exact cursor then continue',
+  });
+  assert.equal(d.action, 'CHECKPOINT_THEN_REPLY_NOW');
+  assert.equal(d.checkpointRequiredBeforeYield, true);
+  assert.equal(d.solverContinuationRequired, true);
+  assert.equal(d.turnEndAllowed, false);
+});
+
+test('transaction checkpoint derives stable idempotency key and exact resume cursor', () => {
+  const input = {
+    jobId: 'JOB-X',
+    runId: 'RUN-7',
+    continuityId: 'CONT-X',
+    phaseId: 'PHASE-2',
+    stepId: 'STEP-3',
+    inputDigest: 'input-sha',
+    nextAction: 'verify STEP-3 output then advance',
+    timestamp: '2026-09-24T06:30:00Z',
+  };
+  const a = buildTransactionalResponseCheckpoint(input);
+  const b = buildTransactionalResponseCheckpoint(input);
+  assert.equal(a.digest, b.digest);
+  assert.equal(a.idempotencyKey, b.idempotencyKey);
+  assert.equal(a.idempotencyKey, deriveResponseStepIdempotencyKey(input));
+  assert.equal(a.phaseId, 'PHASE-2');
+  assert.equal(a.stepId, 'STEP-3');
+  const plan = transactionResumePlan(a);
+  assert.equal(plan.action, 'RESUME_EXACT_STEP');
+  assert.equal(plan.replayExactStep, true);
+});
+
+test('transaction resume verifies possible side effects before retry and keeps verified steps', () => {
+  const executed = buildTransactionalResponseCheckpoint({
+    jobId: 'JOB-X',
+    runId: 'RUN-7',
+    phaseId: 'PHASE-2',
+    stepId: 'WRITE-1',
+    stepStatus: 'EXECUTED',
+    latestReceipt: 'RCP-1',
+    nextAction: 'read back WRITE-1',
+    timestamp: '2026-09-24T06:30:00Z',
+  });
+  const verify = transactionResumePlan(executed);
+  assert.equal(verify.action, 'VERIFY_EXISTING_OUTPUT_BEFORE_RETRY');
+  assert.equal(verify.replayExactStep, false);
+
+  const verified = buildTransactionalResponseCheckpoint({
+    jobId: 'JOB-X',
+    runId: 'RUN-7',
+    phaseId: 'PHASE-2',
+    stepId: 'WRITE-1',
+    stepStatus: 'VERIFIED',
+    nextAction: 'advance to WRITE-2',
+    timestamp: '2026-09-24T06:31:00Z',
+  });
+  const keep = transactionResumePlan(verified);
+  assert.equal(keep.action, 'KEEP_VERIFIED_STEP_AND_ADVANCE');
+  assert.equal(keep.replayExactStep, false);
 });
