@@ -1,0 +1,51 @@
+name: DEUS Web Trust Partition Fabric V1
+
+on:
+  push:
+    branches:
+      - deus/web-trust-partition-fabric-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/web-trust-partition-fabric.mjs'
+      - '.github/workflows/deus-web-trust-partition-fabric.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web-trust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Map latest Common Crawl partitions and CT log entry domains
+        run: node runtime/federation/scripts/web-trust-partition-fabric.mjs
+      - name: Verify material outputs
+        run: |
+          set -euo pipefail
+          test -s .deus/web-trust-partition/v1/manifest.json
+          test -s .deus/web-trust-partition/v1/commoncrawl-partitions.jsonl
+          test -s .deus/web-trust-partition/v1/ct-logs.jsonl
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/web-trust-partition/v1/manifest.json','utf8'));
+          if(!(m.commoncrawl.partitionObjects>0)) throw new Error('Common Crawl partition count must be >0');
+          if(!(m.certificateTransparency.knownLogs>0)) throw new Error('CT known log count must be >0');
+          if(!(m.certificateTransparency.sthReachable>0)) throw new Error('At least one CT STH must be reachable');
+          console.log(JSON.stringify({
+            latestCrawl:m.commoncrawl.crawlId,
+            partitions:m.commoncrawl.partitionObjects,
+            ctLogs:m.certificateTransparency.knownLogs,
+            ctReachable:m.certificateTransparency.sthReachable,
+            digest:m.manifestDigest,
+          }));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-web-trust-partition-fabric-${{ github.run_id }}
+          path: .deus/web-trust-partition/v1/
+          if-no-files-found: error
+          compression-level: 6
