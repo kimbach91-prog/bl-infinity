@@ -17,7 +17,13 @@ import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-
 import { loadGoogleServiceAccount, createServiceAccountTokenSource } from './lib/google-service-account.mjs';
 import { GoogleSheetsCanonicalBridge } from './bridge/drive-machine-bridge.mjs';
 import { BoundedCanonicalObserver } from './bridge/canonical-observer-worker.mjs';
-import { DEFAULT_RESPONSE_CONTINUITY_POLICY, buildResponseCheckpoint, responseContinuityDecision } from './lib/response-continuity.mjs';
+import {
+  DEFAULT_RESPONSE_CONTINUITY_POLICY,
+  buildResponseCheckpoint,
+  buildTransactionalResponseCheckpoint,
+  responseContinuityDecision,
+  transactionResumePlan,
+} from './lib/response-continuity.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -116,17 +122,17 @@ const server = http.createServer(async (req, res) => {
       signedManifestsRequired: requireSignedManifests,
       startupDurability: startupDurabilityReceipt,
       driveBridge: driveBridgeRuntime.snapshot(),
-      responseContinuityGuard: 'V1_NO_SILENT_YIELD',
+      responseContinuityGuard: 'V2_1_CHECKPOINT_VISIBLE_CONTINUE',
       responseContinuityPolicy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
     });
 
     if (req.method === 'GET' && requestPath(req.url) === '/runtime/response-continuity/policy') {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       return send(res, 200, {
-        schema: 'deus-response-continuity-policy/1',
-        guard: 'V1_NO_SILENT_YIELD',
+        schema: 'deus-response-continuity-policy/2',
+        guard: 'V2_1_CHECKPOINT_VISIBLE_CONTINUE',
         policy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
-        truthBoundary: 'CONTROL_OBLIGATION_AND_CHECKPOINTING_DO_NOT_GUARANTEE_PLATFORM_TRANSPORT_DELIVERY',
+        truthBoundary: 'TIMEOUT_RISK_REQUIRES_CHECKPOINT_AND_VISIBLE_UPDATE_BUT_DOES_NOT_AUTHORIZE_SOLVER_STOP__PLATFORM_TRANSPORT_PREEMPTION_REMAINS_EXTERNAL',
       });
     }
 
@@ -135,13 +141,24 @@ const server = http.createServer(async (req, res) => {
       const body = await readJson(req, Math.min(maxBodyBytes, 16_384));
       const decision = responseContinuityDecision(body.state ?? body, body.policy ?? {});
       let checkpointCandidate = null;
+      let resumePlan = null;
       if (decision.checkpointRequiredBeforeYield && body.checkpoint) {
-        checkpointCandidate = buildResponseCheckpoint(body.checkpoint);
+        const transactional = body.checkpoint.runId != null
+          && body.checkpoint.phaseId != null
+          && body.checkpoint.stepId != null;
+        checkpointCandidate = transactional
+          ? buildTransactionalResponseCheckpoint(body.checkpoint)
+          : buildResponseCheckpoint(body.checkpoint);
+        if (transactional) resumePlan = transactionResumePlan(checkpointCandidate, body.resume ?? {});
       }
       return send(res, 200, {
-        schema: 'deus-response-continuity-runtime-plan/1',
+        schema: 'deus-response-continuity-runtime-plan/2',
         decision,
         checkpointCandidate,
+        resumePlan,
+        continuationContract: decision.solverContinuationRequired
+          ? 'CHECKPOINT_VISIBLE_UPDATE_CONTINUE_SAME_TURN'
+          : 'TRUE_WAIT_OR_TERMINAL_MAY_YIELD',
         actor: access.principal.id,
       });
     }
