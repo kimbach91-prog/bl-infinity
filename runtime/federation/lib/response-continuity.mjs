@@ -1,9 +1,11 @@
 import { createHash } from 'node:crypto';
 
 export const DEFAULT_RESPONSE_CONTINUITY_POLICY = Object.freeze({
-  maxSilenceMs: 15_000,
-  maxToolCallsWithoutVisibleUpdate: 3,
-  preemptionMarginMs: 8_000,
+  maxSilenceMs: 8_000,
+  maxToolCallsWithoutVisibleUpdate: 2,
+  preemptionMarginMs: 15_000,
+  softTurnBudgetMs: 35_000,
+  maxCriticalSectionMs: 20_000,
   requireVerifiedCheckpointBeforeNonterminalYield: true,
 });
 
@@ -76,7 +78,12 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   const deadlineRemaining = input.uiDeadlineMsRemaining == null
     ? null
     : boundedNumber(input.uiDeadlineMsRemaining, 0);
+  const turnElapsedMs = boundedNumber(input.turnElapsedMs, 0);
+  const criticalSectionElapsedMs = boundedNumber(input.criticalSectionElapsedMs, 0);
   const predictablePreemption = deadlineRemaining != null && deadlineRemaining <= p.preemptionMarginMs;
+  const softTurnBudgetExceeded = turnElapsedMs >= p.softTurnBudgetMs;
+  const criticalSectionExceeded = criticalSectionElapsedMs >= p.maxCriticalSectionMs;
+  const timeoutRisk = predictablePreemption || softTurnBudgetExceeded || criticalSectionExceeded;
   const silenceExceeded = msSinceVisibleUpdate >= p.maxSilenceMs;
   const toolBudgetExceeded = toolCallsSinceVisibleUpdate >= p.maxToolCallsWithoutVisibleUpdate;
   const waitingOrBlocked = criticalPathWaiting || hardBlocker;
@@ -90,12 +97,20 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   } else if (ownerStop && !hasUserVisibleReply) {
     action = 'EMIT_STOP_ACK_NOW';
     reason = 'OWNER_STOP_REQUIRES_VISIBLE_ACK';
-  } else if (predictablePreemption && !checkpointVerified) {
+  } else if (timeoutRisk && !checkpointVerified) {
     action = 'CHECKPOINT_THEN_REPLY_NOW';
-    reason = 'PREDICTABLE_UI_PREEMPTION_WITHOUT_VERIFIED_CHECKPOINT';
-  } else if (predictablePreemption) {
+    reason = predictablePreemption
+      ? 'PREDICTABLE_UI_PREEMPTION_WITHOUT_VERIFIED_CHECKPOINT'
+      : softTurnBudgetExceeded
+        ? 'SOFT_TURN_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT'
+        : 'CRITICAL_SECTION_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT';
+  } else if (timeoutRisk) {
     action = 'EMIT_PARTIAL_REPLY_NOW';
-    reason = 'PREDICTABLE_UI_PREEMPTION';
+    reason = predictablePreemption
+      ? 'PREDICTABLE_UI_PREEMPTION'
+      : softTurnBudgetExceeded
+        ? 'SOFT_TURN_BUDGET_EXCEEDED'
+        : 'CRITICAL_SECTION_BUDGET_EXCEEDED';
   } else if (waitingOrBlocked && !checkpointVerified) {
     action = 'CHECKPOINT_THEN_REPLY_NOW';
     reason = 'NONTERMINAL_WAIT_OR_BLOCK_WITHOUT_VERIFIED_CHECKPOINT';
@@ -112,7 +127,7 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   }
 
   const nonterminal = !terminal;
-  const yieldCondition = waitingOrBlocked || predictablePreemption;
+  const yieldCondition = waitingOrBlocked || timeoutRisk;
   const turnEndAllowed = terminal || ownerStop || (
     nonterminal
     && yieldCondition
@@ -130,13 +145,18 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       && p.requireVerifiedCheckpointBeforeNonterminalYield
       && !checkpointVerified,
     turnEndAllowed,
-    shouldContinueAfterVisibleUpdate: !terminal && !waitingOrBlocked,
+    shouldContinueAfterVisibleUpdate: !terminal && !waitingOrBlocked && !timeoutRisk,
+    timeoutContainmentTriggered: timeoutRisk,
+    turnElapsedMs,
+    criticalSectionElapsedMs,
     nextAction: input.nextAction == null ? null : String(input.nextAction),
     blocker: input.blocker == null ? null : String(input.blocker),
     policy: Object.freeze({
       maxSilenceMs: p.maxSilenceMs,
       maxToolCallsWithoutVisibleUpdate: p.maxToolCallsWithoutVisibleUpdate,
       preemptionMarginMs: p.preemptionMarginMs,
+      softTurnBudgetMs: p.softTurnBudgetMs,
+      maxCriticalSectionMs: p.maxCriticalSectionMs,
       requireVerifiedCheckpointBeforeNonterminalYield: p.requireVerifiedCheckpointBeforeNonterminalYield,
     }),
     truthBoundary: 'USER_VISIBLE_UPDATE_REQUIRED_IS_A_CONTROL_OBLIGATION__PLATFORM_DELIVERY_ACK_REMAINS_EXTERNAL_TO_THIS_KERNEL',
@@ -146,6 +166,8 @@ export function responseContinuityDecision(input = {}, policy = {}) {
 export class ResponseContinuityGuard {
   constructor({ policy = {}, now = Date.now() } = {}) {
     this.policy = Object.freeze({ ...DEFAULT_RESPONSE_CONTINUITY_POLICY, ...policy });
+    this.turnStartedAt = Number(now);
+    this.criticalSectionStartedAt = Number(now);
     this.lastVisibleAt = Number(now);
     this.toolCallsSinceVisibleUpdate = 0;
     this.materialProgressSinceVisible = false;
@@ -161,6 +183,14 @@ export class ResponseContinuityGuard {
     this.materialProgressSinceVisible = true;
   }
 
+  markCriticalSectionStart({ now = Date.now() } = {}) {
+    this.criticalSectionStartedAt = Number(now);
+  }
+
+  markCriticalSectionEnd({ now = Date.now() } = {}) {
+    this.criticalSectionStartedAt = Number(now);
+  }
+
   markUserVisible({ final = false, now = Date.now() } = {}) {
     this.lastVisibleAt = Number(now);
     this.toolCallsSinceVisibleUpdate = 0;
@@ -173,6 +203,8 @@ export class ResponseContinuityGuard {
     return responseContinuityDecision({
       ...input,
       msSinceVisibleUpdate: Math.max(0, Number(now) - this.lastVisibleAt),
+      turnElapsedMs: Math.max(0, Number(now) - this.turnStartedAt),
+      criticalSectionElapsedMs: Math.max(0, Number(now) - this.criticalSectionStartedAt),
       toolCallsSinceVisibleUpdate: this.toolCallsSinceVisibleUpdate,
       materialProgressSinceVisible: this.materialProgressSinceVisible,
       hasUserVisibleReply: this.hasUserVisibleReply,

@@ -94,3 +94,49 @@ test('checkpoint envelope is deterministic and preserves exact next action', () 
   assert.equal(a.nextAction, 'resume Vercel receipt readback');
   assert.match(a.responseObligation, /MUST_EMIT_USER_VISIBLE_REPLY/);
 });
+
+
+test('soft turn budget checkpoints even when platform deadline telemetry is unavailable', () => {
+  const d = responseContinuityDecision({
+    turnElapsedMs: 36_000,
+    checkpointVerified: false,
+    hasUserVisibleReply: true,
+    nextAction: 'resume exact bounded unit',
+  });
+  assert.equal(d.action, 'CHECKPOINT_THEN_REPLY_NOW');
+  assert.equal(d.reason, 'SOFT_TURN_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT');
+  assert.equal(d.timeoutContainmentTriggered, true);
+  assert.equal(d.turnEndAllowed, false);
+});
+
+test('verified checkpoint at soft turn budget emits partial and stops same-turn continuation', () => {
+  const d = responseContinuityDecision({
+    turnElapsedMs: 36_000,
+    checkpointVerified: true,
+    hasUserVisibleReply: true,
+  });
+  assert.equal(d.action, 'EMIT_PARTIAL_REPLY_NOW');
+  assert.equal(d.reason, 'SOFT_TURN_BUDGET_EXCEEDED');
+  assert.equal(d.shouldContinueAfterVisibleUpdate, false);
+  assert.equal(d.turnEndAllowed, true);
+});
+
+test('visible progress does not reset total turn budget', () => {
+  const g = new ResponseContinuityGuard({ now: 1_000 });
+  g.markUserVisible({ now: 20_000 });
+  const d = g.decide({ checkpointVerified: true }, { now: 37_000 });
+  assert.equal(d.action, 'EMIT_PARTIAL_REPLY_NOW');
+  assert.equal(d.reason, 'SOFT_TURN_BUDGET_EXCEEDED');
+  assert.ok(d.turnElapsedMs >= 36_000);
+});
+
+test('critical section budget triggers containment before a long blocking operation overruns the turn', () => {
+  const d = responseContinuityDecision({
+    criticalSectionElapsedMs: 21_000,
+    checkpointVerified: false,
+    hasUserVisibleReply: true,
+    nextAction: 'resume after external call',
+  });
+  assert.equal(d.action, 'CHECKPOINT_THEN_REPLY_NOW');
+  assert.equal(d.reason, 'CRITICAL_SECTION_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT');
+});
