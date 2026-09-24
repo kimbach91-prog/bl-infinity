@@ -1,0 +1,40 @@
+name: DEUS CT CDXJ Sparse Fabric V1
+on:
+  push:
+    branches:
+      - deus/ct-cdxj-sparse-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/ct-cdxj-sparse-fabric.mjs'
+      - '.github/workflows/deus-ct-cdxj-sparse.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  sparse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build sparse CDXJ + CT relation overlay
+        run: node runtime/federation/scripts/ct-cdxj-sparse-fabric.mjs
+      - name: Verify useful material
+        run: |
+          set -euo pipefail
+          test -s .deus/ct-cdxj-sparse/v1/manifest.json
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/ct-cdxj-sparse/v1/manifest.json','utf8'));
+          if(!(m.commonCrawl.rows>0)) throw new Error('CDXJ useful rows must be >0');
+          if(!(m.certificateTransparency.relations>0)) throw new Error('CT domain relations must be >0');
+          console.log(JSON.stringify({cdxRows:m.commonCrawl.rows,ctRelations:m.certificateTransparency.relations,manifestDigest:m.manifestDigest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-ct-cdxj-sparse-${{ github.run_id }}
+          path: .deus/ct-cdxj-sparse/v1/
+          if-no-files-found: error
+          compression-level: 6
