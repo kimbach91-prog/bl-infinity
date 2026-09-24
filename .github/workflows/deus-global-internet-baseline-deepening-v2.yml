@@ -1,0 +1,36 @@
+name: DEUS Global Internet Baseline Deepening V2
+on:
+  push:
+    branches:
+      - deus/global-internet-baseline-deepening-v2-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-baseline-deepening-v2.mjs'
+      - '.github/workflows/deus-global-internet-baseline-deepening-v2.yml'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deepen-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Read RDAP/RPKI/routing/protocol/cloud/measurement roots
+        run: node runtime/federation/scripts/global-internet-baseline-deepening-v2.mjs
+      - name: Verify broad V2 coverage
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-deepening/v2/manifest.json','utf8'));
+          if(!(m.live>=16 && m.liveClasses.length>=6)) throw new Error('V2 coverage gate failed');
+          if(m.registry.executionAdmitted!==0) throw new Error('V2 must not admit execution');
+          console.log(JSON.stringify({sources:m.sources,live:m.live,held:m.held,classes:m.liveClasses,registry:m.registry,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-deepening-v2-${{ github.run_id }}
+          path: .deus/global-internet-deepening/v2/
+          if-no-files-found: error
