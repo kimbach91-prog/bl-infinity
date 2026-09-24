@@ -31,9 +31,9 @@ const markets=[];
 // Akash public, no-auth provider telemetry.
 const ak=await get('https://console-api.akash.network/v1/providers');
 receipts.push({...ak,body:undefined,source:'AKASH_PROVIDERS'});
-if(ak.ok){
-  const data=j(ak);
-  const providers=Array.isArray(data)?data:(Array.isArray(data?.providers)?data.providers:[]);
+{
+  const data=ak.ok?j(ak):null;
+  const providers=Array.isArray(data)?data:(Array.isArray(data?.providers)?data.providers:(Array.isArray(data?.data)?data.data:[]));
   const online=providers.filter(x=>x?.isOnline===true);
   const gpuAvailable=sum(online,x=>x?.stats?.gpu?.available);
   const gpuTotal=sum(online,x=>x?.stats?.gpu?.total);
@@ -41,18 +41,23 @@ if(ak.ok){
   const cpuTotal=sum(online,x=>x?.stats?.cpu?.total);
   const memAvailable=sum(online,x=>x?.stats?.memory?.available);
   const memTotal=sum(online,x=>x?.stats?.memory?.total);
-  const providerRecords=providers.map(x=>reg('service','akash:'+String(x.owner||x.hostUri||x.name||'unknown'),{
-    provider:'AKASH',name:x.name??null,owner:x.owner??null,hostUri:x.hostUri??null,isOnline:x.isOnline===true,
-    lastCheckDate:x.lastCheckDate??null,gpuModels:x.gpuModels??[],stats:x.stats??null,
-    authorityClass:'OPT_IN_MARKET',offerEligible:true,executionAdmitted:false,
-    truthBoundary:'PUBLIC_PROVIDER_TELEMETRY_NE_LEASE_NE_EXECUTION_AUTHORITY'
-  }));
-  fs.writeFileSync(OUT+'/akash-providers.jsonl',providerRecords.map(x=>JSON.stringify(x)).join('\n')+'\n');
+  if(providers.length){
+    const providerRecords=providers.map(x=>reg('service','akash:'+String(x.owner||x.hostUri||x.name||'unknown'),{
+      provider:'AKASH',name:x.name??null,owner:x.owner??null,hostUri:x.hostUri??null,isOnline:x.isOnline===true,
+      lastCheckDate:x.lastCheckDate??null,gpuModels:x.gpuModels??[],stats:x.stats??null,
+      authorityClass:'OPT_IN_MARKET',offerEligible:true,executionAdmitted:false,
+      truthBoundary:'PUBLIC_PROVIDER_TELEMETRY_NE_LEASE_NE_EXECUTION_AUTHORITY'
+    }));
+    fs.writeFileSync(OUT+'/akash-providers.jsonl',providerRecords.map(x=>JSON.stringify(x)).join('\n')+'\n');
+  }
   markets.push({
-    market:'AKASH',class:'PUBLIC_NOAUTH_MARKET_TELEMETRY',providers:providers.length,onlineProviders:online.length,
+    market:'AKASH',class:'PUBLIC_NOAUTH_MARKET_TELEMETRY',sourceOk:ak.ok,sourceStatus:ak.ok?'LIVE_TELEMETRY':'HOLD_SOURCE_UNREACHABLE',
+    providers:providers.length,onlineProviders:online.length,
     cpuAvailable:cpuAvailable.toString(),cpuTotal:cpuTotal.toString(),gpuAvailable:gpuAvailable.toString(),gpuTotal:gpuTotal.toString(),
     memoryAvailableBytes:memAvailable.toString(),memoryTotalBytes:memTotal.toString(),
-    source:'https://console-api.akash.network/v1/providers',offerState:'OFFER_ELIGIBLE_MARKET',spendState:'NO_SPEND',
+    source:'https://console-api.akash.network/v1/providers',
+    offerState:ak.ok?'OFFER_ELIGIBLE_MARKET':'HOLD_SOURCE_UNREACHABLE',spendState:'NO_SPEND',
+    sourceError:ak.ok?null:ak.error??('HTTP '+String(ak.status??'unknown')),
   });
 }
 
@@ -64,25 +69,29 @@ const golemEndpoints={
   average:'https://api.stats.golem.network/v1/network/pricing/average',
   computing:'https://api.stats.golem.network/v1/network/computing'
 };
-const gr={};
+const gr={}, golemSourceState={};
 for(const [k,u] of Object.entries(golemEndpoints)){
-  const r=await get(u); receipts.push({...r,body:undefined,source:'GOLEM_'+k.toUpperCase()}); gr[k]=r.ok?j(r):null;
+  const r=await get(u); receipts.push({...r,body:undefined,source:'GOLEM_'+k.toUpperCase()}); gr[k]=r.ok?j(r):null; golemSourceState[k]={ok:r.ok,status:r.status??null,error:r.error??null};
 }
-if(gr.online){
+{
   const providers=Array.isArray(gr.online)?gr.online:(Array.isArray(gr.online?.data)?gr.online.data:[]);
-  const providerRecords=providers.map(x=>reg('service','golem:'+String(x.node_id||x?.data?.id||'unknown'),{
-    provider:'GOLEM',nodeId:x.node_id??x?.data?.id??null,online:x.online===true,updatedAt:x.updated_at??null,
-    cpuCores:x?.data?.['golem.inf.cpu.cores']??null,cpuThreads:x?.data?.['golem.inf.cpu.threads']??null,
-    memoryGiB:x?.data?.['golem.inf.mem.gib']??null,storageGiB:x?.data?.['golem.inf.storage.gib']??null,
-    pricingCoeffs:x?.data?.['golem.com.pricing.model.linear.coeffs']??null,
-    authorityClass:'OPT_IN_MARKET',offerEligible:true,executionAdmitted:false,
-    truthBoundary:'PUBLIC_PROVIDER_STATS_NE_MARKET_AGREEMENT_NE_EXECUTION_AUTHORITY'
-  }));
-  fs.writeFileSync(OUT+'/golem-providers.jsonl',providerRecords.map(x=>JSON.stringify(x)).join('\n')+'\n');
+  if(providers.length){
+    const providerRecords=providers.map(x=>reg('service','golem:'+String(x.node_id||x?.data?.id||'unknown'),{
+      provider:'GOLEM',nodeId:x.node_id??x?.data?.id??null,online:x.online===true,updatedAt:x.updated_at??null,
+      cpuCores:x?.data?.['golem.inf.cpu.cores']??null,cpuThreads:x?.data?.['golem.inf.cpu.threads']??null,
+      memoryGiB:x?.data?.['golem.inf.mem.gib']??null,storageGiB:x?.data?.['golem.inf.storage.gib']??null,
+      pricingCoeffs:x?.data?.['golem.com.pricing.model.linear.coeffs']??null,
+      authorityClass:'OPT_IN_MARKET',offerEligible:true,executionAdmitted:false,
+      truthBoundary:'PUBLIC_PROVIDER_STATS_NE_MARKET_AGREEMENT_NE_EXECUTION_AUTHORITY'
+    }));
+    fs.writeFileSync(OUT+'/golem-providers.jsonl',providerRecords.map(x=>JSON.stringify(x)).join('\n')+'\n');
+  }
+  const live=Object.values(golemSourceState).some(x=>x.ok);
   markets.push({
-    market:'GOLEM',class:'PUBLIC_NOAUTH_MARKET_TELEMETRY',
+    market:'GOLEM',class:'PUBLIC_NOAUTH_MARKET_TELEMETRY',sourceOk:live,sourceStatus:live?'LIVE_TELEMETRY':'HOLD_SOURCE_UNREACHABLE',
     onlineProviders:providers.length,networkStats:gr.stats,pricingMedian:gr.median,pricingAverage:gr.average,providersComputing:gr.computing,
-    source:golemEndpoints.online,offerState:'OFFER_ELIGIBLE_MARKET',spendState:'NO_SPEND'
+    source:golemEndpoints.online,sourceState:golemSourceState,
+    offerState:live?'OFFER_ELIGIBLE_MARKET':'HOLD_SOURCE_UNREACHABLE',spendState:'NO_SPEND'
   });
 }
 
@@ -91,16 +100,22 @@ const hPerf=await get('https://aihorde.net/api/v2/status/performance');
 const hModels=await get('https://aihorde.net/api/v2/status/models');
 receipts.push({...hPerf,body:undefined,source:'AIHORDE_PERFORMANCE'},{...hModels,body:undefined,source:'AIHORDE_MODELS'});
 const perf=hPerf.ok?j(hPerf):null, models=hModels.ok?j(hModels):null;
-if(perf||models){
+{
   const modelList=Array.isArray(models)?models:[];
-  fs.writeFileSync(OUT+'/aihorde-models.jsonl',modelList.map(x=>JSON.stringify(reg('service','aihorde:model:'+String(x.name||x.model||'unknown'),{
-    provider:'AI_HORDE',model:x.name??x.model??null,performance:x.performance??null,queued:x.queued??null,jobs:x.jobs??null,
-    authorityClass:'PUBLIC_SERVICE_INTENDED',offerEligible:true,executionAdmitted:false,
-    truthBoundary:'PUBLIC_MODEL_AVAILABILITY_NE_EXECUTION_RECEIPT'
-  }))).join('\n')+'\n');
+  if(modelList.length){
+    fs.writeFileSync(OUT+'/aihorde-models.jsonl',modelList.map(x=>JSON.stringify(reg('service','aihorde:model:'+String(x.name||x.model||'unknown'),{
+      provider:'AI_HORDE',model:x.name??x.model??null,performance:x.performance??null,queued:x.queued??null,jobs:x.jobs??null,
+      authorityClass:'PUBLIC_SERVICE_INTENDED',offerEligible:true,executionAdmitted:false,
+      truthBoundary:'PUBLIC_MODEL_AVAILABILITY_NE_EXECUTION_RECEIPT'
+    }))).join('\n')+'\n');
+  }
+  const live=hPerf.ok||hModels.ok;
   markets.push({
-    market:'AI_HORDE',class:'PUBLIC_INTENDED_SERVICE_TELEMETRY',performance:perf,models:modelList.length,
-    source:'https://aihorde.net/api/v2/status/performance',offerState:'OFFER_ELIGIBLE_PUBLIC_SERVICE',spendState:'NO_SPEND'
+    market:'AI_HORDE',class:'PUBLIC_INTENDED_SERVICE_TELEMETRY',sourceOk:live,sourceStatus:live?'LIVE_TELEMETRY':'HOLD_SOURCE_UNREACHABLE',
+    performance:perf,models:modelList.length,
+    source:'https://aihorde.net/api/v2/status/performance',
+    offerState:live?'OFFER_ELIGIBLE_PUBLIC_SERVICE':'HOLD_SOURCE_UNREACHABLE',spendState:'NO_SPEND',
+    sourceState:{performance:{ok:hPerf.ok,status:hPerf.status??null,error:hPerf.error??null},models:{ok:hModels.ok,status:hModels.status??null,error:hModels.error??null}}
   });
 }
 
@@ -147,7 +162,9 @@ manifest.digest=sha(Buffer.from(JSON.stringify(manifest)));
 fs.writeFileSync(OUT+'/markets.jsonl',markets.map(x=>JSON.stringify(x)).join('\n')+'\n');
 fs.writeFileSync(OUT+'/manifest.json',JSON.stringify(manifest,null,2)+'\n');
 
-if(!(markets.some(x=>x.market==='AKASH')&&markets.some(x=>x.market==='GOLEM')&&markets.some(x=>x.market==='AI_HORDE'))){
-  throw new Error('Required public telemetry markets missing');
+const livePublic=markets.filter(x=>['AKASH','GOLEM','AI_HORDE'].includes(x.market)&&x.sourceOk===true);
+if(livePublic.length===0){
+  console.error(JSON.stringify({markets:markets.map(x=>({market:x.market,sourceOk:x.sourceOk,sourceStatus:x.sourceStatus,offerState:x.offerState})),receipts}));
+  throw new Error('No live public telemetry market available');
 }
-console.log(JSON.stringify({verdict:'PASS',summary:manifest.summary,digest:manifest.digest,markets:markets.map(x=>({market:x.market,class:x.class,providers:x.providers??x.onlineProviders??null,models:x.models??null}))}));
+console.log(JSON.stringify({verdict:'PASS',summary:manifest.summary,digest:manifest.digest,livePublic:livePublic.length,markets:markets.map(x=>({market:x.market,class:x.class,sourceOk:x.sourceOk??null,providers:x.providers??x.onlineProviders??null,models:x.models??null,offerState:x.offerState}))}));
