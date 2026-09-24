@@ -1,16 +1,16 @@
 #!/usr/bin/env python3
 """Public Azure service-tag snapshot -> existing offline Internet atlas.
-Two intended publisher reads at most per due refresh; no member IP is contacted.
+Two intended publisher reads per due refresh or explicit parser repair; no IP probe.
 Source-local failure preserves the last good source and all other atlas tables.
 """
 from __future__ import annotations
-import argparse, hashlib, html, ipaddress, json, os, platform, re, resource
+import argparse, hashlib, html, json, os, platform, re, resource
 import shutil, sqlite3, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 import internet_atlas_cloud_delta as core
 
-VERSION = 'internet-atlas-azure/1.0'
+VERSION = 'internet-atlas-azure/1.0.1'
 SID = 'AZURE_PUBLIC_SERVICE_TAGS'
 PAGE = 'https://www.microsoft.com/en-us/download/details.aspx?id=56519'
 TTL = 86400
@@ -75,8 +75,13 @@ def parse_payload(body):
             raise ValueError('AZURE_TAG_SCHEMA')
         tags.add(name)
         if prop.get('region'): regions.add(prop['region'])
-        # Keep tag and region metadata together; do not invent cross-products.
-        meta = {'service':prop.get('systemService',''), 'region':prop.get('region',''), 'category':name, 'cloud':'Public', 'tagId':tag.get('id'), 'tagChangeNumber':prop.get('changeNumber'), 'networkFeatures':sorted(prop.get('networkFeatures',[]))}
+        features = prop.get('networkFeatures')
+        if features is None:
+            features = []
+        if not isinstance(features,list) or not all(isinstance(x,str) for x in features):
+            raise ValueError('AZURE_FEATURE_LIST_SCHEMA')
+        # Preserve each published tag/region combination, not Cartesian products.
+        meta = {'service':prop.get('systemService',''), 'region':prop.get('region',''), 'category':name, 'cloud':'Public', 'tagId':tag.get('id'), 'tagChangeNumber':prop.get('changeNumber'), 'networkFeatures':sorted(features)}
         for prefix in prefixes:
             canonical,_,_,_,_ = core.projection(prefix)
             result[core.digest([canonical,meta])] = {'prefix':canonical,'meta':meta}
@@ -91,9 +96,19 @@ def refresh(cache, now=None, fetcher=read_public, minimum=1000):
     if old and (old.get('id')!=SID or old.get('url')!=PAGE or core.digest(old.get('rows'))!=old.get('semanticSha256') or not valid_payload_url(old.get('payloadUrl',''))):
         raise ValueError('AZURE_SOURCE_CACHE_TAMPER')
     rec={'id':SID,'networkRequests':0,'bodyBytes':0,'attempts':[],'state':'UNKNOWN'}
-    if hp.exists() and now<json.loads(hp.read_text()).get('retryEpoch',0):
-        rec['state']='HOLD_BACKOFF_LAST_GOOD' if old else 'HOLD_BACKOFF_NO_SNAPSHOT'
-        return old,rec
+    if hp.exists():
+        hold=json.loads(hp.read_text())
+        # Run36017383609 returned HTTP200 for both publisher reads, then this
+        # precise nullable-field parser failure. One new-parser attempt is safe;
+        # HTTP/auth/429 failures never qualify for this exception.
+        repaired=(hold.get('parserVersion')!=VERSION and hold.get('error')=="TypeError:'NoneType' object is not iterable")
+        if now<hold.get('retryEpoch',0) and not repaired:
+            rec['state']='HOLD_BACKOFF_LAST_GOOD' if old else 'HOLD_BACKOFF_NO_SNAPSHOT'
+            return old,rec
+        if repaired:
+            rec['retryReason']='NULLABLE_FEATURE_PARSER_REPAIRED'
+            rec['priorFailure']=hold
+            core.atomic(cache/'azure.previous-parser-failure.json',hold)
     if old and now<old['nextCheckEpoch']:
         rec['state']='SKIP_NOT_DUE'; return old,rec
     def get(url,headers=None):
@@ -115,23 +130,25 @@ def refresh(cache, now=None, fetcher=read_public, minimum=1000):
             current={**old,'validatedAt':core.utc(),'nextCheckEpoch':now+TTL,'publisherDateAgeDays':age}
             rec['state']='UNCHANGED_304'
         elif status==200:
+            # Preserve failure evidence before parsing; do not overwrite accepted
+            # raw source bytes until the semantic integrity gate passes.
+            (cache/'last-attempt.raw.json').write_bytes(body)
             rows,summary=parse_payload(body)
             if len(rows)<minimum: raise ValueError('SHORT_SOURCE')
             if old and (summary['changeNumber']<old['summary']['changeNumber'] or len(rows)<len(old['rows'])/2):
                 raise ValueError('SOURCE_REGRESSION_REQUIRES_REVIEW')
             current={'id':SID,'url':PAGE,'payloadUrl':url,'publisherDate':date,'publisherDateAgeDays':age,'publicationFreshness':'RECENT_PUBLISHED_DATE' if age<=21 else 'STALE_PUBLISHED_DATE_NOT_CURRENT','observedAt':core.utc(),'validatedAt':core.utc(),'nextCheckEpoch':now+TTL,'rows':rows,'summary':summary,'bodySha256':hashlib.sha256(body).hexdigest(),'semanticSha256':core.digest(rows),'etag':h.get('etag'),'lastModified':h.get('last-modified')}
             core.atomic(cache/'publisher-payload.json',json.loads(body))
-            # Preserve exact source bytes separately; JSON reserialization is not the source hash.
             (cache/'publisher-payload.raw.json').write_bytes(body)
             rec['state']='UNCHANGED_SEMANTICS' if old and old['semanticSha256']==current['semanticSha256'] else 'ACCEPTED_PUBLISHED_SNAPSHOT'
         else: raise ValueError('PAYLOAD_HTTP_STATUS')
         core.atomic(p,current)
-        if hp.exists(): hp.unlink()
+        if hp.exists():hp.unlink()
         rec.update(rows=len(current['rows']),semanticSha256=current['semanticSha256'],payloadUrl=url,publisherDate=date,publisherDateAgeDays=age)
         return current,rec
     except Exception as e:
         rec.update(state='HOLD_LAST_GOOD' if old else 'HOLD_NO_SNAPSHOT',error=type(e).__name__+':'+str(e)[:200])
-        core.atomic(hp,{'retryEpoch':now+TTL,'error':rec['error'],'dataFreshnessNotAdvanced':True})
+        core.atomic(hp,{'retryEpoch':now+TTL,'error':rec['error'],'dataFreshnessNotAdvanced':True,'parserVersion':VERSION})
         return old,rec
 
 def execute(parent,expected,out,cache):
