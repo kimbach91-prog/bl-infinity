@@ -3,7 +3,7 @@
   "endpoint": "https://persorai.com/v1/chat/completions",
   "requested_model": "@cf/zai-org/glm-5.2",
   "http_status": 404,
-  "latency_ms": 568,
+  "latency_ms": 461,
   "exact_contract": false,
   "response_digest": "7d04f7431bbfa41a04bcc7e6b98b9de0d919756c4c671c5785c99fff45f16402",
   "auth_mode": "PUBLIC_ANY_BEARER",
