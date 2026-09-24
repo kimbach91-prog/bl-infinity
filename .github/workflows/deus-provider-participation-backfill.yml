@@ -1,0 +1,36 @@
+name: DEUS Provider Participation Backfill V1
+on:
+  push:
+    branches:
+      - deus/provider-participation-backfill-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/provider-participation-backfill.mjs'
+      - '.github/workflows/deus-provider-participation-backfill.yml'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Backfill public/opt-in provider identities into Participation Registry
+        run: node runtime/federation/scripts/provider-participation-backfill.mjs
+      - name: Verify non-admitted registration set
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/provider-participation-backfill/v1/manifest.json','utf8'));
+          if(!(m.akash.registered>1000 && m.aiHorde.registered>0)) throw new Error('provider backfill too small');
+          if(m.counts.executionAdmitted!==0) throw new Error('backfill must not admit execution');
+          console.log(JSON.stringify({counts:m.counts,akash:m.akash,aiHorde:m.aiHorde,providerRoots:m.providerRoots,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-provider-participation-backfill-${{ github.run_id }}
+          path: .deus/provider-participation-backfill/v1/
+          if-no-files-found: error
