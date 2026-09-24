@@ -1,4 +1,4 @@
-import { sha256Json } from './canonical.mjs';
+import { sha256, sha256Json } from './canonical.mjs';
 import { compileLogicalMicrocellShards, ONE_T_LOGICAL_NAMESPACE } from './logical-resource-compiler.mjs';
 
 export const INTERNET_FUNCTIONAL_FABRIC_VERSION='deus-internet-functional-fabric/2.0';
@@ -518,4 +518,253 @@ export function compileInternetFabricPlan({
 
 export function buildCrossCheckSet(atlas,{capability,dataClass='BL-S0',width=3,now=Date.now(),...rest}={}){
   return selectTaskFitRoutes(atlas,{capability,dataClass,maxRoutes:width,now,requireIndependent:true,...rest});
+}
+
+
+export const INTERNET_OBSERVATORY_KERNEL_VERSION='deus-internet-observatory-kernel/1.0';
+export const INTERNET_ADDRESS_SLOT_DOMAIN=1000000000000n;
+
+function normalizeIdentityType(value){
+  const type=String(value??'').trim().toLowerCase();
+  if(!['ipv4','ipv6','cidr','dns','hostname','url','asn','service','protocol','provider','compute','generic'].includes(type)) throw new Error('unsupported identity type '+type);
+  return type;
+}
+function parseIpv4(value){
+  const parts=String(value).trim().split('.');
+  if(parts.length!==4) throw new Error('invalid IPv4 address');
+  let out=0n;
+  for(const part of parts){
+    if(!/^\d{1,3}$/.test(part)) throw new Error('invalid IPv4 address');
+    const n=Number(part);
+    if(n<0||n>255) throw new Error('invalid IPv4 address');
+    out=(out<<8n)|BigInt(n);
+  }
+  return out;
+}
+function formatIpv4(value){
+  if(value<0n||value>0xffffffffn) throw new Error('IPv4 integer out of range');
+  return [24n,16n,8n,0n].map(shift=>Number((value>>shift)&255n)).join('.');
+}
+function ipv4TailToGroups(value){
+  const n=parseIpv4(value);
+  return [Number((n>>16n)&0xffffn).toString(16),Number(n&0xffffn).toString(16)];
+}
+function parseIpv6(value){
+  let text=String(value).trim().toLowerCase();
+  const zone=text.indexOf('%');
+  if(zone>=0) text=text.slice(0,zone);
+  if(text.includes('.')){
+    const lastColon=text.lastIndexOf(':');
+    if(lastColon<0) throw new Error('invalid IPv6 address');
+    const tail=ipv4TailToGroups(text.slice(lastColon+1));
+    text=text.slice(0,lastColon+1)+tail.join(':');
+  }
+  const pieces=text.split('::');
+  if(pieces.length>2) throw new Error('invalid IPv6 address');
+  const left=pieces[0]?pieces[0].split(':'):[];
+  const right=pieces.length===2&&pieces[1]?pieces[1].split(':'):[];
+  const missing=8-left.length-right.length;
+  if((pieces.length===1&&missing!==0)||(pieces.length===2&&missing<1)) throw new Error('invalid IPv6 address');
+  const groups=[...left,...Array(missing).fill('0'),...right];
+  if(groups.length!==8) throw new Error('invalid IPv6 address');
+  let out=0n;
+  for(const group of groups){
+    if(!/^[0-9a-f]{1,4}$/.test(group)) throw new Error('invalid IPv6 address');
+    out=(out<<16n)|BigInt('0x'+group);
+  }
+  return out;
+}
+function formatIpv6(value){
+  if(value<0n||value>((1n<<128n)-1n)) throw new Error('IPv6 integer out of range');
+  const groups=[];
+  for(let i=0;i<8;i++) groups.push(Number((value>>BigInt((7-i)*16))&0xffffn).toString(16));
+  let bestStart=-1,bestLen=0;
+  for(let i=0;i<8;){
+    if(groups[i]!=='0'){i++;continue;}
+    let j=i;
+    while(j<8&&groups[j]==='0') j++;
+    if(j-i>bestLen&&j-i>=2){bestStart=i;bestLen=j-i;}
+    i=j;
+  }
+  if(bestStart<0) return groups.join(':');
+  const left=groups.slice(0,bestStart).join(':');
+  const right=groups.slice(bestStart+bestLen).join(':');
+  return (left?left:'')+'::'+(right?right:'');
+}
+function parseCidr(value){
+  const text=String(value).trim();
+  const slash=text.lastIndexOf('/');
+  if(slash<1) throw new Error('CIDR prefix required');
+  const addr=text.slice(0,slash);
+  const prefix=Number(text.slice(slash+1));
+  const family=addr.includes(':')?'ipv6':'ipv4';
+  const bits=family==='ipv6'?128:32;
+  if(!Number.isInteger(prefix)||prefix<0||prefix>bits) throw new Error('invalid CIDR prefix');
+  const parsed=family==='ipv6'?parseIpv6(addr):parseIpv4(addr);
+  const hostBits=bits-prefix;
+  const all=(1n<<BigInt(bits))-1n;
+  const hostMask=hostBits===0?0n:(1n<<BigInt(hostBits))-1n;
+  const network=parsed&(all^hostMask);
+  return {family,bits,prefix,network,hostBits,canonical:(family==='ipv6'?formatIpv6(network):formatIpv4(network))+'/'+prefix};
+}
+function canonicalizeUrl(value){
+  const u=new URL(String(value).trim());
+  u.hostname=u.hostname.toLowerCase();
+  return u.toString();
+}
+
+export function canonicalizeInternetIdentity(raw={}){
+  const type=normalizeIdentityType(raw.type??raw.kind);
+  let value=String(raw.value??raw.address??raw.id??'').trim();
+  if(!value) throw new Error('identity value required');
+  if(type==='ipv4') value=formatIpv4(parseIpv4(value));
+  else if(type==='ipv6') value=formatIpv6(parseIpv6(value));
+  else if(type==='cidr') value=parseCidr(value).canonical;
+  else if(type==='dns'||type==='hostname') value=value.toLowerCase().replace(/\.+$/,'');
+  else if(type==='url') value=canonicalizeUrl(value);
+  else if(type==='asn'){
+    const match=value.toUpperCase().match(/^AS?(\d+)$/);
+    if(!match) throw new Error('invalid ASN');
+    value='AS'+BigInt(match[1]).toString();
+  } else value=value.toLowerCase();
+  return Object.freeze({type,value});
+}
+
+export function projectInternetIdentity(raw,{slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN}={}){
+  const identity=canonicalizeInternetIdentity(raw);
+  const domain=BigInt(slotDomain);
+  if(domain<=0n) throw new Error('slotDomain must be positive');
+  const resourceKey=sha256(identity.type+'|'+identity.value);
+  const slotId=(BigInt('0x'+resourceKey)%domain).toString();
+  return Object.freeze({
+    schema:'deus-internet-resource-projection/1',
+    ...identity,
+    resourceKey,
+    slotId,
+    slotDomain:domain.toString(),
+    namespace:'deus://internet/address/'+identity.type+'/'+encodeSegment(identity.value),
+    truthBoundary:'PROJECTED_IDENTITY_NE_OBSERVED_LIVE_SERVICE_NE_EXECUTION_AUTHORITY',
+  });
+}
+
+export function cidrCardinality(cidr){
+  const parsed=parseCidr(cidr);
+  return Object.freeze({
+    family:parsed.family,
+    cidr:parsed.canonical,
+    addressCount:(1n<<BigInt(parsed.hostBits)).toString(),
+  });
+}
+
+export function projectCidrAddress(cidr,offset,{slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN}={}){
+  const parsed=parseCidr(cidr);
+  const index=BigInt(offset);
+  const count=1n<<BigInt(parsed.hostBits);
+  if(index<0n||index>=count) throw new Error('CIDR member offset out of range');
+  const numeric=parsed.network+index;
+  const address=parsed.family==='ipv6'?formatIpv6(numeric):formatIpv4(numeric);
+  const projection=projectInternetIdentity({type:parsed.family,value:address},{slotDomain});
+  return Object.freeze({
+    schema:'deus-internet-cidr-member-projection/1',
+    cidr:parsed.canonical,
+    offset:index.toString(),
+    addressCount:count.toString(),
+    ...projection,
+    truthBoundary:'VIRTUAL_PER_ADDRESS_MAPPING_NE_NETWORK_PROBE_NE_LIVENESS_NE_SERVICE_NE_COMPUTE',
+  });
+}
+
+function computeCategory(entry={}){
+  const text=[
+    entry.resourceClass,entry.RESOURCE_CLASS,entry.taskScope,entry.TASK_SCOPE,
+    entry.platform,entry.PLATFORM,entry.routeRoot,entry.ROUTE_ROOT,
+  ].filter(Boolean).join(' ').toLowerCase();
+  if(/gpu|cuda|accelerator|tpu/.test(text)) return 'GPU_ACCELERATOR';
+  if(/llm|model inference|public_model_inference|inference/.test(text)) return 'MODEL_LLM_INFERENCE';
+  if(/cpu|serverless|edge_runtime|hosted_cpu|app_runtime|remote_cpu|sandbox/.test(text)) return 'CPU_RUNTIME';
+  if(/compile|compiler|language_compile/.test(text)) return 'COMPILER_EXEC';
+  if(/render|chart|diagram|screenshot|image|uml|qr codec|code_to_image/.test(text)) return 'RENDER_MEDIA_CODEC';
+  if(/validate|static_analysis|vulnerab|osv/.test(text)) return 'VALIDATION_SECURITY_ANALYSIS';
+  if(/drive|workspace|dataflow|document|transform|storage/.test(text)) return 'WORKSPACE_STORAGE_TRANSFORM';
+  if(/metadata|retrieval|search|registry|rdap|crossref|openalex|geocode|weather|lexical/.test(text)) return 'DATA_KNOWLEDGE_API';
+  return 'OTHER_FUNCTIONAL';
+}
+function historicalPositive(entry={}){
+  const value=String(entry.effectiveCredit??entry.EFFECTIVE_CREDIT??'').toUpperCase();
+  return value==='1'||value.startsWith('POSITIVE');
+}
+function executionVerified(entry={}){
+  const value=String(entry.executableState??entry.EXECUTABLE_STATE??'').toUpperCase();
+  return value.includes('EXECUTED_VERIFIED')||value.includes('RECEIPT_OBSERVED');
+}
+
+export function classifyComputeRegistry(entries=[],{now=Date.now(),maxFreshAgeMs=3600000}={}){
+  if(!Array.isArray(entries)) throw new Error('compute registry entries must be an array');
+  const ageLimit=num(maxFreshAgeMs,'maxFreshAgeMs',3600000);
+  const routes=entries.map((entry,index)=>{
+    const id=String(entry.mapId??entry.MAP_ID??entry.id??('route-'+(index+1)));
+    const credit=historicalPositive(entry);
+    const verified=executionVerified(entry);
+    const stamp=entry.currentEvidenceAt??entry.lastVerifiedUtc??entry.LAST_VERIFIED_UTC??entry.observedAt??null;
+    const parsed=stamp==null?NaN:Date.parse(String(stamp));
+    const fresh=Number.isFinite(parsed)&&Math.max(0,now-parsed)<=ageLimit;
+    const receipt=entry.currentExecutionReceipt??entry.executionReceipt??null;
+    const admission=credit&&verified&&fresh&&receipt
+      ?'CURRENT_ADMITTED'
+      :(credit&&verified?'FRESHNESS_CANARY_REQUIRED':'NO_EXECUTION_CREDIT');
+    return Object.freeze({
+      id,
+      category:computeCategory(entry),
+      historicalPositive:credit,
+      executionVerified:verified,
+      evidenceAt:Number.isFinite(parsed)?new Date(parsed).toISOString():null,
+      freshness:fresh?'FRESH':'STALE_OR_UNKNOWN',
+      admission,
+      currentExecutionReceipt:receipt==null?null:String(receipt),
+      routeRoot:String(entry.routeRoot??entry.ROUTE_ROOT??id),
+      platform:String(entry.platform??entry.PLATFORM??'UNKNOWN'),
+    });
+  });
+  const categories={};
+  for(const route of routes) categories[route.category]=(categories[route.category]??0)+1;
+  const payload={
+    schema:'deus-internet-compute-registry-classification/1',
+    total:routes.length,
+    historicalPositive:routes.filter(x=>x.historicalPositive).length,
+    currentAdmitted:routes.filter(x=>x.admission==='CURRENT_ADMITTED').length,
+    freshnessRequired:routes.filter(x=>x.admission==='FRESHNESS_CANARY_REQUIRED').length,
+    categories,
+    routes,
+    truthBoundary:'HISTORICALLY_VERIFIED_NE_CURRENT_ADMITTED__CURRENT_COMPUTE_REQUIRES_FRESH_EVIDENCE_AND_ATTRIBUTABLE_EXECUTION_RECEIPT',
+  };
+  return Object.freeze({...payload,digest:sha256Json(payload)});
+}
+
+export function compileInternetObservatoryKernel({
+  identities=[],cidrs=[],computeRoutes=[],now=Date.now(),slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,maxFreshAgeMs=3600000,
+}={}){
+  const projected=identities.map(x=>projectInternetIdentity(x,{slotDomain}));
+  const cidrCoverage=cidrs.map(cidr=>{
+    const card=cidrCardinality(cidr);
+    const count=BigInt(card.addressCount);
+    return Object.freeze({
+      ...card,
+      first:projectCidrAddress(cidr,0n,{slotDomain}),
+      last:projectCidrAddress(cidr,count-1n,{slotDomain}),
+    });
+  });
+  const compute=classifyComputeRegistry(computeRoutes,{now,maxFreshAgeMs});
+  const virtualAddressCount=cidrCoverage.reduce((sum,x)=>sum+BigInt(x.addressCount),0n).toString();
+  const payload={
+    schema:INTERNET_OBSERVATORY_KERNEL_VERSION,
+    slotDomain:BigInt(slotDomain).toString(),
+    materializedIdentityCount:projected.length,
+    virtualCidrFamilies:cidrCoverage.length,
+    virtualAddressCount,
+    projected,
+    cidrCoverage,
+    compute,
+    truthBoundary:'FULL_VIRTUAL_ADDRESSABILITY_NE_FULL_OBSERVATION__OBSERVED_NE_LIVE__LIVE_NE_USABLE__ROUTE_SELECTED_NE_EXECUTED',
+  };
+  return Object.freeze({...payload,kernelDigest:sha256Json(payload)});
 }
