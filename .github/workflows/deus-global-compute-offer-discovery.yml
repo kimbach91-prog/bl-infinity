@@ -1,0 +1,34 @@
+name: DEUS Global Compute Offer Discovery V1
+on:
+  push:
+    branches:
+      - deus/global-offer-discovery-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-compute-offer-discovery.mjs'
+      - '.github/workflows/deus-global-compute-offer-discovery.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Probe canonical opt-in/public compute offer sources
+        run: node runtime/federation/scripts/global-compute-offer-discovery.mjs
+      - name: Require useful discovery
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-offer-discovery/v1/manifest.json','utf8'));
+          if(!(m.reachableCount>0)) throw new Error('reachable offer sources must be >0');
+          console.log(JSON.stringify({sources:m.sourceCount,reachable:m.reachableCount,hold:m.holdCount,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-offer-discovery-${{ github.run_id }}
+          path: .deus/global-offer-discovery/v1/
+          if-no-files-found: error
