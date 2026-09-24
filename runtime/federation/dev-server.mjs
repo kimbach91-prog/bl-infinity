@@ -524,9 +524,62 @@ server.listen(port, host, () => {
   if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
   void driveBridgeRuntime.reconcile();
   driveBridgeRuntime.start();
+  if (process.env.DEUS_BRAIN3_GATEWAY_STARTUP_CANARY === 'true') {
+    void runBrain3GatewayPublicCanary().catch((error) => {
+      console.error(JSON.stringify({
+        event: 'DEUS_BRAIN3_GATEWAY_PUBLIC_CANARY_FAIL',
+        error: error.message,
+      }));
+      process.exitCode = 1;
+      setTimeout(() => process.exit(1), 50).unref?.();
+    });
+  }
 });
 let shuttingDown = false;
 for (const signal of ['SIGINT','SIGTERM']) process.once(signal, () => shutdown(signal));
+
+async function runBrain3GatewayPublicCanary() {
+  const base = String(process.env.DEUS_BRAIN3_GATEWAY_PUBLIC_BASE || '').replace(/\/$/, '');
+  if (!base || !brain3GatewayToken) throw new Error('public gateway canary configuration missing');
+  const headers = { authorization: 'Bearer ' + brain3GatewayToken, accept: 'application/json' };
+  let lastError = null;
+  for (let attempt = 1; attempt <= 30; attempt += 1) {
+    try {
+      const statusResp = await fetch(base + '/brain3/gateway/status', {
+        headers,
+        signal: AbortSignal.timeout(8_000),
+      });
+      const status = await statusResp.json().catch(() => ({}));
+      if (statusResp.status !== 200 || status.schema !== 'deus-brain3-public-gateway/1') {
+        throw new Error('public status canary failed HTTP ' + statusResp.status);
+      }
+      const queryResp = await fetch(base + '/brain3/gateway/query', {
+        method: 'POST',
+        headers: { ...headers, 'content-type': 'application/json' },
+        body: JSON.stringify({ query: 'Brain3 public gateway canary' }),
+        signal: AbortSignal.timeout(12_000),
+      });
+      const query = await queryResp.json().catch(() => ({}));
+      if (queryResp.status !== 202 || query.accepted !== true || !/^JOB-BRAIN3-PUBLIC-QUERY-/.test(String(query.jobId || ''))) {
+        throw new Error('public query canary failed HTTP ' + queryResp.status);
+      }
+      console.log(JSON.stringify({
+        event: 'DEUS_BRAIN3_GATEWAY_PUBLIC_CANARY_PASS',
+        jobId: query.jobId,
+        publicBase: base,
+        attempt,
+      }));
+      await runtime.audit.append('brain3.gateway-public-canary-pass', {
+        jobId: query.jobId, publicBase: base, attempt,
+      });
+      return query;
+    } catch (error) {
+      lastError = error;
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw lastError || new Error('public gateway canary exhausted');
+}
 
 async function takeRequestRate(req) {
   const route = classifyRateLimitRoute(req.method, req.url);
