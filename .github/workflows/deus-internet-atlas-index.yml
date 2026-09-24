@@ -1,14 +1,30 @@
 name: DEUS Joined Internet Atlas Index V1
 on:
   push:
-    branches: [deus/internet-atlas-index-v1-20260924]
+    branches:
+      - deus/internet-atlas-index-v1-20260924
+      - deus/internet-atlas-resolver-overlay-v1-20260924
     paths:
       - runtime/federation/scripts/internet_atlas_index.py
       - runtime/federation/scripts/test_internet_atlas_index.py
+      - runtime/federation/scripts/internet_atlas_overlay.py
+      - runtime/federation/scripts/test_internet_atlas_overlay.py
+      - .github/workflows/deus-internet-atlas-index.yml
+  pull_request:
+    paths:
+      - runtime/federation/scripts/internet_atlas_index.py
+      - runtime/federation/scripts/test_internet_atlas_index.py
+      - runtime/federation/scripts/internet_atlas_overlay.py
+      - runtime/federation/scripts/test_internet_atlas_overlay.py
       - .github/workflows/deus-internet-atlas-index.yml
   workflow_dispatch:
   workflow_run:
-    workflows: [DEUS Global Passive Internet Census V1, DEUS Global Routing Overlay V1]
+    workflows:
+      - DEUS Global Passive Internet Census V1
+      - DEUS Global Routing Overlay V1
+      - DEUS Global Internet Real Member Expansion V1
+      - DEUS Global Internet BGP RPKI Relation Join V1
+      - DEUS Global CT Stratified Member Expansion V1
     types: [completed]
 permissions:
   contents: read
@@ -30,7 +46,9 @@ jobs:
         with:
           python-version: '3.12'
       - name: Unit tests
-        run: python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_index.py -v
+        run: |
+          python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_index.py -v
+          python -m unittest discover -s runtime/federation/scripts -p test_internet_atlas_overlay.py -v
       - name: Resolve successful same-repository source artifacts
         id: sources
         uses: actions/github-script@v7
@@ -38,11 +56,15 @@ jobs:
           script: |
             const fs = require('fs');
             const {owner, repo} = context.repo;
-            const sources = {};
-            for (const [label, workflow_id, prefix] of [
+            const specs = [
               ['census', 365780104, 'deus-global-passive-internet-census-'],
-              ['routing', 365786836, 'deus-global-routing-overlay-']
-            ]) {
+              ['routing', 365786836, 'deus-global-routing-overlay-'],
+              ['real', '.github/workflows/deus-global-internet-real-member-expansion-v1.yml', 'deus-global-internet-real-member-expansion-'],
+              ['rpki', '.github/workflows/deus-global-internet-bgp-rpki-join-v1.yml', 'deus-global-bgp-rpki-join-'],
+              ['ct', '.github/workflows/deus-global-ct-stratified-member-v1.yml', 'deus-global-ct-stratified-member-']
+            ];
+            const sources = {};
+            for (const [label, workflow_id, prefix] of specs) {
               const runs = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id, status:'success', per_page:30});
               const run = runs.data.workflow_runs.find(r => r.head_repository?.full_name === `${owner}/${repo}` && r.conclusion === 'success' && ['push','workflow_dispatch','schedule'].includes(r.event));
               if (!run) throw new Error(`NO_SUCCESSFUL_AUTHORIZED_SOURCE_${label}`);
@@ -56,13 +78,13 @@ jobs:
             }
             fs.mkdirSync('.deus/atlas-inputs', {recursive:true});
             fs.writeFileSync('.deus/atlas-inputs/sources.json', JSON.stringify(sources,null,2));
-      - name: Restore exact compiled snapshot
+      - name: Restore exact compiled base snapshot
         id: cache
         uses: actions/cache@v4
         with:
           path: .deus/atlas-snapshots
           key: atlas-v1-${{ runner.os }}-${{ hashFiles('runtime/federation/scripts/internet_atlas_index.py') }}-${{ steps.sources.outputs.census_sha }}-${{ steps.sources.outputs.routing_sha }}
-      - name: Download digest-bound source archives once
+      - name: Download digest-bound base source archives once
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -73,7 +95,7 @@ jobs:
           set -euo pipefail
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CENSUS_ID/zip" > .deus/atlas-inputs/census.zip
           gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$ROUTING_ID/zip" > .deus/atlas-inputs/routing.zip
-      - name: Compile existing source data without host access
+      - name: Compile existing base source data without host access
         if: steps.cache.outputs.cache-hit != 'true'
         env:
           CENSUS_SHA: ${{ steps.sources.outputs.census_sha }}
@@ -84,7 +106,7 @@ jobs:
             --routing .deus/atlas-inputs/routing.zip \
             --census-sha256 "$CENSUS_SHA" --routing-sha256 "$ROUTING_SHA" \
             --out .deus/atlas-snapshots
-      - name: Verify immutable database and offline IPv4 IPv6 queries
+      - name: Verify immutable base database and offline IPv4 IPv6 queries
         env:
           CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
         run: |
@@ -99,7 +121,7 @@ jobs:
           db=root/current['snapshot']/'atlas.sqlite'
           sources=json.loads(Path('.deus/atlas-inputs/sources.json').read_text())
           assert rec['schema']==m.VERSION
-          assert rec['inputHashes']=={k:v['sha256'] for k,v in sources.items()}
+          assert rec['inputHashes']=={k:sources[k]['sha256'] for k in ('census','routing')}
           assert m.sha256_file(db)==rec['databaseSha256']
           assert rec['metrics']['executionAdmitted']==0
           assert rec['metrics']['quality']['integrity']=='ok'
@@ -109,11 +131,79 @@ jobs:
             q['elapsedMilliseconds']=round((time.perf_counter()-started)*1000,3)
             assert q['networkRequests']==0 and not q['executionAdmitted']
             queries.append(q)
-          acceptance={'verdict':'PASS_SNAPSHOT_INDEX_ONLY','cacheHit':os.getenv('CACHE_HIT')=='true','sources':sources,'snapshot':current['snapshot'],'databaseSha256':rec['databaseSha256'],'queries':queries,'truthBoundary':m.BOUNDARY}
+          acceptance={'verdict':'PASS_SNAPSHOT_INDEX_ONLY','cacheHit':os.getenv('CACHE_HIT')=='true','sources':{k:sources[k] for k in ('census','routing')},'snapshot':current['snapshot'],'databaseSha256':rec['databaseSha256'],'queries':queries,'truthBoundary':m.BOUNDARY}
           m.atomic_json(root/'acceptance.json',acceptance)
           print(json.dumps({'inputRows':rec['metrics']['inputRows'],'joins':rec['metrics']['joins'],'cacheHit':acceptance['cacheHit'],'databaseSha256':rec['databaseSha256']}))
           PY
-      - name: Store derived index and receipts
+      - name: Restore exact relation overlay
+        id: overlay_cache
+        uses: actions/cache@v4
+        with:
+          path: .deus/atlas-overlay
+          key: atlas-overlay-v1-${{ runner.os }}-${{ hashFiles('runtime/federation/scripts/internet_atlas_overlay.py') }}-${{ steps.sources.outputs.census_sha }}-${{ steps.sources.outputs.routing_sha }}-${{ steps.sources.outputs.real_sha }}-${{ steps.sources.outputs.rpki_sha }}-${{ steps.sources.outputs.ct_sha }}
+      - name: Download digest-bound relation source archives once
+        if: steps.overlay_cache.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REAL_ID: ${{ steps.sources.outputs.real_id }}
+          RPKI_ID: ${{ steps.sources.outputs.rpki_id }}
+          CT_ID: ${{ steps.sources.outputs.ct_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$REAL_ID/zip" > .deus/atlas-inputs/real.zip
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$RPKI_ID/zip" > .deus/atlas-inputs/rpki.zip
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/$CT_ID/zip" > .deus/atlas-inputs/ct.zip
+      - name: Build reusable relation overlay without repeating base census
+        if: steps.overlay_cache.outputs.cache-hit != 'true'
+        env:
+          REAL_SHA: ${{ steps.sources.outputs.real_sha }}
+          RPKI_SHA: ${{ steps.sources.outputs.rpki_sha }}
+          CT_SHA: ${{ steps.sources.outputs.ct_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          SNAP=$(python -c "import json;print(json.load(open('.deus/atlas-snapshots/CURRENT.json'))['snapshot'])")
+          python runtime/federation/scripts/internet_atlas_overlay.py build \
+            --base-db ".deus/atlas-snapshots/$SNAP/atlas.sqlite" \
+            --base-receipt ".deus/atlas-snapshots/$SNAP/receipt.json" \
+            --real-zip .deus/atlas-inputs/real.zip --real-sha256 "$REAL_SHA" \
+            --rpki-zip .deus/atlas-inputs/rpki.zip --rpki-sha256 "$RPKI_SHA" \
+            --ct-zip .deus/atlas-inputs/ct.zip --ct-sha256 "$CT_SHA" \
+            --out .deus/atlas-overlay
+      - name: Verify task-resolver binding across IP ASN and domain layers
+        env:
+          BASE_CACHE_HIT: ${{ steps.cache.outputs.cache-hit }}
+          OVERLAY_CACHE_HIT: ${{ steps.overlay_cache.outputs.cache-hit }}
+        run: |
+          python - <<'PY'
+          import ipaddress,json,sqlite3,sys,time
+          from pathlib import Path
+          sys.path.insert(0,'runtime/federation/scripts')
+          import internet_atlas_index as base
+          import internet_atlas_overlay as o
+          broot=Path('.deus/atlas-snapshots'); oroot=Path('.deus/atlas-overlay')
+          bcur=json.loads((broot/'CURRENT.json').read_text()); ocur=json.loads((oroot/'OVERLAY_CURRENT.json').read_text())
+          bdb=broot/bcur['snapshot']/'atlas.sqlite'; odb=oroot/ocur['snapshot']/'overlay.sqlite'
+          orec=json.loads((oroot/ocur['receipt']).read_text())
+          assert base.sha256_file(odb)==orec['overlaySha256']
+          assert orec['executionAdmitted']==0 and orec['quality']['integrity']=='ok'
+          with sqlite3.connect(odb) as db:
+            prefix=db.execute('SELECT prefix FROM cloud_prefixes ORDER BY id LIMIT 1').fetchone()[0]
+            asn=db.execute('SELECT asn FROM peering_memberships WHERE asn IS NOT NULL ORDER BY id LIMIT 1').fetchone()[0]
+            domain=db.execute('SELECT domain FROM ct_relations ORDER BY id LIMIT 1').fetchone()[0]
+          ip=str(ipaddress.ip_network(prefix,strict=True).network_address)
+          checks=[]
+          for kind,value,fn in [('ip',ip,lambda:o.resolve_ip(bdb,odb,ip)),('asn','AS'+str(asn),lambda:o.resolve_asn(bdb,odb,asn)),('domain',domain,lambda:o.resolve_domain(odb,domain))]:
+            t=time.perf_counter();q=fn();q['elapsedMilliseconds']=round((time.perf_counter()-t)*1000,3)
+            assert q['schema']=='deus-internet-atlas-resolution/1' and q['networkRequests']==0 and not q['executionAdmitted']
+            checks.append({'kind':kind,'value':value,'elapsedMilliseconds':q['elapsedMilliseconds']})
+          acceptance={'schema':'deus-internet-atlas-resolver-acceptance/1','verdict':'PASS_OFFLINE_MULTI_LAYER_RESOLVER','baseCacheHit':str(__import__('os').environ.get('BASE_CACHE_HIT','')).lower()=='true','overlayCacheHit':str(__import__('os').environ.get('OVERLAY_CACHE_HIT','')).lower()=='true','baseSnapshot':bcur['snapshot'],'overlaySnapshot':ocur['snapshot'],'overlaySha256':orec['overlaySha256'],'counts':orec['counts'],'checks':checks,'networkRequests':0,'executionAdmitted':False,'truthBoundary':o.BOUNDARY}
+          o.atomic_json(oroot/'resolver-acceptance.json',acceptance)
+          print(json.dumps(acceptance))
+          PY
+      - name: Store base derived index only when rebuilt
+        if: steps.cache.outputs.cache-hit != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: deus-joined-internet-atlas-${{ github.run_id }}
@@ -122,3 +212,12 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           compression-level: 3
+      - name: Store compact resolver overlay and receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-joined-internet-atlas-overlay-${{ github.run_id }}
+          path: .deus/atlas-overlay/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+          compression-level: 6
