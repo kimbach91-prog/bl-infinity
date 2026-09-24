@@ -1,0 +1,35 @@
+name: DEUS Global Market Telemetry V1
+on:
+  push:
+    branches:
+      - deus/global-market-telemetry-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-market-telemetry.mjs'
+      - '.github/workflows/deus-global-market-telemetry.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  telemetry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Collect public/opt-in compute market telemetry
+        run: node runtime/federation/scripts/global-market-telemetry.mjs
+      - name: Require useful public telemetry
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-market-telemetry/v1/manifest.json','utf8'));
+          if(!(m.summary.publicNoAuth>=3)) throw new Error('Need at least 3 public/opt-in market telemetry roots');
+          console.log(JSON.stringify({summary:m.summary,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-market-telemetry-${{ github.run_id }}
+          path: .deus/global-market-telemetry/v1/
+          if-no-files-found: error
