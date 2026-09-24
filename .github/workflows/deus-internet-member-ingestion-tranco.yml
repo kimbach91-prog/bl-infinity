@@ -1,0 +1,47 @@
+name: DEUS Internet Tranco Member Ingestion
+
+on:
+  push:
+    branches:
+      - deus/internet-member-ingestion-tranco-20260924
+    paths:
+      - 'runtime/federation/scripts/internet-member-ingestion-tranco.mjs'
+      - '.github/workflows/deus-internet-member-ingestion-tranco.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ingest-tranco:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Fetch current Tranco top 1M
+        run: |
+          mkdir -p .deus/internet-fabric/input
+          curl --fail --location --retry 3 --retry-delay 2 \
+            --user-agent 'DEUS-Internet-Observatory/1.0' \
+            https://tranco-list.eu/top-1m.csv.zip \
+            -o .deus/internet-fabric/input/tranco-top-1m.csv.zip
+          unzip -p .deus/internet-fabric/input/tranco-top-1m.csv.zip > .deus/internet-fabric/input/tranco-top-1m.csv
+          test "$(wc -l < .deus/internet-fabric/input/tranco-top-1m.csv)" -eq 1000000
+          sha256sum .deus/internet-fabric/input/tranco-top-1m.csv.zip
+          sha256sum .deus/internet-fabric/input/tranco-top-1m.csv
+      - name: Materialize all one million Tranco members
+        run: node runtime/federation/scripts/internet-member-ingestion-tranco.mjs .deus/internet-fabric/input/tranco-top-1m.csv
+      - name: Verify chunk manifest
+        run: |
+          test "$(find .deus/internet-fabric/members -path '*/tranco-*/*' -name 'chunk-*.tsv' | wc -l)" -eq 10
+          test -n "$(find .deus/internet-fabric/members -path '*/tranco-*/*' -name 'manifest.json' -print -quit)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-internet-tranco-members-${{ github.run_id }}
+          path: .deus/internet-fabric/members/tranco-*/
+          if-no-files-found: error
+          compression-level: 6
