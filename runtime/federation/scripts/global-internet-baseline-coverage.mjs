@@ -169,6 +169,49 @@ const manifest={
   truthBoundary:'BASELINE_COVERAGE_NE_OMNISCIENCE__PUBLIC_DATASET_NE_HOST_CONTROL__ADDRESS_SPACE_NE_OBSERVED_DEVICE__REGISTRATION_NE_EXECUTION_AUTHORITY',
 };
 manifest.digest=sha(Buffer.from(JSON.stringify(manifest)));
+
+// Structural sanity gates: protect canon from parser/schema drift while keeping
+// source availability failures isolated.
+const rirLive=descriptors.filter(x=>x.class==='NUMBERING_RIR'&&x.ok);
+if(rirLive.length<4) throw new Error('Need at least four live RIR delegated sources');
+let rirIpv4Total=0n, rirAsnTotal=0n, rirIpv6Positive=0;
+for(const x of rirLive){
+  const v4=BigInt(x.descriptor?.ipv4Addresses||'0');
+  const v6=BigInt(x.descriptor?.ipv6Addresses||'0');
+  const asn=BigInt(x.descriptor?.asnCount||'0');
+  if(v4<0n||v4>2n**32n) throw new Error('RIR IPv4 cardinality outside IPv4 space: '+x.id);
+  if(asn<0n||asn>2n**32n) throw new Error('RIR ASN cardinality implausible: '+x.id);
+  if(v6>0n) rirIpv6Positive++;
+  rirIpv4Total+=v4; rirAsnTotal+=asn;
+}
+if(rirIpv4Total>2n**32n) throw new Error('Live-RIR IPv4 sum exceeds global IPv4 space');
+if(rirIpv4Total<3_000_000_000n) throw new Error('Live-RIR IPv4 sum unexpectedly small');
+if(rirIpv6Positive<3) throw new Error('Too few live RIRs with IPv6 allocations');
+if(rirAsnTotal<50_000n) throw new Error('Live-RIR ASN sum unexpectedly small');
+
+const rootZone=descriptors.find(x=>x.id==='DNS_ROOT_ZONE'&&x.ok)?.descriptor;
+if(!(rootZone?.tlds>1000&&rootZone?.resourceRecords>10000)) throw new Error('DNS root-zone descriptor sanity failed');
+const cc=descriptors.find(x=>x.id==='COMMONCRAWL_COLLECTIONS'&&x.ok)?.descriptor;
+if(!(cc?.collections>50)) throw new Error('Common Crawl collection descriptor sanity failed');
+const ct=descriptors.find(x=>x.id==='CHROME_CT_LOG_LIST'&&x.ok)?.descriptor;
+if(!(ct?.operators>=5&&ct?.logs>=10)) throw new Error('CT log-list descriptor sanity failed');
+const atlas=descriptors.find(x=>x.id==='RIPE_ATLAS_PROBES_SAMPLE'&&x.ok)?.descriptor;
+if(!(Number(atlas?.count)>10000)) throw new Error('RIPE Atlas probe-count descriptor sanity failed');
+
+manifest.sanity={
+  rirLive:rirLive.length,
+  rirIpv4Total:rirIpv4Total.toString(),
+  rirAsnTotal:rirAsnTotal.toString(),
+  rirIpv6Positive,
+  dnsRootTlds:rootZone.tlds,
+  commonCrawlCollections:cc.collections,
+  ctOperators:ct.operators,
+  ctLogs:ct.logs,
+  ripeAtlasProbeCount:atlas.count,
+  verdict:'PASS',
+};
+manifest.digest=sha(Buffer.from(JSON.stringify(manifest)));
+
 fs.writeFileSync(OUT+'/descriptors.jsonl',descriptors.map(x=>JSON.stringify(x)).join('\n')+'\n');
 fs.writeFileSync(OUT+'/registrations.jsonl',registry.registrations.map(x=>JSON.stringify(x)).join('\n')+'\n');
 fs.writeFileSync(OUT+'/manifest.json',JSON.stringify(manifest,null,2)+'\n');
