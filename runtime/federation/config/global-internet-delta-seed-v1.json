@@ -1,7 +1,7 @@
 {
   "schema": "deus-global-internet-delta-seed/1",
   "baselineDigest": "fc8f19fb0873d1e2f6ec9300090b04d59f4f8af177a2f39529878fa4a0132526",
-  "generatedAt": "2026-09-24T09:48:14.382Z",
+  "generatedAt": "2026-09-24T10:02:27.581Z",
   "sources": [
     {
       "id": "RIR_APNIC",
@@ -46,16 +46,47 @@
     {
       "id": "RIR_AFRINIC",
       "class": "NUMBERING_RIR",
-      "url": "https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest",
+      "url": "https://ftp.apnic.net/stats/afrinic/delegated-afrinic-latest",
       "fallbacks": [
         "https://ftp.afrinic.net/stats/afrinic/delegated-afrinic-latest",
         "https://ftp.apnic.net/stats/afrinic/delegated-afrinic-latest"
       ],
-      "ok": false,
-      "bytes": 0,
-      "sha256": null,
-      "lastVerifiedAt": "2026-09-24T09:48:14.382Z",
-      "ttlHours": 24
+      "ok": true,
+      "bytes": 493140,
+      "sha256": "f65433d9564fc1d8810c3e5ea14fea62f0ba0357e200b7e6ea8e074f7c94a444",
+      "lastVerifiedAt": "2026-09-24T10:02:27.581Z",
+      "ttlHours": 24,
+      "status": 200,
+      "lastAttemptAt": "2026-09-24T10:02:27.581Z",
+      "lastAttempts": [
+        {
+          "url": "https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest",
+          "ok": false,
+          "status": null,
+          "bytes": 0,
+          "sha256": null,
+          "ms": 407,
+          "error": "fetch failed"
+        },
+        {
+          "url": "https://ftp.afrinic.net/stats/afrinic/delegated-afrinic-latest",
+          "ok": false,
+          "status": null,
+          "bytes": 0,
+          "sha256": null,
+          "ms": 253,
+          "error": "fetch failed"
+        },
+        {
+          "url": "https://ftp.apnic.net/stats/afrinic/delegated-afrinic-latest",
+          "ok": true,
+          "status": 200,
+          "bytes": 493140,
+          "sha256": "f65433d9564fc1d8810c3e5ea14fea62f0ba0357e200b7e6ea8e074f7c94a444",
+          "ms": 1700,
+          "error": null
+        }
+      ]
     },
     {
       "id": "DNS_ROOT_ZONE",
@@ -297,5 +328,7 @@
       "lastVerifiedAt": "2026-09-24T09:48:14.382Z",
       "ttlHours": 1
     }
-  ]
+  ],
+  "parentBaselineDigest": "fc8f19fb0873d1e2f6ec9300090b04d59f4f8af177a2f39529878fa4a0132526",
+  "deltaDigest": "0faeb9179b7b86d00c31a9e49b4c066f5baa2da27a1d4bf3828bc1f872fefabe"
 }
