@@ -4,11 +4,11 @@ No address probing or execution/lease admission. Failed families retain last goo
 rows. Parent overlay and non-cloud tables are immutable. Python standard library.
 """
 from __future__ import annotations
-import argparse, hashlib, ipaddress, json, os, platform, random, resource
+import argparse, hashlib, ipaddress, json, os, platform, random, re, resource
 import shutil, sqlite3, statistics, tempfile, time, urllib.error, urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
-VERSION='internet-atlas-cloud-delta/1.0.0'
+VERSION='internet-atlas-cloud-delta/1.0.1'
 BOUNDARY='PUBLISHED_SERVICE_RANGE_ONLY; NO_HOST_PROBE; NO_LIVENESS_OR_OWNERSHIP_INFERENCE; NO_COMPUTE_ADMISSION; NOT_ALL_INTERNET'
 SOURCES=[
  ('AWS_IP_RANGES','https://ip-ranges.amazonaws.com/ip-ranges.json','aws',1000,21600),
@@ -51,7 +51,7 @@ def parse(kind,body):
         for k,v in obj.items():
             if isinstance(v,list):
                 for p in v:
-                    if isinstance(p,str) and '/' in p and not p.startswith(('http:','https:')):raw.append((p,{'category':k}))
+                    if isinstance(p,str) and re.fullmatch(r'[0-9a-fA-F:.]+/[0-9]{1,3}',p):raw.append((p,{'category':k}))
     elif kind=='fastly':raw=[(p,{}) for p in obj['addresses']+obj.get('ipv6_addresses',[])]
     elif kind=='oracle':
         for region in obj['regions']:
@@ -88,7 +88,8 @@ def refresh(spec,cache,now=None,fetcher=http_read):
     t=time.perf_counter();rec={'id':sid,'url':url,'state':'UNKNOWN','networkRequests':0,'bodyBytes':0}
     if hp.exists():
         hold=json.loads(hp.read_text())
-        if now<float(hold.get('retryEpoch',0)):
+        parser_repaired = sid=='GITHUB_META' and hold.get('parserVersion')!=VERSION and str(hold.get('error','')).startswith('ValueError')
+        if now<float(hold.get('retryEpoch',0)) and not parser_repaired:
             rec.update(state='HELD_BACKOFF_LAST_GOOD' if old else 'HELD_BACKOFF_NO_SNAPSHOT',error=hold.get('error'),rows=len(old['rows']) if old else 0)
             return old,rec
     if old and now<float(old.get('nextCheckEpoch',0)):
@@ -115,7 +116,7 @@ def refresh(spec,cache,now=None,fetcher=http_read):
     except Exception as e:
         current=old;error=type(e).__name__+':'+str(e)[:250]
         rec.update(state='HELD_LAST_GOOD' if old else 'HELD_NO_SNAPSHOT',error=error,rows=len(old['rows']) if old else 0)
-        atomic(hp,{'id':sid,'url':url,'retryEpoch':now+ttl,'error':error,'dataFreshnessNotAdvanced':True})
+        atomic(hp,{'id':sid,'url':url,'retryEpoch':now+ttl,'error':error,'dataFreshnessNotAdvanced':True,'parserVersion':VERSION})
     rec['elapsedSeconds']=round(time.perf_counter()-t,6);return current,rec
 def collect(cache):
     Path(cache).mkdir(parents=True,exist_ok=True);accepted={};receipts=[]

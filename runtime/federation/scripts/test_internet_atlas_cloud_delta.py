@@ -22,6 +22,17 @@ class TestCloudDelta(unittest.TestCase):
     def test_github_metadata_not_domains(self):
         b=json.dumps({'api':['8.0.0.0/8'],'domains':['https://example.com/a'],'verifiable_password_authentication':True}).encode()
         self.assertEqual(len(m.parse('github',b)),1)
+    def test_public_ssh_keys_are_not_ip_ranges(self):
+        b=json.dumps({'ssh_keys':['ecdsa-sha2-nistp256 AAAA/public/key=='],'api':['8.0.0.0/8']}).encode()
+        self.assertEqual(len(m.parse('github',b)),1)
+    def test_failed_source_backoff_without_data(self):
+        with tempfile.TemporaryDirectory() as d:
+            spec=('X','https://example.com','lines',1,100)
+            m.refresh(spec,d,now=1,fetcher=lambda u,h:(503,{},b''))
+            a,r=m.refresh(spec,d,now=2,fetcher=lambda u,h:self.fail('must respect backoff'))
+            self.assertIsNone(a);self.assertEqual(r['networkRequests'],0)
+    def test_list_metadata_sql_adapter(self):
+        self.assertEqual(m.sql_scalar(['x','y']),'["x","y"]')
     def test_fastly(self):
         self.assertEqual(len(m.parse('fastly',b'{"addresses":["8.0.0.0/8"],"ipv6_addresses":["2001:db8::/32"]}')),2)
     def test_google(self):
