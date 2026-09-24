@@ -3,7 +3,7 @@
 Evaluator-only: never expose game source or metadata to a future solver.
 """
 from __future__ import annotations
-import argparse, hashlib, importlib.metadata, json, logging, os, platform, random, sys, time
+import argparse, hashlib, importlib.metadata, json, logging, os, platform, random, sys, time, traceback
 from pathlib import Path
 EXPECTED = set('tn36 lf52 cn04 bp35 wa30 lp85 r11l tu93 sp80 m0r0 vc33 ar25 ka59 sc25 sk48 dc22 cd82 ft09 g50t ls20 re86 s5i5 sb26 su15 tr87'.split())
 def dump(path, value):
@@ -65,9 +65,17 @@ def framehash(obs):
     return hashlib.sha256(raw).hexdigest()
 def smoke(root,seeds,steps):
     clean(); os.environ['OPERATION_MODE']='offline'
-    attempts=[]
+    attempts=[]; denied_binds=[]
     def deny(event,args):
-        if event in ('socket.connect','socket.getaddrinfo','socket.sendto','socket.bind'):
+        if event=='socket.bind':
+            # Bind is not an outbound request. Still DENY it; record separately
+            # because libraries may catch an IPv6 local-capability probe failure.
+            caller=traceback.extract_stack(limit=4)[-2]
+            address=args[1] if len(args)>1 else None
+            denied_binds.append({'event':event,'address':address,
+                                 'caller_file':Path(caller.filename).name,'caller_function':caller.name})
+            raise RuntimeError('OFFLINE_BIND_DENIED')
+        if event in ('socket.connect','socket.getaddrinfo','socket.sendto'):
             attempts.append(event); raise RuntimeError('OFFLINE_NETWORK_DENIED')
     sys.addaudithook(deny)
     from arc_agi import Arcade, OperationMode
@@ -109,8 +117,8 @@ def smoke(root,seeds,steps):
     r={'kind':'ENVIRONMENT_SMOKE_NOT_SOLVER_BENCHMARK','python':platform.python_version(),
        'platform':platform.platform(),'toolkit':importlib.metadata.version('arc-agi'),'game_count':len(ids),
        'seeds':seeds,'cases':len(rows),'passed':sum(x['success'] for x in rows),
-       'network_mode':'OFFLINE','python_network_attempts':attempts,
-       'os_network_namespace_expected':os.getenv('ARC_SMOKE_NETNS')=='1',
+       'network_mode':'OFFLINE','python_network_attempts':attempts,'denied_bind_probes':denied_binds,
+       'all_bind_calls_blocked':True,'os_network_namespace_expected':os.getenv('ARC_SMOKE_NETNS')=='1',
        'real_llm':False,'competition_submission':False,'official_score_claim':False,'rows':rows}
     dump(root/'offline_smoke.json',r)
     print('OFFLINE_SUMMARY',json.dumps({k:v for k,v in r.items() if k!='rows'}),flush=True)
