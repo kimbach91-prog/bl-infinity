@@ -1,0 +1,37 @@
+name: DEUS Qwen3-4B Heldout Transfer Canary
+on:
+  pull_request:
+    paths:
+      - "training/deus_qwen4b_heldout_transfer.py"
+      - ".github/workflows/deus-qwen4b-heldout-transfer.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  heldout-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: "3.11"}
+      - name: Install bounded CPU stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
+          python -m pip install transformers peft accelerate safetensors psutil
+      - name: Run held-out transfer canary
+        run: python training/deus_qwen4b_heldout_transfer.py
+      - name: Show receipt
+        if: always()
+        run: test -f training/qwen4b-heldout-output/receipt.json && cat training/qwen4b-heldout-output/receipt.json || true
+      - name: Upload receipt and adapter
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-qwen4b-heldout-transfer
+          path: training/qwen4b-heldout-output
+          if-no-files-found: warn
