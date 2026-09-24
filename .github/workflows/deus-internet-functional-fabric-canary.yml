@@ -7,6 +7,7 @@ on:
       - 'runtime/federation/test/internet-functional-fabric.test.mjs'
       - 'runtime/federation/scripts/internet-fabric-canary.mjs'
       - 'runtime/federation/scripts/internet-fabric-external-observer.mjs'
+      - 'runtime/federation/scripts/internet-observatory-kernel-canary.mjs'
       - '.github/workflows/deus-internet-functional-fabric-canary.yml'
   workflow_dispatch:
 
@@ -26,10 +27,14 @@ jobs:
         run: node --test runtime/federation/test/internet-functional-fabric.test.mjs
       - name: Compile 1T logical fabric plan
         run: node runtime/federation/scripts/internet-fabric-canary.mjs
+      - name: Run live Internet Observatory kernel acceptance
+        run: node runtime/federation/scripts/internet-observatory-kernel-canary.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: deus-internet-fabric-plan-${{ github.run_id }}
-          path: .deus/internet-fabric/plan.json
+          path: |
+            .deus/internet-fabric/plan.json
+            .deus/internet-fabric/observatory-kernel-v1.json
           if-no-files-found: error
 
   scatter:
