@@ -7,6 +7,7 @@ export const DEFAULT_RESPONSE_CONTINUITY_POLICY = Object.freeze({
   softTurnBudgetMs: 35_000,
   maxCriticalSectionMs: 20_000,
   requireVerifiedCheckpointBeforeNonterminalYield: true,
+  continueAfterCheckpointedTimeout: true,
 });
 
 const TERMINAL_STATES = new Set(['VERIFIED_DONE', 'OWNER_STOP', 'BLOCKED_HARD']);
@@ -25,6 +26,119 @@ function stable(value) {
 
 export function responseCheckpointDigest(envelope = {}) {
   return createHash('sha256').update(JSON.stringify(stable(envelope))).digest('hex');
+}
+
+export function deriveResponseStepIdempotencyKey({
+  jobId,
+  runId,
+  phaseId,
+  stepId,
+  inputDigest = null,
+} = {}) {
+  if (!jobId) throw new Error('jobId is required');
+  if (!runId) throw new Error('runId is required');
+  if (!phaseId) throw new Error('phaseId is required');
+  if (!stepId) throw new Error('stepId is required');
+  return responseCheckpointDigest({
+    schema: 'deus-response-step-idempotency/1',
+    jobId: String(jobId),
+    runId: String(runId),
+    phaseId: String(phaseId),
+    stepId: String(stepId),
+    inputDigest: inputDigest == null ? null : String(inputDigest),
+  });
+}
+
+export function buildTransactionalResponseCheckpoint({
+  jobId,
+  runId,
+  continuityId = null,
+  phaseId,
+  stepId,
+  stepStatus = 'PENDING',
+  state = 'CHECKPOINTED_RUNNABLE',
+  attempt = 1,
+  inputDigest = null,
+  outputRefs = [],
+  verifiedFacts = [],
+  latestReceipt = null,
+  blocker = null,
+  nextAction,
+  idempotencyKey = null,
+  sourceRevision = null,
+  timestamp = new Date().toISOString(),
+} = {}) {
+  if (!jobId) throw new Error('jobId is required');
+  if (!runId) throw new Error('runId is required');
+  if (!phaseId) throw new Error('phaseId is required');
+  if (!stepId) throw new Error('stepId is required');
+  if (!nextAction) throw new Error('nextAction is required');
+  const normalizedAttempt = Math.max(1, Math.trunc(boundedNumber(attempt, 1, { min: 1 })));
+  const key = idempotencyKey == null
+    ? deriveResponseStepIdempotencyKey({ jobId, runId, phaseId, stepId, inputDigest })
+    : String(idempotencyKey);
+  const envelope = Object.freeze({
+    schema: 'deus-response-transaction-checkpoint/2',
+    jobId: String(jobId),
+    runId: String(runId),
+    continuityId: continuityId == null ? null : String(continuityId),
+    phaseId: String(phaseId),
+    stepId: String(stepId),
+    stepStatus: String(stepStatus),
+    state: String(state),
+    attempt: normalizedAttempt,
+    idempotencyKey: key,
+    inputDigest: inputDigest == null ? null : String(inputDigest),
+    outputRefs: Object.freeze([...outputRefs].map(String)),
+    verifiedFacts: Object.freeze([...verifiedFacts].map(String)),
+    latestReceipt: latestReceipt == null ? null : String(latestReceipt),
+    blocker: blocker == null ? null : String(blocker),
+    nextAction: String(nextAction),
+    sourceRevision: sourceRevision == null ? null : String(sourceRevision),
+    timestamp: String(timestamp),
+    resumeContract: 'EXACT_STEP_IDEMPOTENT_REPLAY_OR_KEEP_VERIFIED_OUTPUT',
+    responseObligation: 'CHECKPOINT_THEN_EMIT_VISIBLE_UPDATE_THEN_CONTINUE_SOLVER_UNLESS_TRUE_WAIT_OR_TERMINAL',
+    truthBoundary: 'TRANSACTION_CHECKPOINT_LIMITS_WORK_LOSS_AND_DUPLICATE_REPLAY__IT_DOES_NOT_CONTROL_PLATFORM_UI_DELIVERY_OR_EXTERNAL_SIDE_EFFECT_IDEMPOTENCY',
+  });
+  return Object.freeze({ ...envelope, digest: responseCheckpointDigest(envelope) });
+}
+
+export function transactionResumePlan(checkpoint = {}, {
+  completedIdempotencyKeys = [],
+} = {}) {
+  if (!checkpoint?.jobId || !checkpoint?.runId || !checkpoint?.phaseId || !checkpoint?.stepId || !checkpoint?.idempotencyKey) {
+    throw new Error('transactional checkpoint fields are required');
+  }
+  const completed = new Set([...completedIdempotencyKeys].map(String));
+  const status = String(checkpoint.stepStatus ?? 'PENDING').toUpperCase();
+  const keyAlreadyCompleted = completed.has(String(checkpoint.idempotencyKey));
+  let action = 'RESUME_EXACT_STEP';
+  let reason = 'STEP_NOT_VERIFIED';
+  let replayExactStep = true;
+
+  if (status === 'VERIFIED' || keyAlreadyCompleted) {
+    action = 'KEEP_VERIFIED_STEP_AND_ADVANCE';
+    reason = status === 'VERIFIED' ? 'CHECKPOINT_STEP_VERIFIED' : 'IDEMPOTENCY_KEY_ALREADY_COMPLETED';
+    replayExactStep = false;
+  } else if (status === 'EXECUTED' || status === 'WRITTEN') {
+    action = 'VERIFY_EXISTING_OUTPUT_BEFORE_RETRY';
+    reason = 'SIDE_EFFECT_MAY_ALREADY_EXIST';
+    replayExactStep = false;
+  }
+
+  return Object.freeze({
+    schema: 'deus-response-transaction-resume-plan/2',
+    jobId: String(checkpoint.jobId),
+    runId: String(checkpoint.runId),
+    phaseId: String(checkpoint.phaseId),
+    stepId: String(checkpoint.stepId),
+    idempotencyKey: String(checkpoint.idempotencyKey),
+    action,
+    reason,
+    replayExactStep,
+    nextAction: checkpoint.nextAction == null ? null : String(checkpoint.nextAction),
+    truthBoundary: 'RESUME_PLAN_PREVENTS_BLIND_REPLAY__EXTERNAL_SIDE_EFFECTS_STILL_REQUIRE_PROVIDER_SPECIFIC_READBACK_OR_IDEMPOTENCY_SUPPORT',
+  });
 }
 
 export function buildResponseCheckpoint({
@@ -127,7 +241,12 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   }
 
   const nonterminal = !terminal;
-  const yieldCondition = waitingOrBlocked || timeoutRisk;
+  const checkpointRisk = waitingOrBlocked || timeoutRisk;
+  const timeoutMayYield = timeoutRisk && p.continueAfterCheckpointedTimeout !== true;
+  const yieldCondition = waitingOrBlocked || timeoutMayYield;
+  const solverContinuationRequired = nonterminal
+    && !waitingOrBlocked
+    && (!timeoutRisk || p.continueAfterCheckpointedTimeout === true);
   const turnEndAllowed = terminal || ownerStop || (
     nonterminal
     && yieldCondition
@@ -141,11 +260,13 @@ export function responseContinuityDecision(input = {}, policy = {}) {
     reason,
     mustEmitUserVisible: action !== 'CONTINUE_WORK',
     checkpointRequiredBeforeYield: nonterminal
-      && yieldCondition
+      && checkpointRisk
       && p.requireVerifiedCheckpointBeforeNonterminalYield
       && !checkpointVerified,
     turnEndAllowed,
-    shouldContinueAfterVisibleUpdate: !terminal && !waitingOrBlocked && !timeoutRisk,
+    shouldContinueAfterVisibleUpdate: solverContinuationRequired,
+    solverContinuationRequired,
+    platformPreemptionSafe: checkpointVerified,
     timeoutContainmentTriggered: timeoutRisk,
     turnElapsedMs,
     criticalSectionElapsedMs,
@@ -158,8 +279,9 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       softTurnBudgetMs: p.softTurnBudgetMs,
       maxCriticalSectionMs: p.maxCriticalSectionMs,
       requireVerifiedCheckpointBeforeNonterminalYield: p.requireVerifiedCheckpointBeforeNonterminalYield,
+      continueAfterCheckpointedTimeout: p.continueAfterCheckpointedTimeout === true,
     }),
-    truthBoundary: 'USER_VISIBLE_UPDATE_REQUIRED_IS_A_CONTROL_OBLIGATION__PLATFORM_DELIVERY_ACK_REMAINS_EXTERNAL_TO_THIS_KERNEL',
+    truthBoundary: 'TIMEOUT_RISK_TRIGGERS_CHECKPOINT_AND_VISIBLE_UPDATE_BUT_IS_NOT_A_SOLVER_STOP_CONDITION__PLATFORM_DELIVERY_OR_FORCED_PREEMPTION_REMAINS_EXTERNAL_TO_THIS_KERNEL',
   });
 }
 
