@@ -81,7 +81,12 @@ for(const [family,url] of SOURCES){
   const r=await fetchBytes(url);
   const raw=zlib.gunzipSync(r.body);
   receipts.push({family,url,status:r.status,gzipBytes:r.bytes,gzipSha256:r.sha256,rawBytes:raw.length,rawSha256:sha256(raw)});
-  const rows=parseDump(raw.toString('utf8'),family);
+  const rawText=raw.toString('utf8');
+  const rows=parseDump(rawText,family);
+  if(rows.length===0){
+    console.error('RIS_PARSE_ZERO_ROWS family='+family+' SAMPLE_BEGIN\\n'+rawText.slice(0,4000)+'\\nSAMPLE_END');
+    throw new Error('RIS parser produced zero useful rows for '+family);
+  }
   all.push(...rows);
   fs.writeFileSync(OUT+'/ris-'+family+'.jsonl',rows.map(x=>JSON.stringify(x)).join('\n')+'\n');
 }
