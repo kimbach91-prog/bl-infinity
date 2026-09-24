@@ -130,7 +130,7 @@ for(const s of SOURCES){
     } else if(s.id==='RIPE_ATLAS_PROBES_SAMPLE'){
       const j=safeJson(r.body)||{}; d.descriptor={count:j.count??null,next:Boolean(j.next),sampleResults:Array.isArray(j.results)?j.results.length:0};
     } else if(s.id==='RIPE_RIS_PEERS'){
-      const j=safeJson(r.body)||{}; const peers=j?.data?.peers||j?.data?.peer_count??null; d.descriptor={peerDataType:Array.isArray(peers)?'array':typeof peers,peerCount:Array.isArray(peers)?peers.length:(typeof peers==='number'?peers:null)};
+      const j=safeJson(r.body)||{}; const peers=(j?.data?.peers ?? j?.data?.peer_count ?? null); d.descriptor={peerDataType:Array.isArray(peers)?'array':typeof peers,peerCount:Array.isArray(peers)?peers.length:(typeof peers==='number'?peers:null)};
     } else if(s.id==='PEERINGDB_NET_SAMPLE'||s.id==='PEERINGDB_IX_SAMPLE'){
       const j=safeJson(r.body)||{}; d.descriptor={sampleRecords:Array.isArray(j.data)?j.data.length:0,meta:j.meta??null};
     } else if(s.id==='AKASH_PROVIDER_API'){
