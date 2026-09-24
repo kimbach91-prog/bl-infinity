@@ -1,0 +1,40 @@
+name: DEUS Global BGP RPKI Relation Join V1
+on:
+  push:
+    branches:
+      - deus/global-internet-bgp-rpki-join-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-bgp-rpki-join-v1.mjs'
+      - '.github/workflows/deus-global-internet-bgp-rpki-join-v1.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  join:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Join passive BGP origin observations to public RPKI authorization
+        run: node runtime/federation/scripts/global-internet-bgp-rpki-join-v1.mjs
+      - name: Verify relation classification
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-bgp-rpki-join/v1/manifest.json','utf8'));
+          if(m.ris.uniqueObservedRoutes < 500000) throw new Error('observed route gate');
+          if(m.rpki.totalVrps < 500000) throw new Error('RPKI gate');
+          if(m.validation.counts.VALID_AUTHORIZED < 100000) throw new Error('valid route gate');
+          if(m.registry.executionAdmitted !== 0) throw new Error('execution admission forbidden');
+          console.log(JSON.stringify({observed:m.ris.uniqueObservedRoutes,vrps:m.rpki.totalVrps,counts:m.validation.counts,classifierDigest:m.validation.classifierDigest,manifestDigest:m.manifestDigest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-bgp-rpki-join-${{ github.run_id }}
+          path: .deus/global-internet-bgp-rpki-join/v1/
+          if-no-files-found: error
+          compression-level: 6
