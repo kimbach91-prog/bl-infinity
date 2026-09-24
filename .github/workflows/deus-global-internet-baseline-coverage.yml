@@ -1,0 +1,36 @@
+name: DEUS Global Internet Baseline Coverage V1
+on:
+  push:
+    branches:
+      - deus/global-internet-baseline-coverage-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-baseline-coverage.mjs'
+      - '.github/workflows/deus-global-internet-baseline-coverage.yml'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Read global public Internet baseline datasets
+        run: node runtime/federation/scripts/global-internet-baseline-coverage.mjs
+      - name: Require multi-layer global baseline coverage
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-baseline/v1/manifest.json','utf8'));
+          if(!(m.classCoverage.covered>=7 && m.liveSources>=20)) throw new Error('baseline coverage gate failed');
+          if(m.registry.executionAdmitted!==0) throw new Error('mapping must not admit execution');
+          console.log(JSON.stringify({sources:m.sources,live:m.liveSources,held:m.heldSources,classCoverage:m.classCoverage,classes:m.liveClasses,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-baseline-${{ github.run_id }}
+          path: .deus/global-internet-baseline/v1/
+          if-no-files-found: error
