@@ -2,7 +2,7 @@
   "provider": "POLLINATIONS_LEGACY",
   "endpoint": "https://text.pollinations.ai/{prompt}",
   "http_status": 200,
-  "latency_ms": 234,
+  "latency_ms": 232,
   "exact_contract": true,
   "response_digest": "3afefc6e66ce4609f12e5b521826dc0405bee73ed2686f53f2def846b24ff578",
   "auth_mode": "NO_AUTH_LEGACY_PROBE",
