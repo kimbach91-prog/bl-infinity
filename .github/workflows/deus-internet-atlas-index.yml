@@ -63,16 +63,20 @@ jobs:
               ['rpki', '.github/workflows/deus-global-internet-bgp-rpki-join-v1.yml', 'deus-global-bgp-rpki-join-'],
               ['ct', '.github/workflows/deus-global-ct-stratified-member-v1.yml', 'deus-global-ct-stratified-member-']
             ];
+            const rejectedRunIds = {
+              real: new Set([36009129504])
+            };
             const sources = {};
             for (const [label, workflow_id, prefix] of specs) {
               const runs = await github.rest.actions.listWorkflowRuns({owner, repo, workflow_id, status:'success', per_page:30});
-              const run = runs.data.workflow_runs.find(r => r.head_repository?.full_name === `${owner}/${repo}` && r.conclusion === 'success' && ['push','workflow_dispatch','schedule'].includes(r.event));
+              const rejected = rejectedRunIds[label] || new Set();
+              const run = runs.data.workflow_runs.find(r => r.head_repository?.full_name === `${owner}/${repo}` && r.conclusion === 'success' && ['push','workflow_dispatch','schedule'].includes(r.event) && !rejected.has(r.id));
               if (!run) throw new Error(`NO_SUCCESSFUL_AUTHORIZED_SOURCE_${label}`);
               const artifacts = await github.rest.actions.listWorkflowRunArtifacts({owner, repo, run_id:run.id});
               const a = artifacts.data.artifacts.find(x => !x.expired && x.name === `${prefix}${run.id}`);
               if (!a || !/^sha256:[0-9a-f]{64}$/.test(a.digest || '')) throw new Error(`NO_DIGEST_BOUND_ARTIFACT_${label}`);
               if (a.size_in_bytes > 512*1024*1024) throw new Error('ARTIFACT_SIZE_REVIEW_REQUIRED');
-              sources[label] = {runId:run.id, headSha:run.head_sha, artifactId:a.id, sha256:a.digest.slice(7), bytes:a.size_in_bytes};
+              sources[label] = {runId:run.id, headSha:run.head_sha, artifactId:a.id, sha256:a.digest.slice(7), bytes:a.size_in_bytes, rejectedRunIds:[...rejected]};
               core.setOutput(`${label}_id`, String(a.id));
               core.setOutput(`${label}_sha`, a.digest.slice(7));
             }

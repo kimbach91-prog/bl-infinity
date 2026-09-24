@@ -29,6 +29,7 @@ jobs:
           if(m.rpki.totalVrps < 1000 || m.rpki.sampledVrps < 128) throw new Error('RPKI member gate');
           if(m.ct.domainRelations < 1) throw new Error('CT relation gate');
           if(m.cloud.prefixes < 100) throw new Error('cloud prefix gate');
+          if(m.peering.relations < 1000) throw new Error('peering relation integrity gate');
           if(m.registry.executionAdmitted !== 0) throw new Error('execution admission forbidden');
           console.log(JSON.stringify({
             rpki:m.rpki.totalVrps,
