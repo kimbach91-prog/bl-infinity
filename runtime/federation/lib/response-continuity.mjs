@@ -6,8 +6,11 @@ export const DEFAULT_RESPONSE_CONTINUITY_POLICY = Object.freeze({
   preemptionMarginMs: 15_000,
   softTurnBudgetMs: 35_000,
   maxCriticalSectionMs: 20_000,
+  foregroundHardCapMs: 45_000,
+  maxTotalToolCallsPerTurn: 8,
   requireVerifiedCheckpointBeforeNonterminalYield: true,
   continueAfterCheckpointedTimeout: true,
+  yieldForegroundOnHardCap: true,
 });
 
 const TERMINAL_STATES = new Set(['VERIFIED_DONE', 'OWNER_STOP', 'BLOCKED_HARD']);
@@ -97,7 +100,7 @@ export function buildTransactionalResponseCheckpoint({
     sourceRevision: sourceRevision == null ? null : String(sourceRevision),
     timestamp: String(timestamp),
     resumeContract: 'EXACT_STEP_IDEMPOTENT_REPLAY_OR_KEEP_VERIFIED_OUTPUT',
-    responseObligation: 'CHECKPOINT_THEN_EMIT_VISIBLE_UPDATE_THEN_CONTINUE_SOLVER_UNLESS_TRUE_WAIT_OR_TERMINAL',
+    responseObligation: 'CHECKPOINT_THEN_EMIT_VISIBLE_UPDATE; FOREGROUND_HARD_CAP_HANDS_OFF_DURABLY_INSTEAD_OF_HOLDING_UI_ANALYSIS_OPEN',
     truthBoundary: 'TRANSACTION_CHECKPOINT_LIMITS_WORK_LOSS_AND_DUPLICATE_REPLAY__IT_DOES_NOT_CONTROL_PLATFORM_UI_DELIVERY_OR_EXTERNAL_SIDE_EFFECT_IDEMPOTENCY',
   });
   return Object.freeze({ ...envelope, digest: responseCheckpointDigest(envelope) });
@@ -189,6 +192,7 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   const materialProgressSinceVisible = input.materialProgressSinceVisible === true;
   const msSinceVisibleUpdate = boundedNumber(input.msSinceVisibleUpdate, 0);
   const toolCallsSinceVisibleUpdate = Math.trunc(boundedNumber(input.toolCallsSinceVisibleUpdate, 0));
+  const totalToolCalls = Math.trunc(boundedNumber(input.totalToolCalls, toolCallsSinceVisibleUpdate));
   const deadlineRemaining = input.uiDeadlineMsRemaining == null
     ? null
     : boundedNumber(input.uiDeadlineMsRemaining, 0);
@@ -198,6 +202,9 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   const softTurnBudgetExceeded = turnElapsedMs >= p.softTurnBudgetMs;
   const criticalSectionExceeded = criticalSectionElapsedMs >= p.maxCriticalSectionMs;
   const timeoutRisk = predictablePreemption || softTurnBudgetExceeded || criticalSectionExceeded;
+  const foregroundHardCapExceeded = turnElapsedMs >= p.foregroundHardCapMs;
+  const totalToolCallBudgetExceeded = totalToolCalls >= p.maxTotalToolCallsPerTurn;
+  const analysisStallRisk = foregroundHardCapExceeded || totalToolCallBudgetExceeded;
   const silenceExceeded = msSinceVisibleUpdate >= p.maxSilenceMs;
   const toolBudgetExceeded = toolCallsSinceVisibleUpdate >= p.maxToolCallsWithoutVisibleUpdate;
   const waitingOrBlocked = criticalPathWaiting || hardBlocker;
@@ -211,6 +218,16 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   } else if (ownerStop && !hasUserVisibleReply) {
     action = 'EMIT_STOP_ACK_NOW';
     reason = 'OWNER_STOP_REQUIRES_VISIBLE_ACK';
+  } else if (analysisStallRisk && !checkpointVerified) {
+    action = 'CHECKPOINT_THEN_HANDOFF_REPLY_NOW';
+    reason = foregroundHardCapExceeded
+      ? 'FOREGROUND_HARD_CAP_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT'
+      : 'TOTAL_TOOL_CALL_BUDGET_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT';
+  } else if (analysisStallRisk) {
+    action = 'HANDOFF_AND_EMIT_PARTIAL_NOW';
+    reason = foregroundHardCapExceeded
+      ? 'FOREGROUND_HARD_CAP_EXCEEDED'
+      : 'TOTAL_TOOL_CALL_BUDGET_EXCEEDED';
   } else if (timeoutRisk && !checkpointVerified) {
     action = 'CHECKPOINT_THEN_REPLY_NOW';
     reason = predictablePreemption
@@ -241,11 +258,13 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   }
 
   const nonterminal = !terminal;
-  const checkpointRisk = waitingOrBlocked || timeoutRisk;
+  const checkpointRisk = waitingOrBlocked || timeoutRisk || analysisStallRisk;
   const timeoutMayYield = timeoutRisk && p.continueAfterCheckpointedTimeout !== true;
-  const yieldCondition = waitingOrBlocked || timeoutMayYield;
+  const foregroundMustYield = analysisStallRisk && p.yieldForegroundOnHardCap === true;
+  const yieldCondition = waitingOrBlocked || timeoutMayYield || foregroundMustYield;
   const solverContinuationRequired = nonterminal
     && !waitingOrBlocked
+    && !foregroundMustYield
     && (!timeoutRisk || p.continueAfterCheckpointedTimeout === true);
   const turnEndAllowed = terminal || ownerStop || (
     nonterminal
@@ -268,6 +287,10 @@ export function responseContinuityDecision(input = {}, policy = {}) {
     solverContinuationRequired,
     platformPreemptionSafe: checkpointVerified,
     timeoutContainmentTriggered: timeoutRisk,
+    analysisStallContained: analysisStallRisk,
+    foregroundHardCapExceeded,
+    totalToolCallBudgetExceeded,
+    totalToolCalls,
     turnElapsedMs,
     criticalSectionElapsedMs,
     nextAction: input.nextAction == null ? null : String(input.nextAction),
@@ -278,10 +301,13 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       preemptionMarginMs: p.preemptionMarginMs,
       softTurnBudgetMs: p.softTurnBudgetMs,
       maxCriticalSectionMs: p.maxCriticalSectionMs,
+      foregroundHardCapMs: p.foregroundHardCapMs,
+      maxTotalToolCallsPerTurn: p.maxTotalToolCallsPerTurn,
       requireVerifiedCheckpointBeforeNonterminalYield: p.requireVerifiedCheckpointBeforeNonterminalYield,
       continueAfterCheckpointedTimeout: p.continueAfterCheckpointedTimeout === true,
+      yieldForegroundOnHardCap: p.yieldForegroundOnHardCap === true,
     }),
-    truthBoundary: 'TIMEOUT_RISK_TRIGGERS_CHECKPOINT_AND_VISIBLE_UPDATE_BUT_IS_NOT_A_SOLVER_STOP_CONDITION__PLATFORM_DELIVERY_OR_FORCED_PREEMPTION_REMAINS_EXTERNAL_TO_THIS_KERNEL',
+    truthBoundary: 'SOFT_TIMEOUT_RISK_IS_NOT_TASK_STOP__FOREGROUND_HARD_CAP_ENDS_ONLY_THE_UI_TURN_AFTER_CHECKPOINT_AND_DURABLE_HANDOFF__PLATFORM_DELIVERY_REMAINS_EXTERNAL',
   });
 }
 
@@ -292,6 +318,7 @@ export class ResponseContinuityGuard {
     this.criticalSectionStartedAt = Number(now);
     this.lastVisibleAt = Number(now);
     this.toolCallsSinceVisibleUpdate = 0;
+    this.totalToolCalls = 0;
     this.materialProgressSinceVisible = false;
     this.hasUserVisibleReply = false;
     this.hasUserVisibleFinal = false;
@@ -299,6 +326,7 @@ export class ResponseContinuityGuard {
 
   markToolCall() {
     this.toolCallsSinceVisibleUpdate += 1;
+    this.totalToolCalls += 1;
   }
 
   markMaterialProgress() {
@@ -328,6 +356,7 @@ export class ResponseContinuityGuard {
       turnElapsedMs: Math.max(0, Number(now) - this.turnStartedAt),
       criticalSectionElapsedMs: Math.max(0, Number(now) - this.criticalSectionStartedAt),
       toolCallsSinceVisibleUpdate: this.toolCallsSinceVisibleUpdate,
+      totalToolCalls: this.totalToolCalls,
       materialProgressSinceVisible: this.materialProgressSinceVisible,
       hasUserVisibleReply: this.hasUserVisibleReply,
       hasUserVisibleFinal: this.hasUserVisibleFinal,
