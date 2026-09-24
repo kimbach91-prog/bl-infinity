@@ -298,7 +298,8 @@ test('V2.3 heavy foreground emits fast ack and hands off after checkpoint', () =
   assert.equal(d.action, 'EMIT_FAST_ACK_AND_HANDOFF_DURABLE_NOW');
   assert.equal(d.reason, 'HEAVY_FOREGROUND_OFFLOADED_TO_DURABLE_EXECUTOR');
   assert.equal(d.shouldContinueAfterVisibleUpdate, false);
-  assert.equal(d.turnEndAllowed, true);
+  assert.equal(d.turnEndAllowed, false);
+  assert.equal(d.turnEndAllowedAfterAction, true);
 });
 
 test('V2.3 already-visible heavy foreground returns partial and yields UI', () => {
