@@ -1,0 +1,35 @@
+name: DEUS AI Horde Public Service Canary V1
+on:
+  push:
+    branches:
+      - deus/aihorde-public-service-canary-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/aihorde-public-service-canary.mjs'
+      - '.github/workflows/deus-aihorde-public-service-canary.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Execute one minimal public-intended text canary
+        run: node runtime/federation/scripts/aihorde-public-service-canary.mjs
+      - name: Verify useful result
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/aihorde-public-canary/v1/manifest.json','utf8'));
+          if(!m.resultText) throw new Error('canary result missing');
+          if(m.authorityClass!=='PUBLIC_SERVICE_INTENDED') throw new Error('authority class mismatch');
+          console.log(JSON.stringify({provider:m.provider,model:m.selectedModel,latencyMs:m.latencyMs,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-aihorde-public-canary-${{ github.run_id }}
+          path: .deus/aihorde-public-canary/v1/
+          if-no-files-found: error
