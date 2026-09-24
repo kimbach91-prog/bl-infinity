@@ -1,0 +1,42 @@
+name: DEUS Global Internet Validator Delta V2
+on:
+  push:
+    branches:
+      - deus/global-internet-validator-delta-v2-20260924
+    paths:
+      - 'runtime/federation/data/global-internet-validator-seed-v1.json'
+      - 'runtime/federation/scripts/global-internet-validator-delta-v2.mjs'
+      - '.github/workflows/deus-global-internet-validator-delta-v2.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validator_delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Execute validator-aware Internet delta sweep
+        run: node runtime/federation/scripts/global-internet-validator-delta-v2.mjs
+      - name: Require measurable body-fetch reduction
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-validator-delta/v2/manifest.json','utf8'));
+          if(m.sources!==29 || m.reachable<20) throw new Error('coverage gate failed');
+          if(m.conditionalEligible<15 || m.validator304<1) throw new Error('validator gate failed');
+          if(!(m.bodyFetchCount<m.sources)) throw new Error('no body-fetch reduction measured');
+          console.log(JSON.stringify({
+            sources:m.sources,reachable:m.reachable,conditionalEligible:m.conditionalEligible,
+            validator304:m.validator304,bodyFetchCount:m.bodyFetchCount,
+            estimatedBodyBytesAvoided:m.estimatedBodyBytesAvoided,
+            changedClasses:m.changedClasses,digest:m.digest
+          }));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-validator-delta-${{ github.run_id }}
+          path: .deus/global-internet-validator-delta/v2/
+          if-no-files-found: error

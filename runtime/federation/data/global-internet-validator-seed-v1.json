@@ -1,0 +1,298 @@
+{
+  "schema": "deus-global-internet-validator-seed/1",
+  "baselineDigest": "520c9779ee08ca7484430a3c1b00cd610f9701136d5cf091f73cfef67f9b8907",
+  "sourceSnapshotDigest": "d612078b886091ac57668169539f82e3482c7ffaa6ed4ad66fe09cb65e962327",
+  "generatedAt": "2026-09-24T09:59:27.440Z",
+  "sources": [
+    {
+      "id": "RIR_APNIC",
+      "class": "NUMBERING_RIR",
+      "url": "https://ftp.apnic.net/stats/apnic/delegated-apnic-latest",
+      "sha256": "bd770850a3cdfc09ca14273e361fb3a29430e32b2603c3164545a1c4f993888e",
+      "ok": true,
+      "etag": "\"6ab3ef2e-42246f\"",
+      "lastModified": "Wed, 23 Sep 2026 15:24:30 GMT",
+      "bytes": 4334703
+    },
+    {
+      "id": "RIR_RIPE",
+      "class": "NUMBERING_RIR",
+      "url": "https://ftp.ripe.net/pub/stats/ripencc/delegated-ripencc-latest",
+      "sha256": "d237d216a5a5f2a3097795407efbcc042c6a9611d01e68d681b8b64b20b6b9ed",
+      "ok": true,
+      "etag": "\"6ab44ec7-7e4b3c\"",
+      "lastModified": "Wed, 23 Sep 2026 22:12:23 GMT",
+      "bytes": 8276796
+    },
+    {
+      "id": "RIR_ARIN",
+      "class": "NUMBERING_RIR",
+      "url": "https://ftp.arin.net/pub/stats/arin/delegated-arin-extended-latest",
+      "sha256": "52e94b1653bdbc4114eee94722c5fbe8d8ad267968e1a38dc3a4466b54b296b7",
+      "ok": true,
+      "etag": "\"6ab3cd67-c32758\"",
+      "lastModified": "Wed, 23 Sep 2026 13:00:23 GMT",
+      "bytes": 12789592
+    },
+    {
+      "id": "RIR_LACNIC",
+      "class": "NUMBERING_RIR",
+      "url": "https://ftp.lacnic.net/pub/stats/lacnic/delegated-lacnic-latest",
+      "sha256": "9e4ff3c9c2ba9b16369c21135b3fc3db41c79ef399129e654d621790a00e2204",
+      "ok": true,
+      "etag": "\"235ae0-65c31b2cfca5f\"",
+      "lastModified": "Thu, 24 Sep 2026 02:53:03 GMT",
+      "bytes": 2317024
+    },
+    {
+      "id": "RIR_AFRINIC",
+      "class": "NUMBERING_RIR",
+      "url": "https://ftp.afrinic.net/pub/stats/afrinic/delegated-afrinic-latest",
+      "sha256": "c798f2845eae43b132bcefcf3bc495afa0479f19b61598408ee1a532efe70b39",
+      "ok": true,
+      "etag": "\"7880c-65c2f613efc40\"",
+      "lastModified": "Thu, 24 Sep 2026 00:07:05 GMT",
+      "bytes": 493580
+    },
+    {
+      "id": "DNS_ROOT_ZONE",
+      "class": "DNS_ROOT",
+      "url": "https://www.internic.net/domain/root.zone",
+      "sha256": "3863797c7c0f209b4bc8a3acd7cdc24692e024d3c433187cc132a769bff57c9a",
+      "ok": true,
+      "etag": "\"224b14-65c34e2007700-br\"",
+      "lastModified": "Thu, 24 Sep 2026 06:41:00 GMT",
+      "bytes": 2247444
+    },
+    {
+      "id": "DNS_ROOT_HINTS",
+      "class": "DNS_ROOT",
+      "url": "https://www.internic.net/domain/named.root",
+      "sha256": "75bfbceb2c0827b0eec94917452f41dc594e25a21482ac15514c314369b73726",
+      "ok": true,
+      "etag": "\"cf3-65c34e2007700\"",
+      "lastModified": "Thu, 24 Sep 2026 06:41:00 GMT",
+      "bytes": 3315
+    },
+    {
+      "id": "ROOT_SERVERS",
+      "class": "DNS_ROOT",
+      "url": "https://root-servers.org/",
+      "sha256": "27a1870675d690724ab59f2ea44e4e8fcd231ccdd99465208833a89b84b0ed75",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 259124
+    },
+    {
+      "id": "RIPE_RIS_PEERS",
+      "class": "ROUTING_BGP",
+      "url": "https://stat.ripe.net/data/ris-peers/data.json",
+      "sha256": "d01f6710330b445962a4c2424be3f0b9376a7d8670aa7738c1a0cdc8f72f96da",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 53863
+    },
+    {
+      "id": "ROUTEVIEWS",
+      "class": "ROUTING_BGP",
+      "url": "https://www.routeviews.org/routeviews/",
+      "sha256": "532127967feb7e1ba5ee0fbbe19eb62a165161c7f78d554d02df905870c3f914",
+      "ok": true,
+      "etag": "\"35a0-65c24997fae83\"",
+      "lastModified": "Wed, 23 Sep 2026 11:15:24 GMT",
+      "bytes": 59950
+    },
+    {
+      "id": "BGPSTREAM",
+      "class": "ROUTING_BGP",
+      "url": "https://bgpstream.caida.org/",
+      "sha256": "df7a3dfea6a9955dddca6bf0c3e30a5e42dcd595799ad795c693fdf58392fb5d",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 8128
+    },
+    {
+      "id": "PEERINGDB_NET_SAMPLE",
+      "class": "IX_PEERING",
+      "url": "https://www.peeringdb.com/api/net?limit=1",
+      "sha256": "f9e495e6bdc8f98942f3c66f4e8aaca5ed5b1b8e8a95189e4e7a5b499bb48891",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 1379
+    },
+    {
+      "id": "PEERINGDB_IX_SAMPLE",
+      "class": "IX_PEERING",
+      "url": "https://www.peeringdb.com/api/ix?limit=1",
+      "sha256": "3813050d3eaf08da45c619f5140618b6c16f9cb215d91e194349aa3a7f20b567",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 986
+    },
+    {
+      "id": "COMMONCRAWL_COLLECTIONS",
+      "class": "WEB_CORPUS",
+      "url": "https://index.commoncrawl.org/collinfo.json",
+      "sha256": "fdfe1131836096ec8ff6047997a035acbf464036a2ea09887239c949e0df41f9",
+      "ok": true,
+      "etag": "W/\"6aaeda1d-899a\"",
+      "lastModified": "Sat, 19 Sep 2026 18:53:17 GMT",
+      "bytes": 35226
+    },
+    {
+      "id": "COMMONCRAWL_HOME",
+      "class": "WEB_CORPUS",
+      "url": "https://commoncrawl.org/",
+      "sha256": "f899df204c55deafa8beceaaf8fc91d708d35013888a9e2a939c129c3a0d6d1b",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Tue, 22 Sep 2026 21:07:16 GMT",
+      "bytes": 26744
+    },
+    {
+      "id": "CHROME_CT_LOG_LIST",
+      "class": "CT_PKI",
+      "url": "https://www.gstatic.com/ct/log_list/v3/log_list.json",
+      "sha256": "f207d6c07b6a0a76ac9c76bb3fbf39f42eeeb9350c1dab9e58a303ed47444684",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Wed, 23 Sep 2026 14:18:00 GMT",
+      "bytes": 46765
+    },
+    {
+      "id": "CABFORUM",
+      "class": "CT_PKI",
+      "url": "https://cabforum.org/",
+      "sha256": "9a7b0fd0c5a9deb1ff4d802b1b642c346079db6eee73843a6219693d4be17cdd",
+      "ok": true,
+      "etag": "W/\"6ab4de67-fef0\"",
+      "lastModified": "Thu, 24 Sep 2026 08:25:11 GMT",
+      "bytes": 65264
+    },
+    {
+      "id": "AWS_IP_RANGES",
+      "class": "CLOUD_RANGES",
+      "url": "https://ip-ranges.amazonaws.com/ip-ranges.json",
+      "sha256": "9548fcab05cae4839cd3a63bff92783fe8d26523c544ae86202ab171ee632cd9",
+      "ok": true,
+      "etag": "\"76870f6fd4410dfa1a251791668a4b00\"",
+      "lastModified": "Thu, 24 Sep 2026 08:28:49 GMT",
+      "bytes": 2694143
+    },
+    {
+      "id": "GOOGLE_CLOUD_RANGES",
+      "class": "CLOUD_RANGES",
+      "url": "https://www.gstatic.com/ipranges/cloud.json",
+      "sha256": "ba68d267cdcf182864536dd607c5a657619d5780ddc70c5e39008da1a20a1584",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Thu, 24 Sep 2026 08:28:00 GMT",
+      "bytes": 112790
+    },
+    {
+      "id": "GOOGLE_GLOBAL_RANGES",
+      "class": "CLOUD_RANGES",
+      "url": "https://www.gstatic.com/ipranges/goog.json",
+      "sha256": "b6f79806369fd4283766d289359371194f97ab6038ed20367a5d3779ccf78f3d",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Thu, 24 Sep 2026 08:28:00 GMT",
+      "bytes": 6186
+    },
+    {
+      "id": "CLOUDFLARE_IPS",
+      "class": "CLOUD_RANGES",
+      "url": "https://api.cloudflare.com/client/v4/ips",
+      "sha256": "f3d0a35768afd4a9a8307aa1033d50b9fa011b73836c9235c170aa31acac5efd",
+      "ok": true,
+      "etag": "W/\"38f79d050aa027e3be3865e495dcc9bc\"",
+      "lastModified": null,
+      "bytes": 505
+    },
+    {
+      "id": "GITHUB_META",
+      "class": "CLOUD_RANGES",
+      "url": "https://api.github.com/meta",
+      "sha256": "850b1de90b0cdbaebf3f8c1eea095a1d99ea63ad0da8489f62d8d52dc54bb348",
+      "ok": true,
+      "etag": "W/\"c6f4380ee8b814b5f0ad97bb03b4983b5d82abd891752272507c9594b751e01b\"",
+      "lastModified": null,
+      "bytes": 160181
+    },
+    {
+      "id": "FASTLY_PUBLIC_IPS",
+      "class": "CLOUD_RANGES",
+      "url": "https://api.fastly.com/public-ip-list",
+      "sha256": "d0fa4abe04cded896cf1a1d1a1c16ce2861ea4feb837ebd045a89c7b06a15ab5",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 402
+    },
+    {
+      "id": "RIPE_ATLAS_PROBES_SAMPLE",
+      "class": "MEASUREMENT",
+      "url": "https://atlas.ripe.net/api/v2/probes/?page_size=1",
+      "sha256": "fbec270763a038e86aa25c5c1b0cd81d2b554b3b52747453de3ff37e6e62ec22",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 1740
+    },
+    {
+      "id": "RIPE_ATLAS_HOME",
+      "class": "MEASUREMENT",
+      "url": "https://atlas.ripe.net/",
+      "sha256": "8a8d36c4b4779be93a710e5f7d36d8a6c1654fb8950be0b9628a6e65cd10be35",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 1765
+    },
+    {
+      "id": "CAIDA_DATASETS",
+      "class": "MEASUREMENT",
+      "url": "https://www.caida.org/catalog/datasets/",
+      "sha256": "f8806a932124b0bfb0c602ffbf4a52d926ae0caabd1505675d93121963c5dc24",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 2773
+    },
+    {
+      "id": "AKASH_PROVIDER_API",
+      "class": "COMPUTE_MARKET",
+      "url": "https://console-api.akash.network/v1/providers",
+      "sha256": "0420456fc4dffefef82e3cf13b1bc74099e19b45fe58a90644db4e03dd740452",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Thu, 24 Sep 2026 09:54:01 GMT",
+      "bytes": 3741211
+    },
+    {
+      "id": "AIHORDE_PERFORMANCE",
+      "class": "COMPUTE_MARKET",
+      "url": "https://aihorde.net/api/v2/status/performance",
+      "sha256": "f62f2092d73dc98bdb0d39147d715d95d25a9227fd6cabaa4076889db482e6e5",
+      "ok": true,
+      "etag": null,
+      "lastModified": null,
+      "bytes": 327
+    },
+    {
+      "id": "BOINC_PROJECTS",
+      "class": "COMPUTE_MARKET",
+      "url": "https://boinc.berkeley.edu/projects.php",
+      "sha256": "87cc6e2b82c60277a5929c5080681dc7c1344c061259e770e83a177b9114df46",
+      "ok": true,
+      "etag": null,
+      "lastModified": "Thu, 24 Sep 2026 09:59:27 UTC",
+      "bytes": 49895
+    }
+  ]
+}
