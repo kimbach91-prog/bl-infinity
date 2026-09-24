@@ -523,6 +523,9 @@ export function buildCrossCheckSet(atlas,{capability,dataClass='BL-S0',width=3,n
 
 export const INTERNET_OBSERVATORY_KERNEL_VERSION='deus-internet-observatory-kernel/1.0';
 export const INTERNET_ADDRESS_SLOT_DOMAIN=1000000000000n;
+export const INTERNET_GENERATIVE_ADDRESS_FABRIC_VERSION='deus-internet-generative-address-fabric/2.0';
+export const INTERNET_MICROCELL_BITS=64n;
+export const INTERNET_MICROCELL_DOMAIN=1n<<INTERNET_MICROCELL_BITS;
 
 function normalizeIdentityType(value){
   const type=String(value??'').trim().toLowerCase();
@@ -647,6 +650,42 @@ export function projectInternetIdentity(raw,{slotDomain=INTERNET_ADDRESS_SLOT_DO
   });
 }
 
+
+function resourceKeyInteger(resourceKey){
+  const value=String(resourceKey??'').toLowerCase();
+  if(!/^[0-9a-f]{64}$/.test(value)) throw new Error('resourceKey must be a 256-bit lowercase hex digest');
+  return BigInt('0x'+value);
+}
+
+export function projectInternetIdentityHierarchical(raw,{
+  slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,
+  microcellDomain=INTERNET_MICROCELL_DOMAIN,
+}={}){
+  const slots=BigInt(slotDomain);
+  const microcells=BigInt(microcellDomain);
+  if(slots<=0n) throw new Error('slotDomain must be positive');
+  if(microcells<=0n) throw new Error('microcellDomain must be positive');
+  const base=projectInternetIdentity(raw,{slotDomain:slots});
+  const keyInt=resourceKeyInteger(base.resourceKey);
+  const supercellId=BigInt(base.slotId);
+  const microcellId=(keyInt/slots)%microcells;
+  const routingDomain=slots*microcells;
+  const routingCoordinate=supercellId*microcells+microcellId;
+  return Object.freeze({
+    ...base,
+    schema:'deus-internet-resource-projection/2',
+    supercellId:supercellId.toString(),
+    microcellId:microcellId.toString(),
+    microcellDomain:microcells.toString(),
+    routingCoordinate:routingCoordinate.toString(),
+    routingDomain:routingDomain.toString(),
+    bucketKey:supercellId.toString()+':'+microcellId.toString(),
+    collisionKey:base.resourceKey,
+    locator:'deus://internet/v2/'+supercellId.toString()+'/'+microcellId.toString()+'/'+base.resourceKey,
+    truthBoundary:'SUPERCELL_AND_MICROCELL_ARE_ROUTING_COORDINATES__FULL_RESOURCE_KEY_DISAMBIGUATES_COLLISIONS__PROJECTED_NE_OBSERVED_NE_LIVE_NE_EXECUTABLE',
+  });
+}
+
 export function cidrCardinality(cidr){
   const parsed=parseCidr(cidr);
   return Object.freeze({
@@ -672,6 +711,146 @@ export function projectCidrAddress(cidr,offset,{slotDomain=INTERNET_ADDRESS_SLOT
     ...projection,
     truthBoundary:'VIRTUAL_PER_ADDRESS_MAPPING_NE_NETWORK_PROBE_NE_LIVENESS_NE_SERVICE_NE_COMPUTE',
   });
+}
+
+
+export function compileCidrAddressDescriptor(cidr,{
+  slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,
+  microcellDomain=INTERNET_MICROCELL_DOMAIN,
+}={}){
+  const parsed=parseCidr(cidr);
+  const slots=BigInt(slotDomain);
+  const microcells=BigInt(microcellDomain);
+  if(slots<=0n||microcells<=0n) throw new Error('routing domains must be positive');
+  const addressCount=1n<<BigInt(parsed.hostBits);
+  const core={
+    schema:'deus-internet-cidr-generative-descriptor/2',
+    cidr:parsed.canonical,
+    family:parsed.family,
+    prefix:parsed.prefix,
+    hostBits:parsed.hostBits,
+    networkInteger:parsed.network.toString(),
+    addressCount:addressCount.toString(),
+    slotDomain:slots.toString(),
+    microcellDomain:microcells.toString(),
+    routingDomain:(slots*microcells).toString(),
+    materializedMembers:0,
+    storageModel:'DESCRIPTOR_ONLY_GENERATIVE',
+    generator:'ADDRESS=NETWORK_PLUS_OFFSET__RESOURCE_KEY=SHA256(TYPE_PIPE_CANONICAL_ADDRESS)',
+    activationModel:'SPARSE_HOT_OVERLAY_ONLY',
+    truthBoundary:'DESCRIPTOR_DECLARES_ADDRESSABILITY_NE_ENUMERATED_MEMBERS_NE_OBSERVATION_NE_LIVENESS_NE_EXECUTION_AUTHORITY',
+  };
+  return Object.freeze({...core,descriptorDigest:sha256Json(core)});
+}
+
+export function resolveCidrAddressHandle(cidr,offset,{
+  slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,
+  microcellDomain=INTERNET_MICROCELL_DOMAIN,
+}={}){
+  const descriptor=compileCidrAddressDescriptor(cidr,{slotDomain,microcellDomain});
+  const parsed=parseCidr(descriptor.cidr);
+  const index=BigInt(offset);
+  const count=BigInt(descriptor.addressCount);
+  if(index<0n||index>=count) throw new Error('CIDR member offset out of range');
+  const numeric=parsed.network+index;
+  const address=parsed.family==='ipv6'?formatIpv6(numeric):formatIpv4(numeric);
+  const projection=projectInternetIdentityHierarchical({type:parsed.family,value:address},{slotDomain,microcellDomain});
+  return Object.freeze({
+    schema:'deus-internet-address-handle/2',
+    descriptorDigest:descriptor.descriptorDigest,
+    cidr:descriptor.cidr,
+    offset:index.toString(),
+    addressCount:descriptor.addressCount,
+    ...projection,
+    activationState:'VIRTUAL_COLD',
+    persistence:'NONE_UNTIL_ACTIVATED',
+    truthBoundary:'ADDRESS_HANDLE_IS_GENERATED_ON_DEMAND__NO_MEMBER_ROW_REQUIRED__HANDLE_NE_OBSERVED_HOST_NE_LIVE_SERVICE_NE_EXECUTION_AUTHORITY',
+  });
+}
+
+export function activateCidrAddress(cidr,offset,{
+  slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,
+  microcellDomain=INTERNET_MICROCELL_DOMAIN,
+  activatedAt=new Date().toISOString(),
+  ttlMs=null,
+  metadata={},
+}={}){
+  const handle=resolveCidrAddressHandle(cidr,offset,{slotDomain,microcellDomain});
+  let expiresAt=null;
+  if(ttlMs!=null){
+    const ttl=Number(ttlMs);
+    if(!Number.isFinite(ttl)||ttl<0) throw new Error('ttlMs must be a non-negative finite number');
+    const start=Date.parse(String(activatedAt));
+    if(!Number.isFinite(start)) throw new Error('activatedAt must be an ISO timestamp when ttlMs is used');
+    expiresAt=new Date(start+ttl).toISOString();
+  }
+  const core={
+    ...handle,
+    schema:'deus-internet-address-activation/2',
+    activationState:'HOT_SPARSE',
+    activatedAt:String(activatedAt),
+    expiresAt,
+    persistence:'SPARSE_OVERLAY_ONLY',
+    metadata:clone(metadata),
+    truthBoundary:'HOT_ACTIVATION_IS_SPARSE_KERNEL_STATE__VIRTUAL_ADDRESSABILITY_DOES_NOT_REQUIRE_PERSISTING_ALL_MEMBERS',
+  };
+  return Object.freeze({...core,activationDigest:sha256Json(core)});
+}
+
+export function compileGenerativeAddressFabric({
+  cidrs=[],
+  activated=[],
+  slotDomain=INTERNET_ADDRESS_SLOT_DOMAIN,
+  microcellDomain=INTERNET_MICROCELL_DOMAIN,
+  maxActivated=4096,
+}={}){
+  if(!Array.isArray(cidrs)) throw new Error('cidrs must be an array');
+  if(!Array.isArray(activated)) throw new Error('activated must be an array');
+  const hotLimit=Math.trunc(Number(maxActivated));
+  if(!Number.isFinite(hotLimit)||hotLimit<0) throw new Error('maxActivated must be a non-negative integer');
+  if(activated.length>hotLimit) throw new Error('activated sparse overlay exceeds maxActivated');
+  const descriptors=cidrs.map(cidr=>compileCidrAddressDescriptor(cidr,{slotDomain,microcellDomain}));
+  const virtualAddressCount=descriptors.reduce((sum,x)=>sum+BigInt(x.addressCount),0n);
+  const hot=activated.map((entry,index)=>{
+    if(entry&&typeof entry==='object'&&entry.cidr!=null){
+      return activateCidrAddress(entry.cidr,entry.offset??0n,{
+        slotDomain,microcellDomain,
+        activatedAt:entry.activatedAt??new Date(0).toISOString(),
+        ttlMs:entry.ttlMs??null,
+        metadata:entry.metadata??{index},
+      });
+    }
+    const projection=projectInternetIdentityHierarchical(entry,{slotDomain,microcellDomain});
+    return Object.freeze({
+      ...projection,
+      schema:'deus-internet-address-activation/2',
+      activationState:'HOT_SPARSE',
+      persistence:'SPARSE_OVERLAY_ONLY',
+      metadata:{index},
+      truthBoundary:'HOT_ACTIVATION_IS_SPARSE_KERNEL_STATE__PROJECTED_IDENTITY_NE_OBSERVED_HOST_NE_LIVE_SERVICE',
+    });
+  });
+  const buckets=new Map();
+  for(const item of hot) buckets.set(item.bucketKey,(buckets.get(item.bucketKey)??0)+1);
+  const depths=[...buckets.values()];
+  const payload={
+    schema:INTERNET_GENERATIVE_ADDRESS_FABRIC_VERSION,
+    slotDomain:BigInt(slotDomain).toString(),
+    microcellDomain:BigInt(microcellDomain).toString(),
+    routingDomain:(BigInt(slotDomain)*BigInt(microcellDomain)).toString(),
+    descriptorCount:descriptors.length,
+    virtualAddressCount:virtualAddressCount.toString(),
+    materializedHotIdentities:hot.length,
+    hotBucketCount:buckets.size,
+    hotCollisionBuckets:depths.filter(x=>x>1).length,
+    maxHotBucketDepth:depths.length?Math.max(...depths):0,
+    descriptors,
+    hot,
+    storageModel:'O(DESCRIPTORS_PLUS_HOT_OVERLAY)_NOT_O(VIRTUAL_ADDRESS_COUNT)',
+    collisionModel:'1T_SUPERCELL_PLUS_64BIT_MICROCELL_FOR_ROUTING__FULL_256BIT_RESOURCE_KEY_FOR_FINAL_DISAMBIGUATION',
+    truthBoundary:'FULL_GENERATIVE_ADDRESSABILITY_NE_FULL_MATERIALIZATION__COLD_DESCRIPTOR_NE_HOT_STATE__ADDRESSABLE_NE_OBSERVED_NE_LIVE_NE_EXECUTABLE',
+  };
+  return Object.freeze({...payload,fabricDigest:sha256Json(payload)});
 }
 
 function computeCategory(entry={}){
@@ -753,8 +932,9 @@ export function compileInternetObservatoryKernel({
       last:projectCidrAddress(cidr,count-1n,{slotDomain}),
     });
   });
+  const addressFabric=compileGenerativeAddressFabric({cidrs,slotDomain});
   const compute=classifyComputeRegistry(computeRoutes,{now,maxFreshAgeMs});
-  const virtualAddressCount=cidrCoverage.reduce((sum,x)=>sum+BigInt(x.addressCount),0n).toString();
+  const virtualAddressCount=addressFabric.virtualAddressCount;
   const payload={
     schema:INTERNET_OBSERVATORY_KERNEL_VERSION,
     slotDomain:BigInt(slotDomain).toString(),
@@ -763,8 +943,9 @@ export function compileInternetObservatoryKernel({
     virtualAddressCount,
     projected,
     cidrCoverage,
+    addressFabric,
     compute,
-    truthBoundary:'FULL_VIRTUAL_ADDRESSABILITY_NE_FULL_OBSERVATION__OBSERVED_NE_LIVE__LIVE_NE_USABLE__ROUTE_SELECTED_NE_EXECUTED',
+    truthBoundary:'FULL_VIRTUAL_ADDRESSABILITY_NE_FULL_OBSERVATION__GENERATIVE_ADDRESSABILITY_NE_MATERIALIZED_STATE__OBSERVED_NE_LIVE__LIVE_NE_USABLE__ROUTE_SELECTED_NE_EXECUTED',
   };
   return Object.freeze({...payload,kernelDigest:sha256Json(payload)});
 }
