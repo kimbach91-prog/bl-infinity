@@ -1,0 +1,49 @@
+name: DEUS Global Internet Real Member Expansion V1
+on:
+  push:
+    branches:
+      - deus/global-internet-real-member-expansion-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-real-member-expansion-v1.mjs'
+      - '.github/workflows/deus-global-internet-real-member-expansion-v1.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  real-members:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Expand public Internet real-member relation graph
+        run: node runtime/federation/scripts/global-internet-real-member-expansion-v1.mjs
+      - name: Verify bounded member expansion
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-real-member-expansion/v1/manifest.json','utf8'));
+          if(m.rpki.totalVrps < 1000 || m.rpki.sampledVrps < 128) throw new Error('RPKI member gate');
+          if(m.ct.domainRelations < 1) throw new Error('CT relation gate');
+          if(m.cloud.prefixes < 100) throw new Error('cloud prefix gate');
+          if(m.registry.executionAdmitted !== 0) throw new Error('execution admission forbidden');
+          console.log(JSON.stringify({
+            rpki:m.rpki.totalVrps,
+            rpkiSample:m.rpki.sampledVrps,
+            ct:m.ct.domainRelations,
+            cloud:m.cloud.prefixes,
+            rootNs:m.cloud.rootNsRelations,
+            peering:m.peering.relations,
+            relations:m.relationCounts.total,
+            digest:m.digest
+          }));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-real-member-expansion-${{ github.run_id }}
+          path: .deus/global-internet-real-member-expansion/v1/
+          if-no-files-found: error
+          compression-level: 6
