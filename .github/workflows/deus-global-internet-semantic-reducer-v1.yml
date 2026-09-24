@@ -1,0 +1,36 @@
+name: DEUS Global Internet Semantic Reducer V1
+on:
+  push:
+    branches:
+      - deus/global-internet-semantic-reducer-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-semantic-reducer-v1.mjs'
+      - '.github/workflows/deus-global-internet-semantic-reducer-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  semantic_reducer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Execute bounded semantic reducer
+        run: node runtime/federation/scripts/global-internet-semantic-reducer-v1.mjs
+      - name: Enforce semantic and recovery gates
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-semantic-reducer/v1/manifest.json','utf8'));
+          if(m.sources!==7 || m.reachable<6) throw new Error('coverage gate failed');
+          if(!m.afrinicRecovered) throw new Error('AFRINIC recovery gate failed');
+          if(!m.semanticDigest || !m.rows.every(x=>!x.ok || x.projectionSha256)) throw new Error('projection gate failed');
+          console.log(JSON.stringify({sources:m.sources,reachable:m.reachable,afrinicRecovered:m.afrinicRecovered,semanticDigest:m.semanticDigest,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-semantic-reducer-${{ github.run_id }}
+          path: .deus/global-internet-semantic-reducer/v1/
+          if-no-files-found: error
