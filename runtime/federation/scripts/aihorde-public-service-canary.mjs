@@ -27,90 +27,88 @@ if(!heartbeat.ok) throw new Error('AI Horde heartbeat unavailable');
 
 const hm=await req('https://aihorde.net/api/v2/status/models',{auth:false,timeout:20000});
 receipts.push({...hm,body:undefined,stage:'horde_models'});
-if(!hm.ok) throw new Error('AI Horde model status unavailable');
-const activeModels=j(hm);
-const modelRows=(Array.isArray(activeModels)?activeModels:[])
-  .filter(x=>String(x.name||x.model||'').trim())
-  .map(x=>({
-    name:String(x.name||x.model),
-    workers:Number(x.count??x.workers??0),
-    queued:Number(x.queued??0),
-    performance:Number(x.performance??0),
-    jobs:Number(x.jobs??0),
-    eta:Number(x.eta??0),
-  }))
-  .sort((a,b)=>{
-    if((b.workers>0)!==(a.workers>0)) return (b.workers>0)?1:-1;
-    if(a.queued!==b.queued) return a.queued-b.queued;
-    if(b.workers!==a.workers) return b.workers-a.workers;
-    return b.performance-a.performance;
-  });
-if(modelRows.length===0) throw new Error('No active text model candidate discovered');
+const modelRows=hm.ok
+  ? (Array.isArray(j(hm))?j(hm):[]).map(x=>({
+      name:String(x.name||x.model||''),
+      workers:Number(x.count??x.workers??0),
+      queued:Number(x.queued??0),
+      performance:Number(x.performance??0),
+      jobs:Number(x.jobs??0),
+      eta:Number(x.eta??0),
+    })).filter(x=>x.name)
+  : [];
 
-const attempts=[];
-let result=null;
-for(const candidate of modelRows.slice(0,8)){
-  const submitBody={
-    prompt:'Reply with exactly this token and nothing else: DEUS_CANARY_OK',
-    trusted_workers:false,
-    models:[candidate.name],
-    dry_run:false,
-    params:{n:1,max_context_length:256,max_length:12,temperature:0.01},
-  };
-  const submitted=await req('https://aihorde.net/api/v2/generate/text/async',{
-    method:'POST',
-    body:submitBody,
-    timeout:20000,
-    auth:false,
-    extraHeaders:{apikey:API_KEY,'Client-Agent':UA},
-  });
-  const attempt={model:candidate.name,submitOk:submitted.ok,submitStatus:submitted.status,submitBytes:submitted.bytes,submitSha256:submitted.sha256,submitMs:submitted.ms,error:submitted.error??null};
-  if(!submitted.ok){
-    attempt.responsePreview=submitted.body?submitted.body.toString('utf8').slice(0,500):null;
-    attempts.push(attempt);
-    continue;
-  }
-  const sj=j(submitted);
-  const id=sj?.id;
-  attempt.requestId=id??null;
-  if(!id){attempt.error='submit succeeded without request id';attempts.push(attempt);continue;}
-  const pollStarted=Date.now();
-  let status=null;
-  while(Date.now()-pollStarted<90000){
-    const st=await req('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{auth:false,timeout:15000});
-    if(st.ok){
-      status=j(st);
-      if(status?.done===true || status?.faulted===true) break;
-    }else{
-      attempt.pollError=st.error??('HTTP '+st.status);
-    }
-    await new Promise(r=>setTimeout(r,1000));
-  }
-  attempt.pollMs=Date.now()-pollStarted;
-  attempt.done=status?.done===true;
-  attempt.faulted=status?.faulted===true;
-  attempt.queuePosition=status?.queue_position??null;
-  attempt.waitTime=status?.wait_time??null;
-  const generation=(status?.generations||[])[0];
-  const text=typeof generation?.text==='string'?generation.text.trim():'';
-  attempt.resultLength=text.length;
-  attempts.push(attempt);
-  if(text){
-    result={
-      model:candidate.name,
-      content:text,
-      requestId:id,
-      generationId:generation?.id??null,
-      workerId:generation?.worker_id??null,
-      workerName:generation?.worker_name??null,
-      seed:generation?.seed??null,
-      status,
-      latencyMs:Date.now()-pollStarted+submitted.ms,
-    };
-    break;
-  }
+const submitBody={
+  prompt:'Reply with exactly this token and nothing else: DEUS_CANARY_OK',
+  trusted_workers:false,
+  models:[],
+  dry_run:false,
+  params:{n:1,max_context_length:256,max_length:16,temperature:0.01},
+};
+const submitted=await req('https://aihorde.net/api/v2/generate/text/async',{
+  method:'POST',
+  body:submitBody,
+  timeout:20000,
+  auth:false,
+  extraHeaders:{apikey:API_KEY,'Client-Agent':UA},
+});
+const attempts=[{
+  modelSelection:'HORDE_AUTOMATIC',
+  submitOk:submitted.ok,
+  submitStatus:submitted.status,
+  submitBytes:submitted.bytes,
+  submitSha256:submitted.sha256,
+  submitMs:submitted.ms,
+  error:submitted.error??null,
+  responsePreview:submitted.body?submitted.body.toString('utf8').slice(0,1000):null,
+}];
+if(!submitted.ok){
+  console.error(JSON.stringify({stage:'submit',attempt:attempts[0],submitBody}));
+  throw new Error('AI Horde direct async submit failed HTTP '+String(submitted.status??'network'));
 }
-if(!result) throw new Error('No useful direct AI Horde text generation from first eight current model candidates');
+const sj=j(submitted);
+const id=sj?.id;
+if(!id){
+  console.error(JSON.stringify({stage:'submit_no_id',response:sj,preview:attempts[0].responsePreview}));
+  throw new Error('AI Horde submit succeeded without request id');
+}
+
+const pollStarted=Date.now();
+let status=null;
+while(Date.now()-pollStarted<150000){
+  const st=await req('https://aihorde.net/api/v2/generate/text/status/'+encodeURIComponent(id),{auth:false,timeout:15000});
+  if(st.ok){
+    status=j(st);
+    if(status?.done===true || status?.faulted===true) break;
+  }else{
+    attempts[0].pollError=st.error??('HTTP '+st.status);
+    attempts[0].pollPreview=st.body?st.body.toString('utf8').slice(0,1000):null;
+  }
+  await new Promise(r=>setTimeout(r,1000));
+}
+attempts[0].pollMs=Date.now()-pollStarted;
+attempts[0].done=status?.done===true;
+attempts[0].faulted=status?.faulted===true;
+attempts[0].queuePosition=status?.queue_position??null;
+attempts[0].waitTime=status?.wait_time??null;
+const generation=(status?.generations||[])[0];
+const text=typeof generation?.text==='string'?generation.text.trim():'';
+attempts[0].resultLength=text.length;
+if(!text){
+  console.error(JSON.stringify({stage:'status_no_text',requestId:id,status,attempt:attempts[0]}));
+  throw new Error('AI Horde request completed/expired without useful text');
+}
+const result={
+  model:generation?.model??generation?.model_name??'HORDE_SELECTED',
+  content:text,
+  requestId:id,
+  generationId:generation?.id??null,
+  workerId:generation?.worker_id??null,
+  workerName:generation?.worker_name??null,
+  seed:generation?.seed??null,
+  status,
+  latencyMs:Date.now()-pollStarted+submitted.ms,
+};
 
 const perf=await req('https://aihorde.net/api/v2/status/performance',{auth:false,timeout:15000});
 receipts.push({...perf,body:undefined,stage:'performance'});
@@ -125,7 +123,7 @@ const manifest={
   requestScope:'ONE_MINIMAL_TEXT_COMPLETION',
   heartbeat:{ok:heartbeat.ok,status:heartbeat.status,sha256:heartbeat.sha256,ms:heartbeat.ms},
   modelCandidates:modelRows.length,
-  modelSelection: modelRows.slice(0,8),
+  modelSelection:{mode:'HORDE_AUTOMATIC',observedActiveModels:modelRows.length,sample:modelRows.slice(0,8)},
   attempts,
   selectedModel:result.model,
   requestId:result.requestId,
