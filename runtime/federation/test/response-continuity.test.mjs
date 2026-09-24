@@ -212,3 +212,57 @@ test('transaction resume verifies possible side effects before retry and keeps v
   assert.equal(keep.action, 'KEEP_VERIFIED_STEP_AND_ADVANCE');
   assert.equal(keep.replayExactStep, false);
 });
+
+
+test('foreground hard cap hands off instead of keeping UI in analysis state', () => {
+  const d = responseContinuityDecision({
+    turnElapsedMs: 46_000,
+    checkpointVerified: true,
+    hasUserVisibleReply: true,
+    nextAction: 'durable worker continues exact step',
+  });
+  assert.equal(d.action, 'HANDOFF_AND_EMIT_PARTIAL_NOW');
+  assert.equal(d.reason, 'FOREGROUND_HARD_CAP_EXCEEDED');
+  assert.equal(d.analysisStallContained, true);
+  assert.equal(d.solverContinuationRequired, false);
+  assert.equal(d.shouldContinueAfterVisibleUpdate, false);
+  assert.equal(d.turnEndAllowed, true);
+});
+
+test('foreground hard cap requires checkpoint before handoff', () => {
+  const d = responseContinuityDecision({
+    turnElapsedMs: 46_000,
+    checkpointVerified: false,
+    hasUserVisibleReply: true,
+    nextAction: 'checkpoint exact cursor then handoff',
+  });
+  assert.equal(d.action, 'CHECKPOINT_THEN_HANDOFF_REPLY_NOW');
+  assert.equal(d.reason, 'FOREGROUND_HARD_CAP_EXCEEDED_WITHOUT_VERIFIED_CHECKPOINT');
+  assert.equal(d.checkpointRequiredBeforeYield, true);
+  assert.equal(d.turnEndAllowed, false);
+});
+
+test('total tool calls trigger foreground handoff even when visible updates reset local counter', () => {
+  const d = responseContinuityDecision({
+    turnElapsedMs: 20_000,
+    toolCallsSinceVisibleUpdate: 1,
+    totalToolCalls: 8,
+    checkpointVerified: true,
+    hasUserVisibleReply: true,
+  });
+  assert.equal(d.action, 'HANDOFF_AND_EMIT_PARTIAL_NOW');
+  assert.equal(d.reason, 'TOTAL_TOOL_CALL_BUDGET_EXCEEDED');
+  assert.equal(d.totalToolCallBudgetExceeded, true);
+  assert.equal(d.solverContinuationRequired, false);
+});
+
+test('guard visible updates do not reset total tool-call budget', () => {
+  const g = new ResponseContinuityGuard({ now: 1_000 });
+  for (let i = 0; i < 4; i += 1) g.markToolCall();
+  g.markUserVisible({ now: 5_000 });
+  for (let i = 0; i < 4; i += 1) g.markToolCall();
+  const d = g.decide({ checkpointVerified: true }, { now: 10_000 });
+  assert.equal(d.totalToolCalls, 8);
+  assert.equal(d.action, 'HANDOFF_AND_EMIT_PARTIAL_NOW');
+  assert.equal(d.turnEndAllowed, true);
+});
