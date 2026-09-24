@@ -1,0 +1,22 @@
+name: DEUS Universal Participation Registry V1
+on:
+  push:
+    branches:
+      - deus/universal-participation-registry-v1-20260924
+    paths:
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+      - 'runtime/federation/test/universal-participation-registry.test.mjs'
+      - '.github/workflows/deus-universal-participation-registry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  registry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node --test runtime/federation/test/universal-participation-registry.test.mjs
