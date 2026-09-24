@@ -79,7 +79,7 @@ for(const [family,url] of SOURCES){
     console.error('RIS_PARSE_ZERO_ROWS family='+family+' SAMPLE_BEGIN\\n'+rawText.slice(0,4000)+'\\nSAMPLE_END');
     throw new Error('RIS parser produced zero useful rows for '+family);
   }
-  all.push(...rows);
+  for (const row of rows) all.push(row);
   fs.writeFileSync(OUT+'/ris-'+family+'.jsonl',rows.map(x=>JSON.stringify(x)).join('\n')+'\n');
 }
 const dedup=[...new Map(all.map(x=>[x.prefix+'|'+x.origin,x])).values()];
