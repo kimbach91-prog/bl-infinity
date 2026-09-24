@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const SOURCES=[];
+const SOURCES=["https://boinc.berkeley.edu/","https://www.golem.network/","https://aihorde.net/","https://akash.network/","https://vast.ai/","https://huggingface.co/docs/huggingface_hub/guides/jobs","https://www.bacalhau.org/","https://www.salad.com/","https://io.net/","https://www.runpod.io/"];
 const OUT='.deus/global-offer-discovery/v1';
 fs.mkdirSync(OUT,{recursive:true});
 const UA={'user-agent':'DEUS-Global-Offer-Discovery/1.0','accept':'application/json,text/plain,text/html,*/*'};
