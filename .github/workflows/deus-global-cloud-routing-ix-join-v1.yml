@@ -1,0 +1,40 @@
+name: DEUS Global Cloud Routing IX Join V1
+on:
+  push:
+    branches:
+      - deus/global-cloud-routing-ix-join-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-cloud-routing-ix-join-v1.mjs'
+      - '.github/workflows/deus-global-cloud-routing-ix-join-v1.yml'
+      - 'runtime/federation/lib/internet-functional-fabric.mjs'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cross-layer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Join public cloud ranges to passive routing origins and public IX membership
+        run: node runtime/federation/scripts/global-cloud-routing-ix-join-v1.mjs
+      - name: Verify cross-layer relation output
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-cloud-routing-ix-join/v1/manifest.json','utf8'));
+          if(m.cloud.resolvedCoveringRoute < 500) throw new Error('resolved gate');
+          if(m.cloud.uniqueOrigins < 5) throw new Error('origin diversity gate');
+          if(m.relations.total < 500) throw new Error('relation gate');
+          if(m.registry.executionAdmitted !== 0) throw new Error('execution admission forbidden');
+          console.log(JSON.stringify({cloudPrefixes:m.cloud.prefixes,resolved:m.cloud.resolvedCoveringRoute,providers:m.cloud.resolvedProviders,uniqueOrigins:m.cloud.uniqueOrigins,ixRelations:m.peering.originIxRelations,totalRelations:m.relations.total,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-cloud-routing-ix-join-${{ github.run_id }}
+          path: .deus/global-cloud-routing-ix-join/v1/
+          if-no-files-found: error
+          compression-level: 6
