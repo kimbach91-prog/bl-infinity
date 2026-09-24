@@ -1,0 +1,36 @@
+name: DEUS Global Internet Delta Registry V1
+on:
+  push:
+    branches:
+      - deus/global-internet-delta-registry-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-delta-registry.mjs'
+      - 'runtime/federation/config/global-internet-delta-seed-v1.json'
+      - '.github/workflows/deus-global-internet-delta-registry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Refresh only due or held Internet baseline sources
+        run: node runtime/federation/scripts/global-internet-delta-registry.mjs
+      - name: Verify sparse refresh behavior
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-delta/v1/manifest.json','utf8'));
+          if(m.sources!==29) throw new Error('source cardinality drift');
+          if(!(m.skippedFresh>0)) throw new Error('no fresh source skipped');
+          console.log(JSON.stringify({counts:m.counts,fetched:m.fetchedSources,skippedFresh:m.skippedFresh,bytesFetched:m.bytesFetched,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-delta-${{ github.run_id }}
+          path: .deus/global-internet-delta/v1/
+          if-no-files-found: error
