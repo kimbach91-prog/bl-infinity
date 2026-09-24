@@ -60,7 +60,11 @@ function parseDump(text,family){
     if(!line.trim()){flush();continue;}
     if(line.startsWith('%')) continue;
     const m=line.match(/^([a-zA-Z0-9-]+):\s*(.*)$/);
-    if(m) rec[m[1].toLowerCase()]=m[2].trim();
+    if(m){
+      const key=m[1].toLowerCase();
+      if((key==='route'||key==='route6') && (rec.route||rec.route6)) flush();
+      rec[key]=m[2].trim();
+    }
   }
   flush();
   return rows;
