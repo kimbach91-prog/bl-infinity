@@ -1,0 +1,35 @@
+name: DEUS Global Internet Delta Registry V1
+on:
+  push:
+    branches:
+      - deus/global-internet-delta-registry-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-delta-registry.mjs'
+      - '.github/workflows/deus-global-internet-delta-registry.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Compare global Internet source hashes against verified baseline
+        run: node runtime/federation/scripts/global-internet-delta-registry.mjs
+      - name: Verify bounded delta registry
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-delta-registry/v1/manifest.json','utf8'));
+          if(m.sources!==29) throw new Error('source cardinality drift');
+          if(m.reachable<20) throw new Error('too few reachable baseline sources');
+          console.log(JSON.stringify({reachable:m.reachable,stateCounts:m.stateCounts,deltaCount:m.deltaCount,changedClasses:m.changedClasses,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-delta-${{ github.run_id }}
+          path: .deus/global-internet-delta-registry/v1/
+          if-no-files-found: error
