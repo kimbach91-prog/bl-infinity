@@ -37,8 +37,8 @@ test('never attaches installable mini-cell without explicit consent',()=>{
 
 test('negotiation partitions admitted/hold/decline truthfully',()=>{
   const n=negotiateComputeAccord([
-    {offerId:'drive',authorityClass:'CONNECTED_ACCOUNT',receiptPath:true,canaryPassed:true,currentLease:true,expectedUsefulValue:3},
-    {offerId:'hf',authorityClass:'CONNECTED_ACCOUNT',receiptPath:true,canaryPassed:false,currentLease:false,expectedUsefulValue:8},
+    {offerId:'drive',authorityClass:'CONNECTED_ACCOUNT',receiptPath:true,canaryPassed:true,currentLease:true,freshnessMs:1000,expectedUsefulValue:3},
+    {offerId:'hf',authorityClass:'CONNECTED_ACCOUNT',receiptPath:true,canaryPassed:false,currentLease:false,freshnessMs:1000,expectedUsefulValue:8},
     {offerId:'unknown',authorityClass:'ADDRESS_ONLY',receiptPath:false},
   ]);
   assert.equal(n.counts.total,3);
