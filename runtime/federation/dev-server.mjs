@@ -524,7 +524,11 @@ server.listen(port, host, () => {
   if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
   void driveBridgeRuntime.reconcile();
   driveBridgeRuntime.start();
-  if (process.env.DEUS_BRAIN3_GATEWAY_STARTUP_CANARY === 'true') {
+  if (brain3GatewayToken && process.env.DEUS_BRAIN3_GATEWAY_PUBLIC_BASE) {
+    console.log(JSON.stringify({
+      event: 'DEUS_BRAIN3_GATEWAY_PUBLIC_CANARY_START',
+      publicBase: String(process.env.DEUS_BRAIN3_GATEWAY_PUBLIC_BASE).replace(/\/$/, ''),
+    }));
     void runBrain3GatewayPublicCanary().catch((error) => {
       console.error(JSON.stringify({
         event: 'DEUS_BRAIN3_GATEWAY_PUBLIC_CANARY_FAIL',
@@ -543,7 +547,7 @@ async function runBrain3GatewayPublicCanary() {
   if (!base || !brain3GatewayToken) throw new Error('public gateway canary configuration missing');
   const headers = { authorization: 'Bearer ' + brain3GatewayToken, accept: 'application/json' };
   let lastError = null;
-  for (let attempt = 1; attempt <= 30; attempt += 1) {
+  for (let attempt = 1; attempt <= 90; attempt += 1) {
     try {
       const statusResp = await fetch(base + '/brain3/gateway/status', {
         headers,
