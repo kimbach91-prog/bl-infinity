@@ -13,6 +13,12 @@ import {
   normalizeCapabilitySignature,
   SUPERCELL_PROFILE,
   INTERNET_ADDRESS_SLOT_DOMAIN,
+  INTERNET_MICROCELL_DOMAIN,
+  projectInternetIdentityHierarchical,
+  compileCidrAddressDescriptor,
+  resolveCidrAddressHandle,
+  activateCidrAddress,
+  compileGenerativeAddressFabric,
   canonicalizeInternetIdentity,
   projectInternetIdentity,
   cidrCardinality,
@@ -164,6 +170,67 @@ test('per-address projection is deterministic across IPv4 and IPv6 CIDRs',()=>{
   assert.match(first.truthBoundary,/VIRTUAL_PER_ADDRESS_MAPPING/);
 });
 
+
+test('hierarchical projection keeps 1T as routing layer and full resource key as collision-safe identity',()=>{
+  const a=projectInternetIdentityHierarchical({type:'ipv6',value:'2001:db8::1'});
+  const b=projectInternetIdentityHierarchical({type:'ipv6',value:'2001:db8::1'});
+  const base=projectInternetIdentity({type:'ipv6',value:'2001:db8::1'});
+  assert.equal(a.resourceKey,b.resourceKey);
+  assert.equal(a.supercellId,base.slotId);
+  assert.equal(a.microcellDomain,INTERNET_MICROCELL_DOMAIN.toString());
+  assert.equal(BigInt(a.routingDomain),INTERNET_ADDRESS_SLOT_DOMAIN*INTERNET_MICROCELL_DOMAIN);
+  assert.equal(a.collisionKey,a.resourceKey);
+  assert.match(a.locator,/deus:\/\/internet\/v2\//);
+  assert.match(a.truthBoundary,/FULL_RESOURCE_KEY_DISAMBIGUATES_COLLISIONS/);
+});
+
+test('generative address fabric represents more than one quadrillion addresses with one cold descriptor',()=>{
+  const fabric=compileGenerativeAddressFabric({cidrs:['2001:db8::/78']});
+  assert.equal(fabric.descriptorCount,1);
+  assert.equal(fabric.virtualAddressCount,(1n<<50n).toString());
+  assert.ok(BigInt(fabric.virtualAddressCount)>1000000000000000n);
+  assert.equal(fabric.materializedHotIdentities,0);
+  assert.equal(fabric.descriptors[0].materializedMembers,0);
+  assert.equal(fabric.descriptors[0].storageModel,'DESCRIPTOR_ONLY_GENERATIVE');
+  assert.match(fabric.storageModel,/NOT_O\(VIRTUAL_ADDRESS_COUNT\)/);
+});
+
+test('entire IPv6 universe is addressable from one descriptor without member rows',()=>{
+  const descriptor=compileCidrAddressDescriptor('::/0');
+  assert.equal(descriptor.addressCount,(1n<<128n).toString());
+  assert.equal(descriptor.materializedMembers,0);
+  const first=resolveCidrAddressHandle('::/0',0n);
+  const last=resolveCidrAddressHandle('::/0',(1n<<128n)-1n);
+  assert.equal(first.value,'::');
+  assert.equal(last.value,'ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff');
+  assert.equal(first.descriptorDigest,last.descriptorDigest);
+  assert.notEqual(first.resourceKey,last.resourceKey);
+  assert.equal(first.persistence,'NONE_UNTIL_ACTIVATED');
+});
+
+test('sparse hot activation materializes only requested identities while cold address space stays implicit',()=>{
+  const activated=activateCidrAddress('2001:db8::/126',1n,{
+    activatedAt:'2026-09-24T05:30:00Z',ttlMs:60000,metadata:{reason:'test'},
+  });
+  assert.equal(activated.activationState,'HOT_SPARSE');
+  assert.equal(activated.expiresAt,'2026-09-24T05:31:00.000Z');
+  const fabric=compileGenerativeAddressFabric({
+    cidrs:['2001:db8::/126'],
+    activated:[
+      {cidr:'2001:db8::/126',offset:1n,activatedAt:'2026-09-24T05:30:00Z'},
+      {type:'ipv4',value:'1.1.1.1'},
+    ],
+    maxActivated:2,
+  });
+  assert.equal(fabric.virtualAddressCount,'4');
+  assert.equal(fabric.materializedHotIdentities,2);
+  assert.equal(fabric.descriptors[0].materializedMembers,0);
+  assert.equal(fabric.hot.length,2);
+  assert.throws(()=>compileGenerativeAddressFabric({
+    cidrs:['2001:db8::/126'],activated:[{type:'ipv4',value:'1.1.1.1'}],maxActivated:0,
+  }),/exceeds maxActivated/);
+});
+
 test('compute registry keeps historical positive routes out until fresh attributable execution receipt exists',()=>{
   const now=Date.parse('2026-09-24T04:55:00Z');
   const classified=classifyComputeRegistry([
@@ -197,6 +264,9 @@ test('Internet Observatory kernel compiles virtual member coverage and current c
   assert.equal(kernel.materializedIdentityCount,3);
   assert.equal(kernel.virtualCidrFamilies,2);
   assert.equal(kernel.virtualAddressCount,(4096n+(1n<<96n)).toString());
+  assert.equal(kernel.addressFabric.descriptorCount,2);
+  assert.equal(kernel.addressFabric.virtualAddressCount,kernel.virtualAddressCount);
+  assert.equal(kernel.addressFabric.materializedHotIdentities,0);
   assert.equal(kernel.compute.currentAdmitted,1);
   assert.equal(kernel.compute.freshnessRequired,1);
   assert.equal(kernel.cidrCoverage[0].first.value,'173.245.48.0');
