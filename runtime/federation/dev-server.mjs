@@ -17,6 +17,7 @@ import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-
 import { loadGoogleServiceAccount, createServiceAccountTokenSource } from './lib/google-service-account.mjs';
 import { GoogleSheetsCanonicalBridge } from './bridge/drive-machine-bridge.mjs';
 import { BoundedCanonicalObserver } from './bridge/canonical-observer-worker.mjs';
+import { DEFAULT_RESPONSE_CONTINUITY_POLICY, buildResponseCheckpoint, responseContinuityDecision } from './lib/response-continuity.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -115,7 +116,35 @@ const server = http.createServer(async (req, res) => {
       signedManifestsRequired: requireSignedManifests,
       startupDurability: startupDurabilityReceipt,
       driveBridge: driveBridgeRuntime.snapshot(),
+      responseContinuityGuard: 'V1_NO_SILENT_YIELD',
+      responseContinuityPolicy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
     });
+
+    if (req.method === 'GET' && requestPath(req.url) === '/runtime/response-continuity/policy') {
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
+      return send(res, 200, {
+        schema: 'deus-response-continuity-policy/1',
+        guard: 'V1_NO_SILENT_YIELD',
+        policy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
+        truthBoundary: 'CONTROL_OBLIGATION_AND_CHECKPOINTING_DO_NOT_GUARANTEE_PLATFORM_TRANSPORT_DELIVERY',
+      });
+    }
+
+    if (req.method === 'POST' && requestPath(req.url) === '/runtime/response-continuity/plan') {
+      const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
+      const body = await readJson(req, Math.min(maxBodyBytes, 16_384));
+      const decision = responseContinuityDecision(body.state ?? body, body.policy ?? {});
+      let checkpointCandidate = null;
+      if (decision.checkpointRequiredBeforeYield && body.checkpoint) {
+        checkpointCandidate = buildResponseCheckpoint(body.checkpoint);
+      }
+      return send(res, 200, {
+        schema: 'deus-response-continuity-runtime-plan/1',
+        decision,
+        checkpointCandidate,
+        actor: access.principal.id,
+      });
+    }
 
     if (req.method === 'GET' && req.url === '/readyz') {
       const driveBridge = driveBridgeRuntime.snapshot();
