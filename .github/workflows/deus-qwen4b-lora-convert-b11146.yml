@@ -34,7 +34,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           python -m pip install --index-url https://download.pytorch.org/whl/cpu torch
-          python -m pip install transformers safetensors numpy sentencepiece
+          python -m pip install transformers safetensors numpy sentencepiece requests
       - name: Convert adapter with pinned converter
         shell: bash
         run: |
