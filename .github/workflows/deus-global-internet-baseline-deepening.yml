@@ -1,0 +1,36 @@
+name: DEUS Global Internet Baseline Deepening V1
+on:
+  push:
+    branches:
+      - deus/global-internet-baseline-deepening-v1-20260924
+    paths:
+      - 'runtime/federation/scripts/global-internet-baseline-deepening.mjs'
+      - '.github/workflows/deus-global-internet-baseline-deepening.yml'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deepen:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Read additional authoritative/public Internet roots
+        run: node runtime/federation/scripts/global-internet-baseline-deepening.mjs
+      - name: Verify useful deepening
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-internet-deepening/v1/manifest.json','utf8'));
+          if(!(m.live>=14 && m.liveClasses.length>=6)) throw new Error('deepening coverage gate failed');
+          if(m.registry.executionAdmitted!==0) throw new Error('deepening must not admit execution');
+          console.log(JSON.stringify({live:m.live,held:m.held,classes:m.liveClasses,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-internet-deepening-${{ github.run_id }}
+          path: .deus/global-internet-deepening/v1/
+          if-no-files-found: error
