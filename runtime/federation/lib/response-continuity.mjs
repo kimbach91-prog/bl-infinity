@@ -298,6 +298,17 @@ export function responseContinuityDecision(input = {}, policy = {}) {
     && (!p.requireVerifiedCheckpointBeforeNonterminalYield || checkpointVerified)
     && hasUserVisibleReply
   );
+  const actionWillEmitVisibleHandoff = new Set([
+    'EMIT_FAST_ACK_AND_HANDOFF_DURABLE_NOW',
+    'HANDOFF_DURABLE_AND_RETURN_PARTIAL_NOW',
+    'HANDOFF_AND_EMIT_PARTIAL_NOW',
+  ]).has(action);
+  const turnEndAllowedAfterAction = turnEndAllowed || Boolean(
+    nonterminal
+    && checkpointVerified
+    && yieldCondition
+    && actionWillEmitVisibleHandoff
+  );
 
   return Object.freeze({
     schema: 'deus-response-continuity-decision/1',
@@ -309,6 +320,7 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       && p.requireVerifiedCheckpointBeforeNonterminalYield
       && !checkpointVerified,
     turnEndAllowed,
+    turnEndAllowedAfterAction,
     shouldContinueAfterVisibleUpdate: solverContinuationRequired,
     solverContinuationRequired,
     platformPreemptionSafe: checkpointVerified,
