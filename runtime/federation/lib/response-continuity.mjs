@@ -8,6 +8,10 @@ export const DEFAULT_RESPONSE_CONTINUITY_POLICY = Object.freeze({
   maxCriticalSectionMs: 20_000,
   foregroundHardCapMs: 45_000,
   maxTotalToolCallsPerTurn: 8,
+  fastForegroundAckMs: 3_000,
+  heavyForegroundPlannedToolThreshold: 2,
+  heavyForegroundPlanStepThreshold: 4,
+  preferDurableOffloadForHeavy: true,
   requireVerifiedCheckpointBeforeNonterminalYield: true,
   continueAfterCheckpointedTimeout: true,
   yieldForegroundOnHardCap: true,
@@ -193,6 +197,10 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   const msSinceVisibleUpdate = boundedNumber(input.msSinceVisibleUpdate, 0);
   const toolCallsSinceVisibleUpdate = Math.trunc(boundedNumber(input.toolCallsSinceVisibleUpdate, 0));
   const totalToolCalls = Math.trunc(boundedNumber(input.totalToolCalls, toolCallsSinceVisibleUpdate));
+  const plannedToolCalls = Math.trunc(boundedNumber(input.plannedToolCalls, 0));
+  const plannedSteps = Math.trunc(boundedNumber(input.plannedSteps, 0));
+  const foregroundComplexityClass = String(input.foregroundComplexityClass ?? 'NORMAL').toUpperCase();
+  const durableExecutorAvailable = input.durableExecutorAvailable === true;
   const deadlineRemaining = input.uiDeadlineMsRemaining == null
     ? null
     : boundedNumber(input.uiDeadlineMsRemaining, 0);
@@ -205,6 +213,14 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   const foregroundHardCapExceeded = turnElapsedMs >= p.foregroundHardCapMs;
   const totalToolCallBudgetExceeded = totalToolCalls >= p.maxTotalToolCallsPerTurn;
   const analysisStallRisk = foregroundHardCapExceeded || totalToolCallBudgetExceeded;
+  const explicitHeavyClass = new Set(['HEAVY', 'LONG', 'MULTI_STEP', 'TOOL_HEAVY', 'DEUS_MATERIAL']).has(foregroundComplexityClass);
+  const heavyForegroundTask = explicitHeavyClass
+    || plannedToolCalls > p.heavyForegroundPlannedToolThreshold
+    || plannedSteps > p.heavyForegroundPlanStepThreshold;
+  const fastForegroundOffload = p.preferDurableOffloadForHeavy === true
+    && heavyForegroundTask
+    && durableExecutorAvailable;
+  const fastAckOverdue = !hasUserVisibleReply && turnElapsedMs >= p.fastForegroundAckMs;
   const silenceExceeded = msSinceVisibleUpdate >= p.maxSilenceMs;
   const toolBudgetExceeded = toolCallsSinceVisibleUpdate >= p.maxToolCallsWithoutVisibleUpdate;
   const waitingOrBlocked = criticalPathWaiting || hardBlocker;
@@ -218,6 +234,16 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   } else if (ownerStop && !hasUserVisibleReply) {
     action = 'EMIT_STOP_ACK_NOW';
     reason = 'OWNER_STOP_REQUIRES_VISIBLE_ACK';
+  } else if (fastForegroundOffload && !checkpointVerified) {
+    action = 'CHECKPOINT_FAST_ACK_AND_HANDOFF_NOW';
+    reason = fastAckOverdue
+      ? 'HEAVY_FOREGROUND_FAST_ACK_BUDGET_EXCEEDED_WITHOUT_CHECKPOINT'
+      : 'HEAVY_FOREGROUND_REQUIRES_DURABLE_HANDOFF_CHECKPOINT';
+  } else if (fastForegroundOffload) {
+    action = hasUserVisibleReply
+      ? 'HANDOFF_DURABLE_AND_RETURN_PARTIAL_NOW'
+      : 'EMIT_FAST_ACK_AND_HANDOFF_DURABLE_NOW';
+    reason = 'HEAVY_FOREGROUND_OFFLOADED_TO_DURABLE_EXECUTOR';
   } else if (analysisStallRisk && !checkpointVerified) {
     action = 'CHECKPOINT_THEN_HANDOFF_REPLY_NOW';
     reason = foregroundHardCapExceeded
@@ -258,9 +284,9 @@ export function responseContinuityDecision(input = {}, policy = {}) {
   }
 
   const nonterminal = !terminal;
-  const checkpointRisk = waitingOrBlocked || timeoutRisk || analysisStallRisk;
+  const checkpointRisk = waitingOrBlocked || timeoutRisk || analysisStallRisk || fastForegroundOffload;
   const timeoutMayYield = timeoutRisk && p.continueAfterCheckpointedTimeout !== true;
-  const foregroundMustYield = analysisStallRisk && p.yieldForegroundOnHardCap === true;
+  const foregroundMustYield = (analysisStallRisk && p.yieldForegroundOnHardCap === true) || fastForegroundOffload;
   const yieldCondition = waitingOrBlocked || timeoutMayYield || foregroundMustYield;
   const solverContinuationRequired = nonterminal
     && !waitingOrBlocked
@@ -271,6 +297,17 @@ export function responseContinuityDecision(input = {}, policy = {}) {
     && yieldCondition
     && (!p.requireVerifiedCheckpointBeforeNonterminalYield || checkpointVerified)
     && hasUserVisibleReply
+  );
+  const actionWillEmitVisibleHandoff = new Set([
+    'EMIT_FAST_ACK_AND_HANDOFF_DURABLE_NOW',
+    'HANDOFF_DURABLE_AND_RETURN_PARTIAL_NOW',
+    'HANDOFF_AND_EMIT_PARTIAL_NOW',
+  ]).has(action);
+  const turnEndAllowedAfterAction = turnEndAllowed || Boolean(
+    nonterminal
+    && checkpointVerified
+    && yieldCondition
+    && actionWillEmitVisibleHandoff
   );
 
   return Object.freeze({
@@ -283,11 +320,19 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       && p.requireVerifiedCheckpointBeforeNonterminalYield
       && !checkpointVerified,
     turnEndAllowed,
+    turnEndAllowedAfterAction,
     shouldContinueAfterVisibleUpdate: solverContinuationRequired,
     solverContinuationRequired,
     platformPreemptionSafe: checkpointVerified,
     timeoutContainmentTriggered: timeoutRisk,
     analysisStallContained: analysisStallRisk,
+    fastForegroundOffload,
+    heavyForegroundTask,
+    fastAckOverdue,
+    foregroundComplexityClass,
+    plannedToolCalls,
+    plannedSteps,
+    durableExecutorAvailable,
     foregroundHardCapExceeded,
     totalToolCallBudgetExceeded,
     totalToolCalls,
@@ -303,11 +348,15 @@ export function responseContinuityDecision(input = {}, policy = {}) {
       maxCriticalSectionMs: p.maxCriticalSectionMs,
       foregroundHardCapMs: p.foregroundHardCapMs,
       maxTotalToolCallsPerTurn: p.maxTotalToolCallsPerTurn,
+      fastForegroundAckMs: p.fastForegroundAckMs,
+      heavyForegroundPlannedToolThreshold: p.heavyForegroundPlannedToolThreshold,
+      heavyForegroundPlanStepThreshold: p.heavyForegroundPlanStepThreshold,
+      preferDurableOffloadForHeavy: p.preferDurableOffloadForHeavy === true,
       requireVerifiedCheckpointBeforeNonterminalYield: p.requireVerifiedCheckpointBeforeNonterminalYield,
       continueAfterCheckpointedTimeout: p.continueAfterCheckpointedTimeout === true,
       yieldForegroundOnHardCap: p.yieldForegroundOnHardCap === true,
     }),
-    truthBoundary: 'SOFT_TIMEOUT_RISK_IS_NOT_TASK_STOP__FOREGROUND_HARD_CAP_ENDS_ONLY_THE_UI_TURN_AFTER_CHECKPOINT_AND_DURABLE_HANDOFF__PLATFORM_DELIVERY_REMAINS_EXTERNAL',
+    truthBoundary: 'FAST_FOREGROUND_REDUCES_DEUS_SIDE_LONG_REASONING_AND_TOOL_CHAINS_BY_OFFLOADING_HEAVY_WORK__IT_CANNOT_DISABLE_OR_OVERRIDE_CHATGPT_PLATFORM_AUTOMATIC_REASONING_BEFORE_THIS_KERNEL_EXECUTES',
   });
 }
 
