@@ -1,0 +1,36 @@
+name: DEUS Global Provider Surface Atlas V2
+on:
+  push:
+    branches:
+      - deus/global-provider-surface-atlas-v2-20260924
+    paths:
+      - 'runtime/federation/scripts/global-provider-surface-atlas-v2.mjs'
+      - '.github/workflows/deus-global-provider-surface-atlas-v2.yml'
+      - 'runtime/federation/lib/universal-participation-registry.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  atlas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Probe official compute/AI provider source surfaces
+        run: node runtime/federation/scripts/global-provider-surface-atlas-v2.mjs
+      - name: Verify broad source coverage without admission
+        run: |
+          node - <<'NODE'
+          const fs=require('fs');
+          const m=JSON.parse(fs.readFileSync('.deus/global-provider-surface-atlas/v2/manifest.json','utf8'));
+          if(!(m.providers>=35 && m.reachable>=25)) throw new Error('provider surface coverage gate failed');
+          if(m.registrations.executionAdmitted!==0) throw new Error('atlas must not admit execution');
+          console.log(JSON.stringify({providers:m.providers,reachable:m.reachable,held:m.held,registrations:m.registrations,digest:m.digest}));
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-global-provider-surface-atlas-v2-${{ github.run_id }}
+          path: .deus/global-provider-surface-atlas/v2/
+          if-no-files-found: error
