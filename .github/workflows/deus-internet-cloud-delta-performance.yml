@@ -1,7 +1,7 @@
 name: DEUS Isolated Cloud Delta and Matched Performance V1
 on:
   push:
-    branches: [deus/internet-cloud-delta-perf-v1-20260924]
+    branches: [deus/internet-cloud-delta-perf-v1-20260924, deus/internet-cloud-cache-handoff-v1-20260924]
     paths:
       - runtime/federation/scripts/internet_atlas_cloud_delta.py
       - runtime/federation/scripts/test_internet_atlas_cloud_delta.py
@@ -51,6 +51,41 @@ jobs:
           path: .deus/cloud-source-cache
           key: cloud-source-cache-v1-${{ runner.os }}-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: cloud-source-cache-v1-${{ runner.os }}-
+      - name: Restore missing source caches from verified cross-branch receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import sys,json,hashlib,subprocess,zipfile,os
+          from pathlib import Path
+          sys.path.insert(0,'runtime/federation/scripts')
+          import internet_atlas_cloud_delta as m
+          cache=Path('.deus/cloud-source-cache');cache.mkdir(parents=True,exist_ok=True)
+          missing=[s for s in m.SOURCES if not (cache/(s[0]+'.json')).exists()]
+          receipt={'mode':'EXISTING_SOURCE_CACHE','restored':[],'publicSourceHttpRequests':0}
+          if missing:
+              # Prevent branch/default-branch cache isolation from resetting source TTL.
+              aid=10813084043;expected='b16aa8ada16dc9360c631cec824540ab8b727129c87f8fe2f0f440fd094678bb'
+              dest=Path('.deus/cloud-delta-work/bootstrap.zip')
+              with dest.open('wb') as f:
+                  subprocess.run(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{aid}/zip'],stdout=f,check=True)
+              if m.file_sha(dest)!=expected:raise ValueError('CROSS_BRANCH_RECEIPT_HASH_MISMATCH')
+              with zipfile.ZipFile(dest) as z:
+                  assert len(z.namelist())==len(set(z.namelist())) and sum(i.file_size for i in z.infolist())<128*1024*1024
+                  manifest=json.loads(z.read('manifest.json'))
+                  assert manifest['codeSha']=='65b7070453b12d0d936a3d173c14c3b9d531ba1f' and manifest['workflowRunId']=='36012877667'
+                  assert manifest['executionAdmitted'] is False
+                  for sid,url,kind,minimum,ttl in missing:
+                      source=json.loads(z.read('source-cache/'+sid+'.json'))
+                      assert source['id']==sid and source['url']==url and len(source['rows'])>=minimum
+                      assert m.digest(source['rows'])==source['semanticSha256']==manifest['overlay']['inputSemanticSha256'][sid]
+                      m.atomic(cache/(sid+'.json'),source)
+                      receipt['restored'].append(sid)
+              receipt.update(mode='VERIFIED_ARTIFACT_CACHE_HANDOFF',artifactId=aid,artifactSha256=expected,sourceFreshnessPreserved=True)
+          m.atomic('.deus/cloud-delta-work/cache-handoff.json',receipt)
+          print(json.dumps(receipt))
+          PY
       - name: Fetch and verify parent archive once
         env:
           GH_TOKEN: ${{ github.token }}
@@ -78,6 +113,7 @@ jobs:
           SHA=$(python -c "import json;print(json.load(open('.deus/cloud-delta-work/parent-receipt.json'))['overlaySha256'])")
           python runtime/federation/scripts/internet_atlas_cloud_delta.py --parent-db .deus/cloud-delta-work/parent.sqlite --parent-sha256 "$SHA" --out .deus/cloud-delta-output --cache .deus/cloud-source-cache
           cp .deus/cloud-delta-work/parent-source.json .deus/cloud-delta-output/
+          cp .deus/cloud-delta-work/cache-handoff.json .deus/cloud-delta-output/
           cp runtime/federation/scripts/test_internet_atlas_cloud_delta.py .deus/cloud-delta-output/
           cp -r .deus/cloud-source-cache .deus/cloud-delta-output/source-cache
       - uses: actions/cache/save@v4
