@@ -1,5 +1,6 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
+import zlib from 'node:zlib';
 
 const OUT='.deus/web-trust-partition/v1';
 fs.mkdirSync(OUT,{recursive:true});
@@ -61,42 +62,31 @@ const latest=collections[0];
 const crawlId=String(latest.id||'');
 if(!/^CC-MAIN-\d{4}-\d{2}$/.test(crawlId)) throw new Error('unexpected latest crawl id '+crawlId);
 const prefix='cc-index/table/cc-main/warc/crawl='+crawlId+'/subset=warc/';
-let token=null;
-let listPages=0;
-const ccObjects=[];
-const ccListReceipts=[];
-do{
-  const u=new URL('https://commoncrawl.s3.amazonaws.com/');
-  u.searchParams.set('list-type','2');
-  u.searchParams.set('prefix',prefix);
-  u.searchParams.set('max-keys','1000');
-  if(token)u.searchParams.set('continuation-token',token);
-  const page=await fetchBytes(u.toString(),{accept:'application/xml,text/xml,*/*',timeout:60000});
-  ccListReceipts.push({url:u.toString(),ok:page.ok,status:page.status??null,bytes:page.bytes??0,sha256:page.sha256??null,error:page.error??null});
-  if(!page.ok) throw new Error('Common Crawl S3 list failed: '+page.error);
-  const xml=page.body.toString('utf8');
-  const blocks=[...xml.matchAll(/<Contents>([\s\S]*?)<\/Contents>/g)].map(m=>m[1]);
-  for(const b of blocks){
-    const key=xmlTags(b,'Key')[0]; if(!key)continue;
-    const size=Number(xmlTags(b,'Size')[0]||0);
-    const etag=(xmlTags(b,'ETag')[0]||'').replace(/^"|"$/g,'');
-    const modified=xmlTags(b,'LastModified')[0]||null;
-    const r=resource('commoncrawl_partition',key);
-    ccObjects.push({
-      schema:'deus-commoncrawl-partition/1',
-      crawlId,subset:'warc',key,size,etag,lastModified:modified,
-      ...r,
-      accessUrl:'https://data.commoncrawl.org/'+key,
-      materializedRows:0,
-      state:'WARM_PARTITION_DESCRIPTOR',
-      truthBoundary:'PARTITION_OBJECT_NE_URL_ROWS_MATERIALIZED__COMMONCRAWL_CAPTURE_NE_CURRENT_SITE_LIVENESS_NE_EXECUTION_AUTHORITY',
-    });
-  }
-  const truncated=(xmlTags(xml,'IsTruncated')[0]||'false').toLowerCase()==='true';
-  token=truncated?(xmlTags(xml,'NextContinuationToken')[0]||null):null;
-  listPages++;
-  if(listPages>100)throw new Error('Common Crawl listing pagination runaway');
-}while(token);
+const pathsUrl='https://data.commoncrawl.org/crawl-data/'+crawlId+'/cc-index-table.paths.gz';
+const pathsFetch=await fetchBytes(pathsUrl,{accept:'application/gzip,application/octet-stream,*/*',timeout:60000});
+if(!pathsFetch.ok) throw new Error('Common Crawl cc-index-table.paths.gz unavailable: '+pathsFetch.error);
+let pathsText='';
+try{ pathsText=zlib.gunzipSync(pathsFetch.body).toString('utf8'); }
+catch(e){ throw new Error('Common Crawl paths gzip decode failed: '+e.message); }
+const allPaths=pathsText.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+const warcPaths=allPaths.filter(key=>key.includes('/crawl='+crawlId+'/subset=warc/') && key.endsWith('.parquet'));
+const ccObjects=warcPaths.map(key=>{
+  const r=resource('commoncrawl_partition',key);
+  return {
+    schema:'deus-commoncrawl-partition/1',
+    crawlId,subset:'warc',key,
+    size:null,etag:null,lastModified:null,
+    ...r,
+    accessUrl:'https://data.commoncrawl.org/'+key,
+    materializedRows:0,
+    state:'WARM_PARTITION_DESCRIPTOR',
+    truthBoundary:'PARTITION_OBJECT_NE_URL_ROWS_MATERIALIZED__COMMONCRAWL_CAPTURE_NE_CURRENT_SITE_LIVENESS_NE_EXECUTION_AUTHORITY',
+  };
+});
+const ccListReceipts=[{
+  url:pathsUrl,ok:true,status:pathsFetch.status,bytes:pathsFetch.bytes,sha256:pathsFetch.sha256,
+  totalListedPaths:allPaths.length,warcParquetPaths:warcPaths.length,
+}];
 if(ccObjects.length<1) throw new Error('Common Crawl partition listing empty');
 
 const ccManifest={
@@ -108,11 +98,11 @@ const ccManifest={
   indexUrl:latest.index??null,
   partitionPrefix:prefix,
   partitionObjects:ccObjects.length,
-  partitionBytes:ccObjects.reduce((n,x)=>n+BigInt(x.size||0),0n).toString(),
+  partitionBytes:null,
   objectDigest:stableDigest(ccObjects,['key','size','etag','resourceKey']),
   sourceReceipts:{
     collinfo:{url:col.url,status:col.status,bytes:col.bytes,sha256:col.sha256},
-    s3List:ccListReceipts,
+    pathsFile:ccListReceipts[0],
   },
   storageModel:'WARM_PARTITION_DESCRIPTORS__URL_ROWS_MATERIALIZE_ONLY_ON_QUERY_OR_PARTITION_READ',
   truthBoundary:'LATEST_CRAWL_PARTITIONS_MAPPED_NE_ALL_WEB_URLS_MATERIALIZED__ARCHIVED_PAGE_NE_LIVE_PAGE',
