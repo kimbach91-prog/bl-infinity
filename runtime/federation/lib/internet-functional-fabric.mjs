@@ -623,7 +623,7 @@ export function canonicalizeInternetIdentity(raw={}){
   else if(type==='dns'||type==='hostname') value=value.toLowerCase().replace(/\.+$/,'');
   else if(type==='url') value=canonicalizeUrl(value);
   else if(type==='asn'){
-    const match=value.toUpperCase().match(/^AS?(\d+)$/);
+    const match=value.toUpperCase().match(/^(?:AS)?(\d+)$/);
     if(!match) throw new Error('invalid ASN');
     value='AS'+BigInt(match[1]).toString();
   } else value=value.toLowerCase();
