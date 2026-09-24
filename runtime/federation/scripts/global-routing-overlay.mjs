@@ -24,49 +24,41 @@ function parseOrigin(v){
 }
 function parseDump(text,family){
   const rows=[];
-  let rec={};
-  const flush=()=>{
-    const prefix=rec.route6||rec.route;
-    if(prefix&&rec.origin){
-      try{
-        const d=compileCidrAddressDescriptor(prefix);
-        const origin=parseOrigin(rec.origin);
-        const relation=projectInternetIdentityHierarchical({type:'service',value:'bgp:'+d.cidr+'|'+origin});
-        rows.push({
-          schema:'deus-bgp-prefix-origin-observation/1',
-          source:'RIPE_RISWHOIS',
-          family,
-          prefix:d.cidr,
-          descriptorDigest:d.descriptorDigest,
-          addressCount:d.addressCount,
-          origin,
-          descr:rec.descr||null,
-          seenAt:rec['seen-at']||null,
-          numRisPeers:rec['num-rispeers']?Number(rec['num-rispeers']):null,
-          lastUpdateFirst:rec['lastupd-frst']||null,
-          lastUpdateLast:rec['lastupd-last']||null,
-          relationKey:relation.resourceKey,
-          supercellId:relation.supercellId,
-          microcellId:relation.microcellId,
-          activationClass:'ROUTING_OBSERVATION_ONLY',
-          executionReady:false,
-          truthBoundary:'RIS_BGP_OBSERVATION_NE_HOST_LIVENESS_NE_SERVICE_NE_EXECUTION_AUTHORITY',
-        });
-      }catch{}
-    }
-    rec={};
-  };
-  for(const line of text.split(/\r?\n/)){
-    if(!line.trim()){flush();continue;}
-    if(line.startsWith('%')) continue;
-    const m=line.match(/^([a-zA-Z0-9-]+):\s*(.*)$/);
-    if(m){
-      const key=m[1].toLowerCase();
-      if((key==='route'||key==='route6') && (rec.route||rec.route6)) flush();
-      rec[key]=m[2].trim();
-    }
+  for(const raw of text.split(/\r?\n/)){
+    const line=raw.trim();
+    if(!line||line.startsWith('%')) continue;
+    const parts=raw.split('\t');
+    if(parts.length<3) continue;
+    const originRaw=parts[0].trim();
+    const prefix=parts[1].trim();
+    const peersRaw=parts[2].trim();
+    if(!/^\d+$/.test(originRaw) || !prefix.includes('/')) continue;
+    try{
+      const d=compileCidrAddressDescriptor(prefix);
+      const origin='AS'+BigInt(originRaw).toString();
+      const relation=projectInternetIdentityHierarchical({type:'service',value:'bgp:'+d.cidr+'|'+origin});
+      rows.push({
+        schema:'deus-bgp-prefix-origin-observation/1',
+        source:'RIPE_RISWHOIS_DAILY_DUMP',
+        family,
+        prefix:d.cidr,
+        descriptorDigest:d.descriptorDigest,
+        addressCount:d.addressCount,
+        origin,
+        descr:null,
+        seenAt:null,
+        numRisPeers:/^\d+$/.test(peersRaw)?Number(peersRaw):null,
+        lastUpdateFirst:null,
+        lastUpdateLast:null,
+        relationKey:relation.resourceKey,
+        supercellId:relation.supercellId,
+        microcellId:relation.microcellId,
+        activationClass:'ROUTING_OBSERVATION_ONLY',
+        executionReady:false,
+        truthBoundary:'RIS_BGP_OBSERVATION_NE_HOST_LIVENESS_NE_SERVICE_NE_EXECUTION_AUTHORITY',
+      });
+    }catch{}
   }
-  flush();
   return rows;
 }
 function digestRows(rows){
