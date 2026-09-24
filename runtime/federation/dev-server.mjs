@@ -1,4 +1,5 @@
 import http from 'node:http';
+import { randomUUID, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { createFederationRuntime } from './lib/runtime.mjs';
 import { planRoute } from './lib/fabric.mjs';
@@ -64,6 +65,11 @@ const limiter = rateLimitMode === 'shared'
     })
   : new TokenBucketLimiter({ capacity: rateCapacity, refillPerSecond: rateRefill });
 const rateLimitBackend = rateLimitMode === 'shared' ? 'postgres' : 'memory';
+const brain3GatewayToken = process.env.DEUS_BRAIN3_GATEWAY_TOKEN || null;
+const brain3RemoteAuthorityRef = process.env.DEUS_BRAIN3_REMOTE_AUTHORITY_REF || 'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83';
+const brain3GatewayQueryTtlSeconds = positiveEnvInt('DEUS_BRAIN3_GATEWAY_QUERY_TTL_SECONDS', 180, 900);
+const brain3GatewayMaxQueryChars = positiveEnvInt('DEUS_BRAIN3_GATEWAY_MAX_QUERY_CHARS', 256, 2048);
+
 const heartbeatPreAuthLimiter = new TokenBucketLimiter({
   capacity: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_BURST', 60),
   refillPerSecond: positiveEnvNumber('BL_HEARTBEAT_PREAUTH_PER_SECOND', 1),
@@ -88,6 +94,7 @@ const server = http.createServer(async (req, res) => {
       sourceRev: process.env.DEUS_SOURCE_REV ?? null,
       runtimeResponseMarker: 'WORKSTATION_UPDATE_CARRIER_V3',
       workstationUpdateCarrier: true,
+      brain3PublicGateway: brain3GatewayToken ? 'AUTHENTICATED_TYPED_QUERY_V1' : 'DISABLED',
       stateBackend,
       rateLimitBackend,
       rateLimitMode,
@@ -131,6 +138,88 @@ const server = http.createServer(async (req, res) => {
     if (req.method === 'GET' && req.url === '/drive-bridge/status') {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
       return send(res, 200, driveBridgeRuntime.snapshot());
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/brain3/gateway/status') {
+      if (!authorizeBrain3Gateway(req, res)) return;
+      const gates = await driveBridgeRuntime.readRange('90_BRAIN3_PRIVILEGE_AUTHORITY_GATES!A1:R4');
+      const update = await driveBridgeRuntime.readRange('77_WORKSTATION_UPDATE_CHANNEL!A1:O2');
+      return send(res, 200, {
+        schema: 'deus-brain3-public-gateway/1',
+        ready: driveBridgeRuntime.snapshot().ready === true,
+        nodeId: 'workstation-win-001',
+        transport: 'authenticated-public-gateway-to-drive-pull',
+        publicRawListener: false,
+        gateRows: gates.values?.slice(1,4)?.map((row) => ({
+          gateId: row?.[0] ?? null,
+          state: row?.[1] ?? null,
+          privilegeClass: row?.[3] ?? null,
+          killSwitch: row?.[12] ?? null,
+        })) ?? [],
+        desiredVersion: update.values?.[1]?.[3] ?? null,
+      });
+    }
+
+    if (req.method === 'POST' && requestPath(req.url) === '/brain3/gateway/query') {
+      if (!authorizeBrain3Gateway(req, res)) return;
+      const body = await readJson(req, Math.min(maxBodyBytes, 8_192));
+      const query = String(body.query ?? '').trim();
+      if (!query || query.length > brain3GatewayMaxQueryChars) {
+        return send(res, 400, { error: 'query must be non-empty and within configured length' });
+      }
+      const jobId = 'JOB-BRAIN3-PUBLIC-QUERY-' + Date.now() + '-' + randomUUID().slice(0,8).toUpperCase();
+      const created = new Date();
+      const expires = new Date(created.getTime() + brain3GatewayQueryTtlSeconds * 1000);
+      const row = [
+        jobId,'workstation-win-001','QUEUED',created.toISOString(),'',
+        expires.toISOString(),brain3RemoteAuthorityRef,
+        'THIRDBRAIN_QUERY_SCOPED','SEARCH_V1',JSON.stringify([query]),
+        'brain3-public-gateway','{}',30,65536,
+        '','','','','','','','','','','','',0,
+        'Authenticated public gateway query; typed Brain3 SEARCH_V1 only.'
+      ];
+      const appended = await driveBridgeRuntime.appendRows({
+        range: '84_WORKSTATION_REMOTE_JOBS!A:AB',
+        rows: [row],
+      });
+      if (appended.updatedRows !== 1) return send(res, 503, { error: 'job enqueue failed' });
+      await runtime.audit.append('brain3.gateway-query-enqueued', {
+        jobId, querySha256: await sha256Hex(query), actor: 'brain3-gateway-owner'
+      });
+      return send(res, 202, {
+        schema: 'deus-brain3-public-gateway-job/1',
+        accepted: true,
+        jobId,
+        state: 'QUEUED',
+        expiresAt: expires.toISOString(),
+      });
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/brain3/gateway/result') {
+      if (!authorizeBrain3Gateway(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      const jobId = String(url.searchParams.get('jobId') ?? '');
+      if (!/^JOB-BRAIN3-PUBLIC-QUERY-[A-Za-z0-9_-]{8,128}$/.test(jobId)) {
+        return send(res, 400, { error: 'invalid jobId' });
+      }
+      const rows = await driveBridgeRuntime.readRange('84_WORKSTATION_REMOTE_JOBS!A1:AB500');
+      const headers = rows.values?.[0] ?? [];
+      const match = (rows.values ?? []).slice(1).find((row) => String(row?.[0] ?? '') === jobId);
+      if (!match) return send(res, 404, { error: 'job not found' });
+      const record = {};
+      for (let i = 0; i < headers.length; i += 1) record[String(headers[i])] = match[i] ?? '';
+      return send(res, 200, {
+        schema: 'deus-brain3-public-gateway-result/1',
+        jobId,
+        state: record.STATE || null,
+        createdAt: record.CREATED_AT_UTC || null,
+        startedAt: record.STARTED_AT_UTC || null,
+        finishedAt: record.FINISHED_AT_UTC || null,
+        exitCode: record.EXIT_CODE === '' ? null : Number(record.EXIT_CODE),
+        stdoutPreview: String(record.STDOUT_PREVIEW || '').slice(0, 32_768),
+        stderrPreview: String(record.STDERR_PREVIEW || '').slice(0, 8_192),
+        receiptId: record.RECEIPT_ID || null,
+      });
     }
 
     if (req.method === 'POST' && requestPath(req.url) === '/drive-bridge/reconcile') {
@@ -465,6 +554,30 @@ function authorizeRead(req, res, scope) {
   if (publicReadScopes.has(scope)) return { ok: true, principal: controlAuth.authenticate(req), public: true };
   return authorizeRequired(req, res, scope);
 }
+
+function authorizeBrain3Gateway(req, res) {
+  if (!brain3GatewayToken) {
+    send(res, 503, { error: 'brain3 gateway token is not configured' });
+    return false;
+  }
+  const auth = String(header(req.headers, 'authorization') || '');
+  const prefix = 'Bearer ';
+  if (!auth.startsWith(prefix)) {
+    send(res, 401, { error: 'brain3 gateway authentication required' });
+    return false;
+  }
+  const supplied = Buffer.from(auth.slice(prefix.length), 'utf8');
+  const expected = Buffer.from(brain3GatewayToken, 'utf8');
+  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
+    send(res, 401, { error: 'brain3 gateway authentication failed' });
+    return false;
+  }
+  return true;
+}
+async function sha256Hex(value) {
+  const { createHash } = await import('node:crypto');
+  return createHash('sha256').update(String(value)).digest('hex');
+}
 async function refreshSharedProviders({ failOnBacklog = true } = {}) {
   if (!providerStore) return null;
   const result = providerSynchronizer
@@ -649,6 +762,10 @@ function createDriveBridgeRuntime(){
     async appendHeartbeat(input){
       if(!bridge) throw new Error('drive bridge unavailable');
       return bridge.appendHeartbeat(input);
+    },
+    async appendRows(input){
+      if(!bridge) throw new Error('drive bridge unavailable');
+      return bridge.appendRows(input);
     },
     reconcile,
     start(){
