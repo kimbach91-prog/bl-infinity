@@ -1,0 +1,71 @@
+name: DEUS Qwen3-4B LoRA GGUF Conversion
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/deus-qwen4b-lora-gguf-conversion.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Download exact verified adaptation artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deus-qwen4b-heldout-transfer
+          path: source-artifact
+          repository: kimbach91-prog/bl-infinity
+          run-id: 35972037226
+          github-token: ${{ github.token }}
+      - name: Verify exact PEFT adapter hash
+        shell: bash
+        run: |
+          set -euo pipefail
+          ADAPTER=$(find source-artifact -name 'adapter_model.safetensors' -print -quit)
+          test -n "$ADAPTER"
+          GOT=$(sha256sum "$ADAPTER" | awk '{print $1}')
+          test "$GOT" = "aab38a5fe45404cca38413533c5ff30d610116ce04f3d3b929436aabd4c7538c"
+          echo "ADAPTER_DIR=$(dirname "$ADAPTER")" >> "$GITHUB_ENV"
+      - name: Checkout pinned llama.cpp converter source
+        uses: actions/checkout@v4
+        with:
+          repository: ggml-org/llama.cpp
+          ref: 53ed051ce5e8193652e449f43216ca3859454f49
+          path: llama.cpp
+      - name: Install converter requirements
+        shell: bash
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r llama.cpp/requirements.txt
+      - name: Convert exact PEFT LoRA to GGUF
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p converted
+          python llama.cpp/convert_lora_to_gguf.py             --base-model-id Qwen/Qwen3-4B             --outtype f16             --outfile converted/deus-qwen3-4b-adapter-f16.gguf             "$ADAPTER_DIR"
+          sha256sum converted/deus-qwen3-4b-adapter-f16.gguf | tee converted/sha256.txt
+          python - <<'PY'
+          import hashlib,json,pathlib
+          p=pathlib.Path("converted/deus-qwen3-4b-adapter-f16.gguf")
+          h=hashlib.sha256(p.read_bytes()).hexdigest()
+          src="aab38a5fe45404cca38413533c5ff30d610116ce04f3d3b929436aabd4c7538c"
+          r={"schema":"deus-qwen4b-lora-gguf-conversion/1","passed":p.exists() and p.stat().st_size>0,"source_adapter_sha256":src,"converter_commit":"53ed051ce5e8193652e449f43216ca3859454f49","base_model_id":"Qwen/Qwen3-4B","outtype":"f16","gguf_file":str(p),"gguf_bytes":p.stat().st_size,"gguf_sha256":h}
+          pathlib.Path("converted/receipt.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+          print(json.dumps(r,separators=(",",":")))
+          PY
+      - name: Upload converted adapter candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-qwen4b-lora-gguf-candidate
+          path: converted
+          if-no-files-found: error
