@@ -92,14 +92,14 @@ for(const s of SOURCES){
         if(!line||line.startsWith('#')) continue;
         const p=line.split('|');
         if(p.length<7) continue;
-        const type=p[2],value=p[4],count=p[5],status=p[6];
+        const type=p[2],value=p[4],date=p[5],status=p[6];
         if(status==='summary') continue;
         records++;
-        if(type==='ipv4') ipv4+=bi(count);
+        if(type==='ipv4') ipv4+=bi(value);
         else if(type==='ipv6'){
-          const prefix=Number(count);
+          const prefix=Number(value);
           if(Number.isFinite(prefix)&&prefix>=0&&prefix<=128) ipv6+=2n**BigInt(128-prefix);
-        } else if(type==='asn') asn+=bi(count);
+        } else if(type==='asn') asn+=bi(value);
       }
       d.descriptor={records,ipv4Addresses:ipv4.toString(),ipv6Addresses:ipv6.toString(),asnCount:asn.toString()};
     } else if(s.id==='DNS_ROOT_ZONE'){
