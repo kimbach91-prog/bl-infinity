@@ -12,6 +12,13 @@ import {
   internetNamespace,
   normalizeCapabilitySignature,
   SUPERCELL_PROFILE,
+  INTERNET_ADDRESS_SLOT_DOMAIN,
+  canonicalizeInternetIdentity,
+  projectInternetIdentity,
+  cidrCardinality,
+  projectCidrAddress,
+  classifyComputeRegistry,
+  compileInternetObservatoryKernel,
 } from '../lib/internet-functional-fabric.mjs';
 
 const NOW=Date.parse('2026-09-23T16:40:00Z');
@@ -137,4 +144,63 @@ test('1T logical plan materializes bounded physical shards and globally bounded 
   assert.equal(plan.namespaceSummary.declaredCardinality,'1000000000000');
   assert.equal(plan.namespaceSummary.materialized,plan.summary.hotRoutes);
   assert.match(plan.truthBoundary,/ONE_T_IS_LOGICAL_ADDRESS_SPACE/);
+});
+
+
+test('per-address projection is deterministic across IPv4 and IPv6 CIDRs',()=>{
+  assert.equal(INTERNET_ADDRESS_SLOT_DOMAIN,1000000000000n);
+  assert.deepEqual(canonicalizeInternetIdentity({type:'ipv4',value:'173.245.48.1'}),{type:'ipv4',value:'173.245.48.1'});
+  assert.deepEqual(canonicalizeInternetIdentity({type:'ipv6',value:'2400:cb00:0:0:0:0:0:1'}),{type:'ipv6',value:'2400:cb00::1'});
+  assert.equal(cidrCardinality('173.245.48.0/20').addressCount,'4096');
+  assert.equal(cidrCardinality('2400:cb00::/32').addressCount,(1n<<96n).toString());
+  const first=projectCidrAddress('173.245.48.0/20',0n);
+  const last=projectCidrAddress('173.245.48.0/20',4095n);
+  assert.equal(first.value,'173.245.48.0');
+  assert.equal(last.value,'173.245.63.255');
+  assert.equal(first.slotDomain,'1000000000000');
+  assert.equal(projectInternetIdentity({type:'ipv4',value:first.value}).resourceKey,first.resourceKey);
+  const v6last=projectCidrAddress('2400:cb00::/32',(1n<<96n)-1n);
+  assert.equal(v6last.value,'2400:cb00:ffff:ffff:ffff:ffff:ffff:ffff');
+  assert.match(first.truthBoundary,/VIRTUAL_PER_ADDRESS_MAPPING/);
+});
+
+test('compute registry keeps historical positive routes out until fresh attributable execution receipt exists',()=>{
+  const now=Date.parse('2026-09-24T04:55:00Z');
+  const classified=classifyComputeRegistry([
+    {MAP_ID:'old',ROUTE_ROOT:'old-cpu',PLATFORM:'Old',RESOURCE_CLASS:'REMOTE_CPU_SERVICE',EXECUTABLE_STATE:'EXECUTED_VERIFIED',EFFECTIVE_CREDIT:'POSITIVE',LAST_VERIFIED_UTC:'2026-09-20T00:00:00Z'},
+    {MAP_ID:'fresh-control-only',ROUTE_ROOT:'railway-a',PLATFORM:'Railway',RESOURCE_CLASS:'REMOTE_CPU_SERVICE',EXECUTABLE_STATE:'EXECUTED_VERIFIED',EFFECTIVE_CREDIT:'POSITIVE',LAST_VERIFIED_UTC:'2026-09-24T04:54:30Z'},
+    {MAP_ID:'fresh-executed',ROUTE_ROOT:'gha',PLATFORM:'GitHub Actions',RESOURCE_CLASS:'HOSTED_CPU_CI',EXECUTABLE_STATE:'EXECUTED_VERIFIED',EFFECTIVE_CREDIT:'POSITIVE',LAST_VERIFIED_UTC:'2026-09-24T04:54:30Z',currentExecutionReceipt:'gha-run-123'},
+  ],{now,maxFreshAgeMs:60000});
+  assert.equal(classified.total,3);
+  assert.equal(classified.historicalPositive,3);
+  assert.equal(classified.currentAdmitted,1);
+  assert.equal(classified.freshnessRequired,2);
+  assert.equal(classified.routes.find(x=>x.id==='fresh-control-only').admission,'FRESHNESS_CANARY_REQUIRED');
+  assert.equal(classified.routes.find(x=>x.id==='fresh-executed').admission,'CURRENT_ADMITTED');
+});
+
+test('Internet Observatory kernel compiles virtual member coverage and current compute admission without enumerating address space',()=>{
+  const now=Date.parse('2026-09-24T04:55:00Z');
+  const kernel=compileInternetObservatoryKernel({
+    identities:[
+      {type:'dns',value:'EXAMPLE.COM.'},
+      {type:'asn',value:'AS13335'},
+      {type:'url',value:'HTTPS://EXAMPLE.COM/a'},
+    ],
+    cidrs:['173.245.48.0/20','2400:cb00::/32'],
+    computeRoutes:[
+      {id:'gha',routeRoot:'gha',platform:'GitHub Actions',resourceClass:'HOSTED_CPU_CI',executableState:'EXECUTED_VERIFIED',effectiveCredit:'POSITIVE',lastVerifiedUtc:'2026-09-24T04:54:30Z',currentExecutionReceipt:'gha-run-123'},
+      {id:'stale',routeRoot:'stale',platform:'Old',resourceClass:'REMOTE_CPU_SERVICE',executableState:'EXECUTED_VERIFIED',effectiveCredit:'POSITIVE',lastVerifiedUtc:'2026-09-20T04:00:00Z'},
+    ],
+    now,maxFreshAgeMs:60000,
+  });
+  assert.equal(kernel.materializedIdentityCount,3);
+  assert.equal(kernel.virtualCidrFamilies,2);
+  assert.equal(kernel.virtualAddressCount,(4096n+(1n<<96n)).toString());
+  assert.equal(kernel.compute.currentAdmitted,1);
+  assert.equal(kernel.compute.freshnessRequired,1);
+  assert.equal(kernel.cidrCoverage[0].first.value,'173.245.48.0');
+  assert.equal(kernel.cidrCoverage[0].last.value,'173.245.63.255');
+  assert.equal(kernel.kernelDigest.length,64);
+  assert.match(kernel.truthBoundary,/FULL_VIRTUAL_ADDRESSABILITY_NE_FULL_OBSERVATION/);
 });
