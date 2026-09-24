@@ -1,0 +1,75 @@
+name: ARC3 Public Offline Environment Pack
+on:
+  push:
+    branches: ['deus/arc3-offline-public-20260924']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: arc3-public-offline-acquisition-20260924
+  cancel-in-progress: false
+jobs:
+  acquire-and-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated official toolkit
+        run: |
+          python -m venv .buildvenv
+          .buildvenv/bin/python -m pip install --disable-pip-version-check 'arc-agi==0.9.9'
+          mkdir -p out dist
+          cp arc3_offline.py out/
+          .buildvenv/bin/python -m pip freeze > out/requirements.lock
+          .buildvenv/bin/python -m py_compile arc3_offline.py
+      - name: Download current official public catalog only
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        run: .buildvenv/bin/python arc3_offline.py acquire --root out
+      - name: Cache Linux and Windows dependency wheels
+        run: |
+          .buildvenv/bin/python -m pip download --disable-pip-version-check --only-binary=:all: -r out/requirements.lock -d out/wheelhouse/linux
+          .buildvenv/bin/python -m pip download --disable-pip-version-check --only-binary=:all: --platform win_amd64 --python-version 3.12 --implementation cp --abi cp312 -r out/requirements.lock -d out/wheelhouse/windows
+      - name: Fresh installation with no package index
+        run: |
+          python -m venv .offlinevenv
+          .offlinevenv/bin/python -m pip install --disable-pip-version-check --no-index --find-links out/wheelhouse/linux -r out/requirements.lock
+      - name: Real engine smoke with OS network isolation and unprivileged process
+        run: |
+          sudo unshare --net --setgid "$(id -g)" --setuid "$(id -u)" env ARC_SMOKE_NETNS=1 PYTHONDONTWRITEBYTECODE=1 "$PWD/.offlinevenv/bin/python" "$PWD/out/arc3_offline.py" smoke --root "$PWD/out" --seeds 0,1,2 --steps 8
+      - name: Prepare offline install launchers and archive
+        run: |
+          cp install_windows.cmd out/
+          cp install_linux.sh out/
+          cp README_OFFLINE.md out/
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib,json,os,shutil
+          root=Path('out')
+          for p in list(root.rglob('__pycache__')): shutil.rmtree(p)
+          for folder in ('acquisition_records','smoke_records'):
+              if (root/folder).exists(): shutil.rmtree(root/folder)
+          manifest={'schema':'arc3-public-offline-pack/1','source_commit':os.environ['GITHUB_SHA'],'run_id':os.environ['GITHUB_RUN_ID'],'contents':[],'submission_code_included':False,'model_weights_included':False,'owner_machine_installed':False,'windows_runtime_executed':False}
+          for p in sorted(root.rglob('*')):
+              if p.is_file(): manifest['contents'].append({'path':p.relative_to(root).as_posix(),'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
+          (root/'MANIFEST.json').write_text(json.dumps(manifest,indent=2)+'\n')
+          archive=Path(shutil.make_archive('dist/ARC3_PUBLIC_OFFLINE_PACK','zip','out'))
+          (Path('dist')/'SHA256SUMS.txt').write_text(hashlib.sha256(archive.read_bytes()).hexdigest()+'  '+archive.name+'\n')
+          print('PACK_READY',archive.stat().st_size,hashlib.sha256(archive.read_bytes()).hexdigest())
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: arc3-public-offline-pack-and-receipts
+          path: |
+            dist/*
+            out/acquisition.json
+            out/offline_smoke.json
+            out/requirements.lock
+          if-no-files-found: error
+          retention-days: 3
