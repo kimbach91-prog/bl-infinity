@@ -61,6 +61,17 @@ function parseDump(text,family){
   }
   return rows;
 }
+function writeJsonl(path,rows,chunkSize=5000){
+  const fd=fs.openSync(path,'w');
+  try{
+    for(let i=0;i<rows.length;i+=chunkSize){
+      const chunk=rows.slice(i,i+chunkSize).map(x=>JSON.stringify(x)).join('\n')+'\n';
+      fs.writeSync(fd,chunk);
+    }
+  } finally {
+    fs.closeSync(fd);
+  }
+}
 function digestRows(rows){
   const h=createHash('sha256');
   for(const r of [...rows].sort((a,b)=>(a.prefix+'|'+a.origin).localeCompare(b.prefix+'|'+b.origin))){
@@ -80,7 +91,7 @@ for(const [family,url] of SOURCES){
     throw new Error('RIS parser produced zero useful rows for '+family);
   }
   for (const row of rows) all.push(row);
-  fs.writeFileSync(OUT+'/ris-'+family+'.jsonl',rows.map(x=>JSON.stringify(x)).join('\n')+'\n');
+  writeJsonl(OUT+'/ris-'+family+'.jsonl',rows);
 }
 const dedup=[...new Map(all.map(x=>[x.prefix+'|'+x.origin,x])).values()];
 const origins=new Set(dedup.map(x=>x.origin));
