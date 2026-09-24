@@ -23,8 +23,8 @@ on:
       - DEUS Global Passive Internet Census V1
       - DEUS Global Routing Overlay V1
       - DEUS Global Internet Real Member Expansion V1
-      - DEUS Global Internet BGP RPKI Relation Join V1
-      - DEUS Global CT Stratified Member Expansion V1
+      - DEUS Global BGP RPKI Relation Join V1
+      - DEUS Global CT Stratified Member V1
     types: [completed]
 permissions:
   contents: read
