@@ -38,7 +38,7 @@ const operators=[{id:'atlas',programDigest:moduleDigest,verificationDigest:sha25
  canary:{input:{value:null,sourceDigest:null,upstream:{a:canaryExpected,b:canaryExpected}},expected:combine({upstream:{a:canaryExpected,b:canaryExpected}})},verify:(value,input)=>sha256Json(value)===sha256Json(combine(input))}];
 const authority={consentRef:'CURRENT_AUTHORIZED_INVOCATION_PUBLIC_DATA_ONLY',tenantId:'deus',allowedDataClasses:['public'],expiresAt:new Date(Date.now()+300000).toISOString(),zeroSpend:true};
 const bindings=operators.map(op=>({routeId:'host-'+op.id,poolId:'same-allocated-host',slots:2,maxLeaseMs:30000,operatorIds:[op.id],authority,
- driver:new PinnedWorkerDriver({moduleUrl,moduleDigest,exportName:op.id==='atlas'?'atlasBlobSummary':'reduceAtlas',heapMiB:96})}));
+ driver:new PinnedWorkerDriver({dependencyPins:[],allowedBuiltins:['node:crypto','node:fs','node:path'],moduleUrl,moduleDigest,exportName:op.id==='atlas'?'atlasBlobSummary':'reduceAtlas',heapMiB:96})}));
 function open(index){const store=new AtomStore(join(out,`atoms-${index}.sqlite`)),state=createSqliteFederationState(join(out,`queue-${index}.sqlite`));
  const fabric=new InstructionFabric({store,bindings,operators}),runtime=createFederationRuntime({providers:bindings.map(b=>fabric.provider(b.routeId)),state});
  runtime.executor.adapters.set('instruction-atom',fabric.adapter());return {store,state,fabric,runtime};}
@@ -73,7 +73,7 @@ const receipt={schema:'deus-instruction-fabric-acceptance/1',verdict:'PASS_FOR_S
  processUserCpuMicroseconds:usageAfter.userCPUTime-usageBefore.userCPUTime,processSystemCpuMicroseconds:usageAfter.systemCPUTime-usageBefore.systemCPUTime,maxRssKiB:usageAfter.maxRSS,
  newGpuAllocation:0,newExternalLease:0,moneySpentByThisScript:0,energyJoules:null},
  classifier:{sourceFamilies:classifications.length,indexOnly:classifications.length,fromAtlasExecutionAdmitted:0},
- finalResourceState:f.store.snapshot(),code:{operatorModuleSha256:moduleDigest,controllerSha256:sha256(readFileSync(new URL('../lib/instruction-fabric.mjs',import.meta.url)))},
+ finalResourceState:f.store.snapshot(),codePinModes:[...new Set(f.store.db.prepare("SELECT receipt_json FROM atom_leases WHERE receipt_json IS NOT NULL").all().map(x=>JSON.parse(x.receipt_json).codePinMode))],code:{operatorModuleSha256:moduleDigest,controllerSha256:sha256(readFileSync(new URL('../lib/instruction-fabric.mjs',import.meta.url)))},
  limitations:['Two threads are on one allocated host, not two independent physical nodes.','Local SQLite fencing is not cross-host consensus.','No arbitrary provider, GPU or Windows production deployment was performed.','Worker threads are not a sandbox for untrusted code.','Public range data gives no third-party execution permission.','Existing V5 predecessor benchmark and hardware-history scopes are not overwritten.']};
 f.state.close();f.store.close();writeFileSync(join(out,'acceptance.json'),JSON.stringify(receipt,null,2));
 console.log(JSON.stringify({verdict:receipt.verdict,source:receipt.source,graph:receipt.graph,matched:receipt.matched,controlledDelta:receipt.controlledDelta,resourceLeasesRemaining:receipt.finalResourceState.active,resultDigest:receipt.resultDigest}));

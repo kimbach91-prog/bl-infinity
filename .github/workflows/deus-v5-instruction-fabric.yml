@@ -5,15 +5,19 @@ on:
     paths:
       - '.github/workflows/deus-v5-instruction-fabric.yml'
       - 'runtime/federation/lib/instruction-fabric.mjs'
-      - 'runtime/federation/test/instruction-fabric.test.mjs'
+      - 'runtime/federation/test/*instruction*.mjs'
+      - 'runtime/federation/test/generative-range.test.mjs'
       - 'runtime/federation/worker/instruction-operators.mjs'
-      - 'runtime/federation/scripts/verify-instruction-fabric.mjs'
-      - 'runtime/federation/scripts/join-instruction-receipts.mjs'
+      - 'runtime/federation/worker/generative-range-operators.mjs'
+      - 'runtime/federation/scripts/*instruction*.mjs'
   pull_request:
     paths:
+      - '.github/workflows/deus-v5-instruction-fabric.yml'
       - 'runtime/federation/lib/instruction-fabric.mjs'
-      - 'runtime/federation/test/instruction-fabric.test.mjs'
+      - 'runtime/federation/test/*instruction*.mjs'
+      - 'runtime/federation/test/generative-range.test.mjs'
       - 'runtime/federation/worker/instruction-operators.mjs'
+      - 'runtime/federation/worker/generative-range-operators.mjs'
       - 'runtime/federation/scripts/*instruction*.mjs'
   workflow_dispatch:
 permissions:
@@ -43,7 +47,7 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p ../../.deus/instruction-evidence
-          node --test --test-concurrency=1 test/instruction-fabric.test.mjs test/compute-accord-gate.test.mjs test/durable.test.mjs test/task-graph-broker.test.mjs test/logical-resource-compiler.test.mjs test/universal-participation-registry.test.mjs | tee ../../.deus/instruction-evidence/tests.tap
+          node --test --test-concurrency=1 test/instruction-fabric.test.mjs test/instruction-fabric-hardening.test.mjs test/generative-range.test.mjs test/compute-accord-gate.test.mjs test/durable.test.mjs test/task-graph-broker.test.mjs test/logical-resource-compiler.test.mjs test/universal-participation-registry.test.mjs | tee ../../.deus/instruction-evidence/tests.tap
       - name: Verify exact accepted public Atlas artifact and split without source probing
         env:
           GH_TOKEN: ${{ github.token }}
@@ -69,6 +73,9 @@ jobs:
           PY
       - name: Execute actual leased workers, restart, exact reuse and controlled delta
         run: node runtime/federation/scripts/verify-instruction-fabric.mjs --input .deus/instruction-input/part.json --out .deus/instruction-output
+      - name: Verify bounded generative-state reconstruction and sparse delta contract
+        if: matrix.shard == 0
+        run: node runtime/federation/scripts/verify-instruction-generative.mjs .deus/instruction-generative
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -77,6 +84,8 @@ jobs:
             .deus/instruction-output/acceptance.json
             .deus/instruction-output/atoms-*.sqlite
             .deus/instruction-evidence/tests.tap
+            .deus/instruction-generative/generative-receipt.json
+            .deus/instruction-generative/atoms.sqlite
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
@@ -110,15 +119,37 @@ jobs:
               with p.open('wb') as f:subprocess.run(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{ref["id"]}/zip'],stdout=f,check=True)
               assert hashlib.sha256(p.read_bytes()).hexdigest()==ref['sha']
               with zipfile.ZipFile(p) as z:
+                  assert z.testzip() is None and len(z.namelist())==len(set(z.namelist()))
+                  assert sum(i.file_size for i in z.infolist())<128*1024*1024
                   names=[n for n in z.namelist() if n.endswith('/acceptance.json') or n=='acceptance.json'];assert len(names)==1
-                  (root/('shard-'+str(ref['shard'])+'.json')).write_bytes(z.read(names[0]))
+                  raw=z.read(names[0]);r=json.loads(raw);assert r['codePinModes']==['DECLARED_ESM_CLOSURE']
+                  (root/('shard-'+str(ref['shard'])+'.json')).write_bytes(raw)
+                  if ref['shard']==0:
+                      gnames=[n for n in z.namelist() if n.endswith('generative-receipt.json')];assert len(gnames)==1
+                      (root/'generative-receipt.json').write_bytes(z.read(gnames[0]))
           PY
       - name: Execute leased final reducer and compare independent full-snapshot digest
         run: node runtime/federation/scripts/join-instruction-receipts.mjs .deus/instruction-join/shard-0.json .deus/instruction-join/shard-1.json .deus/instruction-final
+      - name: Verify exact controller and generative receipt gates
+        run: |
+          python - <<'PY'
+          import json,hashlib
+          from pathlib import Path
+          root=Path('.deus/instruction-join');g=json.loads((root/'generative-receipt.json').read_text())
+          assert g['verdict']=='PASS_EXACT_AFFINE_SPARSE_CONTRACT_ONLY' and g['logicalCells']=='1000000000000'
+          assert g['materializedGraphNodes']==11 and g['warm']['newExecutions']==0
+          assert g['delta']['executions']==3 and g['delta']['reuses']==8 and g['leaseState']['active']==0
+          sha=hashlib.sha256(Path('runtime/federation/lib/instruction-fabric.mjs').read_bytes()).hexdigest()
+          assert g['code']['controllerSha256']==sha and g['code']['pinMode']=='DECLARED_ESM_CLOSURE'
+          for i in (0,1):assert json.loads((root/f'shard-{i}.json').read_text())['code']['controllerSha256']==sha
+          final=json.loads(Path('.deus/instruction-final/cross-runner-receipt.json').read_text())
+          assert final['executionReceipt']['codePinMode']=='DECLARED_ESM_CLOSURE'
+          print('PASS_CLOSURE_AND_GENERATIVE_RECEIPTS')
+          PY
       - name: Preserve exact public source and final receipts
         run: |
-          cp .deus/instruction-join/sources.json .deus/instruction-join/shard-*.json .deus/instruction-final/
-          tar --exclude=node_modules --exclude=.deus --exclude=.env --exclude='*.sqlite*' -czf .deus/instruction-final/public-runtime-source.tgz runtime/federation/lib runtime/federation/adapters runtime/federation/test runtime/federation/worker runtime/federation/package.json runtime/federation/scripts/verify-instruction-fabric.mjs runtime/federation/scripts/join-instruction-receipts.mjs
+          cp .deus/instruction-join/sources.json .deus/instruction-join/shard-*.json .deus/instruction-join/generative-receipt.json .deus/instruction-final/
+          tar --exclude=node_modules --exclude=.deus --exclude=.env --exclude='*.sqlite*' -czf .deus/instruction-final/public-runtime-source.tgz runtime/federation/lib runtime/federation/adapters runtime/federation/test runtime/federation/worker runtime/federation/docs/instruction-fabric.md runtime/federation/package.json runtime/federation/scripts/verify-instruction-fabric.mjs runtime/federation/scripts/join-instruction-receipts.mjs runtime/federation/scripts/verify-instruction-generative.mjs
           sha256sum .deus/instruction-final/public-runtime-source.tgz > .deus/instruction-final/SHA256SUMS
           printf '%s\n' "$GITHUB_SHA" > .deus/instruction-final/SOURCE_COMMIT
       - uses: actions/upload-artifact@v4
