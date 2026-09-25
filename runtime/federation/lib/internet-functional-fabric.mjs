@@ -1,7 +1,7 @@
 import { sha256, sha256Json } from './canonical.mjs';
 import { compileLogicalMicrocellShards, ONE_T_LOGICAL_NAMESPACE } from './logical-resource-compiler.mjs';
 
-export const INTERNET_FUNCTIONAL_FABRIC_VERSION='deus-internet-functional-fabric/2.0';
+export const INTERNET_FUNCTIONAL_FABRIC_VERSION='deus-internet-functional-fabric/2.1';
 export const CAPABILITY_ABI_VERSION='deus-capability-abi/2.0';
 export const GENERATIVE_NAMESPACE_VERSION='deus-generative-namespace/1.0';
 export const SUPERCELL_PROFILE='SCALE_FREE_HIERARCHICAL_SYNERGY_V2_PLUS_1T_NAMESPACE';
@@ -290,7 +290,68 @@ function namespaceMatches(resource,query,index,requiredCapability){
     (f.capabilities.length===0||f.capabilities.some(c=>hierarchicalCapabilityMatch(c,requiredCapability.id)))
   );
 }
-function routeMetrics(resource,capability,required,freshness,requireReceipt){
+function normalizeRouteUtilityMemory(raw){
+  if(raw==null) return Object.freeze([]);
+  const entries=Array.isArray(raw)
+    ?raw
+    :Object.entries(raw).map(([resourceId,value])=>({...(value??{}),resourceId:value?.resourceId??resourceId}));
+  return Object.freeze(entries.map((item,index)=>{
+    const row=item??{};
+    const observedAt=isoOrNull(row.observedAt??null,'routeUtilityMemory['+index+'].observedAt');
+    const ttlMs=maybeNum(row.ttlMs,'routeUtilityMemory['+index+'].ttlMs');
+    return Object.freeze({
+      resourceId:row.resourceId==null?null:String(row.resourceId),
+      provider:row.provider==null?null:String(row.provider),
+      taskFamily:row.taskFamily==null?null:String(row.taskFamily),
+      queryFingerprint:row.queryFingerprint==null?null:String(row.queryFingerprint),
+      quality:row.quality==null?null:Math.min(1,num(row.quality,'routeUtilityMemory['+index+'].quality')),
+      successCount:Math.trunc(num(row.successCount,'routeUtilityMemory['+index+'].successCount',0)),
+      failureCount:Math.trunc(num(row.failureCount,'routeUtilityMemory['+index+'].failureCount',0)),
+      reuseCount:Math.trunc(num(row.reuseCount,'routeUtilityMemory['+index+'].reuseCount',0)),
+      scarCount:Math.trunc(num(row.scarCount,'routeUtilityMemory['+index+'].scarCount',0)),
+      observedAt,
+      ttlMs,
+      sourceRef:row.sourceRef==null?null:String(row.sourceRef),
+    });
+  }));
+}
+function routeUtilityPrior(resource,records,{taskFamily=null,queryFingerprint=null,now=Date.now()}={}){
+  const task=taskFamily==null?null:String(taskFamily);
+  const query=queryFingerprint==null?null:String(queryFingerprint);
+  const eligible=records.filter(r=>{
+    if(r.resourceId!=null&&r.resourceId!==resource.id) return false;
+    if(r.provider!=null&&r.provider!==resource.provider) return false;
+    if(r.taskFamily!=null&&task!=null&&r.taskFamily!==task) return false;
+    if(r.queryFingerprint!=null&&query!=null&&r.queryFingerprint!==query) return false;
+    if(r.taskFamily!=null&&task==null) return false;
+    if(r.queryFingerprint!=null&&query==null) return false;
+    if(r.observedAt&&r.ttlMs!=null&&Date.parse(r.observedAt)+r.ttlMs<=now) return false;
+    return true;
+  }).sort((a,b)=>{
+    const specificity=x=>(x.resourceId!=null?4:0)+(x.provider!=null?2:0)+(x.taskFamily!=null?1:0)+(x.queryFingerprint!=null?1:0);
+    const d=specificity(b)-specificity(a);
+    if(d!==0) return d;
+    return (b.observedAt?Date.parse(b.observedAt):0)-(a.observedAt?Date.parse(a.observedAt):0);
+  });
+  const row=eligible[0];
+  if(!row) return Object.freeze({applied:false,multiplier:1,confidence:0,empiricalSuccess:null,quality:null,reuseCount:0,scarCount:0,sourceRef:null});
+  const total=row.successCount+row.failureCount;
+  const empiricalSuccess=(row.successCount+1)/(total+2);
+  const quality=row.quality??empiricalSuccess;
+  const confidence=total===0?0:Math.min(1,Math.log2(1+total)/5);
+  const learnedSignal=empiricalSuccess*quality;
+  const reuseBonus=Math.min(0.12,Math.log1p(row.reuseCount)*0.03);
+  const scarPenalty=Math.min(0.25,row.scarCount*0.05);
+  const rawMultiplier=1+confidence*(learnedSignal-0.5)*0.8+reuseBonus-scarPenalty;
+  const multiplier=Math.max(0.6,Math.min(1.4,rawMultiplier));
+  return Object.freeze({
+    applied:true,multiplier,confidence,empiricalSuccess,quality,
+    reuseCount:row.reuseCount,scarCount:row.scarCount,sourceRef:row.sourceRef,
+    observedAt:row.observedAt,ttlMs:row.ttlMs,
+    taskFamily:row.taskFamily,queryFingerprint:row.queryFingerprint,
+  });
+}
+function routeMetrics(resource,capability,required,freshness,requireReceipt,utilityPrior=null){
   const freshnessFactor=freshness==='FRESH'?1:(freshness==='UNKNOWN'?0.7:0);
   const posteriorUseful=resource.telemetry.trust*resource.telemetry.availability*freshnessFactor;
   const latency=resource.telemetry.p95LatencyMs??1000;
@@ -302,15 +363,19 @@ function routeMetrics(resource,capability,required,freshness,requireReceipt){
   const coordination=(latency+resource.telemetry.coordinationMs)/1000;
   const costPenalty=resource.telemetry.costPerUnitUsd*1000;
   const denominator=1+coordination+costPenalty;
+  const baseMarginalValue=expectedVerifiedUsefulResult/denominator;
+  const prior=utilityPrior??Object.freeze({applied:false,multiplier:1,confidence:0});
   return Object.freeze({
     posteriorUseful,
     expectedVerifiedUsefulResult,
-    marginalValue:expectedVerifiedUsefulResult/denominator,
+    baseMarginalValue,
+    marginalValue:baseMarginalValue*prior.multiplier,
     freshness,
     latencyMs:latency,
     costPerUnitUsd:resource.telemetry.costPerUnitUsd,
     cacheHitProbability:cacheHit,
     receiptCapable:receiptCompatible(resource,capability,required),
+    utilityPrior:prior,
   });
 }
 
@@ -318,11 +383,13 @@ export function evaluateTaskFitRoutes(atlas,{
   capability,operatorAbi=null,dataClass='BL-S0',namespace='deus://internet/',namespaceIndex=null,
   maxRoutes=8,now=Date.now(),requireIndependent=false,requireReceipt=false,
   maxEvidenceAgeMs=null,minTrust=0,maxCostPerUnitUsd=null,requireKnownQuota=false,
+  routeUtilityMemory=null,utilityTaskFamily=null,utilityQueryFingerprint=null,
 }={}){
   const required=normalizeCapabilitySignature(operatorAbi??capability);
   const evidenceAge=maxEvidenceAgeMs==null?null:num(maxEvidenceAgeMs,'maxEvidenceAgeMs');
   const minimumTrust=Math.min(1,num(minTrust,'minTrust',0));
   const costCeiling=maxCostPerUnitUsd==null?null:num(maxCostPerUnitUsd,'maxCostPerUnitUsd');
+  const utilityRecords=normalizeRouteUtilityMemory(routeUtilityMemory);
   const requestedLimit=Math.max(1,Math.trunc(num(maxRoutes,'maxRoutes',8)));
   const matchedNamespaceFamilies=(namespaceIndex?.families??[])
     .filter(f=>String(namespace).startsWith(f.prefix)||f.prefix.startsWith(String(namespace)))
@@ -347,7 +414,10 @@ export function evaluateTaskFitRoutes(atlas,{
     if(resource.telemetry.trust<minimumTrust){reject('TRUST');continue;}
     if(costCeiling!=null&&resource.telemetry.costPerUnitUsd>costCeiling){reject('COST');continue;}
     if(requireReceipt&&!receiptCompatible(resource,matched,required)){reject('RECEIPT_PATH');continue;}
-    const metrics=routeMetrics(resource,matched,required,freshness,requireReceipt);
+    const utilityPrior=routeUtilityPrior(resource,utilityRecords,{
+      taskFamily:utilityTaskFamily,queryFingerprint:utilityQueryFingerprint,now,
+    });
+    const metrics=routeMetrics(resource,matched,required,freshness,requireReceipt,utilityPrior);
     candidates.push({resource,matched,metrics});
   }
   candidates.sort((a,b)=>b.metrics.marginalValue-a.metrics.marginalValue||a.resource.id.localeCompare(b.resource.id));
@@ -372,7 +442,8 @@ export function evaluateTaskFitRoutes(atlas,{
     rejectionCounts:Object.freeze(rejectionCounts),
     evaluatedResources:atlas.resources.length,
     materializedRoutes:routes.length,
-    truthBoundary:'ROUTE_SELECTED_NE_ROUTE_EXECUTED__POSTERIOR_AND_MARGINAL_VALUE_ARE_TASK_SELECTION_METRICS__PHYSICAL_CREDIT_REQUIRES_RECEIPT',
+    utilityPriorRoutes:routes.filter(x=>x.selectionMetrics.utilityPrior.applied).length,
+    truthBoundary:'ROUTE_SELECTED_NE_ROUTE_EXECUTED__UTILITY_PRIOR_NE_AUTHORITY_OR_EXECUTION__POSTERIOR_AND_MARGINAL_VALUE_ARE_TASK_SELECTION_METRICS__PHYSICAL_CREDIT_REQUIRES_RECEIPT',
   };
   return Object.freeze({...payload,selectionDigest:sha256Json(payload)});
 }
