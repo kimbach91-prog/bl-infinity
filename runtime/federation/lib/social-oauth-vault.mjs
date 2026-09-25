@@ -199,6 +199,9 @@ export async function createSocialOAuthVault(pool) {
       ON deus_social_receipts(provider,COALESCE(account_id,''),action,idempotency_key)
       WHERE idempotency_key IS NOT NULL;
   `);
+  if (kekMaterial().length < 24) {
+    return {ready:false,pool,dek:null,reason:'VAULT_KEK_NOT_CONFIGURED'};
+  }
   const dek=await getOrCreateDek(pool);
   return {ready:true,pool,dek,reason:null};
 }
