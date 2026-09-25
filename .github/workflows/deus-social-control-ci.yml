@@ -7,10 +7,12 @@ on:
       - "runtime/federation/lib/social-oauth-vault.mjs"
       - "runtime/federation/dev-server.mjs"
       - "runtime/federation/test/social-control.test.mjs"
+      - "runtime/federation/test/social-oauth-vault.test.mjs"
       - ".github/workflows/deus-social-control-ci.yml"
   push:
     branches:
       - "deus/social-control-api-v0.2-20260925"
+      - "deus/social-control-oauth-v0.3-20260925"
     paths:
       - "runtime/federation/lib/social-control.mjs"
       - "runtime/federation/lib/social-oauth-vault.mjs"
