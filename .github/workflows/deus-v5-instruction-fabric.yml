@@ -1,0 +1,130 @@
+name: DEUS V5 Instruction Fabric Integration
+on:
+  push:
+    branches: [deus/v5-instruction-fabric-20260925]
+    paths:
+      - '.github/workflows/deus-v5-instruction-fabric.yml'
+      - 'runtime/federation/lib/instruction-fabric.mjs'
+      - 'runtime/federation/test/instruction-fabric.test.mjs'
+      - 'runtime/federation/worker/instruction-operators.mjs'
+      - 'runtime/federation/scripts/verify-instruction-fabric.mjs'
+      - 'runtime/federation/scripts/join-instruction-receipts.mjs'
+  pull_request:
+    paths:
+      - 'runtime/federation/lib/instruction-fabric.mjs'
+      - 'runtime/federation/test/instruction-fabric.test.mjs'
+      - 'runtime/federation/worker/instruction-operators.mjs'
+      - 'runtime/federation/scripts/*instruction*.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: deus-v5-instruction-fabric-integration
+  cancel-in-progress: false
+jobs:
+  shard:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      max-parallel: 2
+      fail-fast: false
+      matrix:
+        shard: [0, 1]
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22.16.0'}
+      - name: Existing and new integration tests, with failure propagation
+        working-directory: runtime/federation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p ../../.deus/instruction-evidence
+          node --test --test-concurrency=1 test/instruction-fabric.test.mjs test/compute-accord-gate.test.mjs test/durable.test.mjs test/task-graph-broker.test.mjs test/logical-resource-compiler.test.mjs test/universal-participation-registry.test.mjs | tee ../../.deus/instruction-evidence/tests.tap
+      - name: Verify exact accepted public Atlas artifact and split without source probing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHARD: ${{ matrix.shard }}
+        run: |
+          mkdir -p .deus/instruction-input
+          gh api "repos/$GITHUB_REPOSITORY/actions/artifacts/10815473100/zip" > .deus/instruction-input/atlas.zip
+          python - <<'PY'
+          import hashlib,zipfile,json,sqlite3,os
+          from pathlib import Path
+          root=Path('.deus/instruction-input');raw=(root/'atlas.zip').read_bytes()
+          assert hashlib.sha256(raw).hexdigest()=='99468a54ea2f6ff82d8b7786d23c0a90696795267a78b4875a75c480a66766ce'
+          with zipfile.ZipFile(root/'atlas.zip') as z:
+              assert z.testzip() is None and len(z.namelist())==len(set(z.namelist()))
+              names=[n for n in z.namelist() if n.endswith('overlay.sqlite')];assert len(names)==1
+              b=z.read(names[0]);assert hashlib.sha256(b).hexdigest()=='8ea9f401d0d2094e184debe1727fbbde6c0c34e7c5c8c91a37b727af837f5b6c'
+              (root/'atlas.sqlite').write_bytes(b)
+          with sqlite3.connect('file:'+str(root/'atlas.sqlite')+'?mode=ro',uri=True) as db:
+              rows=[{'source':s,'prefix':p,'metadata':json.loads(m)} for s,p,m in db.execute('select source,prefix,metadata_json from cloud_prefixes order by source,prefix,metadata_json')]
+          assert len(rows)==124397
+          mid=(len(rows)+1)//2;shard=int(os.environ['SHARD']);part=rows[:mid] if shard==0 else rows[mid:]
+          (root/'part.json').write_text(json.dumps(part,ensure_ascii=False,separators=(',',':')))
+          PY
+      - name: Execute actual leased workers, restart, exact reuse and controlled delta
+        run: node runtime/federation/scripts/verify-instruction-fabric.mjs --input .deus/instruction-input/part.json --out .deus/instruction-output
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deus-v5-instruction-shard-${{ matrix.shard }}-${{ github.run_id }}
+          path: |
+            .deus/instruction-output/acceptance.json
+            .deus/instruction-output/atoms-*.sqlite
+            .deus/instruction-evidence/tests.tap
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+  join:
+    needs: shard
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: '22.16.0'}
+      - name: Bind exact same-run shard artifact IDs and digests
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs=require('fs');const {owner,repo}=context.repo;
+            const r=await github.rest.actions.listWorkflowRunArtifacts({owner,repo,run_id:context.runId});
+            const refs=[0,1].map(i=>{const a=r.data.artifacts.find(a=>a.name===`deus-v5-instruction-shard-${i}-${context.runId}`&&!a.expired);if(!a||!/^sha256:[0-9a-f]{64}$/.test(a.digest||''))throw Error('MISSING_VERIFIED_SHARD_ARTIFACT');return {shard:i,id:a.id,sha:a.digest.slice(7)};});
+            fs.mkdirSync('.deus/instruction-join',{recursive:true});fs.writeFileSync('.deus/instruction-join/sources.json',JSON.stringify(refs));
+      - name: Download and verify shard receipts without executing artifact code
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json,os,subprocess,hashlib,zipfile
+          root=Path('.deus/instruction-join')
+          for ref in json.loads((root/'sources.json').read_text()):
+              p=root/('shard-'+str(ref['shard'])+'.zip')
+              with p.open('wb') as f:subprocess.run(['gh','api',f'repos/{os.environ["GITHUB_REPOSITORY"]}/actions/artifacts/{ref["id"]}/zip'],stdout=f,check=True)
+              assert hashlib.sha256(p.read_bytes()).hexdigest()==ref['sha']
+              with zipfile.ZipFile(p) as z:
+                  names=[n for n in z.namelist() if n.endswith('/acceptance.json') or n=='acceptance.json'];assert len(names)==1
+                  (root/('shard-'+str(ref['shard'])+'.json')).write_bytes(z.read(names[0]))
+          PY
+      - name: Execute leased final reducer and compare independent full-snapshot digest
+        run: node runtime/federation/scripts/join-instruction-receipts.mjs .deus/instruction-join/shard-0.json .deus/instruction-join/shard-1.json .deus/instruction-final
+      - name: Preserve exact public source and final receipts
+        run: |
+          cp .deus/instruction-join/sources.json .deus/instruction-join/shard-*.json .deus/instruction-final/
+          tar --exclude=node_modules --exclude=.deus --exclude=.env --exclude='*.sqlite*' -czf .deus/instruction-final/public-runtime-source.tgz runtime/federation/lib runtime/federation/adapters runtime/federation/test runtime/federation/worker runtime/federation/package.json runtime/federation/scripts/verify-instruction-fabric.mjs runtime/federation/scripts/join-instruction-receipts.mjs
+          sha256sum .deus/instruction-final/public-runtime-source.tgz > .deus/instruction-final/SHA256SUMS
+          printf '%s\n' "$GITHUB_SHA" > .deus/instruction-final/SOURCE_COMMIT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-v5-instruction-verified-${{ github.run_id }}
+          path: .deus/instruction-final/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
