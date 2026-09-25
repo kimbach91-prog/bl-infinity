@@ -277,9 +277,12 @@ export class InstructionFabric {
     const row=this.store.db.prepare('SELECT * FROM atom_task_receipts WHERE task_id=?').get(job.id);
     const value=job.result?.result;need(row&&row.task_hash===sha256Json(job.task)&&row.output_hash===sha256Json(value),'QUEUE_RESULT_WITHOUT_VERIFIED_ATOM_RECEIPT');
     const receipt=JSON.parse(row.receipt_json),p=job.task.payload;
+    need(receipt.outputDigest===row.output_hash&&receipt.verdict==='VERIFIED_FOR_OPERATOR_CONTRACT','PERSISTED_RECEIPT_MISMATCH');
     const input=p?.graph?{value:p.input?.value??null,upstream:p.upstream??{},sourceDigest:p.input?.sourceDigest??null}:p;
     const context={tenantId:job.task.tenantId??'deus',dataClass:job.task.dataClass??'public',sideEffect:job.task.sideEffect===true};
     need(receipt.key===this.key(receipt.routeId,job.task.capability.slice(5),input,context),'PERSISTED_CONTRACT_CHANGED');
+    const {op}=this.authorize(receipt.routeId,job.task.capability.slice(5),context);
+    if(op.validateInput)need(op.validateInput(input)===true,'PERSISTED_INPUT_VALIDATION_FAILED');
   }
 }
 
