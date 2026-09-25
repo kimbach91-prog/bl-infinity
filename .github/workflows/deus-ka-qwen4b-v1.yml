@@ -1,0 +1,45 @@
+name: DEUS KA Qwen3-4B LoRA Transfer V1
+on:
+  pull_request:
+    paths:
+      - "training/ka_qwen4b_v1_transfer.py"
+      - ".github/workflows/deus-ka-qwen4b-v1.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  ka-transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      HF_HUB_DISABLE_XET: "1"
+      TOKENIZERS_PARALLELISM: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned bounded CPU stack
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch==2.14.0+cpu"
+          python -m pip install "transformers==5.17.0" "peft==0.21.0" "accelerate==1.15.0" "safetensors==0.8.0" "psutil==7.2.2"
+
+      - name: Run KA sanitized transfer canary
+        run: python training/ka_qwen4b_v1_transfer.py
+
+      - name: Show typed receipt
+        if: always()
+        run: |
+          test -f training/ka-qwen4b-v1-output/receipt.json && cat training/ka-qwen4b-v1-output/receipt.json || true
+
+      - name: Upload receipt and adapter
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-ka-qwen4b-v1-transfer
+          path: training/ka-qwen4b-v1-output
+          if-no-files-found: error
