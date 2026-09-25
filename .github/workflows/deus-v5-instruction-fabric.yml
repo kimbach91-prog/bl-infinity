@@ -1,0 +1,45 @@
+name: DEUS V5 Instruction Fabric Integration
+on:
+  push:
+    branches: [deus/v5-instruction-fabric-20260925]
+    paths:
+      - '.github/workflows/deus-v5-instruction-fabric.yml'
+      - 'runtime/federation/lib/instruction-fabric.mjs'
+      - 'runtime/federation/test/instruction-fabric.test.mjs'
+      - 'runtime/federation/scripts/verify-instruction-fabric.mjs'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: deus-v5-instruction-fabric-integration
+  cancel-in-progress: false
+jobs:
+  integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Install repository-pinned test dependencies
+        working-directory: runtime/federation
+        run: npm ci --ignore-scripts
+      - name: Verify existing Accord and durable runtime baseline
+        working-directory: runtime/federation
+        run: node --test --test-concurrency=1 test/compute-accord-gate.test.mjs test/durable.test.mjs
+      - name: Package exact public runtime sources for independent verification
+        run: |
+          mkdir -p .deus/v5-instruction-package
+          tar --exclude=node_modules --exclude=.deus --exclude=.env --exclude='*.sqlite*' -czf .deus/v5-instruction-package/public-runtime-source.tgz runtime/federation/lib runtime/federation/adapters runtime/federation/test runtime/federation/worker runtime/federation/package.json runtime/federation/package-lock.json
+          sha256sum .deus/v5-instruction-package/public-runtime-source.tgz > .deus/v5-instruction-package/SHA256SUMS
+          printf '%s\n' "$GITHUB_SHA" > .deus/v5-instruction-package/SOURCE_COMMIT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-v5-instruction-baseline-${{ github.run_id }}
+          path: .deus/v5-instruction-package/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
