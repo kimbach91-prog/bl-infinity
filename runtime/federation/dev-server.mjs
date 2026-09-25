@@ -24,6 +24,16 @@ import {
   responseContinuityDecision,
   transactionResumePlan,
 } from './lib/response-continuity.mjs';
+import {
+  SocialControlError,
+  socialControlStatus,
+  normalizeSocialProvider,
+  readSocialProfile,
+  listSocialContent,
+  readSocialInsights,
+  publishSocial,
+  readSocialObject,
+} from './lib/social-control.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -73,6 +83,7 @@ const limiter = rateLimitMode === 'shared'
   : new TokenBucketLimiter({ capacity: rateCapacity, refillPerSecond: rateRefill });
 const rateLimitBackend = rateLimitMode === 'shared' ? 'postgres' : 'memory';
 const brain3GatewayToken = process.env.DEUS_BRAIN3_GATEWAY_TOKEN || null;
+const socialApiToken = process.env.DEUS_SOCIAL_API_TOKEN || process.env.DEUS_WORKSTATION_001_TOKEN || null;
 const brain3RemoteAuthorityRef = process.env.DEUS_BRAIN3_REMOTE_AUTHORITY_REF || 'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83';
 const brain3GatewayQueryTtlSeconds = positiveEnvInt('DEUS_BRAIN3_GATEWAY_QUERY_TTL_SECONDS', 180, 900);
 const brain3GatewayMaxQueryChars = positiveEnvInt('DEUS_BRAIN3_GATEWAY_MAX_QUERY_CHARS', 256, 2048);
@@ -124,7 +135,79 @@ const server = http.createServer(async (req, res) => {
       driveBridge: driveBridgeRuntime.snapshot(),
       responseContinuityGuard: 'V2_1_CHECKPOINT_VISIBLE_CONTINUE',
       responseContinuityPolicy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
+      socialControl: {
+        authConfigured: Boolean(socialApiToken),
+        ...socialControlStatus(),
+      },
     });
+
+    if (req.method === 'GET' && requestPath(req.url) === '/social/status') {
+      if (!authorizeSocial(req, res)) return;
+      return send(res, 200, socialControlStatus());
+    }
+
+    const socialProfileProvider = socialProviderRoute(req.url, 'profile');
+    if (req.method === 'GET' && socialProfileProvider) {
+      if (!authorizeSocial(req, res)) return;
+      try { return send(res, 200, { provider: socialProfileProvider, data: await readSocialProfile(socialProfileProvider) }); }
+      catch (error) { return sendSocialError(res, error); }
+    }
+
+    const socialContentProvider = socialProviderRoute(req.url, 'content');
+    if (req.method === 'GET' && socialContentProvider) {
+      if (!authorizeSocial(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        return send(res, 200, {
+          provider: socialContentProvider,
+          data: await listSocialContent(socialContentProvider, {
+            limit: url.searchParams.get('limit'),
+            cursor: url.searchParams.get('cursor'),
+          }),
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const socialInsightsProvider = socialProviderRoute(req.url, 'insights');
+    if (req.method === 'GET' && socialInsightsProvider) {
+      if (!authorizeSocial(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        return send(res, 200, {
+          provider: socialInsightsProvider,
+          data: await readSocialInsights(socialInsightsProvider, {
+            targetId: url.searchParams.get('target_id'),
+            metrics: url.searchParams.get('metrics'),
+            period: url.searchParams.get('period'),
+            since: url.searchParams.get('since'),
+            until: url.searchParams.get('until'),
+            limit: url.searchParams.get('limit'),
+            cursor: url.searchParams.get('cursor'),
+          }),
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const socialObjectProvider = socialProviderRoute(req.url, 'object');
+    if (req.method === 'GET' && socialObjectProvider) {
+      if (!authorizeSocial(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        return send(res, 200, {
+          provider: socialObjectProvider,
+          data: await readSocialObject(socialObjectProvider, url.searchParams.get('id')),
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const socialPublishProvider = socialProviderRoute(req.url, 'publish');
+    if (req.method === 'POST' && socialPublishProvider) {
+      if (!authorizeSocial(req, res)) return;
+      try {
+        const result = await publishSocial(socialPublishProvider, await readJson(req, Math.min(maxBodyBytes, 262_144)));
+        return send(res, result.state === 'STAGED_ONLY' ? 202 : 200, result);
+      } catch (error) { return sendSocialError(res, error); }
+    }
 
     if (req.method === 'GET' && requestPath(req.url) === '/runtime/response-continuity/policy') {
       const access = authorizeRequired(req, res, 'runtime:read'); if (!access) return;
@@ -656,6 +739,44 @@ function authorizeRequired(req, res, scope) {
 function authorizeRead(req, res, scope) {
   if (publicReadScopes.has(scope)) return { ok: true, principal: controlAuth.authenticate(req), public: true };
   return authorizeRequired(req, res, scope);
+}
+
+function socialProviderRoute(rawUrl, suffix) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(new RegExp(`^/social/([^/]+)/${suffix}$`));
+  if (!match) return null;
+  try { return normalizeSocialProvider(match[1]); }
+  catch { return null; }
+}
+function authorizeSocial(req, res) {
+  if (!socialApiToken) {
+    send(res, 503, { error: 'social api authentication is not configured' });
+    return false;
+  }
+  const auth = String(header(req.headers, 'authorization') || '');
+  const prefix = 'Bearer ';
+  if (!auth.startsWith(prefix)) {
+    send(res, 401, { error: 'social api authentication required' });
+    return false;
+  }
+  const supplied = Buffer.from(auth.slice(prefix.length), 'utf8');
+  const expected = Buffer.from(socialApiToken, 'utf8');
+  if (supplied.length !== expected.length || !timingSafeEqual(supplied, expected)) {
+    send(res, 401, { error: 'social api authentication failed' });
+    return false;
+  }
+  return true;
+}
+function sendSocialError(res, error) {
+  if (error instanceof SocialControlError) {
+    return send(res, Math.min(Math.max(Number(error.status || 502), 400), 599), {
+      error: error.message,
+      provider: error.provider,
+      code: error.code,
+      ...(error.detail ? { upstream: error.detail } : {}),
+    });
+  }
+  return send(res, 502, { error: 'SOCIAL_UNEXPECTED_ERROR' });
 }
 
 function authorizeBrain3Gateway(req, res) {

@@ -1,0 +1,43 @@
+name: DEUS Social Control CI
+
+on:
+  pull_request:
+    paths:
+      - "runtime/federation/lib/social-control.mjs"
+      - "runtime/federation/dev-server.mjs"
+      - "runtime/federation/test/social-control.test.mjs"
+      - ".github/workflows/deus-social-control-ci.yml"
+  push:
+    branches:
+      - "deus/social-control-api-v0.2-20260925"
+    paths:
+      - "runtime/federation/lib/social-control.mjs"
+      - "runtime/federation/dev-server.mjs"
+      - "runtime/federation/test/social-control.test.mjs"
+      - ".github/workflows/deus-social-control-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: runtime/federation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: runtime/federation/package.json
+      - name: Install runtime dependencies
+        run: npm install --omit=dev --no-audit --no-fund
+      - name: Syntax checks
+        run: |
+          node --check lib/social-control.mjs
+          node --check dev-server.mjs
+      - name: Social control deterministic tests
+        run: node --test --test-force-exit --test-concurrency=1 test/social-control.test.mjs
