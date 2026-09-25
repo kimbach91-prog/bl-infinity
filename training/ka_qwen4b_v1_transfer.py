@@ -2,6 +2,7 @@ from __future__ import annotations
 import hashlib, json, time, traceback
 from pathlib import Path
 import psutil, torch
+import torch.nn.functional as F
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import LoraConfig, get_peft_model
 
@@ -38,17 +39,35 @@ def mem():
         "used_gib": v.used / 2**30,
     }
 
-def loss_for(model, tok, text):
-    e = tok(text, return_tensors="pt", truncation=True, max_length=48)
+def losses_for(model, tok, texts):
+    """Per-sequence causal-LM CE in one no-grad batch.
+
+    This is mathematically the same token-level objective as calling the model
+    separately with labels=input_ids for every heldout string, but avoids 6
+    repeated full-model forwards before and after LoRA training.
+    """
+    e = tok(
+        list(texts),
+        return_tensors="pt",
+        padding=True,
+        truncation=True,
+        max_length=48,
+    )
     model.eval()
     with torch.no_grad():
-        return float(
-            model(
-                input_ids=e["input_ids"],
-                attention_mask=e["attention_mask"],
-                labels=e["input_ids"],
-            ).loss.detach().float().cpu()
-        )
+        logits = model(
+            input_ids=e["input_ids"],
+            attention_mask=e["attention_mask"],
+        ).logits[:, :-1, :].float()
+        labels = e["input_ids"][:, 1:]
+        mask = e["attention_mask"][:, 1:].float()
+        per_token = F.cross_entropy(
+            logits.reshape(-1, logits.shape[-1]),
+            labels.reshape(-1),
+            reduction="none",
+        ).reshape(labels.shape)
+        per_seq = (per_token * mask).sum(dim=1) / mask.sum(dim=1).clamp_min(1.0)
+        return [float(x.detach().cpu()) for x in per_seq]
 
 def sha(path: Path):
     h = hashlib.sha256()
@@ -65,6 +84,7 @@ receipt = {
     "protected_source_payload": False,
     "train_text_sha256": hashlib.sha256(TRAIN.encode()).hexdigest(),
     "heldout_text_sha256": [hashlib.sha256(x.encode()).hexdigest() for x in HELDOUT],
+    "heldout_eval_mode": "BATCHED_PER_SEQUENCE_CAUSAL_CE_V1",
     "memory_before": mem(),
     "status": "STARTING",
 }
@@ -84,7 +104,7 @@ try:
     if hasattr(base, "gradient_checkpointing_enable"):
         base.gradient_checkpointing_enable()
 
-    pre = [loss_for(base, tok, x) for x in HELDOUT]
+    pre = losses_for(base, tok, HELDOUT)
 
     cfg = LoraConfig(
         r=2,
@@ -115,7 +135,7 @@ try:
         opt.step()
         train_losses.append(float(loss.detach().float().cpu()))
 
-    post = [loss_for(model, tok, x) for x in HELDOUT]
+    post = losses_for(model, tok, HELDOUT)
     pairs = [
         {
             "id": i + 1,
