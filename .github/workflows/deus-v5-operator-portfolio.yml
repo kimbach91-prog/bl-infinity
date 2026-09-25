@@ -1,0 +1,52 @@
+name: DEUS V5 Operator Portfolio Acceptance
+on:
+  push:
+    branches: [deus/v5-operator-portfolio-20260925]
+    paths:
+      - runtime/federation/lib/execution-portfolio.mjs
+      - runtime/federation/test/execution-portfolio-integration.test.mjs
+      - runtime/federation/scripts/verify-scientific-backends.py
+      - .github/workflows/deus-v5-operator-portfolio.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: '2'
+      OMP_NUM_THREADS: '2'
+      PORTFOLIO_OUT: ${{ github.workspace }}/.deus/operator-portfolio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install isolated scientific test dependencies
+        run: |
+          mkdir -p "$PORTFOLIO_OUT"
+          python -m pip install numpy scipy ortools python-graphblas egglog
+          python -m pip freeze > "$PORTFOLIO_OUT/pip-freeze.txt"
+      - name: Existing fabric regression and new portfolio gates
+        working-directory: runtime/federation
+        run: |
+          node --test test/instruction-fabric.test.mjs test/instruction-fabric-hardening.test.mjs test/generative-range.test.mjs test/execution-portfolio-integration.test.mjs > "$PORTFOLIO_OUT/node-tests.tap" 2>&1
+      - name: Bounded scientific backend checks
+        run: python runtime/federation/scripts/verify-scientific-backends.py > "$PORTFOLIO_OUT/scientific-console.log" 2>&1
+      - name: Source provenance
+        if: always()
+        run: |
+          git rev-parse HEAD > "$PORTFOLIO_OUT/commit.txt"
+          sha256sum runtime/federation/lib/instruction-fabric.mjs runtime/federation/lib/execution-portfolio.mjs runtime/federation/test/execution-portfolio-integration.test.mjs runtime/federation/scripts/verify-scientific-backends.py > "$PORTFOLIO_OUT/source-sha256.txt"
+          tar -czf "$PORTFOLIO_OUT/public-runtime-source.tgz" runtime/federation/lib runtime/federation/worker runtime/federation/test runtime/federation/scripts runtime/federation/package.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: deus-v5-operator-portfolio-${{ github.run_id }}
+          path: .deus/operator-portfolio/
+          retention-days: 14
+          if-no-files-found: error
