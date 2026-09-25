@@ -832,16 +832,22 @@ server.listen(port, host, () => {
     deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
     serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
   }));
-  console.log(JSON.stringify({
-    event:'DEUS_SOCIAL_CONTROL_STARTUP_RECEIPT',
-    sourceRev:process.env.DEUS_SOURCE_REV ?? null,
-    deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
-    serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
-    authConfigured:Boolean(socialApiToken),
-    hydratedAccounts:hydratedSocialAccounts.length,
-    runtime:socialControlStatus(),
-    oauth:socialOAuthStatus(socialVault),
-  }));
+  {
+    const socialRuntime = socialControlStatus();
+    const socialOauth = socialOAuthStatus(socialVault);
+    console.log(JSON.stringify({
+      event:'DEUS_SOCIAL_CONTROL_STARTUP_RECEIPT',
+      sourceRev:process.env.DEUS_SOURCE_REV ?? null,
+      deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
+      serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
+      authConfigured:Boolean(socialApiToken),
+      vaultReady:socialOauth.vaultReady,
+      publicBaseConfigured:socialOauth.publicBaseConfigured,
+      hydratedAccounts:hydratedSocialAccounts.length,
+      publishMasterEnabled:socialRuntime.publishMasterEnabled,
+      appConfigured:Object.fromEntries(Object.entries(socialOauth.providers).map(([provider,state])=>[provider,state.appConfigured])),
+    }));
+  }
   if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
   void driveBridgeRuntime.reconcile();
   driveBridgeRuntime.start();
