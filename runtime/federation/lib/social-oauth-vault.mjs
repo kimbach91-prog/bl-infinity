@@ -465,7 +465,12 @@ export async function claimSocialReceipt(vault,{provider,accountId=null,action,i
       WHERE provider=$1 AND COALESCE(account_id,'')=COALESCE($2,'') AND action=$3 AND idempotency_key=$4
       ORDER BY created_at DESC LIMIT 1
     `,[provider,accountId,action,idempotencyKey]);
-    if (existing.rowCount) return {claimed:false,receipt:existing.rows[0]};
+    if (existing.rowCount) {
+      if (String(existing.rows[0].request_digest) !== String(requestDigest)) {
+        throw new SocialControlError(provider, 409, 'IDEMPOTENCY_KEY_CONFLICT');
+      }
+      return {claimed:false,receipt:existing.rows[0]};
+    }
   }
   await vault.pool.query(`
     INSERT INTO deus_social_receipts(receipt_id,provider,account_id,action,idempotency_key,request_digest,state)
