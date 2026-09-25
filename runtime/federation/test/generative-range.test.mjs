@@ -1,0 +1,20 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {affineRangeSummary,reconstructCell,reduceAffineRanges,decodeRange} from '../worker/generative-range-operators.mjs';
+const desc=(start=0,count=31)=>({schema:'affine-integer-range/1',start:String(start),count:String(count),lanes:Array.from({length:8},(_,i)=>({a:String(i-3),b:String(17-i)})),exceptions:[]});
+function enumerated(d){const sums=Array(8).fill(0n);for(let i=BigInt(d.start);i<BigInt(d.start)+BigInt(d.count);i++)for(let l=0;l<8;l++){const override=d.exceptions.find(e=>e.index===String(i)&&e.lane===l);sums[l]+=override?BigInt(override.value):BigInt(d.lanes[l].a)*i+BigInt(d.lanes[l].b);}return sums.map(String);}
+test('eight-lane descriptor matches exhaustive independent finite oracle',()=>{for(let n=1;n<=128;n++){const d=desc(n%13,n);d.exceptions=[{index:d.start,lane:3,value:'-1009'}];assert.deepEqual(affineRangeSummary({value:d}).laneSums,enumerated(d));}});
+test('reconstruction preserves sparse exception and all eight lane values',()=>{const d=desc(5,10);d.exceptions=[{index:'7',lane:2,value:'999'}];assert.deepEqual(reconstructCell(d,'7'),['-4','2','999','14','20','26','32','38']);});
+test('one trillion logical cells use exact integer arithmetic, not float cardinality',()=>{const d=desc(0,'1000000000000');const s=affineRangeSummary({value:d});assert.equal(s.count,'1000000000000');assert.deepEqual(s.laneSums,d.lanes.map(x=>String((BigInt(x.b)+(BigInt(x.a)*999999999999n+BigInt(x.b)))*1000000000000n/2n)));});
+test('reducer agrees with independent full interval without duplicate seams',()=>{const a=desc(0,19),b=desc(19,7);assert.deepEqual(reduceAffineRanges({upstream:{b:affineRangeSummary({value:b}),a:affineRangeSummary({value:a})}}).laneSums,enumerated(desc(0,26)));});
+test('noncollapse: decision-distinct sparse exception changes exact output',()=>{const a=desc(),b=desc();b.exceptions=[{index:'0',lane:0,value:'18'}];assert.notEqual(affineRangeSummary({value:a}).sum,affineRangeSummary({value:b}).sum);});
+test('aggregate collision is not identity: reconstruction keeps reversed exceptions distinct',()=>{const a=desc(),b=desc();a.exceptions=[{index:'0',lane:0,value:'18'},{index:'1',lane:0,value:'13'}];b.exceptions=[];assert.equal(affineRangeSummary({value:a}).sum,affineRangeSummary({value:b}).sum);assert.notDeepEqual(reconstructCell(a,'0'),reconstructCell(b,'0'));});
+test('arbitrary dense state never silently uses affine compression',()=>{assert.throws(()=>decodeRange({...desc(),denseValues:[1,2]}),/UNSUPPORTED/);});
+test('wrong descriptor family held',()=>{assert.throws(()=>decodeRange({...desc(),schema:'arbitrary-neural-state/1'}),/UNSUPPORTED/);});
+test('duplicate exception held',()=>{assert.throws(()=>decodeRange({...desc(),exceptions:[{index:'0',lane:0,value:'1'},{index:'0',lane:0,value:'2'}]}),/DUPLICATE/);});
+test('out-of-range sparse index held',()=>{assert.throws(()=>decodeRange({...desc(),exceptions:[{index:'31',lane:0,value:'1'}]}),/RANGE/);});
+test('range overflow held',()=>{assert.throws(()=>decodeRange(desc('999999999999',2)),/LIMIT/);});
+test('unsafe numeric coercion held',()=>{assert.throws(()=>decodeRange({...desc(),count:1e12}),/INTEGER_STRING/);});
+test('overlapping partitions rejected',()=>{const x=affineRangeSummary({value:desc()});assert.throws(()=>reduceAffineRanges({upstream:{a:x,b:x}}),/OVERLAP/);});
+test('missing partition rejected',()=>{assert.throws(()=>reduceAffineRanges({upstream:{a:affineRangeSummary({value:desc(0,3)}),b:affineRangeSummary({value:desc(4,3)})}}),/GAP/);});
+test('reducer mismatched lane sum rejected',()=>{const x=affineRangeSummary({value:desc()});assert.throws(()=>reduceAffineRanges({upstream:{x:{...x,sum:'0'}}}),/SUM_MISMATCH/);});
+test('empty interval and empty lane set rejected',()=>{assert.throws(()=>decodeRange(desc(0,0)),/RANGE/);assert.throws(()=>decodeRange({...desc(),lanes:[]}),/EIGHT/);});

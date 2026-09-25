@@ -15,7 +15,7 @@ import { registerParticipationIdentity, promoteRegistrationWithAccord, buildPart
 import { TaskGraphBroker, normalizeTaskGraph } from './task-graph-broker.mjs';
 import { compileLogicalResourcePlan } from './logical-resource-compiler.mjs';
 
-export const INSTRUCTION_FABRIC_VERSION = 'deus-instruction-fabric/1.0';
+export const INSTRUCTION_FABRIC_VERSION = 'deus-instruction-fabric/1.1';
 export const ATOM_VERBS = Object.freeze(['PROBE','LEASE','RUN','CHECKPOINT','RESULT','CANCEL','RELEASE']);
 const HEX = /^[a-f0-9]{64}$/;
 function need(x, code) { if (!x) { const e=new Error(code); e.code=code; throw e; } }
@@ -34,6 +34,7 @@ function fail(code) { const e=new Error(code); e.code=code; return e; }
  */
 export class AtomStore {
   constructor(path) {
+    this.txDepth=0;
     this.db=new DatabaseSync(path);
     this.db.exec(`PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL; PRAGMA busy_timeout=5000;
       CREATE TABLE IF NOT EXISTS atom_pools(id TEXT PRIMARY KEY, slots INTEGER NOT NULL, next_fence INTEGER NOT NULL DEFAULT 0);
@@ -49,19 +50,25 @@ export class AtomStore {
       CREATE TABLE IF NOT EXISTS atom_events(seq INTEGER PRIMARY KEY AUTOINCREMENT, event_json TEXT NOT NULL,
         prev_hash TEXT NOT NULL, hash TEXT NOT NULL);`);
   }
-  tx(fn) { this.db.exec('BEGIN IMMEDIATE'); try { const r=fn(); this.db.exec('COMMIT'); return r; } catch(e) { this.db.exec('ROLLBACK'); throw e; } }
-  pool(id, slots) {
+  tx(fn) {
+    // Synchronous re-entrancy only: nested event writes join their caller's commit.
+    if(this.txDepth>0)return fn();
+    this.db.exec('BEGIN IMMEDIATE');this.txDepth=1;
+    try{const r=fn();need(!r||typeof r.then!=='function','SYNC_TRANSACTION_REQUIRED');this.db.exec('COMMIT');return r;}
+    catch(e){this.db.exec('ROLLBACK');throw e;}finally{this.txDepth=0;}
+  }
+  pool(id, slots) { return this.tx(()=>{
     int(slots,1,64,'POOL_SLOTS');
     const old=this.db.prepare('SELECT * FROM atom_pools WHERE id=?').get(id);
     need(!old||old.slots===slots,'POOL_ALIAS_CAPACITY_CONFLICT');
     this.db.prepare('INSERT OR IGNORE INTO atom_pools(id,slots) VALUES(?,?)').run(id,slots);
-  }
-  event(type, data) {
+  }); }
+  event(type, data) { return this.tx(()=>{
     const previous=this.db.prepare('SELECT hash FROM atom_events ORDER BY seq DESC LIMIT 1').get()?.hash??'0'.repeat(64);
     const e={type,at:new Date().toISOString(),data:jsonValue(data)}; const hash=sha256Json({previous,event:e});
     this.db.prepare('INSERT INTO atom_events(event_json,prev_hash,hash) VALUES(?,?,?)').run(JSON.stringify(e),previous,hash);
     return hash;
-  }
+  }); }
   reserve({pool,route,key,bindingHash,packet,expires,now=Date.now()}) {
     need(expires>now,'LEASE_EXPIRED');
     return this.tx(()=>{
@@ -79,9 +86,9 @@ export class AtomStore {
   get(l) { const r=this.db.prepare('SELECT * FROM atom_leases WHERE id=?').get(l.id); need(r&&r.fence===l.fence,'STALE_FENCE'); return r; }
   current(l, now=Date.now()) { const r=this.get(l); need(!r.released&&r.expires>now,'EXPIRED_OR_RELEASED_LEASE'); return r; }
   claimStart(l) { return this.tx(()=>{ const r=this.current(l); need(r.state==='LEASED','ALREADY_STARTED'); this.db.prepare("UPDATE atom_leases SET state='STARTING' WHERE id=?").run(l.id); return r; }); }
-  ack(l, ack) { const r=this.current(l); need(r.state==='STARTING','ACK_STATE'); this.db.prepare("UPDATE atom_leases SET state='EXECUTING' WHERE id=?").run(l.id); this.event('EXECUTOR_ACK',{...l,ack}); }
-  checkpoint(l, value) { this.current(l); const raw=JSON.stringify(jsonValue(value,256*1024)); this.db.prepare('UPDATE atom_leases SET checkpoint_json=? WHERE id=?').run(raw,l.id); this.event('CHECKPOINT',{...l,hash:sha256(raw)}); }
-  stopped(l, state) { this.get(l); this.db.prepare('UPDATE atom_leases SET stop_observed=1,state=? WHERE id=?').run(state,l.id); this.event('STOP_OBSERVED',{...l,state}); }
+  ack(l, ack) { return this.tx(()=>{const r=this.current(l); need(r.state==='STARTING','ACK_STATE'); this.db.prepare("UPDATE atom_leases SET state='EXECUTING' WHERE id=?").run(l.id); this.event('EXECUTOR_ACK',{...l,ack});}); }
+  checkpoint(l, value) { return this.tx(()=>{const r=this.current(l);need(['LEASED','STARTING','EXECUTING'].includes(r.state),'CHECKPOINT_STATE'); const raw=JSON.stringify(jsonValue(value,256*1024)); this.db.prepare('UPDATE atom_leases SET checkpoint_json=? WHERE id=?').run(raw,l.id); this.event('CHECKPOINT',{...l,hash:sha256(raw)});}); }
+  stopped(l, state) { return this.tx(()=>{const r=this.get(l);if(r.released)return false; this.db.prepare('UPDATE atom_leases SET stop_observed=1,state=? WHERE id=?').run(state,l.id); this.event('STOP_OBSERVED',{...l,state});return true;}); }
   release(l) { return this.tx(()=>{ const r=this.get(l); need(r.stop_observed===1,'STOP_NOT_CONFIRMED'); if(r.released) return false; this.db.prepare('UPDATE atom_leases SET released=1 WHERE id=?').run(l.id); this.event('RELEASE',l); return true; }); }
   cache(key, now=Date.now()) {
     const r=this.db.prepare('SELECT * FROM atom_cache WHERE cache_key=?').get(key); if(!r||r.expires<=now) return null;
@@ -100,14 +107,14 @@ export class AtomStore {
   }
   taskReceipt(task, value, receipt) { this.db.prepare('INSERT OR REPLACE INTO atom_task_receipts VALUES(?,?,?,?)').run(task.id,sha256Json(task),sha256Json(value),JSON.stringify(receipt)); }
   result(l) { const r=this.get(l); return r.receipt_json?JSON.parse(r.receipt_json):null; }
-  verifyEvents() {
+  verifyEvents() { return this.tx(()=>{
     let previous='0'.repeat(64),count=0;
     for(const r of this.db.prepare('SELECT * FROM atom_events ORDER BY seq').all()) { need(r.prev_hash===previous&&r.hash===sha256Json({previous,event:JSON.parse(r.event_json)}),'EVENT_CHAIN_TAMPER'); previous=r.hash; count++; }
     return {count,hash:previous};
-  }
-  snapshot() { return {active:this.db.prepare('SELECT COUNT(*) n FROM atom_leases WHERE released=0').get().n,
+  }); }
+  snapshot() { return this.tx(()=>({active:this.db.prepare('SELECT COUNT(*) n FROM atom_leases WHERE released=0').get().n,
     leases:this.db.prepare('SELECT state,COUNT(*) n FROM atom_leases GROUP BY state').all(),
-    cached:this.db.prepare('SELECT COUNT(*) n FROM atom_cache').get().n,events:this.verifyEvents()}; }
+    cached:this.db.prepare('SELECT COUNT(*) n FROM atom_cache').get().n,events:this.verifyEvents()})); }
   close() { this.db.close(); }
 }
 
@@ -116,6 +123,26 @@ const BOOTSTRAP=`const {parentPort,workerData,threadId}=require('node:worker_thr
 const fs=require('node:fs'),crypto=require('node:crypto');
 (async()=>{const b=fs.readFileSync(new URL(workerData.moduleUrl));
 if(crypto.createHash('sha256').update(b).digest('hex')!==workerData.moduleDigest)throw Error('WORKER_CODE_TAMPER');
+if(workerData.closureSources){
+ const {registerHooks,isBuiltin}=require('node:module');
+ if(typeof registerHooks!=='function')throw Error('CLOSURE_HOOKS_UNAVAILABLE');
+ const sources=new Map(workerData.closureSources.map(x=>[x.url,x]));
+ const allowed=new Set(workerData.allowedBuiltins);
+ registerHooks({
+  resolve(specifier,context,nextResolve){
+   if(isBuiltin(specifier)){const u=specifier.startsWith('node:')?specifier:'node:'+specifier;if(!allowed.has(u))throw Error('UNDECLARED_BUILTIN');return {url:u,shortCircuit:true};}
+   if(!specifier.startsWith('file:')&&!specifier.startsWith('./')&&!specifier.startsWith('../'))throw Error('UNDECLARED_IMPORT');
+   const u=new URL(specifier,context.parentURL||workerData.moduleUrl);
+   if(u.protocol!=='file:'||u.search||u.hash||!sources.has(u.href))throw Error('UNDECLARED_IMPORT');
+   return {url:u.href,shortCircuit:true};
+  },
+  load(url,context,nextLoad){
+   if(url.startsWith('node:'))return nextLoad(url,context);
+   const s=sources.get(url);if(!s||crypto.createHash('sha256').update(s.source).digest('hex')!==s.sha256)throw Error('DEPENDENCY_CODE_TAMPER');
+   return {format:'module',source:s.source,shortCircuit:true};
+  }
+ });
+}
 const mod=await import(workerData.moduleUrl);if(typeof mod[workerData.exportName]!=='function')throw Error('OPERATOR_EXPORT_MISSING');
 parentPort.postMessage({type:'ACK',threadId,pid:process.pid});
 parentPort.once('message',async m=>{if(m.type!=='RUN')throw Error('RUN_REQUIRED');
@@ -125,15 +152,28 @@ catch(e){parentPort.postMessage({type:'ERROR',error:String(e.message)});parentPo
 })().catch(e=>{parentPort.postMessage({type:'ERROR',error:String(e.message)});parentPort.close();});`;
 
 export class PinnedWorkerDriver {
-  constructor({moduleUrl,moduleDigest,exportName,heapMiB=96}) {
+  constructor({moduleUrl,moduleDigest,exportName,heapMiB=96,dependencyPins=null,allowedBuiltins=[]}) {
     const u=new URL(moduleUrl); need(u.protocol==='file:','LOCAL_PINNED_MODULE_REQUIRED'); checkedHash(moduleDigest);
     need(/^[A-Za-z_$][\w$]*$/.test(exportName),'INVALID_EXPORT'); int(heapMiB,16,512,'HEAP_LIMIT');
-    this.config=Object.freeze({moduleUrl:u.href,moduleDigest,exportName,heapMiB});
-    this.identity=sha256Json({kind:'pinned-worker-thread',...this.config});
+    let pins=null;
+    if(dependencyPins!==null){
+      need(Array.isArray(dependencyPins)&&dependencyPins.length<=63,'DEPENDENCY_PIN_LIMIT');
+      need(Array.isArray(allowedBuiltins)&&allowedBuiltins.every(x=>/^node:[a-z_]+(?:\/[a-z_]+)?$/.test(x)),'BUILTIN_ALLOWLIST');
+      const all=[{url:u.href,sha256:moduleDigest},...dependencyPins];const seen=new Set();
+      pins=all.map(x=>{const v=new URL(x.url);need(v.protocol==='file:'&&!v.search&&!v.hash&&v.pathname.endsWith('.mjs'),'LOCAL_ESM_DEPENDENCY_REQUIRED');checkedHash(x.sha256);need(!seen.has(v.href),'DUPLICATE_DEPENDENCY_PIN');seen.add(v.href);return Object.freeze({url:v.href,sha256:x.sha256});}).sort((a,b)=>a.url.localeCompare(b.url));
+      pins=Object.freeze(pins);
+    }
+    this.config=Object.freeze({moduleUrl:u.href,moduleDigest,exportName,heapMiB,dependencyPins:pins,allowedBuiltins:Object.freeze([...new Set(allowedBuiltins)].sort())});
+    this.pinMode=pins?'DECLARED_ESM_CLOSURE':'ENTRY_ONLY';
+    this.identity=sha256Json({kind:'pinned-worker-thread',bootstrapSha256:sha256(BOOTSTRAP),...this.config});
+  }
+  checkIntegrity() {
+    const pins=this.config.dependencyPins??[{url:this.config.moduleUrl,sha256:this.config.moduleDigest}];
+    let total=0;return pins.map(p=>{const raw=readFileSync(fileURLToPath(p.url));total+=raw.length;need(total<=4*1024*1024,'CODE_CLOSURE_SIZE');need(sha256(raw)===p.sha256,p.url===this.config.moduleUrl?'OPERATOR_CODE_TAMPER':'DEPENDENCY_CODE_TAMPER');return {...p,source:raw.toString('utf8')};});
   }
   start(input,onCheckpoint=()=>{}) {
-    need(sha256(readFileSync(fileURLToPath(this.config.moduleUrl)))===this.config.moduleDigest,'OPERATOR_CODE_TAMPER');
-    const worker=new Worker(BOOTSTRAP,{eval:true,workerData:{...this.config,input},resourceLimits:{maxOldGenerationSizeMb:this.config.heapMiB}});
+    const verifiedSources=this.checkIntegrity();
+    const worker=new Worker(BOOTSTRAP,{eval:true,workerData:{...this.config,input,closureSources:this.config.dependencyPins?verifiedSources:null},resourceLimits:{maxOldGenerationSizeMb:this.config.heapMiB}});
     const workerThreadId=worker.threadId;
     let ackResolve,ackReject,resultResolve,resultReject,stopResolve,resultSeen=false,error=null,resultValue;
     const ack=new Promise((a,b)=>{ackResolve=a;ackReject=b;});ack.catch(()=>{});
@@ -173,7 +213,7 @@ export class InstructionFabric {
     need(context.sideEffect!==true,'SIDE_EFFECT_NOT_SUPPORTED');
     need(a.tenantId===(context.tenantId??'deus'),'TENANT_OUTSIDE_GRANT');
     need(a.allowedDataClasses?.includes(context.dataClass??'public'),'DATA_OUTSIDE_GRANT');
-    need(a.zeroSpend===true,'EXPLICIT_ZERO_SPEND_BINDING_REQUIRED');return {b,op};
+    need(a.zeroSpend===true,'EXPLICIT_ZERO_SPEND_BINDING_REQUIRED');b.driver.checkIntegrity?.();return {b,op};
   }
   classifyAtlas(record) {
     // Ignore all source-supplied authority, liveness, lease and endpoint claims.
@@ -205,6 +245,7 @@ export class InstructionFabric {
     const ttl=leaseMs??b.maxLeaseMs;int(ttl,100,b.maxLeaseMs,'LEASE_TTL');
     const packet={routeId,opId,input:jsonValue(input),context:jsonValue(context),probe};
     const key=this.key(routeId,opId,packet.input,context)+(probe?':probe':'');
+    return this.store.tx(()=>{
     const l=this.store.reserve({pool:b.poolId,route:routeId,key,bindingHash:b.bindingHash,packet,expires:Math.min(Date.now()+ttl,Date.parse(b.authority.expiresAt))});
     // These booleans are derived here from host-bound authority + fresh local receipt,
     // never passed through from Atlas or provider output.
@@ -216,6 +257,7 @@ export class InstructionFabric {
       const lease=buildParticipationLease({registration:admitted,leaseId:l.id,issuedAt:new Date().toISOString(),expiresAt:new Date(r.expires).toISOString(),capacity:{pool:b.poolId,slots:1}});
       this.store.event('ACCORD_ADMIT',{id:l.id,lease,sourceConsentRef:b.authority.consentRef});}
     return l;
+    });
   }
   CHECKPOINT(l, value) { return this.store.checkpoint(l,value); }
   RESULT(l) { return this.store.result(l); }
@@ -229,9 +271,11 @@ export class InstructionFabric {
     throw fail('UNKNOWN_EXECUTOR_STOP_HOLD');
   }
   async RUN(l) {
-    const r=this.store.claimStart(l),p=JSON.parse(r.packet_json);const {b,op}=this.authorize(p.routeId,p.opId,p.context);
-    need(b.bindingHash===r.binding_hash,'BINDING_CHANGED');let h,timer;const started=performance.now();
+    const r=this.store.claimStart(l);let h,timer;const started=performance.now();
     try{
+      const p=JSON.parse(r.packet_json);const {b,op}=this.authorize(p.routeId,p.opId,p.context);
+      need(b.bindingHash===r.binding_hash,'BINDING_CHANGED');
+      if(op.validateInput)need(op.validateInput(p.input)===true,'INPUT_VALIDATION_FAILED');
       h={cancelled:false,handle:b.driver.start(p.input,v=>this.CHECKPOINT(l,v))};this.inflight.set(l.id,h);
       const deadline=new Promise((_,reject)=>{timer=setTimeout(()=>{h.cancelled=true;void h.handle.cancel();reject(fail('LEASE_DEADLINE'));},Math.max(1,r.expires-Date.now()));});
       const ack=await Promise.race([h.handle.ack,deadline]);this.store.ack(l,ack);h.handle.run();
@@ -240,11 +284,11 @@ export class InstructionFabric {
       const value=jsonValue(raw);this.store.stopped(l,'RESULT_RETURNED');
       need(await op.verify(value,p.input)===true,'RESULT_VERIFIER_REJECTED');
       if(p.probe)need(sha256Json(value)===sha256Json(op.canary.expected),'CANARY_EXPECTATION_FAIL');
-      this.store.current(l);
+      this.store.current(l);this.authorize(p.routeId,p.opId,p.context);
       const receipt={schema:INSTRUCTION_FABRIC_VERSION,kind:p.probe?'CANARY':'EXECUTED',key:r.job_key,leaseId:l.id,fence:l.fence,
         routeId:p.routeId,poolId:b.poolId,operator:p.opId,inputDigest:sha256Json(p.input),outputDigest:sha256Json(value),
         programDigest:op.programDigest,verificationDigest:op.verificationDigest,environmentDigest:op.environmentDigest,
-        bindingDigest:b.bindingHash,stop,elapsedMs:performance.now()-started,verifiedAt:new Date().toISOString(),
+        bindingDigest:b.bindingHash,codePinMode:b.driver.pinMode??'HOST_CUSTOM_DRIVER',stop,elapsedMs:performance.now()-started,verifiedAt:new Date().toISOString(),
         physicalCapacityClaimed:false,verdict:'VERIFIED_FOR_OPERATOR_CONTRACT'};
       this.store.accept(l,receipt,value,p.probe?0:int(op.cacheTtlMs??600000,0,86400000,'CACHE_TTL'));
       this.RELEASE(l);return value;
