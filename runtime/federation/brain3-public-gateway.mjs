@@ -70,7 +70,7 @@ async function enqueue(query){
   return {jobId,expiresAt:expires.toISOString()};
 }
 async function result(jobId){
-  const read=await bridge.readRange('84_WORKSTATION_REMOTE_JOBS!A1:AB500');
+  const read=await bridge.readRange('84_WORKSTATION_REMOTE_JOBS!A:AB');
   const rows=read.values||[];const headers=rows[0]||[];
   const row=rows.slice(1).find(r=>String(r?.[0]||'')===jobId);
   if(!row) return null;
