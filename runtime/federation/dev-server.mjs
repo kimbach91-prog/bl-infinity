@@ -238,7 +238,8 @@ const server = http.createServer(async (req, res) => {
         const body = await readJson(req, Math.min(maxBodyBytes, 262_144));
         const provider = normalizeSocialProvider(body.provider);
         const accountId = body.account_id ? String(body.account_id) : null;
-        if (accountId) await activateSocialAccount(socialVault, provider, accountId);
+        if (!accountId) return send(res, 400, { error: 'account_id is required' });
+        await activateSocialAccount(socialVault, provider, accountId);
         const payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
         const requestDigest = await sha256Hex(JSON.stringify({ provider, accountId, payload }));
         reservation = await claimSocialReceipt(socialVault, {
