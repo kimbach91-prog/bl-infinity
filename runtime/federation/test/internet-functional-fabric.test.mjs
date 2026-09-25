@@ -66,6 +66,30 @@ test('route selection deduplicates lanes and respects authority expiry',()=>{
   assert.deepEqual(compute.map(x=>x.id),['owner-gpu']);
 });
 
+test('learned utility memory reranks only already-authorized routes and never creates authority',()=>{
+  const atlas=compileCapabilityAtlas([
+    {id:'fast-unlearned',provider:'A',namespace:internetNamespace(['search','fast']),capabilities:['search.research'],authorization:{allowedDataClasses:['BL-S0']},telemetry:{trust:.9,availability:.95,p95LatencyMs:10},state:'ACTIVE'},
+    {id:'learned',provider:'B',namespace:internetNamespace(['search','learned']),capabilities:['search.research'],authorization:{allowedDataClasses:['BL-S0']},telemetry:{trust:.9,availability:.95,p95LatencyMs:40},state:'ACTIVE'},
+    {id:'blocked',provider:'C',namespace:internetNamespace(['search','blocked']),capabilities:['search.research'],authorization:{standing:false,allowedDataClasses:['BL-S0']},telemetry:{trust:1,availability:1,p95LatencyMs:1},state:'ACTIVE'},
+  ]);
+  const base=evaluateTaskFitRoutes(atlas,{capability:'search.research',dataClass:'BL-S0',maxRoutes:3,now:NOW});
+  assert.equal(base.routes[0].id,'fast-unlearned');
+  const learned=evaluateTaskFitRoutes(atlas,{
+    capability:'search.research',dataClass:'BL-S0',maxRoutes:3,now:NOW,
+    utilityTaskFamily:'SEARCH_RESEARCH',utilityQueryFingerprint:'q:deep-research-v1',
+    routeUtilityMemory:[
+      {resourceId:'learned',taskFamily:'SEARCH_RESEARCH',queryFingerprint:'q:deep-research-v1',quality:1,successCount:20,failureCount:0,reuseCount:10,observedAt:'2026-09-23T16:39:30Z',ttlMs:120000,sourceRef:'LiveBus120'},
+      {resourceId:'blocked',taskFamily:'SEARCH_RESEARCH',queryFingerprint:'q:deep-research-v1',quality:1,successCount:100,failureCount:0,reuseCount:100,observedAt:'2026-09-23T16:39:30Z',ttlMs:120000,sourceRef:'should-never-create-authority'},
+    ],
+  });
+  assert.equal(learned.routes[0].id,'learned');
+  assert.equal(learned.routes.some(x=>x.id==='blocked'),false);
+  assert.equal(learned.routes[0].selectionMetrics.utilityPrior.applied,true);
+  assert.ok(learned.routes[0].selectionMetrics.utilityPrior.multiplier<=1.4);
+  assert.equal(learned.rejectionCounts.AUTHORITY,1);
+  assert.match(learned.truthBoundary,/UTILITY_PRIOR_NE_AUTHORITY_OR_EXECUTION/);
+});
+
 test('freshness, quota, cost, trust and receipt requirements fail closed when requested',()=>{
   const atlas=compileCapabilityAtlas([
     {id:'fresh',namespace:internetNamespace(['compute','fresh']),capabilityAbi:[{id:'compute.general',inputType:'job',outputType:'result',receiptSchema:'exec/1'}],authorization:{allowedDataClasses:['BL-S1']},telemetry:{trust:.99,availability:.99,p95LatencyMs:10,costPerUnitUsd:.001},freshness:{observedAt:'2026-09-23T16:39:30Z',ttlMs:120000},quota:{remaining:2},receipt:{capable:true,schema:'exec/1'},state:'VERIFIED'},
