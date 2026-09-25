@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "runtime/federation/lib/social-control.mjs"
+      - "runtime/federation/lib/social-oauth-vault.mjs"
       - "runtime/federation/dev-server.mjs"
       - "runtime/federation/test/social-control.test.mjs"
       - ".github/workflows/deus-social-control-ci.yml"
@@ -12,6 +13,7 @@ on:
       - "deus/social-control-api-v0.2-20260925"
     paths:
       - "runtime/federation/lib/social-control.mjs"
+      - "runtime/federation/lib/social-oauth-vault.mjs"
       - "runtime/federation/dev-server.mjs"
       - "runtime/federation/test/social-control.test.mjs"
       - ".github/workflows/deus-social-control-ci.yml"
@@ -38,6 +40,7 @@ jobs:
       - name: Syntax checks
         run: |
           node --check lib/social-control.mjs
+          node --check lib/social-oauth-vault.mjs
           node --check dev-server.mjs
       - name: Social control deterministic tests
-        run: node --test --test-force-exit --test-concurrency=1 test/social-control.test.mjs
+        run: node --test --test-force-exit --test-concurrency=1 test/social-control.test.mjs test/social-oauth-vault.test.mjs

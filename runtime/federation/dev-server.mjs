@@ -34,6 +34,20 @@ import {
   publishSocial,
   readSocialObject,
 } from './lib/social-control.mjs';
+import {
+  createSocialOAuthVault,
+  socialOAuthStatus,
+  listSocialAccounts,
+  hydrateActiveSocialAccounts,
+  activateSocialAccount,
+  disconnectSocialAccount,
+  socialAuthorizationUrl,
+  handleSocialOAuthCallback,
+  refreshSocialAccount,
+  claimSocialReceipt,
+  finalizeSocialReceipt,
+  getSocialReceipt,
+} from './lib/social-oauth-vault.mjs';
 
 const port = Number(process.env.PORT || 8787);
 const host = process.env.HOST || '127.0.0.1';
@@ -49,6 +63,8 @@ const manifestVerifier = requireSignedManifests ? (manifest) => verifyProviderMa
 const budgetConfig = parseJsonEnv('BL_BUDGET_JSON', {});
 const { state: durableState, backend: stateBackend, allowedDataClasses: allowedStateDataClasses } = await loadDurableState(budgetConfig);
 const runtime = createFederationRuntime({ providers: bootstrapProviders, localHandlers: safeDefaultHandlers, manifestVerifier, budgetConfig, state: durableState, allowedStateDataClasses });
+const socialVault = await createSocialOAuthVault(stateBackend === 'postgres' ? durableState.pool : null);
+const hydratedSocialAccounts = socialVault.ready ? await hydrateActiveSocialAccounts(socialVault) : [];
 const providerStore = stateBackend === 'postgres' ? new PostgresProviderStore(durableState.pool, { manifestVerifier }) : null;
 const providerSyncMode = providerStore ? parseProviderSyncMode(process.env.BL_PROVIDER_SYNC_MODE || 'delta') : 'memory';
 let providerSynchronizer = null;
@@ -137,9 +153,175 @@ const server = http.createServer(async (req, res) => {
       responseContinuityPolicy: DEFAULT_RESPONSE_CONTINUITY_POLICY,
       socialControl: {
         authConfigured: Boolean(socialApiToken),
+        hydratedAccounts: hydratedSocialAccounts.length,
         ...socialControlStatus(),
+        oauth: socialOAuthStatus(socialVault),
       },
     });
+
+    if (req.method === 'GET' && requestPath(req.url) === '/v1/social/health') {
+      return send(res, 200, {
+        schema: 'deus-social-control-health/1',
+        runtime: socialControlStatus(),
+        oauth: socialOAuthStatus(socialVault),
+        accountCount: socialVault.ready ? (await listSocialAccounts(socialVault)).length : 0,
+        publishMasterEnabled: socialControlStatus().publishMasterEnabled,
+        truthBoundary: 'HEALTHY_RUNTIME != PROVIDER_ACCOUNT_CONNECTED',
+      });
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/v1/social/accounts') {
+      if (!authorizeSocial(req, res)) return;
+      return send(res, 200, {
+        schema: 'deus-social-accounts/1',
+        accounts: await listSocialAccounts(socialVault),
+        oauth: socialOAuthStatus(socialVault),
+      });
+    }
+
+    const connectProvider = v1SocialProviderRoute(req.url, 'connect');
+    if (req.method === 'POST' && connectProvider) {
+      if (!authorizeSocial(req, res)) return;
+      try {
+        const body = await readJson(req, Math.min(maxBodyBytes, 8_192));
+        const auth = socialAuthorizationUrl(socialVault, connectProvider, { returnTo: body.return_to || '/v1/social/accounts' });
+        return send(res, 200, auth);
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const oauthCallbackProvider = v1SocialOAuthCallbackProvider(req.url);
+    if (req.method === 'GET' && oauthCallbackProvider) {
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        const result = await handleSocialOAuthCallback(
+          socialVault,
+          oauthCallbackProvider,
+          Object.fromEntries(url.searchParams.entries()),
+        );
+        return send(res, 200, {
+          schema: 'deus-social-oauth-callback/1',
+          connected: result.connected === true,
+          provider: result.provider,
+          accounts: result.accounts || [],
+          active_account_id: result.active_account_id || null,
+          return_to: result.return_to || '/v1/social/accounts',
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const accountAction = v1SocialAccountAction(req.url);
+    if (accountAction && req.method === 'POST' && accountAction.action === 'activate') {
+      if (!authorizeSocial(req, res)) return;
+      try {
+        return send(res, 200, { account: await activateSocialAccount(socialVault, accountAction.provider, accountAction.accountId) });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+    if (accountAction && req.method === 'POST' && accountAction.action === 'refresh') {
+      if (!authorizeSocial(req, res)) return;
+      try {
+        return send(res, 200, await refreshSocialAccount(socialVault, accountAction.provider, accountAction.accountId));
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    const accountDelete = v1SocialAccountDelete(req.url);
+    if (accountDelete && req.method === 'DELETE') {
+      if (!authorizeSocial(req, res)) return;
+      try {
+        return send(res, 200, await disconnectSocialAccount(socialVault, accountDelete.provider, accountDelete.accountId));
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    if (req.method === 'POST' && requestPath(req.url) === '/v1/social/publish') {
+      if (!authorizeSocial(req, res)) return;
+      let reservation = null;
+      try {
+        const body = await readJson(req, Math.min(maxBodyBytes, 262_144));
+        const provider = normalizeSocialProvider(body.provider);
+        const accountId = body.account_id ? String(body.account_id) : null;
+        if (accountId) await activateSocialAccount(socialVault, provider, accountId);
+        const payload = body.payload && typeof body.payload === 'object' ? body.payload : {};
+        const requestDigest = await sha256Hex(JSON.stringify({ provider, accountId, payload }));
+        reservation = await claimSocialReceipt(socialVault, {
+          provider,
+          accountId,
+          action: 'PUBLISH',
+          idempotencyKey: body.idempotency_key ? String(body.idempotency_key) : null,
+          requestDigest,
+        });
+        if (!reservation.claimed) {
+          return send(res, 200, { replayed: true, receipt: reservation.receipt });
+        }
+        const result = await publishSocial(provider, payload);
+        const providerObjectId = result.id || result.publishId || result.creationId || null;
+        const receipt = await finalizeSocialReceipt(socialVault, reservation.receipt.receipt_id, {
+          state: result.state || 'EXECUTED_UNVERIFIED',
+          providerObjectId,
+          detail: {
+            provider,
+            result_state: result.state || null,
+            staged_reason: result.reason || null,
+            provider_object_id: providerObjectId,
+          },
+        });
+        return send(res, result.state === 'STAGED_ONLY' ? 202 : 200, { result, receipt });
+      } catch (error) {
+        if (reservation?.claimed && reservation?.receipt?.receipt_id) {
+          try {
+            await finalizeSocialReceipt(socialVault, reservation.receipt.receipt_id, {
+              state: 'FAILED',
+              detail: { code: error?.code || 'SOCIAL_PUBLISH_FAILED' },
+            });
+          } catch {}
+        }
+        return sendSocialError(res, error);
+      }
+    }
+
+    const publishReceiptId = v1SocialPublishReceiptId(req.url);
+    if (req.method === 'GET' && publishReceiptId) {
+      if (!authorizeSocial(req, res)) return;
+      try { return send(res, 200, { receipt: await getSocialReceipt(socialVault, publishReceiptId) }); }
+      catch (error) { return sendSocialError(res, error); }
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/v1/social/posts') {
+      if (!authorizeSocial(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        const provider = normalizeSocialProvider(url.searchParams.get('provider'));
+        const accountId = url.searchParams.get('account_id');
+        if (accountId) await activateSocialAccount(socialVault, provider, accountId);
+        return send(res, 200, {
+          provider,
+          data: await listSocialContent(provider, {
+            limit: url.searchParams.get('limit'),
+            cursor: url.searchParams.get('cursor'),
+          }),
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/v1/social/metrics') {
+      if (!authorizeSocial(req, res)) return;
+      const url = new URL(req.url || '/', 'http://localhost');
+      try {
+        const provider = normalizeSocialProvider(url.searchParams.get('provider'));
+        const accountId = url.searchParams.get('account_id');
+        if (accountId) await activateSocialAccount(socialVault, provider, accountId);
+        return send(res, 200, {
+          provider,
+          data: await readSocialInsights(provider, {
+            targetId: url.searchParams.get('target_id'),
+            metrics: url.searchParams.get('metrics'),
+            period: url.searchParams.get('period'),
+            since: url.searchParams.get('since'),
+            until: url.searchParams.get('until'),
+            limit: url.searchParams.get('limit'),
+            cursor: url.searchParams.get('cursor'),
+          }),
+        });
+      } catch (error) { return sendSocialError(res, error); }
+    }
 
     if (req.method === 'GET' && requestPath(req.url) === '/social/status') {
       if (!authorizeSocial(req, res)) return;
@@ -650,6 +832,22 @@ server.listen(port, host, () => {
     deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
     serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
   }));
+  {
+    const socialRuntime = socialControlStatus();
+    const socialOauth = socialOAuthStatus(socialVault);
+    console.log(JSON.stringify({
+      event:'DEUS_SOCIAL_CONTROL_STARTUP_RECEIPT',
+      sourceRev:process.env.DEUS_SOURCE_REV ?? null,
+      deploymentId:process.env.RAILWAY_DEPLOYMENT_ID ?? null,
+      serviceId:process.env.RAILWAY_SERVICE_ID ?? null,
+      authConfigured:Boolean(socialApiToken),
+      vaultReady:socialOauth.vaultReady,
+      publicBaseConfigured:socialOauth.publicBaseConfigured,
+      hydratedAccounts:hydratedSocialAccounts.length,
+      publishMasterEnabled:socialRuntime.publishMasterEnabled,
+      appConfigured:Object.fromEntries(Object.entries(socialOauth.providers).map(([provider,state])=>[provider,state.appConfigured])),
+    }));
+  }
   if (!controlAuth.configured && publicReadScopes.size === 0) console.warn('Control auth/public reads are not configured: only health and independently authenticated worker heartbeat remain reachable.');
   void driveBridgeRuntime.reconcile();
   driveBridgeRuntime.start();
@@ -739,6 +937,41 @@ function authorizeRequired(req, res, scope) {
 function authorizeRead(req, res, scope) {
   if (publicReadScopes.has(scope)) return { ok: true, principal: controlAuth.authenticate(req), public: true };
   return authorizeRequired(req, res, scope);
+}
+
+function v1SocialProviderRoute(rawUrl, action) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(new RegExp(`^/v1/social/${action}/([^/]+)$`));
+  if (!match) return null;
+  try { return normalizeSocialProvider(match[1]); }
+  catch { return null; }
+}
+function v1SocialOAuthCallbackProvider(rawUrl) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(/^\/v1\/social\/oauth\/([^/]+)\/callback$/);
+  if (!match) return null;
+  try { return normalizeSocialProvider(match[1]); }
+  catch { return null; }
+}
+function v1SocialAccountAction(rawUrl) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(/^\/v1\/social\/accounts\/([^/]+)\/([^/]+)\/(activate|refresh)$/);
+  if (!match) return null;
+  try {
+    return { provider: normalizeSocialProvider(match[1]), accountId: decodeURIComponent(match[2]), action: match[3] };
+  } catch { return null; }
+}
+function v1SocialAccountDelete(rawUrl) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(/^\/v1\/social\/accounts\/([^/]+)\/([^/]+)$/);
+  if (!match) return null;
+  try { return { provider: normalizeSocialProvider(match[1]), accountId: decodeURIComponent(match[2]) }; }
+  catch { return null; }
+}
+function v1SocialPublishReceiptId(rawUrl) {
+  const pathname = requestPath(rawUrl);
+  const match = pathname.match(/^\/v1\/social\/publish\/(RCP-SOCIAL-[A-Za-z0-9-]+)$/);
+  return match ? match[1] : null;
 }
 
 function socialProviderRoute(rawUrl, suffix) {

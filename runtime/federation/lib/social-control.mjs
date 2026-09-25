@@ -12,7 +12,7 @@ const PROVIDER_WRITE = Object.freeze({
   tiktok: process.env.TIKTOK_PUBLISH_ENABLED === 'true',
 });
 
-const CONFIG = Object.freeze({
+const CONFIG = {
   threads: {
     token: process.env.THREADS_ACCESS_TOKEN || '',
     userId: process.env.THREADS_USER_ID || 'me',
@@ -47,7 +47,7 @@ const CONFIG = Object.freeze({
     optionalScopes: ['user.info.profile', 'user.info.stats', 'video.upload'],
     capabilities: ['profile', 'content', 'insights', 'publish'],
   },
-});
+};
 
 const PROVIDERS = Object.freeze(['threads', 'facebook', 'instagram', 'tiktok']);
 
@@ -70,6 +70,41 @@ export function normalizeSocialProvider(value) {
   const provider = String(value || '').trim().toLowerCase();
   if (!PROVIDERS.includes(provider)) throw new SocialControlError('social', 400, 'PROVIDER_NOT_ALLOWED');
   return provider;
+}
+
+export function applySocialRuntimeCredentials(providerInput, values = {}) {
+  const provider = normalizeSocialProvider(providerInput);
+  const cfg = CONFIG[provider];
+  if (provider === 'facebook') {
+    cfg.token = String(values.accessToken || values.token || '');
+    cfg.pageId = String(values.accountId || values.pageId || '');
+  } else if (provider === 'instagram') {
+    cfg.token = String(values.accessToken || values.token || '');
+    cfg.userId = String(values.accountId || values.userId || '');
+  } else if (provider === 'threads') {
+    cfg.token = String(values.accessToken || values.token || '');
+    cfg.userId = String(values.accountId || values.userId || 'me');
+  } else {
+    cfg.token = String(values.accessToken || values.token || '');
+    cfg.openId = String(values.accountId || values.openId || '');
+  }
+  return {
+    provider,
+    configured: configured(provider),
+    accountId: provider === 'facebook' ? cfg.pageId
+      : provider === 'instagram' || provider === 'threads' ? cfg.userId
+      : cfg.openId,
+  };
+}
+
+export function clearSocialRuntimeCredentials(providerInput) {
+  const provider = normalizeSocialProvider(providerInput);
+  const cfg = CONFIG[provider];
+  cfg.token = '';
+  if (provider === 'facebook') cfg.pageId = '';
+  else if (provider === 'instagram' || provider === 'threads') cfg.userId = provider === 'threads' ? 'me' : '';
+  else cfg.openId = '';
+  return { provider, configured: false };
 }
 
 function configured(provider) {
@@ -401,6 +436,7 @@ async function publishTikTok(payload) {
             disable_comment: Boolean(payload.disableComment),
             disable_stitch: Boolean(payload.disableStitch),
             is_aigc: Boolean(payload.isAigc),
+            brand_content_toggle: Boolean(payload.brandContentToggle),
             brand_organic_toggle: Boolean(payload.brandOrganicToggle),
           },
           source_info: { source: 'PULL_FROM_URL', video_url: mediaUrl },
@@ -416,6 +452,8 @@ async function publishTikTok(payload) {
             privacy_level: privacyLevel,
             disable_comment: Boolean(payload.disableComment),
             auto_add_music: payload.autoAddMusic !== false,
+            brand_content_toggle: Boolean(payload.brandContentToggle),
+            brand_organic_toggle: Boolean(payload.brandOrganicToggle),
           },
           source_info: {
             source: 'PULL_FROM_URL',
@@ -424,6 +462,7 @@ async function publishTikTok(payload) {
           },
           post_mode: 'DIRECT_POST',
           media_type: 'PHOTO',
+          is_aigc: Boolean(payload.isAigc),
         }),
       });
 
