@@ -1,0 +1,57 @@
+name: Kaggle Gemma 4 entry check
+
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/kaggle-gemma4-entry-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-entry:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      KAGGLE_API_TOKEN: ${{ secrets.KAGGLE_API_TOKEN }}
+      KAGGLE_USERNAME: ${{ secrets.KAGGLE_USERNAME }}
+      KAGGLE_KEY: ${{ secrets.KAGGLE_KEY }}
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install current official Kaggle CLI
+        run: python -m pip install --upgrade kaggle
+      - name: Verify Gemma 4 competition entry
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${KAGGLE_API_TOKEN:-}" && ( -z "${KAGGLE_USERNAME:-}" || -z "${KAGGLE_KEY:-}" ) ]]; then
+            echo "KAGGLE_GEMMA4_ENTRY=BLOCKED_SECRET_MISSING"
+            exit 41
+          fi
+          kaggle competitions list --group entered --format json > entered.json
+          python - <<'PY'
+          import json, sys
+          target = "gemma-4-developer-agent"
+          data = json.load(open("entered.json"))
+          rows = data if isinstance(data, list) else data.get("competitions", data.get("results", []))
+          found = [x for x in rows if str(x.get("ref", x.get("competitionRef", ""))) == target]
+          receipt = {
+              "schema": "deus-kaggle-competition-entry-check/1",
+              "competition": target,
+              "entered": bool(found),
+              "truth_boundary": "This workflow only verifies Kaggle membership. It does not accept competition rules or create an entry."
+          }
+          print(json.dumps(receipt))
+          open("gemma4-entry-receipt.json","w").write(json.dumps(receipt, indent=2))
+          if not found:
+              sys.exit(42)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: gemma4-entry-receipt
+          path: gemma4-entry-receipt.json
+          if-no-files-found: ignore
