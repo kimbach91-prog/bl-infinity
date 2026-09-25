@@ -513,7 +513,7 @@ const server = http.createServer(async (req, res) => {
       if (!/^JOB-BRAIN3-PUBLIC-QUERY-[A-Za-z0-9_-]{8,128}$/.test(jobId)) {
         return send(res, 400, { error: 'invalid jobId' });
       }
-      const rows = await driveBridgeRuntime.readRange('84_WORKSTATION_REMOTE_JOBS!A1:AB500');
+      const rows = await driveBridgeRuntime.readRange('84_WORKSTATION_REMOTE_JOBS!A:AB');
       const headers = rows.values?.[0] ?? [];
       const match = (rows.values ?? []).slice(1).find((row) => String(row?.[0] ?? '') === jobId);
       if (!match) return send(res, 404, { error: 'job not found' });
