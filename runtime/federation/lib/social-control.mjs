@@ -436,6 +436,7 @@ async function publishTikTok(payload) {
             disable_comment: Boolean(payload.disableComment),
             disable_stitch: Boolean(payload.disableStitch),
             is_aigc: Boolean(payload.isAigc),
+            brand_content_toggle: Boolean(payload.brandContentToggle),
             brand_organic_toggle: Boolean(payload.brandOrganicToggle),
           },
           source_info: { source: 'PULL_FROM_URL', video_url: mediaUrl },
@@ -451,6 +452,8 @@ async function publishTikTok(payload) {
             privacy_level: privacyLevel,
             disable_comment: Boolean(payload.disableComment),
             auto_add_music: payload.autoAddMusic !== false,
+            brand_content_toggle: Boolean(payload.brandContentToggle),
+            brand_organic_toggle: Boolean(payload.brandOrganicToggle),
           },
           source_info: {
             source: 'PULL_FROM_URL',
@@ -459,6 +462,7 @@ async function publishTikTok(payload) {
           },
           post_mode: 'DIRECT_POST',
           media_type: 'PHOTO',
+          is_aigc: Boolean(payload.isAigc),
         }),
       });
 
