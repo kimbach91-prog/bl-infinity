@@ -3,7 +3,7 @@
   "endpoint": "https://animica.dev/v1/chat/completions",
   "requested_model": "kimi-k3",
   "http_status": 0,
-  "latency_ms": 90012,
+  "latency_ms": 90008,
   "exact_contract": false,
   "response_digest": "",
   "auth_mode": "NO_AUTH_HEADER",
