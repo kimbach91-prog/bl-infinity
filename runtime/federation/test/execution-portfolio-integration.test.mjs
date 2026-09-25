@@ -1,0 +1,42 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,readFileSync,mkdirSync,writeFileSync} from 'node:fs';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import {chooseExecution,executeSelected} from '../lib/execution-portfolio.mjs';
+import {AtomStore,InstructionFabric,PinnedWorkerDriver,compileAtomTree} from '../lib/instruction-fabric.mjs';
+import {createFederationRuntime} from '../lib/runtime.mjs';
+import {createSqliteFederationState} from '../lib/sqlite-state.mjs';
+import {sha256,sha256Json} from '../lib/canonical.mjs';
+const sem='a'.repeat(64),env='b'.repeat(64),budget={cpuThreads:2,ramBytes:268435456,gpuAvailable:false};
+const contract={semanticDigest:sem,environmentDigest:env,sideEffects:false,mode:'cold',workloadBucket:'integer20'};
+const direct={id:'direct',kind:'DIRECT_ATOM',semanticDigest:sem,defaultSafe:true,cpuThreads:1,ramBytes:100};
+const graphCandidate={id:'graph',kind:'ATOM_GRAPH',semanticDigest:sem,cpuThreads:2,ramBytes:200};
+const profile={candidateId:'graph',semanticDigest:sem,environmentDigest:env,workloadBucket:'integer20',mode:'cold',verified:true,samples:7,e2eMs:1,expiresAt:100,observedAt:2,receiptId:'TEST_FIXTURE_NOT_RUNTIME_PERFORMANCE'};
+test('safe fallback has no execution authority',()=>{const p=chooseExecution({contract,candidates:[direct,graphCandidate],budget,now:1});assert.equal(p.selected,'direct');assert.equal(p.executionAuthorized,false);});
+for(const [name,change]of Object.entries({expired:{expiresAt:0},environment:{environmentDigest:'c'.repeat(64)},semantic:{semanticDigest:'d'.repeat(64)},samples:{samples:2},notVerified:{verified:false},nan:{e2eMs:NaN},negative:{e2eMs:-1},mode:{mode:'warm'},bucket:{workloadBucket:'other'}}))test('reject profile '+name,()=>assert.equal(chooseExecution({contract,candidates:[direct,graphCandidate],profiles:[{...profile,...change}],budget,now:1}).selected,'direct'));
+test('valid measured profile selects candidate, not authority',()=>{const p=chooseExecution({contract,candidates:[direct,graphCandidate],profiles:[profile],budget,now:1});assert.equal(p.selected,'graph');assert.equal(p.executionAuthorized,false);});
+test('duplicate, side effects and budget fail closed',()=>{assert.throws(()=>chooseExecution({contract,candidates:[direct,direct],budget}),/DUPLICATE/);assert.throws(()=>chooseExecution({contract:{...contract,sideEffects:true},candidates:[direct],budget}),/PURE/);assert.throws(()=>chooseExecution({contract,candidates:[direct],budget:{cpuThreads:0,ramBytes:0}}),/BUDGET/);});
+for(const [name,change]of Object.entries({cpu:{cpuThreads:3},ram:{ramBytes:1e12},gpu:{gpuRequired:true},kind:{kind:'RAW_SHELL'},semantic:{semanticDigest:'c'.repeat(64)}}))test('candidate constraint '+name,()=>assert.equal(chooseExecution({contract,candidates:[direct,{...graphCandidate,...change}],profiles:[profile],budget,now:1}).selected,'direct'));
+
+test('real direct/reuse/graph/restart through unchanged fabric; zero live leases',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'portfolio-'));const moduleUrl=new URL('../worker/instruction-operators.mjs',import.meta.url).href,moduleDigest=sha256(readFileSync(new URL(moduleUrl)));
+ const sum=input=>({sum:(input.value?.numbers??Object.values(input.upstream).map(x=>x.sum)).reduce((a,n)=>a+BigInt(n),0n).toString()});
+ const cin={value:{numbers:['1','2']},upstream:{},sourceDigest:null};
+ const operators=['sum','sum-reducer'].map(id=>({id,programDigest:moduleDigest,verificationDigest:sha256(sum.toString()),environmentDigest:env,canary:{input:cin,expected:sum(cin)},verify:(v,input)=>sha256Json(v)===sha256Json(sum(input))}));
+ const authority={consentRef:'CURRENT_PROJECT_CI_ISOLATED_INTEGER_TEST',tenantId:'deus',allowedDataClasses:['public'],zeroSpend:true,expiresAt:new Date(Date.now()+300000).toISOString()};
+ const bindings=operators.map(op=>({routeId:'host-'+op.id,poolId:'one-ci-invocation',slots:2,maxLeaseMs:30000,operatorIds:[op.id],authority,driver:new PinnedWorkerDriver({moduleUrl,moduleDigest,dependencyPins:[],allowedBuiltins:['node:crypto','node:fs','node:path'],exportName:'integerSum',heapMiB:96})}));
+ function open(){const store=new AtomStore(join(dir,'atoms.sqlite')),state=createSqliteFederationState(join(dir,'queue.sqlite'));const fabric=new InstructionFabric({store,bindings,operators}),runtime=createFederationRuntime({providers:bindings.map(b=>fabric.provider(b.routeId)),state});runtime.executor.adapters.set('instruction-atom',fabric.adapter());return {store,state,fabric,runtime};}
+ const numbers=Array.from({length:20},(_,i)=>String(i+1));const input={value:{numbers},upstream:{},sourceDigest:null};
+ const leaves=Array.from({length:4},(_,i)=>({value:{numbers:numbers.slice(i*5,i*5+5)},sourceDigest:sha256Json(numbers.slice(i*5,i*5+5))}));
+ const graph=compileAtomTree({graphId:'portfolio-ci',runId:'same-run',leaves,leafOperator:'sum',reducerOperator:'sum-reducer',fanIn:4});
+ const candidates=[{...direct,routeId:'host-sum',operatorId:'sum',input},{...graphCandidate,defaultSafe:true,graph}];let f=open();
+ const cold=await executeSelected({...f,contract,candidates,profiles:[],budget});assert.equal(cold.value.sum,'210');assert.equal(cold.receipt.detail.executions,1);
+ const warm=await executeSelected({...f,contract,candidates,profiles:[],budget});assert.equal(warm.value.sum,'210');assert.equal(warm.receipt.detail.reuses,1);
+ const graphContract={...contract,requireGraphCheckpoints:true};const g=await executeSelected({...f,contract:graphContract,candidates,profiles:[],budget});assert.equal(g.value.sum,'210');assert.equal(g.receipt.detail.executions,graph.nodes.length);
+ await assert.rejects(executeSelected({...f,contract:graphContract,candidates,profiles:[],budget,context:{tenantId:'other'}}),/GRAPH_TENANT_CONTEXT_UNSUPPORTED/);
+ await assert.rejects(executeSelected({...f,contract,candidates,profiles:[],budget,context:{sideEffect:true}}),/PURE_CONTEXT/);
+ f.state.close();f.store.close();f=open();const restored=await executeSelected({...f,contract:graphContract,candidates,profiles:[],budget});assert.equal(restored.value.sum,'210');assert.equal(restored.receipt.detail.executions,0);assert.equal(f.store.snapshot().active,0);
+ const receipt={schema:'portfolio-project-integration/1',scope:'SYNTHETIC_INTEGER20',cold:cold.receipt,warm:warm.receipt,graph:g.receipt,restart:restored.receipt,events:f.store.verifyEvents(),resourceState:f.store.snapshot(),productionAdopted:false};
+ const out=process.env.PORTFOLIO_OUT??'.deus/operator-portfolio';mkdirSync(out,{recursive:true});writeFileSync(join(out,'portfolio-project-integration.json'),JSON.stringify(receipt,null,2));f.state.close();f.store.close();
+});
