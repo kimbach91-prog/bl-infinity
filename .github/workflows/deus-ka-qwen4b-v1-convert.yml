@@ -1,0 +1,108 @@
+name: DEUS KA Qwen3-4B LoRA GGUF Convert b11146
+on:
+  pull_request:
+    paths:
+      - "training/ka_qwen4b_v1_convert.trigger"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  convert:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout DEUS repo
+        uses: actions/checkout@v4
+
+      - name: Download KA training artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deus-ka-qwen4b-v1-transfer
+          github-token: ${{ github.token }}
+          run-id: 36137088836
+          path: input
+
+      - name: Verify training receipt before conversion
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f input/receipt.json
+          python - <<'PY'
+          import json
+          r=json.load(open("input/receipt.json",encoding="utf-8"))
+          assert r["schema"]=="deus-ka-qwen4b-v1-transfer/1", r
+          assert r["status"]=="PASS_NARROW_TRANSFER" and r["passed"] is True, r
+          assert r["data_class"]=="S0_SYNTHETIC_SANITIZED", r
+          assert r["authority_embedding"] is False, r
+          assert r["protected_source_payload"] is False, r
+          print(json.dumps({"verified":True,"adapter_sha256":r["adapter_sha256"],"mean_delta":r["mean_delta"]}))
+          PY
+
+      - name: Checkout llama.cpp b11146
+        uses: actions/checkout@v4
+        with:
+          repository: ggml-org/llama.cpp
+          ref: b11146
+          path: llama.cpp
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install pinned conversion dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --index-url https://download.pytorch.org/whl/cpu "torch==2.14.0+cpu"
+          python -m pip install "transformers==5.17.0" "safetensors==0.8.0" numpy sentencepiece requests
+
+      - name: Convert verified adapter
+        shell: bash
+        run: |
+          set -euo pipefail
+          ADAPTER_DIR="$(dirname "$(find input -name adapter_config.json -print -quit)")"
+          test -f "$ADAPTER_DIR/adapter_model.safetensors"
+          mkdir -p output
+          INPUT_SHA="$(sha256sum "$ADAPTER_DIR/adapter_model.safetensors" | awk '{print $1}')"
+          RECEIPT_SHA="$(python - <<'PY'
+          import json
+          print(json.load(open("input/receipt.json",encoding="utf-8"))["adapter_sha256"])
+          PY
+          )"
+          test "$INPUT_SHA" = "$RECEIPT_SHA"
+          python llama.cpp/convert_lora_to_gguf.py \
+            --outtype f16 \
+            --base-model-id Qwen/Qwen3-4B \
+            --outfile output/ka-qwen3-4b-v1-lora-f16.gguf \
+            "$ADAPTER_DIR"
+          test -s output/ka-qwen3-4b-v1-lora-f16.gguf
+          GGUF_SHA="$(sha256sum output/ka-qwen3-4b-v1-lora-f16.gguf | awk '{print $1}')"
+          GGUF_BYTES="$(stat -c %s output/ka-qwen3-4b-v1-lora-f16.gguf)"
+          python - <<PY
+          import json
+          from pathlib import Path
+          r={
+            "schema":"deus-ka-qwen4b-lora-gguf-conversion/1",
+            "source_run":36137088836,
+            "source_adapter_sha256":"$INPUT_SHA",
+            "converter_repo":"ggml-org/llama.cpp",
+            "converter_ref":"b11146",
+            "base_model_id":"Qwen/Qwen3-4B",
+            "outtype":"f16",
+            "gguf_sha256":"$GGUF_SHA",
+            "gguf_bytes":int("$GGUF_BYTES"),
+            "status":"PASS",
+            "promotion_boundary":"BRAIN3_GA4_EVAL_REQUIRED"
+          }
+          Path("output/conversion-receipt.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+          print(json.dumps(r,separators=(",",":")))
+          PY
+          cp input/receipt.json output/training-receipt.json
+
+      - name: Upload converted candidate
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-ka-qwen4b-v1-gguf-b11146
+          path: output
+          if-no-files-found: error
