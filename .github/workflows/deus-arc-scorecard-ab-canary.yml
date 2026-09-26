@@ -1,0 +1,96 @@
+name: DEUS ARC account-bound scorecard canary
+
+on:
+  push:
+    branches:
+      - deus/arc-scorecard-ab-20260926
+    paths:
+      - .github/workflows/deus-arc-scorecard-ab-canary.yml
+      - public_benchmark/arc-agi-3/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  account-bound-scorecard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Credential presence gate
+        id: creds
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -n "${ARC_API_KEY:-}" ]; then
+            echo "arc_present=true" >> "$GITHUB_OUTPUT"
+            echo "ARC_API_KEY_PRESENT=true" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "arc_present=false" >> "$GITHUB_OUTPUT"
+            echo "ARC_API_KEY_PRESENT=false" >> "$GITHUB_STEP_SUMMARY"
+            exit 42
+          fi
+          if [ -n "${OPENAI_API_KEY:-}" ]; then
+            echo "openai_present=true" >> "$GITHUB_OUTPUT"
+            echo "OPENAI_API_KEY_PRESENT=true" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "openai_present=false" >> "$GITHUB_OUTPUT"
+            echo "OPENAI_API_KEY_PRESENT=false" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install official ARC toolkit
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "arc-agi==0.9.9"
+
+      - name: Replay verified public ls20 route with owner ARC key
+        run: |
+          mkdir -p artifacts
+          python public_benchmark/arc-agi-3/replay_route.py --output artifacts/account_bound_result.json
+
+      - name: Build non-secret receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, os, pathlib
+          p = pathlib.Path("artifacts/account_bound_result.json")
+          data = json.loads(p.read_text())
+          card = data.get("card_id")
+          score = data.get("score")
+          if not card:
+              raise SystemExit("missing card_id")
+          receipt = {
+              "schema": "deus-arc-account-bound-scorecard-canary/1",
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "commit": os.environ["GITHUB_SHA"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "arc_api_key_present": True,
+              "openai_api_key_present": bool(os.environ.get("OPENAI_API_KEY")),
+              "card_id": card,
+              "score": score,
+              "scorecard_url": f"https://arcprize.org/scorecards/{card}",
+              "scope": "public-development-ls20-replay",
+              "competition_mode": data.get("competition_mode"),
+              "claim_boundary": "account-bound public-dev canary; not semi-private or competition equivalence",
+          }
+          pathlib.Path("artifacts/account_binding_receipt.json").write_text(
+              json.dumps(receipt, indent=2, ensure_ascii=False)+"\n"
+          )
+          print(json.dumps(receipt, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Upload receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-arc-account-bound-scorecard-canary
+          path: artifacts/
+          if-no-files-found: error
