@@ -1,0 +1,32 @@
+name: DEUS Adaptive Trust Vault Verify
+on:
+  pull_request:
+    paths:
+      - 'adaptive-security-verifier/**'
+      - '.github/workflows/deus-adaptive-trust-vault-verify.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check adaptive-security-verifier/adaptive-trust.mjs
+      - run: node --check adaptive-security-verifier/owner-vault.mjs
+      - run: node --check adaptive-security-verifier/recovery-envelope.mjs
+      - run: node --check adaptive-security-verifier/owner-hq-server.syntax.mjs
+      - run: node --test adaptive-security-verifier/adaptive-security.test.mjs
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --test adaptive-security-verifier/adaptive-security.test.mjs
