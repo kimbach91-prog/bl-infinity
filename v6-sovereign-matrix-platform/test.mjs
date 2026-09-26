@@ -59,6 +59,7 @@ test('open gates and scars are preserved, not greenwashed', () => {
   assert.ok(B.open_gates.includes('BRAIN3_LIVE_DPAPI_HELPER_CANARY'));
   assert.ok(B.scars_preserved.includes('PRIVATE_PR371_PRESTART_INFRA'));
   assert.ok(B.scars_preserved.includes('GA4_VERIFIED_FAIL_MODEL_RUNNING_FALSE'));
+  assert.ok(B.scars_preserved.includes('ROOT_CANARY_S0_PRESTART_FAILURE_RUN36262942348'));
 });
 
 test('this is a V6 evolution, not an unverified V7 promotion', () => {
