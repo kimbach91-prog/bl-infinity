@@ -1,0 +1,25 @@
+name: DEUS Matrix Power Kernel V1
+
+on:
+  push:
+    branches:
+      - deus/v6-matrix-power-kernel-v1-20260927
+    paths:
+      - 'matrix-power-kernel/**'
+      - '.github/workflows/deus-matrix-power-kernel-v1.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run invariant suite
+        run: node matrix-power-kernel/test.mjs
