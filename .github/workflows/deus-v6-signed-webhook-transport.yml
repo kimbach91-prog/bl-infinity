@@ -1,0 +1,28 @@
+name: DEUS V6 Signed Webhook Transport
+on:
+  push:
+    branches:
+      - deus/v6-signed-webhook-transport-v1-20260927
+    paths:
+      - 'platform-runtime-foundation/webhook-*'
+      - '.github/workflows/deus-v6-signed-webhook-transport.yml'
+  pull_request:
+    paths:
+      - 'platform-runtime-foundation/webhook-*'
+      - '.github/workflows/deus-v6-signed-webhook-transport.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check platform-runtime-foundation/webhook-transport.mjs
+      - run: node --test platform-runtime-foundation/webhook-transport.test.mjs
+      - name: Live synthetic signed webhook canary
+        run: node platform-runtime-foundation/webhook-live-canary.mjs
