@@ -168,6 +168,26 @@ function actionModel(history,legal){
   }
   return out;
 }
+function spatialSummary(visible,model){
+  const sigs=new Map(),vectors={};
+  for(const [action,m] of Object.entries(model)){
+    const motions=m.last_motion||[];
+    if(motions.length){
+      const vs=motions.map(x=>[Number(x.dx),Number(x.dy)]);
+      const first=vs[0];
+      if(vs.every(v=>v[0]===first[0]&&v[1]===first[1]))vectors[action]={dx:first[0],dy:first[1]};
+      for(const x of motions)sigs.set(String(x.colour)+':'+String(x.area),true);
+    }
+  }
+  const comps=(visible.components||[]).map((x,i)=>({...x,index:i,center:centre(x.bbox)}));
+  const movers=comps.filter(x=>sigs.has(String(x.colour)+':'+String(x.area))).slice(0,8);
+  const staticComps=comps.filter(x=>!sigs.has(String(x.colour)+':'+String(x.area)));
+  const anchor=movers[0]?.center||[visible.width/2,visible.height/2];
+  const dist=x=>Math.abs(x.center[0]-anchor[0])+Math.abs(x.center[1]-anchor[1]);
+  const nearby=[...staticComps].sort((a,b)=>dist(a)-dist(b)||a.area-b.area).slice(0,12).map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center,distance:dist(x)}));
+  const small=[...staticComps].filter(x=>x.area<=Math.max(32,(movers[0]?.area||8)*4)).sort((a,b)=>dist(a)-dist(b)||a.area-b.area).slice(0,8).map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center,distance:dist(x)}));
+  return {action_vectors:vectors,moving_components:movers.map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center})),nearby_static_components:nearby,small_static_candidates:small,truth_boundary:'geometric_candidates_not_known_goals'};
+}
 function noopGuard(history,legal){
   if(history.length<2)return null;
   const trans=history.filter(x=>x.kind==='transition');
@@ -247,7 +267,7 @@ function fallback(packet){
   return {turn:t,kind:'act',action:a,data:packet.available_actions[a]?{x,y}:{},repeat:1,memory:'',_fallback:true};
 }
 
-const SYSTEM=`You are the DEUS V6 ARC-AGI-3 interactive decision cortex using the verified R335/V4 generic observation/tool protocol plus generic transition-motion summaries. Control one unfamiliar interactive grid puzzle using only allowed observations and feedback; never replay a memorized route or hidden answer. Observations are losslessly compacted as rle_rows, rle_row_dictionary, or hex_rows; components and motion summaries are geometric evidence, not semantic truth. Learn action semantics from actual transitions. First complete a level, then minimize actions. Keep memory factual and state-specific: observed action->effect rules, current hypotheses, uncertainty, and next discriminating probe. Never copy fallback labels into memory. If an action becomes a visible no-op twice, choose a different legal action. If repeated transitions establish a displacement/cycle, exploit the supported relation. After a level transition preserve only general action semantics and discard level-specific coordinates. A visually identical frame is not proof of identical hidden state.
+const SYSTEM=`You are the DEUS V6 ARC-AGI-3 interactive decision cortex using the verified R335/V4 generic observation/tool protocol plus generic transition-motion summaries. Control one unfamiliar interactive grid puzzle using only allowed observations and feedback; never replay a memorized route or hidden answer. Observations are losslessly compacted as rle_rows, rle_row_dictionary, or hex_rows; components, motion summaries, and spatial_summary are geometric evidence, not semantic truth. spatial_summary lists observed action vectors, moving components, and nearby static candidates; candidates are not known goals. Learn action semantics from actual transitions. First complete a level, then minimize actions. Keep memory factual and state-specific: observed action->effect rules, current hypotheses, uncertainty, and next discriminating probe. Never copy fallback labels into memory. If an action becomes a visible no-op twice, choose a different legal action. If repeated transitions establish a displacement/cycle, exploit the supported relation. After a level transition preserve only general action semantics and discard level-specific coordinates. A visually identical frame is not proof of identical hidden state.
 Return exactly one JSON object. Fields: turn integer; kind act|tool|stop; memory short factual string. For act: action legal string, data object (empty for simple; x/y for complex), repeat 1..8 only when transition evidence supports it. For tool: name and args. Tool signatures: canonical_glyph({cells:[[row,col],...]}); relate({relation:[{input:[tokens],output:[tokens]}],stream:[tokens]}); compose_relations({first:[...],second:[...],stream:[tokens]}); inverse_relation({relation:[...],target:[tokens]}); cyclic_plan({current:int,target:int,period:int,forward:string,backward?:string}); shortest_path({edges:[[state,action,next_state],...],start:state,goal:state}); discriminating_probe({predictions:{ACTION:[predicted_outcome_per_hypothesis,...]}}). Tools are conditional calculators, not proof their premises are true. Do not fabricate observations. No markdown.`;
 
 async function main(){
@@ -259,8 +279,8 @@ async function main(){
     fr=await arc('/api/cmd/RESET',{method:'POST',body:JSON.stringify({card_id:card,game_id:game.game_id})});
     while(calls<MAX_CALLS&&actions<MAX_ACTIONS&&!['WIN','GAME_OVER'].includes(String(fr.state))){
       const [visible,g]=describe(fr.frame),legalNums=fr.available_actions||[],legal=legalNums.map(n=>'ACTION'+Number(n)),types=Object.fromEntries(legalNums.map(n=>['ACTION'+Number(n),Number(n)>=6]));
-      const guard=noopGuard(history,legal);
-      const packet={turn:calls,observation:visible,progress:{state:String(fr.state),levels_completed:Number(fr.levels_completed||0)},available_actions:types,memory,recent_events:history.slice(-5),action_model:actionModel(history,legal),anti_loop:guard,feedback,remaining_actions:MAX_ACTIONS-actions,remaining_calls:MAX_CALLS-calls};
+      const guard=noopGuard(history,legal),amodel=actionModel(history,legal);
+      const packet={turn:calls,observation:visible,progress:{state:String(fr.state),levels_completed:Number(fr.levels_completed||0)},available_actions:types,memory,recent_events:history.slice(-5),action_model:amodel,spatial_summary:spatialSummary(visible,amodel),anti_loop:guard,feedback,remaining_actions:MAX_ACTIONS-actions,remaining_calls:MAX_CALLS-calls};
       const prompt=SYSTEM+'\nPACKET='+JSON.stringify(packet);
       const inf=await infer(prompt,calls);receipts.push(inf);const turn=calls;calls++;
       let msg,wasFallback=false;try{msg=parseDecision(inf.text,turn,legal,types,visible.width,visible.height);feedback=null;}catch(e){rejections++;feedback={rejected:String(e.message).slice(0,240)};msg=fallback(packet);fallbacks++;wasFallback=true;}
