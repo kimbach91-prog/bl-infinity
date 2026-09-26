@@ -1,0 +1,53 @@
+# DEUS ARC-AGI-3 matched GPT-6 Astra profiles
+# Source harness pinned at arcprize/arc-agi-3-benchmarking@4ca00e607e3364a501fcbf7d1b7537dd2729cec3
+# Same model, same effort, same context/action envelope. Only runtime state differs.
+
+- id: "deus-openai-gpt-6-astra-high-standard"
+  agent:
+    MAX_ACTIONS_BASELINE_MULTIPLIER: 5.0
+    MAX_CONTEXT_LENGTH: 175_000
+  runtime:
+    sdk: "openai-python"
+    api: "responses"
+    state: "manual_rolling"
+  client:
+    base_url: "https://api.openai.com/v1"
+    api_key_env: "OPENAI_API_KEY"
+  request:
+    model: "gpt-6-astra"
+    max_output_tokens: 128_000
+    store: false
+    reasoning:
+      effort: "high"
+      summary: "auto"
+  pricing:
+    input: 10.00
+    output: 50.00
+
+- id: "deus-openai-gpt-6-astra-high-provider-adapter"
+  agent:
+    MAX_ACTIONS_BASELINE_MULTIPLIER: 5.0
+    MAX_CONTEXT_LENGTH: 175_000
+  runtime:
+    adapter_id: "openai.responses.v1"
+    sdk: "openai-python"
+    api: "responses"
+    state: "continuous_conversation"
+  client:
+    base_url: "https://api.openai.com/v1"
+    api_key_env: "OPENAI_API_KEY"
+  request:
+    model: "gpt-6-astra"
+    max_output_tokens: 128_000
+    store: false
+    include: ["reasoning.encrypted_content"]
+    context_management:
+      - type: "compaction"
+        compact_threshold: 175_000
+    reasoning:
+      effort: "high"
+      context: "auto"
+      summary: "auto"
+  pricing:
+    input: 10.00
+    output: 50.00
