@@ -69,18 +69,31 @@ async function readBrain3(row){
   return Object.fromEntries(HEAD.map((h,i)=>[h,v[i]||'']));
 }
 async function infer(prompt,turn){
-  const x=await appendBrain3(prompt,turn),end=Date.now()+JOB_QUEUE_WAIT_MS;
-  let rec=null;
-  while(Date.now()<end){
-    rec=await readBrain3(x.row);
-    if(['SUCCEEDED','FAILED','REJECTED','EXPIRED','CANCELLED'].includes(rec.STATE)){
-      if(rec.STATE!=='SUCCEEDED'||(rec.EXIT_CODE&&String(rec.EXIT_CODE)!=='0'))throw new Error('Brain3 '+x.jid+' '+rec.STATE+' '+rec.STDERR_PREVIEW.slice(0,400));
-      const p=JSON.parse(rec.STDOUT_PREVIEW||'{}');
-      return {text:String(p.content||''),job_id:x.jid,receipt_id:rec.RECEIPT_ID||null,latency_s:p.latency_s??null,usage:p.usage??null,model:p.model??null};
+  const deadline=Date.now()+JOB_QUEUE_WAIT_MS;
+  const attempts=[];
+  for(let retry=0;retry<3 && Date.now()<deadline;retry++){
+    const x=await appendBrain3(prompt,turn);attempts.push(x.jid);
+    let rec=null;
+    while(Date.now()<deadline){
+      rec=await readBrain3(x.row);
+      if(['SUCCEEDED','FAILED','REJECTED','EXPIRED','CANCELLED'].includes(rec.STATE)){
+        if(rec.STATE==='SUCCEEDED'&&(!rec.EXIT_CODE||String(rec.EXIT_CODE)==='0')){
+          const p=JSON.parse(rec.STDOUT_PREVIEW||'{}');
+          return {text:String(p.content||''),job_id:x.jid,receipt_id:rec.RECEIPT_ID||null,latency_s:p.latency_s??null,usage:p.usage??null,model:p.model??null,retry_count:retry,attempt_jobs:attempts};
+        }
+        throw new Error('Brain3 '+x.jid+' '+rec.STATE+' '+rec.STDERR_PREVIEW.slice(0,400));
+      }
+      if(rec.STATE==='RUNNING'){
+        const lease=Date.parse(String(rec.LEASE_UNTIL_UTC||''));
+        if(Number.isFinite(lease)&&Date.now()>lease+30000){
+          console.log(JSON.stringify({event:'DEUS_ARC_STALE_LEASE_RETRY',turn,retry,job_id:x.jid,lease_until:rec.LEASE_UNTIL_UTC}));
+          break;
+        }
+      }
+      await sleep(15000);
     }
-    await sleep(15000);
   }
-  throw new Error('Brain3 queue timeout '+x.jid+' last='+(rec?.STATE||'UNKNOWN'));
+  throw new Error('Brain3 queue timeout/retry exhausted turn='+turn+' attempts='+attempts.join(','));
 }
 
 const jar=new Map();
