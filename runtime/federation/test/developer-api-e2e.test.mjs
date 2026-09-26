@@ -104,7 +104,7 @@ pgtest('versioned developer API enforces auth tenant binding and idempotency con
   assert.equal(rows.rowCount,1);
   assert.equal(rows.rows[0].id,'dev-job-1');
   assert.equal(rows.rows[0].tenant_id,'tenant-a');
-  assert.equal(rows.rows[0].idempotency_key,'idem-job-0001');
+  assert.equal(rows.rows[0].idempotency_key,'tenant:tenant-a:idem-job-0001');
 });
 
 async function api(base,method,path,token,body,headers={}){
