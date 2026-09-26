@@ -1,0 +1,28 @@
+name: DEUS V6 Developer Platform Contract
+on:
+  push:
+    branches:
+      - deus/v6-developer-platform-contract-v1-20260927
+    paths:
+      - 'developer-platform-contract/**'
+      - '.github/workflows/deus-v6-developer-platform-contract.yml'
+  pull_request:
+    paths:
+      - 'developer-platform-contract/**'
+      - '.github/workflows/deus-v6-developer-platform-contract.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check developer-platform-contract/index.mjs
+      - name: Developer contract invariants
+        run: node --test developer-platform-contract/test.mjs
