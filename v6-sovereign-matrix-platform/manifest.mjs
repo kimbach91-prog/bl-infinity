@@ -89,7 +89,8 @@ export const V6_SOVEREIGN_MATRIX_PLATFORM_BASELINE = Object.freeze({
     'PRIVATE_PR370_PRESTART_INFRA',
     'PRIVATE_PR371_PRESTART_INFRA',
     'GA4_VERIFIED_FAIL_MODEL_RUNNING_FALSE',
-    'NIGHT_FORGE_RESTORE_UNKNOWN_NOT_LOCATED'
+    'NIGHT_FORGE_RESTORE_UNKNOWN_NOT_LOCATED',
+    'ROOT_CANARY_S0_PRESTART_FAILURE_RUN36262942348'
   ]),
   truth_order: Object.freeze([
     'VERIFIED_RUNTIME_RECEIPT',
@@ -114,6 +115,7 @@ export function assertBaselineInvariant(b = V6_SOVEREIGN_MATRIX_PLATFORM_BASELIN
   if (b.recovery.private_owner_hq_runtime_verified !== false || b.recovery.brain3_live_dpapi_verified !== false) throw new Error('OPEN_RUNTIME_GATE_GREENWASHED');
   if (!b.open_gates.includes('BRAIN3_LIVE_DPAPI_HELPER_CANARY')) throw new Error('BRAIN3_GATE_MISSING');
   if (!b.scars_preserved.includes('GA4_VERIFIED_FAIL_MODEL_RUNNING_FALSE')) throw new Error('SCAR_ERASED');
+  if (!b.scars_preserved.includes('ROOT_CANARY_S0_PRESTART_FAILURE_RUN36262942348')) throw new Error('ROOT_CANARY_SCAR_ERASED');
   if (b.truth_order[0] !== 'VERIFIED_RUNTIME_RECEIPT') throw new Error('TRUTH_ORDER_INVALID');
   return true;
 }
