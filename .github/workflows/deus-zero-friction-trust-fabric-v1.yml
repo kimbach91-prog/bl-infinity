@@ -1,0 +1,28 @@
+name: DEUS Zero Friction Trust Fabric V1
+on:
+  push:
+    branches:
+      - deus/v6-zero-friction-trust-fabric-v1-20260927
+    paths:
+      - 'zero-friction-trust-fabric/**'
+      - '.github/workflows/deus-zero-friction-trust-fabric-v1.yml'
+  pull_request:
+    paths:
+      - 'zero-friction-trust-fabric/**'
+      - '.github/workflows/deus-zero-friction-trust-fabric-v1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check zero-friction-trust-fabric/zero-friction-trust-fabric.mjs
+      - name: Trust invariants
+        run: node --test zero-friction-trust-fabric/zero-friction-trust-fabric.test.mjs
