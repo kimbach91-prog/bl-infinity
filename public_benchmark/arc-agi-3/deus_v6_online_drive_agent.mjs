@@ -94,29 +94,46 @@ function grid(frame){
 }
 function gridText(g){const A='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';return g.map(r=>r.map(v=>A[Number(v)]??'?').join('')).join('\n');}
 function dcount(a,b){if(!a?.length||!b?.length||a.length!==b.length||a[0].length!==b[0].length)return null;let n=0;for(let y=0;y<a.length;y++)for(let x=0;x<a[y].length;x++)if(a[y][x]!==b[y][x])n++;return n;}
-function decision(text,legal,w,h,turn){
+function stagnationGuard(history,legal){
+  if(history.length<6)return null;
+  const tail=history.slice(-6);
+  const blocked=tail[0].action;
+  const stagnant=tail.every(x=>x.action===blocked&&Number(x.levels_after||0)===Number(x.levels_before||0));
+  if(!stagnant)return null;
+  const recent=history.slice(-18),counts=Object.fromEntries(legal.map(a=>[a,0]));
+  for(const x of recent)if(counts[x.action]!==undefined)counts[x.action]++;
+  const candidates=legal.filter(a=>a!==blocked).sort((a,b)=>(counts[a]-counts[b])||a.localeCompare(b));
+  if(!candidates.length)return null;
+  return {blocked,force:candidates[0],reason:'six_consecutive_same_action_without_level_gain',counts};
+}
+function decision(text,legal,w,h,turn,guard){
   let o=null;try{o=JSON.parse(text.trim())}catch{const m=text.match(/\{[\s\S]*\}/);if(m)try{o=JSON.parse(m[0])}catch{}}
   if(o&&legal.includes(String(o.action||'').toUpperCase())){
-    const a=String(o.action).toUpperCase();const rep=Math.max(1,Math.min(8,Number(o.repeat||1)||1));
-    return {action:a,repeat:rep,memory:String(o.memory||'').slice(0,900),fallback:false};
+    let a=String(o.action).toUpperCase();let override=false;
+    if(guard&&a===guard.blocked){a=guard.force;override=true;}
+    const rep=override?1:Math.max(1,Math.min(8,Number(o.repeat||1)||1));
+    return {action:a,repeat:rep,memory:String(o.memory||'').slice(0,900),fallback:false,anti_loop_override:override};
   }
-  return {action:legal[turn%legal.length],repeat:1,memory:'fallback systematic action probe',fallback:true};
+  const a=guard?.force||legal[turn%legal.length];
+  return {action:a,repeat:1,memory:'fallback systematic action probe',fallback:true,anti_loop_override:Boolean(guard)};
 }
 
 async function main(){
   if(!ARC_KEY||!SA.private_key)throw new Error('missing ARC or service-account credential');
   const games=await arc('/api/games'); const game=games.find(x=>String(x.game_id||'').startsWith(GAME_PREFIX)); if(!game)throw new Error('game missing '+GAME_PREFIX);
-  const opened=await arc('/api/scorecard/open',{method:'POST',body:JSON.stringify({tags:['deus-v6','fresh-agent','brain3-qwen-strong','owner-bound','no-route-replay'],source_url:SOURCE_URL,opaque:{system:'DEUS V6 fresh agent',cognition:'Brain3 Qwen3-4B strong via receipt-gated CHAT_V1',capability_score:true,semi_private:false}})});
-  const card=opened.card_id; let fr=null;const history=[],receipts=[];let memory='',fallbacks=0,actions=0;
+  const opened=await arc('/api/scorecard/open',{method:'POST',body:JSON.stringify({tags:['deus-v6','fresh-agent','brain3-qwen-strong','owner-bound','no-route-replay','anti-loop-r4'],source_url:SOURCE_URL,opaque:{system:'DEUS V6 fresh agent',cognition:'Brain3 Qwen3-4B strong via receipt-gated CHAT_V1',capability_score:true,semi_private:false}})});
+  const card=opened.card_id; let fr=null;const history=[],receipts=[];let memory='',fallbacks=0,actions=0,antiLoopOverrides=0;
   try{
     fr=await arc('/api/cmd/RESET',{method:'POST',body:JSON.stringify({card_id:card,game_id:game.game_id})});
     for(let turn=0;turn<MAX_TURNS;turn++){
       if(['WIN','GAME_OVER'].includes(String(fr.state)))break;
       const g=grid(fr.frame),h=g.length,w=g[0]?.length||1;const legal=(fr.available_actions||[]).map(n=>'ACTION'+Number(n));
       if(!legal.length)break;
-      const prompt='You are the DEUS V6 ARC-AGI-3 decision cortex in a fresh live public-development run. Do not replay a memorized route and do not copy placeholder text. Infer action semantics only from the visible grid and the actual transition history. First identify what prior actions changed, then choose the next action that most increases evidence or progress. Complete a level before optimizing action count. Output one raw JSON object with exactly three keys: action, repeat, memory. action MUST equal one legal action string; repeat MUST be an integer 1..8 and use values above 1 only when repeated behavior is supported by observed transitions; memory MUST be a concrete, state-specific hypothesis mentioning observed movement/change, never generic filler. No markdown, no explanation outside JSON.\n'+
-        'turn='+turn+' state='+fr.state+' levels_completed='+Number(fr.levels_completed||0)+' size='+w+'x'+h+'\nlegal='+JSON.stringify(legal)+'\nmemory='+memory+'\nrecent='+JSON.stringify(history.slice(-4))+'\ngrid_rows_top_to_bottom:\n'+gridText(g);
-      const inf=await infer(prompt,turn);receipts.push(inf);const d=decision(inf.text,legal,w,h,turn);memory=d.memory;fallbacks+=d.fallback?1:0;
+      const guard=stagnationGuard(history,legal);
+      const antiLoop=guard?('ANTI_LOOP: '+guard.blocked+' has been repeated without any level gain. Do not choose it this turn; prefer '+guard.force+' or another less-used legal action.'): 'ANTI_LOOP: none.';
+      const prompt='You are the DEUS V6 ARC-AGI-3 decision cortex in a fresh live public-development run. Do not replay a memorized route and do not copy placeholder text. Infer action semantics only from the visible grid and the actual transition history. First identify what prior actions changed, then choose the next action that most increases evidence or progress. Complete a level before optimizing action count. If recent actions repeat without level gain, deliberately test a different legal action. Output one raw JSON object with exactly three keys: action, repeat, memory. action MUST equal one legal action string; repeat MUST be an integer 1..8 and use values above 1 only when repeated behavior is supported by observed transitions; memory MUST be a concrete, state-specific hypothesis mentioning observed movement/change, never generic filler. No markdown, no explanation outside JSON.\n'+
+        'turn='+turn+' state='+fr.state+' levels_completed='+Number(fr.levels_completed||0)+' size='+w+'x'+h+'\nlegal='+JSON.stringify(legal)+'\n'+antiLoop+'\nmemory='+memory+'\nrecent='+JSON.stringify(history.slice(-8))+'\ngrid_rows_top_to_bottom:\n'+gridText(g);
+      const inf=await infer(prompt,turn);receipts.push(inf);const d=decision(inf.text,legal,w,h,turn,guard);memory=d.memory;fallbacks+=d.fallback?1:0;antiLoopOverrides+=d.anti_loop_override?1:0;
       for(let k=0;k<d.repeat;k++){
         const before=grid(fr.frame),bl=Number(fr.levels_completed||0);
         fr=await arc('/api/cmd/'+d.action,{method:'POST',body:JSON.stringify({game_id:game.game_id,guid:fr.guid,reasoning:JSON.stringify({deus_turn:turn,brain3_receipt:inf.receipt_id||null})})});
@@ -126,10 +143,10 @@ async function main(){
       }
     }
     const cl=await arc('/api/scorecard/close',{method:'POST',body:JSON.stringify({card_id:card})});
-    return {schema:'deus-arc3-v6-online-fresh-agent/2',state:'VERIFIED_DONE',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,game_id:game.game_id,score:cl.score,levels_completed:cl.total_levels_completed,total_levels:cl.total_levels,total_actions:cl.total_actions,local_actions:actions,brain3_calls:receipts.length,fallbacks,final_state:fr?.state||null,route_replay:false,semi_private:false,model_sha256:'7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5',receipts:receipts.map(x=>x.receipt_id).filter(Boolean),history_tail:history.slice(-8)};
+    return {schema:'deus-arc3-v6-online-fresh-agent/3',state:'VERIFIED_DONE',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,game_id:game.game_id,score:cl.score,levels_completed:cl.total_levels_completed,total_levels:cl.total_levels,total_actions:cl.total_actions,local_actions:actions,brain3_calls:receipts.length,fallbacks,anti_loop_overrides:antiLoopOverrides,final_state:fr?.state||null,route_replay:false,semi_private:false,model_sha256:'7485fe6f11af29433bc51cab58009521f205840f5b4ae3a32fa7f92e8534fdf5',receipts:receipts.map(x=>x.receipt_id).filter(Boolean),history_tail:history.slice(-8)};
   }catch(e){
     let cl=null;try{cl=await arc('/api/scorecard/close',{method:'POST',body:JSON.stringify({card_id:card})})}catch{}
-    return {schema:'deus-arc3-v6-online-fresh-agent/2',state:'FAILED',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,error_type:e.constructor?.name||'Error',error:String(e.message||e).slice(0,1000),brain3_calls:receipts.length,local_actions:actions,fallbacks,closed_score:cl?.score??null,closed_actions:cl?.total_actions??null,history_tail:history.slice(-5)};
+    return {schema:'deus-arc3-v6-online-fresh-agent/3',state:'FAILED',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,error_type:e.constructor?.name||'Error',error:String(e.message||e).slice(0,1000),brain3_calls:receipts.length,local_actions:actions,fallbacks,anti_loop_overrides:antiLoopOverrides,closed_score:cl?.score??null,closed_actions:cl?.total_actions??null,history_tail:history.slice(-5)};
   }
 }
 main().then(r=>{finalResult=r;console.log('DEUS_ARC3_V6_RESULT='+JSON.stringify(r));}).catch(e=>{finalResult={state:'FAILED',error:String(e)};console.error('DEUS_ARC3_V6_FATAL='+JSON.stringify(finalResult));});
