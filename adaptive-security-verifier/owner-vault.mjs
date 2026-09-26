@@ -10,7 +10,7 @@ function collect(command,args,input,{timeoutMs=10000,maxBytes=262144}={}){
     const t=setTimeout(()=>{try{p.kill()}catch{};finish(new Error('VAULT_HELPER_TIMEOUT'));},timeoutMs);
     p.stdout.on('data',c=>{n+=c.length;if(n>maxBytes)return finish(new Error('VAULT_HELPER_OUTPUT_LIMIT'));out.push(c)});
     p.stderr.on('data',c=>err.push(c));
-    p.on('error',e=>finish(e));p.on('close',code=>code===0?finish(null,Buffer.concat(out).toString('utf8').trim()):finish(new Error('VAULT_HELPER_FAILED_'+code+':'+Buffer.concat(err).toString('utf8').slice(0,200)));
+    p.on('error',e=>finish(e));p.on('close',code=>code===0?finish(null,Buffer.concat(out).toString('utf8').trim()):finish(new Error('VAULT_HELPER_FAILED_'+code+':'+Buffer.concat(err).toString('utf8').slice(0,200))));
     p.stdin.end(input);
   });
 }
