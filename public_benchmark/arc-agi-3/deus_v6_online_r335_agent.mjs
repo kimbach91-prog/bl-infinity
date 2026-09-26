@@ -199,9 +199,26 @@ function executeTool(name,args){
 }
 const TOOL_NAMES=new Set(['canonical_glyph','relate','compose_relations','inverse_relation','cyclic_plan','shortest_path','discriminating_probe']);
 
+function firstJSONObject(text){
+  const start=text.indexOf('{');if(start<0)throw new Error('JSON_OBJECT_REQUIRED');
+  let depth=0,inString=false,esc=false;
+  for(let i=start;i<text.length;i++){
+    const ch=text[i];
+    if(inString){
+      if(esc){esc=false;continue;}
+      if(ch==='\\'){esc=true;continue;}
+      if(ch==='"')inString=false;
+      continue;
+    }
+    if(ch==='"'){inString=true;continue;}
+    if(ch==='{')depth++;
+    else if(ch==='}'){depth--;if(depth===0)return text.slice(start,i+1);}
+  }
+  throw new Error('JSON_OBJECT_UNCLOSED');
+}
 function parseDecision(raw,turn,legal,types,w,h){
   let text=String(raw||'').trim();if(text.startsWith('~~~')||text.startsWith('```')){const ls=text.split('\n');text=ls.slice(1,-1).join('\n').trim();}
-  let o;try{o=JSON.parse(text)}catch{const a=text.indexOf('{'),b=text.lastIndexOf('}');if(a<0||b<=a)throw new Error('JSON_OBJECT_REQUIRED');o=JSON.parse(text.slice(a,b+1));}
+  let o;try{o=JSON.parse(text)}catch{o=JSON.parse(firstJSONObject(text));}
   if(o.turn===undefined)o.turn=turn;if(!Number.isInteger(o.turn)||o.turn!==turn)throw new Error('TURN_BINDING');
   let memory=o.memory??'';memory=String(memory).slice(0,1200);
   let kind=o.kind;if(!['act','tool','stop'].includes(kind)){if(o.action)kind='act';else if(o.name&&o.args)kind='tool';else if(o.stop===true)kind='stop';else throw new Error('DECISION_KIND');}
