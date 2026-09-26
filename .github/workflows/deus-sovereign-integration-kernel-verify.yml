@@ -6,6 +6,10 @@ on:
     paths:
       - 'sovereign-integration-verifier/**'
       - '.github/workflows/deus-sovereign-integration-kernel-verify.yml'
+  pull_request:
+    paths:
+      - 'sovereign-integration-verifier/**'
+      - '.github/workflows/deus-sovereign-integration-kernel-verify.yml'
   workflow_dispatch:
 permissions:
   contents: read
