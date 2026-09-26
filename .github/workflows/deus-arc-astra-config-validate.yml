@@ -1,0 +1,78 @@
+name: DEUS ARC Astra profile validation
+
+on:
+  push:
+    branches:
+      - deus/arc-scorecard-ab-20260926
+    paths:
+      - public_benchmark/arc-agi-3/astra_matched_profiles.yaml
+      - .github/workflows/deus-arc-astra-config-validate.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-astra-profiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v6
+
+      - name: Clone pinned official ARC harness
+        run: |
+          git clone https://github.com/arcprize/arc-agi-3-benchmarking.git /tmp/arc3
+          cd /tmp/arc3
+          git checkout 4ca00e607e3364a501fcbf7d1b7537dd2729cec3
+          test "$(git rev-parse HEAD)" = "4ca00e607e3364a501fcbf7d1b7537dd2729cec3"
+
+      - name: Inject DEUS Astra profiles
+        run: |
+          cat "$GITHUB_WORKSPACE/public_benchmark/arc-agi-3/astra_matched_profiles.yaml" >> /tmp/arc3/benchmarking/model_configs.yaml
+
+      - name: Install official harness dependencies
+        working-directory: /tmp/arc3
+        run: uv sync
+
+      - name: Validate exact config parser
+        working-directory: /tmp/arc3
+        run: |
+          uv run python - <<'PY'
+          import json
+          from benchmarking.model_config import get_model_config
+
+          ids = [
+              "deus-openai-gpt-6-astra-high-standard",
+              "deus-openai-gpt-6-astra-high-provider-adapter",
+          ]
+          rows = [get_model_config(i) for i in ids]
+          a, b = rows
+          checks = {
+              "same_model": a["request"]["model"] == b["request"]["model"] == "gpt-6-astra",
+              "same_effort": a["request"]["reasoning"]["effort"] == b["request"]["reasoning"]["effort"] == "high",
+              "same_max_output": a["request"]["max_output_tokens"] == b["request"]["max_output_tokens"] == 128000,
+              "same_context": a["agent"]["MAX_CONTEXT_LENGTH"] == b["agent"]["MAX_CONTEXT_LENGTH"] == 175000,
+              "same_action_multiplier": a["agent"]["MAX_ACTIONS_BASELINE_MULTIPLIER"] == b["agent"]["MAX_ACTIONS_BASELINE_MULTIPLIER"] == 5.0,
+              "standard_manual_rolling": a["runtime"]["state"] == "manual_rolling",
+              "adapter_continuous": b["runtime"]["state"] == "continuous_conversation",
+              "adapter_id": b["runtime"]["adapter_id"] == "openai.responses.v1",
+              "encrypted_reasoning": "reasoning.encrypted_content" in b["request"]["include"],
+              "compaction_175k": b["request"]["context_management"][0]["compact_threshold"] == 175000,
+          }
+          if not all(checks.values()):
+              raise SystemExit(json.dumps({"pass": False, "checks": checks}, sort_keys=True))
+          print(json.dumps({
+              "schema": "deus-arc-astra-profile-validation/1",
+              "pass": True,
+              "harness_commit": "4ca00e607e3364a501fcbf7d1b7537dd2729cec3",
+              "profiles": ids,
+              "checks": checks,
+          }, sort_keys=True))
+          PY
