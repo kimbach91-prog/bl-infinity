@@ -8,6 +8,7 @@ const SA=JSON.parse(process.env.DEUS_GOOGLE_SERVICE_ACCOUNT_JSON||'{}');
 const GAME_PREFIX=process.env.DEUS_ARC_GAME||'ls20';
 const MAX_TURNS=Number(process.env.DEUS_ARC_MAX_TURNS||24);
 const JOB_TIMEOUT_MS=Number(process.env.DEUS_ARC_JOB_TIMEOUT_MS||120000);
+const JOB_QUEUE_WAIT_MS=Number(process.env.DEUS_ARC_JOB_QUEUE_WAIT_MS||900000);
 const PORT=Number(process.env.PORT||8080);
 const SOURCE_URL='https://github.com/kimbach91-prog/bl-infinity/tree/deus/arc-scorecard-ab-20260926/public_benchmark/arc-agi-3';
 
@@ -51,7 +52,7 @@ function iso(ms=Date.now()){return new Date(ms).toISOString();}
 async function appendBrain3(prompt,turn){
   const jid='JOB-DEUS-ARC3-V6-ONLINE-'+Date.now()+'-'+crypto.randomBytes(4).toString('hex').toUpperCase();
   const row=[jid,'workstation-win-001','QUEUED',iso(),'',
-    iso(Date.now()+Math.max(180000,JOB_TIMEOUT_MS+60000)),'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83',
+    iso(Date.now()+Math.max(180000,JOB_QUEUE_WAIT_MS+60000)),'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83',
     'NATIVE_INFERENCE_SCOPED','CHAT_V1',JSON.stringify([prompt]),'arc3-v6-online-fresh-agent','{}',
     String(Math.ceil(JOB_TIMEOUT_MS/1000)),'65536','','','','','','','','','','','','','0',
     'DEUS V6 fresh ARC ONLINE decision turn '+turn+'; owner scorecard; no route replay.'];
@@ -67,7 +68,7 @@ async function readBrain3(row){
 }
 const sleep=(ms)=>new Promise(r=>setTimeout(r,ms));
 async function infer(prompt,turn){
-  const x=await appendBrain3(prompt,turn); const end=Date.now()+JOB_TIMEOUT_MS+45000;
+  const x=await appendBrain3(prompt,turn); const end=Date.now()+JOB_QUEUE_WAIT_MS;
   let rec=null;
   while(Date.now()<end){
     rec=await readBrain3(x.row);
