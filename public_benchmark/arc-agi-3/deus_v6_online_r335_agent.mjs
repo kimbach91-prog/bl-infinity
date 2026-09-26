@@ -55,8 +55,8 @@ const HEAD=['JOB_ID','TARGET_NODE','STATE','CREATED_AT_UTC','NOT_BEFORE_UTC','EX
 const iso=(ms=Date.now())=>new Date(ms).toISOString();
 
 async function appendBrain3(prompt,turn){
-  const jid='JOB-DEUS-ARC3-R7-R335M-'+Date.now()+'-'+crypto.randomBytes(4).toString('hex').toUpperCase();
-  const row=[jid,'workstation-win-001','QUEUED',iso(),'',iso(Date.now()+Math.max(180000,JOB_QUEUE_WAIT_MS+60000)),'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83','NATIVE_INFERENCE_SCOPED','CHAT_V1',JSON.stringify([prompt]),'arc3-v6-online-r335','{}',String(Math.ceil(JOB_TIMEOUT_MS/1000)),'65536','','','','','','','','','','','','','0','DEUS V6 R7 R335+motion-derived generic online decision turn '+turn+'; no route replay.'];
+  const jid='JOB-DEUS-ARC3-R9-R335B-'+Date.now()+'-'+crypto.randomBytes(4).toString('hex').toUpperCase();
+  const row=[jid,'workstation-win-001','QUEUED',iso(),'',iso(Date.now()+Math.max(180000,JOB_QUEUE_WAIT_MS+60000)),'AUTH-GMAIL-REMOTE-EXEC-1a0ce128e8726a83','NATIVE_INFERENCE_SCOPED','CHAT_V1',JSON.stringify([prompt]),'arc3-v6-online-r335','{}',String(Math.ceil(JOB_TIMEOUT_MS/1000)),'65536','','','','','','','','','','','','','0','DEUS V6 R9 bounded R335+motion generic online decision turn '+turn+'; no route replay.'];
   const range=encodeURIComponent('84_WORKSTATION_REMOTE_JOBS!A:AB');
   const j=await gfetch('/values/'+range+':append?valueInputOption=RAW&insertDataOption=INSERT_ROWS',{method:'POST',body:JSON.stringify({values:[row]})});
   const m=String(j.updates?.updatedRange||'').match(/!A?(\d+):/);if(!m)throw new Error('append range');
@@ -173,20 +173,36 @@ function spatialSummary(visible,model){
   for(const [action,m] of Object.entries(model)){
     const motions=m.last_motion||[];
     if(motions.length){
-      const vs=motions.map(x=>[Number(x.dx),Number(x.dy)]);
-      const first=vs[0];
+      const vs=motions.map(x=>[Number(x.dx),Number(x.dy)]),first=vs[0];
       if(vs.every(v=>v[0]===first[0]&&v[1]===first[1]))vectors[action]={dx:first[0],dy:first[1]};
       for(const x of motions)sigs.set(String(x.colour)+':'+String(x.area),true);
     }
   }
   const comps=(visible.components||[]).map((x,i)=>({...x,index:i,center:centre(x.bbox)}));
-  const movers=comps.filter(x=>sigs.has(String(x.colour)+':'+String(x.area))).slice(0,8);
+  const movers=comps.filter(x=>sigs.has(String(x.colour)+':'+String(x.area))).slice(0,4);
   const staticComps=comps.filter(x=>!sigs.has(String(x.colour)+':'+String(x.area)));
   const anchor=movers[0]?.center||[visible.width/2,visible.height/2];
   const dist=x=>Math.abs(x.center[0]-anchor[0])+Math.abs(x.center[1]-anchor[1]);
-  const nearby=[...staticComps].sort((a,b)=>dist(a)-dist(b)||a.area-b.area).slice(0,12).map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center,distance:dist(x)}));
-  const small=[...staticComps].filter(x=>x.area<=Math.max(32,(movers[0]?.area||8)*4)).sort((a,b)=>dist(a)-dist(b)||a.area-b.area).slice(0,8).map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center,distance:dist(x)}));
-  return {action_vectors:vectors,moving_components:movers.map(x=>({colour:x.colour,area:x.area,bbox:x.bbox,center:x.center})),nearby_static_components:nearby,small_static_candidates:small,truth_boundary:'geometric_candidates_not_known_goals'};
+  const nearby=[...staticComps].sort((a,b)=>dist(a)-dist(b)||a.area-b.area).slice(0,6).map(x=>({c:x.colour,a:x.area,b:x.bbox,d:dist(x)}));
+  return {vectors,movers:movers.map(x=>({c:x.colour,a:x.area,b:x.bbox})),nearby,truth:'candidates_not_goals'};
+}
+function coarseGrid(g,blocks=16){
+  const h=g.length,w=g[0]?.length||0;if(!h||!w)return [];
+  const bh=Math.max(1,Math.ceil(h/blocks)),bw=Math.max(1,Math.ceil(w/blocks)),A='0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const rows=[];
+  for(let y0=0;y0<h;y0+=bh){
+    let s='';
+    for(let x0=0;x0<w;x0+=bw){
+      const cnt=new Map();
+      for(let y=y0;y<Math.min(h,y0+bh);y++)for(let x=x0;x<Math.min(w,x0+bw);x++){const v=g[y][x];cnt.set(v,(cnt.get(v)||0)+1);}
+      const v=[...cnt.entries()].sort((a,b)=>b[1]-a[1])[0]?.[0]??0;s+=A[v]??'?';
+    }
+    rows.push(s);
+  }
+  return rows;
+}
+function compactRecent(history){
+  return history.filter(x=>x.kind==='transition').slice(-5).map(x=>({a:x.action,n:x.changed_pixels,m:(x.motion||[]).slice(0,3),l:x.levels_completed,s:x.state}));
 }
 function noopGuard(history,legal){
   if(history.length<2)return null;
@@ -267,21 +283,29 @@ function fallback(packet){
   return {turn:t,kind:'act',action:a,data:packet.available_actions[a]?{x,y}:{},repeat:1,memory:'',_fallback:true};
 }
 
-const SYSTEM=`You are the DEUS V6 ARC-AGI-3 interactive decision cortex using the verified R335/V4 generic observation/tool protocol plus generic transition-motion summaries. Control one unfamiliar interactive grid puzzle using only allowed observations and feedback; never replay a memorized route or hidden answer. Observations are losslessly compacted as rle_rows, rle_row_dictionary, or hex_rows; components, motion summaries, and spatial_summary are geometric evidence, not semantic truth. spatial_summary lists observed action vectors, moving components, and nearby static candidates; candidates are not known goals. Learn action semantics from actual transitions. First complete a level, then minimize actions. Keep memory factual and state-specific: observed action->effect rules, current hypotheses, uncertainty, and next discriminating probe. Never copy fallback labels into memory. If an action becomes a visible no-op twice, choose a different legal action. If repeated transitions establish a displacement/cycle, exploit the supported relation. After a level transition preserve only general action semantics and discard level-specific coordinates. A visually identical frame is not proof of identical hidden state.
-Return exactly one JSON object. Fields: turn integer; kind act|tool|stop; memory short factual string. For act: action legal string, data object (empty for simple; x/y for complex), repeat 1..8 only when transition evidence supports it. For tool: name and args. Tool signatures: canonical_glyph({cells:[[row,col],...]}); relate({relation:[{input:[tokens],output:[tokens]}],stream:[tokens]}); compose_relations({first:[...],second:[...],stream:[tokens]}); inverse_relation({relation:[...],target:[tokens]}); cyclic_plan({current:int,target:int,period:int,forward:string,backward?:string}); shortest_path({edges:[[state,action,next_state],...],start:state,goal:state}); discriminating_probe({predictions:{ACTION:[predicted_outcome_per_hypothesis,...]}}). Tools are conditional calculators, not proof their premises are true. Do not fabricate observations. No markdown.`;
+const SYSTEM=`DEUS V6 ARC-AGI-3 R335 decision cortex. Infer an unfamiliar grid game only from allowed observations/transitions; never replay hidden routes. PACKET contains: obs summary + coarse grid; progress; legal action keys; factual memory; recent transition/motion; action_model; spatial geometry; feedback. Motion/components are evidence, not semantic truth. Goal: complete a level first, then minimize actions. Keep memory factual: action->effect, hypotheses, uncertainty, next discriminating probe. If an action is visible no-op twice, change action. Use repeated action only when observed displacement supports it.
+OUTPUT exactly one JSON object. For act: {"turn":N,"kind":"act","action":"ACTIONk","data":{},"repeat":1,"memory":"..."}. action MUST COPY EXACTLY one key from PACKET.available_actions; NEVER output words like move/up/down/left/right as action. For simple actions data MUST be {}. Tool form: {"turn":N,"kind":"tool","name":"cyclic_plan|shortest_path|discriminating_probe","args":{...},"memory":"..."}. Tools: cyclic_plan(current,target,period,forward,backward?); shortest_path(edges,start,goal); discriminating_probe(predictions). No markdown or extra text.`;
 
 async function main(){
   if(!ARC_KEY||!SA.private_key)throw new Error('missing credentials');
   const games=await arc('/api/games'),game=games.find(x=>String(x.game_id||'').startsWith(GAME_PREFIX));if(!game)throw new Error('game missing');
-  const opened=await arc('/api/scorecard/open',{method:'POST',body:JSON.stringify({tags:['deus-v6','r7-r335-motion','brain3-qwen-strong','owner-bound','no-route-replay'],source_url:SOURCE_URL,opaque:{system:'DEUS V6 R7 R335+motion-derived generic agent',r335_source_sha256:R335_SOURCE_SHA,cognition:'Brain3 Qwen3-4B strong',semi_private:false,route_replay:false}})});
+  const opened=await arc('/api/scorecard/open',{method:'POST',body:JSON.stringify({tags:['deus-v6','r9-r335-bounded','brain3-qwen-strong','owner-bound','no-route-replay'],source_url:SOURCE_URL,opaque:{system:'DEUS V6 R9 bounded R335+motion generic agent',r335_source_sha256:R335_SOURCE_SHA,cognition:'Brain3 Qwen3-4B strong',semi_private:false,route_replay:false}})});
   const card=opened.card_id;let fr=null,memory='',feedback=null,calls=0,actions=0,tools=0,rejections=0,fallbacks=0;const history=[],receipts=[];
   try{
     fr=await arc('/api/cmd/RESET',{method:'POST',body:JSON.stringify({card_id:card,game_id:game.game_id})});
     while(calls<MAX_CALLS&&actions<MAX_ACTIONS&&!['WIN','GAME_OVER'].includes(String(fr.state))){
       const [visible,g]=describe(fr.frame),legalNums=fr.available_actions||[],legal=legalNums.map(n=>'ACTION'+Number(n)),types=Object.fromEntries(legalNums.map(n=>['ACTION'+Number(n),Number(n)>=6]));
       const guard=noopGuard(history,legal),amodel=actionModel(history,legal);
-      const packet={turn:calls,observation:visible,progress:{state:String(fr.state),levels_completed:Number(fr.levels_completed||0)},available_actions:types,memory,recent_events:history.slice(-5),action_model:amodel,spatial_summary:spatialSummary(visible,amodel),anti_loop:guard,feedback,remaining_actions:MAX_ACTIONS-actions,remaining_calls:MAX_CALLS-calls};
-      const prompt=SYSTEM+'\nPACKET='+JSON.stringify(packet);
+      const packet={turn:calls,obs:{w:visible.width,h:visible.height,palette:visible.palette_counts,components:(visible.components||[]).slice(0,18),coarse:coarseGrid(g,16)},progress:{state:String(fr.state),levels_completed:Number(fr.levels_completed||0)},available_actions:types,memory:String(memory||'').slice(0,600),recent:compactRecent(history),action_model:amodel,spatial:spatialSummary(visible,amodel),anti_loop:guard,feedback,remaining_actions:MAX_ACTIONS-actions,remaining_calls:MAX_CALLS-calls};
+      let prompt=SYSTEM+'\nPACKET='+JSON.stringify(packet);
+      if(prompt.length>7800){
+        packet.obs.components=packet.obs.components.slice(0,10);
+        packet.recent=packet.recent.slice(-3);
+        packet.memory=packet.memory.slice(0,300);
+        packet.spatial.nearby=(packet.spatial.nearby||[]).slice(0,4);
+        prompt=SYSTEM+'\nPACKET='+JSON.stringify(packet);
+      }
+      if(prompt.length>7900)throw new Error('BOUNDED_PACKET_OVERFLOW_'+prompt.length);
       const inf=await infer(prompt,calls);receipts.push(inf);const turn=calls;calls++;
       let msg,wasFallback=false;try{msg=parseDecision(inf.text,turn,legal,types,visible.width,visible.height);feedback=null;}catch(e){rejections++;feedback={rejected:String(e.message).slice(0,240)};msg=fallback(packet);fallbacks++;wasFallback=true;}
       if(msg.kind==='act'&&guard&&msg.action===guard.blocked){msg={...msg,action:guard.force,repeat:1,data:{},_anti_loop:true};}
@@ -290,7 +314,7 @@ async function main(){
       if(msg.kind==='tool'){if(tools>=12){feedback={rejected:'TOOL_BUDGET'};continue;}let result;try{result=executeTool(msg.name,msg.args);tools++;}catch(e){result={status:'ERROR',error:String(e.message).slice(0,240)};}history.push({kind:'tool',name:msg.name,result});continue;}
       for(let k=0;k<Math.min(msg.repeat,MAX_ACTIONS-actions);k++){
         const [beforeV,before]=describe(fr.frame),bl=Number(fr.levels_completed||0);
-        const payload={game_id:game.game_id,guid:fr.guid,reasoning:JSON.stringify({deus_r7_turn:turn,brain3_receipt:inf.receipt_id||null})};if(types[msg.action])payload.data=msg.data;
+        const payload={game_id:game.game_id,guid:fr.guid,reasoning:JSON.stringify({deus_r9_turn:turn,brain3_receipt:inf.receipt_id||null})};if(types[msg.action])payload.data=msg.data;
         fr=await arc('/api/cmd/'+msg.action,{method:'POST',body:JSON.stringify(payload)});actions++;
         const [afterV,after]=describe(fr.frame),changes=diff(before,after),motion=motionSummary(beforeV,afterV);
         history.push({kind:'transition',action:msg.action,data:msg.data,changed_pixels:changes.length,motion,anti_loop_override:Boolean(msg._anti_loop),changes:changes.slice(0,24),changes_truncated:changes.length>24,levels_completed:Number(fr.levels_completed||0),state:String(fr.state),frame_sha256:sha(afterV)});
@@ -298,10 +322,10 @@ async function main(){
       }
     }
     const cl=await arc('/api/scorecard/close',{method:'POST',body:JSON.stringify({card_id:card})});
-    return {schema:'deus-arc3-v6-r7-r335-motion-online/1',state:'VERIFIED_DONE',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,game_id:game.game_id,score:cl.score,levels_completed:cl.total_levels_completed,total_levels:cl.total_levels,total_actions:cl.total_actions,local_actions:actions,brain3_calls:calls,tool_calls:tools,protocol_rejections:rejections,fallbacks,final_state:fr?.state||null,route_replay:false,semi_private:false,model_sha256:MODEL_SHA,r335_source_sha256:R335_SOURCE_SHA,receipts:receipts.map(x=>x.receipt_id).filter(Boolean),history_tail:history.slice(-12)};
+    return {schema:'deus-arc3-v6-r9-r335-bounded-online/1',state:'VERIFIED_DONE',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,game_id:game.game_id,score:cl.score,levels_completed:cl.total_levels_completed,total_levels:cl.total_levels,total_actions:cl.total_actions,local_actions:actions,brain3_calls:calls,tool_calls:tools,protocol_rejections:rejections,fallbacks,final_state:fr?.state||null,route_replay:false,semi_private:false,model_sha256:MODEL_SHA,r335_source_sha256:R335_SOURCE_SHA,receipts:receipts.map(x=>x.receipt_id).filter(Boolean),history_tail:history.slice(-12)};
   }catch(e){
     let cl=null;try{cl=await arc('/api/scorecard/close',{method:'POST',body:JSON.stringify({card_id:card})})}catch{}
-    return {schema:'deus-arc3-v6-r7-r335-motion-online/1',state:'FAILED',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,error_type:e.constructor?.name||'Error',error:String(e.message||e).slice(0,1000),brain3_calls:calls,local_actions:actions,tool_calls:tools,protocol_rejections:rejections,fallbacks,closed_score:cl?.score??null,closed_actions:cl?.total_actions??null,history_tail:history.slice(-8)};
+    return {schema:'deus-arc3-v6-r9-r335-bounded-online/1',state:'FAILED',card_id:card,scorecard_url:ARC_BASE+'/scorecards/'+card,error_type:e.constructor?.name||'Error',error:String(e.message||e).slice(0,1000),brain3_calls:calls,local_actions:actions,tool_calls:tools,protocol_rejections:rejections,fallbacks,closed_score:cl?.score??null,closed_actions:cl?.total_actions??null,history_tail:history.slice(-8)};
   }
 }
-main().then(r=>{finalResult=r;console.log('DEUS_ARC3_R7_RESULT='+JSON.stringify(r));}).catch(e=>{finalResult={state:'FAILED',error:String(e)};console.error('DEUS_ARC3_R7_FATAL='+JSON.stringify(finalResult));});
+main().then(r=>{finalResult=r;console.log('DEUS_ARC3_R9_RESULT='+JSON.stringify(r));}).catch(e=>{finalResult={state:'FAILED',error:String(e)};console.error('DEUS_ARC3_R9_FATAL='+JSON.stringify(finalResult));});
