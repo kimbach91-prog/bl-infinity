@@ -1,0 +1,52 @@
+name: DEUS V6 Versioned Developer API
+on:
+  push:
+    branches:
+      - deus/v6-versioned-developer-api-v1-20260927
+    paths:
+      - 'runtime/federation/lib/developer-api.mjs'
+      - 'runtime/federation/dev-server.mjs'
+      - 'runtime/federation/test/developer-api*.test.mjs'
+      - '.github/workflows/deus-v6-versioned-developer-api.yml'
+  pull_request:
+    paths:
+      - 'runtime/federation/lib/developer-api.mjs'
+      - 'runtime/federation/dev-server.mjs'
+      - 'runtime/federation/test/developer-api*.test.mjs'
+      - '.github/workflows/deus-v6-versioned-developer-api.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 2s
+          --health-timeout 3s
+          --health-retries 20
+    env:
+      BL_TEST_POSTGRES_URL: postgres://postgres:postgres@127.0.0.1:5432/postgres
+    defaults:
+      run:
+        working-directory: runtime/federation
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: node --check lib/developer-api.mjs
+      - run: node --check dev-server.mjs
+      - run: node --test test/developer-api-contract.test.mjs
+      - run: node --test test/developer-api-e2e.test.mjs
