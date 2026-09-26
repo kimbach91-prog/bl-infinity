@@ -32,8 +32,19 @@ async function googleToken(){
 let gToken=null,gTokenAt=0;
 async function gfetch(path,opt={}){
   if(!gToken||Date.now()-gTokenAt>3000000){gToken=await googleToken();gTokenAt=Date.now();}
-  const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+path,{...opt,headers:{authorization:'Bearer '+gToken,'content-type':'application/json',...(opt.headers||{})},signal:AbortSignal.timeout(20000)});
-  const t=await r.text(); let j;try{j=JSON.parse(t)}catch{j={raw:t.slice(0,500)}}; if(!r.ok)throw new Error('sheets '+r.status+' '+JSON.stringify(j).slice(0,500)); return j;
+  let last=null;
+  for(let attempt=0;attempt<7;attempt++){
+    const r=await fetch('https://sheets.googleapis.com/v4/spreadsheets/'+SHEET_ID+path,{...opt,headers:{authorization:'Bearer '+gToken,'content-type':'application/json',...(opt.headers||{})},signal:AbortSignal.timeout(20000)});
+    const t=await r.text(); let j;try{j=JSON.parse(t)}catch{j={raw:t.slice(0,500)}};
+    if(r.ok)return j;
+    last={status:r.status,body:j};
+    if(r.status!==429)throw new Error('sheets '+r.status+' '+JSON.stringify(j).slice(0,500));
+    const retryHeader=Number(r.headers.get('retry-after')||0);
+    const delay=Math.max(8000,retryHeader*1000,8000*(attempt+1));
+    console.log(JSON.stringify({event:'DEUS_SHEETS_QUOTA_BACKOFF',attempt:attempt+1,delay_ms:delay}));
+    await new Promise(resolve=>setTimeout(resolve,delay));
+  }
+  throw new Error('sheets '+last.status+' '+JSON.stringify(last.body).slice(0,500));
 }
 const HEAD=['JOB_ID','TARGET_NODE','STATE','CREATED_AT_UTC','NOT_BEFORE_UTC','EXPIRES_AT_UTC','AUTHORITY_REF','COMMAND_MODE','COMMAND_TEXT','ARGS_JSON','WORKDIR_REL','ENV_JSON','TIMEOUT_S','MAX_OUTPUT_BYTES','LEASE_OWNER','LEASE_ACQUIRED_AT_UTC','LEASE_UNTIL_UTC','STARTED_AT_UTC','FINISHED_AT_UTC','EXIT_CODE','STDOUT_SHA256','STDERR_SHA256','STDOUT_PREVIEW','STDERR_PREVIEW','RESULT_REF','RECEIPT_ID','ATTEMPT','NOTES'];
 function iso(ms=Date.now()){return new Date(ms).toISOString();}
@@ -65,7 +76,7 @@ async function infer(prompt,turn){
       const p=JSON.parse(rec.STDOUT_PREVIEW||'{}');
       return {text:String(p.content||''),job_id:x.jid,receipt_id:rec.RECEIPT_ID||null,latency_s:p.latency_s??null,usage:p.usage??null,model:p.model??null};
     }
-    await sleep(900);
+    await sleep(7000);
   }
   throw new Error('Brain3 timeout '+x.jid+' last='+(rec?.STATE||'UNKNOWN'));
 }
