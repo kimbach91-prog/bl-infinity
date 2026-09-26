@@ -19,6 +19,7 @@ jobs:
       - run: node --check adaptive-security-verifier/adaptive-trust.mjs
       - run: node --check adaptive-security-verifier/owner-vault.mjs
       - run: node --check adaptive-security-verifier/recovery-envelope.mjs
+      - run: node --check adaptive-security-verifier/owner-hq-server.syntax.mjs
       - run: node --test adaptive-security-verifier/adaptive-security.test.mjs
   windows:
     runs-on: windows-latest
