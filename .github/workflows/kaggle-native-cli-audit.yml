@@ -1,0 +1,85 @@
+name: Kaggle official CLI capability audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/kaggle-native-cli-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  official-cli-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install official released CLI and SDK
+        run: python -m pip install --disable-pip-version-check kaggle==2.2.4 kagglesdk==0.1.37
+      - name: Verify supported commands without authenticating
+        run: |
+          python - <<'PY'
+          import ast
+          import datetime
+          import importlib.metadata as metadata
+          import json
+          import pathlib
+          import subprocess
+          import sys
+
+          receipt = {
+              'schema': 'kaggle-native-cli-capability-audit/1',
+              'kaggle_version': metadata.version('kaggle'),
+              'sdk_version': metadata.version('kagglesdk'),
+              'checked_at_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              'login_executed': False,
+              'competition_registration_verified': False,
+              'credentials_requested': False,
+              'custom_client_registration_required_for_this_audit': False,
+              'checks': {},
+          }
+          checks = {
+              'built_in_login': ['auth', 'login', '--help'],
+              'competition_status_listing': ['competitions', 'list', '--help'],
+          }
+          for name, args in checks.items():
+              result = subprocess.run([sys.executable, '-m', 'kaggle', *args], capture_output=True, text=True, timeout=30)
+              receipt['checks'][name] = {
+                  'returncode': result.returncode,
+                  'passed': result.returncode == 0,
+              }
+              if name == 'built_in_login':
+                  receipt['no_launch_browser_option'] = '--no-launch-browser' in result.stdout
+              print('HELP_CHECK', name, result.returncode)
+
+          # Inspect only installed official package SOURCE, never user configuration.
+          dist = metadata.distribution('kaggle')
+          for relative in dist.files or []:
+              if str(relative).endswith('kaggle/api/kaggle_api_extended.py'):
+                  source = pathlib.Path(dist.locate_file(relative)).read_text(encoding='utf-8')
+                  tree = ast.parse(source)
+                  for node in ast.walk(tree):
+                      if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.name == 'auth_login_cli':
+                          snippet = ast.get_source_segment(source, node)
+                          print('OFFICIAL_AUTH_LOGIN_SOURCE_BEGIN')
+                          print(snippet)
+                          print('OFFICIAL_AUTH_LOGIN_SOURCE_END')
+                          receipt['official_login_implementation_found'] = True
+                  break
+
+          ok = all(check['passed'] for check in receipt['checks'].values())
+          receipt['state'] = 'BUILT_IN_CLI_COMMANDS_VERIFIED' if ok else 'CLI_CAPABILITY_CHECK_FAILED'
+          pathlib.Path('kaggle-native-cli-audit.json').write_text(json.dumps(receipt, indent=2), encoding='utf-8')
+          print(json.dumps(receipt))
+          raise SystemExit(0 if ok else 1)
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kaggle-native-cli-audit
+          path: kaggle-native-cli-audit.json
+          retention-days: 7
+          if-no-files-found: error
