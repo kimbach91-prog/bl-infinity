@@ -1,0 +1,26 @@
+name: DEUS V6 Platform Postgres Adapter
+on:
+  push:
+    branches:
+      - deus/v6-platform-postgres-adapter-v1-20260927
+    paths:
+      - 'platform-runtime-foundation/postgres*'
+      - '.github/workflows/deus-v6-platform-postgres-adapter.yml'
+  pull_request:
+    paths:
+      - 'platform-runtime-foundation/postgres*'
+      - '.github/workflows/deus-v6-platform-postgres-adapter.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check platform-runtime-foundation/postgres.mjs
+      - run: node --test platform-runtime-foundation/postgres.test.mjs
