@@ -40,7 +40,7 @@ async function gfetch(path,opt={}){
     last={status:r.status,body:j};
     if(r.status!==429)throw new Error('sheets '+r.status+' '+JSON.stringify(j).slice(0,500));
     const retryHeader=Number(r.headers.get('retry-after')||0);
-    const delay=Math.max(8000,retryHeader*1000,8000*(attempt+1));
+    const delay=Math.max(15000,retryHeader*1000,15000*(attempt+1));
     console.log(JSON.stringify({event:'DEUS_SHEETS_QUOTA_BACKOFF',attempt:attempt+1,delay_ms:delay}));
     await new Promise(resolve=>setTimeout(resolve,delay));
   }
@@ -76,7 +76,7 @@ async function infer(prompt,turn){
       const p=JSON.parse(rec.STDOUT_PREVIEW||'{}');
       return {text:String(p.content||''),job_id:x.jid,receipt_id:rec.RECEIPT_ID||null,latency_s:p.latency_s??null,usage:p.usage??null,model:p.model??null};
     }
-    await sleep(7000);
+    await sleep(15000);
   }
   throw new Error('Brain3 timeout '+x.jid+' last='+(rec?.STATE||'UNKNOWN'));
 }
@@ -114,7 +114,7 @@ async function main(){
       if(['WIN','GAME_OVER'].includes(String(fr.state)))break;
       const g=grid(fr.frame),h=g.length,w=g[0]?.length||1;const legal=(fr.available_actions||[]).map(n=>'ACTION'+Number(n));
       if(!legal.length)break;
-      const prompt='You are the DEUS V6 ARC-AGI-3 decision cortex in a fresh live public-development run. Do not replay a memorized route. Infer action semantics only from visible state and observed transitions. Complete a level first, then minimize actions. Return EXACTLY one JSON object and no markdown: {"action":"ACTION1","repeat":1,"memory":"short observed hypothesis"}. repeat must be 1..8 and >1 only for a transition pattern already supported by evidence. Use only legal actions.\n'+
+      const prompt='You are the DEUS V6 ARC-AGI-3 decision cortex in a fresh live public-development run. Do not replay a memorized route and do not copy placeholder text. Infer action semantics only from the visible grid and the actual transition history. First identify what prior actions changed, then choose the next action that most increases evidence or progress. Complete a level before optimizing action count. Output one raw JSON object with exactly three keys: action, repeat, memory. action MUST equal one legal action string; repeat MUST be an integer 1..8 and use values above 1 only when repeated behavior is supported by observed transitions; memory MUST be a concrete, state-specific hypothesis mentioning observed movement/change, never generic filler. No markdown, no explanation outside JSON.\n'+
         'turn='+turn+' state='+fr.state+' levels_completed='+Number(fr.levels_completed||0)+' size='+w+'x'+h+'\nlegal='+JSON.stringify(legal)+'\nmemory='+memory+'\nrecent='+JSON.stringify(history.slice(-4))+'\ngrid_rows_top_to_bottom:\n'+gridText(g);
       const inf=await infer(prompt,turn);receipts.push(inf);const d=decision(inf.text,legal,w,h,turn);memory=d.memory;fallbacks+=d.fallback?1:0;
       for(let k=0;k<d.repeat;k++){
