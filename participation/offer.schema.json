@@ -1,0 +1,103 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kimbach91-prog/bl-infinity/blob/main/participation/offer.schema.json",
+  "title": "DEUS Public Participation Offer V1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "offer_id",
+    "participant_id",
+    "participation_class",
+    "resource_class",
+    "capabilities",
+    "data_ceiling",
+    "resource_ceiling",
+    "ttl_seconds",
+    "verifier",
+    "revocation"
+  ],
+  "properties": {
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "offer_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "participant_id": {
+      "type": "string",
+      "minLength": 3,
+      "maxLength": 160
+    },
+    "participation_class": {
+      "enum": ["PUBLIC_SERVICE", "MARKETPLACE", "DIRECT_PEER"]
+    },
+    "resource_class": {
+      "enum": ["CPU", "GPU", "NPU", "TPU", "MODEL", "API", "BROWSER", "STORAGE", "NETWORK", "SERVICE"]
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 64,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 128
+      }
+    },
+    "data_ceiling": {
+      "enum": ["PUBLIC", "TASK_PUBLIC", "OWNER_SCOPED"]
+    },
+    "resource_ceiling": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "cpu_cores": {"type": ["number", "null"], "minimum": 0},
+        "ram_bytes": {"type": ["integer", "null"], "minimum": 0},
+        "gpu_count": {"type": ["integer", "null"], "minimum": 0},
+        "gpu_memory_bytes": {"type": ["integer", "null"], "minimum": 0},
+        "max_concurrency": {"type": ["integer", "null"], "minimum": 1},
+        "max_cost": {"type": ["number", "null"], "minimum": 0},
+        "currency": {"type": ["string", "null"], "maxLength": 16}
+      }
+    },
+    "ttl_seconds": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 604800
+    },
+    "authority_ref": {
+      "type": ["string", "null"],
+      "maxLength": 512
+    },
+    "provenance_ref": {
+      "type": ["string", "null"],
+      "maxLength": 512
+    },
+    "verifier": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result_contract"],
+      "properties": {
+        "result_contract": {"type": "string", "minLength": 1, "maxLength": 256},
+        "receipt_required": {"type": "boolean", "default": true}
+      }
+    },
+    "revocation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["supported"],
+      "properties": {
+        "supported": {"const": true},
+        "max_stop_latency_seconds": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "notes": {
+      "type": "string",
+      "maxLength": 2000
+    }
+  }
+}
