@@ -1,0 +1,28 @@
+name: DEUS V6 Data Governance Runtime
+on:
+  push:
+    branches:
+      - deus/v6-data-governance-runtime-v1-20260927
+    paths:
+      - 'data-governance-runtime/**'
+      - '.github/workflows/deus-v6-data-governance-runtime.yml'
+  pull_request:
+    paths:
+      - 'data-governance-runtime/**'
+      - '.github/workflows/deus-v6-data-governance-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check data-governance-runtime/index.mjs
+      - name: Data governance invariants
+        run: node --test data-governance-runtime/test.mjs
