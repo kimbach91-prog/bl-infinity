@@ -1,0 +1,28 @@
+name: DEUS V6 Sovereign Matrix Platform Baseline
+on:
+  push:
+    branches:
+      - deus/v6-sovereign-matrix-platform-baseline-v1-20260927
+    paths:
+      - 'v6-sovereign-matrix-platform/**'
+      - '.github/workflows/deus-v6-sovereign-matrix-platform-baseline.yml'
+  pull_request:
+    paths:
+      - 'v6-sovereign-matrix-platform/**'
+      - '.github/workflows/deus-v6-sovereign-matrix-platform-baseline.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Syntax
+        run: node --check v6-sovereign-matrix-platform/manifest.mjs
+      - name: Unified baseline invariants
+        run: node --test v6-sovereign-matrix-platform/test.mjs
