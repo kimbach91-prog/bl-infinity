@@ -1,0 +1,26 @@
+name: DEUS V6 Trust Appeal Runtime
+on:
+  push:
+    branches:
+      - deus/v6-trust-appeal-runtime-v1-20260927
+    paths:
+      - 'trust-appeal-runtime/**'
+      - '.github/workflows/deus-v6-trust-appeal-runtime.yml'
+  pull_request:
+    paths:
+      - 'trust-appeal-runtime/**'
+      - '.github/workflows/deus-v6-trust-appeal-runtime.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: node --check trust-appeal-runtime/index.mjs
+      - run: node --test trust-appeal-runtime/test.mjs
