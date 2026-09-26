@@ -11,6 +11,14 @@ import { PostgresProviderDeltaView, ProviderRegistrySynchronizer } from './lib/r
 import { verifyProviderHeartbeat } from './lib/provider-heartbeat.mjs';
 import { TokenBucketLimiter, PostgresTokenBucketLimiter, classifyRateLimitRoute, rateLimitScopeKey } from './lib/rate-limit.mjs';
 import { ControlAuthenticator, bindTaskToPrincipalTenant, parseControlPrincipals, parsePublicReadScopes } from './lib/control-auth.mjs';
+import {
+  PLATFORM_API_VERSION,
+  platformApiContext,
+  applyPlatformResponseHeaders,
+  platformError,
+  platformEnvelope,
+  developerReplayMeta,
+} from './lib/developer-api.mjs';
 import { createSqliteFederationState } from './lib/sqlite-state.mjs';
 import { openPostgresFederationState } from './lib/postgres-state.mjs';
 import { assertPostgresSchema, assertProviderDeltaSchema } from './lib/postgres-readiness.mjs';
@@ -389,6 +397,114 @@ const server = http.createServer(async (req, res) => {
         const result = await publishSocial(socialPublishProvider, await readJson(req, Math.min(maxBodyBytes, 262_144)));
         return send(res, result.state === 'STAGED_ONLY' ? 202 : 200, result);
       } catch (error) { return sendSocialError(res, error); }
+    }
+
+    if (req.method === 'GET' && requestPath(req.url) === '/v1/platform/status') {
+      const context = platformApiContext(req);
+      if (!context.ok) {
+        const out = context.error;
+        applyPlatformResponseHeaders(res, context);
+        return send(res, out.status, out.body);
+      }
+      applyPlatformResponseHeaders(res, context);
+      const access = controlAuth.authorize(req, 'runtime:read');
+      if (!access.ok) {
+        const out = platformError(context, access.reason === 'scope-denied' ? 'SCOPE_DENIED' : 'UNAUTHORIZED', access.reason, {
+          status: access.status,
+          retryable: false,
+          details: { required_scope: 'runtime:read' },
+        });
+        return send(res, out.status, out.body);
+      }
+      const runtimeStatus = await runtime.orchestrator.status();
+      return send(res, 200, platformEnvelope(context, {
+        service: 'deus-platform-api',
+        api_version: PLATFORM_API_VERSION,
+        tenant_id: access.principal.tenantId,
+        principal_id: access.principal.id,
+        state_backend: stateBackend,
+        startup_durability: startupDurabilityReceipt.state,
+        runtime_source_rev: process.env.DEUS_SOURCE_REV ?? null,
+        queue: runtimeStatus.queue,
+        allowed_state_data_classes: runtimeStatus.allowedStateDataClasses,
+      }, {
+        contract: 'deus-platform-api/1',
+        authenticated: true,
+      }));
+    }
+
+    if (req.method === 'POST' && requestPath(req.url) === '/v1/platform/jobs') {
+      const context = platformApiContext(req, { requireIdempotency: true });
+      if (!context.ok) {
+        const out = context.error;
+        applyPlatformResponseHeaders(res, context);
+        return send(res, out.status, out.body);
+      }
+      applyPlatformResponseHeaders(res, context);
+      const access = controlAuth.authorize(req, 'task:submit');
+      if (!access.ok) {
+        const out = platformError(context, access.reason === 'scope-denied' ? 'SCOPE_DENIED' : 'UNAUTHORIZED', access.reason, {
+          status: access.status,
+          retryable: false,
+          details: { required_scope: 'task:submit' },
+        });
+        return send(res, out.status, out.body);
+      }
+
+      try {
+        const body = await readJson(req, maxBodyBytes);
+        const rawTask = body.task ?? body;
+        const task = bindTaskToPrincipalTenant(rawTask, access.principal);
+        const options = { ...(body.options ?? {}), idempotencyKey: context.idempotency_key };
+        const submitted = await runtime.orchestrator.submit(task, options);
+        const replay = developerReplayMeta(submitted, task);
+        if (replay.conflict) {
+          const out = platformError(context, 'IDEMPOTENCY_CONFLICT', 'Idempotency-Key was already used with a different request body', {
+            status: 409,
+            retryable: false,
+            details: {
+              idempotency_key: context.idempotency_key,
+              request_hash: replay.request_hash,
+              existing_hash: replay.existing_hash,
+            },
+          });
+          await runtime.audit.append('platform.v1.idempotency-conflict', {
+            tenantId: task.tenantId ?? 'default',
+            actor: access.principal.id,
+            requestId: context.request_id,
+            traceId: context.trace_id,
+            idempotencyKey: context.idempotency_key,
+          });
+          return send(res, out.status, out.body);
+        }
+
+        await runtime.audit.append(replay.replay ? 'platform.v1.job-replayed' : 'platform.v1.job-submitted', {
+          taskId: submitted.job.id,
+          tenantId: task.tenantId ?? 'default',
+          actor: access.principal.id,
+          requestId: context.request_id,
+          traceId: context.trace_id,
+          idempotencyKey: context.idempotency_key,
+        });
+
+        return send(res, replay.replay ? 200 : 202, platformEnvelope(context, {
+          job: submitted.job,
+          admission: submitted.admission,
+        }, {
+          replay: replay.replay,
+          idempotency_key: context.idempotency_key,
+          request_hash: replay.request_hash,
+        }));
+      } catch (error) {
+        const status = error.code === 'TENANT_SCOPE_VIOLATION' ? 403
+          : error.code === 'STATE_DATA_CLASS_REJECTED' || error.code === 'VALUE_POLICY_REJECTED' ? 422
+          : 400;
+        const out = platformError(context, error.code ?? 'INVALID_REQUEST', error.message, {
+          status,
+          retryable: false,
+        });
+        return send(res, out.status, out.body);
+      }
     }
 
     if (req.method === 'GET' && requestPath(req.url) === '/runtime/response-continuity/policy') {
