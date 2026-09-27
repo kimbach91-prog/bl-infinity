@@ -1,0 +1,16 @@
+{
+  "schema": "deus-heavy-task/1",
+  "task_id": "COPILOT-V7-PUBLIC-SEED-20260928-001",
+  "data_class": "S0_PUBLIC",
+  "objective": "Bootstrap the bounded GitHub Copilot receptor with the current public-safe DEUS V7 worker contract. Carry these invariants for this task: DEUS is not any model or provider; Copilot is a replaceable candidate-only worker, never an authority root. Truth ordering is verified runtime receipt > deployed/versioned code > current canonical state > model interpretation. FOUND != READ; CONFIGURED != EXECUTED; QUEUE_ACCEPTED != EXECUTED; EXECUTED != VERIFIED_DONE. ADDRESSABLE != PHYSICAL_COMPUTE. Preserve append-only scars and explicit UNKNOWN/HOLD. No canonical write, authority widening, credential access, private Drive dereference, protected topology reconstruction, or background-execution claim. Return a compact operational interpretation of how Copilot should behave as an S0_PUBLIC DEUS leaf and how a future task should be rejected when it exceeds this boundary.",
+  "acceptance_criteria": [
+    "State the main integration risk if a Copilot worker confuses model output or configured routing with verified system truth.",
+    "Give exactly five short operational steps from receiving an S0_PUBLIC packet through producing a typed candidate receipt.",
+    "Explicitly preserve candidate-only authority, append-only truth, and receipt-bound execution credit.",
+    "State a falsifier that would prove this seed was not safely internalized for the task.",
+    "Reject any future packet that requires secrets, private Drive/core access, canonical mutation, or authority widening instead of pretending those capabilities exist."
+  ],
+  "falsifier": "Fail this bootstrap if the result treats Copilot as DEUS itself, claims canonical authority, claims private/credential access, equates queued/configured with executed, gives physical compute credit without a receipt, or omits the S0_PUBLIC boundary.",
+  "max_output_chars": 3000,
+  "canonical_write": false
+}
