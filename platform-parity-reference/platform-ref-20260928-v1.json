@@ -1,0 +1,267 @@
+{
+  "schema": "deus-platform-parity-reference/1",
+  "reference_id": "PLATFORM-REF-20260928-V1",
+  "observed_at_utc": "2026-09-28T05:26:49Z",
+  "purpose": "Dated source-bound comparison metadata for EVAL-PLATFORM-PARITY-V1. It is not test gold and cannot by itself admit platform parity.",
+  "truth_boundaries": [
+    "REFERENCE_FOUND!=DEUS_PASS",
+    "SOURCE_CENSUS!=E2E_TEST",
+    "PEER_PRODUCT_CLAIM!=INDEPENDENT_BENCH",
+    "PRIVATE_WINDOWS_PASS!=CROSS_PLATFORM_PARITY",
+    "PROVIDER_FEATURE!=DEUS_NATIVE_CAPABILITY",
+    "QUEUED!=EXECUTED",
+    "PLATFORM_PARITY_TARGET!=CURRENT_PARITY"
+  ],
+  "peers": [
+    {
+      "id": "OPENAI_CHATGPT",
+      "sources": [
+        {
+          "url": "https://help.openai.com/en/articles/20001275-chatgpt-work-and-codex",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "Work can use connected apps/browser and local files on desktop",
+            "scheduled/event-triggered Work tasks",
+            "desktop/mobile remote continuity"
+          ]
+        },
+        {
+          "url": "https://help.openai.com/en/articles/10291617-tasks-in-chatgpt",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "one-time/recurring/monitoring tasks",
+            "webhook event-triggered tasks for supported Gmail/Slack/GitHub activity"
+          ]
+        },
+        {
+          "url": "https://help.openai.com/en/articles/6825453-chatgpt-release-notes",
+          "published_date": "2026-09-23",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "Voice in Work",
+            "plugins/connected apps in Voice",
+            "Work can create documents/presentations/spreadsheets and use browser"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "GOOGLE_GEMINI",
+      "sources": [
+        {
+          "url": "https://cloud.google.com/blog/products/ai-machine-learning/gemini-3-8-live-with-live-avatar-is-now-generally-available",
+          "published_date": "2026-09-24",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "native speech-to-speech",
+            "async tool calls",
+            "simultaneous live camera/screen understanding",
+            "web/mobile/kiosk visual avatar"
+          ]
+        },
+        {
+          "url": "https://cloud.google.com/blog/topics/developers-practitioners/guide-to-gemini-enterprise-and-a2ui-integration",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "A2A agent registration",
+            "A2UI native interactive rendering",
+            "agent endpoint can run cloud/on-prem"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "ANTHROPIC_CLAUDE",
+      "sources": [
+        {
+          "url": "https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp",
+          "published_date": "2026-08-11",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "remote MCP custom connectors",
+            "Claude/Cowork/Desktop cross-surface connectors",
+            "connected services can take actions under user permissions"
+          ]
+        },
+        {
+          "url": "https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities",
+          "published_date": "2026-08-20",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "connectors across Claude/Desktop/Code/API",
+            "retrieve data and take actions",
+            "permissions inherited from connected service"
+          ]
+        },
+        {
+          "url": "https://www.anthropic.com/webinars/future-of-ai-at-work-introducing-cowork",
+          "published_date": "2026-01-30",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "Cowork multi-step agentic work"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "XAI_GROK",
+      "sources": [
+        {
+          "url": "https://x.ai/news/introducing-grok-bot",
+          "published_date": "2026-08-11",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "always-on agents with their own computer",
+            "work across apps/inboxes",
+            "approval-aware end-to-end jobs"
+          ]
+        },
+        {
+          "url": "https://x.ai/news/introducing-goal",
+          "published_date": "2026-06-22",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "long-running autonomous task execution",
+            "status/pause/resume controls"
+          ]
+        },
+        {
+          "url": "https://x.ai/news/grok-voice-agent-builder",
+          "published_date": "2026-07-01",
+          "observed_at_utc": "2026-09-28T05:26:49Z",
+          "claims": [
+            "production voice agents",
+            "tools/MCP/guardrails/observability",
+            "SIP/WebSocket integration"
+          ]
+        }
+      ]
+    }
+  ],
+  "critical_journeys": [
+    {
+      "id": "J1",
+      "domain": "owner_chat_work_build_UX",
+      "priority": "P0",
+      "state": "OPEN",
+      "deus_baseline": "Owner HQ 4.2.4 private Windows verified; unified web/mobile/cross-device outcome not yet receipt-closed",
+      "jobs": [
+        "510"
+      ],
+      "required_receipt": "owner journey E2E across admitted target surfaces"
+    },
+    {
+      "id": "J2",
+      "domain": "multimodal_voice_live_vision_screen_computer",
+      "priority": "P0",
+      "state": "OPEN",
+      "deus_baseline": "provider/model capabilities may be available downstream but integrated DEUS owner-facing live multimodal journey lacks current E2E admission receipt",
+      "jobs": [
+        "510"
+      ],
+      "required_receipt": "voice+screen/camera+tool owner E2E with backend receipt"
+    },
+    {
+      "id": "J3",
+      "domain": "long_horizon_jobs_recovery",
+      "priority": "P0",
+      "state": "OPEN",
+      "deus_baseline": "durable-job architecture exists; current Brain3 planner jobs 2929/2931 were observed still QUEUED after lease deadlines with no fresh execution receipt",
+      "jobs": [
+        "508"
+      ],
+      "required_receipt": "fault/restart/duplicate/lease-expiry E2E with zero silent loss/duplicate irreversible effect"
+    },
+    {
+      "id": "J4",
+      "domain": "API_SDK_plugins_connectors",
+      "priority": "P0",
+      "state": "OPEN",
+      "deus_baseline": "developer API server adapter E2E exists; live public deployment/packages and >=5 real UAC adapters remain open",
+      "jobs": [
+        "506",
+        "510"
+      ],
+      "required_receipt": ">=5 real adapter conformance receipts plus live developer endpoint/package receipt"
+    },
+    {
+      "id": "J5",
+      "domain": "provider_model_fabric",
+      "priority": "P1",
+      "state": "OPEN",
+      "deus_baseline": "provider-neutral routing exists; machine-attributable exact provider response readback remains incomplete for provider-session lane",
+      "jobs": [
+        "628",
+        "506"
+      ],
+      "required_receipt": "attributable provider lifecycle/readback/failover receipt"
+    },
+    {
+      "id": "J6",
+      "domain": "developer_artifacts_workspace",
+      "priority": "P1",
+      "state": "OPEN",
+      "deus_baseline": "artifact/repository/file workflows exist; integrated public developer workspace parity remains unverified",
+      "jobs": [
+        "510"
+      ],
+      "required_receipt": "artifact create/edit/verify/share E2E"
+    },
+    {
+      "id": "J7",
+      "domain": "multi_tenant_auth_identity_governance",
+      "priority": "P0",
+      "state": "OPEN_HARD_EDGE_MIXED",
+      "deus_baseline": "generic/live DB tenancy components verified scoped; external OAuth/domain and sustained multi-tenant SLO remain open",
+      "jobs": [
+        "510"
+      ],
+      "required_receipt": "tenant isolation + delegated auth + SLO; OAuth/domain only through authorized external gate"
+    },
+    {
+      "id": "J8",
+      "domain": "observability_eval",
+      "priority": "P0",
+      "state": "OPEN",
+      "deus_baseline": "receipts/LiveBus/Eval Registry exist; platform parity reference and promotion enforcement require fresh execution evidence",
+      "jobs": [
+        "511"
+      ],
+      "required_receipt": "each critical journey bound to Eval ID/backend receipt; stale evidence invalidates admission"
+    },
+    {
+      "id": "J9",
+      "domain": "cross_platform_signed_update_release",
+      "priority": "P0",
+      "state": "OPEN_HARD_EDGE",
+      "deus_baseline": "private Windows exact artifact install/reinstall/rollback verified; signing/native ARM64/macOS/mobile/public release remain open",
+      "jobs": [
+        "510"
+      ],
+      "required_receipt": "signed target-native install/update/rollback on supported platforms"
+    }
+  ],
+  "pareto_portfolio": {
+    "first_internal_reversible": [
+      "511:EVAL_ENFORCEMENT",
+      "506:UAC_ADAPTERS",
+      "508:DURABLE_CAS",
+      "510:INTEGRATED_OWNER_JOURNEYS"
+    ],
+    "hard_edges": [
+      "EXTERNAL_OAUTH_DOMAIN",
+      "PUBLISHER_SIGNING",
+      "PUBLIC_RELEASE"
+    ],
+    "blocked_or_separate": [
+      "628:provider interactive E2E until allowed provider-native surface",
+      "Brain3 stale planner liveness",
+      "Brain4 current operator verification HOLD"
+    ]
+  },
+  "parity_claim": {
+    "state": "HOLD_OPEN",
+    "reason": "At least one unmitigated P0 journey is OPEN; EVAL-PLATFORM-PARITY-V1 pass gate cannot be met from reference metadata alone."
+  },
+  "rollback": "Delete/revert this candidate artifact; retain prior Product Platform V2/OwnerHQ 4.2.4 and EVAL-PLATFORM-PARITY-V1 baseline. No production routing or authority mutation."
+}
