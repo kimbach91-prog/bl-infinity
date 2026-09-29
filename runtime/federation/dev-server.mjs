@@ -121,6 +121,31 @@ const server = http.createServer(async (req, res) => {
       : await takeRequestRate(req);
     if (!rate.ok) return sendRateLimited(res, rate);
 
+    if (req.method === 'GET' && requestPath(req.url) === '/api/bl/f912b0ca288ba6651e4d0815fc207c628ad751dc89ce193c87899ed2e2732124') {
+      return send(res, 200, {
+        schema: 'bl-address/1',
+        state: 'LIVE_INTERNET_GATEWAY',
+        blUri: 'bl://deus/hello/v1',
+        contentHash: 'f912b0ca288ba6651e4d0815fc207c628ad751dc89ce193c87899ed2e2732124',
+        service: 'DEUS BL Internet Address Canary',
+        canon: 'DEUS V8 R4',
+        createdAt: '2026-09-29T12:25:13Z',
+        transport: 'HTTPS',
+        truthBoundary: 'BL_URI_IS_LOGICAL_NAMESPACE; HTTPS_IS_THE_CURRENT_BROWSER_TRANSPORT; CUSTOM_BL_SCHEME_REQUIRES_A_PROTOCOL_HANDLER'
+      });
+    }
+
+    if (req.method === 'GET' && (requestPath(req.url) === '/bl' || requestPath(req.url) === '/bl/' || requestPath(req.url) === '/bl/f912b0ca288ba6651e4d0815fc207c628ad751dc89ce193c87899ed2e2732124')) {
+      const body = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BL:// LIVE</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#050505;color:#f5f5f5;font:16px ui-monospace,SFMono-Regular,Menlo,monospace}.c{max-width:820px;margin:24px;padding:28px;border:1px solid #303030;border-radius:18px;background:#0d0d0d;box-shadow:0 24px 100px #000}.ok{color:#77f29a}.muted{color:#9a9a9a}.v{word-break:break-all}code{background:#191919;padding:3px 6px;border-radius:6px}a{color:#9bc5ff}</style></head><body><main class="c"><h1 class="ok">BL:// LIVE</h1><p>Địa chỉ logic:</p><p class="v"><code>bl://deus/hello/v1</code></p><p>Content hash:</p><p class="v"><code>f912b0ca288ba6651e4d0815fc207c628ad751dc89ce193c87899ed2e2732124</code></p><p><a href="/api/bl/f912b0ca288ba6651e4d0815fc207c628ad751dc89ce193c87899ed2e2732124">Xem JSON proof</a></p><hr><p class="muted">DEUS V8 R4 · Railway live canary. BL URI là namespace riêng của DEUS; trình duyệt hiện truy cập qua HTTPS gateway trừ khi thiết bị cài BL protocol handler.</p></main></body></html>';
+      res.writeHead(200, {
+        'content-type': 'text/html; charset=utf-8',
+        'content-length': Buffer.byteLength(body),
+        'cache-control': 'public, max-age=60'
+      });
+      res.end(body);
+      return;
+    }
+
     if (req.method === 'GET' && requestPath(req.url) === '/health') return send(res, 200, {
       ok: true,
       service: 'bl-compute-federation',
