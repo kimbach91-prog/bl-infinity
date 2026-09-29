@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS federation_jobs (
   tenant_id text NOT NULL DEFAULT 'default',
   capability text NOT NULL,
   task jsonb NOT NULL,
-  state text NOT NULL CHECK (state IN ('pending','running','succeeded','deadletter')),
+  state text NOT NULL CHECK (state IN ('pending','running','unknown_outcome','succeeded','deadletter')),
   priority integer NOT NULL DEFAULT 0,
   attempts integer NOT NULL DEFAULT 0,
   max_attempts integer NOT NULL DEFAULT 3 CHECK (max_attempts >= 1),
@@ -19,9 +19,17 @@ CREATE TABLE IF NOT EXISTS federation_jobs (
   lease_token uuid,
   lease_expires_at timestamptz,
   lease_heartbeat_at timestamptz,
+  state_revision bigint NOT NULL DEFAULT 0 CHECK (state_revision >= 0),
+  fence_generation bigint NOT NULL DEFAULT 0 CHECK (fence_generation >= 0),
+  effect_phase text CHECK (effect_phase IS NULL OR effect_phase IN ('prepared','executing','readback','committed')),
   result jsonb,
   error jsonb
 );
+ALTER TABLE federation_jobs ADD COLUMN IF NOT EXISTS state_revision bigint NOT NULL DEFAULT 0 CHECK (state_revision >= 0);
+ALTER TABLE federation_jobs ADD COLUMN IF NOT EXISTS fence_generation bigint NOT NULL DEFAULT 0 CHECK (fence_generation >= 0);
+ALTER TABLE federation_jobs ADD COLUMN IF NOT EXISTS effect_phase text CHECK (effect_phase IS NULL OR effect_phase IN ('prepared','executing','readback','committed'));
+ALTER TABLE federation_jobs DROP CONSTRAINT IF EXISTS federation_jobs_state_check;
+ALTER TABLE federation_jobs ADD CONSTRAINT federation_jobs_state_check CHECK (state IN ('pending','running','unknown_outcome','succeeded','deadletter'));
 ALTER TABLE federation_jobs DROP CONSTRAINT IF EXISTS federation_jobs_idempotency_key_key;
 CREATE UNIQUE INDEX IF NOT EXISTS federation_jobs_tenant_idempotency_idx ON federation_jobs (tenant_id, idempotency_key);
 CREATE INDEX IF NOT EXISTS federation_jobs_claim_idx ON federation_jobs(state, available_at, priority DESC, created_at);
