@@ -2,12 +2,12 @@
   "provider": "ANIMICA",
   "endpoint": "https://animica.dev/v1/chat/completions",
   "requested_model": "kimi-k3",
-  "http_status": 200,
-  "latency_ms": 39708,
-  "exact_contract": true,
-  "response_digest": "e0a40503f2ac7851158da722db384d229b113f88a3513d2981e57f5999859165",
+  "http_status": 0,
+  "latency_ms": 90005,
+  "exact_contract": false,
+  "response_digest": "",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": true,
+  "provider_execution": false,
   "canonical_write": false,
   "settlement": false
 }
