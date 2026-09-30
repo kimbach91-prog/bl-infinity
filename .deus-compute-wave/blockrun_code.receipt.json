@@ -2,12 +2,12 @@
   "provider": "BLOCKRUN_CODE",
   "endpoint": "https://blockrun.ai/api/v1/chat/completions",
   "requested_model": "cohere/north-mini-code",
-  "http_status": 200,
-  "latency_ms": 12748,
-  "exact_contract": true,
-  "response_digest": "5deebcd5f55888f74f7d85102390ffe61b955e8a2b1872407760081ca3523718",
+  "http_status": 429,
+  "latency_ms": 140,
+  "exact_contract": false,
+  "response_digest": "bbc0e09de905a959ca3d0c6609d5af2bc84168a79843ed5b928aef653d3d944f",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": true,
+  "provider_execution": false,
   "canonical_write": false,
   "settlement": false
 }
