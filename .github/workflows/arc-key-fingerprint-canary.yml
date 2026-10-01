@@ -1,0 +1,28 @@
+name: ARC key fingerprint canary
+on:
+  push:
+    branches:
+      - deus/arc-key-fingerprint-20261001
+
+jobs:
+  fingerprint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Match ARC secret without printing it
+        env:
+          ARC_API_KEY: ${{ secrets.ARC_API_KEY }}
+        run: |
+          python - <<'PY'
+          import os, hashlib
+          k=os.environ.get("ARC_API_KEY","")
+          if not k:
+              print("ARC_KEY_MATCH=MISSING")
+              raise SystemExit(2)
+          h=hashlib.sha256(k.encode()).hexdigest()
+          if h=="83163afdfbb0cca7d6d306beb853b93061f4ae62f8f2ee32743ce166bde1ddd9":
+              print("ARC_KEY_MATCH=CANDIDATE_1")
+          elif h=="c8a42b4368583f9822877f2b9b6d60bd25bf96820b68f4b52af0fbcdebed657c":
+              print("ARC_KEY_MATCH=CANDIDATE_2")
+          else:
+              print("ARC_KEY_MATCH=OTHER")
+          PY
