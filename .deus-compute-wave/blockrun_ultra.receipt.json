@@ -2,12 +2,12 @@
   "provider": "BLOCKRUN_ULTRA",
   "endpoint": "https://blockrun.ai/api/v1/chat/completions",
   "requested_model": "nvidia/nemotron-3-ultra-550b",
-  "http_status": 429,
-  "latency_ms": 129,
-  "exact_contract": false,
-  "response_digest": "1b47394f36611f5633c81793e95b7ab21e2c6b8abe6f607963219f7043ffd671",
+  "http_status": 200,
+  "latency_ms": 492,
+  "exact_contract": true,
+  "response_digest": "133204eb519583fe2390533a29bf5cc1960514a9259ec7efce60c6326259ce9b",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": false,
+  "provider_execution": true,
   "canonical_write": false,
   "settlement": false
 }

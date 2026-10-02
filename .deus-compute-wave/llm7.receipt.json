@@ -2,12 +2,12 @@
   "provider": "LLM7",
   "endpoint": "https://api.llm7.io/v1/chat/completions",
   "requested_model": "default",
-  "http_status": 402,
-  "latency_ms": 404,
-  "exact_contract": false,
-  "response_digest": "35d4ae378f209a9d23f3a01ff68a448afff63a3df78c75843623b9d646909176",
+  "http_status": 200,
+  "latency_ms": 1901,
+  "exact_contract": true,
+  "response_digest": "f1121f64bfb4fc89102b9897d97dd7fffe242b1c809c17c9ccfed63856686c14",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": false,
+  "provider_execution": true,
   "canonical_write": false,
   "settlement": false
 }
