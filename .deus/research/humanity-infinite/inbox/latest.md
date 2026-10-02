@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-02T05:33:46.562290+00:00
+- Generated: 2026-10-02T22:11:43.413901+00:00
 - Records: 91
-- Digest: `067fcf99950b88ab7a15e0b89e0daacc0392f52710f94051bc7e8ac75e467850`
+- Digest: `23f50361c0df26aeb290ee2c05b146343b56da45a6de75c391f9f50844be8917`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -43,9 +43,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-04
 
 - [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
-- [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
 - [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
+- [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
 - [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
 - [Europe PMC] Effects of Health Qigong on quality of life, physical function, and mental health in older adults: a systematic review and meta-analysis of randomized controlled trials. — 42698455
 - [Europe PMC] Exercise, Sleep, and Cognitive Performance in Older Adults: A Structured Review of Mechanisms and Clinical Implications. — 42783405
