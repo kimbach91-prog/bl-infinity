@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-02T22:11:43.413901+00:00
+- Generated: 2026-10-03T05:15:39.477010+00:00
 - Records: 91
-- Digest: `23f50361c0df26aeb290ee2c05b146343b56da45a6de75c391f9f50844be8917`
+- Digest: `ce416de9e9886e4252d49b64f45c8702e3ecc4faf65188e018f4d582da2b1e0e`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -43,9 +43,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-04
 
 - [Europe PMC] The impact of exercise interventions on cognitive frailty: a scoping review of outcomes and biological mechanisms. — 41602035
+- [Europe PMC] Movement-Based Interventions in Pre-Frail and Frail Older Adults: An Integrative Review of Clinical, Digital, and Implementation Evidence. — 41710114
 - [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
 - [Europe PMC] Global perspectives and clinical trends in Qigong research: a bibliometric and visual analysis (2005-2025). — 42180717
-- [Europe PMC] Comparative effectiveness of non-pharmacological interventions on depression and anxiety in aging populations: a systematic review and network meta-analysis of randomized controlled trials. — 42358404
 - [Europe PMC] Effects of Traditional Chinese Mind-Body Exercise on Physical Function in Older Adults with Sarcopenia and Frailty: A Meta-Analysis of Randomized Controlled Trials. — 42651433
 - [Europe PMC] Effects of Health Qigong on quality of life, physical function, and mental health in older adults: a systematic review and meta-analysis of randomized controlled trials. — 42698455
 - [Europe PMC] Exercise, Sleep, and Cognitive Performance in Older Adults: A Structured Review of Mechanisms and Clinical Implications. — 42783405
@@ -99,8 +99,8 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals. — 42393428
-- [Europe PMC] Gut Microbiota and Ageing: Mechanisms, Age-Related Diseases, and Therapeutic Perspectives. — 42512634
 - [Europe PMC] DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol. — 42585167
+- [Europe PMC] Midlife Vascular and Lifestyle Determinants of Late-Life Cognitive Decline and Dementia: A Life-Course Prevention Framework with a Gulf (GCC) Perspective. — 42652977
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
 - [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
