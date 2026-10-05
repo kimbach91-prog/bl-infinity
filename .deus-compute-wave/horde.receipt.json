@@ -1,10 +1,10 @@
 {
   "provider": "AI_HORDE",
   "heartbeat": true,
-  "http_status": 0,
+  "http_status": 200,
   "exact_contract": false,
-  "model": "",
-  "digest": "",
+  "model": "koboldcpp/Llama-3.2-1B-Instruct",
+  "digest": "c26b3c1db55bd639a042a4ea9821d7fdc574a8f0355da4a3e14885c024f64fb2",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
