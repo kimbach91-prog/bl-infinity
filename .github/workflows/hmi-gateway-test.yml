@@ -1,0 +1,63 @@
+name: DEUS HMI Access Gateway Tests
+
+on:
+  pull_request:
+    paths:
+      - 'runtime/hmi/**'
+      - '.github/workflows/hmi-gateway-test.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'runtime/hmi/**'
+      - '.github/workflows/hmi-gateway-test.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  policy-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    defaults:
+      run:
+        working-directory: runtime/hmi
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run HMI isolation benchmark
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm test 2>&1 | tee hmi-test.tap
+      - name: Syntax check
+        run: |
+          find . -name '*.mjs' -type f -print0 | xargs -0 -n1 node --check
+      - name: Write benchmark receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          {
+            echo 'DEUS_HMI_BENCHMARK_RECEIPT_V0_1'
+            echo "GITHUB_SHA=$GITHUB_SHA"
+            echo "GITHUB_RUN_ID=$GITHUB_RUN_ID"
+            echo "GITHUB_RUN_ATTEMPT=$GITHUB_RUN_ATTEMPT"
+            echo "RUNNER_OS=$RUNNER_OS"
+            echo "RUNNER_ARCH=$RUNNER_ARCH"
+            echo "NODE=$(node --version)"
+            echo "NPM=$(npm --version)"
+            uname -a
+            sha256sum hmi-test.tap
+          } > benchmark-receipt.txt
+          cat benchmark-receipt.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deus-hmi-benchmark-${{ github.sha }}
+          path: |
+            runtime/hmi/hmi-test.tap
+            runtime/hmi/benchmark-receipt.txt
+          if-no-files-found: error
+          retention-days: 30
