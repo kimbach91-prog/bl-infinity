@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-06T00:01:23.821386+00:00
+- Generated: 2026-10-06T06:17:30.087979+00:00
 - Records: 91
-- Digest: `584d1f86b466b02c14b16d1c7f76ca5b7ba2473de5869d1c3d7a053ee955fa97`
+- Digest: `9df7221bf9482420e37727dfe315b2d238e21ea7856597fb4352466fbf602071`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -33,8 +33,8 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
 - [Europe PMC] Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment. — 42352506
-- [Europe PMC] Effects of open- versus closed-skill exercise combined with mindfulness training on inhibitory control in children with ADHD: protocol for a three-arm randomised controlled trial with fMRI. — 42431671
 - [Europe PMC] Breaking the Freeze: The Role of Cognitive Function in Freezing of Gait in Parkinson's Disease. — 42483310
+- [Europe PMC] Does mindfulness mediate the relationship between anxiety and second language performance? A meta-analytic structural equation modeling study. — 42670559
 - [Europe PMC] Effects of Cognitive Behavioral Couple Therapy With Integrated Mindfulness on Mindful Attention, Depressive Symptoms, and Dyadic Adjustment in Low-Income Couples: A Pilot Randomized Clinical Trial. — 42671041
 - [Europe PMC] Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis. — 42748566
 - [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
