@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-06T18:19:58.938901+00:00
+- Generated: 2026-10-07T05:56:01.988193+00:00
 - Records: 91
-- Digest: `680f7dab6f3dc19ea35d1c03371613b0585af04f5e1ad9529119bce222aa9157`
+- Digest: `82cebaa8cedbe547d06bd83d43984cd79db7d7dcb023c551c9118a67de85440b`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -34,11 +34,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
 - [Europe PMC] Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment. — 42352506
 - [Europe PMC] Breaking the Freeze: The Role of Cognitive Function in Freezing of Gait in Parkinson's Disease. — 42483310
-- [Europe PMC] Does mindfulness mediate the relationship between anxiety and second language performance? A meta-analytic structural equation modeling study. — 42670559
 - [Europe PMC] Effects of Cognitive Behavioral Couple Therapy With Integrated Mindfulness on Mindful Attention, Depressive Symptoms, and Dyadic Adjustment in Low-Income Couples: A Pilot Randomized Clinical Trial. — 42671041
 - [Europe PMC] Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis. — 42748566
 - [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] The Effect of Brief Mindfulness Meditation on Attention Networks in University Students with Problematic Short-Video Use. — 42792287
+- [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 
 ## BA-P0-04
 
