@@ -1,4 +1,4 @@
-# DEUS fresh-overlap trigger 2026-10-07T15:34Z
+# DEUS overlap-v2 trigger 2026-10-07T15:43Z
 name: Public S0 hosted stress8 canary
 
 on:
@@ -34,11 +34,13 @@ jobs:
           set -euo pipefail
           node <<'NODE'
           const crypto = require('crypto');
+          const os = require('os');
           const shard = Number(process.env.SHARD);
           const SHARD_N = 1048576;
           const start = shard * SHARD_N + 1;
           const output = new Uint32Array(SHARD_N);
           const expectedAt = (x) => (Math.imul(x >>> 0, 1664525) + 1013904223) >>> 0;
+          const wallStart = new Date().toISOString();
           const t0 = Date.now();
 
           let fnv = 2166136261 >>> 0;
@@ -63,8 +65,20 @@ jobs:
             .update(Buffer.from(output.buffer))
             .digest('hex');
 
+          let burn = (0x9e3779b9 ^ shard) >>> 0;
+          let burnRounds = 0;
+          const holdUntil = Date.now() + 12000;
+          while (Date.now() < holdUntil) {
+            for (let i = 0; i < 262144; i++) {
+              burn ^= (burn << 13) >>> 0;
+              burn ^= burn >>> 17;
+              burn ^= (burn << 5) >>> 0;
+            }
+            burnRounds++;
+          }
+
           const receipt = {
-            schema: 'public-s0-github-actions-stress8-receipt/1',
+            schema: 'public-s0-github-actions-stress8-overlap-v2/1',
             route_id: 'PUBLIC-GITHUB-ACTIONS-CPU-S0-STRESS8',
             state: 'RESULT_VERIFIED_RUNNER_SCOPE',
             provider: 'GitHub Actions',
@@ -76,11 +90,19 @@ jobs:
             runner_os: process.env.RUNNER_OS || null,
             runner_arch: process.env.RUNNER_ARCH || null,
             data_class: 'BL-S0',
+            wall_start_utc: wallStart,
+            wall_end_utc: new Date().toISOString(),
+            cpu_logical: os.cpus().length,
+            mem_total_bytes: os.totalmem(),
+            mem_free_end_bytes: os.freemem(),
             workload: {
-              kind: 'u32_lcg_transform_stress_shard',
+              kind: 'u32_lcg_transform_plus_cpu_hold',
               start,
               elements: SHARD_N,
-              bytes: output.byteLength
+              bytes: output.byteLength,
+              hold_ms: 12000,
+              burn_rounds: burnRounds,
+              burn_acc: burn >>> 0
             },
             sample,
             checksum: fnv.toString(16).padStart(8, '0'),
