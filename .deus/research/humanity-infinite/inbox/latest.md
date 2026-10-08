@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-07T13:19:10.999372+00:00
+- Generated: 2026-10-08T13:25:26.691333+00:00
 - Records: 91
-- Digest: `86dc4ec598d90f550fb8e749b2b6e95c718e7ce98c512ef0895698013b6f821a`
+- Digest: `857c3118b42bebd23c258a9289d325597d2f2df24b66ff5f779b24e9c6dd1d29`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -56,7 +56,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
 - [Europe PMC] Pathophysiology of functional neurological disorder for the general neurologist. — 41190174
 - [Europe PMC] Paediatric occupational therapists' views on applying interoception in practice contexts. — 41854272
-- [Europe PMC] Feeling Like a Woman: Interoception and the Objectified Body. — 42192807
+- [Europe PMC] The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction. — 42389825
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
