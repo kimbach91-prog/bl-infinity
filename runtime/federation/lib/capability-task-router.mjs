@@ -1,3 +1,4 @@
+import { sha256Json } from './canonical.mjs';
 /**
  * Task-fit hint resolver for an EXISTING, host-admitted InstructionFabric.
  * Atlas/skill metadata are discovery hints only: never credentials, grants or liveness.
@@ -41,4 +42,35 @@ export function resolveTaskCapability({fabric,hostSkills,intent,dataClass='publi
   accepted.sort((a,b)=>a.priority-b.priority||a.skillId.localeCompare(b.skillId));
   if(!accepted.length)return {state:'HOLD_NO_ADMITTED_ROUTE',selected:null,observations};
   return {state:'CANDIDATE_NEEDS_FRESH_CANARY_AND_RECEIPT',selected:accepted[0],observations};
+}
+
+/**
+ * Write a verified, task-scoped utilization event into the EXISTING AtomStore
+ * hash-chained journal. It does not train a model or publish an autonomous route.
+ */
+export function recordVerifiedCapabilityUsage({fabric,selection,execution,receipt,sourceDigest,metrics={}}={}) {
+  if(!fabric?.store?.event||!fabric?.store?.verifyEvents)fail('DURABLE_ATOM_STORE_REQUIRED');
+  if(selection?.state!=='CANDIDATE_NEEDS_FRESH_CANARY_AND_RECEIPT'||!selection.selected)fail('NO_SELECTED_ADMITTED_ROUTE');
+  if(!HASH.test(sourceDigest||''))fail('USAGE_SOURCE_PIN_REQUIRED');
+  const s=selection.selected;
+  if(receipt?.kind!=='EXECUTED'||receipt?.verdict!=='VERIFIED_FOR_OPERATOR_CONTRACT'||
+     receipt?.routeId!==s.routeId||receipt?.operator!==s.operatorId||
+     receipt?.programDigest!==s.programDigest||receipt?.bindingDigest!==s.bindingDigest||
+     receipt?.stop?.exitCode!==0||receipt?.outputDigest!==sha256Json(execution?.root)||
+     execution?.snapshot?.verdict!=='SUCCEEDED')fail('USAGE_EXECUTION_RECEIPT_MISMATCH');
+  const before=fabric.store.verifyEvents();
+  if(fabric.store.snapshot().active!==0)fail('USAGE_ACTIVE_LEASE_HOLD');
+  for(const [name,value] of Object.entries(metrics)){
+    if(!/^(directMs|coldMs|warmMs|replayMs)$/.test(name)||typeof value!=='number'||!Number.isFinite(value)||value<0)fail('INVALID_USAGE_METRIC');
+  }
+  const observation={schema:'deus-capability-use-event/1',scope:'HOST_ADMITTED_SCOPED',skillId:s.skillId,
+    intent:s.intent,routeId:s.routeId,operatorId:s.operatorId,bindingDigest:s.bindingDigest,
+    sourceDigest,outputDigest:receipt.outputDigest,leaseId:receipt.leaseId,
+    receiptVerdict:receipt.verdict,hostJobVerdict:execution.snapshot.verdict,
+    measured:metrics,usefulValueClaim:'EXACT_RESULT_ONLY_NO_SPEEDUP_CREDIT',
+    productionPromotion:false};
+  const eventHash=fabric.store.event('CAPABILITY_USE_VERIFIED_SCOPED',observation);
+  const after=fabric.store.verifyEvents();
+  if(after.count!==before.count+1||after.hash!==eventHash)fail('USAGE_JOURNAL_READBACK_FAIL');
+  return {state:'SCOPED_USAGE_READBACK_VERIFIED',eventHash,eventCount:after.count,observation};
 }
