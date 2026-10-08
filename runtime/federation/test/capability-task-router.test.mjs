@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 import { performance } from 'node:perf_hooks';
-import { resolveTaskCapability } from '../lib/capability-task-router.mjs';
+import { resolveTaskCapability,recordVerifiedCapabilityUsage } from '../lib/capability-task-router.mjs';
 import { AtomStore,InstructionFabric,PinnedWorkerDriver,compileAtomTree,executeAtomGraph } from '../lib/instruction-fabric.mjs';
 import { createFederationRuntime } from '../lib/runtime.mjs';
 import { createSqliteFederationState } from '../lib/sqlite-state.mjs';
@@ -111,6 +111,11 @@ test('real task: discover skill, select admitted CI Brain route, execute existin
   const real=receipts.find(x=>x.kind==='EXECUTED');
   assert.ok(real?.leaseId && real.stop?.exitCode===0 && real.verdict==='VERIFIED_FOR_OPERATOR_CONTRACT');
   assert.equal(real.programDigest,workerDigest);
+  const usage=recordVerifiedCapabilityUsage({fabric:s.fabric,selection,execution:cold,receipt:real,
+    sourceDigest:s.sourceHash,metrics:{directMs,coldMs,warmMs,replayMs:resumeMs}});
+  assert.equal(usage.state,'SCOPED_USAGE_READBACK_VERIFIED');
+  assert.ok(s.store.verifyEvents().count>=usage.eventCount);
+  assert.equal(s.store.db.prepare("SELECT COUNT(*) n FROM atom_events WHERE event_json LIKE '%CAPABILITY%'").get().n>=1,true);
   await assert.rejects(s.fabric.invoke(selection.selected.routeId,selection.selected.operatorId,
     {...s.taskInput,sourceDigest:'0'.repeat(64)}),/INPUT_VALIDATION_FAILED/);
   const receipt={
@@ -127,7 +132,7 @@ test('real task: discover skill, select admitted CI Brain route, execute existin
     warmExecutions:warm.executions,warmReuses:warm.reuses,
     acceptedRouteCandidates:selection.observations.filter(x=>x.verdict==='ELIGIBLE_FOR_PROBE').length,
     rejectedRouteCandidates:selection.observations.filter(x=>x.verdict==='HOLD').length,
-    receiptDigest:real.outputDigest,driver:real.stop.driver,
+    receiptDigest:real.outputDigest,driver:real.stop.driver,usageJournalHash:usage.eventHash,usageJournalEvents:usage.eventCount,
     verifier:real.verdict,negativeControls:['unbound_candidate','stale_input_digest','no_side_effect','data_class_gate','revoked_binding'],
     sourceModified:false,providerCalls:0,newPaidComputeClaims:0,productionMutation:false
   };
