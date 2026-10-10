@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-10T05:49:05.733577+00:00",
+  "generated_at_utc": "2026-10-10T21:41:33.890012+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "f4a38b8ae8cd22bb2e6e50c2f0dff2d8ab501b1a50c45544be20e63521ebaf2a",
+  "digest_sha256": "8db2a2fea348777f3f7de9286cd7add998cca9620c905e6176c5226e739e9aa3",
   "errors": [],
   "records": [
     {
@@ -185,6 +185,19 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
+      "source_id": "42170549",
+      "title": "Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review.",
+      "author": "Singh R, Gaston SA, Koenig HG, Jackson CL.",
+      "journal": "Curr Sleep Med Rep",
+      "pub_year": "2026",
+      "doi": "10.1007/s40675-026-00374-y",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42170549"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
       "source_id": "42553883",
       "title": "Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review.",
       "author": "Girishankara KSM, Shetty S, Shetty P, Akshatha R.",
@@ -222,19 +235,6 @@
       "url": "https://europepmc.org/article/MED/42670176"
     },
     {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
-      "source_id": "42823794",
-      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
-      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
-      "journal": "J Rehabil Med",
-      "pub_year": "2026",
-      "doi": "10.2340/jrm.v58.45767",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42823794"
-    },
-    {
       "track_id": "BA-P0-03",
       "source": "ClinicalTrials.gov",
       "source_id": "NCT02780739",
@@ -260,19 +260,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42352506"
-    },
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
-      "source_id": "42483310",
-      "title": "Breaking the Freeze: The Role of Cognitive Function in Freezing of Gait in Parkinson's Disease.",
-      "author": "Papacek O, Ruzicka E.",
-      "journal": "Parkinsons Dis",
-      "pub_year": "2026",
-      "doi": "10.1155/padi/7199074",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42483310"
     },
     {
       "track_id": "BA-P0-03",
@@ -347,6 +334,19 @@
       "author": "Pleinica S, Šuriņa S, Semjonova G, Peleckis G, Tang J, Liepa A.",
       "journal": "Front Psychol",
       "pub_year": null,
+      "doi": null,
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": null
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "PMC13651499",
+      "title": "Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis",
+      "author": "Liang X, Chen M, Chan R, Chang J, Yeung M, Hsu C, Liu C, Chen Y, Xu R, Yang B, Yan C, Qiu H, Tse A, Shum D, Chan R, Li S.",
+      "journal": "EClinicalMedicine",
+      "pub_year": "2026",
       "doi": null,
       "cited_by_count": 0,
       "is_open_access": "Y",
@@ -1110,19 +1110,6 @@
     {
       "track_id": "BA-P2-02",
       "source": "Europe PMC",
-      "source_id": "41590012",
-      "title": "Neuroscientific Framework of Cognitive-Behavioral Interventions for Mental Health Across Diverse Cultural Populations: A Systematic Review of Effectiveness, Delivery Methods, and Engagement.",
-      "author": "Gkintoni E, Nikolaou G.",
-      "journal": "Eur J Investig Health Psychol Educ",
-      "pub_year": "2025",
-      "doi": "10.3390/ejihpe16010002",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41590012"
-    },
-    {
-      "track_id": "BA-P2-02",
-      "source": "Europe PMC",
       "source_id": "41594837",
       "title": "Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing.",
       "author": "Gkintoni E, Sortwell A, Vantarakis A.",
@@ -1193,6 +1180,19 @@
       "author": null,
       "journal": "Indian J Psychiatry",
       "pub_year": "2026",
+      "doi": null,
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": null
+    },
+    {
+      "track_id": "BA-P2-02",
+      "source": "Europe PMC",
+      "source_id": "PMC13649992",
+      "title": "Dual-point sensory anchoring: emergent attentional coherence through embodied coupling",
+      "author": "Hou P.",
+      "journal": "Front Neurosci",
+      "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
       "is_open_access": "Y",

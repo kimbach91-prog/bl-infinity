@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-10T05:49:05.733577+00:00
+- Generated: 2026-10-10T21:41:33.890012+00:00
 - Records: 91
-- Digest: `f4a38b8ae8cd22bb2e6e50c2f0dff2d8ab501b1a50c45544be20e63521ebaf2a`
+- Digest: `8db2a2fea348777f3f7de9286cd7add998cca9620c905e6176c5226e739e9aa3`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -25,20 +25,20 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
+- [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
-- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
 - [Europe PMC] Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment. — 42352506
-- [Europe PMC] Breaking the Freeze: The Role of Cognitive Function in Freezing of Gait in Parkinson's Disease. — 42483310
 - [Europe PMC] Effects of Cognitive Behavioral Couple Therapy With Integrated Mindfulness on Mindful Attention, Depressive Symptoms, and Dyadic Adjustment in Low-Income Couples: A Pilot Randomized Clinical Trial. — 42671041
 - [Europe PMC] Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis. — 42748566
 - [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] The Effect of Brief Mindfulness Meditation on Attention Networks in University Students with Problematic Short-Video Use. — 42792287
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
+- [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review — PMC13634863
 
 ## BA-P0-04
 
@@ -120,11 +120,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P2-02
 
 - [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
-- [Europe PMC] Neuroscientific Framework of Cognitive-Behavioral Interventions for Mental Health Across Diverse Cultural Populations: A Systematic Review of Effectiveness, Delivery Methods, and Engagement. — 41590012
 - [Europe PMC] Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing. — 41594837
 - [Europe PMC] A scoping review of music-based digital therapeutics for stress, anxiety, and depression. — 41907803
 - [Europe PMC] Energy constraint on human health. — 42025458
 - [Europe PMC] Abstracts of the 7th World Parkinson Congress. — 42175618
 - [Europe PMC] ePoster. — 42366021
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
+- [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
