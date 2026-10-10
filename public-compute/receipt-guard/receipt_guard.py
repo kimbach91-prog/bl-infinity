@@ -16,7 +16,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 HEX = re.compile(r"[0-9a-f]{64}\Z")
 
 
@@ -150,8 +150,14 @@ class ClaimJournal:
     """
     def __init__(self, path: str | Path):
         self.db = sqlite3.connect(str(path), timeout=10, isolation_level=None)
-        self.db.execute("PRAGMA synchronous=FULL")
-        self.db.execute("CREATE TABLE IF NOT EXISTS claims (node TEXT NOT NULL, job TEXT NOT NULL, binding TEXT NOT NULL, request TEXT NOT NULL, nonce TEXT NOT NULL, state TEXT NOT NULL, result TEXT, PRIMARY KEY(node,job))")
+        try:
+            self.db.execute("PRAGMA synchronous=FULL")
+            self.db.execute("CREATE TABLE IF NOT EXISTS claims (node TEXT NOT NULL, job TEXT NOT NULL, binding TEXT NOT NULL, request TEXT NOT NULL, nonce TEXT NOT NULL, state TEXT NOT NULL, result TEXT, PRIMARY KEY(node,job))")
+        except BaseException:
+            # A rejected database must not leave an open handle on Windows.
+            # Re-raise unchanged: cleanup is not permission to execute.
+            self.db.close()
+            raise
 
     def close(self) -> None:
         self.db.close()
