@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-08T23:19:09.252750+00:00
+- Generated: 2026-10-10T05:49:05.733577+00:00
 - Records: 91
-- Digest: `25440ad7ed3fc0fd60e8197dbf1af3d31dbedc2f1f22ed87c2b2cbe6e0142f43`
+- Digest: `f4a38b8ae8cd22bb2e6e50c2f0dff2d8ab501b1a50c45544be20e63521ebaf2a`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -25,9 +25,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
-- [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
+- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
