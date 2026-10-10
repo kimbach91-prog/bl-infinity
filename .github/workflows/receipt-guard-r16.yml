@@ -1,0 +1,28 @@
+name: Receipt Guard R16 Public Tests
+on:
+  push:
+    branches: ['deus/receipt-reconcile-r16-20261010']
+    paths: ['public-compute/receipt-guard/**', '.github/workflows/receipt-guard-r16.yml']
+permissions:
+  contents: read
+jobs:
+  public-recovery-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Fetch exact public source without account credentials
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REPOSITORY" = 'kimbach91-prog/bl-infinity'
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --depth=1 origin "$GITHUB_SHA"
+          git checkout --detach FETCH_HEAD
+          test "$(git rev-parse HEAD)" = "$GITHUB_SHA"
+      - name: Run receipt reconciliation, concurrency and crash-recovery tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd public-compute/receipt-guard
+          python3 test_receipt_guard.py
