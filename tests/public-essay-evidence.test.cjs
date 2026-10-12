@@ -18,10 +18,16 @@ for (const p of pages) {
   assert((html.match(/<p>/g) || []).length >= 48, p.path + ": evidence narrative truncated");
   assert(!html.includes("\u2014"), p.path + ": long dash reintroduced");
   assert(!html.includes("CORE_PRIMARY_SOLVER") && !html.includes("COMMAND_TEXT") && !html.includes("ARGS_JSON"), p.path + ": private operational token detected");
+  assert(html.includes('<details class="essay-references">'), p.path + ": accessible bibliography missing");
+  assert(!html.includes("<sup>"), p.path + ": disruptive inline citation returned");
+  const sourceStart = html.indexOf('<section class="essay-sources"');
+  const sourceEnd = html.indexOf("</section>", sourceStart);
+  const sectionBody = sourceStart >= 0 && sourceEnd > sourceStart ? html.slice(sourceStart, sourceEnd) : "";
+  assert(sectionBody.includes("<summary>"), p.path + ": bibliography toggle missing");
   for (let i = 1; i <= 11; i++) {
-    assert(html.includes('href="#ref-' + i + '"'), p.path + ": uncited reference " + i);
-    assert(html.includes('id="ref-' + i + '"'), p.path + ": bibliography gap " + i);
+    assert(sectionBody.includes('id="ref-' + i + '"'), p.path + ": bibliography gap " + i);
   }
+  assert((sectionBody.split('<a href="https://').length - 1) >= 11, p.path + ": scholarly links missing");
   for (const source of ["10.1126/science.adh2586", "10.1038/s41562-024-02024-1", "10.1038/s41586-024-07566-y"]) {
     assert(html.includes(source), p.path + ": source missing " + source);
   }
