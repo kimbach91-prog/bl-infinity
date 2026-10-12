@@ -251,6 +251,7 @@ jobs:
           set -euo pipefail
           node --check assets/js/site-navigation.js
           node tests/public-language-routing.test.cjs
+          node tests/public-essay-evidence.test.cjs
           python - <<'PY'
           from pathlib import Path
           pairs={
@@ -410,13 +411,13 @@ jobs:
           assert base.startswith('https://'), 'Pages did not report an HTTPS deployment URL'
           paths=[
             ('/', 'data-bl-public-header="1.2"'),
-            ('/kien-truc-su-he-thong/', 'Kỷ nguyên tư duy đệ quy'),
+            ('/kien-truc-su-he-thong/', 'Nguồn và ranh giới bằng chứng'),
             ('/assets/css/site-navigation.css', '.bl-drawer'),
             ('/assets/js/site-navigation.js', 'bl-public-language-v1'),
             ('/en/', 'Architect of Intelligence'),
             ('/zh/', '智慧架构师'),
-            ('/en/architect-of-intelligence/', 'Architect of Intelligence'),
-            ('/zh/architect-of-intelligence/', '智慧架构师')
+            ('/en/architect-of-intelligence/', 'Sources and evidentiary boundaries'),
+            ('/zh/architect-of-intelligence/', '参考来源与证据边界')
           ]
           failures=[]
           for path,marker in paths:
