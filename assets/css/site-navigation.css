@@ -1,0 +1,28 @@
+/* B∞ public navigation v1.2, component-scoped, accessible desktop/mobile */
+.bl-site-header,.bl-site-header *,.bl-drawer,.bl-drawer *,.bl-overlay{box-sizing:border-box}
+.bl-site-header{position:sticky;top:0;z-index:8000;width:100%;background:rgba(250,248,244,.97);backdrop-filter:blur(12px);border-bottom:1px solid #d8d1c7;color:#24201c;font:600 14px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.bl-header-inner{max-width:1160px;min-height:64px;padding:8px 20px;margin:auto;display:flex;align-items:center;gap:22px}
+.bl-site-header a.bl-logo{display:inline-flex;align-items:center;gap:10px;text-decoration:none!important;color:#24201c!important;white-space:nowrap}
+.bl-logo b{font:bold 29px/1 Georgia,serif;letter-spacing:-.07em}
+.bl-logo span{font-size:11px;letter-spacing:.11em;line-height:1.35;text-transform:uppercase}
+.bl-site-header nav.bl-horizontal{display:flex;gap:5px;align-items:center;margin:0;padding:0;flex:1;justify-content:center;flex-wrap:nowrap}
+.bl-site-header nav.bl-horizontal a{display:inline-flex;align-items:center;min-height:40px;text-decoration:none!important;color:#473e38!important;font-size:13px;font-weight:700;padding:8px 10px;border-radius:9px;white-space:nowrap}
+.bl-site-header nav.bl-horizontal a:hover,.bl-site-header nav.bl-horizontal a[aria-current="page"]{background:#eee7dc}
+.bl-site-header button.bl-toggle{margin-left:auto;display:inline-flex;align-items:center;gap:8px;min-height:43px;padding:8px 13px;background:#24201c!important;color:#fff!important;border:1px solid #24201c;border-radius:10px;cursor:pointer;font:700 13px/1.2 system-ui,sans-serif;white-space:nowrap}
+.bl-toggle svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2}
+.bl-site-header :focus-visible,.bl-drawer :focus-visible{outline:3px solid #8c67b1;outline-offset:3px}
+.bl-overlay[hidden],.bl-drawer[hidden]{display:none!important}
+.bl-overlay{position:fixed;inset:0;z-index:8500;background:rgba(17,15,19,.62)}
+.bl-drawer{position:fixed;top:0;right:0;bottom:0;z-index:8600;width:min(390px,94vw);height:100dvh;overflow-y:auto;overscroll-behavior:contain;padding:20px 22px 38px;background:#faf8f4;color:#24201c;box-shadow:-10px 0 45px rgba(0,0,0,.24);font:500 15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;animation:bl-slide .18s ease-out}
+.bl-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-bottom:15px;border-bottom:1px solid #ded6cd}
+.bl-drawer-head strong{font:700 24px/1.2 Georgia,serif}
+.bl-drawer button.bl-close{min-width:44px;min-height:44px;cursor:pointer;background:transparent;color:inherit;border:1px solid #beb5aa;border-radius:9px;font-size:22px}
+.bl-drawer nav.bl-links{display:block!important;margin:0!important;padding:0!important}
+.bl-drawer .bl-group{display:block;font:800 11px/1.5 system-ui,sans-serif;letter-spacing:.13em;color:#6b605a;text-transform:uppercase;margin:26px 0 7px}
+.bl-drawer nav.bl-links a{display:block!important;color:#2e2823!important;text-decoration:none!important;font:650 15px/1.4 system-ui,sans-serif;padding:12px 7px;border-bottom:1px solid #e8e2da;min-height:44px}
+.bl-drawer nav.bl-links a:hover,.bl-drawer nav.bl-links a[aria-current="page"]{background:#eee7dc;border-radius:7px}
+.bl-drawer-foot{margin-top:30px;color:#776b62;font-size:12px;line-height:1.6}
+body.bl-scroll-lock{overflow:hidden}
+@keyframes bl-slide{from{opacity:.5;transform:translateX(13px)}to{opacity:1;transform:translateX(0)}}
+@media(max-width:850px){.bl-site-header nav.bl-horizontal{display:none!important}.bl-header-inner{justify-content:space-between;min-height:59px;padding:8px 15px;gap:10px}.bl-logo span{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.bl-drawer{animation:none}}

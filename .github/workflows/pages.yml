@@ -250,13 +250,14 @@ jobs:
         run: |
           set -euo pipefail
           rm -rf _site
-          mkdir -p _site/novel _site/assets/css _site/assets/js _site/books
+          mkdir -p _site/novel _site/assets/css _site/assets/js _site/books _site/kien-truc-su-he-thong
           mkdir -p _site/research/human-development/kevin-nt/studio
           mkdir -p _site/deus _site/BL-CF _site/public-compute _site/.well-known
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
+          cp kien-truc-su-he-thong/index.html _site/kien-truc-su-he-thong/
           cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
-          cp assets/css/main.css assets/css/reader.css _site/assets/css/
-          cp assets/js/site.js assets/js/reader.js assets/js/reader-markdown.js _site/assets/js/
+          cp assets/css/main.css assets/css/reader.css assets/css/site-navigation.css _site/assets/css/
+          cp assets/js/site.js assets/js/reader.js assets/js/reader-markdown.js assets/js/site-navigation.js _site/assets/js/
           cp -R books/. _site/books/
           cp research/human-development/index.html _site/research/human-development/
           cp research/human-development/kevin-nt/index.html _site/research/human-development/kevin-nt/
@@ -275,6 +276,13 @@ jobs:
           test -f _site/assets/css/reader.css
           test -f _site/assets/js/reader.js
           test -f _site/assets/js/reader-markdown.js
+          test -f _site/kien-truc-su-he-thong/index.html
+          grep -q 'Dị số: điểm kỳ dị' _site/kien-truc-su-he-thong/index.html
+          grep -q 'Kỷ nguyên tư duy đệ quy' _site/kien-truc-su-he-thong/index.html
+          grep -q 'data-bl-public-header="1.2"' _site/index.html
+          grep -q 'data-bl-public-header="1.2"' _site/kien-truc-su-he-thong/index.html
+          test -f _site/assets/css/site-navigation.css
+          test -f _site/assets/js/site-navigation.js
           test -f _site/books/index.html
           test -f _site/books/bieu-tuong-va-ban-chat/index.html
           test -f _site/books/bieu-tuong-va-ban-chat/book.json
@@ -347,6 +355,46 @@ jobs:
       - name: Deploy Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Verify deployed B∞ homepage, article and shared navigation
+        if: ${{ steps.deployment.outcome == 'success' }}
+        shell: bash
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import os,time,urllib.request
+          base=os.environ['PAGE_URL'].rstrip('/')
+          assert base.startswith('https://'), 'Pages did not report an HTTPS deployment URL'
+          paths=[
+            ('/', 'data-bl-public-header="1.2"'),
+            ('/kien-truc-su-he-thong/', 'Kỷ nguyên tư duy đệ quy'),
+            ('/assets/css/site-navigation.css', '.bl-drawer'),
+            ('/assets/js/site-navigation.js', 'aria-expanded')
+          ]
+          failures=[]
+          for path,marker in paths:
+            ok=False
+            for attempt in range(8):
+              try:
+                req=urllib.request.Request(base+path,headers={'User-Agent':'BInfinity-Pages-Live-Verification/1'})
+                with urllib.request.urlopen(req,timeout=15) as res:
+                  body=res.read(600000).decode('utf-8')
+                  if res.status==200 and marker in body:
+                    print('HTTP_200_MARKER_PASS',res.url,marker)
+                    ok=True
+                    break
+                  print('BAD_HTTP_OR_MARKER',res.status,res.url,marker in body)
+              except Exception as exc:
+                print('RETRY',base+path,type(exc).__name__,str(exc))
+              time.sleep(5)
+            if not ok:
+              failures.append(base+path)
+          if failures:
+            raise SystemExit('PAGES_RUNTIME_SMOKE_FAIL '+repr(failures))
+          print('B_INFINITY_PAGES_DEPLOYED_HTTP_SMOKE_PASS')
+          PY
 
       - name: Post machine worker discovery deployment receipt
         uses: actions/github-script@v7
