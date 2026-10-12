@@ -271,7 +271,7 @@ jobs:
               assert 'hreflang="en"' in source and 'hreflang="zh-Hans"' in source,filename+' missing cross-language links'
               if 'architect-of-intelligence/' in filename or filename=='kien-truc-su-he-thong/index.html':
                   assert chr(0x2014) not in source,filename+' contains an em dash'
-                  assert '<h1>' in source and source.count('<h2>')>=9,filename+' lost argument structure'
+                  assert (source.count('<h1>') + source.count('<h1 ')) == 1 and source.count('<h2>')>=9,filename+' lost argument structure'
           i18n=Path('assets/js/site-navigation.js').read_text(encoding='utf-8')
           assert 'navigator.languages' in i18n and 'localStorage' in i18n and 'bl-i18n-notice' in i18n
           assert 'fetch(' not in i18n and 'translate.googleapis' not in i18n
