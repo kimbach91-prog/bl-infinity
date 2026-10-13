@@ -251,6 +251,7 @@ jobs:
           set -euo pipefail
           node --check assets/js/site-navigation.js
           node tests/public-language-routing.test.cjs
+          node tests/public-theory-surface.test.cjs
           node tests/public-essay-evidence.test.cjs
           python - <<'PY'
           from pathlib import Path
@@ -261,13 +262,16 @@ jobs:
             "en/architect-of-intelligence/index.html":("en","Architect of Intelligence"),
             "zh/index.html":("zh-CN","智慧架构师"),
             "zh/architect-of-intelligence/index.html":("zh-CN","智慧架构师"),
+            "theory.html":("vi","BL∞: Vô hạn khả năng"),
+            "en/theory/index.html":("en","BL∞: The reach of possibility"),
+            "zh/theory/index.html":("zh-CN","BL∞：可达的未来"),
           }
           for filename,(language,marker) in pairs.items():
               source=Path(filename).read_text(encoding='utf-8')
               assert '<html lang="'+language+'">' in source,filename+' missing language tag'
               assert marker in source,filename+' missing localized content'
               assert 'data-bl-public-header="1.2"' in source,filename+' missing shared navigation'
-              assert 'site-navigation.js?v=20261012-i18n1' in source,filename+' missing versioned script'
+              assert 'site-navigation.js?v=20261013-theory1' in source,filename+' missing versioned script'
               assert 'hreflang="en"' in source and 'hreflang="zh-Hans"' in source,filename+' missing cross-language links'
               if 'architect-of-intelligence/' in filename or filename=='kien-truc-su-he-thong/index.html':
                   assert chr(0x2014) not in source,filename+' contains an em dash'
@@ -285,13 +289,15 @@ jobs:
           rm -rf _site
           mkdir -p _site/novel _site/assets/css _site/assets/js _site/books _site/kien-truc-su-he-thong
           mkdir -p _site/research/human-development/kevin-nt/studio
-          mkdir -p _site/en/architect-of-intelligence _site/zh/architect-of-intelligence
+          mkdir -p _site/en/architect-of-intelligence _site/zh/architect-of-intelligence _site/en/theory _site/zh/theory
           mkdir -p _site/deus _site/BL-CF _site/public-compute _site/.well-known
           cp index.html theory.html academic-freedom.html academic-democracy.html author.html projects.html authors-promise.html robots.txt sitemap.xml _site/
           cp kien-truc-su-he-thong/index.html _site/kien-truc-su-he-thong/
           cp en/index.html _site/en/
+          cp en/theory/index.html _site/en/theory/
           cp en/architect-of-intelligence/index.html _site/en/architect-of-intelligence/
           cp zh/index.html _site/zh/
+          cp zh/theory/index.html _site/zh/theory/
           cp zh/architect-of-intelligence/index.html _site/zh/architect-of-intelligence/
           cp novel/index.html novel/chapter-001.html novel/chapter-001.md _site/novel/
           cp assets/css/main.css assets/css/reader.css assets/css/site-navigation.css _site/assets/css/
@@ -315,6 +321,12 @@ jobs:
           test -f _site/assets/js/reader.js
           test -f _site/assets/js/reader-markdown.js
           test -f _site/kien-truc-su-he-thong/index.html
+          test -f _site/theory.html
+          test -f _site/en/theory/index.html
+          test -f _site/zh/theory/index.html
+          grep -q 'PUBLIC_B_INFINITY_THEORY_OVERVIEW_V1' _site/theory.html
+          grep -q 'PUBLIC_B_INFINITY_THEORY_OVERVIEW_V1' _site/en/theory/index.html
+          grep -q 'PUBLIC_B_INFINITY_THEORY_OVERVIEW_V1' _site/zh/theory/index.html
           test -f _site/en/index.html
           test -f _site/en/architect-of-intelligence/index.html
           test -f _site/zh/index.html
@@ -415,6 +427,9 @@ jobs:
             ('/assets/css/site-navigation.css', '.bl-drawer'),
             ('/assets/js/site-navigation.js', 'bl-public-language-v1'),
             ('/en/', 'Architect of Intelligence'),
+            ('/theory.html', 'PUBLIC_B_INFINITY_THEORY_OVERVIEW_V1'),
+            ('/en/theory/', 'BL∞: The reach of possibility'),
+            ('/zh/theory/', 'BL∞：可达的未来'),
             ('/zh/', '智慧架构师'),
             ('/en/architect-of-intelligence/', 'Sources and evidentiary boundaries'),
             ('/zh/architect-of-intelligence/', '参考来源与证据边界')

@@ -14,6 +14,12 @@ Only one intentionally ambiguous research concept is public:
 
 The richer internal formation remains withheld while the author evaluates potential value, transforms material into clearer public objects, and determines what can responsibly be released.
 
+## Reopened public original-thesis page (2026-10-13)
+
+The public `theory.html` page is no longer a redirect. It contains an editorial philosophical explanation of the original BL∞ question already public: the reachable domains of the future and the UNKNOWN final boundary. The companion translations are at `en/theory/` and `zh/theory/`.
+
+This adds readability to the already public *concept*, not disclosure of the protected theory core. **Original operators, internal formulae, mathematical construction, private mechanisms, algorithm chains, implementation details, credentials and reconstructive material remain withheld.** The page must not be represented as complete root-canon publication, scientific validation or evidence of unlimited performance.
+
 ## Explicitly public, separate lanes
 
 The following are public by separate owner decision and do not count as disclosure of the deeper B∞ research architecture:

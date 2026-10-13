@@ -14,9 +14,16 @@
 2. **Sách và khảo luận:** các bản công khai đã được chọn lọc.
 3. **Tự do Học thuật / Dân chủ Học thuật:** các tuyên ngôn và đề xuất ở tầng xã hội, nguyên tắc.
 4. **Tác giả và dự án:** hồ sơ tác giả cùng những thông tin dự án được chủ động công bố.
-5. **B∞ / UNKNOWN:** khái niệm công khai tối giản.
+5. **Học thuyết gốc BL∞ / UNKNOWN:** bản diễn giải triết học công khai tại [theory.html](theory.html), không kèm các toán tử hay cấu trúc nội bộ.
 
 Research core, continuity nội bộ, bản đồ người thật, quy tắc biên tập, kiểm soát nhịp truyện và các lớp vận hành không thuộc trải nghiệm đọc công khai.
+
+
+## BL∞ original thesis: public interpretation
+
+The original thesis page has been reopened at [theory.html](theory.html), with static [English](en/theory/) and [Chinese](zh/theory/) interpretations. It states the previously public BL∞ concept and its epistemic limits without revealing original operators, exact mathematical construction, execution mechanisms or protected research material.
+
+Public theory page status: **PUBLIC_PHILOSOPHICAL_OVERVIEW**, not FULL_ROOT_DISCLOSURE and not SCIENTIFIC_VERIFIED.
 
 ## Tiểu thuyết
 
