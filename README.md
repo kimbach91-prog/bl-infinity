@@ -31,6 +31,18 @@ Bề mặt tiểu thuyết được thiết kế như một tác phẩm trước
 
 Public privacy cũng được giữ chặt: prose không cần công bố địa chỉ, tuyến đi, điểm trường, mapping người thật, chronology gia đình hoặc chi tiết định danh chỉ vì research layer đang có dữ liệu đó.
 
+
+## 2026-10-13: scientific public edition and unified navigation
+
+The public BL∞ thesis, its English/Chinese editions, and a static scientific release gateway are now part of the curated source. The scientific edition cites published mathematics and cognition research as **methodological context**, provides reproducible **new illustrative examples**, and explicitly does not represent these examples as original BL∞ mathematics.
+
+Publication gateway: [Vietnamese](publication-gate.html), [English](en/publication-gate/), [Simplified Chinese](zh/publication-gate/). Its only role is to show evidence conditions, negative controls and an author-controlled disclosure boundary. Original operators remain withheld; no benchmark or CI result grants automatic release.
+
+Public information architecture: [public-content-map.json](public-content-map.json). The home page, reading library, research hub and studio serve different purposes. Short summaries link to their own canonical work instead of duplicating full content. No independent work was destroyed or silently redirected.
+
+The editorial page family shares the B∞ global header/drawer, navigation script, footer enhancements, canonical links, language tags, Open Graph, Twitter and structured page metadata. Dedicated book readers and research interfaces retain their specialized layout and functionality.
+
+
 ## Vẫn mở
 
 - **Tiểu thuyết:** Chương 1 hiện hành của *Bách Lâm: Lần Hồi Quy Thứ Một Triệu*.

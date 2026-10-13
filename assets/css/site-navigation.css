@@ -39,3 +39,15 @@ body.bl-scroll-lock{overflow:hidden}
 @media(max-width:390px){.bl-site-header .bl-logo span{display:none}.bl-site-header button.bl-toggle span{display:none}}
 
 @media(max-width:1080px){.bl-site-header nav.bl-horizontal{display:none!important}}
+
+/* BL∞ shared editorial tokens and publication footer, preserving specialized readers */
+:root{--bl-paper:#f8f6f1;--bl-ink:#24201c;--bl-rule:#d8d1c7;--bl-accent:#725340;--bl-card:#fffdf8;--bl-muted:#766b62;--bl-radius:12px}
+body.bl-public-site{--bl-design-system:1}
+body.bl-public-site :where(main) a:focus-visible{outline:3px solid #9271ac;outline-offset:3px}
+body.bl-public-site :where(main) h1,body.bl-public-site :where(main) h2{scroll-margin-top:94px}
+body.bl-public-site :where(main) img{max-width:100%;height:auto}
+.bl-unified-footer{max-width:100%;margin-top:35px;padding-top:18px;border-top:1px solid var(--bl-rule);color:var(--bl-muted)}
+.bl-unified-footer .bl-footer-links{display:flex;flex-wrap:wrap;gap:4px 15px;margin:12px 0 8px;font:650 .81rem/1.55 system-ui,sans-serif}
+.bl-unified-footer .bl-footer-links a{color:var(--bl-ink)!important;text-decoration:none!important;display:inline-flex;align-items:center;min-height:34px}
+.bl-unified-footer .bl-footer-links a:hover{text-decoration:underline!important}
+.bl-footer-custody{display:block;color:var(--bl-muted);font:400 .73rem/1.65 system-ui,sans-serif;margin:7px 0 2px}

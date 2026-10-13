@@ -20,6 +20,15 @@ The public `theory.html` page is no longer a redirect. It contains an editorial 
 
 This adds readability to the already public *concept*, not disclosure of the protected theory core. **Original operators, internal formulae, mathematical construction, private mechanisms, algorithm chains, implementation details, credentials and reconstructive material remain withheld.** The page must not be represented as complete root-canon publication, scientific validation or evidence of unlimited performance.
 
+
+## Scientific exposition and release gateway (2026-10-13)
+
+The public BL∞ theory is expanded to include clearly sourced methodological context (Shannon, Bayesian epistemology, Simon, Hutchins, Engelbart and Popper), plus finite-branching, graph-reachability and Bayesian/entropy **examples prepared for this public edition**. These calculations are **NOT certified as original BL∞ pre-theory calculations**, do not validate the full BL∞ thesis and are not reconstructed from restricted research materials.
+
+A new disclosure gate at `publication-gate.html` and translated `en/publication-gate/`, `zh/publication-gate/` states release criteria. An exact original-operator payload remains WITHHELD until evidence is independently checked, bounded applications are demonstrated, a provenance/rollback package exists and the owner makes a further explicit decision for that precise material. Release does not occur automatically.
+
+The public content map and standardized metadata consolidate navigation and avoid repeated index summaries without removing independent work, research-case lineage or literary boundaries.
+
 ## Explicitly public, separate lanes
 
 The following are public by separate owner decision and do not count as disclosure of the deeper B∞ research architecture:

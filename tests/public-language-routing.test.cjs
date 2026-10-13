@@ -20,7 +20,7 @@ function verify({path="",browser=["vi-VN"],saved=null,search=""},expected){
  };
  const document={
   querySelector(selector){
-   if(selector.includes('script[src*='))return {src:root+"assets/js/site-navigation.js?v=20261013-theory1"};
+   if(selector.includes('script[src*='))return {src:root+"assets/js/site-navigation.js?v=20261013-unified1"};
    return null;
   }
  };
@@ -43,6 +43,11 @@ verify({path:"theory.html",browser:["zh-CN"]},"zh/theory/");
 verify({path:"en/theory/",browser:["vi-VN"]},null);
 verify({path:"zh/theory/",browser:["en-US"]},null);
 verify({path:"theory.html",search:"?lang=vi",browser:["en-US"]},null);
+verify({path:"publication-gate.html",browser:["en-US"]},"en/publication-gate/");
+verify({path:"publication-gate.html",browser:["zh-CN"]},"zh/publication-gate/");
+verify({path:"en/publication-gate/",browser:["vi-VN"]},null);
+verify({path:"zh/publication-gate/",browser:["en-US"]},null);
+verify({path:"publication-gate.html",search:"?lang=vi",browser:["en-US"]},null);
 assert(code.includes("localStorage.setItem("),"manual language persistence missing");
 assert(code.includes('select.addEventListener("change"'),"manual locale selector missing");
 assert(code.includes("bl-i18n-notice"),"untranslated work disclosure missing");

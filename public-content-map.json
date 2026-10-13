@@ -1,0 +1,101 @@
+{
+  "schema": "b-infinity-public-content-map/1",
+  "releaseDate": "2026-10-13",
+  "author": "Lâm Kim Bách",
+  "publicScope": "PUBLIC_ONLY",
+  "canonicalSections": [
+    {
+      "id": "home",
+      "vi": "/",
+      "en": "/en/",
+      "zh": "/zh/",
+      "kind": "index",
+      "description": "Public reading library"
+    },
+    {
+      "id": "original-theory",
+      "vi": "/theory.html",
+      "en": "/en/theory/",
+      "zh": "/zh/theory/",
+      "kind": "public_hypothesis",
+      "description": "BL∞ philosophical overview and bounded scientific illustrations"
+    },
+    {
+      "id": "scientific-gate",
+      "vi": "/publication-gate.html",
+      "en": "/en/publication-gate/",
+      "zh": "/zh/publication-gate/",
+      "kind": "publication_policy",
+      "description": "Evidence criteria; no automatic operator disclosure"
+    },
+    {
+      "id": "architect-of-intelligence",
+      "vi": "/kien-truc-su-he-thong/",
+      "en": "/en/architect-of-intelligence/",
+      "zh": "/zh/architect-of-intelligence/",
+      "kind": "essay",
+      "description": "Essay with cited studies, not scientific validation of BL∞"
+    },
+    {
+      "id": "academic-freedom",
+      "vi": "/academic-freedom.html",
+      "kind": "manifesto",
+      "description": "Distinct work, not a duplicate of Academic Democracy"
+    },
+    {
+      "id": "academic-democracy",
+      "vi": "/academic-democracy.html",
+      "kind": "manifesto",
+      "description": "Distinct work, separate evidentiary claims"
+    },
+    {
+      "id": "books",
+      "vi": "/books/",
+      "kind": "library_index",
+      "description": "Index of individual works; do not duplicate their full content"
+    },
+    {
+      "id": "fiction",
+      "vi": "/novel/",
+      "kind": "fiction_reader",
+      "description": "Separate literary work and publication state"
+    },
+    {
+      "id": "human-development",
+      "vi": "/research/human-development/",
+      "kind": "research_index",
+      "description": "Program hub, distinct from research cases and studio"
+    },
+    {
+      "id": "author",
+      "vi": "/author.html",
+      "kind": "author_profile",
+      "description": "Author identity distinct from site home and publication promise"
+    },
+    {
+      "id": "publication-promise",
+      "vi": "/authors-promise.html",
+      "kind": "author_statement",
+      "description": "Separate disclosure promise, not the operator release gate"
+    },
+    {
+      "id": "projects",
+      "vi": "/projects.html",
+      "kind": "projects_index",
+      "description": "Public project registry, not internal architecture"
+    }
+  ],
+  "duplicatePolicy": {
+    "rule": "Reuse canonical URLs and short cross-links for repeated summaries. Never collapse works with different subjects, provenance or evidentiary status.",
+    "redirectsImplemented": [],
+    "distinctPagesRetained": true
+  },
+  "scientificDisclosure": {
+    "originalOperators": "WITHHELD",
+    "futureRelease": "EXPLICIT_AUTHOR_APPROVAL_AFTER_EVIDENCE",
+    "automaticUnlock": false,
+    "pretheoryNumbers": "ILLUSTRATIVE_PUBLIC_CALCULATIONS_NOT_ORIGINAL_BL_INFINITY",
+    "experimentalClaimState": "NOT_VERIFIED_AS_A_WHOLE",
+    "scientificSources": "BACKGROUND_METHODOLOGY_NOT_BL_INFINITY_CONFIRMATION"
+  }
+}
