@@ -87,9 +87,11 @@ const sideFoot=drawer.querySelector(".bl-drawer-foot"),footVI=sideFoot?sideFoot.
 
 /* Shared public footer: keep editorial footers, add consistent route affordances. */
 function createPublicFooter(){
-  const main=document.querySelector("body > main");
+  // Prefer the actual existing document footer. Some readers place it outside <main>.
+  // Otherwise a second copyright block would be created on every page load.
+  const main=document.querySelector("body main");
   if(!main)return null;
-  let foot=main.querySelector("footer:last-of-type");
+  let foot=document.querySelector("body > footer") || main.querySelector("footer:last-of-type");
   if(!foot){foot=document.createElement("footer");main.appendChild(foot)}
   foot.classList.add("bl-unified-footer");
   if(foot.querySelector(".bl-footer-links"))return foot;

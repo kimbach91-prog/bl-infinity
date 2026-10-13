@@ -15,7 +15,7 @@ function walk(dir){for(const item of fs.readdirSync(dir,{withFileTypes:true})){
 walk(root);
 const files=new Set(all.map(f=>path.relative(root,f).split(path.sep).join("/")));
 const htmlFiles=all.filter(f=>/\.html$/i.test(f));
-const missing=[],badRoot=[],duplicateIds=[],missingFragments=[],unsafeHref=[],accessibility=[],external=[];
+const missing=[],badRoot=[],duplicateIds=[],missingFragments=[],unsafeHref=[],accessibility=[],external=[],wrongCurrent=[];
 const clean=s=>String(s||"").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&#39;/g,"'").trim();
 function convertRef(raw,from,kind){
  raw=clean(raw);
@@ -50,7 +50,21 @@ for(const file of htmlFiles){
  const markup=html.replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi,"").replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi,"");
  const ids=[...markup.matchAll(/\bid=(["'])([^"']+)\1/gi)].map(m=>m[2]);
  for(const id of new Set(ids))if(ids.filter(x=>x===id).length>1)duplicateIds.push({from,id});
- if(markup.includes('class="bl-site-header"'))navCount++;
+ if(markup.includes('class="bl-site-header"')){
+  navCount++;
+  const sections=[markup.match(/<header class="bl-site-header"[\s\S]*?<\/header>/i)?.[0]||"",
+                  markup.match(/<aside id="bl-drawer"[\s\S]*?<\/aside>/i)?.[0]||""];
+  const expectedPath=new URL(from,origin+sitePrefix).pathname.replace(/index\.html$/,"");
+  for(const section of sections){
+    for(const a of section.matchAll(/<a\b[^>]*\baria-current="page"[^>]*>/gi)){
+      const href=attribute(a[0],"href");
+      const actual=new URL(href,origin+sitePrefix+from).pathname.replace(/index\.html$/,"");
+      if(actual!==expectedPath)wrongCurrent.push({from,href,actual,expectedPath});
+    }
+  }
+  if((markup.match(/<header class="bl-site-header"/g)||[]).length!==1)accessibility.push({from,issue:"duplicated global header"});
+  if((markup.match(/<footer\b/gi)||[]).length>1)accessibility.push({from,issue:"multiple static footers"});
+ }
  for(const match of markup.matchAll(/<(a|img|link|script|source|video|audio|iframe|form|use|meta|object)\b[^>]*>/gi)){
    const tag=match[0],type=match[1].toLowerCase();
    if(type==="img"){imageCount++;if(!/\balt\s*=/i.test(tag))accessibility.push({from,issue:"image missing alt",tag:tag.slice(0,100)});}
@@ -78,13 +92,17 @@ for(const file of all.filter(f=>/\.css$/i.test(f))){
    convertRef(match[2],from,"css");cssReferences++;
  }
 }
-const issues=[...missing.map(e=>({...e,issue:"missing published file"})),...badRoot.map(e=>({...e,issue:"site-root mismatch"}))];
 const uniq=a=>[...new Set(a)];
 const compact=(a,n=30)=>a.slice(0,n);
-const stats={htmlFiles:htmlFiles.length,stagedFiles:files.size,htmlReferences,cssReferences,images:imageCount,publicNavigationPages:navCount,missing:missing.length,badRoot:badRoot.length,unsafeHref:unsafeHref.length,duplicateIds:duplicateIds.length,missingFragments:missingFragments.length,accessibilityWarnings:accessibility.length,externalDomains:uniq(external).length};
+const sitemap=fs.readFileSync(path.join(root,"sitemap.xml"),"utf8");
+let sitemapUrls=0;
+for(const x of sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)){sitemapUrls++;convertRef(x[1],"sitemap.xml","sitemap");}
+const issues=[...missing.map(e=>({...e,issue:"missing published file"})),...badRoot.map(e=>({...e,issue:"site-root mismatch"}))];
+const stats={htmlFiles:htmlFiles.length,stagedFiles:files.size,htmlReferences,cssReferences,sitemapUrls,images:imageCount,publicNavigationPages:navCount,missing:missing.length,badRoot:badRoot.length,unsafeHref:unsafeHref.length,duplicateIds:duplicateIds.length,wrongCurrent:wrongCurrent.length,missingFragments:missingFragments.length,accessibilityWarnings:accessibility.length,externalDomains:uniq(external).length};
 console.log("B_INFINITY_STAGED_SITE_AUDIT_COUNTS",JSON.stringify(stats));
 if(issues.length)console.error("B_INFINITY_STAGED_SITE_BROKEN_LINKS",JSON.stringify(compact(issues,80),null,2));
 if(unsafeHref.length)console.error("B_INFINITY_STAGED_SITE_UNSAFE_LINKS",JSON.stringify(compact(unsafeHref),null,2));
+if(wrongCurrent.length)console.error("B_INFINITY_STAGED_SITE_WRONG_ACTIVE_LINKS",JSON.stringify(compact(wrongCurrent),null,2));
 if(duplicateIds.length)console.warn("B_INFINITY_STAGED_SITE_DUPLICATE_IDS",JSON.stringify(compact(duplicateIds),null,2));
 if(missingFragments.length)console.warn("B_INFINITY_STAGED_SITE_FRAGMENT_WARNINGS",JSON.stringify(compact(missingFragments),null,2));
 if(accessibility.length)console.warn("B_INFINITY_STAGED_SITE_ACCESSIBILITY_WARNINGS",JSON.stringify(compact(accessibility),null,2));
@@ -92,4 +110,5 @@ if(process.env.GITHUB_STEP_SUMMARY)fs.appendFileSync(process.env.GITHUB_STEP_SUM
  "## B∞ Staged Public Site Crawl\n\n\`\`\`json\n"+JSON.stringify(stats,null,2)+"\n\`\`\`\n");
 assert.equal(issues.length,0,"Public site has internal broken or misrooted links");
 assert.equal(unsafeHref.length,0,"Public site has javascript: links");
+assert.equal(wrongCurrent.length,0,"Public navigation has incorrect aria-current=page links");
 console.log("B_INFINITY_STAGED_SITE_LINKS_PASS",htmlFiles.length,htmlReferences+cssReferences);
