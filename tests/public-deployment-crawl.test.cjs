@@ -25,6 +25,11 @@ function convertRef(raw,from,kind){
  let u;try{u=new URL(raw,origin+sitePrefix+from)}catch{return null;}
  if(u.origin!==origin){external.push(u.origin);return null;}
  if(!u.pathname.startsWith(sitePrefix)){
+   // A fully-qualified page on a different GitHub Pages project is external.
+   // Its public availability cannot be inferred from this repository's artifact.
+   if(/^https?:\/\//i.test(raw) && u.pathname.startsWith("/Theory-Group/")){
+      external.push(u.origin+"/Theory-Group/");return null;
+   }
    badRoot.push({from,raw:raw.slice(0,100),resolved:u.pathname});
    return null;
  }
