@@ -256,6 +256,7 @@ jobs:
           node tests/public-pretheory-calculations.test.cjs
           node tests/public-essay-evidence.test.cjs
           node tests/public-editorial-coherence.test.cjs
+          node tests/public-author-voice.test.cjs
           python - <<'PY'
           from pathlib import Path
           pairs={
