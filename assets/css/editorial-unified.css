@@ -1,0 +1,68 @@
+/* B∞ Public Editorial System v2.0
+   One shared design layer. Preserves work-specific reader and studio layouts. */
+:root{
+ --bl-public-paper:#f8f6f1;--bl-public-ink:#24201c;--bl-public-secondary:#62584f;
+ --bl-public-line:#d9d0c4;--bl-public-panel:#fffdf8;--bl-public-accent:#69474a;
+ --bl-public-focus:#8264a7;
+}
+body[data-bl-editorial="1"]{
+ background:var(--bl-public-paper)!important;color:var(--bl-public-ink);
+ -webkit-font-smoothing:antialiased;
+}
+body[data-bl-editorial="1"] .bl-site-header{
+ border-color:var(--bl-public-line);background:rgba(248,246,241,.96);
+}
+body[data-bl-editorial="1"] .bl-logo b{
+ color:var(--bl-public-ink);
+}
+body[data-bl-editorial="1"] .bl-drawer{
+ background:var(--bl-public-paper);
+}
+body[data-bl-editorial="1"] .bl-toggle{
+ border-radius:10px;
+}
+body[data-bl-editorial="1"] a:focus-visible,
+body[data-bl-editorial="1"] button:focus-visible,
+body[data-bl-editorial="1"] summary:focus-visible{
+ outline:3px solid var(--bl-public-focus);outline-offset:3px;
+}
+body[data-bl-layout="editorial"] main{
+ max-width:960px;
+}
+body[data-bl-layout="editorial"] main h1,
+body[data-bl-layout="editorial"] main h2,
+body[data-bl-layout="editorial"] main h3{
+ text-wrap:balance;
+}
+body[data-bl-layout="editorial"] main h1,
+body[data-bl-layout="editorial"] main h2{
+ font-family:Georgia,"Noto Serif",serif;
+}
+body[data-bl-editorial="1"] main a:not(.bl-brand):hover{
+ text-decoration-thickness:2px;text-underline-offset:.15em;
+}
+body[data-bl-editorial="1"] main p{
+ overflow-wrap:break-word;
+}
+body[data-bl-editorial="1"] footer{
+ border-top:1px solid var(--bl-public-line);
+ color:var(--bl-public-secondary);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+ font-size:.83rem;line-height:1.7;
+}
+body[data-bl-editorial="1"] .section,
+body[data-bl-editorial="1"] .essay-section{
+ scroll-margin-top:90px;
+}
+body[data-bl-editorial="1"] .bl-publication-marker{
+ font:700 .72rem/1.45 system-ui,sans-serif;letter-spacing:.055em;
+ padding:7px 11px;border:1px solid #d6c8b8;border-radius:8px;
+ color:#594d42;background:var(--bl-public-panel);display:inline-block;
+ margin:0 0 14px;
+}
+@media(max-width:640px){
+ body[data-bl-editorial="1"] main{padding-bottom:max(48px,env(safe-area-inset-bottom));}
+ body[data-bl-editorial="1"] .bl-site-header .bl-header-inner{gap:8px;}
+}
+@media(prefers-reduced-motion:reduce){
+ body[data-bl-editorial="1"] *{scroll-behavior:auto!important;}
+}
