@@ -419,6 +419,12 @@ jobs:
           test ! -e _site/assets.html
           test ! -d _site/machine
 
+      - name: Crawl staged public site links and accessibility
+        shell: bash
+        run: |
+          set -euo pipefail
+          node tests/public-deployment-crawl.test.cjs _site
+
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@7b1f4a764d45c48632c6b24a0339c27f5614fb0b
         with:

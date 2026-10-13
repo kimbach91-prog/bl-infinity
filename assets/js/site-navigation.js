@@ -59,7 +59,7 @@ function addPublicTheoryLink(nav,beforeFragment){
   const a=document.createElement("a");
   a.href=new URL(map.theory.vi,root).href;
   a.textContent="Học thuyết BL∞";
-  if(key==="theory")a.setAttribute("aria-current","page");
+  // Active item is determined consistently in update() for every locale.
   const before=Array.from(nav.querySelectorAll("a")).find(link=>(link.getAttribute("href")||"").includes(beforeFragment));
   nav.insertBefore(a,before||null);
 }
@@ -134,6 +134,12 @@ function update(){
     else if(resolved.origin===root.origin&&resolved.pathname===new URL(map.theory.vi,root).pathname)kind="theory";
     else if(resolved.origin===root.origin&&resolved.pathname===new URL(map.publication.vi,root).pathname)kind="publication";
     if(kind){el.href=new URL(map[kind][language],root).href;}
+    // Accessibility: the active item must match this document, never a copied template.
+    const dest=new URL(el.href);
+    const current=dest.origin===root.origin && dest.pathname.startsWith(prefix)
+      && normalize(dest.pathname.slice(prefix.length))===clean;
+    if(current)el.setAttribute("aria-current","page");
+    else el.removeAttribute("aria-current");
   }
   for(const {el,word} of groupOrigins)el.textContent=textFor(word);
   if(sideFoot)sideFoot.textContent=language==="vi"?footVI:language==="en"?"B∞ · Public reading library. Every work has its own disclosure boundary.":"B∞ · 公共阅读图书馆。每部作品均有独立的公开范围。";
