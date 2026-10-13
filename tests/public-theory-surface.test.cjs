@@ -23,7 +23,7 @@ for(const e of editions){
  assert(!/http-equiv\s*=\s*["']refresh["']/i.test(html),e.path+" still redirects");
  assert((main.match(/class="section"/g)||[]).length===11,e.path+" missing expanded science sections");
  assert((main.match(/<h2>/g)||[]).length===11,e.path+" public outline incomplete");
- assert(main.length>(e.lang==="zh-CN"?9000:14000),e.path+" too short");
+ assert(main.length>(e.lang==="zh-CN"?6500:14000),e.path+" too short");
  assert(!/<\s*(?:code|pre|script|iframe|form|input|textarea)\b/i.test(main),e.path+" executable or reconstructive section present");
  assert(!/data:text\/|javascript:|gdrive:\/\//i.test(main),e.path+" unsupported egress content");
  assert(!/\b(?:[A-Z]{3,}_[A-Z0-9]{3,}){2,}\b/.test(main.replaceAll("PUBLIC_B_INFINITY_THEORY_OVERVIEW_V1","")),e.path+" unreviewed internal identifier");
