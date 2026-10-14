@@ -84,8 +84,11 @@ function runner() {
     cwd: REPO, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();
   need(sourceHead === actualHead, 'ACTUAL_HEAD_MISMATCH');
+  need(process.platform === 'linux' && process.versions.node.split('.')[0] === '22', 'PINNED_CI_ENVIRONMENT_REQUIRED');
+  const kernelBootId = fs.readFileSync('/proc/sys/kernel/random/boot_id', 'utf8').trim().toLowerCase();
+  need(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(kernelBootId), 'LINUX_KERNEL_BOOT_ID_REQUIRED');
   const r = {
-    hostname: hostname(), job: process.env.GITHUB_JOB,
+    hostname: hostname(), kernelBootId, job: process.env.GITHUB_JOB,
     runnerName: process.env.RUNNER_NAME ?? null, runnerOS: process.env.RUNNER_OS,
     workflowRunId: process.env.GITHUB_RUN_ID, workflowAttempt: process.env.GITHUB_RUN_ATTEMPT,
     sourceHead,
@@ -217,6 +220,7 @@ function firstRecord(c, id) {
     receipt.stop?.exitCode === 0 && receipt.leaseId && Number.isSafeInteger(receipt.fence), 'FIRST_EXECUTED_STOP_RECEIPT_REQUIRED');
   return { taskId: id, attempts: job.attempts, taskHash: row.task_hash, outputHash: row.output_hash,
     receiptSha256: hash(row.receipt_json), leaseId: receipt.leaseId, fence: receipt.fence,
+    kind: receipt.kind, verdict: receipt.verdict, stop: receipt.stop,
     leaseKey: receipt.key,
     leaseCount: Number(c.store.db.prepare('SELECT COUNT(*) n FROM atom_leases WHERE job_key=?').get(receipt.key).n) };
 }
@@ -354,7 +358,15 @@ function validateCarrier(dir, who, snapshot) {
   same(m.sourceSnapshot, snapshot, 'ACTUAL_SOURCE_SNAPSHOT_CHANGED');
   same(m.environment, environment(), 'ACTUAL_ENVIRONMENT_CHANGED');
   for (const k of ['workflowRunId', 'workflowAttempt', 'sourceHead']) need(m.producer[k] === who[k], 'DIFFERENT_WORKFLOW_OR_HEAD');
-  need(m.producer.hostname !== who.hostname && m.producer.job !== who.job, 'DISTINCT_PRODUCER_CONSUMER_HOST_REQUIRED');
+  need(/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/.test(m.producer.kernelBootId ?? ''), 'PRODUCER_KERNEL_BOOT_ID_REQUIRED');
+  if (m.producer.kernelBootId === who.kernelBootId || m.producer.job === who.job) {
+    const identity = r => ({ hostname: r.hostname, kernelBootId: r.kernelBootId, job: r.job,
+      workflowRunId: r.workflowRunId, workflowAttempt: r.workflowAttempt, sourceHead: r.sourceHead });
+    throw Object.assign(new Error('DISTINCT_PRODUCER_CONSUMER_HOST_REQUIRED'), {
+      code: 'DISTINCT_PRODUCER_CONSUMER_HOST_REQUIRED',
+      details: { producer: identity(m.producer), consumer: identity(who) },
+    });
+  }
   need(m.dataClass === 'public' && m.zeroSpend === true && m.providerCalls === 0 &&
     m.productionTaskAdmission === false, 'PUBLIC_ONLY_CARRIER_REQUIRED');
   authorityCurrent(m.authority, m.issuedAt);
@@ -404,13 +416,17 @@ async function resume(dir, who, snapshot) {
     const finalCounts = quiet(c), jobs = c.state.queue.list();
     need(jobs.length === 3 && jobs.every(j => j.state === 'succeeded' && j.attempts === 1), 'THREE_STABLE_SINGLE_ATTEMPT_JOBS');
     need(finalCounts.graphReceipts === 3 && finalCounts.leases === 5, 'SEPARATE_CANARY_GRAPH_ACCOUNTING');
+    const finalTaskReceipts = jobs.map(j => firstRecord(c, j.id)).sort((a, b) => a.taskId.localeCompare(b.taskId));
+    need(new Set(finalTaskReceipts.map(r => r.leaseId)).size === 3, 'DISTINCT_EXECUTED_GRAPH_LEASES_REQUIRED');
+    need(finalTaskReceipts.filter(r => r.taskId !== m.firstTask.taskId).every(r => r.fence > m.firstTask.fence),
+      'FRESH_SAME_POOL_FENCES_REQUIRED');
     receipt = { schema: 'deus.public-handoff-resume-receipt/1', state: 'PUBLIC_CROSS_HOST_HANDOFF_VERIFIED',
       observedUtc: new Date().toISOString(), producer: m.producer, consumer: who,
       runId: m.runId, sourceManifestDigest: SOURCE_DIGEST, graphFingerprint: c.graph.fingerprint,
       inputManifestSha256: process.env.DEUS_HANDOFF_MANIFEST_SHA256,
       authority: m.authority, originalGrantPreserved: true, environment: environment(),
       bindingDigest: c.bindingDigest, driverIdentity: c.driver.identity,
-      firstTaskBefore: m.firstTask, firstTaskAfter: firstAfter, oldLeaseRejection,
+      firstTaskBefore: m.firstTask, firstTaskAfter: firstAfter, finalTaskReceipts, oldLeaseRejection,
       restoredTaskIds: restored.map(x => x.taskId), finalTaskIds: jobs.map(x => x.id).sort(),
       root: result.root, rootDigest: ROOT_DIGEST, remainingGraphExecutions: result.executions,
       graphExecutionsTotal: 3, canaryExecutionsTotal: 2, counts: finalCounts,
@@ -438,6 +454,7 @@ try {
 } catch (error) {
   console.error(JSON.stringify({ schema: 'deus.public-handoff-failure/1', phase,
     state: 'FAIL_CLOSED', code: String(error.code ?? error.message),
+    ...(error.details ? { details: error.details } : {}),
     productionTaskAdmission: false, physicalCapacityClaimed: false }));
   process.exitCode = 1;
 }
