@@ -74,6 +74,8 @@ pgtest('two control planes share principal quota and enforce tenant/scope bounda
       lastSuccessAt: null,
       lastError: null,
       receipt: null,
+      lastErrorCode: null,
+      checkpointLookup: null,
     },
   });
 
