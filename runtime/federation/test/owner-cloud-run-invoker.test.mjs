@@ -1,7 +1,7 @@
 import { test, before } from 'node:test';
 import assert from 'node:assert/strict';
-import { webcrypto } from 'node:crypto';
-import { createOwnerCloudRunInvoker } from '../lib/owner-cloud-run-invoker.mjs';
+import { webcrypto, createHash } from 'node:crypto';
+import { createOwnerCloudRunInvoker, createOwnerCloudRunFrontendInvoker } from '../lib/owner-cloud-run-invoker.mjs';
 
 // Public synthetic fixtures only. No network, account, tokens or private receiver source.
 const c = Object.freeze({ teamDomain: 'https://fixture.cloudflareaccess.com', cfAudience: 'a'.repeat(64),
@@ -299,4 +299,185 @@ test('typed host query whitelist validates bounds/duplicates and preserves origi
     const blocked = harness(null, {}, config); await noDispatch(blocked, request(await token(), '/api/search' + query, { method: 'GET' }), 404);
     assert.equal(blocked.calls.length, 0);
   }
+});
+
+
+// Generic synthetic UI bytes only; no application asset is copied into this fixture.
+const frontendAssets = Object.freeze({
+  '/': Object.freeze({ mime: 'text/html', body: '<!doctype html><title>synthetic fixture</title>' }),
+  '/static/app.js': Object.freeze({ mime: 'text/javascript', body: '/* synthetic fixture only */\n' }),
+  '/static/style.css': Object.freeze({ mime: 'text/css', body: '/* synthetic fixture only */\n' }),
+});
+const sha = b => createHash('sha256').update(b).digest('hex');
+const pins = Object.entries(frontendAssets).map(([path, a]) =>
+  ({ path, expectedBytes: Buffer.byteLength(a.body), sha256: sha(a.body) }));
+function frontendHarness(change, options = {}, sourcePins = pins) {
+  const calls = [];
+  const fetchImpl = async (url, init) => {
+    const headers = new Headers(init.headers), entry = { url: String(url), init, headers };
+    calls.push(entry);
+    if (change) { const replacement = await change(entry, calls); if (replacement) return replacement; }
+    if (url === c.teamDomain + '/cdn-cgi/access/certs') return json({ keys: [jwk] });
+    if (url === STS) return json({ access_token: ACCESS, token_type: 'Bearer',
+      issued_token_type: 'urn:ietf:params:oauth:token-type:access_token', expires_in: 3600 });
+    if (String(url).startsWith('https://iamcredentials.googleapis.com/')) return json({ token: ID });
+    const path = String(url).slice(c.cloudRunOrigin.length), a = frontendAssets[path];
+    assert.ok(a, 'only one exact synthetic frontend resource is requested');
+    return new Response(a.body, { headers: { 'content-type': a.mime + '; charset=utf-8',
+      'set-cookie': 'synthetic-upstream-cookie', 'x-debug-token': ID, 'etag': '"fixture"',
+      'content-encoding': 'identity', 'content-length': String(Buffer.byteLength(a.body)) } });
+  };
+  return { calls, invoke: createOwnerCloudRunFrontendInvoker(c, sourcePins,
+    { fetchImpl, now: () => N * 1000, ...options }) };
+}
+const uiRequest = (t, path = '/', headers = {}, method = 'GET') =>
+  request(t, path, { method, headers });
+for (const [path, asset] of Object.entries(frontendAssets)) {
+  test('frontend exact asset ' + path + ' verifies hash and strips upstream diagnostics/cache/auth metadata', async () => {
+    const t = await token(), h = frontendHarness();
+    const r = await h.invoke(uiRequest(t, path, { cookie: 'synthetic-cookie',
+      authorization: 'Bearer synthetic-caller', 'x-serverless-authorization': 'Bearer synthetic-caller',
+      'x-csrf-token': 'synthetic-csrf', 'idempotency-key': IDEM, 'if-none-match': '"synthetic"',
+      'if-modified-since': 'Sat, 01 Jan 2000 00:00:00 GMT' }));
+    assert.equal(r.status, 200); assert.equal(await r.text(), asset.body);
+    assert.equal(r.headers.get('content-type'), asset.mime + '; charset=utf-8');
+    assert.equal(r.headers.get('cache-control'), 'no-store');
+    assert.equal(r.headers.get('x-content-type-options'), 'nosniff');
+    assert.equal(r.headers.get('x-frame-options'), 'DENY');
+    assert.equal(r.headers.get('referrer-policy'), 'no-referrer');
+    assert.equal(r.headers.get('content-security-policy'),
+      "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'");
+    assert.equal(r.headers.get('x-deus-transport-state'), 'SOURCE_PIN_VERIFIED');
+    for (const header of ['set-cookie', 'x-debug-token', 'etag', 'content-encoding', 'content-length',
+      'cf-access-jwt-assertion', 'x-serverless-authorization']) assert.equal(r.headers.has(header), false);
+    assert.equal(h.calls.length, 4); const backend = backendCalls(h)[0];
+    assert.equal(backend.url, c.cloudRunOrigin + path);
+    assert.equal(backend.init.method, 'GET'); assert.equal(backend.init.body, undefined);
+    assert.equal(backend.init.cache, 'no-store');
+    assert.equal(backend.headers.get('cf-access-jwt-assertion'), t);
+    assert.equal(backend.headers.get('x-serverless-authorization'), 'Bearer ' + ID);
+    assert.equal(backend.headers.get('origin'), c.publicOrigin);
+    assert.equal(backend.headers.get('accept-encoding'), 'identity');
+    for (const header of ['cookie', 'authorization', 'if-none-match', 'if-modified-since',
+      'range', 'x-csrf-token', 'idempotency-key']) assert.equal(backend.headers.has(header), false);
+    for (const call of h.calls) assert.equal(call.init.redirect, 'manual');
+  });
+}
+test('frontend rejects non-exact paths/queries/HEAD/API and Range before credentials', async () => {
+  const t = await token();
+  for (const [path, headers, method, status] of [
+    ['/static/other.js', {}, 'GET', 404], ['/static/app.js/', {}, 'GET', 404],
+    ['/static/%61pp.js', {}, 'GET', 404], ['/?q=x', {}, 'GET', 404],
+    ['/?', {}, 'GET', 404], ['/api/session', {}, 'GET', 404],
+    ['/', {}, 'HEAD', 404], ['/', {}, 'POST', 404],
+    ['/', { range: 'bytes=0-10' }, 'GET', 400],
+    ['/', { 'if-range': '"fixture"' }, 'GET', 400],
+    ['/', { 'content-length': '1' }, 'GET', 400],
+    ['/', { 'transfer-encoding': 'chunked' }, 'GET', 400],
+  ]) {
+    const h = frontendHarness(); await noDispatch(h, uiRequest(t, path, headers, method), status);
+    assert.equal(h.calls.length, 0);
+  }
+});
+test('frontend rejects wrong host/origin/owner/JWT signature before STS', async () => {
+  const t = await token(), parts = t.split('.'); parts[2] = (parts[2][0] === 'A' ? 'B' : 'A') + parts[2].slice(1);
+  for (const [req, maxCalls] of [
+    [new Request('https://attacker.example.invalid/', { headers: { 'cf-access-jwt-assertion': t } }), 0],
+    [uiRequest(t, '/', { origin: 'https://attacker.example.invalid' }), 0],
+    [uiRequest(await token({ email: 'attacker@example.invalid' })), 0],
+    [uiRequest(parts.join('.')), 1],
+  ]) {
+    const h = frontendHarness(); const r = await h.invoke(req);
+    assert.ok([403, 404].includes(r.status)); assert.equal((await r.json()).effect, 'NO_DISPATCH');
+    assert.equal(h.calls.length, maxCalls); assert.equal(h.calls.some(x => x.url === STS), false);
+  }
+});
+test('frontend source-policy rejects widening, sparse/getter/inherited/malformed pins before execution', () => {
+  const copy = () => pins.map(p => ({ ...p }));
+  const invalid = [];
+  invalid.push([]); invalid.push([...copy(), { ...pins[0] }]);
+  let p = copy(); p[0].path = '/static/*'; invalid.push(p);
+  p = copy(); p[1] = { ...p[0] }; invalid.push(p);
+  p = copy(); delete p[1]; invalid.push(p);
+  p = copy(); p[0].expectedBytes = 16385; invalid.push(p);
+  p = copy(); p[0].expectedBytes = 0; invalid.push(p);
+  p = copy(); p[0].sha256 = 'A'.repeat(64); invalid.push(p);
+  p = copy(); p[0].method = 'POST'; invalid.push(p);
+  p = copy(); p[0] = Object.create(p[0]); invalid.push(p);
+  p = copy(); Object.defineProperty(p[0], 'sha256', { get() { throw Error('GETTER_MUST_NOT_RUN'); } }); invalid.push(p);
+  p = copy(); Object.defineProperty(p, '0', { get() { throw Error('GETTER_MUST_NOT_RUN'); } }); invalid.push(p);
+  for (const value of invalid) assert.throws(() =>
+    createOwnerCloudRunFrontendInvoker(c, value), /^Error: HOST_CONFIG_INVALID$/);
+});
+test('frontend source-policy snapshots caller-owned admission values immutably', async () => {
+  const p = pins.map(r => ({ ...r })), h = frontendHarness(undefined, {}, p);
+  p[0].path = '/static/other.js'; p[0].sha256 = '0'.repeat(64); p.splice(1, 2);
+  const r = await h.invoke(uiRequest(await token())); assert.equal(r.status, 200);
+  assert.equal(await r.text(), frontendAssets['/'].body);
+});
+test('frontend rejects wrong MIME/status/bytes/hash/UTF8 without forwarding source or retry', async () => {
+  const t = await token();
+  const variants = [
+    new Response(frontendAssets['/'].body, { status: 202, headers: { 'content-type': 'text/html' } }),
+    new Response(null, { status: 204 }),
+    new Response(null, { status: 302, headers: { location: 'https://attacker.invalid/' } }),
+    new Response('PRIVATE_SENTINEL', { status: 403, headers: { 'content-type': 'text/html' } }),
+    new Response(frontendAssets['/'].body, { headers: { 'content-type': 'application/json' } }),
+    new Response(frontendAssets['/'].body, { headers: { 'content-type': 'text/html; charset=latin1' } }),
+    new Response(frontendAssets['/'].body, { headers: { 'content-type': 'text/html', 'content-encoding': 'gzip' } }),
+    new Response(frontendAssets['/'].body + 'X', { headers: { 'content-type': 'text/html' } }),
+    new Response('X'.repeat(Buffer.byteLength(frontendAssets['/'].body)), { headers: { 'content-type': 'text/html' } }),
+    new Response('X'.repeat(16385), { headers: { 'content-type': 'text/html', 'content-length': '1' } }),
+    new Response(frontendAssets['/'].body, { headers: { 'content-type': 'text/html', 'content-length': '99999' } }),
+  ];
+  for (const backend of variants) {
+    const h = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin) ? backend : undefined);
+    const r = await h.invoke(uiRequest(t)); assert.equal(r.status, 502);
+    const body = await r.text(); assert.ok(!body.includes('PRIVATE_SENTINEL'));
+    assert.equal(JSON.parse(body).retry, false); assert.equal(backendCalls(h).length, 1);
+    assert.equal(h.calls.length, 4);
+  }
+  const bytes = Buffer.from([255]), p = pins.map(x => ({ ...x }));
+  p[0] = { ...p[0], expectedBytes: 1, sha256: sha(bytes) };
+  const h = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin)
+    ? new Response(bytes, { headers: { 'content-type': 'text/html' } }) : undefined, {}, p);
+  assert.equal((await h.invoke(uiRequest(t))).status, 502);
+});
+test('frontend accepts exact 16KiB pin but caps decoded streaming bodies independently of header', async () => {
+  const bytes = Buffer.alloc(16384, 65), p = pins.map(x => ({ ...x }));
+  p[0] = { ...p[0], expectedBytes: bytes.length, sha256: sha(bytes) };
+  const h = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin)
+    ? new Response(bytes, { headers: { 'content-type': 'text/html' } }) : undefined, {}, p);
+  assert.equal((await h.invoke(uiRequest(await token()))).status, 200);
+  let cancelled = false, emitted = false;
+  const stream = new ReadableStream({ pull(controller) {
+    if (!emitted) { emitted = true; controller.enqueue(new Uint8Array(16385)); }
+  }, cancel() { cancelled = true; } });
+  const tooLarge = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin)
+    ? new Response(stream, { headers: { 'content-type': 'text/html', 'content-length': '1' } }) : undefined);
+  const r = await tooLarge.invoke(uiRequest(await token()));
+  assert.equal(r.status, 502); assert.equal(cancelled, true); assert.equal(backendCalls(tooLarge).length, 1);
+});
+test('frontend cancels a stalled receiver body on finite deadline without fallback', async () => {
+  const t = await token(); let cancelled = false;
+  const h = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin)
+    ? new Response(new ReadableStream({ pull() {}, cancel() { cancelled = true; } }),
+      { headers: { 'content-type': 'text/html' } }) : undefined, { timeoutMs: 100 });
+  const started = Date.now(), r = await h.invoke(uiRequest(t));
+  assert.equal(r.status, 502); assert.equal(cancelled, true);
+  assert.ok(Date.now() - started < 2000); assert.equal(backendCalls(h).length, 1);
+});
+test('frontend does not expose a credential even when an admitted fixture pin contains it', async () => {
+  const p = pins.map(x => ({ ...x })); p[0] = { ...p[0], expectedBytes: Buffer.byteLength(ID), sha256: sha(ID) };
+  const h = frontendHarness(e => e.url.startsWith(c.cloudRunOrigin)
+    ? new Response(ID, { headers: { 'content-type': 'text/html' } }) : undefined, {}, p);
+  const r = await h.invoke(uiRequest(await token())); assert.equal(r.status, 502);
+  assert.equal((await r.text()).includes(ID), false);
+});
+test('frontend IAM failure sends no private receiver request and never retries', async () => {
+  const h = frontendHarness(e => e.url.startsWith('https://iamcredentials.googleapis.com/')
+    ? new Response('synthetic-error', { status: 403 }) : undefined);
+  const r = await h.invoke(uiRequest(await token())); assert.equal(r.status, 502);
+  assert.equal((await r.json()).effect, 'NO_DISPATCH');
+  assert.equal(h.calls.length, 3); assert.equal(backendCalls(h).length, 0);
 });

@@ -7,6 +7,17 @@ const decoder = new TextDecoder('utf-8', { fatal: true });
 const BODY_LIMIT = 65536, RESPONSE_LIMIT = 131072, TOKEN_LIMIT = 12288;
 const PUBLIC_CODES = new Set(['PATH_REJECTED', 'REQUEST_REJECTED', 'ACCESS_REJECTED',
   'KEYS_UNAVAILABLE', 'STS_UNAVAILABLE', 'IAM_UNAVAILABLE', 'BACKEND_UNCONFIRMED']);
+const FRONTEND_TYPES = Object.freeze({
+  '/': Object.freeze(['text/html']),
+  '/static/app.js': Object.freeze(['text/javascript', 'application/javascript']),
+  '/static/style.css': Object.freeze(['text/css']),
+});
+const FRONTEND_HEADERS = Object.freeze({
+  'cache-control': 'no-store', 'x-content-type-options': 'nosniff',
+  'x-frame-options': 'DENY', 'referrer-policy': 'no-referrer',
+  'content-security-policy': "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; object-src 'none'; base-uri 'none'; form-action 'self'",
+  'x-deus-transport-state': 'SOURCE_PIN_VERIFIED',
+});
 const fail = (code) => { throw new Error(code); };
 const requireValue = (ok, code) => { if (!ok) fail(code); };
 const DEFAULT_ROUTES = [
@@ -116,6 +127,22 @@ function hostConfig(value) {
   return Object.freeze({ ...c, apiRoutes: routePolicy(Object.hasOwn(value, 'apiRoutes') ? value.apiRoutes : undefined) });
 }
 
+function frontendPolicy(value) {
+  requireValue(Array.isArray(value) && Object.getPrototypeOf(value) === Array.prototype &&
+    value.length === 3 && Reflect.ownKeys(value).every(k => k === 'length' || ['0', '1', '2'].includes(k)), 'HOST_CONFIG_INVALID');
+  const seen = new Set(), result = [];
+  for (let i = 0; i < value.length; i++) {
+    requireValue(Object.hasOwn(value, i) && Object.hasOwn(Object.getOwnPropertyDescriptor(value, String(i)), 'value'), 'HOST_CONFIG_INVALID');
+    const r = value[i]; plainRecord(r, ['path', 'expectedBytes', 'sha256']);
+    requireValue(['path', 'expectedBytes', 'sha256'].every(k => Object.hasOwn(r, k)) &&
+      typeof r.path === 'string' && Object.hasOwn(FRONTEND_TYPES, r.path) && !seen.has(r.path) &&
+      Number.isSafeInteger(r.expectedBytes) && r.expectedBytes > 0 && r.expectedBytes <= 16384 &&
+      typeof r.sha256 === 'string' && /^[a-f0-9]{64}$/.test(r.sha256), 'HOST_CONFIG_INVALID');
+    seen.add(r.path); result.push(Object.freeze({ path: r.path, expectedBytes: r.expectedBytes, sha256: r.sha256 }));
+  }
+  return Object.freeze(result);
+}
+
 function fromBase64url(s) {
   requireValue(typeof s === 'string' && /^[A-Za-z0-9_-]+$/.test(s) && s.length % 4 !== 1, 'ACCESS_REJECTED');
   let text; try { text = atob(s.replaceAll('-', '+').replaceAll('_', '/') + '='.repeat((4 - s.length % 4) % 4)); }
@@ -184,6 +211,19 @@ function cleanFailure(code) {
 export function createOwnerCloudRunInvoker(config, {
   fetchImpl = globalThis.fetch, now = Date.now, timeoutMs = 8000,
 } = {}) {
+  return createInvoker(config, null, { fetchImpl, now, timeoutMs });
+}
+
+/** Separate GET-only UI delivery; reviewed source pins are host admission, never caller input.
+ * This does not admit a browser, a deployed application, or a compute executor.
+ */
+export function createOwnerCloudRunFrontendInvoker(config, sourcePins, {
+  fetchImpl = globalThis.fetch, now = Date.now, timeoutMs = 8000,
+} = {}) {
+  return createInvoker(config, frontendPolicy(sourcePins), { fetchImpl, now, timeoutMs });
+}
+
+function createInvoker(config, frontend, { fetchImpl, now, timeoutMs }) {
   const c = hostConfig(config);
   requireValue(typeof fetchImpl === 'function' && typeof now === 'function' &&
     Number.isInteger(timeoutMs) && timeoutMs >= 1 && timeoutMs <= 30000, 'HOST_CONFIG_INVALID');
@@ -230,17 +270,24 @@ export function createOwnerCloudRunInvoker(config, {
     let backendSent = false;
     try {
       const url = new URL(request.url);
-      const route = c.apiRoutes.find(r => r.method === request.method && r.match.test(url.pathname));
+      const route = frontend
+        ? frontend.find(r => request.method === 'GET' && r.path === url.pathname)
+        : c.apiRoutes.find(r => r.method === request.method && r.match.test(url.pathname));
       const write = request.method === 'POST';
       requireValue(url.origin === c.publicOrigin && !url.username && !url.password && !url.hash &&
         route, 'PATH_REJECTED');
-      queryAllowed(url, route.query);
+      if (frontend) {
+        requireValue(url.href === `${c.publicOrigin}${url.pathname}`, 'PATH_REJECTED');
+        requireValue(request.body === null && (!request.headers.has('content-length') || request.headers.get('content-length') === '0') &&
+          !['transfer-encoding', 'range', 'if-range'].some(h => request.headers.has(h)), 'REQUEST_REJECTED');
+      } else queryAllowed(url, route.query);
       requireValue((!request.headers.has('origin') || request.headers.get('origin') === c.publicOrigin) &&
         (!write || request.headers.get('origin') === c.publicOrigin), 'ACCESS_REJECTED');
       const token = request.headers.get('cf-access-jwt-assertion');
       await verifyAccess(token);
       let body;
       const headers = new Headers({ 'cf-access-jwt-assertion': token, origin: c.publicOrigin });
+      if (frontend) headers.set('accept-encoding', 'identity');
       if (write) {
         body = await timed(signal => readBounded(request.body, route.maxBytes, 'REQUEST_REJECTED', signal), timeoutMs, 'REQUEST_REJECTED');
         requireValue(!route.bodyRequired || body.byteLength > 0, 'REQUEST_REJECTED');
@@ -251,7 +298,7 @@ export function createOwnerCloudRunInvoker(config, {
         requireValue(request.headers.has('x-csrf-token') &&
           (!route.idempotencyRequired || request.headers.has('idempotency-key')), 'REQUEST_REJECTED');
       }
-      for (const name of ['x-csrf-token', 'idempotency-key']) {
+      for (const name of frontend ? [] : ['x-csrf-token', 'idempotency-key']) {
         const value = request.headers.get(name);
         if (value !== null) {
           requireValue(/^[\x21-\x7e]{1,256}$/.test(value) &&
@@ -274,7 +321,25 @@ export function createOwnerCloudRunInvoker(config, {
       claimsAllowed(objectJson(fromBase64url(token.split('.')[1]), 'ACCESS_REJECTED'), c, now);
       headers.set('x-serverless-authorization', `Bearer ${id.token}`);
       backendSent = true; // An interrupted POST may have taken effect: never retry here.
-      const backend = await wire(`${c.cloudRunOrigin}${url.pathname}${url.search}`, { method: request.method, headers, body }, 'BACKEND_UNCONFIRMED', RESPONSE_LIMIT, true);
+      const backend = await wire(`${c.cloudRunOrigin}${url.pathname}${url.search}`, {
+        method: request.method, headers, body, ...(frontend ? { cache: 'no-store' } : {}),
+      },
+        'BACKEND_UNCONFIRMED', frontend ? 16384 : RESPONSE_LIMIT, !frontend);
+      if (frontend) {
+        const type = (backend.response.headers.get('content-type') || '').trim().toLowerCase();
+        const acceptedType = FRONTEND_TYPES[route.path].find(m => type === m || type === `${m}; charset=utf-8`);
+        const encoding = backend.response.headers.get('content-encoding');
+        requireValue(backend.response.status === 200 && acceptedType &&
+          (encoding === null || encoding.trim().toLowerCase() === 'identity') &&
+          backend.bytes.byteLength === route.expectedBytes, 'BACKEND_UNCONFIRMED');
+        const digest = new Uint8Array(await globalThis.crypto.subtle.digest('SHA-256', backend.bytes));
+        requireValue(Array.from(digest, b => b.toString(16).padStart(2, '0')).join('') === route.sha256, 'BACKEND_UNCONFIRMED');
+        let text; try { text = decoder.decode(backend.bytes); } catch { fail('BACKEND_UNCONFIRMED'); }
+        requireValue(![token, sts.access_token, id.token].some(secret => text.includes(secret)), 'BACKEND_UNCONFIRMED');
+        return new Response(backend.bytes, { status: 200, headers: {
+          ...FRONTEND_HEADERS, 'content-type': `${acceptedType}; charset=utf-8`,
+        } });
+      }
       requireValue(/^application\/json(?:\s*;.*)?$/i.test(backend.response.headers.get('content-type') || ''), 'BACKEND_UNCONFIRMED');
       let text; try { text = JSON.stringify(JSON.parse(decoder.decode(backend.bytes))); } catch { fail('BACKEND_UNCONFIRMED'); }
       requireValue(![token, sts.access_token, id.token].some(secret => text.includes(secret)), 'BACKEND_UNCONFIRMED');
