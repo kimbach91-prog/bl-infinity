@@ -1,0 +1,63 @@
+name: DEUS Owner Cloud Run Binding Protocol
+
+on:
+  push:
+    branches: [deus/capability-router-native-canary-20261008]
+    paths:
+      - 'runtime/federation/lib/owner-cloud-run-invoker.mjs'
+      - 'runtime/federation/test/owner-cloud-run-invoker.test.mjs'
+      - '.github/workflows/deus-owner-cloud-run-binding.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  protocol:
+    if: ${{ github.repository == 'kimbach91-prog/bl-infinity' && github.ref == 'refs/heads/deus/capability-router-native-canary-20261008' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Verify public synthetic JWT and transport contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          timeout -k 5s 180s node --max-old-space-size=128 --test --test-reporter=tap runtime/federation/test/owner-cloud-run-invoker.test.mjs | tee "$RUNNER_TEMP/deus-owner-binding.tap"
+      - name: Emit attributable bounded protocol receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import crypto from 'node:crypto';
+          const hash = p => crypto.createHash('sha256').update(fs.readFileSync(p)).digest('hex');
+          const log = fs.readFileSync(process.env.RUNNER_TEMP + '/deus-owner-binding.tap', 'utf8');
+          const count = key => Number(log.match(new RegExp('^# ' + key + ' (\\d+)$', 'm'))?.[1] ?? -1);
+          if (count('tests') < 1 || count('fail') !== 0 || count('pass') !== count('tests')) throw new Error('PROTOCOL_TEST_RECEIPT_INCOMPLETE');
+          console.log(JSON.stringify({
+            schema: 'deus-owner-binding-protocol-receipt/1',
+            objective: 'Verify the generic authenticated owner consumer to private Cloud Run transport contract',
+            sourceCommit: process.env.GITHUB_SHA,
+            repository: process.env.GITHUB_REPOSITORY,
+            runId: process.env.GITHUB_RUN_ID,
+            runAttempt: process.env.GITHUB_RUN_ATTEMPT,
+            jobName: process.env.GITHUB_JOB,
+            bootId: fs.readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim(),
+            executor: 'GitHub Actions hosted ubuntu-24.04 / Node 22',
+            tests: count('tests'), pass: count('pass'), fail: count('fail'),
+            moduleSha256: hash('runtime/federation/lib/owner-cloud-run-invoker.mjs'),
+            testsSha256: hash('runtime/federation/test/owner-cloud-run-invoker.test.mjs'),
+            workflowSha256: hash('.github/workflows/deus-owner-cloud-run-binding.yml'),
+            dataClass: 'PUBLIC_SYNTHETIC_TEST_ONLY',
+            realProviderCalls: 0, ownerPrivateSourceExported: false,
+            privateCloudRunAdmission: false, consumerProductionAdoption: false,
+            scope: 'Cryptographic checks and mocked provider protocol only; no hardware capacity or production execution credit'
+          }));
+          NODE
