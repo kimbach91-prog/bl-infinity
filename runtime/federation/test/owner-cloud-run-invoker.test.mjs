@@ -32,7 +32,7 @@ function request(t, path = '/api/jobs', { method = 'POST', body = '{"kind":"task
       'x-csrf-token': 'synthetic-csrf', 'idempotency-key': IDEM } : {}), ...headers },
     ...(method === 'POST' ? { body } : {}) });
 }
-function harness(change, options = {}) {
+function harness(change, options = {}, config = c) {
   const calls = [];
   const fetchImpl = async (url, init) => {
     const headers = new Headers(init.headers);
@@ -47,7 +47,7 @@ function harness(change, options = {}) {
     assert.ok(String(url).startsWith(c.cloudRunOrigin + '/api/'), 'only fixed backend permitted');
     return json({ job_id: 'b'.repeat(32), state: 'queued', proof: 'application response only' });
   };
-  return { calls, invoke: createOwnerCloudRunInvoker(c, { fetchImpl, now: () => N * 1000, ...options }) };
+  return { calls, invoke: createOwnerCloudRunInvoker(config, { fetchImpl, now: () => N * 1000, ...options }) };
 }
 const backendCalls = h => h.calls.filter(x => x.url.startsWith(c.cloudRunOrigin));
 async function noDispatch(h, req, status = 403) {
@@ -208,4 +208,95 @@ test('reliable backend422 is a sanitized response, not NO_DISPATCH or result pro
   const response = await h.invoke(request(await token()));
   assert.equal(response.status, 422); assert.equal((await response.json()).effect, 'RESPONSE_RECEIVED');
   assert.equal(backendCalls(h).length, 1);
+});
+
+// Host policy fixtures are generic metadata, not a deployed owner's route configuration.
+const route = (method, path, fields = {}) => ({ method, path, bodyRequired: method === 'POST',
+  idempotencyRequired: false, maxBytes: method === 'POST' ? 131072 : 0, ...fields });
+const searchRoute = () => route('GET', '/api/search', { query: {
+  q: { type: 'string', maxLength: 200 }, limit: { type: 'integer', min: 1, max: 100 } } });
+test('reviewed host-only routes admit bounded synthetic reads/writes without changing default', async () => {
+  const config = { ...c, apiRoutes: [route('GET', '/api/status'), route('GET', '/api/items/{id:ascii64}'),
+    route('POST', '/api/submit', { idempotencyRequired: true })] };
+  for (const path of ['/api/status', '/api/items/' + 'Z_-'.repeat(21)]) {
+    const h = harness(null, {}, config), response = await h.invoke(request(await token(), path, { method: 'GET' }));
+    assert.equal(response.status, 200); assert.equal(backendCalls(h)[0].url, c.cloudRunOrigin + path);
+  }
+  const h = harness(null, {}, config), body = JSON.stringify({ work_id: 'DEUS-SYNTHETIC-002', text: 'x'.repeat(70000) });
+  assert.equal((await h.invoke(request(await token(), '/api/submit', { body }))).status, 200);
+  assert.equal(backendCalls(h)[0].body, body);
+  const defaults = harness(); await noDispatch(defaults, request(await token(), '/api/status', { method: 'GET',
+    headers: { 'x-api-routes': JSON.stringify(config.apiRoutes) } }), 404); assert.equal(defaults.calls.length, 0);
+  const oversize = harness(null, {}, config);
+  await noDispatch(oversize, request(await token(), '/api/submit', { body: JSON.stringify({ text: 'x'.repeat(131072) }) }), 400);
+});
+test('route descriptors reject callbacks/regex/targets/duplicates/ambiguous IDs and remain closed', async () => {
+  const get = route('GET', '/api/status');
+  for (const apiRoutes of [[], Array(33).fill(get), [get, get], [ { ...get, match: () => true } ],
+    [ { ...get, path: /status/ } ], [ { ...get, path: 'https://attacker.invalid/api/status' } ],
+    [ { ...get, path: '/api/*' } ], [ { ...get, path: '/api/items/{id:any}' } ],
+    [ { ...get, path: '/api/items/{id:ascii64}/{id:hex32}' } ],
+    [route('GET', '/api/items/{id:ascii64}'), route('GET', '/api/items/{id:hex32}')],
+    [route('POST', '/api/submit', { bodyRequired: false })],
+    [route('POST', '/api/jobs')], [route('POST', '/api/chat')],
+    [{ ...get, query: { q: { type: 'string', maxLength: 200, regex: '.*' } } }],
+    [{ ...get, query: null }]]) {
+    assert.throws(() => createOwnerCloudRunInvoker({ ...c, apiRoutes }), /HOST_CONFIG_INVALID/);
+  }
+  const h = harness(null, {}, { ...c, apiRoutes: [route('GET', '/api/items/{id:ascii64}')] });
+  for (const path of ['/api/items/' + 'a'.repeat(65), '/api/items/a%2Fb', '/api/items/item/cancel', '/api/items/item?q=x']) {
+    await noDispatch(h, request(await token(), path, { method: 'GET' }), 404);
+  }
+  assert.equal(h.calls.length, 0);
+});
+test('prototype/accessor inputs reject and deep-cloned policy cannot be broadened after construction', async () => {
+  assert.throws(() => createOwnerCloudRunInvoker(Object.create(c)), /HOST_CONFIG_INVALID/);
+  assert.throws(() => createOwnerCloudRunInvoker({ ...c, apiRoutes: [Object.create(route('GET', '/api/status'))] }), /HOST_CONFIG_INVALID/);
+  let accessed = false; const accessor = { ...c };
+  Object.defineProperty(accessor, 'cfAudience', { get() { accessed = true; return c.cfAudience; } });
+  assert.throws(() => createOwnerCloudRunInvoker(accessor), /HOST_CONFIG_INVALID/); assert.equal(accessed, false);
+  const entries = []; Object.defineProperty(entries, '0', { get() { accessed = true; return route('GET', '/api/status'); } });
+  assert.throws(() => createOwnerCloudRunInvoker({ ...c, apiRoutes: entries }), /HOST_CONFIG_INVALID/); assert.equal(accessed, false);
+  const config = { ...c, apiRoutes: [searchRoute(), route('GET', '/api/status')] }, h = harness(null, {}, config);
+  config.cloudRunOrigin = 'https://attacker.run.app'; config.ownerEmail = 'attacker@example.invalid';
+  config.apiRoutes[0].query.q.maxLength = 1024; config.apiRoutes[0].query.limit.max = 1000000000;
+  config.apiRoutes[1].path = '/api/control'; config.apiRoutes.push(route('GET', '/api/control'));
+  assert.equal((await h.invoke(request(await token(), '/api/status', { method: 'GET' }))).status, 200);
+  assert.equal(backendCalls(h)[0].url, c.cloudRunOrigin + '/api/status');
+  for (const path of ['/api/control', '/api/search?q=' + 'x'.repeat(201), '/api/search?limit=101']) {
+    const count = h.calls.length, response = await h.invoke(request(await token(), path, { method: 'GET' }));
+    assert.equal(response.status, 404); assert.equal((await response.json()).effect, 'NO_DISPATCH');
+    assert.equal(h.calls.length, count);
+  }
+});
+test('all policy POSTs require CSRF; explicit idempotency and verified optional bodies are enforced', async () => {
+  const optional = [route('POST', '/api/logout', { bodyRequired: false }),
+    route('POST', '/api/jobs/{id:ascii64}/cancel', { bodyRequired: false }),
+    route('POST', '/api/resources/{id:ascii64}/revoke', { bodyRequired: false })];
+  for (const path of ['/api/logout', '/api/jobs/fixture/cancel', '/api/resources/fixture/revoke']) {
+    for (const body of ['', '{"reason":"synthetic"}']) {
+      const h = harness(null, {}, { ...c, apiRoutes: optional }), req = request(await token(), path, { body });
+      req.headers.delete('idempotency-key'); if (!body) req.headers.delete('content-type');
+      assert.equal((await h.invoke(req)).status, 200); assert.equal(backendCalls(h)[0].body, body || undefined);
+    }
+    const h = harness(null, {}, { ...c, apiRoutes: optional }), req = request(await token(), path, { body: '' });
+    req.headers.delete('x-csrf-token'); await noDispatch(h, req, 400); assert.equal(h.calls.some(x => x.url === STS), false);
+  }
+  for (const field of ['x-csrf-token', 'idempotency-key', 'body']) {
+    const h = harness(null, {}, { ...c, apiRoutes: [route('POST', '/api/submit', { idempotencyRequired: true })] });
+    const req = request(await token(), '/api/submit', { body: field === 'body' ? '' : '{}' });
+    if (field !== 'body') req.headers.delete(field);
+    await noDispatch(h, req, 400); assert.equal(h.calls.some(x => x.url === STS), false);
+  }
+});
+test('typed host query whitelist validates bounds/duplicates and preserves original search bytes', async () => {
+  const config = { ...c, apiRoutes: [searchRoute()] }, path = '/api/search?q=%CE%B4%20road&limit=40';
+  const h = harness(null, {}, config);
+  assert.equal((await h.invoke(request(await token(), path, { method: 'GET' }))).status, 200);
+  assert.equal(backendCalls(h)[0].url, c.cloudRunOrigin + path);
+  for (const query of ['?q=one&q=two', '?q=one&%71=two', '?target=https://attacker.invalid', '?q=%00',
+    '?q=%ZZ', '?q=' + 'x'.repeat(201), '?q=' + 'x'.repeat(2049), '?limit=0', '?limit=101', '?limit=01', '?limit=1e2']) {
+    const blocked = harness(null, {}, config); await noDispatch(blocked, request(await token(), '/api/search' + query, { method: 'GET' }), 404);
+    assert.equal(blocked.calls.length, 0);
+  }
 });

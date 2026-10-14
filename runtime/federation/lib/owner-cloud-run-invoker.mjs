@@ -9,12 +9,96 @@ const PUBLIC_CODES = new Set(['PATH_REJECTED', 'REQUEST_REJECTED', 'ACCESS_REJEC
   'KEYS_UNAVAILABLE', 'STS_UNAVAILABLE', 'IAM_UNAVAILABLE', 'BACKEND_UNCONFIRMED']);
 const fail = (code) => { throw new Error(code); };
 const requireValue = (ok, code) => { if (!ok) fail(code); };
+const DEFAULT_ROUTES = [
+  { method: 'GET', path: '/api/session', bodyRequired: false, idempotencyRequired: false, maxBytes: 0 },
+  { method: 'GET', path: '/api/jobs', bodyRequired: false, idempotencyRequired: false, maxBytes: 0 },
+  { method: 'GET', path: '/api/jobs/{id:hex32}', bodyRequired: false, idempotencyRequired: false, maxBytes: 0 },
+  { method: 'POST', path: '/api/jobs', bodyRequired: true, idempotencyRequired: true, maxBytes: BODY_LIMIT },
+];
+function plainRecord(value, allowed) {
+  requireValue(value && typeof value === 'object' && !Array.isArray(value) &&
+    [Object.prototype, null].includes(Object.getPrototypeOf(value)), 'HOST_CONFIG_INVALID');
+  for (const key of Reflect.ownKeys(value)) {
+    requireValue(typeof key === 'string' && allowed.includes(key) &&
+      Object.hasOwn(Object.getOwnPropertyDescriptor(value, key), 'value'), 'HOST_CONFIG_INVALID');
+  }
+}
+function queryPolicy(input) {
+  if (input === undefined) return Object.freeze(Object.create(null));
+  requireValue(input && typeof input === 'object' && !Array.isArray(input), 'HOST_CONFIG_INVALID');
+  const keys = Reflect.ownKeys(input);
+  requireValue(keys.length <= 8 && keys.every(k => typeof k === 'string' && /^[a-z][a-z0-9_]{0,31}$/.test(k)), 'HOST_CONFIG_INVALID');
+  plainRecord(input, keys);
+  const result = Object.create(null);
+  for (const key of keys) {
+    const r = input[key]; plainRecord(r, ['type', 'maxLength', 'min', 'max']);
+    requireValue(Object.hasOwn(r, 'type') && ['string', 'integer'].includes(r.type), 'HOST_CONFIG_INVALID');
+    if (r.type === 'string') {
+      requireValue(Object.hasOwn(r, 'maxLength') && Number.isSafeInteger(r.maxLength) && r.maxLength >= 1 && r.maxLength <= 1024 &&
+        !Object.hasOwn(r, 'min') && !Object.hasOwn(r, 'max'), 'HOST_CONFIG_INVALID');
+      result[key] = Object.freeze({ type: r.type, maxLength: r.maxLength });
+    } else {
+      requireValue(Object.hasOwn(r, 'min') && Object.hasOwn(r, 'max') && Number.isSafeInteger(r.min) &&
+        Number.isSafeInteger(r.max) && r.min >= -1000000000 && r.max <= 1000000000 && r.min <= r.max &&
+        !Object.hasOwn(r, 'maxLength'), 'HOST_CONFIG_INVALID');
+      result[key] = Object.freeze({ type: r.type, min: r.min, max: r.max });
+    }
+  }
+  return Object.freeze(result);
+}
+function routePolicy(value = DEFAULT_ROUTES) {
+  requireValue(Array.isArray(value) && Object.getPrototypeOf(value) === Array.prototype &&
+    value.length > 0 && value.length <= 32 && Reflect.ownKeys(value).every(k =>
+      k === 'length' || (typeof k === 'string' && /^(?:0|[1-9][0-9]*)$/.test(k) && Number(k) < value.length)), 'HOST_CONFIG_INVALID');
+  for (let i = 0; i < value.length; i++) requireValue(Object.hasOwn(value, i) &&
+    Object.hasOwn(Object.getOwnPropertyDescriptor(value, String(i)), 'value'), 'HOST_CONFIG_INVALID');
+  const required = ['method', 'path', 'bodyRequired', 'idempotencyRequired', 'maxBytes'];
+  const patterns = Object.assign(Object.create(null), { '{id:hex32}': '[a-f0-9]{32}', '{id:ascii64}': '[A-Za-z0-9_-]{1,64}' });
+  const routes = value.map(input => {
+    plainRecord(input, [...required, 'query']);
+    requireValue(required.every(k => Object.hasOwn(input, k)), 'HOST_CONFIG_INVALID');
+    const r = Object.fromEntries(required.map(k => [k, input[k]]));
+    requireValue(['GET', 'POST'].includes(r.method) && typeof r.path === 'string' &&
+      typeof r.bodyRequired === 'boolean' && typeof r.idempotencyRequired === 'boolean' &&
+      Number.isSafeInteger(r.maxBytes) && r.maxBytes >= 0 && r.maxBytes <= 131072, 'HOST_CONFIG_INVALID');
+    const parts = r.path.split('/').slice(1);
+    requireValue(r.path.startsWith('/api/') && parts.length >= 2 && parts.length <= 6 &&
+      parts.filter(x => Object.hasOwn(patterns, x)).length <= 1 &&
+      parts.every(x => /^[a-z][a-z0-9-]{0,63}$/.test(x) || Object.hasOwn(patterns, x)), 'HOST_CONFIG_INVALID');
+    requireValue(r.method !== 'GET' || (!r.bodyRequired && !r.idempotencyRequired && r.maxBytes === 0), 'HOST_CONFIG_INVALID');
+    requireValue(r.method !== 'POST' || (r.maxBytes > 0 &&
+      (r.bodyRequired || r.path === '/api/logout' || /^\/api\/(?:jobs\/\{id:(?:hex32|ascii64)\}\/cancel|resources\/\{id:(?:hex32|ascii64)\}\/revoke)$/.test(r.path))), 'HOST_CONFIG_INVALID');
+    requireValue(!['/api/jobs', '/api/chat'].includes(r.path) || r.method !== 'POST' || r.idempotencyRequired, 'HOST_CONFIG_INVALID');
+    const match = new RegExp('^/' + parts.map(x => patterns[x] || x).join('/') + '$');
+    const query = queryPolicy(Object.hasOwn(input, 'query') ? input.query : undefined);
+    requireValue(r.method === 'GET' || Object.keys(query).length === 0, 'HOST_CONFIG_INVALID');
+    return Object.freeze({ ...r, parts: Object.freeze(parts), match, query });
+  });
+  const compatible = (a, b) => a === b || (patterns[a] && patterns[b]) ||
+    (patterns[a] && new RegExp(`^${patterns[a]}$`).test(b)) || (patterns[b] && new RegExp(`^${patterns[b]}$`).test(a));
+  for (let i = 0; i < routes.length; i++) for (let j = 0; j < i; j++) {
+    const a = routes[i], b = routes[j];
+    requireValue(a.method !== b.method || a.parts.length !== b.parts.length ||
+      !a.parts.every((x, k) => compatible(x, b.parts[k])), 'HOST_CONFIG_INVALID');
+  }
+  return Object.freeze(routes);
+}
+function queryAllowed(url, rules) {
+  requireValue(url.search.length <= 2048 && !/%(?![a-f0-9]{2})/i.test(url.search), 'PATH_REJECTED');
+  const seen = new Set();
+  for (const [key, value] of url.searchParams) {
+    requireValue(Object.hasOwn(rules, key) && !seen.has(key) && !/[\x00-\x1f\x7f\ufffd]/.test(value), 'PATH_REJECTED');
+    seen.add(key); const r = rules[key];
+    if (r.type === 'string') requireValue(Array.from(value).length <= r.maxLength, 'PATH_REJECTED');
+    else requireValue(/^-?(?:0|[1-9][0-9]{0,9})$/.test(value) && Number(value) >= r.min && Number(value) <= r.max, 'PATH_REJECTED');
+  }
+}
 
 function hostConfig(value) {
   const keys = ['teamDomain', 'cfAudience', 'ownerEmail', 'projectNumber',
     'wifPool', 'wifProvider', 'invokerServiceAccount', 'cloudRunOrigin', 'publicOrigin'];
-  requireValue(value && keys.every(k => typeof value[k] === 'string') &&
-    Object.keys(value).every(k => keys.includes(k)), 'HOST_CONFIG_INVALID');
+  plainRecord(value, [...keys, 'apiRoutes']);
+  requireValue(keys.every(k => Object.hasOwn(value, k) && typeof value[k] === 'string'), 'HOST_CONFIG_INVALID');
   const c = Object.fromEntries(keys.map(k => [k, value[k]]));
   requireValue(/^https:\/\/[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.cloudflareaccess\.com$/.test(c.teamDomain), 'HOST_CONFIG_INVALID');
   let u; try { u = new URL(c.cloudRunOrigin); } catch { fail('HOST_CONFIG_INVALID'); }
@@ -29,7 +113,7 @@ function hostConfig(value) {
     /^[1-9][0-9]{5,19}$/.test(c.projectNumber) &&
     /^[a-z][a-z0-9-]{3,31}$/.test(c.wifPool) && /^[a-z][a-z0-9-]{3,31}$/.test(c.wifProvider) &&
     /^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com$/.test(c.invokerServiceAccount), 'HOST_CONFIG_INVALID');
-  return Object.freeze(c);
+  return Object.freeze({ ...c, apiRoutes: routePolicy(Object.hasOwn(value, 'apiRoutes') ? value.apiRoutes : undefined) });
 }
 
 function fromBase64url(s) {
@@ -146,10 +230,11 @@ export function createOwnerCloudRunInvoker(config, {
     let backendSent = false;
     try {
       const url = new URL(request.url);
-      const read = request.method === 'GET' && (['/api/session', '/api/jobs'].includes(url.pathname) || /^\/api\/jobs\/[a-f0-9]{32}$/.test(url.pathname));
-      const write = request.method === 'POST' && url.pathname === '/api/jobs';
-      requireValue(url.origin === c.publicOrigin && !url.username && !url.password && !url.search && !url.hash &&
-        (read || write), 'PATH_REJECTED');
+      const route = c.apiRoutes.find(r => r.method === request.method && r.match.test(url.pathname));
+      const write = request.method === 'POST';
+      requireValue(url.origin === c.publicOrigin && !url.username && !url.password && !url.hash &&
+        route, 'PATH_REJECTED');
+      queryAllowed(url, route.query);
       requireValue((!request.headers.has('origin') || request.headers.get('origin') === c.publicOrigin) &&
         (!write || request.headers.get('origin') === c.publicOrigin), 'ACCESS_REJECTED');
       const token = request.headers.get('cf-access-jwt-assertion');
@@ -157,11 +242,14 @@ export function createOwnerCloudRunInvoker(config, {
       let body;
       const headers = new Headers({ 'cf-access-jwt-assertion': token, origin: c.publicOrigin });
       if (write) {
-        requireValue(/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get('content-type') || ''), 'REQUEST_REJECTED');
-        body = await timed(signal => readBounded(request.body, BODY_LIMIT, 'REQUEST_REJECTED', signal), timeoutMs, 'REQUEST_REJECTED');
-        objectJson(body, 'REQUEST_REJECTED'); // Transport only: preserve exact WorkID/body bytes.
-        headers.set('content-type', 'application/json');
-        requireValue(request.headers.has('x-csrf-token') && request.headers.has('idempotency-key'), 'REQUEST_REJECTED');
+        body = await timed(signal => readBounded(request.body, route.maxBytes, 'REQUEST_REJECTED', signal), timeoutMs, 'REQUEST_REJECTED');
+        requireValue(!route.bodyRequired || body.byteLength > 0, 'REQUEST_REJECTED');
+        if (body.byteLength > 0) {
+          requireValue(/^application\/json(?:\s*;\s*charset=utf-8)?$/i.test(request.headers.get('content-type') || ''), 'REQUEST_REJECTED');
+          objectJson(body, 'REQUEST_REJECTED'); headers.set('content-type', 'application/json');
+        } else { body = undefined; }
+        requireValue(request.headers.has('x-csrf-token') &&
+          (!route.idempotencyRequired || request.headers.has('idempotency-key')), 'REQUEST_REJECTED');
       }
       for (const name of ['x-csrf-token', 'idempotency-key']) {
         const value = request.headers.get(name);
@@ -186,7 +274,7 @@ export function createOwnerCloudRunInvoker(config, {
       claimsAllowed(objectJson(fromBase64url(token.split('.')[1]), 'ACCESS_REJECTED'), c, now);
       headers.set('x-serverless-authorization', `Bearer ${id.token}`);
       backendSent = true; // An interrupted POST may have taken effect: never retry here.
-      const backend = await wire(`${c.cloudRunOrigin}${url.pathname}`, { method: request.method, headers, body }, 'BACKEND_UNCONFIRMED', RESPONSE_LIMIT, true);
+      const backend = await wire(`${c.cloudRunOrigin}${url.pathname}${url.search}`, { method: request.method, headers, body }, 'BACKEND_UNCONFIRMED', RESPONSE_LIMIT, true);
       requireValue(/^application\/json(?:\s*;.*)?$/i.test(backend.response.headers.get('content-type') || ''), 'BACKEND_UNCONFIRMED');
       let text; try { text = JSON.stringify(JSON.parse(decoder.decode(backend.bytes))); } catch { fail('BACKEND_UNCONFIRMED'); }
       requireValue(![token, sts.access_token, id.token].some(secret => text.includes(secret)), 'BACKEND_UNCONFIRMED');
