@@ -1242,6 +1242,8 @@ function createDriveBridgeRuntime(){
       lastSuccessAt:null,
       lastError:null,
       receipt:null,
+      lastErrorCode:null,
+      checkpointLookup:null,
     },
   };
   try{
@@ -1261,6 +1263,9 @@ function createDriveBridgeRuntime(){
           sourceRev:process.env.DEUS_SOURCE_REV||'unknown-rev',
           activeJobScanMaxRows:positiveEnvInt('DEUS_AUTONOMOUS_OBSERVER_JOB_SCAN_ROWS',250,2000),
           checkpointScanMaxRows:positiveEnvInt('DEUS_AUTONOMOUS_OBSERVER_CHECKPOINT_SCAN_ROWS',500,5000),
+          checkpointPageRows:128,
+          checkpointRowHint:process.env.DEUS_AUTONOMOUS_OBSERVER_CHECKPOINT_ROW_HINT||null,
+          timeBudgetMs:10_000,
         });
       }
       state={...state,bridge:'INITIALIZING'};
@@ -1307,13 +1312,13 @@ function createDriveBridgeRuntime(){
         state={
           ...state,
           ready:true,
-          observer:{...state.observer,state:receipt.state,ready:true,lastSuccessAt:new Date().toISOString(),lastError:null,receipt},
+          observer:{...state.observer,state:receipt.state,ready:true,lastSuccessAt:new Date().toISOString(),lastError:null,receipt,lastErrorCode:null,checkpointLookup:receipt.checkpointLookup??null},
         };
       }catch(error){
         state={
           ...state,
           ready:false,
-          observer:{...state.observer,state:'DEGRADED',ready:false,lastError:error.message,receipt:null},
+          observer:{...state.observer,state:'DEGRADED',ready:false,lastError:error.message,receipt:null,lastErrorCode:typeof error.code==='string'&&/^[A-Z0-9_]{2,64}$/.test(error.code)?error.code:'OBSERVER_ERROR',checkpointLookup:error.diagnostics??null},
         };
       }
     }

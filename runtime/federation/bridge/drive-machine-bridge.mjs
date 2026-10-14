@@ -53,22 +53,22 @@ export class GoogleSheetsCanonicalBridge {
     return body;
   }
 
-  async readRange(range=this.canonicalReadRange){
+  async readRange(range=this.canonicalReadRange,{signal}={}){
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.spreadsheetId)}/values/${encodeURIComponent(range)}?majorDimension=ROWS`;
-    const body=await this.#request(url);
+    const body=await this.#request(url,{signal});
     return {
       range:body.range??range,
       values:Array.isArray(body.values)?body.values:[],
     };
   }
 
-  async appendRows({range,rows}){
+  async appendRows({range,rows,signal}){
     const target=required(range,'range');
     if(!Array.isArray(rows)||rows.length<1||rows.length>100) throw new Error('rows must contain between 1 and 100 rows');
     if(rows.some((row)=>!Array.isArray(row)||row.length<1||row.length>100)) throw new Error('each appended row must contain between 1 and 100 cells');
     const values=rows.map((row)=>row.map((cell)=>cell==null?'':cell));
     const url=`https://sheets.googleapis.com/v4/spreadsheets/${encodeURIComponent(this.spreadsheetId)}/values/${encodeURIComponent(target)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`;
-    const body=await this.#request(url,{method:'POST',body:JSON.stringify({values})});
+    const body=await this.#request(url,{method:'POST',body:JSON.stringify({values}),signal});
     return {
       rows:values,
       updatedRange:body.updates?.updatedRange??null,
