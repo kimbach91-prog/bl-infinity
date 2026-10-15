@@ -1,0 +1,52 @@
+name: DEUS Public Atlas Dask CI
+on:
+  pull_request:
+    paths:
+      - runtime/federation/public-atlas-ci/**
+      - .github/workflows/deus-public-atlas-dask-ci.yml
+permissions:
+  contents: read
+concurrency:
+  group: deus-public-atlas-dask-ci-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+jobs:
+  public-atlas-dask:
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    env:
+      DEUS_SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+      PIP_INDEX_URL: https://pypi.org/simple
+      PIP_EXTRA_INDEX_URL: ''
+      OMP_NUM_THREADS: '1'
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: '3.12'
+      - name: Bounded metadata regression gates
+        run: python -I -B runtime/federation/public-atlas-ci/test-public-atlas-dag.py -v
+      - name: Install pinned public Dask wheels for project CI
+        run: |
+          mkdir -p .deus/public-atlas-ci
+          python -m pip install --disable-pip-version-check --only-binary=:all: --index-url https://pypi.org/simple --report .deus/public-atlas-ci/pip-install-report.json -r runtime/federation/public-atlas-ci/requirements.txt
+          python -m pip freeze > .deus/public-atlas-ci/pip-freeze.txt
+      - name: Validate atlas scatter and reduction on two subprocess workers
+        run: python -I -B runtime/federation/public-atlas-ci/verify-public-atlas-dag.py --input runtime/federation/public-atlas-ci/public-input.json --output .deus/public-atlas-ci
+      - name: Source provenance
+        if: always()
+        run: |
+          mkdir -p .deus/public-atlas-ci
+          git rev-parse HEAD > .deus/public-atlas-ci/commit.txt
+          sha256sum runtime/federation/public-atlas-ci/* .github/workflows/deus-public-atlas-dask-ci.yml > .deus/public-atlas-ci/source-sha256.txt
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9
+        if: always()
+        with:
+          name: deus-public-atlas-dask-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .deus/public-atlas-ci/
+          retention-days: 1
+          if-no-files-found: error
