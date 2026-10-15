@@ -53,7 +53,7 @@ def reduce_partitions(parts,rows):
     return expected
 def worker_snapshot(dask_worker=None):
     import psutil
-    return {'address':dask_worker.address,'pid':os.getpid(),'hostname':platform.node(),'cpu_count_observed':os.cpu_count(),'total_memory_bytes_observed':psutil.virtual_memory().total,'configured_threads':dask_worker.nthreads,'configured_memory_limit_bytes':dask_worker.memory_manager.memory_limit}
+    return {'address':dask_worker.address,'pid':os.getpid(),'hostname':platform.node(),'cpu_count_observed':os.cpu_count(),'total_memory_bytes_observed':psutil.virtual_memory().total}
 def execute(input_path,output):
     # This entry is admitted only within a GitHub-hosted CI job for this public repo.
     require(os.environ.get('GITHUB_ACTIONS')=='true' and os.environ.get('GITHUB_REPOSITORY')=='kimbach91-prog/bl-infinity' and os.environ.get('RUNNER_ENVIRONMENT')=='github-hosted','GITHUB_HOSTED_CI_ONLY')
@@ -67,6 +67,11 @@ def execute(input_path,output):
             client.wait_for_workers(2,timeout=30)
             workers=client.run(worker_snapshot)
             addresses=sorted(workers)
+            scheduler_workers=client.scheduler_info()['workers']
+            for address in addresses:
+                info=scheduler_workers[address]
+                require(info['nthreads']==1 and info['memory_limit']==536870912,'WORKER_CONFIGURATION')
+                workers[address].update(configured_threads=info['nthreads'],configured_memory_limit_bytes=info['memory_limit'])
             require(len(addresses)==2 and len({w['pid'] for w in workers.values()})==2,'TWO_PROCESS_WORKERS')
             futures=[client.submit(partition,i,rows[i::4],workers=[addresses[i%2]],allow_other_workers=False,pure=False,retries=0) for i in range(4)]
             parts=client.gather(futures)
