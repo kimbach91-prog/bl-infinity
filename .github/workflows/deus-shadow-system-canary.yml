@@ -1,0 +1,22 @@
+name: DEUS Shadow System Canary
+on:
+  pull_request:
+    paths:
+      - "ci/deus_shadow_system_canary.py"
+      - ".github/workflows/deus-shadow-system-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  shadow-system-canary:
+    runs-on: ubuntu-slim
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Execute typed compute canary
+        run: python ci/deus_shadow_system_canary.py
