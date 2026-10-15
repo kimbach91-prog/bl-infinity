@@ -1,9 +1,9 @@
 {
   "provider": "ANTSEED",
-  "cli_version": "0.1.183",
+  "cli_version": "0.1.186",
   "buyer_proxy_live": true,
-  "model_count": 78,
-  "digest": "ace539d9cd7f5a7f7855de2af935226eb6c9142d8e4a89f2b6f39c13f9a63514",
+  "model_count": 496,
+  "digest": "5227e6c89c27658fc5168d973a7348405c113f5f3766a3f9673e8e35d8b71243",
   "auth_mode": "NO_CENTRAL_ACCOUNT_EPHEMERAL_NODE_IDENTITY",
   "payment_deposit": false,
   "paid_inference": false,
