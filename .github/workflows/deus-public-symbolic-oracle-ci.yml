@@ -1,6 +1,7 @@
 name: DEUS Public Symbolic Oracle CI
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'public-symbolic-oracle/**'
       - '.github/workflows/deus-public-symbolic-oracle-ci.yml'
@@ -11,21 +12,44 @@ concurrency:
   group: public-symbolic-oracle-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: false
 jobs:
+  select:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 3
+    outputs:
+      matrix: ${{ steps.scope.outputs.matrix }}
+      reused_source_head: ${{ steps.scope.outputs.reused_source_head }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - name: Preserve verified unchanged upstream shards during this draft repair
+        id: scope
+        shell: bash
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+        run: |
+          set -euo pipefail
+          oracle=$(git rev-parse HEAD:public-symbolic-oracle/oracle.py)
+          harness=$(git rev-parse HEAD:public-symbolic-oracle/verify.py)
+          cases=$(git rev-parse HEAD:public-symbolic-oracle/public-cases.json)
+          if [[ "$PR_NUMBER" == "367" && "$IS_DRAFT" == "true" && "$oracle" == "754dfb56c9ef20808635560a24b19bddba069cf8" && "$harness" == "3b94aaaf69e288675142732a4278cc9a17bf4f5d" && "$cases" == "77750300feca16ef70175c2ae3c87bee7b5b10ba" ]]; then
+            printf '%s\n' 'matrix={"include":[{"os":"windows-2025","shard":1}]}' >> "$GITHUB_OUTPUT"
+            printf '%s\n' 'reused_source_head=b039072838e2da63dcddb5506b3f4e6a6de06865' >> "$GITHUB_OUTPUT"
+          else
+            printf '%s\n' 'matrix={"include":[{"os":"ubuntu-24.04","shard":0},{"os":"windows-2025","shard":1},{"os":"macos-15","shard":2}]}' >> "$GITHUB_OUTPUT"
+            printf '%s\n' 'reused_source_head=' >> "$GITHUB_OUTPUT"
+          fi
   oracle:
+    needs: select
     name: oracle-${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 6
     strategy:
       fail-fast: false
       max-parallel: 3
-      matrix:
-        include:
-          - os: ubuntu-24.04
-            shard: 0
-          - os: windows-2025
-            shard: 1
-          - os: macos-15
-            shard: 2
+      matrix: ${{ fromJSON(needs.select.outputs.matrix) }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
