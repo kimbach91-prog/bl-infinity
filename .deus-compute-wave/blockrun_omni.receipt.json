@@ -2,12 +2,12 @@
   "provider": "BLOCKRUN_OMNI",
   "endpoint": "https://blockrun.ai/api/v1/chat/completions",
   "requested_model": "nvidia/nemotron-3-nano-omni-30b-a3b-reasoning",
-  "http_status": 0,
-  "latency_ms": 30013,
-  "exact_contract": false,
-  "response_digest": "",
+  "http_status": 200,
+  "latency_ms": 3762,
+  "exact_contract": true,
+  "response_digest": "b5df5b68275db414bcf68a9b9a33c57e195af126b8ccd08360e4389a3de6b36f",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": false,
+  "provider_execution": true,
   "canonical_write": false,
   "settlement": false
 }
