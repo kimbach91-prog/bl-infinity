@@ -1,0 +1,47 @@
+name: DEUS Public Symbolic Oracle CI
+on:
+  pull_request:
+    paths:
+      - 'public-symbolic-oracle/**'
+      - '.github/workflows/deus-public-symbolic-oracle-ci.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: public-symbolic-oracle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+jobs:
+  oracle:
+    name: oracle-${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 6
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            shard: 0
+          - os: windows-2025
+            shard: 1
+          - os: macos-15
+            shard: 2
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: '3.13'
+      - name: Verify one bounded public regression shard
+        env:
+          DEUS_CI_EXPECTED_HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: python -I -B public-symbolic-oracle/verify.py --cases public-symbolic-oracle/public-cases.json --manifest public-symbolic-oracle/source-manifest.json --shard ${{ matrix.shard }} --shards 3 --output public-symbolic-oracle/out/result.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: public-symbolic-oracle-${{ matrix.os }}
+          path: public-symbolic-oracle/out/
+          if-no-files-found: error
+          retention-days: 3
