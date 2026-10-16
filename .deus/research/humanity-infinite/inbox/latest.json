@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-16T16:36:08.492271+00:00",
+  "generated_at_utc": "2026-10-16T21:05:00.155212+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "0e7de3a74ee70ea5e95c6147875dde27aa9e33bbaf870c055cffa4d54243dc56",
+  "digest_sha256": "a95c980d783970beb763204cf832249d1c16620fb4f6a19b1e5ac449e0386f27",
   "errors": [],
   "records": [
     {
@@ -146,19 +146,6 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
-      "source_id": "41358607",
-      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
-      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
-      "journal": "Psychophysiology",
-      "pub_year": "2025",
-      "doi": "10.1111/psyp.70182",
-      "cited_by_count": 1,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41358607"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -233,6 +220,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42670176"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42823794",
+      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
+      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
+      "journal": "J Rehabil Med",
+      "pub_year": "2026",
+      "doi": "10.2340/jrm.v58.45767",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42823794"
     },
     {
       "track_id": "BA-P0-03",
@@ -628,19 +628,6 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "42783405",
-      "title": "Exercise, Sleep, and Cognitive Performance in Older Adults: A Structured Review of Mechanisms and Clinical Implications.",
-      "author": "Vieira EFFS, Olegário RL, Goulart C, Nóbrega OT, Frimpong E, Paez A, Dang-Vu TT, Camargos EF.",
-      "journal": "Med Sci (Basel)",
-      "pub_year": "2026",
-      "doi": "10.3390/medsci14050532",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42783405"
-    },
-    {
-      "track_id": "BA-P0-06",
-      "source": "Europe PMC",
       "source_id": "PMC13579262",
       "title": "Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis",
       "author": "Yang J, Li H, Hu S, Xu Y, Zhang Y.",
@@ -658,6 +645,19 @@
       "title": "Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep",
       "author": "Zheng W, Wu M, Chen Y, Li S, Huang L.",
       "journal": "Front Hum Neurosci",
+      "pub_year": null,
+      "doi": null,
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": null
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "source_id": "PMC13659112",
+      "title": "Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth",
+      "author": "Wen D, Lin Y, Sun J, Lv S, Wang J, Yuan T, Zhu D.",
+      "journal": "Front Psychol",
       "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
