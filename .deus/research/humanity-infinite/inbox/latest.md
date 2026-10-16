@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-14T04:50:07.851174+00:00
+- Generated: 2026-10-16T16:36:08.492271+00:00
 - Records: 91
-- Digest: `8db2a2fea348777f3f7de9286cd7add998cca9620c905e6176c5226e739e9aa3`
+- Digest: `0e7de3a74ee70ea5e95c6147875dde27aa9e33bbaf870c055cffa4d54243dc56`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,10 +22,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
+- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
-- [Europe PMC] Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review. — 42170549
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
 
@@ -71,7 +71,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Editorial: Exploring physical activity as a complementary strategy in managing mental illness. — 42761147
 - [Europe PMC] Exercise, Sleep, and Cognitive Performance in Older Adults: A Structured Review of Mechanisms and Clinical Implications. — 42783405
 - [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
-- [Europe PMC] Effects of High-Intensity Interval Training on Cognitive Function in Older Adults: A Systematic Review of Randomized Controlled Trials — PMC13580880
+- [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep — PMC13654707
 
 ## BA-P1-02
 

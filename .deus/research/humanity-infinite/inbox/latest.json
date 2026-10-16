@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-14T04:50:07.851174+00:00",
+  "generated_at_utc": "2026-10-16T16:36:08.492271+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "8db2a2fea348777f3f7de9286cd7add998cca9620c905e6176c5226e739e9aa3",
+  "digest_sha256": "0e7de3a74ee70ea5e95c6147875dde27aa9e33bbaf870c055cffa4d54243dc56",
   "errors": [],
   "records": [
     {
@@ -146,6 +146,19 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
+      "source_id": "41358607",
+      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
+      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
+      "journal": "Psychophysiology",
+      "pub_year": "2025",
+      "doi": "10.1111/psyp.70182",
+      "cited_by_count": 1,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41358607"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -181,19 +194,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42051560"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
-      "source_id": "42170549",
-      "title": "Religion and Spirituality as Social Determinants of Sleep Health Across the Globe: A Narrative Review.",
-      "author": "Singh R, Gaston SA, Koenig HG, Jackson CL.",
-      "journal": "Curr Sleep Med Rep",
-      "pub_year": "2026",
-      "doi": "10.1007/s40675-026-00374-y",
-      "cited_by_count": 5,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42170549"
     },
     {
       "track_id": "BA-P0-02",
@@ -654,10 +654,10 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "PMC13580880",
-      "title": "Effects of High-Intensity Interval Training on Cognitive Function in Older Adults: A Systematic Review of Randomized Controlled Trials",
-      "author": "Faisal F, Boileau A.",
-      "journal": "Cureus",
+      "source_id": "PMC13654707",
+      "title": "Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep",
+      "author": "Zheng W, Wu M, Chen Y, Li S, Huang L.",
+      "journal": "Front Hum Neurosci",
       "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
