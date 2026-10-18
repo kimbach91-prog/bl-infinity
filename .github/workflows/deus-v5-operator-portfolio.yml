@@ -2,6 +2,8 @@ name: DEUS One R62 PUBLIC R4 verification
 run-name: DEUS One R62 PUBLIC R4 exact-source verification
 on:
   workflow_dispatch:
+  push:
+    branches: [deus/r62-public-compose-r4-ci-20261018]
 permissions:
   contents: read
 jobs:
