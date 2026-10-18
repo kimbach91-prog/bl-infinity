@@ -1,0 +1,27 @@
+{
+  "alias_tests": {
+    "sha256": "e014a4428c1bba8138bcb97bf5d1a7a3815b5a23cb727d69a76dd66644113d43",
+    "test_count": 4
+  },
+  "baseline": {
+    "filename": "baseline-r62.zip",
+    "sha256": "e4ef264b8f53d1d9fb71126a0b517d557e9ea8403163631444eb476905af71f3",
+    "source_id": "d9ef5f4baaa371cf6662881ed93cdc8736dfa761d09d324f518d0670709be1d9"
+  },
+  "candidate": {
+    "filename": "candidate-r4.zip",
+    "sha256": "79b06b4a953971fe89034d8cd6d2d8917416f0ebb42465a4016510c5bb3a9d4c",
+    "source_id": "4f88caf2ee8149e40c11696a56d762ed9a8c35de0faaceb85c05acc00c5a5c11"
+  },
+  "catalog_sha256": "cdfbfb69dcff4ddd1c0cc64928d91b4278683dfebd60b1fb3d005540fed4be76",
+  "fixture_files": {
+    "ci-verify.py": "e88bd4951f3af2d6b980956056fcd57bee58ad8a583a0c13f19be787cd0c1005",
+    "external-test-alias-r4.py": "e014a4428c1bba8138bcb97bf5d1a7a3815b5a23cb727d69a76dd66644113d43",
+    "external-test-compose-r4.py": "2008316442774776d94ae62801f6487011359afd324247537c0c6e5eb3b54af5",
+    "task-plan.json": "15b75cfb56c11d4bfdcbec7c41254540511c0cdad468e57bca25f8340f143613",
+    "verify-deus-one-archive.py": "4367e104cc068d265ee9c7524ba3326f98c04758ad6ef547b2bdd4ca50a8fb0c"
+  },
+  "full_suite_expected_tests": 63,
+  "policy_revision": "DEUS_BORROWED_RESOURCE_R3_20261014",
+  "schema": "deus-one-r4-ci-pins/1"
+}

@@ -1,0 +1,32 @@
+name: DEUS One R62 PUBLIC R4 verification
+run-name: DEUS One R62 PUBLIC R4 exact-source verification
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  public-r62-r4:
+    name: PUBLIC R62 R4 Linux acceptance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+      PYTHONDONTWRITEBYTECODE: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify exact PUBLIC source, baseline failures, and patched full suite
+        run: python -B ci-verify.py
+      - name: Preserve attributable result and failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deus-one-r62-public-r4-${{ github.run_id }}-${{ github.run_attempt }}
+          path: verification-output
+          if-no-files-found: error
+          retention-days: 14
