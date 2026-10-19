@@ -1,22 +1,11 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-16T21:05:00.155212+00:00
-- Records: 91
-- Digest: `a95c980d783970beb763204cf832249d1c16620fb4f6a19b1e5ac449e0386f27`
+- Generated: 2026-10-19T04:36:46.126183+00:00
+- Records: 83
+- Digest: `e91271c2c4ae4ab259f996615ee77ddd95d00fdb8d48d73091749ab0cc97de61`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
-
-## BA-P0-01
-
-- [Europe PMC] The vagus nerve: a cornerstone for mental health and performance optimization in recreation and elite sports. — 40718569
-- [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
-- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
-- [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
-- [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
-- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
-- [Europe PMC] A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping. — 42483100
-- [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
 
 ## BA-P0-02
 
@@ -128,3 +117,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
+## Collector errors
+
+- BA-P0-01 / Europe PMC: HTTPError: HTTP Error 503: 
