@@ -2,22 +2,120 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-19T04:36:46.126183+00:00",
+  "generated_at_utc": "2026-10-19T13:08:46.163391+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
-  "record_count": 83,
-  "digest_sha256": "e91271c2c4ae4ab259f996615ee77ddd95d00fdb8d48d73091749ab0cc97de61",
-  "errors": [
+  "record_count": 91,
+  "digest_sha256": "a95c980d783970beb763204cf832249d1c16620fb4f6a19b1e5ac449e0386f27",
+  "errors": [],
+  "records": [
     {
       "track_id": "BA-P0-01",
       "source": "Europe PMC",
-      "error": "HTTPError: HTTP Error 503: "
-    }
-  ],
-  "records": [
+      "source_id": "40718569",
+      "title": "The vagus nerve: a cornerstone for mental health and performance optimization in recreation and elite sports.",
+      "author": "Lopez Blanco C, Tyler WJ.",
+      "journal": "Front Psychol",
+      "pub_year": "2025",
+      "doi": "10.3389/fpsyg.2025.1639866",
+      "cited_by_count": 7,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40718569"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "40792649",
+      "title": "The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience.",
+      "author": "Little AL.",
+      "journal": "Stress Health",
+      "pub_year": "2025",
+      "doi": "10.1002/smi.70098",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40792649"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "40843749",
+      "title": "Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter?",
+      "author": "Siebieszuk A, Płoński AF, Baranowski M.",
+      "journal": "Med Sci (Basel)",
+      "pub_year": "2025",
+      "doi": "10.3390/medsci13030127",
+      "cited_by_count": 2,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40843749"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "41480343",
+      "title": "Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability.",
+      "author": "Purcell K.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2025",
+      "doi": "10.3389/fpsyt.2025.1726708",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41480343"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "41787752",
+      "title": "Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial.",
+      "author": "Little A, Stainer M, MacQuarrie AS, Wiseman N, Haskins B.",
+      "journal": "Stress Health",
+      "pub_year": "2026",
+      "doi": "10.1002/smi.70161",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41787752"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42088717",
+      "title": "Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine.",
+      "author": "Lee S, Yoon SI, Liao HY, Kim JW, Lee IS, Chae Y.",
+      "journal": "Front Hum Neurosci",
+      "pub_year": "2026",
+      "doi": "10.3389/fnhum.2026.1807034",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42088717"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42483100",
+      "title": "A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping.",
+      "author": "Sun M, Wu H, Deng M, Qu Q.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyt.2026.1879147",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42483100"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42487760",
+      "title": "Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application.",
+      "author": "Sharma P, Veerareddy V, Hong I, Nycklemoe M, Kandimalla M, Sharma V, Kung TL, Osman R, Lim S, Kandimalla KK, Lapid MI, Min PH.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyt.2026.1774490",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42487760"
+    },
     {
       "track_id": "BA-P0-02",
       "source": "ClinicalTrials.gov",
