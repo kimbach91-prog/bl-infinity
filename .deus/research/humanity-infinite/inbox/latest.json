@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-19T13:08:46.163391+00:00",
+  "generated_at_utc": "2026-10-19T22:19:32.843588+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "a95c980d783970beb763204cf832249d1c16620fb4f6a19b1e5ac449e0386f27",
+  "digest_sha256": "b3a813b2f826b1bbc5fa4a8a681b72f9fc1608555362e002c735b2bb2d9916c8",
   "errors": [],
   "records": [
     {
@@ -178,7 +178,7 @@
       "journal": "Front Neurosci",
       "pub_year": "2026",
       "doi": "10.3389/fnins.2026.1718808",
-      "cited_by_count": 0,
+      "cited_by_count": 1,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42051560"
     },
@@ -264,19 +264,6 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42671041",
-      "title": "Effects of Cognitive Behavioral Couple Therapy With Integrated Mindfulness on Mindful Attention, Depressive Symptoms, and Dyadic Adjustment in Low-Income Couples: A Pilot Randomized Clinical Trial.",
-      "author": "Durães RSS, Vargas ZEP, Dias ACG, Lotufo-Neto F, Ramos RT, Serafim AP.",
-      "journal": "J Marital Fam Ther",
-      "pub_year": "2026",
-      "doi": "10.1111/jmft.70169",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42671041"
-    },
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
       "source_id": "42748566",
       "title": "Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis.",
       "author": "Sahu SK, Pradhan AK, Giri P.",
@@ -325,6 +312,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42819275"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42857135",
+      "title": "Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis.",
+      "author": "Liang X, Chen M, Chan RCF, Chang JR, Yeung MK, Hsu CL, Liu C, Chen Y, Xu RH, Yang BR, Yan C, Qiu H, Tse ACY, Shum DHK, Chan RCK, Li SX.",
+      "journal": "EClinicalMedicine",
+      "pub_year": "2026",
+      "doi": "10.1016/j.eclinm.2026.104228",
+      "cited_by_count": 0,
+      "is_open_access": "N",
+      "url": "https://europepmc.org/article/MED/42857135"
     },
     {
       "track_id": "BA-P0-03",
@@ -785,15 +785,15 @@
     {
       "track_id": "BA-P1-03",
       "source": "Europe PMC",
-      "source_id": "40469950",
-      "title": "Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine.",
-      "author": "Merlo G, Snellman L, Sugden SG.",
-      "journal": "Am J Lifestyle Med",
-      "pub_year": "2025",
-      "doi": "10.1177/15598276251345455",
-      "cited_by_count": 18,
-      "is_open_access": "N",
-      "url": "https://europepmc.org/article/MED/40469950"
+      "source_id": "39155713",
+      "title": "Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual.",
+      "author": "Saraei M, Paxton A, Xygalatas D.",
+      "journal": "Philos Trans R Soc Lond B Biol Sci",
+      "pub_year": "2024",
+      "doi": "10.1098/rstb.2023.0162",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/39155713"
     },
     {
       "track_id": "BA-P1-03",
@@ -915,19 +915,6 @@
     {
       "track_id": "BA-P1-04",
       "source": "Europe PMC",
-      "source_id": "42585167",
-      "title": "DELTA: Strengthening human biological resilience with an N=1 digital health and dynamic biomarker protocol.",
-      "author": "Wang P, Foo N, Su C, Leung NYT, Song SW, Seres G, Sapanel Y, Hooi L, Wong A, Ong YH, Rai P, Park H, Chew HSJ, Wang LYT, Lee JWJ, Tadeo X, Ho D.",
-      "journal": "PLoS One",
-      "pub_year": "2026",
-      "doi": "10.1371/journal.pone.0354234",
-      "cited_by_count": 1,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42585167"
-    },
-    {
-      "track_id": "BA-P1-04",
-      "source": "Europe PMC",
       "source_id": "42654410",
       "title": "Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review.",
       "author": "Văcărescu C, Cozma D.",
@@ -985,6 +972,19 @@
       "author": "Cozma D, Gaita D, Crisan S, Tudoran C, Dumitrescu A, Văcărescu C.",
       "journal": "J Clin Med",
       "pub_year": "2026",
+      "doi": null,
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": null
+    },
+    {
+      "track_id": "BA-P1-04",
+      "source": "Europe PMC",
+      "source_id": "PMC13674649",
+      "title": "Common questions and misconceptions about diets: what does the scientific evidence really show?",
+      "author": "Antonio J, Antonio B, Aragon A, Arent S, Campbell B, Candow D, Eberhardt H, Escalante G, Evans C, Forbes S, Gonzalez D, Kerksick C, Bustillo E, Lafontant K, Mastrofini G, Mills S, Ormsbee M, Paterson K, Pereira F, Silva Ramirez V, Schwarz A, Singleton K, Smith-Ryan A, Stout J, Tinsley G.",
+      "journal": "J Int Soc Sports Nutr",
+      "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
       "is_open_access": "Y",
