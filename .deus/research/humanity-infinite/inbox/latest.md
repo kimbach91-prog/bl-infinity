@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-20T11:32:31.703395+00:00
+- Generated: 2026-10-21T21:40:34.597463+00:00
 - Records: 91
-- Digest: `fca2b173d7f91447b5c0fab0ab4e3dcf28c923f21a6d578419ed26c78fc24fb4`
+- Digest: `bd860bdaa03071158852c386dbe75b48f104a06b7cce3874cdbc0d9b482dd026`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,12 +32,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment. — 42352506
 - [Europe PMC] Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis. — 42748566
 - [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] The Effect of Brief Mindfulness Meditation on Attention Networks in University Students with Problematic Short-Video Use. — 42792287
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
+- [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
 - [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review — PMC13634863
 
 ## BA-P0-04

@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-20T11:32:31.703395+00:00",
+  "generated_at_utc": "2026-10-21T21:40:34.597463+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "fca2b173d7f91447b5c0fab0ab4e3dcf28c923f21a6d578419ed26c78fc24fb4",
+  "digest_sha256": "bd860bdaa03071158852c386dbe75b48f104a06b7cce3874cdbc0d9b482dd026",
   "errors": [],
   "records": [
     {
@@ -251,19 +251,6 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42352506",
-      "title": "Cancer-Related Cognitive Impairment in Breast Cancer: Current State of Knowledge, Mechanisms, Diagnosis, Prevention and Treatment.",
-      "author": "Andreis F, Deori C, Giubileo V, Abeni C, Caramella I, Cherri S, Di Biasi B, Libertini M, Noventa S, Ogliosi C, Oneda E, Prochilo T, Meriggi FA, Zaniboni A.",
-      "journal": "Cancers (Basel)",
-      "pub_year": "2026",
-      "doi": "10.3390/cancers18121974",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42352506"
-    },
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
       "source_id": "42748566",
       "title": "Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis.",
       "author": "Sahu SK, Pradhan AK, Giri P.",
@@ -325,6 +312,19 @@
       "cited_by_count": 0,
       "is_open_access": "N",
       "url": "https://europepmc.org/article/MED/42857135"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42898349",
+      "title": "Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review.",
+      "author": "Fan Y, Liu X.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1838599",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42898349"
     },
     {
       "track_id": "BA-P0-03",
