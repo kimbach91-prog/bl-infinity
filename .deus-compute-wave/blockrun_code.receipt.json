@@ -3,7 +3,7 @@
   "endpoint": "https://blockrun.ai/api/v1/chat/completions",
   "requested_model": "cohere/north-mini-code",
   "http_status": 429,
-  "latency_ms": 172,
+  "latency_ms": 177,
   "exact_contract": false,
   "response_digest": "b0a8452fbd0448020eebc017117cf6fb141dbb8085cbdc56f4ea82d5689167df",
   "auth_mode": "NO_AUTH_HEADER",
