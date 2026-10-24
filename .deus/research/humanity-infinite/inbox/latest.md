@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-24T15:55:18.370806+00:00
+- Generated: 2026-10-24T20:45:43.071811+00:00
 - Records: 91
-- Digest: `bd860bdaa03071158852c386dbe75b48f104a06b7cce3874cdbc0d9b482dd026`
+- Digest: `aa225484f02592a276e6ae313eee351e55ebc034110386546eacc16869df07be`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -54,13 +54,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-05
 
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
-- [Europe PMC] Pathophysiology of functional neurological disorder for the general neurologist. — 41190174
 - [Europe PMC] Paediatric occupational therapists' views on applying interoception in practice contexts. — 41854272
 - [Europe PMC] The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction. — 42389825
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
 - [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
+- [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients — PMC13687007
 
 ## BA-P0-06
 
