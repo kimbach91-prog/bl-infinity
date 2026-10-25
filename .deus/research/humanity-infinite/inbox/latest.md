@@ -1,15 +1,14 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-24T20:45:43.071811+00:00
+- Generated: 2026-10-25T04:37:18.965889+00:00
 - Records: 91
-- Digest: `aa225484f02592a276e6ae313eee351e55ebc034110386546eacc16869df07be`
+- Digest: `d831fc3d78964d683b6c71e87b05d93d9323433123a25aed7bb12d1dd87a2e57`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
 
 ## BA-P0-01
 
-- [Europe PMC] The vagus nerve: a cornerstone for mental health and performance optimization in recreation and elite sports. — 40718569
 - [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
 - [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
 - [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
@@ -17,6 +16,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
 - [Europe PMC] A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping. — 42483100
 - [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
+- [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
 
 ## BA-P0-02
 
@@ -65,13 +65,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
+- [Europe PMC] Exercise-induced irisin-BDNF signaling in aging: implications for cognitive decline, sarcopenia, and neurodegeneration. A narrative review. — 42644357
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
-- [Europe PMC] Non-Pharmacological Interventions for Cognitive Function Management in Middle-Aged and Older Adults with Hypertension: A Scoping Review. — 42746159
-- [Europe PMC] Editorial: Exploring physical activity as a complementary strategy in managing mental illness. — 42761147
 - [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep — PMC13654707
 - [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth — PMC13659112
+- [Europe PMC] Cognitive remediation in schizophrenia: efficacy and role of neuroplasticity in “top-down” and “bottom-up” mechanisms—a randomized, double-blind, treatment-as-usual-controlled study protocol — PMC13691481
 
 ## BA-P1-02
 
