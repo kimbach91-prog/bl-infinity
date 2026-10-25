@@ -2,12 +2,12 @@
   "provider": "VIREONIX",
   "endpoint": "https://vireonix.ai/v1/chat/completions",
   "requested_model": "auto",
-  "http_status": 200,
-  "latency_ms": 3687,
-  "exact_contract": true,
-  "response_digest": "b2285ba6d4f52db74a6974054c4764a8fd8400988477e559b5d1e5f29a40fb81",
+  "http_status": 502,
+  "latency_ms": 265,
+  "exact_contract": false,
+  "response_digest": "baf8640cf61e22009cb605750fc0fb026e9d1d903b3948b92643753989bfbf09",
   "auth_mode": "NO_AUTH_HEADER",
-  "provider_execution": true,
+  "provider_execution": false,
   "canonical_write": false,
   "settlement": false
 }
