@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-26T04:42:49.453244+00:00
+- Generated: 2026-10-26T22:37:59.665481+00:00
 - Records: 91
-- Digest: `5ec794a64c63132feaefe1b8af934cba820c23a434cbd133ae43a025b8b7bcd6`
+- Digest: `08ef1a7fd32989a0abc4601f32897f6a763a11f5981be33df3731f0aae2f0deb`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -60,7 +60,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
 - [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
-- [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients — PMC13687007
+- [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
 
 ## BA-P0-06
 
