@@ -2,9 +2,9 @@
   "provider": "AI_HORDE",
   "heartbeat": true,
   "http_status": 200,
-  "exact_contract": true,
-  "model": "koboldcpp/Qwen2.5-Coder-3B-Instruct",
-  "digest": "6ba720341b000ee55240ed752be37f20cbe3e1cf9d41b3b8323bd8bb95b892fb",
+  "exact_contract": false,
+  "model": "koboldcpp/Llama-3.2-1B-Instruct",
+  "digest": "f1a54c36bf4a210cfc5d16b0f19f1d3a5fecf58c49187299b352cdaca89c923e",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
