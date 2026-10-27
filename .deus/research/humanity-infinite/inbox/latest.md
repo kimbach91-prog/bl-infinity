@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-27T17:58:54.132444+00:00
+- Generated: 2026-10-27T22:10:44.217276+00:00
 - Records: 91
-- Digest: `cfdcace5afd3ec41d2b46257b1ccd05777dd2215c6214abb1af4f88362a08fc6`
+- Digest: `685bf8aec9a333311e355161c00c822d81b6f985b8e0616e35ea64a7d86511b1`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -104,7 +104,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
-- [Europe PMC] Common questions and misconceptions about diets: what does the scientific evidence really show? — PMC13674649
+- [Europe PMC] Lifestyle-Associated Biomarkers of Cellular and Whole-Organism Aging: A Practical Roadmap for Human Geroscience Trials — PMC13702451
 
 ## BA-P2-01
 
