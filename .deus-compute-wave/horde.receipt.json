@@ -4,7 +4,7 @@
   "http_status": 200,
   "exact_contract": true,
   "model": "koboldcpp/Qwen2.5-Coder-3B-Instruct",
-  "digest": "420a7aa9c4fc353883cc376e96ace842242f5cdc4b961f10e2990685aa166ed5",
+  "digest": "e0863b9f74a24407e4b35cfa309d0b0eb80d24d8e7b3f724d0971fe2ceddd0b6",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
