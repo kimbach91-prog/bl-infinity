@@ -1,10 +1,10 @@
 {
   "provider": "AI_HORDE",
   "heartbeat": true,
-  "http_status": 500,
-  "exact_contract": false,
-  "model": "koboldcpp/gemma-4-E4B-it",
-  "digest": "e41656eb2ba6c6293bf6dd928e5a88cdbc50535cab661c1969e0f598e497ed62",
+  "http_status": 200,
+  "exact_contract": true,
+  "model": "koboldcpp/Qwen2.5-Coder-3B-Instruct",
+  "digest": "a4c65a74bd81f94720468d524572208723c547667efeb13be8d9a6243be2bab8",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
