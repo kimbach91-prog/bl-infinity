@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-28T12:50:02.314799+00:00",
+  "generated_at_utc": "2026-10-29T05:44:18.423336+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "031a45b702414b5058f3229169202ba055a291dd8d150e3fe9d368f70702f223",
+  "digest_sha256": "685bf8aec9a333311e355161c00c822d81b6f985b8e0616e35ea64a7d86511b1",
   "errors": [],
   "records": [
     {
@@ -146,6 +146,19 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
+      "source_id": "41358607",
+      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
+      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
+      "journal": "Psychophysiology",
+      "pub_year": "2025",
+      "doi": "10.1111/psyp.70182",
+      "cited_by_count": 1,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41358607"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -220,19 +233,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42670176"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
-      "source_id": "42823794",
-      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
-      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
-      "journal": "J Rehabil Med",
-      "pub_year": "2026",
-      "doi": "10.2340/jrm.v58.45767",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42823794"
     },
     {
       "track_id": "BA-P0-03",

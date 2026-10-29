@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-28T12:50:02.314799+00:00
+- Generated: 2026-10-29T05:44:18.423336+00:00
 - Records: 91
-- Digest: `031a45b702414b5058f3229169202ba055a291dd8d150e3fe9d368f70702f223`
+- Digest: `685bf8aec9a333311e355161c00c822d81b6f985b8e0616e35ea64a7d86511b1`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,12 +22,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
+- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
-- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
