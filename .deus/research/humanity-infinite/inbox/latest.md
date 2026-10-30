@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-29T05:44:18.423336+00:00
+- Generated: 2026-10-30T12:50:27.542570+00:00
 - Records: 91
-- Digest: `685bf8aec9a333311e355161c00c822d81b6f985b8e0616e35ea64a7d86511b1`
+- Digest: `10acc9d4f83eaba8b73b2fb05e2c2a3a769ec31ee48bea0ab4e0085b8bd706b2`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,12 +22,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
-- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
+- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
@@ -104,7 +104,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
-- [Europe PMC] Lifestyle-Associated Biomarkers of Cellular and Whole-Organism Aging: A Practical Roadmap for Human Geroscience Trials — PMC13702451
+- [Europe PMC] Common questions and misconceptions about diets: what does the scientific evidence really show? — PMC13674649
 
 ## BA-P2-01
 
