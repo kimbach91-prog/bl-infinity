@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-10-30T12:50:27.542570+00:00",
+  "generated_at_utc": "2026-10-30T22:15:56.541319+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "10acc9d4f83eaba8b73b2fb05e2c2a3a769ec31ee48bea0ab4e0085b8bd706b2",
+  "digest_sha256": "f2eee857844b84afd31cf2fc51df1ae09170fa7931ac51ebe0a8e59090559a4a",
   "errors": [],
   "records": [
     {
@@ -967,24 +967,24 @@
     {
       "track_id": "BA-P1-04",
       "source": "Europe PMC",
+      "source_id": "42939758",
+      "title": "Lifestyle-Associated Biomarkers of Cellular and Whole-Organism Aging: A Practical Roadmap for Human Geroscience Trials.",
+      "author": "Rose SC, Rizvanov AA, Haines DD, Cowan FM, Silverstein RH, Mahmoud FF, Solovyeva VV, Kitaeva KV, Hyo-Seok S, Tosaki A.",
+      "journal": "Biomolecules",
+      "pub_year": "2026",
+      "doi": "10.3390/biom16101504",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42939758"
+    },
+    {
+      "track_id": "BA-P1-04",
+      "source": "Europe PMC",
       "source_id": "PMC13301037",
       "title": "The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review",
       "author": "Cozma D, Gaita D, Crisan S, Tudoran C, Dumitrescu A, Văcărescu C.",
       "journal": "J Clin Med",
       "pub_year": "2026",
-      "doi": null,
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": null
-    },
-    {
-      "track_id": "BA-P1-04",
-      "source": "Europe PMC",
-      "source_id": "PMC13674649",
-      "title": "Common questions and misconceptions about diets: what does the scientific evidence really show?",
-      "author": "Antonio J, Antonio B, Aragon A, Arent S, Campbell B, Candow D, Eberhardt H, Escalante G, Evans C, Forbes S, Gonzalez D, Kerksick C, Bustillo E, Lafontant K, Mastrofini G, Mills S, Ormsbee M, Paterson K, Pereira F, Silva Ramirez V, Schwarz A, Singleton K, Smith-Ryan A, Stout J, Tinsley G.",
-      "journal": "J Int Soc Sports Nutr",
-      "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
       "is_open_access": "Y",
@@ -1116,7 +1116,7 @@
       "journal": "Brain Sci",
       "pub_year": "2026",
       "doi": "10.3390/brainsci16010116",
-      "cited_by_count": 1,
+      "cited_by_count": 2,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/41594837"
     },
