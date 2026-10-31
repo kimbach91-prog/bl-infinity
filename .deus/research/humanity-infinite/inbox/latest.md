@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-10-31T12:22:44.209749+00:00
+- Generated: 2026-10-31T21:30:22.842332+00:00
 - Records: 91
-- Digest: `8a665c77b46505361fd62baf31fc2b9f413d1f5e476a9e76b3130e8a154fb297`
+- Digest: `add35905c041ba995c2071a417824b8695b95aec6d33ed02388df8ed94aa887d`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,11 +32,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Yoga therapy for mental resilience in technology-driven occupational settings: A qualitative systematic review and thematic synthesis. — 42748566
-- [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
+- [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
+- [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
 - [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review — PMC13634863
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis — PMC13651499
 
