@@ -1,10 +1,10 @@
 {
   "provider": "AI_HORDE",
-  "heartbeat": true,
-  "http_status": 200,
-  "exact_contract": true,
-  "model": "koboldcpp/Qwen2.5-Coder-3B-Instruct",
-  "digest": "beaa45155e4b1e27eee5de52797995c33cb3914ae5a5362f1eac2ceb512620a9",
+  "heartbeat": false,
+  "http_status": 0,
+  "exact_contract": false,
+  "model": "",
+  "digest": "",
   "auth_mode": "ANONYMOUS_PUBLIC_KEY",
   "canonical_write": false,
   "settlement": false
