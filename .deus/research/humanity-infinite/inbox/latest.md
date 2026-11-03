@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-03T14:08:20.628316+00:00
+- Generated: 2026-11-03T18:20:19.067141+00:00
 - Records: 91
-- Digest: `1db507360f6be699d5ba3989f30a6976be4ebe8e75d74a0d02eaaab2bf320a0b`
+- Digest: `2d3012b0a49938976ad816b3f3f9ae68eed90d7629f23e472f93a27ad26bb6a8`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -86,7 +86,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-03
 
-- [Europe PMC] Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual. — 39155713
+- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
 - [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
 - [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
 - [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
