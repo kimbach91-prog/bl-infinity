@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-06T00:37:18.060602+00:00",
+  "generated_at_utc": "2026-11-06T12:23:51.267935+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "c550406b14c7257d8d5459a0c1108831984b772ee896afc544f2105f2015003a",
+  "digest_sha256": "a6aaad9666356c4c6afa409bdfd6ad2c7faa38b70f296c20f9b9bdebc5545559",
   "errors": [],
   "records": [
     {
@@ -146,19 +146,6 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
-      "source_id": "41358607",
-      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
-      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
-      "journal": "Psychophysiology",
-      "pub_year": "2025",
-      "doi": "10.1111/psyp.70182",
-      "cited_by_count": 2,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41358607"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -235,6 +222,19 @@
       "url": "https://europepmc.org/article/MED/42670176"
     },
     {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42823794",
+      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
+      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
+      "journal": "J Rehabil Med",
+      "pub_year": "2026",
+      "doi": "10.2340/jrm.v58.45767",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42823794"
+    },
+    {
       "track_id": "BA-P0-03",
       "source": "ClinicalTrials.gov",
       "source_id": "NCT02780739",
@@ -251,15 +251,15 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42784385",
-      "title": "Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review.",
-      "author": "Rodríguez CAL, Martín-Rodríguez A.",
-      "journal": "Sports (Basel)",
+      "source_id": "42522359",
+      "title": "Managing chemobrain: Translational insights and evidence-based psychological interventions.",
+      "author": "Szekeres T, Virág M, Dank M, Kovács P.",
+      "journal": "CNS Spectr",
       "pub_year": "2026",
-      "doi": "10.3390/sports14090389",
+      "doi": "10.1017/s1092852926101096",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42784385"
+      "url": "https://europepmc.org/article/MED/42522359"
     },
     {
       "track_id": "BA-P0-03",
@@ -1116,7 +1116,7 @@
       "journal": "Brain Sci",
       "pub_year": "2026",
       "doi": "10.3390/brainsci16010116",
-      "cited_by_count": 2,
+      "cited_by_count": 3,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/41594837"
     },
