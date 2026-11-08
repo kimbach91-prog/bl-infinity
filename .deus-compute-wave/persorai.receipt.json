@@ -2,12 +2,12 @@
   "provider": "PERSORAI",
   "endpoint": "https://persorai.com/v1/chat/completions",
   "requested_model": "@cf/zai-org/glm-5.2",
-  "http_status": 200,
-  "latency_ms": 698,
+  "http_status": 404,
+  "latency_ms": 766,
   "exact_contract": false,
-  "response_digest": "60e3923af8e65b610418865d5f6d2a23812ce19cd37a02ace0f4178f0b48563a",
+  "response_digest": "7d04f7431bbfa41a04bcc7e6b98b9de0d919756c4c671c5785c99fff45f16402",
   "auth_mode": "PUBLIC_ANY_BEARER",
-  "provider_execution": true,
+  "provider_execution": false,
   "canonical_write": false,
   "settlement": false
 }
