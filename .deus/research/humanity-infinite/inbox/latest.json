@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-06T18:21:34.036517+00:00",
+  "generated_at_utc": "2026-11-09T12:24:56.228479+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "867cc3690054208be0913829d857a2d0abd5222512c0e33a8c6775185e22a29d",
+  "digest_sha256": "0aad7774f828fe8a97cd2eac558283bd9915078f72492125976834418ca27e44",
   "errors": [],
   "records": [
     {
@@ -80,19 +80,6 @@
     {
       "track_id": "BA-P0-01",
       "source": "Europe PMC",
-      "source_id": "42483100",
-      "title": "A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping.",
-      "author": "Sun M, Wu H, Deng M, Qu Q.",
-      "journal": "Front Psychiatry",
-      "pub_year": "2026",
-      "doi": "10.3389/fpsyt.2026.1879147",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42483100"
-    },
-    {
-      "track_id": "BA-P0-01",
-      "source": "Europe PMC",
       "source_id": "42487760",
       "title": "Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application.",
       "author": "Sharma P, Veerareddy V, Hong I, Nycklemoe M, Kandimalla M, Sharma V, Kung TL, Osman R, Lim S, Kandimalla KK, Lapid MI, Min PH.",
@@ -115,6 +102,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42908962"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42983971",
+      "title": "Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task.",
+      "author": "Hehemann L, Stetza L, Kayser C.",
+      "journal": "Eur J Neurosci",
+      "pub_year": "2026",
+      "doi": "10.1111/ejn.70737",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42983971"
     },
     {
       "track_id": "BA-P0-02",
@@ -576,19 +576,6 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "42644357",
-      "title": "Exercise-induced irisin-BDNF signaling in aging: implications for cognitive decline, sarcopenia, and neurodegeneration. A narrative review.",
-      "author": "Ersever EM.",
-      "journal": "Eur J Transl Myol",
-      "pub_year": "2026",
-      "doi": "10.4081/ejtm.2026.15846",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42644357"
-    },
-    {
-      "track_id": "BA-P0-06",
-      "source": "Europe PMC",
       "source_id": "42646500",
       "title": "Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention.",
       "author": "Flynn AM, Hankir A, Abdulrahman M, Al-Rumaihi N, Carrick FR.",
@@ -611,6 +598,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42670179"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "source_id": "42999924",
+      "title": "Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. ",
+      "author": "Galindo CD, Jemar G, Osorio IC, Lopez A, Uribe Zapata M, Gonzalez Perez L, Villamil Montejo SD, Carvajal Angarita LA.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.119286",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42999924"
     },
     {
       "track_id": "BA-P0-06",
@@ -889,19 +889,6 @@
     {
       "track_id": "BA-P1-04",
       "source": "Europe PMC",
-      "source_id": "42238536",
-      "title": "Building a framework for integrative longevity science: from rediscovery to innovation.",
-      "author": "Gonzalez-Freire M.",
-      "journal": "Front Aging",
-      "pub_year": "2026",
-      "doi": "10.3389/fragi.2026.1742582",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42238536"
-    },
-    {
-      "track_id": "BA-P1-04",
-      "source": "Europe PMC",
       "source_id": "42393428",
       "title": "PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals.",
       "author": "Kuerec AH, Guan L, Wang W, Barros D, Alenezi WM, Grgic J, Wazny VK, Morwani-Mangnani J, Dotou M, Zhang D, Chen T, Wang J, Ong JYY, Tay JH, To-Anan N, Sotelo CR, Khan ADBN, Bruggink W, Nair SV, Sukor SABM, Rikka S, Sin RCY, Chong HM, Hashim FBM, Hameed SNBS, Hamid ABBA, Jin X, Fuster C, Chen Y, Milani A, Zhang C, Macary P, Singham TR, Sachaphibulkij K, Dunn M, Yi L, Maier AB.",
@@ -976,6 +963,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42939758"
+    },
+    {
+      "track_id": "BA-P1-04",
+      "source": "Europe PMC",
+      "source_id": "42982749",
+      "title": "The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities.",
+      "author": "Zhao FY, Wang JM, Lu SY, Hao L, Zhang HY, Wang HQ.",
+      "journal": "Aging Cell",
+      "pub_year": "2026",
+      "doi": "10.1111/acel.70798",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42982749"
     },
     {
       "track_id": "BA-P1-04",

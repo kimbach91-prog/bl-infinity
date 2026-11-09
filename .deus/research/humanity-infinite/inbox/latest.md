@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-06T18:21:34.036517+00:00
+- Generated: 2026-11-09T12:24:56.228479+00:00
 - Records: 91
-- Digest: `867cc3690054208be0913829d857a2d0abd5222512c0e33a8c6775185e22a29d`
+- Digest: `0aad7774f828fe8a97cd2eac558283bd9915078f72492125976834418ca27e44`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -14,9 +14,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
 - [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
 - [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
-- [Europe PMC] A mechanism-driven real-time respiratory modulation framework for rapid affective regulation via prefrontal EEG computational phenotyping. — 42483100
 - [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
 - [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
+- [Europe PMC] Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task. — 42983971
 
 ## BA-P0-02
 
@@ -65,9 +65,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
-- [Europe PMC] Exercise-induced irisin-BDNF signaling in aging: implications for cognitive decline, sarcopenia, and neurodegeneration. A narrative review. — 42644357
 - [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
+- [Europe PMC] Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. — 42999924
 - [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep — PMC13654707
 - [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth — PMC13659112
@@ -97,13 +97,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-04
 
-- [Europe PMC] Building a framework for integrative longevity science: from rediscovery to innovation. — 42238536
 - [Europe PMC] PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals. — 42393428
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
 - [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
 - [Europe PMC] Lifestyle-Associated Biomarkers of Cellular and Whole-Organism Aging: A Practical Roadmap for Human Geroscience Trials. — 42939758
+- [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
 ## BA-P2-01
