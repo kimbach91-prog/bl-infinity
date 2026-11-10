@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-09T12:24:56.228479+00:00
+- Generated: 2026-11-10T00:36:29.807881+00:00
 - Records: 91
-- Digest: `0aad7774f828fe8a97cd2eac558283bd9915078f72492125976834418ca27e44`
+- Digest: `d40f7cd8e6754a61564476d8a38c3461cf5d947fcfe76baeaadf51039a9e955a`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
