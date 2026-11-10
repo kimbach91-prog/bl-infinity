@@ -1,0 +1,20 @@
+name: DEUS Inference Backend Admission Canary
+on:
+  pull_request:
+    paths:
+      - "public_benchmark/inference/backend_contract_canary.py"
+      - ".github/workflows/deus-inference-backend-contract-canary.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Run deterministic negative controls
+        run: python -m unittest -v public_benchmark/inference/backend_contract_canary.py
