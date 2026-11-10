@@ -2,7 +2,7 @@
   "provider": "AKASH_NETWORK_DATA",
   "http_status": 200,
   "provider_records": 1874,
-  "digest": "1f08bbad0fbc41cbff9bf1ee6ca2d9152edd8d0bba4313ff95e473f6ad95613e",
+  "digest": "ac73760cdd78aa31895f1c6a565c77f52d4ed8fd18ea02f5f904232004286513",
   "auth_mode": "NONE",
   "workload_execution": false,
   "canonical_write": false,
