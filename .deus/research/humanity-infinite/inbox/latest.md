@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-12T12:25:10.387582+00:00
+- Generated: 2026-11-12T18:20:58.595794+00:00
 - Records: 91
-- Digest: `a4ef138b6360fe4acf8181229a722c538e11ac389c3477ff4b5f5ed70eb71d73`
+- Digest: `4766ec98ddaa11c4ebb8f91079dad298a6098dc5c3dadac29e61e22d495e0118`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,7 +32,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Managing chemobrain: Translational insights and evidence-based psychological interventions. — 42522359
+- [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
