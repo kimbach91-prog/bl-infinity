@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-10T06:26:11.294301+00:00
+- Generated: 2026-11-12T12:25:10.387582+00:00
 - Records: 91
-- Digest: `db303d5afd0aa23816b133977aaa299a0e2714c777df2376e9665bba9b97bf4e`
+- Digest: `a4ef138b6360fe4acf8181229a722c538e11ac389c3477ff4b5f5ed70eb71d73`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,7 +32,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
+- [Europe PMC] Managing chemobrain: Translational insights and evidence-based psychological interventions. — 42522359
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
@@ -59,8 +59,8 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
-- [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
 - [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
+- [Europe PMC] Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications. — 43007828
 
 ## BA-P0-06
 
@@ -86,7 +86,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-03
 
-- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
+- [Europe PMC] Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual. — 39155713
 - [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
 - [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
 - [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041

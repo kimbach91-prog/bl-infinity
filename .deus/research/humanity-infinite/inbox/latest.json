@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-10T06:26:11.294301+00:00",
+  "generated_at_utc": "2026-11-12T12:25:10.387582+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "db303d5afd0aa23816b133977aaa299a0e2714c777df2376e9665bba9b97bf4e",
+  "digest_sha256": "a4ef138b6360fe4acf8181229a722c538e11ac389c3477ff4b5f5ed70eb71d73",
   "errors": [],
   "records": [
     {
@@ -251,15 +251,15 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42784385",
-      "title": "Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review.",
-      "author": "Rodríguez CAL, Martín-Rodríguez A.",
-      "journal": "Sports (Basel)",
+      "source_id": "42522359",
+      "title": "Managing chemobrain: Translational insights and evidence-based psychological interventions.",
+      "author": "Szekeres T, Virág M, Dank M, Kovács P.",
+      "journal": "CNS Spectr",
       "pub_year": "2026",
-      "doi": "10.3390/sports14090389",
+      "doi": "10.1017/s1092852926101096",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42784385"
+      "url": "https://europepmc.org/article/MED/42522359"
     },
     {
       "track_id": "BA-P0-03",
@@ -537,19 +537,6 @@
     {
       "track_id": "BA-P0-05",
       "source": "Europe PMC",
-      "source_id": "42786603",
-      "title": "The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception.",
-      "author": "Lapomarda G, Fracasso A, Morawetz C, Grecucci A, Melcher D.",
-      "journal": "Hum Brain Mapp",
-      "pub_year": "2026",
-      "doi": "10.1002/hbm.70650",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42786603"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
       "source_id": "42922907",
       "title": "Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients.",
       "author": "Back AL, Price CJ, McGregor BA, Markell A.",
@@ -559,6 +546,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42922907"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "source_id": "43007828",
+      "title": "Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications.",
+      "author": "Savage H, Felsenheimer AK, Smekal V, Garfinkel SN.",
+      "journal": "Philos Trans R Soc Lond B Biol Sci",
+      "pub_year": "2026",
+      "doi": "10.1098/rstb.2025.0161",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/43007828"
     },
     {
       "track_id": "BA-P0-06",
@@ -785,15 +785,15 @@
     {
       "track_id": "BA-P1-03",
       "source": "Europe PMC",
-      "source_id": "40469950",
-      "title": "Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine.",
-      "author": "Merlo G, Snellman L, Sugden SG.",
-      "journal": "Am J Lifestyle Med",
-      "pub_year": "2025",
-      "doi": "10.1177/15598276251345455",
-      "cited_by_count": 18,
-      "is_open_access": "N",
-      "url": "https://europepmc.org/article/MED/40469950"
+      "source_id": "39155713",
+      "title": "Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual.",
+      "author": "Saraei M, Paxton A, Xygalatas D.",
+      "journal": "Philos Trans R Soc Lond B Biol Sci",
+      "pub_year": "2024",
+      "doi": "10.1098/rstb.2023.0162",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/39155713"
     },
     {
       "track_id": "BA-P1-03",
