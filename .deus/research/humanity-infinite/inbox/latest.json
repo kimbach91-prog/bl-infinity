@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-13T00:38:30.943016+00:00",
+  "generated_at_utc": "2026-11-13T12:24:18.304906+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "b526a8e1880fc3c8bc497a19c893dc38636c5d18040c8bcff20ebbf2a6f2c17a",
+  "digest_sha256": "4ec6725740327aefbf3abcef8a979d203e8cf379ec1ea17622fe1efa0d6408a7",
   "errors": [],
   "records": [
     {
@@ -472,19 +472,6 @@
     {
       "track_id": "BA-P0-05",
       "source": "Europe PMC",
-      "source_id": "41854272",
-      "title": "Paediatric occupational therapists' views on applying interoception in practice contexts.",
-      "author": "Clark E, Brown T, Yu ML, Pepin G, MacKinnon C.",
-      "journal": "Aust Occup Ther J",
-      "pub_year": "2026",
-      "doi": "10.1111/1440-1630.70082",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41854272"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
       "source_id": "42389825",
       "title": "The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction.",
       "author": "Mesce M, Scalzeri M, Galvez-Sánchez CM, Camacho-Ruiz JA, Limiñana-Gras RM, Galli F.",
@@ -533,6 +520,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42667300"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "source_id": "42786603",
+      "title": "The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception.",
+      "author": "Lapomarda G, Fracasso A, Morawetz C, Grecucci A, Melcher D.",
+      "journal": "Hum Brain Mapp",
+      "pub_year": "2026",
+      "doi": "10.1002/hbm.70650",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42786603"
     },
     {
       "track_id": "BA-P0-05",
