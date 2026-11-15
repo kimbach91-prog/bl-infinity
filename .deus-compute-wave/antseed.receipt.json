@@ -1,6 +1,6 @@
 {
   "provider": "ANTSEED",
-  "cli_version": "0.1.248",
+  "cli_version": "0.1.249",
   "buyer_proxy_live": true,
   "model_count": 0,
   "digest": "4016c2b75e41b787bd6f4bd256fd549df2170ab097dc4f807c3221dac265660c",
