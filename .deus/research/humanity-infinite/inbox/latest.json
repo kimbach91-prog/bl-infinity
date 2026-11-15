@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-14T12:21:17.611749+00:00",
+  "generated_at_utc": "2026-11-15T12:21:59.033807+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "c5fe19533dbb9cf69022a46159755ea1367e3112a62bdc93625cc17555cf35b5",
+  "digest_sha256": "b526a8e1880fc3c8bc497a19c893dc38636c5d18040c8bcff20ebbf2a6f2c17a",
   "errors": [],
   "records": [
     {
@@ -146,6 +146,19 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
+      "source_id": "41358607",
+      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
+      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
+      "journal": "Psychophysiology",
+      "pub_year": "2025",
+      "doi": "10.1111/psyp.70182",
+      "cited_by_count": 2,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41358607"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -220,19 +233,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42670176"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
-      "source_id": "42823794",
-      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
-      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
-      "journal": "J Rehabil Med",
-      "pub_year": "2026",
-      "doi": "10.2340/jrm.v58.45767",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42823794"
     },
     {
       "track_id": "BA-P0-03",
@@ -472,6 +472,19 @@
     {
       "track_id": "BA-P0-05",
       "source": "Europe PMC",
+      "source_id": "41854272",
+      "title": "Paediatric occupational therapists' views on applying interoception in practice contexts.",
+      "author": "Clark E, Brown T, Yu ML, Pepin G, MacKinnon C.",
+      "journal": "Aust Occup Ther J",
+      "pub_year": "2026",
+      "doi": "10.1111/1440-1630.70082",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41854272"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
       "source_id": "42389825",
       "title": "The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction.",
       "author": "Mesce M, Scalzeri M, Galvez-Sánchez CM, Camacho-Ruiz JA, Limiñana-Gras RM, Galli F.",
@@ -520,19 +533,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42667300"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42786603",
-      "title": "The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception.",
-      "author": "Lapomarda G, Fracasso A, Morawetz C, Grecucci A, Melcher D.",
-      "journal": "Hum Brain Mapp",
-      "pub_year": "2026",
-      "doi": "10.1002/hbm.70650",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42786603"
     },
     {
       "track_id": "BA-P0-05",

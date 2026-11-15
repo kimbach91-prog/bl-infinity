@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-14T12:21:17.611749+00:00
+- Generated: 2026-11-15T12:21:59.033807+00:00
 - Records: 91
-- Digest: `c5fe19533dbb9cf69022a46159755ea1367e3112a62bdc93625cc17555cf35b5`
+- Digest: `b526a8e1880fc3c8bc497a19c893dc38636c5d18040c8bcff20ebbf2a6f2c17a`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,12 +22,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
+- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
-- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
@@ -54,11 +54,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-05
 
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
+- [Europe PMC] Paediatric occupational therapists' views on applying interoception in practice contexts. — 41854272
 - [Europe PMC] The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction. — 42389825
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
-- [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
 - [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
 - [Europe PMC] Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications. — 43007828
 
