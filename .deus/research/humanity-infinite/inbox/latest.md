@@ -1,22 +1,11 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-15T12:21:59.033807+00:00
-- Records: 91
-- Digest: `b526a8e1880fc3c8bc497a19c893dc38636c5d18040c8bcff20ebbf2a6f2c17a`
+- Generated: 2026-11-16T00:43:49.310299+00:00
+- Records: 83
+- Digest: `698813e554e79dfa1f034caee59224f69edaa0e95f160a30992d4b822a5b8fb2`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
-
-## BA-P0-01
-
-- [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
-- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
-- [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
-- [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
-- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
-- [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
-- [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
-- [Europe PMC] Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task. — 42983971
 
 ## BA-P0-02
 
@@ -54,11 +43,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-05
 
 - [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
-- [Europe PMC] Paediatric occupational therapists' views on applying interoception in practice contexts. — 41854272
 - [Europe PMC] The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction. — 42389825
 - [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
 - [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
+- [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
 - [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
 - [Europe PMC] Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications. — 43007828
 
@@ -128,3 +117,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
+## Collector errors
+
+- BA-P0-01 / Europe PMC: HTTPError: HTTP Error 503: 
