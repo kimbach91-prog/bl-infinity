@@ -1,0 +1,322 @@
+{
+  "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
+  "agent_id": "BL-HC-01",
+  "project": "HUMANITY-INFINITE/BODY-ASCENSION",
+  "generated_at_utc": "2026-11-18T18:20:01.901055+00:00",
+  "query_set": ".deus/research/humanity-infinite/collector/queries.json",
+  "sources": [
+    "Europe PMC",
+    "ClinicalTrials.gov"
+  ],
+  "record_count": 19,
+  "digest_sha256": "404d5ea23fd946ff6122c0a9ac0684a152d881c1c4935340415c84e4cd7af07b",
+  "errors": [
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "error": "TimeoutError: The read operation timed out"
+    },
+    {
+      "track_id": "BA-P0-04",
+      "source": "Europe PMC",
+      "error": "TimeoutError: The read operation timed out"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "error": "TimeoutError: The read operation timed out"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "error": "TimeoutError: The read operation timed out"
+    },
+    {
+      "track_id": "BA-P1-01",
+      "source": "Europe PMC",
+      "error": "TimeoutError: The read operation timed out"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P1-04",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P2-02",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    }
+  ],
+  "records": [
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "40792649",
+      "title": "The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience.",
+      "author": "Little AL.",
+      "journal": "Stress Health",
+      "pub_year": "2025",
+      "doi": "10.1002/smi.70098",
+      "cited_by_count": 8,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40792649"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "40843749",
+      "title": "Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter?",
+      "author": "Siebieszuk A, Płoński AF, Baranowski M.",
+      "journal": "Med Sci (Basel)",
+      "pub_year": "2025",
+      "doi": "10.3390/medsci13030127",
+      "cited_by_count": 2,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40843749"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "41480343",
+      "title": "Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability.",
+      "author": "Purcell K.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2025",
+      "doi": "10.3389/fpsyt.2025.1726708",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41480343"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "41787752",
+      "title": "Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial.",
+      "author": "Little A, Stainer M, MacQuarrie AS, Wiseman N, Haskins B.",
+      "journal": "Stress Health",
+      "pub_year": "2026",
+      "doi": "10.1002/smi.70161",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41787752"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42088717",
+      "title": "Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine.",
+      "author": "Lee S, Yoon SI, Liao HY, Kim JW, Lee IS, Chae Y.",
+      "journal": "Front Hum Neurosci",
+      "pub_year": "2026",
+      "doi": "10.3389/fnhum.2026.1807034",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42088717"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42487760",
+      "title": "Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application.",
+      "author": "Sharma P, Veerareddy V, Hong I, Nycklemoe M, Kandimalla M, Sharma V, Kung TL, Osman R, Lim S, Kandimalla KK, Lapid MI, Min PH.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyt.2026.1774490",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42487760"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42908962",
+      "title": "Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study.",
+      "author": "Spizzirri A, Buchanan N.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1787922",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42908962"
+    },
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "source_id": "42983971",
+      "title": "Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task.",
+      "author": "Hehemann L, Stetza L, Kayser C.",
+      "journal": "Eur J Neurosci",
+      "pub_year": "2026",
+      "doi": "10.1111/ejn.70737",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42983971"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT03652220",
+      "title": "Meditation Based Lifestyle Modification in Depression",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2018-08-27",
+      "completion_date": "2020-07-20",
+      "url": "https://clinicaltrials.gov/study/NCT03652220"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "41158896",
+      "title": "The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence.",
+      "author": "Giridharan S, Soumian S, Kumar NV, Godbole M.",
+      "journal": "Cureus",
+      "pub_year": "2025",
+      "doi": "10.7759/cureus.93355",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41158896"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "41358607",
+      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
+      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
+      "journal": "Psychophysiology",
+      "pub_year": "2025",
+      "doi": "10.1111/psyp.70182",
+      "cited_by_count": 2,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41358607"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "41896920",
+      "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
+      "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
+      "journal": "Trials",
+      "pub_year": "2026",
+      "doi": "10.1186/s13063-026-09549-y",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41896920"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "41978849",
+      "title": "Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being.",
+      "author": "Daulatabad V, K P, H E, R N, A A, B A, V N, John N, Bhargav H, N R, V P.",
+      "journal": "Maedica (Bucur)",
+      "pub_year": "2026",
+      "doi": "10.26574/maedica.2026.21.1.137",
+      "cited_by_count": 1,
+      "is_open_access": "N",
+      "url": "https://europepmc.org/article/MED/41978849"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42051560",
+      "title": "How yoga shapes the brain: a systematic review.",
+      "author": "Stoelers L, Arias-Sánchez S, Domínguez P, Martín-Monzón I.",
+      "journal": "Front Neurosci",
+      "pub_year": "2026",
+      "doi": "10.3389/fnins.2026.1718808",
+      "cited_by_count": 1,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42051560"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42553883",
+      "title": "Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review.",
+      "author": "Girishankara KSM, Shetty S, Shetty P, Akshatha R.",
+      "journal": "Int J Yoga",
+      "pub_year": "2026",
+      "doi": "10.4103/ijoy.ijoy_39_25",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42553883"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42613121",
+      "title": "Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative.",
+      "author": "Sun S, Rajasankar V, Giovannone N, Miguel C, Harrer M, van Straten A, Cuijpers P, Loucks EB, Goldberg S.",
+      "journal": "BMJ Open",
+      "pub_year": "2026",
+      "doi": "10.1136/bmjopen-2025-113883",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42613121"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42670176",
+      "title": "The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence.",
+      "author": "Husain W, Ammar A, Wusqa UT, Farooq M, Tariq Z, Pandi-Perumal SR, BaHammam AS, Trabelsi K, Griffiths MD, Pakpour A, Jahrami H.",
+      "journal": "Brain Behav",
+      "pub_year": "2026",
+      "doi": "10.1002/brb3.71733",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42670176"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT02780739",
+      "title": "INSIGHT, A Comprehensive, Multidisciplinary Brain Training System",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2014-03",
+      "completion_date": "2014-11",
+      "url": "https://clinicaltrials.gov/study/NCT02780739"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT05895084",
+      "title": "Neural Markers of Balance in Adults With Brain Injury",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2021-08-30",
+      "completion_date": "2021-11-18",
+      "url": "https://clinicaltrials.gov/study/NCT05895084"
+    }
+  ],
+  "truth_policy": {
+    "collector_output_is_source_metadata_not_scientific_conclusion": true,
+    "phenomenology_not_ontology": true,
+    "requires_human_or_llm_synthesis_before_promotion": true
+  }
+}
