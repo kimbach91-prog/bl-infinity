@@ -1,22 +1,11 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-19T00:38:40.807614+00:00
-- Records: 91
-- Digest: `f29b8d70b95230442e3d4ab28d56ce3714e0e9276f4cec97eec22a1167ad403c`
+- Generated: 2026-11-19T06:28:23.801729+00:00
+- Records: 75
+- Digest: `75146323f252fef781ed138c9f9e36f6562c9015308a707c9f19cbbd676a9dd5`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
-
-## BA-P0-01
-
-- [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
-- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
-- [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
-- [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
-- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
-- [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
-- [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
-- [Europe PMC] Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task. — 42983971
 
 ## BA-P0-02
 
@@ -106,17 +95,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
-## BA-P2-01
-
-- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
-- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38304734
-- [Europe PMC] Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial. — 40931401
-- [Europe PMC] Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial. — 41316170
-- [Europe PMC] The Application of Reiki Therapy on Stress, Anxiety, and Well-Being in Health care Workers During the COVID-19 Pandemic: An Integrative Review. — 41433417
-- [Europe PMC] Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice. — 42305856
-- [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
-- [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
-
 ## BA-P2-02
 
 - [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
@@ -128,3 +106,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
+## Collector errors
+
+- BA-P0-01 / Europe PMC: TimeoutError: The read operation timed out
+- BA-P2-01 / Europe PMC: TimeoutError: The read operation timed out
