@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-20T12:24:18.293426+00:00
-- Records: 83
-- Digest: `dec7abee5a9f2087e017eabede672cf70591ae5ffa7b3d9e33fbd04430206325`
+- Generated: 2026-11-20T18:21:33.867660+00:00
+- Records: 91
+- Digest: `999f56c89965d19cc8b2579aab233006d167d0deaf2f7fe4036e9364ff00168f`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -10,13 +10,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-01
 
 - [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
-- [Europe PMC] Breathwork for Chronic Stress and Mental Health: Does Choosing a Specific Technique Matter? — 40843749
 - [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
 - [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
 - [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
 - [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
 - [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
 - [Europe PMC] Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task. — 42983971
+- [Europe PMC] Learning proximal cyclic sighing buffers anxiety across learning moments and boredom across days. — 43020829
 
 ## BA-P0-02
 
@@ -100,10 +100,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals. — 42393428
 - [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
 - [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
-- [Europe PMC] Clinical Protocol for the Dietary Approaches to Longevity and Health (DiAL Health) Pilot Trial. — 42741276
 - [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
-- [Europe PMC] Lifestyle-Associated Biomarkers of Cellular and Whole-Organism Aging: A Practical Roadmap for Human Geroscience Trials. — 42939758
 - [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
+- [Europe PMC] Translating Geroscience Into Clinical Practice: Molecular Targets, Emerging Therapies, and Lifestyle Strategies for Healthy Longevity. — 43034819
+- [Europe PMC] Skin Longevity Medicine: A Hierarchical Framework for Personalized Skin Health and Aging Intervention. — 43036749
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
 ## BA-P2-01
@@ -117,7 +117,14 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
 - [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
 
-## Collector errors
+## BA-P2-02
 
-- BA-P1-01 / Europe PMC: TimeoutError: The read operation timed out
-- BA-P2-02 / Europe PMC: TimeoutError: The read operation timed out
+- [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
+- [Europe PMC] Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing. — 41594837
+- [Europe PMC] A scoping review of music-based digital therapeutics for stress, anxiety, and depression. — 41907803
+- [Europe PMC] Energy constraint on human health. — 42025458
+- [Europe PMC] Abstracts of the 7th World Parkinson Congress. — 42175618
+- [Europe PMC] ePoster. — 42366021
+- [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
+- [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
+
