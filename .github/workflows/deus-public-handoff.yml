@@ -1,0 +1,143 @@
+name: DEUS Public Same-Job Handoff
+
+# Finite public pilot on the existing owner branch; no schedule or daemon.
+
+on:
+  push:
+    branches:
+      - deus/capability-router-native-canary-20261008
+    paths:
+      - 'runtime/federation/scripts/verify-public-handoff.mjs'
+      - '.github/workflows/deus-public-handoff.yml'
+
+permissions:
+  contents: read
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  produce:
+    if: ${{ github.repository == 'kimbach91-prog/bl-infinity' && github.ref == 'refs/heads/deus/capability-router-native-canary-20261008' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    env:
+      DEUS_HANDOFF_DIR: ${{ github.workspace }}/.deus/public-handoff
+      DEUS_HANDOFF_SOURCE_SHA: ${{ github.sha }}
+    outputs:
+      manifest_sha256: ${{ steps.producer.outputs.manifest_sha256 }}
+      carrier_artifact_id: ${{ steps.carrier.outputs.artifact-id }}
+      carrier_artifact_digest: ${{ steps.carrier.outputs.artifact-digest }}
+    steps:
+      - name: Check out the exact owner-branch source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up Node 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Produce the bounded public checkpoint
+        id: producer
+        run: |
+          set -euo pipefail
+          summary="$RUNNER_TEMP/deus-public-handoff-produce.json"
+          timeout -k 5s 180s env -i \
+            PATH="$PATH" \
+            GITHUB_ACTIONS=true \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+            DEUS_HANDOFF_DIR="$DEUS_HANDOFF_DIR" \
+            DEUS_HANDOFF_SOURCE_SHA="$DEUS_HANDOFF_SOURCE_SHA" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" \
+            GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_JOB="$GITHUB_JOB" \
+            RUNNER_NAME="$RUNNER_NAME" \
+            RUNNER_OS="$RUNNER_OS" \
+            node --max-old-space-size=256 --experimental-sqlite --experimental-vm-modules \
+            runtime/federation/scripts/verify-public-handoff.mjs produce > "$summary"
+          cat "$summary"
+          node --input-type=module - "$summary" <<'NODE'
+          import fs from 'node:fs';
+          const result = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          if (typeof result.manifestSha256 !== 'string' || !/^[a-f0-9]{64}$/.test(result.manifestSha256)) {
+            throw new Error('INVALID_PRODUCER_MANIFEST_SHA256');
+          }
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `manifest_sha256=${result.manifestSha256}\n`);
+          NODE
+      - name: Upload only the closed public carrier
+        id: carrier
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-public-handoff-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.DEUS_HANDOFF_DIR }}/manifest.json
+            ${{ env.DEUS_HANDOFF_DIR }}/graph.json
+            ${{ env.DEUS_HANDOFF_DIR }}/federation.sqlite
+            ${{ env.DEUS_HANDOFF_DIR }}/atoms.sqlite
+            ${{ env.DEUS_HANDOFF_DIR }}/producer-receipt.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          include-hidden-files: true
+          overwrite: false
+
+  resume:
+    needs: produce
+    if: ${{ needs.produce.result == 'success' && github.repository == 'kimbach91-prog/bl-infinity' && github.ref == 'refs/heads/deus/capability-router-native-canary-20261008' }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    env:
+      DEUS_HANDOFF_DIR: ${{ github.workspace }}/.deus/public-handoff
+      DEUS_HANDOFF_SOURCE_SHA: ${{ github.sha }}
+      DEUS_HANDOFF_MANIFEST_SHA256: ${{ needs.produce.outputs.manifest_sha256 }}
+    steps:
+      - name: Check out the same exact owner-branch source commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Set up the same Node 22 runtime
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          package-manager-cache: false
+      - name: Download the producer artifact from this workflow run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          artifact-ids: ${{ needs.produce.outputs.carrier_artifact_id }}
+          path: ${{ env.DEUS_HANDOFF_DIR }}
+          merge-multiple: true
+      - name: Resume the same public job and verify negative controls
+        run: |
+          set -euo pipefail
+          timeout -k 5s 180s env -i \
+            PATH="$PATH" \
+            GITHUB_ACTIONS=true \
+            GITHUB_REPOSITORY="$GITHUB_REPOSITORY" \
+            DEUS_HANDOFF_DIR="$DEUS_HANDOFF_DIR" \
+            DEUS_HANDOFF_SOURCE_SHA="$DEUS_HANDOFF_SOURCE_SHA" \
+            DEUS_HANDOFF_MANIFEST_SHA256="$DEUS_HANDOFF_MANIFEST_SHA256" \
+            GITHUB_RUN_ID="$GITHUB_RUN_ID" \
+            GITHUB_RUN_ATTEMPT="$GITHUB_RUN_ATTEMPT" \
+            GITHUB_SHA="$GITHUB_SHA" \
+            GITHUB_JOB="$GITHUB_JOB" \
+            RUNNER_NAME="$RUNNER_NAME" \
+            RUNNER_OS="$RUNNER_OS" \
+            node --max-old-space-size=256 --experimental-sqlite --experimental-vm-modules \
+            runtime/federation/scripts/verify-public-handoff.mjs resume
+      - name: Upload only the public handoff verification receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: deus-public-handoff-receipts-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ env.DEUS_HANDOFF_DIR }}/resume-receipt.json
+            ${{ env.DEUS_HANDOFF_DIR }}/negative-receipts.json
+          if-no-files-found: error
+          retention-days: 1
+          compression-level: 0
+          include-hidden-files: true
+          overwrite: false
