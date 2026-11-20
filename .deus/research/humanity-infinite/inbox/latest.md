@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-19T18:22:03.911690+00:00
-- Records: 83
-- Digest: `f7a69d19179da2078628089b7f70a78f2d5ece7e783e8e846edb1f05b68ae846`
+- Generated: 2026-11-20T00:36:24.876477+00:00
+- Records: 91
+- Digest: `db73f0f196e4e85c40b7a81da8ab6b2f39931476ea60e16f8b5ecb97d4740058`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -86,7 +86,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-03
 
-- [Europe PMC] Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual. — 39155713
+- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
 - [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
 - [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
 - [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
@@ -106,6 +106,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
 - [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
 
+## BA-P2-01
+
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38304734
+- [Europe PMC] Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial. — 40931401
+- [Europe PMC] Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial. — 41316170
+- [Europe PMC] The Application of Reiki Therapy on Stress, Anxiety, and Well-Being in Health care Workers During the COVID-19 Pandemic: An Integrative Review. — 41433417
+- [Europe PMC] Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice. — 42305856
+- [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
+- [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
+
 ## BA-P2-02
 
 - [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
@@ -117,6 +128,3 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
-## Collector errors
-
-- BA-P2-01 / Europe PMC: TimeoutError: The read operation timed out
