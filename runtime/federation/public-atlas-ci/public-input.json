@@ -1,0 +1,127 @@
+{
+  "attribution": {
+    "license": "CC0",
+    "property": "https://www.wikidata.org/wiki/Property:P1324",
+    "scope": "Source metadata only; not an installation or execution grant for listed repositories",
+    "source": "Wikidata"
+  },
+  "data_class": "PUBLIC",
+  "policy_binding": {
+    "catalog_sha256": "cdfbfb69dcff4ddd1c0cc64928d91b4278683dfebd60b1fb3d005540fed4be76",
+    "config_sha256": "e659db9448e3b3ca5e2fdafa76c9acc83a42d605629a823cb406d105b562a8e8",
+    "policy_module_sha256": "f5c0e4411998fd70993041667e6e4137c2391cca732811ced8a8348aebd3838d",
+    "revision": "DEUS_BORROWED_RESOURCE_R3_20261014"
+  },
+  "records": [
+    {
+      "label": "Apache Airflow",
+      "repositories": [
+        "https://github.com/apache/airflow"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q28915062"
+    },
+    {
+      "label": "Apache Hadoop",
+      "repositories": [
+        "https://git-wip-us.apache.org/repos/asf/hadoop.git",
+        "https://gitbox.apache.org/repos/asf?p=hadoop.git",
+        "https://github.com/apache/hadoop"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q29120"
+    },
+    {
+      "label": "Apache Spark",
+      "repositories": [
+        "https://gitbox.apache.org/repos/asf/spark.git",
+        "https://github.com/apache/spark"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q7573619"
+    },
+    {
+      "label": "CernVM-FS",
+      "repositories": [
+        "https://github.com/cvmfs/cvmfs"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q28974795"
+    },
+    {
+      "label": "HTCondor",
+      "repositories": [
+        "https://github.com/htcondor/htcondor"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q196193"
+    },
+    {
+      "label": "JAX",
+      "repositories": [
+        "https://github.com/jax-ml/jax"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q107382149"
+    },
+    {
+      "label": "Kubernetes",
+      "repositories": [
+        "https://github.com/kubernetes/kubernetes"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q22661306"
+    },
+    {
+      "label": "MPICH",
+      "repositories": [
+        "https://github.com/pmodels/mpich"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q1814051"
+    },
+    {
+      "label": "Nextflow",
+      "repositories": [
+        "https://github.com/nextflow-io/nextflow"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q51293717"
+    },
+    {
+      "label": "ONNX",
+      "repositories": [
+        "https://github.com/onnx/onnx"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q55080116"
+    },
+    {
+      "label": "Open MPI",
+      "repositories": [
+        "https://github.com/open-mpi/ompi"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q378561"
+    },
+    {
+      "label": "OpenStack",
+      "repositories": [
+        "https://opendev.org/openstack/openstack"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q1470293"
+    },
+    {
+      "label": "PyTorch",
+      "repositories": [
+        "https://github.com/pytorch/pytorch"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q47509047"
+    },
+    {
+      "label": "Ray",
+      "repositories": [
+        "https://github.com/ray-project/ray"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q105276783"
+    },
+    {
+      "label": "TensorFlow",
+      "repositories": [
+        "https://github.com/tensorflow/tensorflow"
+      ],
+      "source_entity": "http://www.wikidata.org/entity/Q21447895"
+    }
+  ],
+  "schema": "deus-public-atlas-ci-input/1",
+  "task_id": "TASK-DEUS-PUBLIC-ATLAS-DASK-CI-20261015-015"
+}

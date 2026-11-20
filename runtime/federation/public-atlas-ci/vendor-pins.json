@@ -1,0 +1,48 @@
+{
+  "actions": {
+    "checkout": {
+      "commit": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+      "release_url": "https://github.com/actions/checkout/releases/tag/v7.0.1",
+      "repository": "actions/checkout",
+      "tag": "v7.0.1"
+    },
+    "setup-python": {
+      "commit": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+      "release_url": "https://github.com/actions/setup-python/releases/tag/v7.0.0",
+      "repository": "actions/setup-python",
+      "tag": "v7.0.0"
+    },
+    "upload-artifact": {
+      "commit": "cf430e030ddbb5b0abf93d22962f4752f3646cd9",
+      "release_url": "https://github.com/actions/upload-artifact/releases/tag/v7.0.2",
+      "repository": "actions/upload-artifact",
+      "tag": "v7.0.2"
+    }
+  },
+  "data_ceiling": "PUBLIC_WIKIDATA_CC0_METADATA_ONLY",
+  "public_repo": "kimbach91-prog/bl-infinity",
+  "python": "3.12",
+  "python_packages": {
+    "dask": {
+      "metadata_raw_sha256": "98027ac69873effb130184fd0c0be5405f0a4213fff9107804cd60df14457ff1",
+      "metadata_source": "https://pypi.org/pypi/dask/json",
+      "requires_python": ">=3.10",
+      "sha256": "ccc0c83a189b0398602435189771d28dad7b5773b6089bb8dce14ae732dd782c",
+      "url": "https://files.pythonhosted.org/packages/f8/3a/4fc99e788bcfa1b3b3f21abf57da45898d807d007e7f6fd1c7300904eb70/dask-2026.8.0-py3-none-any.whl",
+      "version": "2026.8.0",
+      "wheel": "dask-2026.8.0-py3-none-any.whl"
+    },
+    "distributed": {
+      "metadata_raw_sha256": "1cdbeac9ce6fdd27b14d1106e7215307f8a272fa9dbb00cbd4d2f7683ae3ae43",
+      "metadata_source": "https://pypi.org/pypi/distributed/json",
+      "requires_python": ">=3.10",
+      "sha256": "3bd8882861a2cf497453f28c6b61135fa8ef2bb1d6885ad3b9f27e887e9c0e01",
+      "url": "https://files.pythonhosted.org/packages/28/d4/017e2d39d797eaa38a52b4459c8bea875d5e0ada335a62aafe98193041a6/distributed-2026.8.0-py3-none-any.whl",
+      "version": "2026.8.0",
+      "wheel": "distributed-2026.8.0-py3-none-any.whl"
+    }
+  },
+  "runner": "ubuntu-24.04",
+  "schema": "deus-public-atlas-ci-vendor-pins/1",
+  "task_id": "TASK-DEUS-PUBLIC-ATLAS-DASK-CI-20261015-015"
+}
