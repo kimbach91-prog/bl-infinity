@@ -47,7 +47,15 @@ function fixture({duplicateJob=false,checkpointRows=[]}={}){
 class FakeBridge{
   constructor(tables){this.tables=tables;this.appended=[];this.readbacks=new Map();}
   async readRange(range){
-    const values=this.readbacks.get(range)||this.tables.get(range);
+    let values=this.readbacks.get(range)||this.tables.get(range);
+    if(!values){
+      const match=range.match(/^(?:53_FLOW_CHECKPOINTS|'53_FLOW_CHECKPOINTS')!A(\d+):L(\d+)$/);
+      if(match){
+        const source=this.tables.get('53_FLOW_CHECKPOINTS!A1:L500');
+        values=source.slice(Number(match[1])-1,Number(match[2]));
+        while(values.length&&!values.at(-1).some((cell)=>String(cell??'').trim()!=='')) values.pop();
+      }
+    }
     if(!values) throw new Error(`unexpected range ${range}`);
     return {range,values:structuredClone(values)};
   }
