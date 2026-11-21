@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-21T12:22:23.667788+00:00",
+  "generated_at_utc": "2026-11-21T18:19:01.811771+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "4bfa61427855361160423214402620ac6b7c28642067dfa74a0952bbba98ee27",
+  "digest_sha256": "f3afe8b5d461b7fc942cb81a39a6246431c804b9f3870bcf0bc5d6747cc625ea",
   "errors": [],
   "records": [
     {
@@ -251,19 +251,6 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42522359",
-      "title": "Managing chemobrain: Translational insights and evidence-based psychological interventions.",
-      "author": "Szekeres T, Virág M, Dank M, Kovács P.",
-      "journal": "CNS Spectr",
-      "pub_year": "2026",
-      "doi": "10.1017/s1092852926101096",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42522359"
-    },
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
       "source_id": "42819275",
       "title": "Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis.",
       "author": "Shen F, Zhou H, Zhang T.",
@@ -273,6 +260,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42819275"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42834935",
+      "title": "Interventions for developing selective and sustained attention in adolescent athletes: a scoping review.",
+      "author": "Pleinica S, Šuriņa S, Semjonova G, Peleckis G, Tang J, Liepa A.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1816887",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42834935"
     },
     {
       "track_id": "BA-P0-03",
@@ -329,15 +329,15 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "PMC13634863",
-      "title": "Interventions for developing selective and sustained attention in adolescent athletes: a scoping review",
-      "author": "Pleinica S, Šuriņa S, Semjonova G, Peleckis G, Tang J, Liepa A.",
-      "journal": "Front Psychol",
-      "pub_year": null,
-      "doi": null,
+      "source_id": "43061022",
+      "title": "Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices.",
+      "author": "Nistor A, Fotakopoulos G, Vasilopoulou MA, Kavouridis VK, Foroglou N.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.118230",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": null
+      "url": "https://europepmc.org/article/MED/43061022"
     },
     {
       "track_id": "BA-P0-03",
@@ -576,19 +576,6 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "42646500",
-      "title": "Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention.",
-      "author": "Flynn AM, Hankir A, Abdulrahman M, Al-Rumaihi N, Carrick FR.",
-      "journal": "NeuroSci",
-      "pub_year": "2026",
-      "doi": "10.3390/neurosci7040090",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42646500"
-    },
-    {
-      "track_id": "BA-P0-06",
-      "source": "Europe PMC",
       "source_id": "42670179",
       "title": "Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review.",
       "author": "Yang S, Liu Q, Wang M, Zhang Y.",
@@ -624,6 +611,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42999924"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "source_id": "43061022",
+      "title": "Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices.",
+      "author": "Nistor A, Fotakopoulos G, Vasilopoulou MA, Kavouridis VK, Foroglou N.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.118230",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/43061022"
     },
     {
       "track_id": "BA-P0-06",
@@ -1142,7 +1142,7 @@
       "journal": "Trends Endocrinol Metab",
       "pub_year": "2026",
       "doi": "10.1016/j.tem.2026.02.010",
-      "cited_by_count": 8,
+      "cited_by_count": 11,
       "is_open_access": "N",
       "url": "https://europepmc.org/article/MED/42025458"
     },

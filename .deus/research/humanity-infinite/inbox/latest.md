@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-21T12:22:23.667788+00:00
+- Generated: 2026-11-21T18:19:01.811771+00:00
 - Records: 91
-- Digest: `4bfa61427855361160423214402620ac6b7c28642067dfa74a0952bbba98ee27`
+- Digest: `f3afe8b5d461b7fc942cb81a39a6246431c804b9f3870bcf0bc5d6747cc625ea`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,13 +32,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Managing chemobrain: Translational insights and evidence-based psychological interventions. — 42522359
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
+- [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review. — 42834935
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
 - [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
 - [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
-- [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review — PMC13634863
+- [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
 
 ## BA-P0-04
 
@@ -65,10 +65,10 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
-- [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
 - [Europe PMC] Structured effects of exercise on circulating brain-derived neurotrophic factor (BDNF) in postmenopausal women: a meta-analysis. — 42991639
 - [Europe PMC] Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. — 42999924
+- [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
 - [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep — PMC13654707
 - [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth — PMC13659112
