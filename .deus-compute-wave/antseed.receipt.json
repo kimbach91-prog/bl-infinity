@@ -3,7 +3,7 @@
   "cli_version": "0.1.256",
   "buyer_proxy_live": true,
   "model_count": 92,
-  "digest": "96d5b45dc5040bf664858f34112563cb5f4f6ff627f56fe2e060bc6b36669937",
+  "digest": "ddffb7c7adb3e4264470d1e2f67daf9d607e4b60c12b38dadf2bfc58f8b1b86d",
   "auth_mode": "NO_CENTRAL_ACCOUNT_EPHEMERAL_NODE_IDENTITY",
   "payment_deposit": false,
   "paid_inference": false,
