@@ -2,21 +2,15 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-22T18:19:55.954890+00:00",
+  "generated_at_utc": "2026-11-23T00:41:31.846018+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
-  "record_count": 83,
-  "digest_sha256": "0e3a2546f9bda3bd85b3670ba4cd86cd22beafb5471ac259ae3be2e4c0217106",
-  "errors": [
-    {
-      "track_id": "BA-P2-01",
-      "source": "Europe PMC",
-      "error": "TimeoutError: The read operation timed out"
-    }
-  ],
+  "record_count": 91,
+  "digest_sha256": "2aefa76e06dbbdc3600fd60e82db7889b988b554bb34f5cb96493e295230edb3",
+  "errors": [],
   "records": [
     {
       "track_id": "BA-P0-01",
@@ -478,19 +472,6 @@
     {
       "track_id": "BA-P0-05",
       "source": "Europe PMC",
-      "source_id": "41854272",
-      "title": "Paediatric occupational therapists' views on applying interoception in practice contexts.",
-      "author": "Clark E, Brown T, Yu ML, Pepin G, MacKinnon C.",
-      "journal": "Aust Occup Ther J",
-      "pub_year": "2026",
-      "doi": "10.1111/1440-1630.70082",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41854272"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
       "source_id": "42389825",
       "title": "The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction.",
       "author": "Mesce M, Scalzeri M, Galvez-Sánchez CM, Camacho-Ruiz JA, Limiñana-Gras RM, Galli F.",
@@ -539,6 +520,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42667300"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "source_id": "42786603",
+      "title": "The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception.",
+      "author": "Lapomarda G, Fracasso A, Morawetz C, Grecucci A, Melcher D.",
+      "journal": "Hum Brain Mapp",
+      "pub_year": "2026",
+      "doi": "10.1002/hbm.70650",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42786603"
     },
     {
       "track_id": "BA-P0-05",
@@ -997,6 +991,110 @@
       "url": null
     },
     {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "38300148",
+      "title": "Biofield Therapies: Guidelines for Reporting Clinical Trials.",
+      "author": "Hammerschlag R, Sprengel M, Baldwin AL.",
+      "journal": "J Integr Complement Med",
+      "pub_year": "2024",
+      "doi": "10.1089/jicm.2024.29128.rh",
+      "cited_by_count": 3,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/38300148"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "38304734",
+      "title": "Biofield Therapies: Guidelines for Reporting Clinical Trials.",
+      "author": "Hammerschlag R, Sprengel M, Baldwin AL.",
+      "journal": "Glob Adv Integr Med Health",
+      "pub_year": "2024",
+      "doi": "10.1177/27536130231202501",
+      "cited_by_count": 4,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/38304734"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "40931401",
+      "title": "Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial.",
+      "author": "Trivedi MK, Branton A, Trivedi D, Mondal S, Jana S.",
+      "journal": "Neuropsychopharmacol Rep",
+      "pub_year": "2025",
+      "doi": "10.1002/npr2.70050",
+      "cited_by_count": 2,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40931401"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "41316170",
+      "title": "Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial.",
+      "author": "Joy M, Adams N, Yanuck M, Dossett ML.",
+      "journal": "BMC Complement Med Ther",
+      "pub_year": "2025",
+      "doi": "10.1186/s12906-025-05161-w",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41316170"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "41433417",
+      "title": "The Application of Reiki Therapy on Stress, Anxiety, and Well-Being in Health care Workers During the COVID-19 Pandemic: An Integrative Review.",
+      "author": "DiBenedetto JK, Godzik CM, Stahl JE.",
+      "journal": "Holist Nurs Pract",
+      "pub_year": "2027",
+      "doi": "10.1097/hnp.0000000000000751",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41433417"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "42305856",
+      "title": "Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice.",
+      "author": "Delorme A, Cusimano A, Tran M, Nguyen P, Deng D, Fields C, Velíšek L, Wagner R, Yang P, Cohen L.",
+      "journal": "IBRO Neurosci Rep",
+      "pub_year": "2026",
+      "doi": "10.1016/j.ibneur.2026.05.011",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42305856"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "42625788",
+      "title": "Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy.",
+      "author": "Bonanno F, Cedro C, Alito A, Milardi D, Rizzo V, Mento C, Lombardo C.",
+      "journal": "Front Pain Res (Lausanne)",
+      "pub_year": "2026",
+      "doi": "10.3389/fpain.2026.1869699",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42625788"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "source_id": "42626333",
+      "title": "Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial.",
+      "author": "Rabbani A, Vahid H, Mazlom SR, Mirzavaziri H, Zarghi N.",
+      "journal": "J Educ Health Promot",
+      "pub_year": "2026",
+      "doi": "10.4103/jehp.jehp_192_25",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42626333"
+    },
+    {
       "track_id": "BA-P2-02",
       "source": "Europe PMC",
       "source_id": "41294401",
@@ -1005,7 +1103,7 @@
       "journal": "Biomimetics (Basel)",
       "pub_year": "2025",
       "doi": "10.3390/biomimetics10110730",
-      "cited_by_count": 23,
+      "cited_by_count": 26,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/41294401"
     },
