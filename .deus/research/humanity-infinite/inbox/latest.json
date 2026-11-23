@@ -2,15 +2,26 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-23T00:41:31.846018+00:00",
+  "generated_at_utc": "2026-11-23T12:25:54.031464+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
-  "record_count": 91,
-  "digest_sha256": "2aefa76e06dbbdc3600fd60e82db7889b988b554bb34f5cb96493e295230edb3",
-  "errors": [],
+  "record_count": 75,
+  "digest_sha256": "9025fd74739a7328de94ea0501ab9df4445ecc5afb58307d8c5d0a4795edfe7a",
+  "errors": [
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: "
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: "
+    }
+  ],
   "records": [
     {
       "track_id": "BA-P0-01",
@@ -146,19 +157,6 @@
     {
       "track_id": "BA-P0-02",
       "source": "Europe PMC",
-      "source_id": "41358607",
-      "title": "A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels.",
-      "author": "Nashiro K, Cahn BR, Choi P, Lee HRJ, Satchi S, Min J, Yoo HJ, Cho C, Mercer N, Sordo L, Head E, Choupan J, Mather M.",
-      "journal": "Psychophysiology",
-      "pub_year": "2025",
-      "doi": "10.1111/psyp.70182",
-      "cited_by_count": 2,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41358607"
-    },
-    {
-      "track_id": "BA-P0-02",
-      "source": "Europe PMC",
       "source_id": "41896920",
       "title": "Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol.",
       "author": "Mehriyan F, Bakhtiari A, Zahedi R.",
@@ -233,6 +231,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42670176"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "source_id": "42823794",
+      "title": "Content and outcome of non-pharmacological rehabilitation for women with traumatic brain injury - a scoping review.",
+      "author": "Lidström Holmqvist K, Matérne M, Simpson G, Massey J, Strandberg T.",
+      "journal": "J Rehabil Med",
+      "pub_year": "2026",
+      "doi": "10.2340/jrm.v58.45767",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42823794"
     },
     {
       "track_id": "BA-P0-03",
@@ -457,110 +468,6 @@
       "url": null
     },
     {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "40979528",
-      "title": "Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health.",
-      "author": "Ueno D, Kimura K, Ohira H, Narumoto J.",
-      "journal": "Front Neurosci",
-      "pub_year": "2025",
-      "doi": "10.3389/fnins.2025.1676040",
-      "cited_by_count": 1,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/40979528"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42389825",
-      "title": "The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction.",
-      "author": "Mesce M, Scalzeri M, Galvez-Sánchez CM, Camacho-Ruiz JA, Limiñana-Gras RM, Galli F.",
-      "journal": "Psychiatry Clin Neurosci",
-      "pub_year": "2026",
-      "doi": "10.1111/pcn.70099",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42389825"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42620348",
-      "title": "The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition.",
-      "author": "Samanta S.",
-      "journal": "Front Psychol",
-      "pub_year": "2026",
-      "doi": "10.3389/fpsyg.2026.1872500",
-      "cited_by_count": 2,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42620348"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42658654",
-      "title": "The Mind From Within: Visceral Roots of Human Cognition.",
-      "author": "Monti A, Aglioti SM.",
-      "journal": "Adv Sci (Weinh)",
-      "pub_year": "2026",
-      "doi": "10.1002/advs.202524184",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42658654"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42667300",
-      "title": "Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study.",
-      "author": "Hartmann H, Proposito A, Riva F, Lamm C.",
-      "journal": "Psychophysiology",
-      "pub_year": "2026",
-      "doi": "10.1111/psyp.70391",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42667300"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42786603",
-      "title": "The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception.",
-      "author": "Lapomarda G, Fracasso A, Morawetz C, Grecucci A, Melcher D.",
-      "journal": "Hum Brain Mapp",
-      "pub_year": "2026",
-      "doi": "10.1002/hbm.70650",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42786603"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "42922907",
-      "title": "Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients.",
-      "author": "Back AL, Price CJ, McGregor BA, Markell A.",
-      "journal": "Front Psychiatry",
-      "pub_year": "2026",
-      "doi": "10.3389/fpsyt.2026.1890966",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42922907"
-    },
-    {
-      "track_id": "BA-P0-05",
-      "source": "Europe PMC",
-      "source_id": "43007828",
-      "title": "Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications.",
-      "author": "Savage H, Felsenheimer AK, Smekal V, Garfinkel SN.",
-      "journal": "Philos Trans R Soc Lond B Biol Sci",
-      "pub_year": "2026",
-      "doi": "10.1098/rstb.2025.0161",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/43007828"
-    },
-    {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
       "source_id": "42179966",
@@ -572,6 +479,19 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42179966"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "source_id": "42646500",
+      "title": "Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention.",
+      "author": "Flynn AM, Hankir A, Abdulrahman M, Al-Rumaihi N, Carrick FR.",
+      "journal": "NeuroSci",
+      "pub_year": "2026",
+      "doi": "10.3390/neurosci7040090",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42646500"
     },
     {
       "track_id": "BA-P0-06",
@@ -624,19 +544,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/43061022"
-    },
-    {
-      "track_id": "BA-P0-06",
-      "source": "Europe PMC",
-      "source_id": "PMC13579262",
-      "title": "Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis",
-      "author": "Yang J, Li H, Hu S, Xu Y, Zhang Y.",
-      "journal": "Front Aging Neurosci",
-      "pub_year": null,
-      "doi": null,
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": null
     },
     {
       "track_id": "BA-P0-06",
@@ -781,110 +688,6 @@
       "cited_by_count": 0,
       "is_open_access": "Y",
       "url": "https://europepmc.org/article/MED/42745897"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "40469950",
-      "title": "Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine.",
-      "author": "Merlo G, Snellman L, Sugden SG.",
-      "journal": "Am J Lifestyle Med",
-      "pub_year": "2025",
-      "doi": "10.1177/15598276251345455",
-      "cited_by_count": 20,
-      "is_open_access": "N",
-      "url": "https://europepmc.org/article/MED/40469950"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "40695844",
-      "title": "Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease.",
-      "author": "Good A, Pachete A, Gilmore S, Russo FA.",
-      "journal": "Sci Rep",
-      "pub_year": "2025",
-      "doi": "10.1038/s41598-025-09200-x",
-      "cited_by_count": 1,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/40695844"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "41491824",
-      "title": "Shared breath of joy enhances empathy through breathing synchronization.",
-      "author": "Masaoka Y, Honma M, Nakayama M, Matsui M, Yoshikawa A, Kosuge S, Kosuge M, Shoji D, Sakakura S, Izumizaki M.",
-      "journal": "Sci Rep",
-      "pub_year": "2026",
-      "doi": "10.1038/s41598-026-34981-0",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41491824"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "41595041",
-      "title": "A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development.",
-      "author": "Williams KE, Bentley L.",
-      "journal": "Behav Sci (Basel)",
-      "pub_year": "2026",
-      "doi": "10.3390/bs16010100",
-      "cited_by_count": 1,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/41595041"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "42137408",
-      "title": "Staging the stands: the ritual choreography of sports fandom and collective emotion regulation.",
-      "author": "He Y.",
-      "journal": "Front Sports Act Living",
-      "pub_year": "2026",
-      "doi": "10.3389/fspor.2026.1805368",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42137408"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "42193684",
-      "title": "Humming and Homeostasis: Insights from Infants, Mothers, Mantras and Caregiving.",
-      "author": "Gratier M, Carvalho ME.",
-      "journal": "Behav Sci (Basel)",
-      "pub_year": "2026",
-      "doi": "10.3390/bs16050805",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42193684"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "42325126",
-      "title": "Synchrony and Reciprocity in Rhythmic Interaction.",
-      "author": "Palmer C, Yi W, Smykovskyi A.",
-      "journal": "Ann N Y Acad Sci",
-      "pub_year": "2026",
-      "doi": "10.1111/nyas.70326",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42325126"
-    },
-    {
-      "track_id": "BA-P1-03",
-      "source": "Europe PMC",
-      "source_id": "42720138",
-      "title": "Critical Review on the Development and Evolution of Beat Perception.",
-      "author": "Háden G, Honing H.",
-      "journal": "Ann N Y Acad Sci",
-      "pub_year": "2026",
-      "doi": "10.1111/nyas.70386",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42720138"
     },
     {
       "track_id": "BA-P1-04",

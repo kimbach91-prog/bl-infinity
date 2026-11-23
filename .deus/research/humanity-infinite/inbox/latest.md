@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-23T00:41:31.846018+00:00
-- Records: 91
-- Digest: `2aefa76e06dbbdc3600fd60e82db7889b988b554bb34f5cb96493e295230edb3`
+- Generated: 2026-11-23T12:25:54.031464+00:00
+- Records: 75
+- Digest: `9025fd74739a7328de94ea0501ab9df4445ecc5afb58307d8c5d0a4795edfe7a`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -22,12 +22,12 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
 - [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
-- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
 - [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
 - [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
 - [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
 - [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
 - [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
+- [Europe PMC] The Neuroscience of Religious and Spiritual Practices: A Systematic Review of Neurotheological Evidence. — 42670176
 
 ## BA-P0-03
 
@@ -51,25 +51,14 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Exercise, Sleep, and Cognitive Performance in Older Adults: A Structured Review of Mechanisms and Clinical Implications. — 42783405
 - [Europe PMC] The Science of Tai Chi and Qigong as Whole Person Health, April 30-May 1, 2026, Harvard Medical School, Boston, MA — PMC13294534
 
-## BA-P0-05
-
-- [Europe PMC] Editorial: Exploring the interplay of interoception in emotion, cognition, and mental health. — 40979528
-- [Europe PMC] The bodily self in fibromyalgia: A systematic review and meta-analysis of body image, body representation, and interoceptive dysfunction. — 42389825
-- [Europe PMC] The body before the dance somatic codification, elemental self-regulation, and contemplative recognition in the Naṭarāja tradition. — 42620348
-- [Europe PMC] The Mind From Within: Visceral Roots of Human Cognition. — 42658654
-- [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
-- [Europe PMC] The Emotional Experience of Time: Effects of Anxiety and Interoceptive Ability on Temporal Perception. — 42786603
-- [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
-- [Europe PMC] Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications. — 43007828
-
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
+- [Europe PMC] Exercise and Brain Health in Postmenopausal Women: A Review of Cognitive Benefits, Mechanisms, and Neurodegeneration Prevention. — 42646500
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
 - [Europe PMC] Structured effects of exercise on circulating brain-derived neurotrophic factor (BDNF) in postmenopausal women: a meta-analysis. — 42991639
 - [Europe PMC] Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. — 42999924
 - [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
-- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep — PMC13654707
 - [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth — PMC13659112
 
@@ -83,17 +72,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
 - [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
 - [Europe PMC] Ayurveda Treatments for Insomnia: A Narrative Review. — 42739755
-
-## BA-P1-03
-
-- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
-- [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
-- [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
-- [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
-- [Europe PMC] Staging the stands: the ritual choreography of sports fandom and collective emotion regulation. — 42137408
-- [Europe PMC] Humming and Homeostasis: Insights from Infants, Mothers, Mantras and Caregiving. — 42193684
-- [Europe PMC] Synchrony and Reciprocity in Rhythmic Interaction. — 42325126
-- [Europe PMC] Critical Review on the Development and Evolution of Beat Perception. — 42720138
 
 ## BA-P1-04
 
@@ -128,3 +106,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
+## Collector errors
+
+- BA-P0-05 / Europe PMC: HTTPError: HTTP Error 503: 
+- BA-P1-03 / Europe PMC: HTTPError: HTTP Error 503: 
