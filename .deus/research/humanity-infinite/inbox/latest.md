@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-25T00:39:06.138603+00:00
-- Records: 91
-- Digest: `9f24e8a907991cc666e94996e8c8ce31f964bdddec2c61b6f31da8a1137245f8`
+- Generated: 2026-11-25T12:26:08.055738+00:00
+- Records: 67
+- Digest: `79f10cd461914c3ef700a810306614bf114367042f5f8c0a72082ce58e0a58bb`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -12,11 +12,11 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] The A52 Breath Method: A Narrative Review of Breathwork for Mental Health and Stress Resilience. — 40792649
 - [Europe PMC] Regulation as modulation: autonomic flexibility as a physiological buffer in bipolar II disorder - a perspective on somatic regulation and mood stability. — 41480343
 - [Europe PMC] Examining the Effectiveness of Breathwork to Improve Resilience and Psychological Wellbeing While Reducing Anxiety, Depression, Stress, and Insomnia in Paramedicine Students: A Single-Blind Randomised Controlled Trial. — 41787752
-- [Europe PMC] Listen to your inner body: embodied emotions in predictive neuroscience and traditional East Asian medicine. — 42088717
 - [Europe PMC] Neurophysiological mechanisms of breathing-based well-being practices: a narrative review for clinical application. — 42487760
 - [Europe PMC] Effects of a brief resonance frequency breathing intervention on heart rate variability and perceived stress in postgraduate students: a pilot and feasibility study. — 42908962
 - [Europe PMC] Effects of Short-Term Breathwork on Respiration and Cognitive Performance in a Discrimination Task. — 42983971
 - [Europe PMC] Learning proximal cyclic sighing buffers anxiety across learning moments and boredom across days. — 43020829
+- [Europe PMC] Box Breathing for Stress Regulation, Attention, and Performance: A Narrative Review. — 43075207
 
 ## BA-P0-02
 
@@ -32,13 +32,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
+- [Europe PMC] Managing chemobrain: Translational insights and evidence-based psychological interventions. — 42522359
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review. — 42834935
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
 - [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
 - [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
-- [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
 
 ## BA-P0-04
 
@@ -84,39 +84,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
 - [Europe PMC] Ayurveda Treatments for Insomnia: A Narrative Review. — 42739755
 
-## BA-P1-03
-
-- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
-- [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
-- [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
-- [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
-- [Europe PMC] Staging the stands: the ritual choreography of sports fandom and collective emotion regulation. — 42137408
-- [Europe PMC] Humming and Homeostasis: Insights from Infants, Mothers, Mantras and Caregiving. — 42193684
-- [Europe PMC] Synchrony and Reciprocity in Rhythmic Interaction. — 42325126
-- [Europe PMC] Critical Review on the Development and Evolution of Beat Perception. — 42720138
-
-## BA-P1-04
-
-- [Europe PMC] PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals. — 42393428
-- [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
-- [Europe PMC] From obesity to healthy longevity: a consensus-based clinical framework for diagnosis, staging, and treatment. — 42666398
-- [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
-- [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
-- [Europe PMC] Translating Geroscience Into Clinical Practice: Molecular Targets, Emerging Therapies, and Lifestyle Strategies for Healthy Longevity. — 43034819
-- [Europe PMC] Skin Longevity Medicine: A Hierarchical Framework for Personalized Skin Health and Aging Intervention. — 43036749
-- [Europe PMC] The Oxygen Imperative: Cardiorespiratory Fitness, Dose-Dependent Exercise Thresholds, and Longevity—A Narrative Review — PMC13301037
-
-## BA-P2-01
-
-- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
-- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38304734
-- [Europe PMC] Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial. — 40931401
-- [Europe PMC] Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial. — 41316170
-- [Europe PMC] The Application of Reiki Therapy on Stress, Anxiety, and Well-Being in Health care Workers During the COVID-19 Pandemic: An Integrative Review. — 41433417
-- [Europe PMC] Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice. — 42305856
-- [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
-- [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
-
 ## BA-P2-02
 
 - [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
@@ -128,3 +95,8 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling — PMC13649992
 
+## Collector errors
+
+- BA-P1-03 / Europe PMC: TimeoutError: The read operation timed out
+- BA-P1-04 / Europe PMC: TimeoutError: The read operation timed out
+- BA-P2-01 / Europe PMC: TimeoutError: The read operation timed out
