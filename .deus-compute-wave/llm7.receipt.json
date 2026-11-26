@@ -3,7 +3,7 @@
   "endpoint": "https://api.llm7.io/v1/chat/completions",
   "requested_model": "default",
   "http_status": 429,
-  "latency_ms": 294,
+  "latency_ms": 425,
   "exact_contract": false,
   "response_digest": "df56775a1653b4a49ae56bc480a3613ce7f259d4c8717a3561975f7cea81f005",
   "auth_mode": "NO_AUTH_HEADER",
