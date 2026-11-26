@@ -2,21 +2,15 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-25T18:20:20.222024+00:00",
+  "generated_at_utc": "2026-11-26T00:38:10.505404+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
-  "record_count": 83,
-  "digest_sha256": "96eb837956067c308e6eaac34a52eac7f23ffdeafa37370868e095b23687b89f",
-  "errors": [
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
-      "error": "TimeoutError: The read operation timed out"
-    }
-  ],
+  "record_count": 91,
+  "digest_sha256": "d2126de6e4ecccf43fd9bc5fa05d377883d04feb51f986baa99fb126814de4b1",
+  "errors": [],
   "records": [
     {
       "track_id": "BA-P0-01",
@@ -253,6 +247,110 @@
       "start_date": "2014-03",
       "completion_date": "2014-11",
       "url": "https://clinicaltrials.gov/study/NCT02780739"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42522359",
+      "title": "Managing chemobrain: Translational insights and evidence-based psychological interventions.",
+      "author": "Szekeres T, Virág M, Dank M, Kovács P.",
+      "journal": "CNS Spectr",
+      "pub_year": "2026",
+      "doi": "10.1017/s1092852926101096",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42522359"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42819275",
+      "title": "Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis.",
+      "author": "Shen F, Zhou H, Zhang T.",
+      "journal": "Front Psychiatry",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyt.2026.1894822",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42819275"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42834935",
+      "title": "Interventions for developing selective and sustained attention in adolescent athletes: a scoping review.",
+      "author": "Pleinica S, Šuriņa S, Semjonova G, Peleckis G, Tang J, Liepa A.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1816887",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42834935"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42857135",
+      "title": "Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis.",
+      "author": "Liang X, Chen M, Chan RCF, Chang JR, Yeung MK, Hsu CL, Liu C, Chen Y, Xu RH, Yang BR, Yan C, Qiu H, Tse ACY, Shum DHK, Chan RCK, Li SX.",
+      "journal": "EClinicalMedicine",
+      "pub_year": "2026",
+      "doi": "10.1016/j.eclinm.2026.104228",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42857135"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42898349",
+      "title": "Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review.",
+      "author": "Fan Y, Liu X.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1838599",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42898349"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42925739",
+      "title": "How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis.",
+      "author": "Li J, Huang R, Li H.",
+      "journal": "Dev Cogn Neurosci",
+      "pub_year": "2026",
+      "doi": "10.1016/j.dcn.2026.101831",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42925739"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "42958354",
+      "title": "Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions.",
+      "author": "Wang Y, Alsufayan Y, Hassankiadeh RF, Chayjan MA, Hasan MB, Osmani F.",
+      "journal": "BMC Psychol",
+      "pub_year": "2026",
+      "doi": "10.1186/s40359-026-05278-8",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42958354"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "43061022",
+      "title": "Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices.",
+      "author": "Nistor A, Fotakopoulos G, Vasilopoulou MA, Kavouridis VK, Foroglou N.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.118230",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/43061022"
     },
     {
       "track_id": "BA-P0-04",

@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-25T18:20:20.222024+00:00
-- Records: 83
-- Digest: `96eb837956067c308e6eaac34a52eac7f23ffdeafa37370868e095b23687b89f`
+- Generated: 2026-11-26T00:38:10.505404+00:00
+- Records: 91
+- Digest: `d2126de6e4ecccf43fd9bc5fa05d377883d04feb51f986baa99fb126814de4b1`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -32,6 +32,13 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
+- [Europe PMC] Managing chemobrain: Translational insights and evidence-based psychological interventions. — 42522359
+- [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
+- [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review. — 42834935
+- [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
+- [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
+- [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
+- [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
 
 ## BA-P0-04
 
@@ -121,6 +128,3 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling. — 42857169
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
 
-## Collector errors
-
-- BA-P0-03 / Europe PMC: TimeoutError: The read operation timed out
