@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-26T12:25:23.486569+00:00
-- Records: 67
-- Digest: `807a58b49e791cf78ad4df13c4c8caa9783ae6a5d8aaf8ba5e6592c1e3e0889c`
+- Generated: 2026-11-26T18:21:43.616223+00:00
+- Records: 83
+- Digest: `9eaa498f96538864f400dd6d70b1a447de59e047c7996d0285ffb7bf16730a3d`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -21,17 +21,24 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 ## BA-P0-02
 
 - [ClinicalTrials.gov] Meditation Based Lifestyle Modification in Depression — NCT03652220
+- [Europe PMC] The Impact of Vipassana Meditation on Health and Well-Being: A Systematic Review of Current Evidence. — 41158896
+- [Europe PMC] A Randomized Clinical Trial Reveals Effects of Mindfulness and Slow Breathing on Plasma Amyloid Beta Levels. — 41358607
+- [Europe PMC] Outdoor nature-based activities for mental vitality and cognitive empowerment in older adults: a randomized controlled trial protocol. — 41896920
+- [Europe PMC] Transcendental Meditation as a Modulator of Cognitive and Psychological Well-Being. — 41978849
+- [Europe PMC] How yoga shapes the brain: a systematic review. — 42051560
+- [Europe PMC] Therapeutic Evaluation of Mind Sound Resonance Technique (A Guided Yogic Meditative Technique) on Human Psychophysiology - A Narrative Review. — 42553883
+- [Europe PMC] Synthesising evidence from decades of meditation-based research across populations, interventions, comparisons and outcomes: protocol for a meta-analytic database of randomised controlled trials via the MetaCIH Collaborative. — 42613121
 
 ## BA-P0-03
 
 - [ClinicalTrials.gov] INSIGHT, A Comprehensive, Multidisciplinary Brain Training System — NCT02780739
-- [Europe PMC] Effects of Physical Activity Interventions on Cognitive Flexibility in Children with ADHD: A Systematic Review. — 42784385
 - [Europe PMC] Efficacy of mindfulness-based interventions for children and adolescents with attention deficit hyperactivity disorder: a systematic review and meta-analysis. — 42819275
 - [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review. — 42834935
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
-- [Europe PMC] Effects of dance-based physical activity on cognitive and psychological health across age groups: a systematic review. — 42898349
 - [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
 - [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
+- [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
+- [Europe PMC] Cognitive and neural outcomes of executive function training in healthy adults: a systematic review. — 43077153
 
 ## BA-P0-04
 
@@ -60,22 +67,15 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep. — 42865364
+- [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth. — 42871341
 - [Europe PMC] Structured effects of exercise on circulating brain-derived neurotrophic factor (BDNF) in postmenopausal women: a meta-analysis. — 42991639
 - [Europe PMC] Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. — 42999924
 - [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
-- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 - [Europe PMC] Exercise in Multiple Sclerosis: Mechanisms, Clinical Benefits, Potential Disease-Modifying Effects, and Practical Recommendations — PMC13804806
 
 ## BA-P1-02
 
 - [ClinicalTrials.gov] Neural Markers of Balance in Adults With Brain Injury — NCT05895084
-- [Europe PMC] Evidence-Based Clinical Effectiveness of Kundalini Yoga: Systematic Review of RCTs Across Multiple Health Conditions. — 40985958
-- [Europe PMC] Efficacy of an Online Yoga Module in Alleviating Premenstrual Symptoms of Working Women in India: A Nonrandomized Controlled Trial. — 41561711
-- [Europe PMC] Effects of Isha Yoga Practices on Health Outcomes: A Systematic Review of Controlled Studies. — 41694821
-- [Europe PMC] Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review. — 41939577
-- [Europe PMC] Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA). — 42044105
-- [Europe PMC] An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial. — 42359292
-- [Europe PMC] Ayurveda Treatments for Insomnia: A Narrative Review. — 42739755
 
 ## BA-P1-03
 
@@ -88,6 +88,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Synchrony and Reciprocity in Rhythmic Interaction. — 42325126
 - [Europe PMC] Critical Review on the Development and Evolution of Beat Perception. — 42720138
 
+## BA-P1-04
+
+- [Europe PMC] PROMETHEUS clinical trial protocol: tailoring healthy ageing with lifestyle and nutraceuticals. — 42393428
+- [Europe PMC] Beyond Diabetes: Continuous Glucose Monitoring as a Candidate Precision Tool for Cardiovascular Prevention and Healthy Longevity-A Hypothesis-Generating Narrative Review. — 42654410
+- [Europe PMC] Behavior Change and Compliance Outcomes of a Novel Web-Based Health Behavior Tool Integrated Into Certified Exercise Practitioner Services: Twelve-Week, Two-Arm, Randomized Pre-Post Trial. — 42815033
+- [Europe PMC] The Vicious Cycle of Sleep Disruption and Inflammaging: Mechanisms, Consequences, and Therapeutic Opportunities. — 42982749
+- [Europe PMC] Translating Geroscience Into Clinical Practice: Molecular Targets, Emerging Therapies, and Lifestyle Strategies for Healthy Longevity. — 43034819
+- [Europe PMC] Skin Longevity Medicine: A Hierarchical Framework for Personalized Skin Health and Aging Intervention. — 43036749
+- [Europe PMC] Tennis Participation Across the Lifespan: Functional and Health-Related Evidence Relevant to Healthy Aging. — 43081383
+- [Europe PMC] Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors—A Narrative Review — PMC13806849
+
 ## BA-P2-01
 
 - [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
@@ -99,8 +110,17 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
 - [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
 
+## BA-P2-02
+
+- [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
+- [Europe PMC] Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing. — 41594837
+- [Europe PMC] A scoping review of music-based digital therapeutics for stress, anxiety, and depression. — 41907803
+- [Europe PMC] Energy constraint on human health. — 42025458
+- [Europe PMC] ePoster. — 42366021
+- [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling. — 42857169
+- [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
+- [Europe PMC] Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety — PMC13799534
+
 ## Collector errors
 
-- BA-P0-02 / Europe PMC: TimeoutError: The read operation timed out
-- BA-P1-04 / Europe PMC: TimeoutError: The read operation timed out
-- BA-P2-02 / Europe PMC: TimeoutError: The read operation timed out
+- BA-P1-02 / Europe PMC: TimeoutError: The read operation timed out
