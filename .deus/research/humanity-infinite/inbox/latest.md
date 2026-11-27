@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-27T12:25:16.929193+00:00
+- Generated: 2026-11-27T18:21:09.510148+00:00
 - Records: 91
-- Digest: `5cd5d71f1490afe81a9b44c1b3a29e5e15d1fc6b2f968ce47603b3bf2273a719`
+- Digest: `222ec38e303466ef2d9c79cae0579d23c094f382c7e282ef5e033e5f5645464e`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -36,9 +36,9 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Interventions for developing selective and sustained attention in adolescent athletes: a scoping review. — 42834935
 - [Europe PMC] Non-pharmacological executive function interventions for children and adolescents with neurodevelopmental disorders: a systematic review and network meta-analysis. — 42857135
 - [Europe PMC] How School-Based Interventions Shape the Developing Brain during 3-12 Years: A Systematic Review and Exploratory Meta-analysis. — 42925739
-- [Europe PMC] Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions. — 42958354
 - [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
 - [Europe PMC] Cognitive and neural outcomes of executive function training in healthy adults: a systematic review. — 43077153
+- [Europe PMC] For whom does a brief mindfulness induction work? An exploration of the moderating role of individual differences in the effect of mindfulness induction on executive functioning and mind-wandering. — 43087076
 
 ## BA-P0-04
 
@@ -60,18 +60,18 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Placebo Analgesia Does Not Generalize From Pain to Interoceptive Abilities: A Preregistered Exploratory Study. — 42667300
 - [Europe PMC] Preparing the body for psilocybin therapy: receptive and generative interoception in cancer patients. — 42922907
 - [Europe PMC] Making sense of sensation: a framework of interoceptive attribution and appraisal with clinical applications. — 43007828
-- [Europe PMC] A Practical Guide to Understanding Interoception and Translating Knowledge into Practice — PMC13801947
+- [Europe PMC] A Practical Guide to Understanding Interoception and Translating Knowledge into Practice. — 43089670
 
 ## BA-P0-06
 
 - [Europe PMC] Four-Limb Coordinated Training and Neuroplasticity in Older Adults with Cognitive Frailty: Mechanisms and Clinical Evidence. — 42179966
 - [Europe PMC] Music and Exercise in Concert: Uncovering Synergistic Mechanisms for Enhancing Brain Health and Cognitive Resilience-A Narrative Review. — 42670179
 - [Europe PMC] Effects of exercise on cognitive function in older adults: a systematic review and meta-analysis of the mediating role of sleep. — 42865364
-- [Europe PMC] Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth. — 42871341
 - [Europe PMC] Structured effects of exercise on circulating brain-derived neurotrophic factor (BDNF) in postmenopausal women: a meta-analysis. — 42991639
 - [Europe PMC] Peripheral Brain-Derived Neurotrophic Factor Changes and Clinical Response to Electroconvulsive Therapy and Repetitive Transcranial Magnetic Stimulation in Major Depressive Disorder: A Systematic Review. — 42999924
 - [Europe PMC] Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices. — 43061022
-- [Europe PMC] Exercise in Multiple Sclerosis: Mechanisms, Clinical Benefits, Potential Disease-Modifying Effects, and Practical Recommendations — PMC13804806
+- [Europe PMC] Exercise in Multiple Sclerosis: Mechanisms, Clinical Benefits, Potential Disease-Modifying Effects, and Practical Recommendations. — 43091696
+- [Europe PMC] Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis — PMC13579262
 
 ## BA-P1-02
 
@@ -86,7 +86,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 
 ## BA-P1-03
 
-- [Europe PMC] Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine. — 40469950
+- [Europe PMC] Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual. — 39155713
 - [Europe PMC] Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease. — 40695844
 - [Europe PMC] Shared breath of joy enhances empathy through breathing synchronization. — 41491824
 - [Europe PMC] A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development. — 41595041
@@ -104,7 +104,7 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Translating Geroscience Into Clinical Practice: Molecular Targets, Emerging Therapies, and Lifestyle Strategies for Healthy Longevity. — 43034819
 - [Europe PMC] Skin Longevity Medicine: A Hierarchical Framework for Personalized Skin Health and Aging Intervention. — 43036749
 - [Europe PMC] Tennis Participation Across the Lifespan: Functional and Health-Related Evidence Relevant to Healthy Aging. — 43081383
-- [Europe PMC] Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors—A Narrative Review — PMC13806849
+- [Europe PMC] Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors-A Narrative Review. — 43092931
 
 ## BA-P2-01
 
@@ -125,6 +125,6 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Energy constraint on human health. — 42025458
 - [Europe PMC] ePoster. — 42366021
 - [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling. — 42857169
+- [Europe PMC] Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety. — 43087487
 - [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
-- [Europe PMC] Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety — PMC13799534
 

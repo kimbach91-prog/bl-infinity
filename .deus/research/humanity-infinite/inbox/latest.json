@@ -2,14 +2,14 @@
   "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
   "agent_id": "BL-HC-01",
   "project": "HUMANITY-INFINITE/BODY-ASCENSION",
-  "generated_at_utc": "2026-11-27T12:25:16.929193+00:00",
+  "generated_at_utc": "2026-11-27T18:21:09.510148+00:00",
   "query_set": ".deus/research/humanity-infinite/collector/queries.json",
   "sources": [
     "Europe PMC",
     "ClinicalTrials.gov"
   ],
   "record_count": 91,
-  "digest_sha256": "5cd5d71f1490afe81a9b44c1b3a29e5e15d1fc6b2f968ce47603b3bf2273a719",
+  "digest_sha256": "222ec38e303466ef2d9c79cae0579d23c094f382c7e282ef5e033e5f5645464e",
   "errors": [],
   "records": [
     {
@@ -303,19 +303,6 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "42958354",
-      "title": "Self-care recovery after ischemic stroke: a quasi-experimental comparison of two psychological interventions.",
-      "author": "Wang Y, Alsufayan Y, Hassankiadeh RF, Chayjan MA, Hasan MB, Osmani F.",
-      "journal": "BMC Psychol",
-      "pub_year": "2026",
-      "doi": "10.1186/s40359-026-05278-8",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42958354"
-    },
-    {
-      "track_id": "BA-P0-03",
-      "source": "Europe PMC",
       "source_id": "43061022",
       "title": "Harnessing Neuroplasticity for Rehabilitation: The Combined Effects of Experiential Music, Intermittent Fasting, and Daily Cognitive-Mindfulness Practices.",
       "author": "Nistor A, Fotakopoulos G, Vasilopoulou MA, Kavouridis VK, Foroglou N.",
@@ -342,15 +329,28 @@
     {
       "track_id": "BA-P0-03",
       "source": "Europe PMC",
-      "source_id": "PMC13800549",
-      "title": "Effects of Cognitive Behavioral Interventions on Core Symptom Dimensions of Attention-Deficit/Hyperactivity Disorder in Children and Adolescents: A Systematic Review and Meta-Analysis",
+      "source_id": "43087076",
+      "title": "For whom does a brief mindfulness induction work? An exploration of the moderating role of individual differences in the effect of mindfulness induction on executive functioning and mind-wandering.",
+      "author": "Shi K, Calia C, Takacs ZK.",
+      "journal": "BMC Psychol",
+      "pub_year": "2026",
+      "doi": "10.1186/s40359-026-05331-6",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/43087076"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "source_id": "43088318",
+      "title": "Effects of Cognitive Behavioral Interventions on Core Symptom Dimensions of Attention-Deficit/Hyperactivity Disorder in Children and Adolescents: A Systematic Review and Meta-Analysis.",
       "author": "Guo X, Yang H, Liu Q, Lu C, Zhang T.",
       "journal": "Brain Sci",
       "pub_year": "2026",
-      "doi": null,
+      "doi": "10.3390/brainsci16111202",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": null
+      "url": "https://europepmc.org/article/MED/43088318"
     },
     {
       "track_id": "BA-P0-04",
@@ -550,15 +550,15 @@
     {
       "track_id": "BA-P0-05",
       "source": "Europe PMC",
-      "source_id": "PMC13801947",
-      "title": "A Practical Guide to Understanding Interoception and Translating Knowledge into Practice",
-      "author": "Newby M, Lane S.",
+      "source_id": "43089670",
+      "title": "A Practical Guide to Understanding Interoception and Translating Knowledge into Practice.",
+      "author": "Newby MJ, Lane SJ.",
       "journal": "Children (Basel)",
       "pub_year": "2026",
-      "doi": null,
+      "doi": "10.3390/children13111538",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": null
+      "url": "https://europepmc.org/article/MED/43089670"
     },
     {
       "track_id": "BA-P0-06",
@@ -602,19 +602,6 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "42871341",
-      "title": "Sculpting the developing brain: a review of neural mechanisms linking physical activity to executive function and emotion regulation in youth.",
-      "author": "Wen DT, Lin Y, Sun JY, Lv SZ, Wang JY, Yuan TS, Zhu DY.",
-      "journal": "Front Psychol",
-      "pub_year": "2026",
-      "doi": "10.3389/fpsyg.2026.1865879",
-      "cited_by_count": 0,
-      "is_open_access": "Y",
-      "url": "https://europepmc.org/article/MED/42871341"
-    },
-    {
-      "track_id": "BA-P0-06",
-      "source": "Europe PMC",
       "source_id": "42991639",
       "title": "Structured effects of exercise on circulating brain-derived neurotrophic factor (BDNF) in postmenopausal women: a meta-analysis.",
       "author": "Zhou Y, Chai J, Wang J, Wang J.",
@@ -654,11 +641,24 @@
     {
       "track_id": "BA-P0-06",
       "source": "Europe PMC",
-      "source_id": "PMC13804806",
-      "title": "Exercise in Multiple Sclerosis: Mechanisms, Clinical Benefits, Potential Disease-Modifying Effects, and Practical Recommendations",
-      "author": null,
+      "source_id": "43091696",
+      "title": "Exercise in Multiple Sclerosis: Mechanisms, Clinical Benefits, Potential Disease-Modifying Effects, and Practical Recommendations.",
+      "author": "Gklinos P, Christodoulou G, Konstantinidou EM, Spyropoulos D, Evangelopoulos ME, Mitsikostas DD.",
       "journal": "Int J Mol Sci",
       "pub_year": "2026",
+      "doi": "10.3390/ijms272210066",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/43091696"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "source_id": "PMC13579262",
+      "title": "Knowledge structure and frontier trends of exercise interventions for Parkinson’s disease: a bibliometric and visualized analysis",
+      "author": "Yang J, Li H, Hu S, Xu Y, Zhang Y.",
+      "journal": "Front Aging Neurosci",
+      "pub_year": null,
       "doi": null,
       "cited_by_count": 0,
       "is_open_access": "Y",
@@ -785,15 +785,15 @@
     {
       "track_id": "BA-P1-03",
       "source": "Europe PMC",
-      "source_id": "40469950",
-      "title": "Connectedness: The Updated and Expanded Pillar of Lifestyle Psychiatry and Lifestyle Medicine.",
-      "author": "Merlo G, Snellman L, Sugden SG.",
-      "journal": "Am J Lifestyle Med",
-      "pub_year": "2025",
-      "doi": "10.1177/15598276251345455",
-      "cited_by_count": 20,
-      "is_open_access": "N",
-      "url": "https://europepmc.org/article/MED/40469950"
+      "source_id": "39155713",
+      "title": "Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual.",
+      "author": "Saraei M, Paxton A, Xygalatas D.",
+      "journal": "Philos Trans R Soc Lond B Biol Sci",
+      "pub_year": "2024",
+      "doi": "10.1098/rstb.2023.0162",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/39155713"
     },
     {
       "track_id": "BA-P1-03",
@@ -980,15 +980,15 @@
     {
       "track_id": "BA-P1-04",
       "source": "Europe PMC",
-      "source_id": "PMC13806849",
-      "title": "Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors—A Narrative Review",
+      "source_id": "43092931",
+      "title": "Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors-A Narrative Review.",
       "author": "Sarić A, Matovinović M, Sorić T, Ivanišin A, Milić M, Klarin I, Matek Sarić M.",
       "journal": "Nutrients",
       "pub_year": "2026",
-      "doi": null,
+      "doi": "10.3390/nu18223814",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": null
+      "url": "https://europepmc.org/article/MED/43092931"
     },
     {
       "track_id": "BA-P2-01",
@@ -1175,23 +1175,23 @@
     {
       "track_id": "BA-P2-02",
       "source": "Europe PMC",
-      "source_id": "PMC12945368",
-      "title": "ABSTRACTS FOR SYMPOSIA",
-      "author": null,
-      "journal": "Indian J Psychiatry",
+      "source_id": "43087487",
+      "title": "Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety.",
+      "author": "Liu X, Zhu D.",
+      "journal": "Behav Sci (Basel)",
       "pub_year": "2026",
-      "doi": null,
+      "doi": "10.3390/bs16112189",
       "cited_by_count": 0,
       "is_open_access": "Y",
-      "url": null
+      "url": "https://europepmc.org/article/MED/43087487"
     },
     {
       "track_id": "BA-P2-02",
       "source": "Europe PMC",
-      "source_id": "PMC13799534",
-      "title": "Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety",
-      "author": "Liu X, Zhu D.",
-      "journal": "Behav Sci (Basel)",
+      "source_id": "PMC12945368",
+      "title": "ABSTRACTS FOR SYMPOSIA",
+      "author": null,
+      "journal": "Indian J Psychiatry",
       "pub_year": "2026",
       "doi": null,
       "cited_by_count": 0,
