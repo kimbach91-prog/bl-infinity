@@ -1,8 +1,8 @@
 # Huyền Cơ · Humanity Infinite · Evidence Sweep
 
-- Generated: 2026-11-28T06:25:49.237956+00:00
-- Records: 75
-- Digest: `62dc62250b6195e74596eb4b8fa903cca1230d8489518755d8896a249085c424`
+- Generated: 2026-11-28T12:22:43.831483+00:00
+- Records: 91
+- Digest: `b6b0623398df5e8f06cb9777732ccaf6be24a469699237ef08c1bd05064cfa75`
 - Changed since previous packet: `True`
 
 Collector output is source metadata, not a scientific conclusion. Promotion requires synthesis, provenance review, safety review and replication logic.
@@ -106,8 +106,25 @@ Collector output is source metadata, not a scientific conclusion. Promotion requ
 - [Europe PMC] Tennis Participation Across the Lifespan: Functional and Health-Related Evidence Relevant to Healthy Aging. — 43081383
 - [Europe PMC] Extending Healthspan Through Lifestyle: Nutrition, Physical Activity, Sleep, and Other Modifiable Behaviors-A Narrative Review. — 43092931
 
-## Collector errors
+## BA-P2-01
 
-- BA-P1-01 / Europe PMC: TimeoutError: The read operation timed out
-- BA-P2-01 / Europe PMC: TimeoutError: The read operation timed out
-- BA-P2-02 / Europe PMC: TimeoutError: The read operation timed out
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38300148
+- [Europe PMC] Biofield Therapies: Guidelines for Reporting Clinical Trials. — 38304734
+- [Europe PMC] Amelioration of Adults' Mental Health Conditions and Symptoms Through Spiritual Energy Therapy: Randomized Controlled Trial. — 40931401
+- [Europe PMC] Experiences with Qi and changes in post-acute sequelae of COVID-19 (PASC) symptoms with qigong: a qualitative analysis of participants' experiences in a pilot clinical trial. — 41316170
+- [Europe PMC] The Application of Reiki Therapy on Stress, Anxiety, and Well-Being in Health care Workers During the COVID-19 Pandemic: An Integrative Review. — 41433417
+- [Europe PMC] Exploring the mechanisms of biofield therapy through joint electrophysiological recordings in humans and mice. — 42305856
+- [Europe PMC] Touch-based interventions, biofield therapies, and hypnosis for pain management: a scoping review of complementary approaches in physiotherapy. — 42625788
+- [Europe PMC] Enhancing self-efficacy in nursing internship students through Reiki practices: A randomized controlled trial. — 42626333
+
+## BA-P2-02
+
+- [Europe PMC] Mapping EEG Metrics to Human Affective and Cognitive Models: An Interdisciplinary Scoping Review from a Cognitive Neuroscience Perspective. — 41294401
+- [Europe PMC] Neural Efficiency and Sensorimotor Adaptations in Swimming Athletes: A Systematic Review of Neuroimaging and Cognitive-Behavioral Evidence for Performance and Wellbeing. — 41594837
+- [Europe PMC] A scoping review of music-based digital therapeutics for stress, anxiety, and depression. — 41907803
+- [Europe PMC] Energy constraint on human health. — 42025458
+- [Europe PMC] ePoster. — 42366021
+- [Europe PMC] Dual-point sensory anchoring: emergent attentional coherence through embodied coupling. — 42857169
+- [Europe PMC] Research Progress on Peripheral Physiological Responses and Central Neural Activity Characteristics of Competitive Anxiety. — 43087487
+- [Europe PMC] ABSTRACTS FOR SYMPOSIA — PMC12945368
+
