@@ -1,0 +1,317 @@
+{
+  "schema": "HUYENCO_HUMANITY_INFINITE_EVIDENCE_PACKET/v1",
+  "agent_id": "BL-HC-01",
+  "project": "HUMANITY-INFINITE/BODY-ASCENSION",
+  "generated_at_utc": "2026-11-28T00:36:28.894673+00:00",
+  "query_set": ".deus/research/humanity-infinite/collector/queries.json",
+  "sources": [
+    "Europe PMC",
+    "ClinicalTrials.gov"
+  ],
+  "record_count": 19,
+  "digest_sha256": "23727b032c28ff544c2bc7d99be9545f236c4661c4765578a8a24a12fc3bed3d",
+  "errors": [
+    {
+      "track_id": "BA-P0-01",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P0-02",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P0-04",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P0-05",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P0-06",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 500: Internal Server Error"
+    },
+    {
+      "track_id": "BA-P1-04",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P2-01",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    },
+    {
+      "track_id": "BA-P2-02",
+      "source": "Europe PMC",
+      "error": "HTTPError: HTTP Error 503: Service Temporarily Unavailable"
+    }
+  ],
+  "records": [
+    {
+      "track_id": "BA-P0-02",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT03652220",
+      "title": "Meditation Based Lifestyle Modification in Depression",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2018-08-27",
+      "completion_date": "2020-07-20",
+      "url": "https://clinicaltrials.gov/study/NCT03652220"
+    },
+    {
+      "track_id": "BA-P0-03",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT02780739",
+      "title": "INSIGHT, A Comprehensive, Multidisciplinary Brain Training System",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2014-03",
+      "completion_date": "2014-11",
+      "url": "https://clinicaltrials.gov/study/NCT02780739"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "ClinicalTrials.gov",
+      "source_id": "NCT05895084",
+      "title": "Neural Markers of Balance in Adults With Brain Injury",
+      "overall_status": "COMPLETED",
+      "study_type": "INTERVENTIONAL",
+      "phases": [
+        "NA"
+      ],
+      "start_date": "2021-08-30",
+      "completion_date": "2021-11-18",
+      "url": "https://clinicaltrials.gov/study/NCT05895084"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "40985958",
+      "title": "Evidence-Based Clinical Effectiveness of Kundalini Yoga: Systematic Review of RCTs Across Multiple Health Conditions.",
+      "author": "Roy S, Biswas AK, Sharma M.",
+      "journal": "Altern Ther Health Med",
+      "pub_year": "2026",
+      "doi": null,
+      "cited_by_count": 1,
+      "is_open_access": "N",
+      "url": "https://europepmc.org/article/MED/40985958"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "41561711",
+      "title": "Efficacy of an Online Yoga Module in Alleviating Premenstrual Symptoms of Working Women in India: A Nonrandomized Controlled Trial.",
+      "author": "Misra U, Chetri S, Sharma H.",
+      "journal": "Indian J Community Med",
+      "pub_year": "2025",
+      "doi": "10.4103/ijcm.ijcm_681_24",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41561711"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "41694821",
+      "title": "Effects of Isha Yoga Practices on Health Outcomes: A Systematic Review of Controlled Studies.",
+      "author": "Giridharan S, Pandiyan B, Kumar NV, Godbole M, Soumian S.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.101478",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41694821"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "41939577",
+      "title": "Mapping Evidence on the Effectiveness of Mind-Body Interventions and Brain Gym on Cognitive Function in Older Adults: A Scoping Review.",
+      "author": "Sakpal S, Ganvir S, Suvarna D, Ranade P, Pitchai P.",
+      "journal": "Cureus",
+      "pub_year": "2026",
+      "doi": "10.7759/cureus.104687",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41939577"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "42044105",
+      "title": "Effectiveness of yoga therapy as an adjunct on mental health status, quality of life, and medication adherence among people living with HIV on antiretroviral therapy: A study protocol of a randomized controlled trial (ART YOGA).",
+      "author": "Dhanlika D, Haldar P, Nischal N, Wig N, Singh S, Singh U, Sagar R, Das BK, Ranjan S, Sharma G.",
+      "journal": "PLoS One",
+      "pub_year": "2026",
+      "doi": "10.1371/journal.pone.0331992",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42044105"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "42359292",
+      "title": "An exploratory study of breathwork-induced altered states of consciousness in experienced practitioners: the airways to alteration (A2A) trial.",
+      "author": "Fincham GW, Caddye E, Kartar AA, Lilley EA, Stoke N, Colasanti A.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1851882",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42359292"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "42739755",
+      "title": "Ayurveda Treatments for Insomnia: A Narrative Review.",
+      "author": "Vendrame M, Chai V.",
+      "journal": "J Clin Med",
+      "pub_year": "2026",
+      "doi": "10.3390/jcm15176750",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42739755"
+    },
+    {
+      "track_id": "BA-P1-02",
+      "source": "Europe PMC",
+      "source_id": "42745897",
+      "title": "Posttraumatic growth following culturally grounded intervention among tribal young women with dissociative disorders in Sikkim: an interpretative phenomenological analysis.",
+      "author": "Singh D.",
+      "journal": "Front Psychol",
+      "pub_year": "2026",
+      "doi": "10.3389/fpsyg.2026.1927590",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42745897"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "39155713",
+      "title": "Aligned bodies, united hearts: embodied emotional dynamics of an Islamic ritual.",
+      "author": "Saraei M, Paxton A, Xygalatas D.",
+      "journal": "Philos Trans R Soc Lond B Biol Sci",
+      "pub_year": "2024",
+      "doi": "10.1098/rstb.2023.0162",
+      "cited_by_count": 5,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/39155713"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "40695844",
+      "title": "Comparing the biopsychosocial impact of group singing and yoga activities in older adults living with Parkinson's disease.",
+      "author": "Good A, Pachete A, Gilmore S, Russo FA.",
+      "journal": "Sci Rep",
+      "pub_year": "2025",
+      "doi": "10.1038/s41598-025-09200-x",
+      "cited_by_count": 1,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/40695844"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "41491824",
+      "title": "Shared breath of joy enhances empathy through breathing synchronization.",
+      "author": "Masaoka Y, Honma M, Nakayama M, Matsui M, Yoshikawa A, Kosuge S, Kosuge M, Shoji D, Sakakura S, Izumizaki M.",
+      "journal": "Sci Rep",
+      "pub_year": "2026",
+      "doi": "10.1038/s41598-026-34981-0",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41491824"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "41595041",
+      "title": "A Preschool Rhythm and Movement Intervention: RCT Evidence for Improved Social and Behavioral Development.",
+      "author": "Williams KE, Bentley L.",
+      "journal": "Behav Sci (Basel)",
+      "pub_year": "2026",
+      "doi": "10.3390/bs16010100",
+      "cited_by_count": 1,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/41595041"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "42137408",
+      "title": "Staging the stands: the ritual choreography of sports fandom and collective emotion regulation.",
+      "author": "He Y.",
+      "journal": "Front Sports Act Living",
+      "pub_year": "2026",
+      "doi": "10.3389/fspor.2026.1805368",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42137408"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "42193684",
+      "title": "Humming and Homeostasis: Insights from Infants, Mothers, Mantras and Caregiving.",
+      "author": "Gratier M, Carvalho ME.",
+      "journal": "Behav Sci (Basel)",
+      "pub_year": "2026",
+      "doi": "10.3390/bs16050805",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42193684"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "42325126",
+      "title": "Synchrony and Reciprocity in Rhythmic Interaction.",
+      "author": "Palmer C, Yi W, Smykovskyi A.",
+      "journal": "Ann N Y Acad Sci",
+      "pub_year": "2026",
+      "doi": "10.1111/nyas.70326",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42325126"
+    },
+    {
+      "track_id": "BA-P1-03",
+      "source": "Europe PMC",
+      "source_id": "42720138",
+      "title": "Critical Review on the Development and Evolution of Beat Perception.",
+      "author": "Háden G, Honing H.",
+      "journal": "Ann N Y Acad Sci",
+      "pub_year": "2026",
+      "doi": "10.1111/nyas.70386",
+      "cited_by_count": 0,
+      "is_open_access": "Y",
+      "url": "https://europepmc.org/article/MED/42720138"
+    }
+  ],
+  "truth_policy": {
+    "collector_output_is_source_metadata_not_scientific_conclusion": true,
+    "phenomenology_not_ontology": true,
+    "requires_human_or_llm_synthesis_before_promotion": true
+  }
+}
